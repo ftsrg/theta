@@ -37,7 +37,8 @@ fun XcfaProcedure.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)?): String {
     locs.forEach { builder.appendLine("${it.name}[];") }
     edges.forEach {
         builder.appendLine(
-            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];")
+            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];"
+        )
     }
     return builder.toString()
 }

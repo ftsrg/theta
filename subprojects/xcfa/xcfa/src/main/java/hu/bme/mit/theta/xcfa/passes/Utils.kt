@@ -76,27 +76,41 @@ fun Stmt.flatten(): List<Stmt> {
 fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): XcfaLabel =
     if (varLut.isNotEmpty())
         when (this) {
-            is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut, parseContext) },
-                metadata = metadata)
+            is InvokeLabel -> InvokeLabel(
+                name, params.map { it.changeVars(varLut, parseContext) },
+                metadata = metadata
+            )
 
             is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
-            is NondetLabel -> NondetLabel(labels.map { it.changeVars(varLut, parseContext) }.toSet(),
-                metadata = metadata)
+            is NondetLabel -> NondetLabel(
+                labels.map { it.changeVars(varLut, parseContext) }.toSet(),
+                metadata = metadata
+            )
 
-            is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
-                metadata = metadata)
+            is ReadLabel -> ReadLabel(
+                local.changeVars(varLut), global.changeVars(varLut), labels,
+                metadata = metadata
+            )
 
-            is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut, parseContext) },
-                metadata = metadata)
+            is SequenceLabel -> SequenceLabel(
+                labels.map { it.changeVars(varLut, parseContext) },
+                metadata = metadata
+            )
 
-            is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut, parseContext) },
-                pidVar.changeVars(varLut), metadata = metadata)
+            is StartLabel -> StartLabel(
+                name, params.map { it.changeVars(varLut, parseContext) },
+                pidVar.changeVars(varLut), metadata = metadata
+            )
 
-            is StmtLabel -> StmtLabel(stmt.changeVars(varLut, parseContext), metadata = metadata,
-                choiceType = this.choiceType)
+            is StmtLabel -> StmtLabel(
+                stmt.changeVars(varLut, parseContext), metadata = metadata,
+                choiceType = this.choiceType
+            )
 
-            is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
-                metadata = metadata)
+            is WriteLabel -> WriteLabel(
+                local.changeVars(varLut), global.changeVars(varLut), labels,
+                metadata = metadata
+            )
 
             is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
 
@@ -107,11 +121,15 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
 @JvmOverloads
 fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
     val stmt = when (this) {
-        is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
-            cast(expr.changeVars(varLut, parseContext), varDecl.type))
+        is AssignStmt<*> -> AssignStmt.of(
+            cast(varDecl.changeVars(varLut), varDecl.type),
+            cast(expr.changeVars(varLut, parseContext), varDecl.type)
+        )
 
-        is MemoryAssignStmt<*, *, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *, *>,
-            expr.changeVars(varLut))
+        is MemoryAssignStmt<*, *, *> -> MemoryAssignStmt.create(
+            deref.changeVars(varLut) as Dereference<out Type, *, *>,
+            expr.changeVars(varLut)
+        )
 
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))

@@ -53,7 +53,8 @@ enum class AccessType {
 val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
         is MemoryAssignStmt<*, *, *> -> expr.dereferences.map { Pair(it, AccessType.READ) } + listOf(
-            Pair(deref, AccessType.WRITE)) + deref.ops.flatMap { it.dereferences }.map { Pair(it, AccessType.READ) }
+            Pair(deref, AccessType.WRITE)
+        ) + deref.ops.flatMap { it.dereferences }.map { Pair(it, AccessType.READ) }
 
         is AssignStmt<*> -> expr.dereferences.map { Pair(it, AccessType.READ) }
         is AssumeStmt -> cond.dereferences.map { Pair(it, AccessType.READ) }
@@ -83,19 +84,23 @@ fun SequenceStmt.collapse(): Stmt =
         this
     }
 
-fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
-    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>): Stmt {
+fun Stmt.uniqueDereferences(
+    vargen: (String, Type) -> VarDecl<*>,
+    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>
+): Stmt {
     val ret = ArrayList<Stmt>()
     val newStmt = when (this) {
         is MemoryAssignStmt<*, *, *> -> {
             MemoryAssignStmt.create(
                 deref.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second as Dereference<*, *, *>,
-                expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+                expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second
+            )
         }
 
         is AssignStmt<*> -> AssignStmt.of(
             TypeUtils.cast(varDecl, varDecl.type),
-            TypeUtils.cast(expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second, varDecl.type))
+            TypeUtils.cast(expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second, varDecl.type)
+        )
 
         is AssumeStmt -> AssumeStmt.of(cond.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
         is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
@@ -109,13 +114,16 @@ fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
     return SequenceStmt.of(ret + newStmt).collapse()
 }
 
-fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
-    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>): Pair<List<Stmt>, Expr<T>> =
+fun <T : Type> Expr<T>.uniqueDereferences(
+    vargen: (String, Type) -> VarDecl<*>,
+    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>
+): Pair<List<Stmt>, Expr<T>> =
     if (this is Dereference<*, *, T>) {
         val ret = ArrayList<Stmt>()
         Preconditions.checkState(this.uniquenessIdx.isEmpty, "Only non-pretransformed dereferences should be here")
         val arrayExpr = ExprUtils.simplify(
-            array.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+            array.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second
+        )
         val arrayLaterRef = if (arrayExpr !is LitExpr<*>) {
             val arrayConst = vargen("a", array.type).ref
             ret.add(Assume(Eq(arrayConst, arrayExpr)))
@@ -124,7 +132,8 @@ fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
             arrayExpr
         }
         val offsetExpr = ExprUtils.simplify(
-            offset.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+            offset.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second
+        )
         val offsetLaterRef = if (offsetExpr !is LitExpr<*>) {
             val offsetConst = vargen("o", offset.type).ref
             ret.add(Assume(Eq(offsetConst, offsetExpr)))
@@ -141,7 +150,8 @@ fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
     } else {
         val ret = ArrayList<Stmt>()
         Pair(ret,
-            this.withOps(this.ops.map { it.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second }))
+            this.withOps(this.ops.map { it.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second })
+        )
     }
 
 object TopCollection : Set<Expr<*>> {
@@ -168,8 +178,11 @@ enum class PtrTracking {
 fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getIte(writeTriples: WriteTriples): Expr<IntType> {
     val list = writeTriples[type] ?: emptyList()
     return list.fold(Int(0) as Expr<IntType>) { elze, (arr, off, value) ->
-        IteExpr.of(BoolExprs.And(
-            listOf(Eq(arr, array), Eq(off, offset))), value, elze)
+        IteExpr.of(
+            BoolExprs.And(
+                listOf(Eq(arr, array), Eq(off, offset))
+            ), value, elze
+        )
     }
 }
 

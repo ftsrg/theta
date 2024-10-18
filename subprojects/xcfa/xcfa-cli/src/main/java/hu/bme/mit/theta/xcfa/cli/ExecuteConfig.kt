@@ -176,13 +176,14 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
     logger.write(
         Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
-        stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n"
+            stopwatch.elapsed(TimeUnit.MILLISECONDS)
+        } ms)\n"
     )
 
     logger.write(RESULT, "ParsingResult Success\n")
     logger.write(RESULT,
-        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n")
+        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n"
+    )
 
     return Triple(xcfa, mcm, parseContext)
 }
@@ -226,8 +227,8 @@ private fun backend(
 
             logger.write(
                 Logger.Level.INFO, "Backend finished (in ${
-                stopwatch.elapsed(TimeUnit.MILLISECONDS)
-            } ms)\n"
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
+                } ms)\n"
             )
 
             logger.write(RESULT, result.toString() + "\n")
@@ -331,8 +332,10 @@ private fun postVerificationLogging(
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
 
                     val sequenceFile = File(resultFolder, "trace.plantuml")
-                    writeSequenceTrace(sequenceFile,
-                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
+                    writeSequenceTrace(
+                        sequenceFile,
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>
+                    ) { (_, act) ->
                         act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
 
@@ -363,8 +366,10 @@ private fun postVerificationLogging(
     }
 }
 
-private fun writeSequenceTrace(sequenceFile: File, trace: Trace<XcfaState<ExplState>, XcfaAction>,
-    printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>) {
+private fun writeSequenceTrace(
+    sequenceFile: File, trace: Trace<XcfaState<ExplState>, XcfaAction>,
+    printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>
+) {
     sequenceFile.writeText("@startuml\n")
     var maxWidth = 0
     trace.actions.forEachIndexed { i, it ->

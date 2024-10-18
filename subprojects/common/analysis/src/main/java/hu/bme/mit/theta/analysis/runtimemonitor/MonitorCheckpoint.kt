@@ -52,7 +52,8 @@ class MonitorCheckpoint internal constructor(private val name: String) {
             assert(registeredCheckpoints.contains(checkpointName))
             { "Checkpoint name $checkpointName was not registered (add it in MonitorCheckpoint.kt)" } // see checkpointNames above
             registeredCheckpoints[checkpointName]?.registerMonitor(m) ?: error(
-                "Checkpoint with name $checkpointName not found.")
+                "Checkpoint with name $checkpointName not found."
+            )
         }
 
         fun execute(name: String) {

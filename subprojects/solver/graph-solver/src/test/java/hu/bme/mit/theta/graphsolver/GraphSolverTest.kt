@@ -53,44 +53,50 @@ class GraphSolverTest<T> {
 
     companion object {
 
-        private val smallLine: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(listOf(1, 2, 3), mapOf(
-            Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.FALSE),
-        ))
+        private val smallLine: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(
+            listOf(1, 2, 3), mapOf(
+                Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.FALSE),
+            )
+        )
 
-        private val smallCycle: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(listOf(1, 2, 3), mapOf(
-            Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.FALSE),
-            Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.FALSE),
-        ))
+        private val smallCycle: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(
+            listOf(1, 2, 3), mapOf(
+                Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.FALSE),
+                Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.FALSE),
+            )
+        )
 
-        private val smallFull: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(listOf(1, 2, 3), mapOf(
-            Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.TRUE),
-            Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.TRUE),
-            Pair(Pair("W", Tuple1.of(1)), ThreeVL.TRUE),
-            Pair(Pair("R", Tuple1.of(2)), ThreeVL.TRUE),
-            Pair(Pair("F", Tuple1.of(3)), ThreeVL.TRUE),
-        ))
+        private val smallFull: Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> = Pair(
+            listOf(1, 2, 3), mapOf(
+                Pair(Pair("po", Tuple2.of(1, 1)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(1, 2)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(1, 3)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(2, 1)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(2, 2)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(2, 3)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.TRUE),
+                Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.TRUE),
+                Pair(Pair("W", Tuple1.of(1)), ThreeVL.TRUE),
+                Pair(Pair("R", Tuple1.of(2)), ThreeVL.TRUE),
+                Pair(Pair("F", Tuple1.of(3)), ThreeVL.TRUE),
+            )
+        )
 
         @Parameterized.Parameters
         @JvmStatic
@@ -102,7 +108,8 @@ class GraphSolverTest<T> {
                     smallLine.first,
                     smallLine.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -111,7 +118,8 @@ class GraphSolverTest<T> {
                     smallCycle.first,
                     smallCycle.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -120,7 +128,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -129,7 +138,8 @@ class GraphSolverTest<T> {
                     smallLine.first,
                     smallLine.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -138,7 +148,8 @@ class GraphSolverTest<T> {
                     smallCycle.first,
                     smallCycle.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -147,7 +158,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -156,7 +168,8 @@ class GraphSolverTest<T> {
                     smallLine.first,
                     smallLine.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -165,7 +178,8 @@ class GraphSolverTest<T> {
                     smallCycle.first,
                     smallCycle.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -174,7 +188,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -183,7 +198,8 @@ class GraphSolverTest<T> {
                     smallLine.first,
                     smallLine.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -192,7 +208,8 @@ class GraphSolverTest<T> {
                     smallCycle.first,
                     smallCycle.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -201,7 +218,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -210,7 +228,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -219,7 +238,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
                 arrayOf(
@@ -228,7 +248,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -237,7 +258,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -246,7 +268,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -255,7 +278,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -264,7 +288,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -273,7 +298,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -282,7 +308,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -291,7 +318,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -300,7 +328,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -309,7 +338,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -318,7 +348,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -327,7 +358,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -336,7 +368,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     true
                 ),
                 arrayOf(
@@ -345,7 +378,8 @@ class GraphSolverTest<T> {
                     smallFull.first,
                     smallFull.second,
                     SATGraphSolver(
-                        Z3LegacySolverFactory.getInstance().createSolver()),
+                        Z3LegacySolverFactory.getInstance().createSolver()
+                    ),
                     false
                 ),
             )

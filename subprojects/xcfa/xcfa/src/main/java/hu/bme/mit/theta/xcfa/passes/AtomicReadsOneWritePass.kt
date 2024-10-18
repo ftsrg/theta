@@ -160,9 +160,12 @@ class AtomicReadsOneWritePass : ProcedurePass {
     private fun XcfaLabel.replaceAccesses(localVersions: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel {
         return when (this) {
             is StmtLabel -> when (val stmt = stmt) {
-                is AssignStmt<*> -> StmtLabel(AssignStmt.of(
-                    cast(localVersions[stmt.varDecl] ?: stmt.varDecl, stmt.varDecl.type),
-                    cast(stmt.expr.replace(localVersions), stmt.varDecl.type)))
+                is AssignStmt<*> -> StmtLabel(
+                    AssignStmt.of(
+                        cast(localVersions[stmt.varDecl] ?: stmt.varDecl, stmt.varDecl.type),
+                        cast(stmt.expr.replace(localVersions), stmt.varDecl.type)
+                    )
+                )
 
                 is AssumeStmt -> StmtLabel(AssumeStmt.of(stmt.cond.replace(localVersions)))
                 is HavocStmt<*> -> StmtLabel(HavocStmt.of(localVersions[stmt.varDecl] ?: stmt.varDecl))

@@ -122,13 +122,14 @@ class XcfaAbstractor<S : State, A : Action, P : Prec>(
     companion object {
 
         fun <S : State, A : Action, P : Prec> builder(
-            argBuilder: ArgBuilder<S, A, P>): BasicAbstractor.Builder<S, A, P> {
+            argBuilder: ArgBuilder<S, A, P>
+        ): BasicAbstractor.Builder<S, A, P> {
             return Builder(argBuilder)
         }
     }
 
-    class Builder<S : State, A : Action, P : Prec>(argBuilder: ArgBuilder<S, A, P>)
-        : BasicAbstractor.Builder<S, A, P>(argBuilder) {
+    class Builder<S : State, A : Action, P : Prec>(argBuilder: ArgBuilder<S, A, P>) :
+        BasicAbstractor.Builder<S, A, P>(argBuilder) {
 
         override fun build(): BasicAbstractor<S, A, P> {
             return XcfaAbstractor(argBuilder, projection, waitlist, stopCriterion, logger)

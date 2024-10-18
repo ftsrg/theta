@@ -64,7 +64,8 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
         if (!varsAndParams.containsAll(usedVars)) {
             uniqueWarningLogger.write(Logger.Level.INFO,
                 "WARNING: There are some used variables not present as declarations: " +
-                    "${usedVars.filter { it !in varsAndParams }}\n")
+                    "${usedVars.filter { it !in varsAndParams }}\n"
+            )
         }
 
         builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }

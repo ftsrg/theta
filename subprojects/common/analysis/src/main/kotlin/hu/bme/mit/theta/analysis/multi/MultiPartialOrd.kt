@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.State
 
 class MultiPartialOrd<LState : State, RState : State, DataState : State, LControl : State, RControl : State,
     MState : MultiState<LControl, RControl, DataState>>
-(
+    (
     private val leftPartOrd: PartialOrd<LState>,
     private val leftCombineStates: (LControl, DataState) -> LState,
     private val rightPartOrd: PartialOrd<RState>,
