@@ -26,7 +26,9 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -40,26 +42,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssume;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CBreak;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCase;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CContinue;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDecls;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDefault;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFor;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFunction;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CGoto;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CRet;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
+import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -67,20 +50,13 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
@@ -541,18 +517,110 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitAssignmentExpressionConditionalExpression(CParser.AssignmentExpressionConditionalExpressionContext ctx) {
-        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor, uniqueWarningLogger);
+        return ctx.conditionalExpression().accept(this);
+    }
+
+    /*
+    This collects the following:
+        - the current compound's pre-statement
+        - all pre-statements of the pre-statement (before the pre-statement)
+        - all the pre-statement of every cStatement
+     */
+    private List<CStatement> collectPreStatements(CStatement cStatement) {
+        if (cStatement instanceof CCompound) {
+            return Stream.concat(
+                    Stream.concat(
+                            collectPreStatements(cStatement.getPreStatements()).stream(),
+                            Stream.of(cStatement.getPreStatements())),
+                    ((CCompound) cStatement).getcStatementList().stream().flatMap(cStatement1 -> collectPreStatements(cStatement1).stream())
+            ).toList();
+        } else return List.of();
+    }
+
+    /*
+    This collects the following:
+        - all the post-statements of every cStatement
+        - the current compound's post-statement
+        - all post-statements of the post-statement (after the post-statement)
+     */
+    private List<CStatement> collectPostStatements(CStatement cStatement) {
+        if (cStatement instanceof CCompound) {
+            return Stream.concat(
+                    ((CCompound) cStatement).getcStatementList().stream().flatMap(cStatement1 -> collectPostStatements(cStatement1).stream()),
+                    Stream.concat(
+                            Stream.of(cStatement.getPreStatements()),
+                            collectPostStatements(cStatement.getPreStatements()).stream())
+            ).toList();
+        } else return List.of();
+    }
+
+    // This is in the function visitor, not in the expression visitor, because
+    //    cond ? f1() : f2()
+    // will only call either f1 or f2 (it can be used for branching)
+    @Override
+    public CStatement visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
         CCompound compound = new CCompound(parseContext);
         CCompound preStatements = new CCompound(parseContext);
         CCompound postStatements = new CCompound(parseContext);
-        Expr<?> ret = ctx.conditionalExpression().accept(expressionVisitor);
-        CExpr cexpr = new CExpr(ret, parseContext);
+
+        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor, uniqueWarningLogger);
+
+        Expr<?> iteExpr;
+        if (!ctx.expression().isEmpty()) {
+            CStatement ifTrue = ctx.ifTrue.accept(this);
+            CStatement ifFalse = ctx.ifFalse.accept(this);
+
+            Expr<?> expr = ctx.logicalOrExpression().accept(expressionVisitor);
+            Expr<?> lhs = ifTrue.getExpression();
+            Expr<?> rhs = ifFalse.getExpression();
+
+            CCompound guardCompound = new CCompound(parseContext);
+            guardCompound.getcStatementList().add(new CExpr(expr, parseContext));
+            guardCompound.setPostStatements(new CCompound(parseContext));
+            guardCompound.setPreStatements(new CCompound(parseContext));
+
+
+            CCompound ifTruePre = new CCompound(parseContext);
+            ifTruePre.getcStatementList().addAll(collectPreStatements(ifTrue));
+            ifTruePre.setPostStatements(new CCompound(parseContext));
+            ifTruePre.setPreStatements(new CCompound(parseContext));
+            CCompound ifFalsePre = new CCompound(parseContext);
+            ifFalsePre.getcStatementList().addAll(collectPreStatements(ifFalse));
+            ifFalsePre.setPostStatements(new CCompound(parseContext));
+            ifFalsePre.setPreStatements(new CCompound(parseContext));
+
+            CCompound ifTruePost = new CCompound(parseContext);
+            ifTruePost.getcStatementList().addAll(collectPostStatements(ifTrue));
+            ifTruePost.setPostStatements(new CCompound(parseContext));
+            ifTruePost.setPreStatements(new CCompound(parseContext));
+            CCompound ifFalsePost = new CCompound(parseContext);
+            ifFalsePost.getcStatementList().addAll(collectPostStatements(ifFalse));
+            ifFalsePost.setPostStatements(new CCompound(parseContext));
+            ifFalsePost.setPreStatements(new CCompound(parseContext));
+
+
+            preStatements.getcStatementList().add(new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
+            postStatements.getcStatementList().add(new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
+
+            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
+            IteExpr<?> ite = Ite(
+                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
+                    smallestCommonType.castTo(lhs),
+                    smallestCommonType.castTo(rhs)
+            );
+            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
+            iteExpr = ite;
+        } else {
+            iteExpr = ctx.logicalOrExpression().accept(expressionVisitor);
+        }
+
+        CExpr cexpr = new CExpr(iteExpr, parseContext);
         compound.getcStatementList().add(cexpr);
         preStatements.getcStatementList().addAll(expressionVisitor.getPreStatements());
         compound.setPreStatements(preStatements);
         recordMetadata(ctx, compound);
-        postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
         compound.setPostStatements(postStatements);
+        postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
         recordMetadata(ctx, compound);
         return compound;
     }

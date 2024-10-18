@@ -44,7 +44,10 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.*;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -110,37 +113,41 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return preStatements;
     }
 
-    @Override
-    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
-        if (ctx.expression() != null) {
-            CStatement ifTrue = ctx.expression().accept(functionVisitor);
-            addPreStatements(ifTrue);
-            if (ifTrue instanceof CAssignment) {
-                preStatements.add(ifTrue);
-            }
-            Expr<?> expr = ctx.logicalOrExpression().accept(this);
-            Expr<?> lhs = ifTrue.getExpression();
-            Expr<?> rhs = ctx.conditionalExpression().accept(this);
-            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
-            IteExpr<?> ite = Ite(
-                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
-                    smallestCommonType.castTo(lhs),
-                    smallestCommonType.castTo(rhs)
-            );
-            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
-            return ite;
-        } else return ctx.logicalOrExpression().accept(this);
-    }
+//    @Override
+//    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
+//        if (ctx.expression() != null) {
+//            CStatement cond = ctx.logicalOrExpression().accept(functionVisitor);
+//            CStatement ifTrue = ctx.expression().accept(functionVisitor);
+//            CStatement ifFalse = ctx.conditionalExpression().accept(functionVisitor);
+//
+//            Expr<?> expr = ctx.logicalOrExpression().accept(this);
+//            Expr<?> lhs = ifTrue.getExpression();
+//            Expr<?> rhs = ctx.conditionalExpression().accept(this);
+//
+//            preStatements.add(new CIf(cond, ifTrue, ifFalse, parseContext));
+//
+//            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
+//            IteExpr<?> ite = Ite(
+//                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
+//                    smallestCommonType.castTo(lhs),
+//                    smallestCommonType.castTo(rhs)
+//            );
+//            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
+//            return ite;
+//        } else return ctx.logicalOrExpression().accept(this);
+//    }
 
-    private void addPreStatements(CStatement ifTrue) {
-        if (ifTrue instanceof CCompound) {
-            if (ifTrue.getPreStatements() != null) preStatements.add(ifTrue.getPreStatements());
-            if (ifTrue.getPostStatements() != null) postStatements.add(ifTrue.getPostStatements());
-            for (CStatement cStatement : ((CCompound) ifTrue).getcStatementList()) {
-                addPreStatements(cStatement);
-            }
-        }
-    }
+//    private void addPrePostStatementsForConditional(CStatement statement) {
+//        if (statement instanceof CCompound) {
+//            if (statement.getPreStatements() != null) preStatements.add(statement.getPreStatements());
+//            if (statement.getPostStatements() != null) postStatements.add(statement.getPostStatements());
+//            for (CStatement cStatement : ((CCompound) statement).getcStatementList()) {
+//                addPrePostStatementsForConditional(cStatement);
+//            }
+//        } else {
+//            preStatements.add(statement);
+//        }
+//    }
 
     @Override
     public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
