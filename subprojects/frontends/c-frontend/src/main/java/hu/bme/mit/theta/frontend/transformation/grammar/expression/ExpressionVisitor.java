@@ -18,13 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionAccessContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionBracesContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionBracketsContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionDecrementContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionIncrementContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionMemberAccessContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionPtrMemberAccessContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -35,23 +29,16 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
+import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -59,7 +46,6 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -70,23 +56,14 @@ import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -136,37 +113,41 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return preStatements;
     }
 
-    @Override
-    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
-        if (ctx.expression() != null) {
-            CStatement ifTrue = ctx.expression().accept(functionVisitor);
-            addPreStatements(ifTrue);
-            if (ifTrue instanceof CAssignment) {
-                preStatements.add(ifTrue);
-            }
-            Expr<?> expr = ctx.logicalOrExpression().accept(this);
-            Expr<?> lhs = ifTrue.getExpression();
-            Expr<?> rhs = ctx.conditionalExpression().accept(this);
-            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
-            IteExpr<?> ite = Ite(
-                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
-                    smallestCommonType.castTo(lhs),
-                    smallestCommonType.castTo(rhs)
-            );
-            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
-            return ite;
-        } else return ctx.logicalOrExpression().accept(this);
-    }
+//    @Override
+//    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
+//        if (ctx.expression() != null) {
+//            CStatement cond = ctx.logicalOrExpression().accept(functionVisitor);
+//            CStatement ifTrue = ctx.expression().accept(functionVisitor);
+//            CStatement ifFalse = ctx.conditionalExpression().accept(functionVisitor);
+//
+//            Expr<?> expr = ctx.logicalOrExpression().accept(this);
+//            Expr<?> lhs = ifTrue.getExpression();
+//            Expr<?> rhs = ctx.conditionalExpression().accept(this);
+//
+//            preStatements.add(new CIf(cond, ifTrue, ifFalse, parseContext));
+//
+//            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
+//            IteExpr<?> ite = Ite(
+//                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
+//                    smallestCommonType.castTo(lhs),
+//                    smallestCommonType.castTo(rhs)
+//            );
+//            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
+//            return ite;
+//        } else return ctx.logicalOrExpression().accept(this);
+//    }
 
-    private void addPreStatements(CStatement ifTrue) {
-        if (ifTrue instanceof CCompound) {
-            if (ifTrue.getPreStatements() != null) preStatements.add(ifTrue.getPreStatements());
-            if (ifTrue.getPostStatements() != null) postStatements.add(ifTrue.getPostStatements());
-            for (CStatement cStatement : ((CCompound) ifTrue).getcStatementList()) {
-                addPreStatements(cStatement);
-            }
-        }
-    }
+//    private void addPrePostStatementsForConditional(CStatement statement) {
+//        if (statement instanceof CCompound) {
+//            if (statement.getPreStatements() != null) preStatements.add(statement.getPreStatements());
+//            if (statement.getPostStatements() != null) postStatements.add(statement.getPostStatements());
+//            for (CStatement cStatement : ((CCompound) statement).getcStatementList()) {
+//                addPrePostStatementsForConditional(cStatement);
+//            }
+//        } else {
+//            preStatements.add(statement);
+//        }
+//    }
 
     @Override
     public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
@@ -310,7 +291,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         guard = AbstractExprs.Geq(leftExpr, rightExpr);
                         break;
                     default:
-                        throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
+                        throw new UnsupportedFrontendElementException("Unexpected relational expression sign: " + ctx.signs.get(i).getText());
                 }
 //                MaxEnumAnalyzer.instance.consume(guard); TODO: handle circular dependency
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
@@ -415,7 +396,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         }
                         break;
                     default:
-                        throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
+                        throw new UnsupportedFrontendElementException("Unexpected multiplicative expression sign: " + ctx.signs.get(i).getText());
                 }
                 parseContext.getMetadata().create(expr, "cType", smallestCommonType);
                 expr = smallestCommonType.castTo(expr);
@@ -665,9 +646,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
             BigFloat bigFloat;
             if (text.startsWith("0x")) {
-                throw new UnsupportedOperationException("Hexadecimal FP constants are not yet supported!");
+                throw new UnsupportedFrontendElementException("Hexadecimal FP constants are not yet supported!");
             } else if (text.startsWith("0b")) {
-                throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
+                throw new UnsupportedFrontendElementException("Binary FP constants are not yet supported!");
             } else {
                 bigFloat = new BigFloat(text, new BinaryMathContext(significand - 1, exponent));
             }
