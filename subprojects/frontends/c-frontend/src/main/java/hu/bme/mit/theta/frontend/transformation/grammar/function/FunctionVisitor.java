@@ -432,14 +432,19 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                 createVars(declaration);
                 if (declaration.getType() instanceof Struct) {
                     checkState(declaration.getInitExpr() instanceof CInitializerList, "Struct can only be initialized via an initializer list!");
+                    final var initializerList = (CInitializerList) declaration.getInitExpr();
                     List<VarDecl<?>> varDecls = declaration.getVarDecls();
-                    for (int i = 0; i < varDecls.size(); i++) {
-                        VarDecl<?> varDecl = varDecls.get(i);
-                        Tuple2<Optional<CStatement>, CStatement> initializer = ((CInitializerList) declaration.getInitExpr()).getStatements().get(i);
-
-                        CAssignment cAssignment = new CAssignment(varDecl.getRef(), initializer.get2(), "=", parseContext);
+                    VarDecl<?> varDecl = varDecls.get(0);
+                    final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                    LitExpr<?> currentValue = ptrType.getNullValue();
+                    LitExpr<?> unitValue = ptrType.getUnitValue();
+                    for (Tuple2<Optional<CStatement>, CStatement> statement : initializerList.getStatements()) {
+                        final var expr = statement.get2().getExpression();
+                        final var deref = Exprs.Dereference(cast(varDecl.getRef(), currentValue.getType()), cast(currentValue, currentValue.getType()), expr.getType());
+                        CAssignment cAssignment = new CAssignment(deref, statement.get2(), "=", parseContext);
                         recordMetadata(ctx, cAssignment);
                         compound.getcStatementList().add(cAssignment);
+                        currentValue = Add(currentValue, unitValue).eval(ImmutableValuation.empty());
                     }
                 } else {
                     checkState(declaration.getVarDecls().size() == 1, "non-struct declarations shall only have one variable!");
