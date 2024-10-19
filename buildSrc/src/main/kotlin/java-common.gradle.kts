@@ -70,7 +70,7 @@ tasks {
 spotless {
     java {
         // apply a specific flavor of google-java-format
-        googleJavaFormat("1.8").aosp().reflowLongStrings().skipJavadocFormatting()
+        googleJavaFormat("1.24.0").aosp().reflowLongStrings()
         // fix formatting of type annotations
         formatAnnotations()
         licenseHeader(
