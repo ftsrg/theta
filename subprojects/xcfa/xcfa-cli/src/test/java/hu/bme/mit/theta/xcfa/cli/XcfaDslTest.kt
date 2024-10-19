@@ -88,23 +88,18 @@ class XcfaDslTest {
     fun verifyXcfa() {
         SolverManager.registerSolverManager(Z3SolverManager.create())
         val config = XcfaConfig<SpecFrontendConfig, CegarConfig>(
-            backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig())
-        )
+            backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
         run {
             val xcfa = getSyncXcfa()
-            val checker = getChecker(
-                xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
-                NullLogger.getInstance()
-            )
+            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+                NullLogger.getInstance())
             val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isSafe)
         }
         run {
             val xcfa = getAsyncXcfa()
-            val checker = getChecker(
-                xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
-                NullLogger.getInstance()
-            )
+            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+                NullLogger.getInstance())
             val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isUnsafe)
         }

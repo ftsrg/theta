@@ -25,9 +25,7 @@ fun XSTS.copyWithReplacingVars(variableMapping: Map<String, VarDecl<*>>): XSTS {
     val matchingCtrlVarNames = ctrlVars.filter { variableMapping.containsKey(it.name) }.map { it.name }
     val newCtrlVars = ctrlVars.filter { it.name !in variableMapping }
         .toSet() + variableMapping.filter { it.key in matchingCtrlVarNames }.values.toSet()
-    return XSTS(
-        newCtrlVars, init.changeVars(variableMapping) as NonDetStmt,
+    return XSTS(newCtrlVars, init.changeVars(variableMapping) as NonDetStmt,
         tran.changeVars(variableMapping) as NonDetStmt, env.changeVars(variableMapping) as NonDetStmt,
-        initFormula.changeVars(variableMapping), prop.changeVars(variableMapping)
-    )
+        initFormula.changeVars(variableMapping), prop.changeVars(variableMapping))
 }

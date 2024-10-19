@@ -46,15 +46,11 @@ class GsonTest {
     private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean): Gson {
         val gsonBuilder = GsonBuilder()
         lateinit var gson: Gson
-        gsonBuilder.registerTypeHierarchyAdapter(
-            XcfaLocation::class.java,
-            StringTypeAdapter(xcfaLocationAdapter)
-        )
+        gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java,
+            StringTypeAdapter(xcfaLocationAdapter))
         gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
-        gsonBuilder.registerTypeHierarchyAdapter(
-            VarDecl::class.java,
-            VarDeclAdapter({ gson }, scope, env, !newScope)
-        )
+        gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
+            VarDeclAdapter({ gson }, scope, env, !newScope))
         gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java,
             StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
         gsonBuilder.registerTypeHierarchyAdapter(Expr::class.java,
@@ -63,10 +59,8 @@ class GsonTest {
             StringTypeAdapter { TypeWrapper(it).instantiate() })
         gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java,
             StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
-        gsonBuilder.registerTypeHierarchyAdapter(
-            XcfaLabel::class.java,
-            XcfaLabelAdapter(scope, env, { gson })
-        )
+        gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java,
+            XcfaLabelAdapter(scope, env, { gson }))
         gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())
         gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
         gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
@@ -118,10 +112,8 @@ class GsonTest {
         val env = Env()
 
         val gson = getGson(symbolTable, env, true)
-        assertEquals(
-            parseContext.metadata.lookupKeyValue,
-            gson.fromJson(gson.toJson(parseContext), ParseContext::class.java).metadata.lookupKeyValue
-        )
+        assertEquals(parseContext.metadata.lookupKeyValue,
+            gson.fromJson(gson.toJson(parseContext), ParseContext::class.java).metadata.lookupKeyValue)
 
     }
 

@@ -70,22 +70,16 @@ data class InputConfig(
     @Parameter(names = ["--cat"], description = "Path of the cat model")
     var catFile: File? = null,
 
-    @Parameter(
-        names = ["--parse-ctx"],
-        description = "Path of the parse context JSON (may contain additional metadata)"
-    )
+    @Parameter(names = ["--parse-ctx"],
+        description = "Path of the parse context JSON (may contain additional metadata)")
     var parseCtx: File? = null,
 
-    @Parameter(
-        names = ["--xcfa-w-ctx"],
-        description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)"
-    )
+    @Parameter(names = ["--xcfa-w-ctx"],
+        description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)")
     var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
 
-    @Parameter(
-        names = ["--property"],
-        description = "Path of the property file (will overwrite --property when given)"
-    )
+    @Parameter(names = ["--property"],
+        description = "Path of the property file (will overwrite --property when given)")
     var propertyFile: File? = null,
 
     @Parameter(names = ["--property-value"], description = "Property")
@@ -106,22 +100,16 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
     var staticCoi: Boolean = false,
 
-    @Parameter(
-        names = ["--unroll"],
-        description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)"
-    )
+    @Parameter(names = ["--unroll"],
+        description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
     var loopUnroll: Int = 1000,
 
-    @Parameter(
-        names = ["--force-unroll"],
-        description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)"
-    )
+    @Parameter(names = ["--force-unroll"],
+        description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)")
     var forceUnroll: Int = -1,
 
-    @Parameter(
-        names = ["--enable-few"],
-        description = "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses"
-    )
+    @Parameter(names = ["--enable-few"],
+        description = "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses")
     var enableFew: Boolean = false,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
@@ -218,28 +206,22 @@ data class CegarAbstractorConfig(
     @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
     var abstractionSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-abstraction-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-abstraction-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateAbstractionSolver: Boolean = false,
 
     @Parameter(names = ["--domain"], description = "Abstraction domain")
     var domain: Domain = Domain.EXPL,
 
-    @Parameter(
-        names = ["--maxenum"],
-        description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit."
-    )
+    @Parameter(names = ["--maxenum"],
+        description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
     var maxEnum: Int = 1,
 
     @Parameter(names = ["--search"], description = "Search strategy")
     var search: Search = Search.ERR,
 
-    @Parameter(
-        names = ["--havoc-memory"],
-        description = "HAVOC memory model (do not track pointers in transition function)"
-    )
+    @Parameter(names = ["--havoc-memory"],
+        description = "HAVOC memory model (do not track pointers in transition function)")
     var havocMemory: Boolean = false
 ) : Config
 
@@ -247,10 +229,8 @@ data class CegarRefinerConfig(
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
     var refinementSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-refinement-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-refinement-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateRefinementSolver: Boolean = false,
 
     @Parameter(names = ["--refinement"], description = "Refinement strategy")
@@ -301,10 +281,8 @@ data class BMCConfig(
     @Parameter(names = ["--bmc-solver"], description = "BMC solver name")
     var bmcSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-bmc-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-bmc-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateBMCSolver: Boolean = false,
 ) : Config
 
@@ -315,22 +293,16 @@ data class InductionConfig(
     @Parameter(names = ["--induction-solver", "--ind-solver"], description = "Induction solver name")
     var indSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-induction-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-induction-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateIndSolver: Boolean = false,
 
-    @Parameter(
-        names = ["--ind-min-bound"],
-        description = "Start induction after reaching this bound"
-    )
+    @Parameter(names = ["--ind-min-bound"],
+        description = "Start induction after reaching this bound")
     var indMinBound: Int = 0,
 
-    @Parameter(
-        names = ["--ind-frequency"],
-        description = "Frequency of induction check"
-    )
+    @Parameter(names = ["--ind-frequency"],
+        description = "Frequency of induction check")
     var indFreq: Int = 1,
 ) : Config
 
@@ -341,10 +313,8 @@ data class InterpolationConfig(
     @Parameter(names = ["--interpolation-solver", "--itp-solver"], description = "Interpolation solver name")
     var itpSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-interpolation-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-interpolation-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateItpSolver: Boolean = false,
 
     ) : Config
@@ -419,10 +389,8 @@ data class WitnessConfig(
     @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
     var concretizerSolver: String = "Z3",
 
-    @Parameter(
-        names = ["--validate-cex-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
-    )
+    @Parameter(names = ["--validate-cex-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateConcretizerSolver: Boolean = false
 ) : Config
 
@@ -441,15 +409,11 @@ data class DebugConfig(
     @Parameter(names = ["--loglevel"], description = "Detailedness of logging")
     var logLevel: Logger.Level = Logger.Level.MAINSTEP,
 
-    @Parameter(
-        names = ["--arg-debug"],
-        description = "ARG debug mode (use the web-based debugger for ARG visualization)"
-    )
+    @Parameter(names = ["--arg-debug"],
+        description = "ARG debug mode (use the web-based debugger for ARG visualization)")
     var argdebug: Boolean = false,
 
-    @Parameter(
-        names = ["--arg-to-file"],
-        description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/"
-    )
+    @Parameter(names = ["--arg-to-file"],
+        description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
     var argToFile: Boolean = false
 ) : Config

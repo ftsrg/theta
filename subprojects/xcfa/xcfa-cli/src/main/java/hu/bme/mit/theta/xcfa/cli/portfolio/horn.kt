@@ -34,8 +34,7 @@ fun hornPortfolio(
     parseContext: ParseContext,
     portfolioConfig: XcfaConfig<*, *>,
     logger: Logger,
-    uniqueLogger: Logger
-): STM {
+    uniqueLogger: Logger): STM {
 
     val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
@@ -44,14 +43,12 @@ fun hornPortfolio(
             input = null,
             xcfaWCtx = Triple(xcfa, mcm, parseContext),
             propertyFile = null,
-            property = portfolioConfig.inputConfig.property
-        ),
+            property = portfolioConfig.inputConfig.property),
         frontendConfig = FrontendConfig(
             lbeLevel = LbePass.level,
             loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
-            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)
-        ),
+            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)),
         backendConfig = BackendConfig(
             backend = Backend.CHC,
             solverHome = portfolioConfig.backendConfig.solverHome,
@@ -59,8 +56,7 @@ fun hornPortfolio(
             specConfig = HornConfig(
                 solver = "z3:4.13.0",
                 validateSolver = false
-            )
-        ),
+            )),
         outputConfig = OutputConfig(
             versionInfo = false,
             resultFolder = Paths.get("./").toFile(), // cwd
@@ -107,42 +103,34 @@ fun hornPortfolio(
         timeoutMs: Long = 0,
         inProcess: Boolean = this.backendConfig.inProcess
     ): XcfaConfig<*, HornConfig> {
-        return copy(
-            backendConfig = backendConfig.copy(
-                timeoutMs = timeoutMs,
-                inProcess = inProcess,
-                specConfig = backendConfig.specConfig!!.copy(
-                    solver = solver,
-                )
+        return copy(backendConfig = backendConfig.copy(
+            timeoutMs = timeoutMs,
+            inProcess = inProcess,
+            specConfig = backendConfig.specConfig!!.copy(
+                solver = solver,
             )
-        )
+        ))
     }
 
     fun getStm(inProcess: Boolean): STM {
         val edges = LinkedHashSet<Edge>()
-        val configZ3 = ConfigNode(
-            "Z3-$inProcess",
+        val configZ3 = ConfigNode("Z3-$inProcess",
             baseConfig.adaptConfig(
                 inProcess = inProcess,
                 timeoutMs = 100_000
-            ), checker
-        )
-        val configEldarica = ConfigNode(
-            "Eldarica-$inProcess",
+            ), checker)
+        val configEldarica = ConfigNode("Eldarica-$inProcess",
             baseConfig.adaptConfig(
                 inProcess = inProcess,
                 solver = "eldarica:2.1",
                 timeoutMs = 500_000
-            ), checker
-        )
-        val configGolem = ConfigNode(
-            "Golem-$inProcess",
+            ), checker)
+        val configGolem = ConfigNode("Golem-$inProcess",
             baseConfig.adaptConfig(
                 inProcess = inProcess,
                 solver = "golem:0.5.0",
                 timeoutMs = 300_000
-            ), checker
-        )
+            ), checker)
 
         edges.add(Edge(configZ3, configEldarica, anyError))
         edges.add(Edge(configEldarica, configGolem, anyError))

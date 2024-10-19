@@ -78,28 +78,26 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     )
 )
 
-class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
-    listOf(
-        // formatting
-        NormalizePass(),
-        DeterministicPass(),
-        // removing redundant elements
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-        // optimizing
-        SimplifyExprsPass(parseContext),
-    ), listOf(
-        // trying to inline procedures
-        InlineProceduresPass(parseContext),
-        RemoveDeadEnds(),
-        EliminateSelfLoops(),
-        // handling remaining function calls
-        LbePass(parseContext),
-        NormalizePass(), // needed after lbe, TODO
-        DeterministicPass(), // needed after lbe, TODO
-        // Final cleanup
-        UnusedVarPass(uniqueWarningLogger),
-    )
-)
+class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(
+    // formatting
+    NormalizePass(),
+    DeterministicPass(),
+    // removing redundant elements
+    EmptyEdgeRemovalPass(),
+    UnusedLocRemovalPass(),
+    // optimizing
+    SimplifyExprsPass(parseContext),
+), listOf(
+    // trying to inline procedures
+    InlineProceduresPass(parseContext),
+    RemoveDeadEnds(),
+    EliminateSelfLoops(),
+    // handling remaining function calls
+    LbePass(parseContext),
+    NormalizePass(), // needed after lbe, TODO
+    DeterministicPass(), // needed after lbe, TODO
+    // Final cleanup
+    UnusedVarPass(uniqueWarningLogger),
+))
 
 class LitmusPasses : ProcedurePassManager()
