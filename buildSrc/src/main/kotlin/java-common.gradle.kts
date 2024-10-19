@@ -69,6 +69,7 @@ tasks {
 
 spotless {
     ratchetFrom("origin/master")
+    
     val year = "\$YEAR" // you can't escape $ in raw strings..
     val licenseHeader = """            /*
              *  Copyright $year Budapest University of Technology and Economics
