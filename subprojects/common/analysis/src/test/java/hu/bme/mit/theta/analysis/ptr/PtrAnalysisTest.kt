@@ -43,44 +43,31 @@ class PtrAnalysisTest {
         private val explTop1 = PtrState(ExplState.top(), nextCnt = 1)
 
         private val emptyAction = PtrActionStub(listOf(), emptyMap())
-        private val readLiteralOnly = PtrActionStub(
-            listOf(Assume(Eq(Dereference(Int(0), Int(1), Int()), Int(0)))),
-            emptyMap()
-        )
-        private val writeLiteralOnly = PtrActionStub(
-            listOf(MemoryAssign(Dereference(Int(0), Int(1), Int()), Int(0))),
-            emptyMap()
-        )
+        private val readLiteralOnly = PtrActionStub(listOf(Assume(Eq(Dereference(Int(0), Int(1), Int()), Int(0)))),
+            emptyMap())
+        private val writeLiteralOnly = PtrActionStub(listOf(MemoryAssign(Dereference(Int(0), Int(1), Int()), Int(0))),
+            emptyMap())
 
         private val emptyPrec = PtrPrec(ExplPrec.empty(), emptySet())
 
         @JvmStatic
         fun testInputs(): Collection<Arguments> {
             return listOf(
-                Arguments.of(
-                    explTop0, emptyAction, emptyPrec,
-                    listOf(explTop0)
-                ),
-                Arguments.of(
-                    explTop0, readLiteralOnly, emptyPrec,
-                    listOf(explTop1)
-                ),
-                Arguments.of(
-                    explTop0, writeLiteralOnly, emptyPrec,
+                Arguments.of(explTop0, emptyAction, emptyPrec,
+                    listOf(explTop0)),
+                Arguments.of(explTop0, readLiteralOnly, emptyPrec,
+                    listOf(explTop1)),
+                Arguments.of(explTop0, writeLiteralOnly, emptyPrec,
                     listOf(
-                        PtrState(ExplState.top(), 1)
-                    )
-                ),
+                        PtrState(ExplState.top(), 1))),
             )
         }
     }
 
     @ParameterizedTest
     @MethodSource("testInputs")
-    fun transFuncTest(
-        state: PtrState<ExplState>, action: PtrAction, prec: PtrPrec<ExplPrec>,
-        expectedResult: Collection<PtrState<ExplState>>
-    ) {
+    fun transFuncTest(state: PtrState<ExplState>, action: PtrAction, prec: PtrPrec<ExplPrec>,
+        expectedResult: Collection<PtrState<ExplState>>) {
         val analysis =
             PtrAnalysis(ExplAnalysis.create(Z3LegacySolverFactory.getInstance().createSolver(), True()))
         val result = analysis.transFunc.getSuccStates(state, action, prec)

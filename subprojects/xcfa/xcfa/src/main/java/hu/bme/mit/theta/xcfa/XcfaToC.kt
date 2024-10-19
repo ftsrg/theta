@@ -57,10 +57,8 @@ import hu.bme.mit.theta.xcfa.model.*
 
 private const val arraySize = 10;
 
-fun XCFA.toC(
-    parseContext: ParseContext, arraySupport: Boolean, exactArraySupport: Boolean,
-    intRangeConstraint: Boolean
-): String = """         
+fun XCFA.toC(parseContext: ParseContext, arraySupport: Boolean, exactArraySupport: Boolean,
+    intRangeConstraint: Boolean): String = """         
     extern void abort();
     extern unsigned short __VERIFIER_nondet_ushort();
     extern short __VERIFIER_nondet_short();

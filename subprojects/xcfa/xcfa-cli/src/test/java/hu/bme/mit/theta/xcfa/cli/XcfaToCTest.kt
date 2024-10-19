@@ -55,17 +55,11 @@ class XcfaToCTest {
         val chcFrontend = ChcFrontend(chcTransformation)
         val xcfa = chcFrontend.buildXcfa(
             CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)), ChcPasses(
-                ParseContext(), NullLogger.getInstance()
-            )
-        ).build()
+            ParseContext(), NullLogger.getInstance())).build()
         val temp = createTempDirectory()
         val file = temp.resolve("${filePath.split("/").last()}.c").also {
-            it.toFile().writeText(
-                xcfa.toC(
-                    ParseContext(),
-                    true, false, false
-                )
-            )
+            it.toFile().writeText(xcfa.toC(ParseContext(),
+                true, false, false))
         }
         System.err.println(file)
     }

@@ -100,8 +100,7 @@ object XstsSerializer : StmtVisitor<Void?, String> {
     }
 
     override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-        stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Void?
-    ): String {
+        stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Void?): String {
         TODO("Not yet implemented")
     }
 

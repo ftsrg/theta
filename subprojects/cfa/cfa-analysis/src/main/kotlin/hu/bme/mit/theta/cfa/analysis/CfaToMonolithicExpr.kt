@@ -41,13 +41,11 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
     }
     val locVar = Decls.Var("__loc__", Int())
     val tranList = this.edges.map { e ->
-        SequenceStmt.of(
-            listOf(
-                AssumeStmt.of(Eq(locVar.ref, Int(map[e.source]!!))),
-                e.stmt,
-                AssignStmt.of(locVar, Int(map[e.target]!!))
-            )
-        )
+        SequenceStmt.of(listOf(
+            AssumeStmt.of(Eq(locVar.ref, Int(map[e.source]!!))),
+            e.stmt,
+            AssignStmt.of(locVar, Int(map[e.target]!!))
+        ))
     }.toList()
     val trans = NonDetStmt.of(tranList);
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0));

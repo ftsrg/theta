@@ -29,8 +29,7 @@ class AssumeFalseRemovalPass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.getEdges().toSet().forEach { edge ->
             if (edge.getFlatLabels()
-                    .any { it is StmtLabel && it.stmt is AssumeStmt && it.stmt.cond is FalseExpr }
-            ) {
+                    .any { it is StmtLabel && it.stmt is AssumeStmt && it.stmt.cond is FalseExpr }) {
                 builder.removeEdge(edge)
             }
         }

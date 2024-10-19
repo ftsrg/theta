@@ -33,7 +33,7 @@ import hu.bme.mit.theta.analysis.unit.UnitState
  * the whole IDE. For this reason, a POJO has to be used instead
  */
 private data class MultiBuilderResult<LState : State, RState : State, DataState : State, LControl : State, RControl : State, LAction : Action, RAction : Action, LPrec : Prec, RPrec : Prec, DataPrec : Prec, LControlPrec : Prec, RControlPrec : Prec, MState : MultiState<LControl, RControl, DataState>, MControlState : MultiState<LControl, RControl, UnitState>, MAction : MultiAction<LAction, RAction>, MLts : MultiLts<LState, RState, DataState, LControl, RControl, LAction, RAction, MState, MAction>>
-    (
+(
     val side: MultiAnalysisSide<MState, DataState, MControlState, MAction, MultiPrec<LPrec, RPrec, DataPrec>, MultiPrec<LControlPrec, RControlPrec, UnitPrec>>,
     val lts: MLts
 )

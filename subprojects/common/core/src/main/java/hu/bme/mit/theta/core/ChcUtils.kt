@@ -61,10 +61,8 @@ open class Relation(val name: String, vararg paramTypes: Type) {
     open operator fun invoke(vararg params: Expr<*>) = RelationApp(this, params.toList())
 }
 
-data class RelationApp(
-    val relation: Relation, val params: List<Expr<*>>,
-    val constraints: List<Expr<BoolType>> = emptyList()
-) {
+data class RelationApp(val relation: Relation, val params: List<Expr<*>>,
+    val constraints: List<Expr<BoolType>> = emptyList()) {
 
     init {
         checkArgument(params.size == relation.arity)

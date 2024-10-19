@@ -90,10 +90,8 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
             }
         }
 
-        private fun isObserved(
-            action: A, procedures: MutableList<ProcedureEntry>,
-            multipleProcedures: Set<XcfaProcedure>
-        ): Boolean {
+        private fun isObserved(action: A, procedures: MutableList<ProcedureEntry>,
+            multipleProcedures: Set<XcfaProcedure>): Boolean {
             val toVisit = edgeToProcedure.keys.filter {
                 it.source == action.edge.source && it.target == action.edge.target
             }.toMutableList()

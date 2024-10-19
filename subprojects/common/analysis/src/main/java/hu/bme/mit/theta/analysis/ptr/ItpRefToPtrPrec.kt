@@ -30,10 +30,8 @@ class ItpRefToPtrPrec<P : Prec>(private val innerRefToPrec: RefutationToPrec<P, 
     override fun toPrec(refutation: ItpRefutation, index: Int): PtrPrec<P> {
         val newDerefs = refutation[index].dereferences
         val innerPrec = innerRefToPrec.toPrec(refutation, index).repatch()
-        return PtrPrec(
-            innerPrec, newDerefs.flatMap { it.ops }.toSet(),
-            if (newDerefs.isEmpty()) 0 else refutation.size() - index
-        )
+        return PtrPrec(innerPrec, newDerefs.flatMap { it.ops }.toSet(),
+            if (newDerefs.isEmpty()) 0 else refutation.size() - index)
     }
 
     override fun join(prec1: PtrPrec<P>, prec2: PtrPrec<P>): PtrPrec<P> {

@@ -59,12 +59,8 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
 
         attributes.add(WitnessAttribute("assumption", "string", "edge", "assumption"))
         attributes.add(WitnessAttribute("assumption.scope", "string", "edge", "assumption.scope"))
-        attributes.add(
-            WitnessAttribute(
-                "assumption.resultfunction", "string", "edge",
-                "assumption.resultfunction"
-            )
-        )
+        attributes.add(WitnessAttribute("assumption.resultfunction", "string", "edge",
+            "assumption.resultfunction"))
         attributes.add(WitnessAttribute("control", "string", "edge", "control"))
         attributes.add(WitnessAttribute("startline", "string", "edge", "startline"))
         attributes.add(WitnessAttribute("endline", "string", "edge", "endline"))
@@ -73,8 +69,7 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
         attributes.add(WitnessAttribute("enterLoopHead", "string", "edge", "enterLoopHead"))
         attributes.add(WitnessAttribute("enterFunction", "string", "edge", "enterFunction"))
         attributes.add(
-            WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction")
-        )
+            WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction"))
         attributes.add(WitnessAttribute("threadId", "string", "edge", "threadId"))
         attributes.add(WitnessAttribute("createThread", "string", "edge", "createThread"))
         attributes.add(WitnessAttribute("stmt", "string", "edge", "stmt"))
@@ -276,8 +271,7 @@ private fun bytesToHex(hash: ByteArray): String {
 private fun getIsoDate(): String {
     val tz: TimeZone = TimeZone.getTimeZone("UTC")
     val df: DateFormat = SimpleDateFormat(
-        "yyyy-MM-dd'T'HH:mm:ss'Z'"
-    ) // Quoted "Z" to indicate UTC, no timezone offset
+        "yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
 
     df.timeZone = tz
     return df.format(Date())
@@ -287,8 +281,7 @@ private fun getIsoDate(): String {
 private fun prettyFormat(input: String, indent: Int): String {
     return try {
         val xmlInput: Source = StreamSource(
-            StringReader(input.replace(Regex("(  )|[\\t\\n\\r]"), ""))
-        )
+            StringReader(input.replace(Regex("(  )|[\\t\\n\\r]"), "")))
         val stringWriter = StringWriter()
         val xmlOutput = StreamResult(stringWriter)
         val transformerFactory: TransformerFactory = TransformerFactory.newInstance()

@@ -29,10 +29,8 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 
-class VarDeclAdapter(
-    val gsonSupplier: () -> Gson, val scope: MutableScope, val env: Env,
-    val throwIfNotInScope: Boolean = false
-) : TypeAdapter<VarDecl<*>>() {
+class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val env: Env,
+    val throwIfNotInScope: Boolean = false) : TypeAdapter<VarDecl<*>>() {
 
     private lateinit var gson: Gson
 

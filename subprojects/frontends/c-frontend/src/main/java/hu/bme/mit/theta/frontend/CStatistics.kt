@@ -50,10 +50,8 @@ fun CProgram.getStatistics(): CStatistics {
 fun CFunction.collectStatistics(): Triple<Int, Int, Boolean> {
     val statisticsCollectorVisitor = StatisticsCollectorVisitor()
     this.compound?.accept(statisticsCollectorVisitor, Unit)
-    return Triple(
-        statisticsCollectorVisitor.loopNumber, statisticsCollectorVisitor.deepestLoop,
-        statisticsCollectorVisitor.linear
-    )
+    return Triple(statisticsCollectorVisitor.loopNumber, statisticsCollectorVisitor.deepestLoop,
+        statisticsCollectorVisitor.linear)
 }
 
 fun Expr<*>.isNonLinear(): Boolean {

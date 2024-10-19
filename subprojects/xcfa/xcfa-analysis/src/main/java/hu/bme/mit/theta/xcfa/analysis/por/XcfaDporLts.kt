@@ -200,8 +200,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                     val lastButOne = stack[stack.size - 2]
                     val mutexNeverReleased =
                         last.mutexLocks.containsKey(
-                            ""
-                        ) && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                            "") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
                             ""
                         )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
@@ -261,9 +260,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
                     if (newLastDependents.containsKey(action.pid) && index <= checkNotNull(
-                            newLastDependents[action.pid]
-                        )
-                    ) {
+                            newLastDependents[action.pid])) {
                         // there is an action a' such that  action -> a' -> newaction  (->: happens-before)
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {

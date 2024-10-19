@@ -39,28 +39,24 @@ class XcfaCliWitnessTest {
         @JvmStatic
         fun cFiles(): Stream<Arguments> {
             return Stream.of(
-                Arguments.of(
-                    "/c/litmustest/singlethread/witness_test.c", null, listOf(
-                        WitnessEdge(
-                            startlineRange = Pair(5, 5),
-                            endlineRange = Pair(5, 5),
-                            startoffsetRange = Pair(100, 130),
-                            endoffsetRange = Pair(100, 130),
-                            assumption = Regex("i *== *-1"),
-                        ),
-                    )
-                ),
-                Arguments.of(
-                    "/c/litmustest/singlethread/witness_test.c", "--backend BOUNDED", listOf(
-                        WitnessEdge(
-                            startlineRange = Pair(5, 5),
-                            endlineRange = Pair(5, 5),
-                            startoffsetRange = Pair(100, 130),
-                            endoffsetRange = Pair(100, 130),
-                            assumption = Regex("i *== *-1"),
-                        ),
-                    )
-                ),
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", null, listOf(
+                    WitnessEdge(
+                        startlineRange = Pair(5, 5),
+                        endlineRange = Pair(5, 5),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
+                        assumption = Regex("i *== *-1"),
+                    ),
+                )),
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend BOUNDED", listOf(
+                    WitnessEdge(
+                        startlineRange = Pair(5, 5),
+                        endlineRange = Pair(5, 5),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
+                        assumption = Regex("i *== *-1"),
+                    ),
+                )),
             )
         }
 

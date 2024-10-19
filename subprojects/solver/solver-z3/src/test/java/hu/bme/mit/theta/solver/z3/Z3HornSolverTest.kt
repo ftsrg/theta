@@ -85,11 +85,8 @@ class Z3HornSolverTest {
                     App(
                         App(
                             model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
-                            p0.ref
-                        ),
-                        p1.ref
-                    )
-                )
+                            p0.ref),
+                        p1.ref))
 
                 checkerSolver.add(Lt(p1.ref, Int(0)))
                 Assertions.assertTrue(checkerSolver.check().isUnsat)

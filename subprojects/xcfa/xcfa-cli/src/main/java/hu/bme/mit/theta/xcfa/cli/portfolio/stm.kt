@@ -36,10 +36,8 @@ ${innerSTM.visualize()}
 }""".trimIndent()
 }
 
-class ConfigNode(
-    name: String, private val config: XcfaConfig<*, *>,
-    private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>
-) : Node(name) {
+class ConfigNode(name: String, private val config: XcfaConfig<*, *>,
+    private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>) : Node(name) {
 
     override fun execute(): Pair<Any, Any> {
         println("Current configuration: $config")
@@ -50,12 +48,10 @@ class ConfigNode(
         .map { "state ${name.replace(Regex("[:\\.-]+"), "_")}: $it" }.reduce { a, b -> "$a\n$b" }
 }
 
-data class Edge(
-    val source: Node,
+data class Edge(val source: Node,
     val target: Node,
     val trigger: (Throwable) -> Boolean,
-    val guard: (Node, Edge) -> Boolean = { _, _ -> true }
-) {
+    val guard: (Node, Edge) -> Boolean = { _, _ -> true }) {
 
     init {
         source.outEdges.add(this)
@@ -74,10 +70,8 @@ class ExceptionTrigger(
     val label: String? = null
 ) : (Throwable) -> Boolean {
 
-    constructor(vararg exceptions: Throwable, label: String? = null) : this(
-        exceptions.toSet(),
-        label = label
-    )
+    constructor(vararg exceptions: Throwable, label: String? = null) : this(exceptions.toSet(),
+        label = label)
 
     override fun invoke(e: Throwable): Boolean =
         if (exceptions.isNotEmpty())
@@ -95,8 +89,7 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
         val nodes = edges.map { listOf(it.source, it.target) }.flatten().toSet()
         nodes.forEach {
             check(
-                it.parent == null || it.parent === this
-            ) { "Edges to behave encapsulated (offender: $it)" }
+                it.parent == null || it.parent === this) { "Edges to behave encapsulated (offender: $it)" }
             it.parent = this
         }
     }
@@ -123,11 +116,9 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
                     println("Handling exception as ${edge.trigger}")
                     currentNode = edge.target
                 } else {
-                    println(
-                        "Could not handle trigger $e (Available triggers: ${
-                            currentNode.outEdges.map { it.trigger }.toList()
-                        })"
-                    )
+                    println("Could not handle trigger $e (Available triggers: ${
+                        currentNode.outEdges.map { it.trigger }.toList()
+                    })")
                     throw e
                 }
             }

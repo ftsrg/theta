@@ -29,10 +29,8 @@ import hu.bme.mit.theta.xsts.XSTS
 import kotlin.random.Random
 
 @JvmOverloads
-fun generateXsts(
-    seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int = 3,
-    requireAllVarsWritten: Boolean = false
-): XSTS {
+fun generateXsts(seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int = 3,
+    requireAllVarsWritten: Boolean = false): XSTS {
     val writtenVars = object : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
         override fun visit(stmt: SkipStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
             return param
@@ -79,8 +77,7 @@ fun generateXsts(
         }
 
         override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-            stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Set<VarDecl<*>>?
-        ): Set<VarDecl<*>> {
+            stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
             TODO("Not yet implemented")
         }
 
@@ -181,21 +178,17 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     }
 
     fun randomSeq(currDepth: Int, maxDepth: Int): Stmt {
-        return Stmts.SequenceStmt(
-            listOf(
-                randomIntermediate(currDepth + 1, maxDepth),
-                randomIntermediate(currDepth + 1, maxDepth)
-            )
-        )
+        return Stmts.SequenceStmt(listOf(
+            randomIntermediate(currDepth + 1, maxDepth),
+            randomIntermediate(currDepth + 1, maxDepth)
+        ))
     }
 
     fun randomNonDet(currDepth: Int, maxDepth: Int): Stmt {
-        return Stmts.NonDetStmt(
-            listOf(
-                randomIntermediate(currDepth + 1, maxDepth),
-                randomIntermediate(currDepth + 1, maxDepth)
-            )
-        )
+        return Stmts.NonDetStmt(listOf(
+            randomIntermediate(currDepth + 1, maxDepth),
+            randomIntermediate(currDepth + 1, maxDepth)
+        ))
 
     }
 
@@ -203,8 +196,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
         var expr: Expr<BoolType>
         do expr = randomBoolExpr(0)
         while (ExprUtils.getVars(expr).isEmpty())
-        return IfStmt.of(
-            expr,
+        return IfStmt.of(expr,
             randomIntermediate(currDepth + 1, maxDepth),
             randomIntermediate(currDepth + 1, maxDepth)
         )
@@ -230,8 +222,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
                 {
                     BoolExprs.Or(
                         randomBoolExpr(currDepth + 1),
-                        randomBoolExpr(currDepth + 1)
-                    )
+                        randomBoolExpr(currDepth + 1))
                 },
                 { BoolExprs.Imply(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
                 { BoolExprs.Iff(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
@@ -305,8 +296,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     }
 
     fun randomAssume() = (listOf(this::randomDataAssume) + (if (clockVars.isEmpty()) listOf() else listOf(
-        this::randomClockConstraint
-    ))).random(random)()
+        this::randomClockConstraint))).random(random)()
 
     fun randomDataAssume(): Stmt {
         var expr: Expr<BoolType>
@@ -333,15 +323,13 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
         ).random()()
 
         val compareTo = IntExprs.Int(random.nextInt(10))
-        return Stmts.Assume(
-            listOf(
-                { IntExprs.Leq(c, compareTo) },
-                { IntExprs.Lt(c, compareTo) },
-                { IntExprs.Geq(c, compareTo) },
-                { IntExprs.Gt(c, compareTo) },
-                { IntExprs.Eq(c, compareTo) },
-            ).random(random)()
-        )
+        return Stmts.Assume(listOf(
+            { IntExprs.Leq(c, compareTo) },
+            { IntExprs.Lt(c, compareTo) },
+            { IntExprs.Geq(c, compareTo) },
+            { IntExprs.Gt(c, compareTo) },
+            { IntExprs.Eq(c, compareTo) },
+        ).random(random)())
     }
 
     fun randomHavoc(): Stmt {

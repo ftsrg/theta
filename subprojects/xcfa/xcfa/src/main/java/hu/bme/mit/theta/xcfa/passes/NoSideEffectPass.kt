@@ -30,9 +30,7 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
             if (edges.size > 1 || (edges.size == 1 && predicate(
-                    (edges[0].label as SequenceLabel).labels[0]
-                ))
-            ) {
+                    (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {

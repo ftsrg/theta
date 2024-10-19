@@ -238,8 +238,7 @@ class CatVisitor(file: File) : CatBaseVisitor<GraphPattern>() {
     override fun visitExprComplement(ctx: ExprComplementContext): GraphPattern {
         val rel = ctx.e.accept(this)
         return if (rel is EdgePattern) Complement(rel) else if (rel is NodePattern) ComplementNode(rel) else error(
-            "Mismatched types"
-        )
+            "Mismatched types")
     }
 
     override fun visitExprInverse(ctx: ExprInverseContext): GraphPattern {

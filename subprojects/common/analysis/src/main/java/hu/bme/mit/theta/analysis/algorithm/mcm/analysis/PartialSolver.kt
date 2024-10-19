@@ -54,6 +54,5 @@ class PartialSolver<T>(
 
 data class CandidateExecutionGraph(
     val nodes: List<Int>,
-    val knownEvents: Map<Pair<String, Tuple>, ThreeVL>
-) {
+    val knownEvents: Map<Pair<String, Tuple>, ThreeVL>) {
 }

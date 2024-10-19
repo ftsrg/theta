@@ -47,10 +47,8 @@ var baseConfig = XcfaCegarConfig(
 )
 
 if (traitsTyped.multithreaded) {
-    baseConfig = baseConfig.copy(
-        search = Search.BFS, porLevel = POR.AAPOR,
-        pruneStrategy = PruneStrategy.LAZY
-    )
+    baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AAPOR,
+        pruneStrategy = PruneStrategy.LAZY)
 
     if (propertyTyped == ErrorDetection.DATA_RACE) {
         baseConfig = baseConfig.copy(porLevel = POR.BASIC)

@@ -35,8 +35,7 @@ fun <S : ExprState, A : ExprAction> buildBMC(
     lfPathOnly: () -> Boolean = { true },
 ): BoundedChecker<S, A> {
     return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, null,
-        { false }, valToState, biValToAction, logger
-    )
+        { false }, valToState, biValToAction, logger)
 }
 
 @JvmOverloads
@@ -52,10 +51,8 @@ fun <S : ExprState, A : ExprAction> buildKIND(
     lfPathOnly: () -> Boolean = { true },
     kindEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(
-        monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, indSolver,
-        kindEnabled, valToState, biValToAction, logger
-    )
+    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, indSolver,
+        kindEnabled, valToState, biValToAction, logger)
 }
 
 @JvmOverloads
@@ -72,6 +69,5 @@ fun <S : ExprState, A : ExprAction> buildIMC(
     imcEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {
     return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, itpSolver, imcEnabled, null,
-        { false }, valToState, biValToAction, logger
-    )
+        { false }, valToState, biValToAction, logger)
 }

@@ -47,8 +47,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 ) : SafetyChecker<EmptyWitness, EmptyCex, XcfaPrec<*>> {
 
     override fun check(
-        prec: XcfaPrec<*>?
-    ): SafetyResult<EmptyWitness, EmptyCex> {
+        prec: XcfaPrec<*>?): SafetyResult<EmptyWitness, EmptyCex> {
         return check()
     }
 
@@ -81,18 +80,16 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
             getGson(xcfa).toJson(processConfig)
         }
 
-        val pb = NuProcessBuilder(
-            listOf(
-                ProcessHandle.current().info().command().orElse("java"),
-                "-Xss120m",
-                "-Xmx14210m",
-                "-cp",
-                File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
-                XcfaCli::class.qualifiedName,
-                "-c",
-                configJson.absolutePath
-            ).filterNotNull()
-        )
+        val pb = NuProcessBuilder(listOf(
+            ProcessHandle.current().info().command().orElse("java"),
+            "-Xss120m",
+            "-Xmx14210m",
+            "-cp",
+            File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+            XcfaCli::class.qualifiedName,
+            "-c",
+            configJson.absolutePath
+        ).filterNotNull())
         val processHandler = ProcessHandler()
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()
@@ -105,10 +102,8 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
                     process.destroy(true)
                     throw ErrorCodeException(ExitCodes.TIMEOUT.code)
                 } else {
-                    logger.write(
-                        Logger.Level.RESULT,
-                        "Config timed out but started writing result, trying to wait an additional 10%..."
-                    )
+                    logger.write(Logger.Level.RESULT,
+                        "Config timed out but started writing result, trying to wait an additional 10%...")
                     val retCode = process.waitFor(config.backendConfig.timeoutMs / 10, TimeUnit.MILLISECONDS)
                     if (retCode != 0) {
                         throw ErrorCodeException(retCode)

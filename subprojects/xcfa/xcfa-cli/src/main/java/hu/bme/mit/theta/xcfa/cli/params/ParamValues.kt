@@ -116,10 +116,8 @@ enum class Domain(
 
     EXPL(
         abstractor = { a, b, c, d, e, f, g, h, i, j ->
-            getXcfaAbstractor(
-                ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j), d,
-                e, f, g, h
-            )
+            getXcfaAbstractor(ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j), d,
+                e, f, g, h)
         },
         itpPrecRefiner = {
             XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
@@ -131,12 +129,8 @@ enum class Domain(
     ),
     PRED_BOOL(
         abstractor = { a, b, c, d, e, f, g, h, i, j ->
-            getXcfaAbstractor(
-                PredXcfaAnalysis(
-                    a, b, PredAbstractors.booleanAbstractor(b),
-                    i as PartialOrd<XcfaState<PtrState<PredState>>>, j
-                ), d, e, f, g, h
-            )
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanAbstractor(b),
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
             XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
@@ -148,12 +142,8 @@ enum class Domain(
     ),
     PRED_CART(
         abstractor = { a, b, c, d, e, f, g, h, i, j ->
-            getXcfaAbstractor(
-                PredXcfaAnalysis(
-                    a, b, PredAbstractors.cartesianAbstractor(b),
-                    i as PartialOrd<XcfaState<PtrState<PredState>>>, j
-                ), d, e, f, g, h
-            )
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.cartesianAbstractor(b),
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
             XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
@@ -165,12 +155,8 @@ enum class Domain(
     ),
     PRED_SPLIT(
         abstractor = { a, b, c, d, e, f, g, h, i, j ->
-            getXcfaAbstractor(
-                PredXcfaAnalysis(
-                    a, b, PredAbstractors.booleanSplitAbstractor(b),
-                    i as PartialOrd<XcfaState<PtrState<PredState>>>, j
-                ), d, e, f, g, h
-            )
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanSplitAbstractor(b),
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
             XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
@@ -294,19 +280,15 @@ enum class Search {
     BFS {
 
         override fun getComp(cfa: XCFA): ArgNodeComparator {
-            return ArgNodeComparators.combine(
-                ArgNodeComparators.targetFirst(),
-                ArgNodeComparators.bfs()
-            )
+            return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
+                ArgNodeComparators.bfs())
         }
     },
     DFS {
 
         override fun getComp(cfa: XCFA): ArgNodeComparator {
-            return ArgNodeComparators.combine(
-                ArgNodeComparators.targetFirst(),
-                ArgNodeComparators.dfs()
-            )
+            return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
+                ArgNodeComparators.dfs())
         }
     },
     ERR {
@@ -339,8 +321,7 @@ enum class InitPrec(
     ALLASSUMES(
         explPrec = { xcfa ->
             XcfaPrec(
-                PtrPrec(ExplPrec.of(xcfa.collectAssumes().flatMap(ExprUtils::getVars)), emptySet())
-            )
+                PtrPrec(ExplPrec.of(xcfa.collectAssumes().flatMap(ExprUtils::getVars)), emptySet()))
         },
         predPrec = { xcfa -> XcfaPrec(PtrPrec(PredPrec.of(xcfa.collectAssumes()), emptySet())) },
     ),

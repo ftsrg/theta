@@ -43,8 +43,7 @@ class BoundedTest {
         }
         private val biValToAction = { valuation: Valuation?, valuation2: Valuation? ->
             ExprActionStub(
-                emptyList()
-            )
+                emptyList())
         }
 
         init {
@@ -77,8 +76,7 @@ class BoundedTest {
             indSolver = indSolver,
             valToState = valToState,
             biValToAction = biValToAction,
-            logger = ConsoleLogger(Logger.Level.VERBOSE)
-        )
+            logger = ConsoleLogger(Logger.Level.VERBOSE))
         val safetyResult: SafetyResult<*, *> = checker.check()
         Assert.assertTrue(safetyResult.isUnsafe())
     }
@@ -95,8 +93,7 @@ class BoundedTest {
             indSolver = indSolver,
             valToState = valToState,
             biValToAction = biValToAction,
-            logger = ConsoleLogger(Logger.Level.VERBOSE)
-        )
+            logger = ConsoleLogger(Logger.Level.VERBOSE))
         val safetyResult: SafetyResult<*, *> = checker.check()
         Assert.assertTrue(safetyResult.isSafe())
     }

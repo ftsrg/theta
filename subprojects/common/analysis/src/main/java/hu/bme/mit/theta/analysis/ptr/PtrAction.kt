@@ -61,30 +61,19 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
             val postList = ArrayList<Stmt>()
 
             for ((deref, type) in stmt.dereferencesWithAccessTypes) {
-                Preconditions.checkState(
-                    deref.uniquenessIdx.isPresent,
-                    "Incomplete dereferences (missing uniquenessIdx) are not handled properly."
-                )
+                Preconditions.checkState(deref.uniquenessIdx.isPresent,
+                    "Incomplete dereferences (missing uniquenessIdx) are not handled properly.")
                 val expr = deref.getIte(nextWriteTriples)
                 if (type == AccessType.WRITE) {
                     val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
                     nextWriteTriples.getOrPut(deref.type) { ArrayList() }
                         .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx.get()))
-                    postList.add(
-                        Stmts.Assume(
-                            ExprUtils.simplify(
-                                BoolExprs.And(
-                                    listOf(
-                                        AbstractExprs.Eq(writeExpr, deref.uniquenessIdx.get()),
-                                    )
-                                )
-                            )
-                        )
-                    )
+                    postList.add(Stmts.Assume(ExprUtils.simplify(BoolExprs.And(listOf(
+                        AbstractExprs.Eq(writeExpr, deref.uniquenessIdx.get()),
+                    )))))
                 } else {
                     preList.add(
-                        Stmts.Assume(ExprUtils.simplify(AbstractExprs.Eq(expr, deref.uniquenessIdx.get())))
-                    )
+                        Stmts.Assume(ExprUtils.simplify(AbstractExprs.Eq(expr, deref.uniquenessIdx.get()))))
                 }
 //                postList.add(Stmts.Assume(Eq(vargen("value", deref.type).ref, deref))) // debug mode
             }
