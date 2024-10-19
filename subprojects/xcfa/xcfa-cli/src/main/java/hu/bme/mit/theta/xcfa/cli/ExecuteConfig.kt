@@ -219,11 +219,11 @@ private fun backend(
             }
         }
 
-            logger.write(
-                Logger.Level.INFO, "Backend finished (in ${
-                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
-                } ms)\n"
-            )
+        logger.write(
+            Logger.Level.INFO, "Backend finished (in ${
+                stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            } ms)\n"
+        )
 
         logger.write(RESULT, result.toString() + "\n")
         result
