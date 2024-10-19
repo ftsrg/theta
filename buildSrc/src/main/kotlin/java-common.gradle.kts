@@ -70,7 +70,7 @@ tasks {
 spotless {
     ratchetFrom("origin/master")
 
-    enforceCheck false
+    enforceCheck(false)
     
     val year = "\$YEAR" // you can't escape $ in raw strings..
     val licenseHeader = """            /*
