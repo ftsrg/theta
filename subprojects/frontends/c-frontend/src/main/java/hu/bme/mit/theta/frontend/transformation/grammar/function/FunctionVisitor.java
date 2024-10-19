@@ -566,7 +566,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     private List<CStatement> getStatementList(CStatement statement) {
         if (statement instanceof CCompound compound) {
-            return compound.getcStatementList();
+            return compound.getcStatementList().stream().flatMap(i -> getStatementList(i).stream()).toList();
         } else if (statement != null) {
             return List.of(statement);
         } else {
@@ -587,7 +587,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                             collectPreStatements(cStatement.getPreStatements()).stream(),
                             getStatementList(cStatement.getPreStatements()).stream()),
                     ((CCompound) cStatement).getcStatementList().stream().flatMap(cStatement1 -> collectPreStatements(cStatement1).stream())
-            ).toList();
+            ).filter(i -> !(i instanceof CExpr)).toList();
         } else return List.of();
     }
 
@@ -604,7 +604,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     Stream.concat(
                             getStatementList(cStatement.getPostStatements()).stream(),
                             collectPostStatements(cStatement.getPostStatements()).stream())
-            ).toList();
+            ).filter(i -> !(i instanceof CExpr)).toList();
         } else return List.of();
     }
 
