@@ -20,16 +20,16 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.core.model.Valuation
 
-class ConcreteSummaryBuilder<A: Action> {
-    fun <S: State> build(
-        valuations: MutableMap<SummaryNode<S, A>, Valuation>,
-        summary: AbstractTraceSummary<S, A>
+class ConcreteSummaryBuilder<S: State, A: Action> {
+    fun build(
+        valuations: MutableMap<SummaryNode<out S, out A>, Valuation>,
+        summary: AbstractTraceSummary<out S, out A>
     ): ConcreteSummary<Valuation, A> {
         // TODO check that every node has a valuation?
         // TODO make valuation into a template type?
 
         // create nodes (states/valuations)
-        val concreteNodeMap: MutableMap<SummaryNode<S, A>, ConcreteSummaryNode<Valuation, A>> = mutableMapOf()
+        val concreteNodeMap: MutableMap<SummaryNode<out S, out A>, ConcreteSummaryNode<Valuation, A>> = mutableMapOf()
         for(node in summary.summaryNodes) {
             concreteNodeMap[node] = ConcreteSummaryNode<Valuation, A>(valuations[node]!!)
         }

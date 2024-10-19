@@ -1,15 +1,14 @@
 package hu.bme.mit.theta.xsts.analysis.concretizer
 
-import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ExprSummaryStatus
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprSummaryFwBinItpChecker
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xsts.XSTS
@@ -18,86 +17,22 @@ import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.*
 import java.util.stream.Collectors
 
-object TraceGenerationXstsTraceConcretizerUtil {
+object TraceGenerationXstsSummaryConcretizerUtil {
 
     private val infeasibles: MutableList<Tuple2<List<XstsState<ExplState>>, ItpRefutation>> = ArrayList()
     var report: String? = null
         private set
     private var foundInfeasible = false
 
-    fun concretizeTraceSet(
-        summary: AbstractTraceSummary<out State, out Action>, solverFactory: SolverFactory, xsts: XSTS
-    ): Set<XstsStateSequence?> {
+    fun concretizeSummary(
+        summary: AbstractTraceSummary<XstsState<ExprState>, XstsAction>, solverFactory: SolverFactory, xsts: XSTS
+    ): ExprSummaryStatus {
         val varFilter = VarFilter.of(xsts)
         val checker: ExprSummaryFwBinItpChecker = ExprSummaryFwBinItpChecker.create(
-            xsts.initFormula,
-            BoolExprs.Bool(true), solverFactory.createItpSolver()
+            xsts.initFormula, solverFactory.createItpSolver()
         )
 
-        checker.check(summary)
-
-        ////////////////////////////////////////
-
-        val tracePairs = HashMap<Trace<XstsState<ExplState>, XstsAction>, XstsStateSequence>()
-
-        for (abstractTrace in abstractTraces) {
-            var aTrace = abstractTrace
-            // another xsts specific thing - if the env is more complicated, trace might end in env sending something, which might seem weird
-            val lastState = abstractTrace.states[abstractTrace.states.size - 1]
-            if (lastState.toString().contains("last_env")) {
-                aTrace = shortenTrace(abstractTrace, abstractTrace.states.size - 2)
-            }
-
-            var status = checker.check(abstractTrace)
-            if (status.isInfeasible) {
-                foundInfeasible = true
-                addToReport(status.asInfeasible().refutation, abstractTrace)
-                val pruneIndex = status.asInfeasible().refutation.pruneIndex
-                if (pruneIndex > 0) {
-                    aTrace = shortenTrace(abstractTrace, pruneIndex)
-                    status = checker.check(abstractTrace)
-                }
-            }
-
-            if (status.isFeasible) {
-                val valuations = status.asFeasible().valuations
-                assert(valuations.states.size == abstractTrace.states.size)
-                val xstsStates: MutableList<XstsState<ExplState>> = ArrayList()
-                for (i in abstractTrace.states.indices) {
-                    xstsStates.add(
-                        XstsState.of(
-                            ExplState.of(varFilter.filter(valuations.getState(i))),
-                            abstractTrace.getState(i).lastActionWasEnv(), abstractTrace.getState(i).isInitialized
-                        )
-                    )
-                }
-
-                val concretizedTrace = XstsStateSequence.of(xstsStates, xsts)
-
-                tracePairs[abstractTrace] = concretizedTrace
-            }
-        }
-
-        // if trace was shortened, it might match with another one, in this case, do not add it again
-        val filteredTracePairs = HashMap<Trace<XstsState<ExplState>, XstsAction>, XstsStateSequence?>()
-        tracePairs.keys.stream().filter { trace: Trace<XstsState<ExplState>, XstsAction> ->
-            for (otherTrace in tracePairs.keys) {
-                if (trace.states.size < otherTrace.states.size) {
-                    val traceString = trace.toString()
-                    val traceStringWithoutClosingParentheses =
-                        traceString.substring(0, traceString.length - 1)
-                    if (otherTrace.toString().contains(traceStringWithoutClosingParentheses)) {
-                        return@filter false
-                    }
-                }
-            }
-            true
-        }.forEach { key: Trace<XstsState<ExplState>, XstsAction> ->
-            filteredTracePairs[key] = tracePairs[key]
-        }
-
-        createReport(filteredTracePairs.keys)
-        return HashSet(filteredTracePairs.values)
+        return checker.check(summary)
     }
 
     private fun addToReport(refutation: ItpRefutation, abstractTrace: Trace<XstsState<ExplState>, XstsAction>) {

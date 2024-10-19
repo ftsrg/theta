@@ -16,8 +16,15 @@
 
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
-abstract class SummaryStatus<R>(val feasible : Boolean)
+import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolType
 
-class FeasibleExprSummaryStatus<R>(val summary : R) : SummaryStatus<R>(true) {}
+abstract class ExprSummaryStatus(val feasible : Boolean)
 
-class InfeasibleSummaryStatus<R>(val refutation : R) : SummaryStatus<R>(false) {}
+class FeasibleExprSummaryStatus<S : Valuation, A : Action>(val summary : ConcreteSummary<S,A>)
+    : ExprSummaryStatus(true)
+
+class InfeasibleExprSummaryStatus(val itp : Expr<BoolType>) : ExprSummaryStatus(false)

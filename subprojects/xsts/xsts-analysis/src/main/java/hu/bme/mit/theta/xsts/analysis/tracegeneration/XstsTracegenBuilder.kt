@@ -56,7 +56,7 @@ class XstsTracegenBuilder(
         return this
     }
 
-    private fun buildExpl(xsts: XSTS) : XstsTracegenConfig<out ExprState, out ExprAction, out ExplPrec> {
+    private fun buildExpl(xsts: XSTS) : XstsTracegenConfig<out State, out Action, out Prec> {
         val solver2 =
             solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
 

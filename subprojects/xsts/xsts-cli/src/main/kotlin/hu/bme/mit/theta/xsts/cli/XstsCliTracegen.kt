@@ -23,14 +23,18 @@ import com.google.common.io.MoreFiles
 import com.google.common.io.RecursiveDeleteOption
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
-import hu.bme.mit.theta.analysis.utils.TraceSummaryVisualizer
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ExprSummaryStatus
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.InfeasibleExprSummaryStatus
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
-import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsTraceConcretizerUtil
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
+import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsSummaryConcretizerUtil
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenBuilder
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenConfig
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
@@ -48,13 +52,24 @@ class XstsCliTracegen : XstsCliBaseCommand(
     ).file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
 
     private fun printResult(
-        status: TraceGenerationResult<out AbstractTraceSummary<out State, out Action>, out State, out Action>, totalTimeMs: Long, traceDirPath: File) {
-        logger.write(Logger.Level.RESULT, "Successfully generated ${status.getWitness().sourceTraces.size} traces in ${totalTimeMs}ms")
+        concretizationResult: ExprSummaryStatus, abstractSummary: AbstractTraceSummary<out State, out Action>, totalTimeMs: Long, traceDirPath: File) {
+        logger.write(Logger.Level.RESULT, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces in ${totalTimeMs}ms\n")
         // TODO print coverage (full or not)?
-        val graph = TraceSummaryVisualizer.visualize(status.getWitness())
-        val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".trace-summary.png"
+
+        val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+        val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".abstract-trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        logger.write(Logger.Level.VERBOSE, "Trace Summary was visualized in ${visFile}:")
+        logger.write(Logger.Level.VERBOSE, "Abstract trace summary was visualized in ${visFile}")
+
+        if(concretizationResult.feasible) {
+            logger.write(Logger.Level.RESULT, "Abstract trace summary successfully concretized\n")
+            val concreteSummaryFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
+            TODO("write to file")
+            logger.write(Logger.Level.VERBOSE, "Concrete trace summary exported to ${concreteSummaryFile}")
+        } else {
+            logger.write(Logger.Level.RESULT, "Abstract trace summary was infeasible, could not be concretized\n")
+            logger.write(Logger.Level.RESULT, "Interpolant: ${(concretizationResult as InfeasibleExprSummaryStatus).itp}\n")
+        }
     }
 
     override fun run() {
@@ -94,12 +109,12 @@ class XstsCliTracegen : XstsCliBaseCommand(
         val result = checker.check()
 
         // TODO concretization, writing into file
-        val concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet(
-            result.summary, Z3LegacySolverFactory.getInstance(), xsts
+        val concretizationResult = TraceGenerationXstsSummaryConcretizerUtil.concretizeSummary(
+            result.summary as AbstractTraceSummary<XstsState<ExprState>, XstsAction>, Z3LegacySolverFactory.getInstance(), xsts
         )
 
         sw.stop()
-        printResult(result, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath)
+        printResult(concretizationResult, result.summary, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath)
     }
 
 }

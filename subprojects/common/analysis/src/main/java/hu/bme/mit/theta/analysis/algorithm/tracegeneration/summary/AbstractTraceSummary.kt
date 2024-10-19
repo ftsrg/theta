@@ -89,8 +89,10 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
         for(summaryNode in summaryNodes) {
             for(argNode in summaryNode.argNodes) {
                 for(edge in argNode.outEdges) {
-                    // adds itself to source and target as well
-                    summaryEdges.add(SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!))
+                    if(edge.target in argNodes) {
+                        // summary edge adds itself to source and target as well
+                        summaryEdges.add(SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!))
+                    }
                 }
             }
         }
@@ -155,7 +157,7 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
                 }
             }
 
-            val notCoveringNodes = argNodes.filter { argNode -> argNode.coveredNodes.count() == 0L }
+            val notCoveringNodes = argNodes.filter { argNode -> argNode.coveredNodes.filter { node -> node in argNodes }.count() == 0L }
             var mostOverApproximatedNode = notCoveringNodes[0]
 
             for(node in notCoveringNodes) {

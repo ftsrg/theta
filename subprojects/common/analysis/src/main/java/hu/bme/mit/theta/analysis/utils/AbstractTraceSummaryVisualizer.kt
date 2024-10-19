@@ -30,7 +30,7 @@ import java.awt.Color
  * connected by trace metadata.
  * The result is an automata-like summary of executions.
  */
-object TraceSummaryVisualizer {
+object AbstractTraceSummaryVisualizer {
     val lineStyle: LineStyle = LineStyle.NORMAL
     val fillColor: Color = Color.WHITE
     val lineColor: Color = Color.BLACK
