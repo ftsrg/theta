@@ -61,12 +61,14 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
         val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
 
         reader.endObject()
-        return XcfaState(xcfa = null,
+        return XcfaState(
+            xcfa = null,
             processes = processes,
             sGlobal = sGlobal,
             mutexes = mutexes,
             threadLookup = threadLookup,
-            bottom = bottom)
+            bottom = bottom
+        )
     }
 
     private fun initGson() {

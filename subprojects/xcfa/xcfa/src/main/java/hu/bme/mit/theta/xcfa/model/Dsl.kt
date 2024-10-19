@@ -39,10 +39,14 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
     infix fun Pair<String, Type>.init(initValue: String): VarDecl<Type> {
         val varDecl = Var(first, second)
         builder.addVar(
-            XcfaGlobalVar(varDecl,
+            XcfaGlobalVar(
+                varDecl,
                 ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(
-                    Env()) as LitExpr<*>,
-                local))
+                    Env()
+                ) as LitExpr<*>,
+                local
+            )
+        )
         return varDecl
     }
 }
@@ -89,7 +93,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     fun start(vararg expr: Any) {
         val exprs = expr.map {
             if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                it) else error("Bad type")
+                it
+            ) else error("Bad type")
         }
         builder.parent.addEntryPoint(builder, exprs)
     }
@@ -112,7 +117,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
 
         infix fun String.assign(to: String): SequenceLabel {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(
-                this) as VarDecl<Type>
+                this
+            ) as VarDecl<Type>
             val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
             val label = StmtLabel(Assign(lhs, rhs))
             labelList.add(label)
@@ -128,7 +134,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
 
         infix fun String.assign(to: Expr<*>): SequenceLabel {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(
-                this) as VarDecl<Type>
+                this
+            ) as VarDecl<Type>
             val rhs: Expr<Type> = to as Expr<Type>
             val label = StmtLabel(Assign(lhs, rhs))
             labelList.add(label)
@@ -171,7 +178,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
         operator fun XcfaProcedureBuilderContext.invoke(vararg expr: Any): SequenceLabel {
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = InvokeLabel(this.builder.name, exprs, EmptyMetaData)
             this@SequenceLabelContext.labelList.add(label)
@@ -181,7 +189,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
         operator fun String.invoke(vararg expr: Any): SequenceLabel {
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = InvokeLabel(this, exprs, EmptyMetaData)
             this@SequenceLabelContext.labelList.add(label)
@@ -192,7 +201,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = StartLabel(ctx.builder.name, exprs, lhs, EmptyMetaData)
             labelList.add(label)
@@ -202,7 +212,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
         fun VarDecl<*>.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): SequenceLabel {
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = StartLabel(ctx.builder.name, exprs, this, EmptyMetaData)
             labelList.add(label)
@@ -213,7 +224,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = StartLabel(ctx, exprs, lhs, EmptyMetaData)
             labelList.add(label)
@@ -223,7 +235,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
         fun VarDecl<*>.start(ctx: String, vararg expr: Any): SequenceLabel {
             val exprs = expr.map {
                 if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
-                    it) else error("Bad type")
+                    it
+                ) else error("Bad type")
             }
             val label = StartLabel(ctx, exprs, this, EmptyMetaData)
             labelList.add(label)
@@ -301,8 +314,10 @@ fun XcfaBuilder.threadlocal(lambda: VarContext.() -> Unit) {
     context.apply(lambda)
 }
 
-fun XcfaBuilder.procedure(name: String, passManager: ProcedurePassManager,
-    lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
+fun XcfaBuilder.procedure(
+    name: String, passManager: ProcedurePassManager,
+    lambda: XcfaProcedureBuilderContext.() -> Unit
+): XcfaProcedureBuilderContext {
     val builder = XcfaProcedureBuilder(name, passManager)
     builder.parent = this
     val procBuilder = XcfaProcedureBuilderContext(builder).apply(lambda)
@@ -310,7 +325,9 @@ fun XcfaBuilder.procedure(name: String, passManager: ProcedurePassManager,
     return procBuilder
 }
 
-fun XcfaBuilder.procedure(name: String,
-    lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
+fun XcfaBuilder.procedure(
+    name: String,
+    lambda: XcfaProcedureBuilderContext.() -> Unit
+): XcfaProcedureBuilderContext {
     return procedure(name, ProcedurePassManager(), lambda)
 }

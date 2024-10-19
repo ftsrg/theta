@@ -24,8 +24,10 @@ import hu.bme.mit.theta.xcfa.passes.flatten
 
 data class XcfaAction
 @JvmOverloads
-constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTriples = emptyMap(),
-    private val nextCnt: Int = 0) :
+constructor(
+    val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTriples = emptyMap(),
+    private val nextCnt: Int = 0
+) :
     PtrAction(lastWrites, nextCnt) {
 
     val source: XcfaLocation = edge.source
@@ -33,12 +35,14 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
     val label: XcfaLabel = edge.label
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
-    constructor(pid: Int,
+    constructor(
+        pid: Int,
         source: XcfaLocation,
         target: XcfaLocation,
         label: XcfaLabel = NopLabel,
         lastWrites: WriteTriples = emptyMap(),
-        nextCnt: Int = 0) :
+        nextCnt: Int = 0
+    ) :
         this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
 
     override val stmtList: List<Stmt>

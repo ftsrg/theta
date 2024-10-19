@@ -63,25 +63,34 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             procedure.getVars().forEach { builder.addVar(it) }
                             procedure.getParams().forEach { builder.addVar(it.first) }
                             procedure.getEdges().forEach {
-                                builder.addEdge(it.withSource(checkNotNull(newLocs[it.source]))
-                                    .withTarget(checkNotNull(newLocs[it.target])))
+                                builder.addEdge(
+                                    it.withSource(checkNotNull(newLocs[it.source]))
+                                        .withTarget(checkNotNull(newLocs[it.target]))
+                                )
                             }
 
                             val inStmts: MutableList<XcfaLabel> = ArrayList()
                             val outStmts: MutableList<XcfaLabel> = ArrayList()
                             for ((i, param) in procedure.getParams().withIndex()) {
                                 if (param.second != ParamDirection.OUT) {
-                                    val stmt = AssignStmt.of(cast(param.first, param.first.type),
-                                        cast(CComplexType.getType(param.first.ref, parseContext)
-                                            .castTo(invokeLabel.params[i]), param.first.type))
+                                    val stmt = AssignStmt.of(
+                                        cast(param.first, param.first.type),
+                                        cast(
+                                            CComplexType.getType(param.first.ref, parseContext)
+                                                .castTo(invokeLabel.params[i]), param.first.type
+                                        )
+                                    )
                                     inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }
 
                                 if (param.second != ParamDirection.IN) {
                                     val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
-                                    val stmt = AssignStmt.of(cast(varDecl, param.first.type), cast(
-                                        CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
-                                        param.first.type))
+                                    val stmt = AssignStmt.of(
+                                        cast(varDecl, param.first.type), cast(
+                                            CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
+                                            param.first.type
+                                        )
+                                    )
                                     outStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }
                             }
@@ -92,13 +101,20 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
                             builder.addEdge(XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts)))
                             if (finalLoc.isPresent)
-                                builder.addEdge(XcfaEdge(checkNotNull(newLocs[finalLoc.get()]), target,
-                                    SequenceLabel(outStmts)))
+                                builder.addEdge(
+                                    XcfaEdge(
+                                        checkNotNull(newLocs[finalLoc.get()]), target,
+                                        SequenceLabel(outStmts)
+                                    )
+                                )
                             if (errorLoc.isPresent) {
                                 if (builder.errorLoc.isEmpty) builder.createErrorLoc()
                                 builder.addEdge(
-                                    XcfaEdge(checkNotNull(newLocs[errorLoc.get()]), builder.errorLoc.get(),
-                                        SequenceLabel(listOf())))
+                                    XcfaEdge(
+                                        checkNotNull(newLocs[errorLoc.get()]), builder.errorLoc.get(),
+                                        SequenceLabel(listOf())
+                                    )
+                                )
                             }
                         } else {
                             builder.addEdge(e)

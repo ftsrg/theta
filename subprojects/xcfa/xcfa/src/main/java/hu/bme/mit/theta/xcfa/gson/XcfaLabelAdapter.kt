@@ -80,11 +80,14 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
             checkNotNull(constructor) { "${clazz.simpleName} has no fromString() method." }
             val obj =
                 try {
-                    constructor.call(clazz.companionObject!!.objectInstance, content, scope, env,
-                        metadata)
+                    constructor.call(
+                        clazz.companionObject!!.objectInstance, content, scope, env,
+                        metadata
+                    )
                 } catch (e: Exception) {
                     System.err.println(
-                        "Could not parse $content\nscope: ${scope}\nenv: $env\ntype: ${clazz.simpleName}")
+                        "Could not parse $content\nscope: ${scope}\nenv: $env\ntype: ${clazz.simpleName}"
+                    )
                     throw e
                 }
             check(obj is XcfaLabel)

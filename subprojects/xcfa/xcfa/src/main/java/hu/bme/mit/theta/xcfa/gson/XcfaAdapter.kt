@@ -111,7 +111,8 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
 
     private fun parseInitProcedures(
         reader: JsonReader,
-        procedures: Map<String, XcfaProcedure>): List<Pair<XcfaProcedure, List<Expr<*>>>> {
+        procedures: Map<String, XcfaProcedure>
+    ): List<Pair<XcfaProcedure, List<Expr<*>>>> {
         reader.beginArray()
         val ret = ArrayList<Pair<XcfaProcedure, List<Expr<*>>>>()
         val paramsType = object : TypeToken<List<Expr<*>>>() {}.type
@@ -190,9 +191,11 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                     }
                 }
             }
-            ret[name] = XcfaProcedure(name, params, vars, locs.values.toSet(), edges, initLoc,
+            ret[name] = XcfaProcedure(
+                name, params, vars, locs.values.toSet(), edges, initLoc,
                 Optional.ofNullable(finalLoc),
-                Optional.ofNullable(errorLoc)).also { it.parent = xcfa }
+                Optional.ofNullable(errorLoc)
+            ).also { it.parent = xcfa }
             reader.endObject()
         }
         reader.endArray()

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -140,7 +141,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
     @Override
     public CDeclaration visitStructDeclaratorConstant(CParser.StructDeclaratorConstantContext ctx) {
-        throw new UnsupportedOperationException("Not yet supported!");
+        throw new UnsupportedFrontendElementException("Not yet supported!");
     }
 
     @Override
@@ -191,17 +192,17 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
     @Override
     public CDeclaration visitDirectDeclaratorArray2(CParser.DirectDeclaratorArray2Context ctx) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        throw new UnsupportedFrontendElementException("Not yet implemented!");
     }
 
     @Override
     public CDeclaration visitDirectDeclaratorArray3(CParser.DirectDeclaratorArray3Context ctx) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        throw new UnsupportedFrontendElementException("Not yet implemented!");
     }
 
     @Override
     public CDeclaration visitDirectDeclaratorArray4(CParser.DirectDeclaratorArray4Context ctx) {
-        throw new UnsupportedOperationException("Not yet implemented!");
+        throw new UnsupportedFrontendElementException("Not yet implemented!");
     }
 
     @Override
