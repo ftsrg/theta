@@ -68,25 +68,42 @@ tasks {
 }
 
 spotless {
+    ratchetFrom("origin/master")
+    
+    val year = "\$YEAR" // you can't escape $ in raw strings..
+    val licenseHeader = """            /*
+             *  Copyright $year Budapest University of Technology and Economics
+             *
+             *  Licensed under the Apache License, Version 2.0 (the "License");
+             *  you may not use this file except in compliance with the License.
+             *  You may obtain a copy of the License at
+             *
+             *      http://www.apache.org/licenses/LICENSE-2.0
+             *
+             *  Unless required by applicable law or agreed to in writing, software
+             *  distributed under the License is distributed on an "AS IS" BASIS,
+             *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             *  See the License for the specific language governing permissions and
+             *  limitations under the License.
+             */""".trimIndent()
+
+
     java {
-        // apply a specific flavor of google-java-format
+        importOrder("java|javax", "hu.bme.", "")
+        removeUnusedImports()
         googleJavaFormat("1.24.0").aosp().reflowLongStrings()
-        // fix formatting of type annotations
         formatAnnotations()
-        licenseHeader(
-            """            Copyright $(YEAR) Budapest University of Technology and Economics
 
-            Licensed under the Apache License, Version 2.0 (the "License");
-            you may not use this file except in compliance with the License.
-            You may obtain a copy of the License at
+        licenseHeader(licenseHeader)
+    }
+    kotlin {
+        ktfmt("0.51").googleStyle()
 
-                http://www.apache.org/licenses/LICENSE-2.0
+        licenseHeader(licenseHeader)
+    }
+    kotlinGradle {
+        target("*.gradle.kts") // default target for kotlinGradle
 
-            Unless required by applicable law or agreed to in writing, software
-            distributed under the License is distributed on an "AS IS" BASIS,
-            WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-            See the License for the specific language governing permissions and
-            limitations under the License.""".trimIndent()
-        )
+        ktlint()
     }
 }
