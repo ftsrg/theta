@@ -149,8 +149,7 @@ fun <T : Type> Expr<T>.uniqueDereferences(
         Pair(ret, retDeref)
     } else {
         val ret = ArrayList<Stmt>()
-        Pair(
-            ret,
+        Pair(ret,
             this.withOps(this.ops.map { it.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second })
         )
     }

@@ -106,8 +106,7 @@ private fun getGson(
         StringTypeAdapter(xcfaLocationAdapter)
     )
     gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
-    gsonBuilder.registerTypeHierarchyAdapter(
-        VarDecl::class.java,
+    gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
         VarDeclAdapter({ gson }, scope, env, !newScope)
     )
     gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java,
@@ -119,12 +118,10 @@ private fun getGson(
     gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java,
         StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
     gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
-    gsonBuilder.registerTypeHierarchyAdapter(
-        PredState::class.java,
+    gsonBuilder.registerTypeHierarchyAdapter(PredState::class.java,
         PredStateAdapter({ gson }, scope, env)
     )
-    gsonBuilder.registerTypeHierarchyAdapter(
-        XcfaLabel::class.java,
+    gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java,
         XcfaLabelAdapter(scope, env, { gson })
     )
     gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())
