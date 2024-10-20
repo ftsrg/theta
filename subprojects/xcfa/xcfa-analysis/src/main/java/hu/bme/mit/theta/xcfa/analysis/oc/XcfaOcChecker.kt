@@ -88,7 +88,7 @@ class XcfaOcChecker(
         prec: XcfaPrec<UnitPrec>?
     ): SafetyResult<EmptyWitness, Cex> = let {
         if (xcfa.initProcedures.size > 1)
-            exit("Multiple entry points are not supported by OC checker.")
+            exit("multiple entry points")
 
         logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
@@ -149,6 +149,7 @@ class XcfaOcChecker(
         private lateinit var edge: XcfaEdge
         private var inEdge = false
         private var atomicEntered: Boolean? = null
+        private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
         fun event(d: VarDecl<*>, type: EventType): List<E> {
             check(!inEdge || last.size == 1)
@@ -254,7 +255,7 @@ class XcfaOcChecker(
                     atomicEntered = current.atomics.firstOrNull()
 
                     edge.getFlatLabels().forEach { label ->
-                        if (label.references.isNotEmpty()) exit("References: not supported by OC checker")
+                        if (label.references.isNotEmpty()) exit("references")
                         when (label) {
                             is StmtLabel -> {
                                 when (val stmt = label.stmt) {
@@ -298,21 +299,21 @@ class XcfaOcChecker(
                                         last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(exprConsts))
                                     }
 
-                                    else -> exit("Unsupported statement type: $stmt")
+                                    else -> exit("unknown statement type: $stmt")
                                 }
                             }
 
                             is StartLabel -> {
                                 // TODO StartLabel params
                                 if (label.name in thread.startHistory) {
-                                    exit("Recursive thread start not supported by OC checker.")
+                                    exit("recursive thread start")
                                 }
                                 val procedure = xcfa.procedures.find { it.name == label.name }
-                                    ?: exit("Procedure not found: ${label.name}")
+                                    ?: exit("unknown procedure name: ${label.name}")
                                 last = event(label.pidVar, EventType.WRITE)
                                 val pidVar = label.pidVar.threadVar(pid)
                                 if (threads.any { it.pidVar == pidVar }) {
-                                    exit("Using a pthread_t variable in multiple threads: not supported by OC checker")
+                                    multipleUsePidVars.add(pidVar)
                                 }
                                 val newHistory = thread.startHistory + thread.procedure.name
                                 val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
@@ -325,14 +326,18 @@ class XcfaOcChecker(
                                 val incomingGuard = guard
                                 val lastEvents = mutableListOf<E>()
                                 val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
-                                threadLookup[label.pidVar.threadVar(pid)]?.forEach { (g, thread) ->
+                                val pidVar = label.pidVar.threadVar(pid)
+                                if (pidVar in multipleUsePidVars) {
+                                    exit("join on a pthread_t variable used in multiple pthread_create calls")
+                                }
+                                threadLookup[pidVar]?.forEach { (g, thread) ->
                                     guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
                                     val joinEvent = event(label.pidVar, EventType.READ).first()
                                     thread.finalEvents.forEach { final -> po(final, joinEvent) }
                                     lastEvents.add(joinEvent)
                                     joinGuards.add(guard)
                                     thread.joinEvents.add(joinEvent)
-                                } ?: exit("Thread started in a different thread: not supported by OC checker")
+                                } ?: exit("thread started in a different thread")
                                 guard = joinGuards.toOrInSet()
                                 last = lastEvents
                             }
@@ -340,7 +345,7 @@ class XcfaOcChecker(
                             is FenceLabel -> {
                                 if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
                                     if (label.labels.size != 1 || label.labels.first() != "pthread_exit" || !edge.target.final) {
-                                        exit("Untransformed fence label: $label")
+                                        exit("untransformed fence label: $label")
                                     }
                                 }
                                 if (label.isAtomicBegin) atomicEntered = false
@@ -348,7 +353,7 @@ class XcfaOcChecker(
                             }
 
                             is NopLabel -> {}
-                            else -> exit("Unsupported label type by OC checker: $label")
+                            else -> exit("unsupported label type: $label")
                         }
                         firstLabel = false
                     }
@@ -371,7 +376,7 @@ class XcfaOcChecker(
                     for (e in current.loc.outgoingEdges) {
                         val first = e.getFlatLabels().first()
                         if (first !is StmtLabel || first.stmt !is AssumeStmt) {
-                            exit("Branching with non-assume labels: not supported by OC checker")
+                            exit("branching with non-assume labels")
                         }
                     }
                     assumeConsts.forEach { (_, set) ->
@@ -384,7 +389,7 @@ class XcfaOcChecker(
                 }
             }
 
-            if (waitList.isNotEmpty()) exit("Loops and dangling edges: not supported by OC checker")
+            if (waitList.isNotEmpty()) exit("loops and dangling edges")
         }
     }
 
@@ -476,7 +481,6 @@ class XcfaOcChecker(
     }
 
     private fun exit(msg: String): Nothing {
-        System.err.println(msg)
-        error(203)
+        error("Feature not supported by OC checker: $msg.")
     }
 }
