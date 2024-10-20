@@ -63,6 +63,7 @@ class XcfaCli(private val args: Array<String>) {
                     listOf(
                         "--enable-output",
                         "--disable-xcfa-serialization",
+                        "--disable-arg-generation",
                         "--disable-chc-serialization",
                         "--disable-c-serialization",
                         "--only-svcomp-witness"
