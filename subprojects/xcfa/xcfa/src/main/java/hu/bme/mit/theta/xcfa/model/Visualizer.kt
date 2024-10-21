@@ -13,31 +13,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.model
 
 fun XCFA.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)? = null): String {
-    val builder = StringBuilder()
-    builder.appendLine("digraph G {")
-    builder.appendLine("label=\"$name\";")
+  val builder = StringBuilder()
+  builder.appendLine("digraph G {")
+  builder.appendLine("label=\"$name\";")
 
-    for ((i, procedure) in procedures.withIndex()) {
-        builder.appendLine("subgraph cluster_$i {")
-        builder.appendLine(procedure.toDot(edgeLabelCustomizer))
-        builder.appendLine("}")
-    }
-
+  for ((i, procedure) in procedures.withIndex()) {
+    builder.appendLine("subgraph cluster_$i {")
+    builder.appendLine(procedure.toDot(edgeLabelCustomizer))
     builder.appendLine("}")
-    return builder.toString()
+  }
+
+  builder.appendLine("}")
+  return builder.toString()
 }
 
 fun XcfaProcedure.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)?): String {
-    val builder = StringBuilder()
-    builder.appendLine("label=\"$name\";")
-    locs.forEach { builder.appendLine("${it.name}[];") }
-    edges.forEach {
-        builder.appendLine(
-            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];")
-    }
-    return builder.toString()
+  val builder = StringBuilder()
+  builder.appendLine("label=\"$name\";")
+  locs.forEach { builder.appendLine("${it.name}[];") }
+  edges.forEach {
+    builder.appendLine(
+      "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];"
+    )
+  }
+  return builder.toString()
 }

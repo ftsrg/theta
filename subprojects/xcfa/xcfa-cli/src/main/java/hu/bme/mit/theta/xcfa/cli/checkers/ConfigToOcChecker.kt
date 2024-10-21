@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
@@ -29,12 +27,21 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getOcChecker(
-    xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, logger: Logger
+  xcfa: XCFA,
+  mcm: MCM,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
 ): SafetyChecker<EmptyWitness, Cex, XcfaPrec<*>> {
-    val ocConfig = config.backendConfig.specConfig as OcConfig
-    val ocChecker = XcfaOcChecker(
-        xcfa, ocConfig.decisionProcedure, logger, ocConfig.inputConflictClauseFile, ocConfig.outputConflictClauses,
-        ocConfig.nonPermissiveValidation, ocConfig.autoConflict
+  val ocConfig = config.backendConfig.specConfig as OcConfig
+  val ocChecker =
+    XcfaOcChecker(
+      xcfa,
+      ocConfig.decisionProcedure,
+      logger,
+      ocConfig.inputConflictClauseFile,
+      ocConfig.outputConflictClauses,
+      ocConfig.nonPermissiveValidation,
+      ocConfig.autoConflict,
     )
-    return SafetyChecker { ocChecker.check() }
+  return SafetyChecker { ocChecker.check() }
 }

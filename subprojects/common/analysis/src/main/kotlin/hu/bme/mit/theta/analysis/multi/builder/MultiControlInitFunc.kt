@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.multi.builder
 
 import hu.bme.mit.theta.analysis.InitFunc
@@ -25,23 +24,29 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
 
 /**
- * Serves as a control initial function for a multi analysis if the product is nested and this analysis is going to be a part of a larger product.
+ * Serves as a control initial function for a multi analysis if the product is nested and this
+ * analysis is going to be a part of a larger product.
  */
-internal class MultiControlInitFunc<LControl : State, RControl : State, LControlPrec : Prec, RControlPrec : Prec, MState : MultiState<LControl, RControl, UnitState>, MPrec : MultiPrec<LControlPrec, RControlPrec, UnitPrec>>
-(
-    private val leftControlInitFunc: InitFunc<LControl, LControlPrec>,
-    private val rightControlInitFunc: InitFunc<RControl, RControlPrec>,
-    private val createState: (lState: LControl, rState: RControl) -> MState
+internal class MultiControlInitFunc<
+  LControl : State,
+  RControl : State,
+  LControlPrec : Prec,
+  RControlPrec : Prec,
+  MState : MultiState<LControl, RControl, UnitState>,
+  MPrec : MultiPrec<LControlPrec, RControlPrec, UnitPrec>,
+>(
+  private val leftControlInitFunc: InitFunc<LControl, LControlPrec>,
+  private val rightControlInitFunc: InitFunc<RControl, RControlPrec>,
+  private val createState: (lState: LControl, rState: RControl) -> MState,
 ) : InitFunc<MState, MPrec> {
 
-    override fun getInitStates(prec: MPrec): MutableCollection<out MState> {
-        val leftInitStates: Collection<LControl> = HashSet(leftControlInitFunc.getInitStates(prec.leftPrec))
-        val rightInitStates: Collection<RControl> = HashSet(rightControlInitFunc.getInitStates(prec.rightPrec))
-        return leftInitStates.flatMap { left ->
-            rightInitStates.map { right ->
-                createState(left, right)
-            }
-        }.toMutableSet()
-
-    }
+  override fun getInitStates(prec: MPrec): MutableCollection<out MState> {
+    val leftInitStates: Collection<LControl> =
+      HashSet(leftControlInitFunc.getInitStates(prec.leftPrec))
+    val rightInitStates: Collection<RControl> =
+      HashSet(rightControlInitFunc.getInitStates(prec.rightPrec))
+    return leftInitStates
+      .flatMap { left -> rightInitStates.map { right -> createState(left, right) } }
+      .toMutableSet()
+  }
 }

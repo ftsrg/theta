@@ -27,58 +27,67 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 class XcfaCliPortfolioTest {
-    companion object {
+  companion object {
 
-
-        @JvmStatic
-        fun portfolios(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of({ xcfa: XCFA,
-                    mcm: MCM,
-                    parseContext: ParseContext,
-                    portfolioConfig: XcfaConfig<*, *>,
-                    logger: Logger,
-                    uniqueLogger: Logger ->
-                    complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-                }),
-                Arguments.of({ xcfa: XCFA,
-                    mcm: MCM,
-                    parseContext: ParseContext,
-                    portfolioConfig: XcfaConfig<*, *>,
-                    logger: Logger,
-                    uniqueLogger: Logger ->
-                    complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-                }),
-            )
-        }
-
+    @JvmStatic
+    fun portfolios(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+      )
     }
+  }
 
-    @ParameterizedTest
-    @MethodSource("portfolios")
-    fun testPortfolio(portfolio: (xcfa: XCFA,
+  @ParameterizedTest
+  @MethodSource("portfolios")
+  fun testPortfolio(
+    portfolio:
+      (
+        xcfa: XCFA,
         mcm: MCM,
         parseContext: ParseContext,
         portfolioConfig: XcfaConfig<*, *>,
         logger: Logger,
-        uniqueLogger: Logger) -> STM) {
+        uniqueLogger: Logger,
+      ) -> STM
+  ) {
 
-        for (value in ArithmeticTrait.values()) {
+    for (value in ArithmeticTrait.values()) {
 
-            val stm = portfolio(XCFA("name", setOf()), emptySet(), ParseContext(),
-                XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(), NullLogger.getInstance(), NullLogger.getInstance())
+      val stm =
+        portfolio(
+          XCFA("name", setOf()),
+          emptySet(),
+          ParseContext(),
+          XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
+          NullLogger.getInstance(),
+          NullLogger.getInstance(),
+        )
 
-            Assertions.assertTrue(stm.visualize().isNotEmpty())
-        }
-
+      Assertions.assertTrue(stm.visualize().isNotEmpty())
     }
-
-
+  }
 }

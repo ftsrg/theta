@@ -32,45 +32,40 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 class TypeTest {
 
-    @Parameterized.Parameter(0)
-    lateinit var memory: Type
+  @Parameterized.Parameter(0) lateinit var memory: Type
 
-    @Parameterized.Parameter(1)
-    lateinit var serialized: String
+  @Parameterized.Parameter(1) lateinit var serialized: String
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        @Parameterized.Parameters
-        fun data(): Collection<Array<Any>> {
-            return listOf(
-                arrayOf(Int(), "Int"),
-                arrayOf(Rat(), "Rat"),
-                arrayOf(Bool(), "Bool"),
-                arrayOf(Func(Int(), Rat()), "(Func Int Rat)"),
-                arrayOf(ArrayExprs.Array(Int(), Rat()), "(Array ([Int] -> Rat))"),
-                arrayOf(BvType(32), "(Bv 32)"),
-                arrayOf(FpType(12, 45), "(Fp 12 45)"),
-
-                arrayOf(Func(Int(), ArrayExprs.Array(Int(), Rat())),
-                    "(Func Int (Array ([Int] -> Rat)))"),
-            )
-        }
+    @JvmStatic
+    @Parameterized.Parameters
+    fun data(): Collection<Array<Any>> {
+      return listOf(
+        arrayOf(Int(), "Int"),
+        arrayOf(Rat(), "Rat"),
+        arrayOf(Bool(), "Bool"),
+        arrayOf(Func(Int(), Rat()), "(Func Int Rat)"),
+        arrayOf(ArrayExprs.Array(Int(), Rat()), "(Array ([Int] -> Rat))"),
+        arrayOf(BvType(32), "(Bv 32)"),
+        arrayOf(FpType(12, 45), "(Fp 12 45)"),
+        arrayOf(Func(Int(), ArrayExprs.Array(Int(), Rat())), "(Func Int (Array ([Int] -> Rat)))"),
+      )
     }
+  }
 
-    @Test
-    fun testSerialize() {
-        Assert.assertEquals(serialized, memory.toString())
-    }
+  @Test
+  fun testSerialize() {
+    Assert.assertEquals(serialized, memory.toString())
+  }
 
-    @Test
-    fun testDeserialize() {
-        Assert.assertEquals(TypeWrapper(serialized).instantiate(), memory)
-    }
+  @Test
+  fun testDeserialize() {
+    Assert.assertEquals(TypeWrapper(serialized).instantiate(), memory)
+  }
 
-    @Test
-    fun testRoundTrip() {
-        Assert.assertEquals(TypeWrapper(memory.toString()).instantiate(), memory)
-    }
-
+  @Test
+  fun testRoundTrip() {
+    Assert.assertEquals(TypeWrapper(memory.toString()).instantiate(), memory)
+  }
 }
