@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -40,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -100,7 +99,7 @@ public class StsMddCheckerTest {
             sts = Utils.singleElementOf(spec.getAllSts());
         }
 
-        final SafetyResult<MddWitness, MddCex> status;
+        final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
                 @Override

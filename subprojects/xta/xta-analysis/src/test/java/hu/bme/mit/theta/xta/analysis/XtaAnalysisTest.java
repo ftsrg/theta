@@ -15,24 +15,12 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
 import hu.bme.mit.theta.analysis.unit.UnitAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.unit.UnitState;
@@ -40,6 +28,17 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public final class XtaAnalysisTest {
@@ -79,11 +78,11 @@ public final class XtaAnalysisTest {
                 lts, analysis,
                 s -> false);
 
-        final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(
+        final ArgAbstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicArgAbstractor.builder(
                         argBuilder)
                 .projection(s -> s.getLocs()).build();
 
-        final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
+        final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createProof();
         abstractor.check(arg, UnitPrec.getInstance());
 
         System.out.println(

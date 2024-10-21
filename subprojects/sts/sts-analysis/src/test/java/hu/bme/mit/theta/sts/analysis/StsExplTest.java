@@ -19,14 +19,14 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -34,12 +34,7 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -60,14 +55,8 @@ import java.util.function.Predicate;
 import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static org.junit.Assert.assertTrue;
 
 public class StsExplTest {
@@ -110,7 +99,7 @@ public class StsExplTest {
         final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
                 analysis, target);
 
-        final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(
+        final ArgAbstractor<ExplState, StsAction, ExplPrec> abstractor = BasicArgAbstractor.builder(
                         argBuilder)
                 .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
 
@@ -122,12 +111,12 @@ public class StsExplTest {
                 .create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()),
                         PruneStrategy.LAZY, logger);
 
-        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = CegarChecker.create(
+        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = ArgCegarChecker.create(
                 abstractor, refiner, logger);
 
         final SafetyResult<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>> safetyStatus = checker.check(prec);
 
-        final ARG<ExplState, StsAction> arg = safetyStatus.getWitness();
+        final ARG<ExplState, StsAction> arg = safetyStatus.getProof();
         assertTrue(isWellLabeled(arg, abstractionSolver));
 
         // System.out.println(new

@@ -18,9 +18,9 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expl.*
 import hu.bme.mit.theta.analysis.expr.refinement.*
@@ -88,7 +88,7 @@ class XcfaExplAnalysisTest {
             StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+            ErrorDetection.ERROR_LOCATION) as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
             ItpRefToPtrPrec(ItpRefToExplPrec()))
@@ -98,10 +98,10 @@ class XcfaExplAnalysisTest {
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+                NullLogger.getInstance()) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+            ArgCegarChecker.create(abstractor, refiner)
 
         val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
@@ -133,7 +133,7 @@ class XcfaExplAnalysisTest {
             StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+            ErrorDetection.ERROR_LOCATION) as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
             ItpRefToPtrPrec(ItpRefToExplPrec()))
@@ -143,10 +143,10 @@ class XcfaExplAnalysisTest {
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+                NullLogger.getInstance()) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+            ArgCegarChecker.create(abstractor, refiner)
 
         val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
@@ -178,7 +178,7 @@ class XcfaExplAnalysisTest {
             StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+            ErrorDetection.ERROR_LOCATION) as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
             ItpRefToPtrPrec(ItpRefToExplPrec()))
@@ -189,10 +189,10 @@ class XcfaExplAnalysisTest {
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 ConsoleLogger(
-                    Logger.Level.DETAIL)) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+                    Logger.Level.DETAIL)) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+            ArgCegarChecker.create(abstractor, refiner)
 
         val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
@@ -224,7 +224,7 @@ class XcfaExplAnalysisTest {
             StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+            ErrorDetection.ERROR_LOCATION) as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val precRefiner = XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
             ItpRefToPtrPrec(ItpRefToExplPrec()))
@@ -235,10 +235,10 @@ class XcfaExplAnalysisTest {
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
-                atomicNodePruner) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+                atomicNodePruner) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val cegarChecker =
-            CegarChecker.create(abstractor, AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()))
+            ArgCegarChecker.create(abstractor, AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()))
 
         val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
@@ -270,7 +270,7 @@ class XcfaExplAnalysisTest {
             StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+            ErrorDetection.ERROR_LOCATION) as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val precRefiner = XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
 
@@ -279,10 +279,10 @@ class XcfaExplAnalysisTest {
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+                NullLogger.getInstance()) as ArgRefiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
         val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+            ArgCegarChecker.create(abstractor, refiner)
 
         val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 

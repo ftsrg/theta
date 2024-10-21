@@ -52,20 +52,11 @@ import hu.bme.mit.theta.sts.analysis.StsToMonolithicExprKt;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Domain;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.InitPrec;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.PredSplit;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Refinement;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
+import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.*;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -278,7 +269,7 @@ public class StsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            if (status.getWitness() instanceof ARG<?, ?> arg) {
+            if (status.getProof() instanceof ARG<?, ?> arg) {
                 writer.cell(arg.size());
                 writer.cell(arg.getDepth());
                 writer.cell(arg.getMeanBranchingFactor());

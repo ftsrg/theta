@@ -27,8 +27,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
@@ -37,14 +35,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaToMonolithicExprKt;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.*;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
@@ -63,12 +54,7 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -345,7 +331,7 @@ public class CfaCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            if (status.getWitness() instanceof ARG<?, ?> arg) {
+            if (status.getProof() instanceof ARG<?, ?> arg) {
                 writer.cell(arg.size());
                 writer.cell(arg.getDepth());
                 writer.cell(arg.getMeanBranchingFactor());

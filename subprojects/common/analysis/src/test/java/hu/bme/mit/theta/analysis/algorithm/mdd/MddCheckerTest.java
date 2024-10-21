@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -143,7 +142,7 @@ public class MddCheckerTest {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final SafetyResult<MddWitness, MddCex> status;
+        final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddChecker<ExprAction> checker = MddChecker.create(initExpr, VarIndexingFactory.indexing(0), new ExprAction() {
                 @Override
@@ -164,7 +163,7 @@ public class MddCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
-        assertEquals(stateSpaceSize, status.getWitness().size());
+        assertEquals(stateSpaceSize, status.getProof().size());
 
 
     }

@@ -15,12 +15,9 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
-import java.io.*;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -42,6 +39,8 @@ import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+
+import java.io.*;
 
 public final class XtaCli {
 
@@ -176,7 +175,7 @@ public final class XtaCli {
     private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
             throws FileNotFoundException {
         final Graph graph =
-                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
+                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getProof())
                         : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }

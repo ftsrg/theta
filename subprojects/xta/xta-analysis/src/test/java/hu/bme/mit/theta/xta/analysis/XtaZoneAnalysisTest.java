@@ -15,25 +15,12 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
@@ -46,6 +33,18 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public final class XtaZoneAnalysisTest {
@@ -91,10 +90,10 @@ public final class XtaZoneAnalysisTest {
         final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> argBuilder = ArgBuilder
                 .create(lts, analysis, s -> false);
 
-        final Abstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicAbstractor
+        final ArgAbstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicArgAbstractor
                 .builder(argBuilder).projection(s -> s.getLocs()).build();
 
-        final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createArg();
+        final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createProof();
         abstractor.check(arg, prec);
 
         System.out.println(arg.getNodes().collect(Collectors.toSet()));

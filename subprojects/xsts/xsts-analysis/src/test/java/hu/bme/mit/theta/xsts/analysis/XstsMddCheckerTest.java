@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xsts.analysis;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -26,12 +26,8 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
@@ -116,7 +112,7 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final SafetyResult<MddWitness, MddCex> status;
+        final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger, iterationStrategy);
             status = checker.check(null);

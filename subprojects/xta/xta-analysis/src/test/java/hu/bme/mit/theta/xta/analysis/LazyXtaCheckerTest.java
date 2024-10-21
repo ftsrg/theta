@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xta.analysis;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
@@ -106,7 +106,7 @@ public final class LazyXtaCheckerTest {
         // Assert
         final ArgChecker argChecker = ArgChecker.create(
                 Z3LegacySolverFactory.getInstance().createSolver());
-        final boolean argCheckResult = argChecker.isWellLabeled(status.getWitness());
+        final boolean argCheckResult = argChecker.isWellLabeled(status.getProof());
         assertTrue(argCheckResult);
     }
 

@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -71,7 +71,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
     private val valToState: (Valuation) -> S,
     private val biValToAction: (Valuation, Valuation) -> A,
     private val logger: Logger,
-) : SafetyChecker<EmptyWitness, Trace<S, A>, UnitPrec> {
+) : SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
 
     private val vars = monolithicExpr.vars()
     private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
@@ -87,7 +87,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
         check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
     }
 
-    override fun check(prec: UnitPrec?): SafetyResult<EmptyWitness, Trace<S, A>> {
+    override fun check(prec: UnitPrec?): SafetyResult<EmptyProof, Trace<S, A>> {
 
         iteration = 0
 
@@ -121,7 +121,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
         return SafetyResult.unknown(BoundedStatistics(iteration))
     }
 
-    private fun bmc(): SafetyResult<EmptyWitness, Trace<S, A>>? {
+    private fun bmc(): SafetyResult<EmptyProof, Trace<S, A>>? {
         val bmcSolver = this.bmcSolver!!
         logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
 
@@ -139,7 +139,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
 
             if (bmcSolver.check().isUnsat) {
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
-                return SafetyResult.safe(EmptyWitness.getInstance(), BoundedStatistics(iteration))
+                return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
             }
         }
 
@@ -149,12 +149,12 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
             if (bmcSolver.check().isSat) {
                 val trace = getTrace(bmcSolver.model)
                 logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
-                SafetyResult.unsafe(trace, EmptyWitness.getInstance(), BoundedStatistics(iteration))
+                SafetyResult.unsafe(trace, EmptyProof.getInstance(), BoundedStatistics(iteration))
             } else null
         }
     }
 
-    private fun kind(): SafetyResult<EmptyWitness, Trace<S, A>>? {
+    private fun kind(): SafetyResult<EmptyProof, Trace<S, A>>? {
         val indSolver = this.indSolver!!
 
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
@@ -167,12 +167,12 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
 
             if (indSolver.check().isUnsat) {
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
-                SafetyResult.safe(EmptyWitness.getInstance(), BoundedStatistics(iteration))
+                SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
             } else null
         }
     }
 
-    private fun itp(): SafetyResult<EmptyWitness, Trace<S, A>>? {
+    private fun itp(): SafetyResult<EmptyProof, Trace<S, A>>? {
         val itpSolver = this.itpSolver!!
         logger.write(Logger.Level.MAINSTEP, "\tStarting IMC\n")
 
@@ -203,7 +203,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
                 itpSolver.pop()
                 itpSolver.pop()
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
-                return SafetyResult.safe(EmptyWitness.getInstance(), BoundedStatistics(iteration))
+                return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
             }
             itpSolver.pop()
         }
@@ -217,7 +217,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
             logger.write(Logger.Level.MAINSTEP, "CeX found in IMC/BMC step (length ${trace.length()})\n")
             itpSolver.pop()
             itpSolver.pop()
-            return SafetyResult.unsafe(trace, EmptyWitness.getInstance(), BoundedStatistics(iteration))
+            return SafetyResult.unsafe(trace, EmptyProof.getInstance(), BoundedStatistics(iteration))
         }
 
         var img = unfoldedInitExpr
@@ -234,7 +234,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC step\n")
                 itpSolver.pop()
                 itpSolver.pop()
-                return SafetyResult.safe(EmptyWitness.getInstance(), BoundedStatistics(iteration))
+                return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
             }
             itpSolver.pop()
             img = Or(img, itpFormula)

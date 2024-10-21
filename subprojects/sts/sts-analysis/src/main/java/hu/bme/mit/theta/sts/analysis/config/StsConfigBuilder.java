@@ -21,10 +21,10 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -173,14 +173,14 @@ public final class StsConfigBuilder {
             final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
                     analysis, target,
                     true);
-            final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(
+            final ArgAbstractor<ExplState, StsAction, ExplPrec> abstractor = BasicArgAbstractor.builder(
                             argBuilder)
                     .waitlist(PriorityWaitlist.create(search.comparator))
                     .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
                             : StopCriterions.firstCex())
                     .logger(logger).build();
 
-            Refiner<ExplState, StsAction, ExplPrec> refiner = null;
+            ArgRefiner<ExplState, StsAction, ExplPrec> refiner = null;
 
             switch (refinement) {
                 case FW_BIN_ITP:
@@ -218,7 +218,7 @@ public final class StsConfigBuilder {
                             domain + " domain does not support " + refinement + " refinement.");
             }
 
-            final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = CegarChecker.create(
+            final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = ArgCegarChecker.create(
                     abstractor, refiner,
                     logger);
             final ExplPrec prec = initPrec.builder.createExpl(sts);
@@ -248,7 +248,7 @@ public final class StsConfigBuilder {
             final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
                     analysis, target,
                     true);
-            final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(
+            final ArgAbstractor<PredState, StsAction, PredPrec> abstractor = BasicArgAbstractor.builder(
                             argBuilder)
                     .waitlist(PriorityWaitlist.create(search.comparator))
                     .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
@@ -277,7 +277,7 @@ public final class StsConfigBuilder {
                     throw new UnsupportedOperationException(
                             domain + " domain does not support " + refinement + " refinement.");
             }
-            Refiner<PredState, StsAction, PredPrec> refiner;
+            ArgRefiner<PredState, StsAction, PredPrec> refiner;
             if (refinement == Refinement.MULTI_SEQ) {
                 refiner = MultiExprTraceRefiner.create(exprTraceChecker,
                         JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)),
@@ -288,7 +288,7 @@ public final class StsConfigBuilder {
                         pruneStrategy, logger);
             }
 
-            final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = CegarChecker.create(
+            final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = ArgCegarChecker.create(
                     abstractor, refiner,
                     logger);
 

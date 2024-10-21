@@ -18,8 +18,8 @@ package hu.bme.mit.theta.analysis.multi.config
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.expr.refinement.*
@@ -58,14 +58,16 @@ sealed class StmtMultiConfigBuilder<LState : ExprState, RState : ExprState, Data
 
     fun build(): MultiConfig<DataState, LControl, RControl, LAction, RAction, LPrec, RPrec, DataPrec, ExprMultiState<LControl, RControl, DataState>, StmtMultiAction<LAction, RAction>> {
         val argBuilder = ArgBuilder.create(product.lts, product.side.analysis, target)
-        val abstractor = BasicAbstractor.builder(argBuilder).build()
+        val abstractor = BasicArgAbstractor.builder(argBuilder).build()
         val traceChecker = getTraceChecker()
         val precRefiner =
             JoiningPrecRefiner.create<ExprMultiState<LControl, RControl, DataState>, StmtMultiAction<LAction, RAction>, MultiPrec<LPrec, RPrec, DataPrec>, R>(
                 RefToMultiPrec(lRefToPrec, rRefToPrec, dRefToPrec)
             )
         val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger)
-        return MultiConfig(CegarChecker.create(abstractor, refiner), MultiPrec(lInitPrec, rInitPrec, dInitPrec))
+        return MultiConfig(
+            ArgCegarChecker.create(abstractor, refiner), MultiPrec(lInitPrec, rInitPrec, dInitPrec)
+        )
     }
 
     class ItpStmtMultiConfigBuilder<LState : ExprState, RState : ExprState, DataState : ExprState, LControl : ExprState, RControl : ExprState, LAction : StmtAction, RAction : StmtAction, LPrec : Prec, RPrec : Prec, DataPrec : Prec, LControlPrec : Prec, RControlPrec : Prec>(

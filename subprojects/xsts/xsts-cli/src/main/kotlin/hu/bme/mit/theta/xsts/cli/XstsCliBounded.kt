@@ -21,7 +21,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -85,7 +85,7 @@ class XstsCliBounded : XstsCliBaseCommand(
 
     private val variant by option().enum<Variant>().default(Variant.BMC)
 
-    private fun printResult(status: SafetyResult<EmptyWitness, Trace<S, XstsAction>>, xsts: XSTS, totalTimeMs: Long) {
+    private fun printResult(status: SafetyResult<EmptyProof, Trace<S, XstsAction>>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
         printCommonResult(status, xsts, totalTimeMs)
         val stats = status.stats.orElse(BoundedStatistics(0)) as BoundedStatistics
