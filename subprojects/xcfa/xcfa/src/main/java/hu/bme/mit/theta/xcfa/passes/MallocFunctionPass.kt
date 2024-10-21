@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -27,7 +28,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import org.abego.treelayout.internal.util.Contract.checkState
 
 /**
  * Transforms mallocs into address assignments. Requires the ProcedureBuilder be `deterministic`.
