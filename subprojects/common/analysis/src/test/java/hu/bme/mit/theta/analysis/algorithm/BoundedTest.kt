@@ -34,67 +34,71 @@ import org.junit.Test
 
 class BoundedTest {
 
-    companion object {
+  companion object {
 
-        private var unsafeMonolithicExpr: MonolithicExpr? = null
-        private var safeMonolithicExpr: MonolithicExpr? = null
-        private val valToState = { valuation: Valuation ->
-            ExprStateStub(valuation.toExpr())
-        }
-        private val biValToAction = { valuation: Valuation?, valuation2: Valuation? ->
-            ExprActionStub(
-                emptyList())
-        }
-
-        init {
-            val x = Decls.Var("x", Int())
-            val unfoldResult = StmtUtils.toExpr(Assign(x, IntExprs.Add(x.ref, Int(1))), VarIndexingFactory.indexing(0))
-            unsafeMonolithicExpr = MonolithicExpr(
-                AbstractExprs.Eq(x.ref, Int(0)),
-                And(unfoldResult.exprs),
-                AbstractExprs.Neq(x.ref, Int(5)),
-                unfoldResult.indexing
-            )
-            safeMonolithicExpr = MonolithicExpr(
-                AbstractExprs.Eq(x.ref, Int(0)),
-                And(unfoldResult.exprs),
-                AbstractExprs.Neq(x.ref, Int(-5)),
-                unfoldResult.indexing
-            )
-        }
+    private var unsafeMonolithicExpr: MonolithicExpr? = null
+    private var safeMonolithicExpr: MonolithicExpr? = null
+    private val valToState = { valuation: Valuation -> ExprStateStub(valuation.toExpr()) }
+    private val biValToAction = { valuation: Valuation?, valuation2: Valuation? ->
+      ExprActionStub(emptyList())
     }
 
-    @Test
-    fun testBoundedUnsafe() {
-        val solver = Z3LegacySolverFactory.getInstance().createSolver()
-        val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
-        val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
-        val checker: BoundedChecker<*, *> = BoundedChecker(
-            monolithicExpr = unsafeMonolithicExpr!!,
-            bmcSolver = solver,
-            itpSolver = itpSolver,
-            indSolver = indSolver,
-            valToState = valToState,
-            biValToAction = biValToAction,
-            logger = ConsoleLogger(Logger.Level.VERBOSE))
-        val safetyResult: SafetyResult<*, *> = checker.check()
-        Assert.assertTrue(safetyResult.isUnsafe())
+    init {
+      val x = Decls.Var("x", Int())
+      val unfoldResult =
+        StmtUtils.toExpr(Assign(x, IntExprs.Add(x.ref, Int(1))), VarIndexingFactory.indexing(0))
+      unsafeMonolithicExpr =
+        MonolithicExpr(
+          AbstractExprs.Eq(x.ref, Int(0)),
+          And(unfoldResult.exprs),
+          AbstractExprs.Neq(x.ref, Int(5)),
+          unfoldResult.indexing,
+        )
+      safeMonolithicExpr =
+        MonolithicExpr(
+          AbstractExprs.Eq(x.ref, Int(0)),
+          And(unfoldResult.exprs),
+          AbstractExprs.Neq(x.ref, Int(-5)),
+          unfoldResult.indexing,
+        )
     }
+  }
 
-    @Test
-    fun testBoundedSafe() {
-        val solver = Z3LegacySolverFactory.getInstance().createSolver()
-        val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
-        val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
-        val checker: BoundedChecker<*, *> = BoundedChecker(
-            monolithicExpr = safeMonolithicExpr!!,
-            bmcSolver = solver,
-            itpSolver = itpSolver,
-            indSolver = indSolver,
-            valToState = valToState,
-            biValToAction = biValToAction,
-            logger = ConsoleLogger(Logger.Level.VERBOSE))
-        val safetyResult: SafetyResult<*, *> = checker.check()
-        Assert.assertTrue(safetyResult.isSafe())
-    }
+  @Test
+  fun testBoundedUnsafe() {
+    val solver = Z3LegacySolverFactory.getInstance().createSolver()
+    val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
+    val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
+    val checker: BoundedChecker<*, *> =
+      BoundedChecker(
+        monolithicExpr = unsafeMonolithicExpr!!,
+        bmcSolver = solver,
+        itpSolver = itpSolver,
+        indSolver = indSolver,
+        valToState = valToState,
+        biValToAction = biValToAction,
+        logger = ConsoleLogger(Logger.Level.VERBOSE),
+      )
+    val safetyResult: SafetyResult<*, *> = checker.check()
+    Assert.assertTrue(safetyResult.isUnsafe())
+  }
+
+  @Test
+  fun testBoundedSafe() {
+    val solver = Z3LegacySolverFactory.getInstance().createSolver()
+    val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
+    val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
+    val checker: BoundedChecker<*, *> =
+      BoundedChecker(
+        monolithicExpr = safeMonolithicExpr!!,
+        bmcSolver = solver,
+        itpSolver = itpSolver,
+        indSolver = indSolver,
+        valToState = valToState,
+        biValToAction = biValToAction,
+        logger = ConsoleLogger(Logger.Level.VERBOSE),
+      )
+    val safetyResult: SafetyResult<*, *> = checker.check()
+    Assert.assertTrue(safetyResult.isSafe())
+  }
 }

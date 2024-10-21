@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -25,49 +24,85 @@ import hu.bme.mit.theta.solver.Solver
 
 @JvmOverloads
 fun <S : ExprState, A : ExprAction> buildBMC(
-    monolithicExpr: MonolithicExpr,
-    bmcSolver: Solver,
-    valToState: (Valuation) -> S,
-    biValToAction: (Valuation, Valuation) -> A,
-    logger: Logger,
-    shouldGiveUp: (Int) -> Boolean = { false },
-    bmcEnabled: () -> Boolean = { true },
-    lfPathOnly: () -> Boolean = { true },
+  monolithicExpr: MonolithicExpr,
+  bmcSolver: Solver,
+  valToState: (Valuation) -> S,
+  biValToAction: (Valuation, Valuation) -> A,
+  logger: Logger,
+  shouldGiveUp: (Int) -> Boolean = { false },
+  bmcEnabled: () -> Boolean = { true },
+  lfPathOnly: () -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, null,
-        { false }, valToState, biValToAction, logger)
+  return BoundedChecker(
+    monolithicExpr,
+    shouldGiveUp,
+    bmcSolver,
+    bmcEnabled,
+    lfPathOnly,
+    null,
+    { false },
+    null,
+    { false },
+    valToState,
+    biValToAction,
+    logger,
+  )
 }
 
 @JvmOverloads
 fun <S : ExprState, A : ExprAction> buildKIND(
-    monolithicExpr: MonolithicExpr,
-    bmcSolver: Solver,
-    indSolver: Solver,
-    valToState: (Valuation) -> S,
-    biValToAction: (Valuation, Valuation) -> A,
-    logger: Logger,
-    shouldGiveUp: (Int) -> Boolean = { false },
-    bmcEnabled: () -> Boolean = { true },
-    lfPathOnly: () -> Boolean = { true },
-    kindEnabled: (Int) -> Boolean = { true },
+  monolithicExpr: MonolithicExpr,
+  bmcSolver: Solver,
+  indSolver: Solver,
+  valToState: (Valuation) -> S,
+  biValToAction: (Valuation, Valuation) -> A,
+  logger: Logger,
+  shouldGiveUp: (Int) -> Boolean = { false },
+  bmcEnabled: () -> Boolean = { true },
+  lfPathOnly: () -> Boolean = { true },
+  kindEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, indSolver,
-        kindEnabled, valToState, biValToAction, logger)
+  return BoundedChecker(
+    monolithicExpr,
+    shouldGiveUp,
+    bmcSolver,
+    bmcEnabled,
+    lfPathOnly,
+    null,
+    { false },
+    indSolver,
+    kindEnabled,
+    valToState,
+    biValToAction,
+    logger,
+  )
 }
 
 @JvmOverloads
 fun <S : ExprState, A : ExprAction> buildIMC(
-    monolithicExpr: MonolithicExpr,
-    bmcSolver: Solver,
-    itpSolver: ItpSolver,
-    valToState: (Valuation) -> S,
-    biValToAction: (Valuation, Valuation) -> A,
-    logger: Logger,
-    shouldGiveUp: (Int) -> Boolean = { false },
-    bmcEnabled: () -> Boolean = { true },
-    lfPathOnly: () -> Boolean = { true },
-    imcEnabled: (Int) -> Boolean = { true },
+  monolithicExpr: MonolithicExpr,
+  bmcSolver: Solver,
+  itpSolver: ItpSolver,
+  valToState: (Valuation) -> S,
+  biValToAction: (Valuation, Valuation) -> A,
+  logger: Logger,
+  shouldGiveUp: (Int) -> Boolean = { false },
+  bmcEnabled: () -> Boolean = { true },
+  lfPathOnly: () -> Boolean = { true },
+  imcEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, itpSolver, imcEnabled, null,
-        { false }, valToState, biValToAction, logger)
+  return BoundedChecker(
+    monolithicExpr,
+    shouldGiveUp,
+    bmcSolver,
+    bmcEnabled,
+    lfPathOnly,
+    itpSolver,
+    imcEnabled,
+    null,
+    { false },
+    valToState,
+    biValToAction,
+    logger,
+  )
 }

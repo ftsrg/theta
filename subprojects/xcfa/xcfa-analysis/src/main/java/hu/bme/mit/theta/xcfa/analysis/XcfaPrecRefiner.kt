@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import com.google.common.base.Preconditions
@@ -32,63 +31,76 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.xcfa.model.getTempLookup
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
-class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: RefutationToPrec<PtrPrec<P>, R>) :
-    PrecRefiner<XcfaState<S>, XcfaAction, XcfaPrec<PtrPrec<P>>, R> {
+class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(
+  refToPrec: RefutationToPrec<PtrPrec<P>, R>
+) : PrecRefiner<XcfaState<S>, XcfaAction, XcfaPrec<PtrPrec<P>>, R> {
 
-    private val refToPrec: RefutationToPrec<PtrPrec<P>, R> = Preconditions.checkNotNull(refToPrec)
+  private val refToPrec: RefutationToPrec<PtrPrec<P>, R> = Preconditions.checkNotNull(refToPrec)
 
-    override fun refine(prec: XcfaPrec<PtrPrec<P>>, trace: Trace<XcfaState<S>, XcfaAction>,
-        refutation: R): XcfaPrec<PtrPrec<P>> {
-        Preconditions.checkNotNull(trace)
-        Preconditions.checkNotNull<Any>(prec)
-        Preconditions.checkNotNull<R>(refutation)
-        var runningPrec: PtrPrec<P> = prec.p
-        for (i in trace.states.indices) {
-            val reverseVarLookup = trace.states[i].processes.values.map {
-                it.foldVarLookup().map { Pair(it.value, it.key) }
-            }.flatten().toMap()
-            val reverseTempLookup = if (i > 0) getTempLookup(
-                trace.actions[i - 1].edge.label).entries.associateBy(
-                { it.value }) { it.key } else emptyMap()
-            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseVarLookup + reverseTempLookup)
-            runningPrec = refToPrec.join(runningPrec, precFromRef)
-        }
-//        if (runningPrec is PredPrec) {
-//            // todo: instead of outright disabling the dereferences in the prec, maybe just force a literal in the address?
-//            runningPrec = PredPrec.of(runningPrec.preds.filter { !it.hasDeref() }) as P
-//        }
-        return prec.refine(runningPrec)
+  override fun refine(
+    prec: XcfaPrec<PtrPrec<P>>,
+    trace: Trace<XcfaState<S>, XcfaAction>,
+    refutation: R,
+  ): XcfaPrec<PtrPrec<P>> {
+    Preconditions.checkNotNull(trace)
+    Preconditions.checkNotNull<Any>(prec)
+    Preconditions.checkNotNull<R>(refutation)
+    var runningPrec: PtrPrec<P> = prec.p
+    for (i in trace.states.indices) {
+      val reverseVarLookup =
+        trace.states[i]
+          .processes
+          .values
+          .map { it.foldVarLookup().map { Pair(it.value, it.key) } }
+          .flatten()
+          .toMap()
+      val reverseTempLookup =
+        if (i > 0)
+          getTempLookup(trace.actions[i - 1].edge.label).entries.associateBy({ it.value }) {
+            it.key
+          }
+        else emptyMap()
+      val precFromRef =
+        refToPrec.toPrec(refutation, i).changeVars(reverseVarLookup + reverseTempLookup)
+      runningPrec = refToPrec.join(runningPrec, precFromRef)
     }
+    //        if (runningPrec is PredPrec) {
+    //            // todo: instead of outright disabling the dereferences in the prec, maybe just
+    // force a literal in the address?
+    //            runningPrec = PredPrec.of(runningPrec.preds.filter { !it.hasDeref() }) as P
+    //        }
+    return prec.refine(runningPrec)
+  }
 
-    override fun toString(): String {
-        return javaClass.simpleName
-    }
+  override fun toString(): String {
+    return javaClass.simpleName
+  }
 }
 
 private fun Expr<*>.hasDeref(): Boolean =
-    this is Dereference<*, *, *> || this.ops.any(Expr<*>::hasDeref)
+  this is Dereference<*, *, *> || this.ops.any(Expr<*>::hasDeref)
 
 fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
-    if (lookup.isEmpty()) this
-    else
-        when (this) {
-            is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
-            is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
-            is PtrPrec<*> -> PtrPrec(innerPrec.changeVars(lookup)) as P
-            else -> error("Precision type ${this.javaClass} not supported.")
-        }
+  if (lookup.isEmpty()) this
+  else
+    when (this) {
+      is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
+      is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
+      is PtrPrec<*> -> PtrPrec(innerPrec.changeVars(lookup)) as P
+      else -> error("Precision type ${this.javaClass} not supported.")
+    }
 
 fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
-    if (lookups.isEmpty()) this
-    else
-        when (this) {
-            is ExplPrec -> ExplPrec.of(
-                vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+  if (lookups.isEmpty()) this
+  else
+    when (this) {
+      is ExplPrec ->
+        ExplPrec.of(vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
 
-            is PredPrec -> PredPrec.of(
-                preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+      is PredPrec ->
+        PredPrec.of(preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
 
-            is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
+      is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 
-            else -> error("Precision type ${this.javaClass} not supported.")
-        }
+      else -> error("Precision type ${this.javaClass} not supported.")
+    }

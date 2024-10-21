@@ -13,11 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
@@ -39,255 +38,309 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import java.util.*
+import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
-import kotlin.random.Random
-
 
 class XcfaExplAnalysisTest {
 
+  companion object {
 
-    companion object {
+    private val seed = 1001
 
-        private val seed = 1001
-
-        @JvmStatic
-        fun data(): Collection<Array<Any>> {
-            return listOf(
-                arrayOf("/00assignment.c", SafetyResult<*, *>::isUnsafe),
-                arrayOf("/01function.c", SafetyResult<*, *>::isUnsafe),
-                arrayOf("/02functionparam.c", SafetyResult<*, *>::isSafe),
-                arrayOf("/03nondetfunction.c", SafetyResult<*, *>::isUnsafe),
-                arrayOf("/04multithread.c", SafetyResult<*, *>::isUnsafe),
-            )
-        }
+    @JvmStatic
+    fun data(): Collection<Array<Any>> {
+      return listOf(
+        arrayOf("/00assignment.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/01function.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/02functionparam.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/03nondetfunction.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/04multithread.c", SafetyResult<*, *>::isUnsafe),
+      )
     }
+  }
 
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        println("Testing NOPOR on $filepath...")
-        val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing NOPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val analysis = ExplXcfaAnalysis(
-            xcfa,
-            Z3LegacySolverFactory.getInstance().createSolver(),
-            1,
-            getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()), false
-        )
+    val analysis =
+      ExplXcfaAnalysis(
+        xcfa,
+        Z3LegacySolverFactory.getInstance().createSolver(),
+        1,
+        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        false,
+      )
 
-        val lts = getXcfaLts()
+    val lts = getXcfaLts()
 
-        val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(
-                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-            ConsoleLogger(Logger.Level.DETAIL),
-            lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val abstractor =
+      getXcfaAbstractor(
+        analysis,
+        PriorityWaitlist.create(
+          ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
+        ),
+        StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
+        ConsoleLogger(Logger.Level.DETAIL),
+        lts,
+        ErrorDetection.ERROR_LOCATION,
+      )
+        as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
-            ItpRefToPtrPrec(ItpRefToExplPrec()))
+    val precRefiner =
+      XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
+        ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
 
-        val refiner =
-            XcfaSingleExprTraceRefiner.create(
-                ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3LegacySolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val refiner =
+      XcfaSingleExprTraceRefiner.create(
+        ExprTraceBwBinItpChecker.create(
+          BoolExprs.True(),
+          BoolExprs.True(),
+          Z3LegacySolverFactory.getInstance().createItpSolver(),
+        ),
+        precRefiner,
+        PruneStrategy.FULL,
+        NullLogger.getInstance(),
+      ) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+    val cegarChecker = CegarChecker.create(abstractor, refiner)
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
+    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
+    Assertions.assertTrue(verdict(safetyResult))
+  }
 
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing SPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        Assertions.assertTrue(verdict(safetyResult))
-    }
+    val analysis =
+      ExplXcfaAnalysis(
+        xcfa,
+        Z3LegacySolverFactory.getInstance().createSolver(),
+        1,
+        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        false,
+      )
 
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        println("Testing SPOR on $filepath...")
-        val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val lts = XcfaSporLts(xcfa)
 
-        val analysis = ExplXcfaAnalysis(
-            xcfa,
-            Z3LegacySolverFactory.getInstance().createSolver(),
-            1,
-            getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()), false
-        )
+    val abstractor =
+      getXcfaAbstractor(
+        analysis,
+        PriorityWaitlist.create(
+          ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
+        ),
+        StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
+        ConsoleLogger(Logger.Level.DETAIL),
+        lts,
+        ErrorDetection.ERROR_LOCATION,
+      )
+        as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val lts = XcfaSporLts(xcfa)
+    val precRefiner =
+      XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
+        ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
 
-        val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(
-                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-            ConsoleLogger(Logger.Level.DETAIL),
-            lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val refiner =
+      XcfaSingleExprTraceRefiner.create(
+        ExprTraceBwBinItpChecker.create(
+          BoolExprs.True(),
+          BoolExprs.True(),
+          Z3LegacySolverFactory.getInstance().createItpSolver(),
+        ),
+        precRefiner,
+        PruneStrategy.FULL,
+        NullLogger.getInstance(),
+      ) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
-            ItpRefToPtrPrec(ItpRefToExplPrec()))
+    val cegarChecker = CegarChecker.create(abstractor, refiner)
 
-        val refiner =
-            XcfaSingleExprTraceRefiner.create(
-                ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3LegacySolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
-        val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+    Assertions.assertTrue(verdict(safetyResult))
+  }
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    XcfaDporLts.random = Random(seed)
+    println("Testing DPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
+    val analysis =
+      ExplXcfaAnalysis(
+        xcfa,
+        Z3LegacySolverFactory.getInstance().createSolver(),
+        1,
+        XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
+        false,
+      )
 
+    val lts = XcfaDporLts(xcfa)
 
-        Assertions.assertTrue(verdict(safetyResult))
-    }
+    val abstractor =
+      getXcfaAbstractor(
+        analysis,
+        lts.waitlist,
+        StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
+        ConsoleLogger(Logger.Level.DETAIL),
+        lts,
+        ErrorDetection.ERROR_LOCATION,
+      )
+        as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        XcfaDporLts.random = Random(seed)
-        println("Testing DPOR on $filepath...")
-        val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val precRefiner =
+      XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
+        ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
 
-        val analysis = ExplXcfaAnalysis(
-            xcfa,
-            Z3LegacySolverFactory.getInstance().createSolver(),
-            1,
-            XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())), false
-        )
+    val refiner =
+      XcfaSingleExprTraceRefiner.create(
+        ExprTraceBwBinItpChecker.create(
+          BoolExprs.True(),
+          BoolExprs.True(),
+          Z3LegacySolverFactory.getInstance().createItpSolver(),
+        ),
+        precRefiner,
+        PruneStrategy.FULL,
+        ConsoleLogger(Logger.Level.DETAIL),
+      ) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val lts = XcfaDporLts(xcfa)
+    val cegarChecker = CegarChecker.create(abstractor, refiner)
 
-        val abstractor = getXcfaAbstractor(analysis,
-            lts.waitlist,
-            StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-            ConsoleLogger(Logger.Level.DETAIL),
-            lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<ExplState>>, ExplPrec, ItpRefutation>(
-            ItpRefToPtrPrec(ItpRefToExplPrec()))
+    Assertions.assertTrue(verdict(safetyResult))
+  }
 
-        val refiner =
-            XcfaSingleExprTraceRefiner.create(
-                ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3LegacySolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL,
-                ConsoleLogger(
-                    Logger.Level.DETAIL)) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing AASPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
+    val analysis =
+      ExplXcfaAnalysis(
+        xcfa,
+        Z3LegacySolverFactory.getInstance().createSolver(),
+        1,
+        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        false,
+      )
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
+    val lts = XcfaAasporLts(xcfa, mutableMapOf())
 
+    val abstractor =
+      getXcfaAbstractor(
+        analysis,
+        PriorityWaitlist.create(
+          ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())
+        ),
+        StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
+        ConsoleLogger(Logger.Level.DETAIL),
+        lts,
+        ErrorDetection.ERROR_LOCATION,
+      )
+        as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
+    val precRefiner =
+      XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
+        ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
+    val atomicNodePruner = AtomicNodePruner<XcfaState<PtrState<ExplState>>, XcfaAction>()
 
-        Assertions.assertTrue(verdict(safetyResult))
-    }
+    val refiner =
+      XcfaSingleExprTraceRefiner.create(
+        ExprTraceBwBinItpChecker.create(
+          BoolExprs.True(),
+          BoolExprs.True(),
+          Z3LegacySolverFactory.getInstance().createItpSolver(),
+        ),
+        precRefiner,
+        PruneStrategy.FULL,
+        NullLogger.getInstance(),
+        atomicNodePruner,
+      ) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        println("Testing AASPOR on $filepath...")
-        val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val cegarChecker =
+      CegarChecker.create(
+        abstractor,
+        AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()),
+      )
 
-        val analysis = ExplXcfaAnalysis(
-            xcfa,
-            Z3LegacySolverFactory.getInstance().createSolver(),
-            1,
-            getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()), false
-        )
+    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
-        val lts = XcfaAasporLts(xcfa, mutableMapOf())
+    Assertions.assertTrue(verdict(safetyResult))
+  }
 
-        val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(
-                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-            ConsoleLogger(Logger.Level.DETAIL),
-            lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testAadporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+    XcfaDporLts.random = Random(seed)
+    println("Testing AADPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val precRefiner = XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
-            ItpRefToPtrPrec(ItpRefToExplPrec()))
-        val atomicNodePruner = AtomicNodePruner<XcfaState<PtrState<ExplState>>, XcfaAction>()
+    val analysis =
+      ExplXcfaAnalysis(
+        xcfa,
+        Z3LegacySolverFactory.getInstance().createSolver(),
+        1,
+        XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
+        false,
+      )
 
-        val refiner =
-            XcfaSingleExprTraceRefiner.create(
-                ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3LegacySolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
-                atomicNodePruner) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
+    val lts = XcfaAadporLts(xcfa)
 
-        val cegarChecker =
-            CegarChecker.create(abstractor, AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()))
+    val abstractor =
+      getXcfaAbstractor(
+        analysis,
+        lts.waitlist,
+        StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
+        ConsoleLogger(Logger.Level.DETAIL),
+        lts,
+        ErrorDetection.ERROR_LOCATION,
+      )
+        as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
+    val precRefiner =
+      XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
 
+    val refiner =
+      XcfaSingleExprTraceRefiner.create(
+        ExprTraceBwBinItpChecker.create(
+          BoolExprs.True(),
+          BoolExprs.True(),
+          Z3LegacySolverFactory.getInstance().createItpSolver(),
+        ),
+        precRefiner,
+        PruneStrategy.FULL,
+        NullLogger.getInstance(),
+      ) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
+    val cegarChecker = CegarChecker.create(abstractor, refiner)
 
-        Assertions.assertTrue(verdict(safetyResult))
-    }
+    val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
 
-    @ParameterizedTest
-    @MethodSource("data")
-    fun testAadporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        XcfaDporLts.random = Random(seed)
-        println("Testing AADPOR on $filepath...")
-        val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
-        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
-
-        val analysis = ExplXcfaAnalysis(
-            xcfa,
-            Z3LegacySolverFactory.getInstance().createSolver(),
-            1,
-            XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())), false
-        )
-
-        val lts = XcfaAadporLts(xcfa)
-
-        val abstractor = getXcfaAbstractor(analysis,
-            lts.waitlist,
-            StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-            ConsoleLogger(Logger.Level.DETAIL),
-            lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
-
-        val precRefiner = XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
-
-        val refiner =
-            XcfaSingleExprTraceRefiner.create(
-                ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3LegacySolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
-
-        val cegarChecker =
-            CegarChecker.create(abstractor, refiner)
-
-        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())))
-
-
-
-        Assertions.assertTrue(verdict(safetyResult))
-    }
+    Assertions.assertTrue(verdict(safetyResult))
+  }
 }

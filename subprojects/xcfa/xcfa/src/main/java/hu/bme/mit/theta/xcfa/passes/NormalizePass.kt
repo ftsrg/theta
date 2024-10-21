@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -21,53 +20,53 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
- * This pass converts all edges to a normalized form, i.e., the outermost label is a NonDetLabel containing
- * SequenceLabels, which do not contain any more Sequence or NonDet labels.
- * Sets the `normal` flag on the ProcedureBuilder
+ * This pass converts all edges to a normalized form, i.e., the outermost label is a NonDetLabel
+ * containing SequenceLabels, which do not contain any more Sequence or NonDet labels. Sets the
+ * `normal` flag on the ProcedureBuilder
  */
-
 class NormalizePass : ProcedurePass {
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val edges = LinkedHashSet(builder.getEdges())
-        for (edge in edges) {
-            builder.removeEdge(edge)
-            builder.addEdge(edge.withLabel(normalize(edge.label)))
-        }
-        builder.metaData["normal"] = Unit
-        return builder
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val edges = LinkedHashSet(builder.getEdges())
+    for (edge in edges) {
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(normalize(edge.label)))
     }
+    builder.metaData["normal"] = Unit
+    return builder
+  }
 
-    private fun normalize(label: XcfaLabel): XcfaLabel {
-        val collector: MutableList<MutableList<XcfaLabel>> = ArrayList()
-        collector.add(ArrayList())
-        normalize(label, collector)
-        return NondetLabel(collector.map { SequenceLabel(it) }.toSet())
-    }
+  private fun normalize(label: XcfaLabel): XcfaLabel {
+    val collector: MutableList<MutableList<XcfaLabel>> = ArrayList()
+    collector.add(ArrayList())
+    normalize(label, collector)
+    return NondetLabel(collector.map { SequenceLabel(it) }.toSet())
+  }
 
-    private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {
-        when (label) {
-            is SequenceLabel -> label.labels.forEach { normalize(it, collector) }
-            is NondetLabel -> {
-                val labelList = label.labels.toList()
-                ArrayList(collector).forEach { list ->
-                    for ((i, xcfaLabel) in labelList.withIndex()) {
-                        if (i == labelList.size - 1) {
-                            list.add(xcfaLabel)
-                        } else {
-                            val newList = ArrayList(list)
-                            newList.add(xcfaLabel)
-                            collector.add(newList)
-                        }
-                    }
-                }
+  private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {
+    when (label) {
+      is SequenceLabel -> label.labels.forEach { normalize(it, collector) }
+      is NondetLabel -> {
+        val labelList = label.labels.toList()
+        ArrayList(collector).forEach { list ->
+          for ((i, xcfaLabel) in labelList.withIndex()) {
+            if (i == labelList.size - 1) {
+              list.add(xcfaLabel)
+            } else {
+              val newList = ArrayList(list)
+              newList.add(xcfaLabel)
+              collector.add(newList)
             }
-
-            is NopLabel -> {}
-            is StmtLabel -> if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(
-                    True()))) collector.forEach { it.add(label) }
-
-            else -> collector.forEach { it.add(label) }
+          }
         }
+      }
+
+      is NopLabel -> {}
+      is StmtLabel ->
+        if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(True())))
+          collector.forEach { it.add(label) }
+
+      else -> collector.forEach { it.add(label) }
     }
+  }
 }
