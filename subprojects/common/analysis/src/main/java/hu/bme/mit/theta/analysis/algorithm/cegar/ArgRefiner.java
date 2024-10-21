@@ -13,13 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import java.util.Optional;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
-public interface Result<Pr extends Proof> {
-
-    Pr getProof();
-
-    Optional<Statistics> getStats();
-}
+/**
+ * Common interface for refiners. It takes an ARG and a precision, checks if the counterexample in
+ * the ARG is feasible and if not, it refines the precision and may also prune the ARG.
+ */
+public interface ArgRefiner<S extends State, A extends Action, P extends Prec>
+        extends Refiner<P, ARG<S, A>, Trace<S, A>> {}

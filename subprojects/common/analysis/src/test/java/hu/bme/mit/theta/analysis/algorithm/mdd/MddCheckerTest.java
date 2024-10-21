@@ -15,6 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -29,30 +37,18 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(value = Parameterized.class)
-
 public class MddCheckerTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
     private static final VarDecl<IntType> Y = Decls.Var("y", IntType.getInstance());
     private static final VarDecl<IntType> Z = Decls.Var("z", IntType.getInstance());
-
 
     @Parameterized.Parameter(value = 0)
     public Expr<BoolType> initExpr;
@@ -71,57 +67,86 @@ public class MddCheckerTest {
 
     @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {Eq(X.getRef(), Int(0)), // x = 0
+        return Arrays.asList(
+                new Object[][] {
+                    {
+                        Eq(X.getRef(), Int(0)), // x = 0
                         Eq(Prime(X.getRef()), X.getRef()), // x'=x
                         Not(Eq(X.getRef(), Int(5))), // not x = 5
                         true,
-                        1L},
-
-                {Eq(X.getRef(), Int(0)),
+                        1L
+                    },
+                    {
+                        Eq(X.getRef(), Int(0)),
                         Eq(Prime(X.getRef()), X.getRef()),
                         Not(Eq(X.getRef(), Int(0))),
                         false,
-                        1L},
-
-                {Eq(X.getRef(), Int(0)), // x = 0
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
+                        1L
+                    },
+                    {
+                        Eq(X.getRef(), Int(0)), // x = 0
+                        And(
+                                Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))),
+                                Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
                         Not(Eq(X.getRef(), Int(5))),
                         false,
-                        11L},
-
-                {Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(5))),
+                        11L
+                    },
+                    {
+                        Eq(X.getRef(), Int(0)),
+                        And(
+                                Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))),
+                                Leq(Prime(X.getRef()), Int(5))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
-                        6L},
-
-                {Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(4))),
+                        6L
+                    },
+                    {
+                        Eq(X.getRef(), Int(0)),
+                        And(
+                                Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))),
+                                Leq(Prime(X.getRef()), Int(4))),
                         Not(Eq(X.getRef(), Int(5))),
                         true,
-                        5L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(10))),
+                        5L
+                    },
+                    {
+                        And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(
+                                And(
+                                        Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))),
+                                        Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))),
+                                        Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))),
+                                IntExprs.Lt(Prime(Z.getRef()), Int(10))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
-                        10L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(6))),
+                        10L
+                    },
+                    {
+                        And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(
+                                And(
+                                        Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))),
+                                        Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))),
+                                        Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))),
+                                IntExprs.Lt(Prime(Z.getRef()), Int(6))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
-                        6L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(5))),
+                        6L
+                    },
+                    {
+                        And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(
+                                And(
+                                        Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))),
+                                        Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))),
+                                        Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))),
+                                IntExprs.Lt(Prime(Z.getRef()), Int(5))),
                         Not(Eq(X.getRef(), Int(5))),
                         true,
-                        5L},
-
-        });
+                        5L
+                    },
+                });
     }
 
     @Test
@@ -139,23 +164,32 @@ public class MddCheckerTest {
         testWithIterationStrategy(MddChecker.IterationStrategy.GSAT);
     }
 
-    public void testWithIterationStrategy(MddChecker.IterationStrategy iterationStrategy) throws Exception {
+    public void testWithIterationStrategy(MddChecker.IterationStrategy iterationStrategy)
+            throws Exception {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final SafetyResult<MddWitness, MddCex> status;
+        final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final MddChecker<ExprAction> checker = MddChecker.create(initExpr, VarIndexingFactory.indexing(0), new ExprAction() {
-                @Override
-                public Expr<BoolType> toExpr() {
-                    return tranExpr;
-                }
+            final MddChecker<ExprAction> checker =
+                    MddChecker.create(
+                            initExpr,
+                            VarIndexingFactory.indexing(0),
+                            new ExprAction() {
+                                @Override
+                                public Expr<BoolType> toExpr() {
+                                    return tranExpr;
+                                }
 
-                @Override
-                public VarIndexing nextIndexing() {
-                    return VarIndexingFactory.indexing(1);
-                }
-            }, propExpr, solverPool, logger, iterationStrategy);
+                                @Override
+                                public VarIndexing nextIndexing() {
+                                    return VarIndexingFactory.indexing(1);
+                                }
+                            },
+                            propExpr,
+                            solverPool,
+                            logger,
+                            iterationStrategy);
             status = checker.check(null);
         }
 
@@ -164,9 +198,6 @@ public class MddCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
-        assertEquals(stateSpaceSize, status.getWitness().size());
-
-
+        assertEquals(stateSpaceSize, status.getProof().size());
     }
-
 }

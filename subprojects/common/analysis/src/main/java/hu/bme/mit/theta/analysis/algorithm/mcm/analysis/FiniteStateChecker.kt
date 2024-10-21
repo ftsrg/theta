@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mcm.analysis
 
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.InitFunc
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.TransFunc
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mcm.interpreter.MemoryEventProvider
@@ -35,52 +34,52 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 import java.util.*
 
-/**
- * WiP checker for finite-state systems
- */
+/** WiP checker for finite-state systems */
 class FiniteStateChecker<S : ExplState, A : StmtAction, T>(
-    private val mcm: Collection<GraphConstraint>,
-    private val initFunc: InitFunc<S, ExplPrec>,
-    private val actionFunc: LTS<S, A>,
-    private val transFunc: TransFunc<S, A, ExplPrec>,
-    private val memoryEventProvider: MemoryEventProvider<A, ExplPrec>,
-    private val graphPatternCompiler: GraphPatternCompiler<T, *>,
-    private val graphPatternSolver: GraphSolver<T>
-) : SafetyChecker<EmptyWitness, EmptyCex, ExplPrec> {
+  private val mcm: Collection<GraphConstraint>,
+  private val initFunc: InitFunc<S, ExplPrec>,
+  private val actionFunc: LTS<S, A>,
+  private val transFunc: TransFunc<S, A, ExplPrec>,
+  private val memoryEventProvider: MemoryEventProvider<A, ExplPrec>,
+  private val graphPatternCompiler: GraphPatternCompiler<T, *>,
+  private val graphPatternSolver: GraphSolver<T>,
+) : SafetyChecker<EmptyProof, EmptyCex, ExplPrec> {
 
-    override fun check(prec: ExplPrec): SafetyResult<EmptyWitness, EmptyCex> {
-        val eventIds = LinkedList<Int>()
-        val rels = LinkedList<Pair<String, Tuple>>()
-        val lastIds = LinkedHashMap<S, Int>()
-        val initId = nextId(eventIds)
-        val initStates = LinkedList(initFunc.getInitStates(prec))
-        initStates.forEach { lastIds[it] = initId }
-        while (initStates.isNotEmpty()) {
-            val state = initStates.pop()
-            val lastId = checkNotNull(lastIds[state])
-            val actions = actionFunc.getEnabledActionsFor(state)
+  override fun check(prec: ExplPrec): SafetyResult<EmptyProof, EmptyCex> {
+    val eventIds = LinkedList<Int>()
+    val rels = LinkedList<Pair<String, Tuple>>()
+    val lastIds = LinkedHashMap<S, Int>()
+    val initId = nextId(eventIds)
+    val initStates = LinkedList(initFunc.getInitStates(prec))
+    initStates.forEach { lastIds[it] = initId }
+    while (initStates.isNotEmpty()) {
+      val state = initStates.pop()
+      val lastId = checkNotNull(lastIds[state])
+      val actions = actionFunc.getEnabledActionsFor(state)
 
-            val nextStates = actions.map { a ->
-                val memEvent = memoryEventProvider[a, prec]
-                transFunc.getSuccStates(state, a, prec).onEach { s ->
-                    memEvent?.also {
-                        val id = nextId(eventIds)
-                        rels.add(Pair(memEvent.type().label, Tuple1.of(id)))
-                        rels.add(Pair("po", Tuple2.of(lastId, id)))
-                        lastIds[s] = id
-                    }
-                }
-            }.flatten()
-            initStates.addAll(nextStates)
-        }
-//        PartialSolver(mcm, CandidateExecutionGraph(eventIds, rels))
-        return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyWitness.getInstance())
-
+      val nextStates =
+        actions
+          .map { a ->
+            val memEvent = memoryEventProvider[a, prec]
+            transFunc.getSuccStates(state, a, prec).onEach { s ->
+              memEvent?.also {
+                val id = nextId(eventIds)
+                rels.add(Pair(memEvent.type().label, Tuple1.of(id)))
+                rels.add(Pair("po", Tuple2.of(lastId, id)))
+                lastIds[s] = id
+              }
+            }
+          }
+          .flatten()
+      initStates.addAll(nextStates)
     }
+    //        PartialSolver(mcm, CandidateExecutionGraph(eventIds, rels))
+    return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+  }
 
-    private fun nextId(list: MutableList<Int>): Int {
-        val ret = list.size
-        list.add(list.size)
-        return ret
-    }
+  private fun nextId(list: MutableList<Int>): Int {
+    val ret = list.size
+    list.add(list.size)
+    return ret
+  }
 }
