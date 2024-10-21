@@ -35,20 +35,16 @@ import hu.bme.mit.theta.core.stmt.Stmt
  *
  */
 
-class PtrAnalysis<S : ExprState, P : Prec>(
-    private val innerAnalysis: Analysis<S, ExprAction, P>,
-    private val isHavoc: Boolean = false
-) :
+class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>,
+    private val isHavoc: Boolean = false) :
     Analysis<PtrState<S>, PtrAction, PtrPrec<P>> {
 
     override fun getPartialOrd(): PartialOrd<PtrState<S>> = innerAnalysis.partialOrd.getPtrPartialOrd()
 
     override fun getInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = innerAnalysis.initFunc.getPtrInitFunc()
 
-    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> =
-        innerAnalysis.transFunc.getPtrTransFunc(
-            isHavoc
-        )
+    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc(
+        isHavoc)
 }
 
 fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
@@ -60,8 +56,7 @@ fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState
 }
 
 fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
-    isHavoc: Boolean = false
-): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
+    isHavoc: Boolean = false): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
     val writeTriples = action.nextWriteTriples()
     val patchedPrec = prec.innerPrec.patch(writeTriples)
     val exprAction: ExprAction = if (isHavoc) {

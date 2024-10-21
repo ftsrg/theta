@@ -40,52 +40,47 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleBindings
 
-fun getPortfolioChecker(
-    xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
+fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     parseContext: ParseContext, logger: Logger,
-    uniqueLogger: Logger
-): SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> =
-    SafetyChecker { _ ->
+    uniqueLogger: Logger): SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> = SafetyChecker { _ ->
 
-        val sw = Stopwatch.createStarted()
-        val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
+    val sw = Stopwatch.createStarted()
+    val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
 
-        val portfolioStm = when (portfolioName) {
-            "STABLE",
-            "CEGAR",
-            "COMPLEX",
-            "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+    val portfolioStm = when (portfolioName) {
+        "STABLE",
+        "CEGAR",
+        "COMPLEX",
+        "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-            "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-            "EMERGENT",
-            "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        "EMERGENT",
+        "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-            "TESTING",
-            "CHC",
-            "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        "TESTING",
+        "CHC",
+        "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-            else -> {
-                if (File(portfolioName).exists()) {
-                    val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
-                    val bindings: Bindings = SimpleBindings()
-                    bindings["xcfa"] = xcfa
-                    bindings["mcm"] = mcm
-                    bindings["parseContext"] = parseContext
-                    bindings["portfolioConfig"] = config
-                    bindings["logger"] = logger
-                    bindings["uniqueLogger"] = uniqueLogger
-                    kotlinEngine.eval(FileReader(portfolioName), bindings) as STM
-                } else {
-                    error("No such file or built-in config: $portfolioName")
-                }
+        else -> {
+            if (File(portfolioName).exists()) {
+                val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+                val bindings: Bindings = SimpleBindings()
+                bindings["xcfa"] = xcfa
+                bindings["mcm"] = mcm
+                bindings["parseContext"] = parseContext
+                bindings["portfolioConfig"] = config
+                bindings["logger"] = logger
+                bindings["uniqueLogger"] = uniqueLogger
+                kotlinEngine.eval(FileReader(portfolioName), bindings) as STM
+            } else {
+                error("No such file or built-in config: $portfolioName")
             }
         }
-
-        val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
-
-        logger.write(
-            Logger.Level.RESULT, "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n"
-        )
-        result.second as SafetyResult<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>?
     }
+
+    val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
+
+    logger.write(Logger.Level.RESULT, "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n")
+    result.second as SafetyResult<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>?
+}

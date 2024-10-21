@@ -30,6 +30,7 @@ apply(from = rootDir.resolve("../gradle/shared-with-buildSrc/mirrors.gradle.kts"
 
 val kotlinVersion: String by project
 val shadowVersion: String by project
+val spotlessVersion: String by project
 
 // https://github.com/gradle/kotlin-dsl/issues/430#issuecomment-414768887
 fun gradlePlugin(id: String, version: String): String = "$id:$id.gradle.plugin:$version"
@@ -38,14 +39,14 @@ dependencies {
     compileOnly(gradleKotlinDsl())
     implementation(kotlin("gradle-plugin", kotlinVersion))
     implementation(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
+    implementation(gradlePlugin("com.diffplug.spotless", spotlessVersion))
 }
 
 // Force the embeddable Kotlin compiler version to be the selected kotlinVersion.
 // https://github.com/gradle/kotlin-dsl/issues/1207
 configurations.all {
     val isKotlinCompiler = name == "embeddedKotlin" || name.startsWith("kotlin") || name.startsWith(
-        "kapt"
-    )
+        "kapt")
     if (!isKotlinCompiler) {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin" && requested.module.name == "kotlin-compiler-embeddable") {

@@ -73,44 +73,29 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                 is InvokeLabel -> {
                     val lut = getDerefLut(dereferences, builder)
                     SequenceLabel(lut.map {
-                        StmtLabel(
-                            Assign(
-                                cast(it.value, it.value.type),
-                                cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)
-                            )
-                        )
-                    } + InvokeLabel(
-                        this.name, this.params.map { it.replaceDerefs(lut) }, metadata,
-                        tempLookup
-                    ), metadata
-                    )
+                        StmtLabel(Assign(cast(it.value, it.value.type),
+                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)))
+                    } + InvokeLabel(this.name, this.params.map { it.replaceDerefs(lut) }, metadata,
+                        tempLookup), metadata)
                 }
 
                 is StartLabel -> {
                     val lut = getDerefLut(dereferences, builder)
                     SequenceLabel(lut.map {
-                        StmtLabel(
-                            Assign(
-                                cast(it.value, it.value.type),
-                                cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)
-                            )
-                        )
+                        StmtLabel(Assign(cast(it.value, it.value.type),
+                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)))
                     } + StartLabel(name, params.map { it.replaceDerefs(lut) }, pidVar, metadata, tempLookup), metadata)
                 }
 
-                is StmtLabel -> SequenceLabel(
-                    stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
-                    metadata
-                )
+                is StmtLabel -> SequenceLabel(stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
+                    metadata)
 
                 else -> error("Not implemented for ${this.javaClass.simpleName}")
             }
         } else this
 
-    private fun getDerefLut(
-        dereferences: List<Dereference<*, *, *>>,
-        builder: XcfaProcedureBuilder
-    ) = dereferences.associateWith {
+    private fun getDerefLut(dereferences: List<Dereference<*, *, *>>,
+        builder: XcfaProcedureBuilder) = dereferences.associateWith {
         val tmpVar = Var("__THETA_heap_tmp_$cnt", it.type)
         builder.addVar(tmpVar)
         tmpVar
@@ -133,24 +118,15 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
         val ret = ArrayList<Stmt>()
         val accessType = dereferencesWithAccessTypes.filter { dereferences.contains(it.first) }
         for (dereference in accessType.filter { it.second.isRead }.map { it.first }) {
-            ret.add(
-                Assign(
-                    cast(lut[dereference]!!, dereference.type),
-                    cast(dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) }, dereference.type)
-                )
-            )
+            ret.add(Assign(cast(lut[dereference]!!, dereference.type),
+                cast(dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) }, dereference.type)))
         }
         ret.add(stmt)
         for (dereference in accessType.filter { it.second.isWritten }.map { it.first }) {
-            ret.add(
-                MemoryAssign(
-                    cast(
-                        dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) },
-                        dereference.type
-                    ) as Dereference<*, *, Type>,
-                    cast(lut[dereference]!!, dereference.type).ref
-                )
-            )
+            ret.add(MemoryAssign(
+                cast(dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) },
+                    dereference.type) as Dereference<*, *, Type>,
+                cast(lut[dereference]!!, dereference.type).ref))
         }
         return ret
     }

@@ -50,11 +50,9 @@ data class InvokeLabel @JvmOverloads constructor(
 
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (name, params) = Regex("([^\\(]*)\\((.*)\\)").matchEntire(s)!!.destructured
-            return InvokeLabel(
-                name,
+            return InvokeLabel(name,
                 params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
-                metadata = metadata
-            )
+                metadata = metadata)
         }
     }
 }
@@ -89,14 +87,11 @@ data class StartLabel(
 
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (pidVarName, pidVarType, name, params) = Regex(
-                "\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)"
-            ).matchEntire(s)!!.destructured
+                "\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
-            return StartLabel(
-                name,
+            return StartLabel(name,
                 params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar,
-                metadata = metadata
-            )
+                metadata = metadata)
         }
     }
 }
@@ -114,8 +109,7 @@ data class JoinLabel(
 
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (pidVarName, pidVarType) = Regex("join \\(var (.*) (.*)\\)").matchEntire(
-                s
-            )!!.destructured
+                s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
             return JoinLabel(pidVar, metadata = metadata)
         }
@@ -136,8 +130,7 @@ data class StmtLabel @JvmOverloads constructor(
 
     init {
         check(
-            stmt !is NonDetStmt && stmt !is SequenceStmt
-        ) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
+            stmt !is NonDetStmt && stmt !is SequenceStmt) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
     }
 
     override fun toStmt(): Stmt = stmt
@@ -154,15 +147,11 @@ data class StmtLabel @JvmOverloads constructor(
             val matchResult = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)
             if (matchResult != null) {
                 val (stmt, choiceTypeStr) = matchResult.destructured
-                return StmtLabel(
-                    StatementWrapper(stmt, scope).instantiate(env),
-                    choiceType = ChoiceType.valueOf(choiceTypeStr), metadata = metadata
-                )
+                return StmtLabel(StatementWrapper(stmt, scope).instantiate(env),
+                    choiceType = ChoiceType.valueOf(choiceTypeStr), metadata = metadata)
             } else {
-                return StmtLabel(
-                    StatementWrapper(s, scope).instantiate(env),
-                    choiceType = ChoiceType.NONE, metadata = metadata
-                )
+                return StmtLabel(StatementWrapper(s, scope).instantiate(env),
+                    choiceType = ChoiceType.NONE, metadata = metadata)
             }
         }
     }
