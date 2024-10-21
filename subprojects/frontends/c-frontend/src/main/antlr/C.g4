@@ -173,7 +173,7 @@ logicalOrExpression
     ;
 
 conditionalExpression
-    :   logicalOrExpression ('?' expression ':' conditionalExpression)?
+    :   logicalOrExpression ('?' ifTrue=expression ':' ifFalse=expression)?
     ;
 
 assignmentExpression

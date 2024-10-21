@@ -6,8 +6,6 @@ runs:
     - name: Checkout code
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Check for formatting
-      uses: leventeBajczi/intellij-idea-format@v1.0
+      uses: ./.github/actions/cache-build
       with:
-        settings-file: "./.idea/codeStyles/Project.xml"
-        file-mask: "*.java,*.kt"
-        additional-options: "-dry"
+        arguments: spotlessCheck

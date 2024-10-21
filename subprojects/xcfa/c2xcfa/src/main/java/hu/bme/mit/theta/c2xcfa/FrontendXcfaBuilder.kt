@@ -94,7 +94,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 continue
             }
             if (type is CStruct) {
-                error("Not handling init expression of struct array ${globalDeclaration.get1()}")
+                uniqueWarningLogger.write(
+                    Logger.Level.INFO, "Not handling init expression of struct array ${globalDeclaration.get1()}"
+                )
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
             if (type is CArray) {
@@ -190,7 +192,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
             val type = CComplexType.getType(flatVariable.ref, parseContext)
-            if (type is CArray && builder.getParams().none { it.first == flatVariable }) {
+            if ((type is CArray || type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(flatVariable, flatVariable.type),
                         cast(type.getValue("$ptrCnt"), flatVariable.type))

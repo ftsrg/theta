@@ -41,6 +41,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--help", "-h"], help = true)
     private var help = false
 
+    @Parameter(names = ["--svcomp"])
+    private var svcomp = false
+
     @Parameter
     var remainingFlags: MutableList<String> = ArrayList()
 
@@ -54,6 +57,18 @@ class XcfaCli(private val args: Array<String>) {
                 config = getGson().fromJson(FileReader(configFile), XcfaConfig::class.java)
             } else {
                 config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
+            }
+            if (svcomp) {
+                remainingFlags.addAll(
+                    listOf(
+                        "--enable-output",
+                        "--disable-xcfa-serialization",
+                        "--disable-arg-generation",
+                        "--disable-chc-serialization",
+                        "--disable-c-serialization",
+                        "--only-svcomp-witness"
+                    )
+                )
             }
             while (remainingFlags.isNotEmpty()) {
                 val nextArgs = remainingFlags.toTypedArray()

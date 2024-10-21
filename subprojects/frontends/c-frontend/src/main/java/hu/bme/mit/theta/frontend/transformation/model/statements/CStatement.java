@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 
 /**
  * Every Program, Function and Statement is a subclass of this base class.
@@ -60,7 +61,7 @@ public abstract class CStatement {
      * @return The expression associated with the statement.
      */
     public Expr<?> getExpression() {
-        throw new RuntimeException("Cannot get expression!");
+        throw new UnsupportedFrontendElementException("Cannot get expression!");
     }
 
     public CStatement getPostStatements() {
@@ -68,7 +69,7 @@ public abstract class CStatement {
     }
 
     public void setPostStatements(CStatement postStatements) {
-        throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
+        throw new UnsupportedFrontendElementException("Only CCompounds shall currently have pre- and post statements!");
     }
 
     public CStatement getPreStatements() {
@@ -76,7 +77,7 @@ public abstract class CStatement {
     }
 
     public void setPreStatements(CStatement preStatements) {
-        throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
+        throw new UnsupportedFrontendElementException("Only CCompounds shall currently have pre- and post statements!");
     }
 
     public abstract <P, R> R accept(CStatementVisitor<P, R> visitor, P param);

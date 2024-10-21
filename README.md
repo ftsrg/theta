@@ -20,7 +20,7 @@
 [![Check formatting](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
-![Theta logo](https://raw.githubusercontent.com/ftsrg/theta/master/doc/theta-logo.png)
+<img src="https://raw.githubusercontent.com/ftsrg/theta/master/doc/theta-logo.svg" alt="Theta logo" width="33%">
 
 ## About
 

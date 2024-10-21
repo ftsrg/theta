@@ -41,7 +41,7 @@ public class Fitsall extends CInteger implements Unsigned {
 
     @Override
     public CInteger getSignedVersion() {
-        throw new RuntimeException("Bool does not have a signed version!");
+        throw new RuntimeException("Fitsall does not have a signed version!");
     }
 
     @Override

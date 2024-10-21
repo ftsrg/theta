@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.params
 
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.solver.UnknownSolverStatusException
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverException
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
@@ -32,6 +33,7 @@ enum class ExitCodes(val code: Int) {
     SERVER_ERROR(202),
     PORTFOLIO_ERROR(203),
 
+    UNSUPPORTED_ELEMENT(209),
     FRONTEND_FAILED(210),
     INVALID_PARAM(211),
 
@@ -59,6 +61,9 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
     } catch (e: ErrorCodeException) {
         e.printStackTrace()
         exitProcess(throwDontExit, e, e.code)
+    } catch (e: UnsupportedFrontendElementException) {
+        e.printCauseAndTrace(stacktrace)
+        exitProcess(throwDontExit, e, ExitCodes.UNSUPPORTED_ELEMENT.code)
     } catch (e: SmtLibSolverException) {
         e.printCauseAndTrace(stacktrace)
         exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
