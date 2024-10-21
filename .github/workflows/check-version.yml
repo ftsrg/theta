@@ -45,3 +45,11 @@ jobs:
           mode: 'recreate'
           message: |
             :exclamation: Please modify `build.gradle.kts` to contain a later version than ${{ steps.master_version.outputs.version }}. Current version is ${{ steps.new_version.outputs.version }}.
+
+      - name: Delete Comment
+        if: github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+        continue-on-error: true # if we are in a fork, this will fail, but we don't care (tables will be missing)
+        with: 
+          comment_tag: 'version'
+          mode: 'delete'
