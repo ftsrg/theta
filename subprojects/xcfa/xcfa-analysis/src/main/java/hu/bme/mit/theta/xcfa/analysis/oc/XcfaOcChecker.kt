@@ -54,7 +54,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import kotlin.system.exitProcess
 import kotlin.time.measureTime
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
@@ -394,7 +393,9 @@ class XcfaOcChecker(
     }
 
     private fun addCrossThreadRelations() {
-        for ((_, map) in events)
+        for ((v, map) in events) {
+            if (map.values.all { it.all { e -> e.assignment == null } })
+                exit("variable $v is not initialized")
             for ((pid1, list1) in map)
                 for ((pid2, list2) in map)
                     if (pid1 != pid2)
@@ -405,6 +406,7 @@ class XcfaOcChecker(
                                 if (e2.type == EventType.WRITE)
                                     wss.add(RelationType.WS, e1, e2)
                             }
+        }
     }
 
     private fun addToSolver(solver: Solver): Boolean {
@@ -482,5 +484,12 @@ class XcfaOcChecker(
 
     private fun exit(msg: String): Nothing {
         error("Feature not supported by OC checker: $msg.")
+    }
+
+    fun printXcfa() = xcfa.toDot { edge ->
+        "(${
+            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
+                .joinToString(",") { it.const.name }
+        })"
     }
 }

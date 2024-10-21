@@ -191,7 +191,7 @@ class FrontendXcfaBuilder(
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
+        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext))
         xcfaBuilder.addProcedure(builder)
         val initStmtList = ArrayList<XcfaLabel>()
         if (param.size > 0 && builder.name.equals("main")) {

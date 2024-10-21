@@ -30,7 +30,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -596,7 +595,7 @@ class PassTests {
     @Test
     fun testCPipeline() {
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+            procedure("main", CPasses(false, parseContext)) {
                 (init to final) {
                     "proc1"()
                 }
@@ -617,7 +616,7 @@ class PassTests {
     fun testSplit() {
         lateinit var edge: XcfaEdge
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+            procedure("main", CPasses(false, parseContext)) {
                 edge = (init to final) {
                     assume("1 == 1")
                     "proc1"()
@@ -627,7 +626,7 @@ class PassTests {
         }
 
         val newEdges = edge.splitIf { it is InvokeLabel }
-        Assertions.assertTrue(newEdges.size == 3)
+        assertTrue(newEdges.size == 3)
     }
 
 }

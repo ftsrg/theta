@@ -24,7 +24,7 @@ open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
     val passes: List<List<ProcedurePass>> = passes.toList()
 }
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
+class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(
     listOf(
         // formatting
         NormalizePass(),
@@ -40,6 +40,10 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         CLibraryFunctionsPass(),
     ),
     listOf(
+        ReferenceElimination(parseContext),
+        MallocFunctionPass(parseContext),
+    ),
+    listOf(
         // optimizing
         SimplifyExprsPass(parseContext),
         LoopUnrollPass(),
@@ -52,10 +56,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         InlineProceduresPass(parseContext),
         RemoveDeadEnds(),
         EliminateSelfLoops(),
-    ),
-    listOf(
-        ReferenceElimination(parseContext),
-        MallocFunctionPass(parseContext),
     ),
     listOf(
         StaticCoiPass(),
