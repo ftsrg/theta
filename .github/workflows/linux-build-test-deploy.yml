@@ -105,6 +105,11 @@ jobs:
         with:
           name: "EmergenTheta"
           inputflag: "--algorithm EMERGENT"
+      - name: Create thorn.zip
+        uses: ./.github/actions/build-archive
+        with:
+          name: "Thorn"
+          inputflag: "--algorithm HORN"
 
 
   javadoc:
