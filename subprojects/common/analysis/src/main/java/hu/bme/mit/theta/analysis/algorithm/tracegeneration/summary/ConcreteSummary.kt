@@ -20,55 +20,13 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.core.model.Valuation
 
-class ConcreteSummaryBuilder<S: State, A: Action> {
-    fun build(
-        valuations: MutableMap<SummaryNode<out S, out A>, Valuation>,
-        summary: AbstractTraceSummary<out S, out A>
-    ): ConcreteSummary<Valuation, A> {
-        // TODO check that every node has a valuation?
-        // TODO make valuation into a template type?
+class ConcreteSummary<S : State, A: Action>(
+    val valuationMap: MutableMap<AbstractSummaryNode<out S, out A>, Valuation>,
+    val summary: AbstractTraceSummary<out S, out A>
+) {
+    // TODO check that every node has a valuation?
 
-        // create nodes (states/valuations)
-        val concreteNodeMap: MutableMap<SummaryNode<out S, out A>, ConcreteSummaryNode<Valuation, A>> = mutableMapOf()
-        for(node in summary.summaryNodes) {
-            concreteNodeMap[node] = ConcreteSummaryNode<Valuation, A>(valuations[node]!!)
-        }
-
-        // create edges (actions)
-        val edges: MutableSet<ConcreteSummaryEdge<Valuation, A>> = mutableSetOf()
-        for((summaryNode, concreteNode) in concreteNodeMap) {
-            for(summaryEdge in summaryNode.outEdges) {
-                edges.add(ConcreteSummaryEdge.create(summaryEdge.action, concreteNode, concreteNodeMap[summaryEdge.target]!!))
-            }
-        }
-
-        // create concrete summary
-        return ConcreteSummary(concreteNodeMap.values.toSet(), edges)
-    }
-}
-
-data class ConcreteSummary<S, A>(val nodes: Set<ConcreteSummaryNode<S, A>>, val edges: Set<ConcreteSummaryEdge<S, A>>)
-
-class ConcreteSummaryNode<S, A>(val state: S) {
-    val inEdges : MutableSet<ConcreteSummaryEdge<S,A>> = mutableSetOf()
-    val outEdges : MutableSet<ConcreteSummaryEdge<S,A>> = mutableSetOf()
-    
-    fun addInEdge(edge: ConcreteSummaryEdge<S, A>) {
-        inEdges.add(edge)
-    }
-
-    fun addOutEdge(edge: ConcreteSummaryEdge<S, A>) {
-        outEdges.add(edge)
-    }
-}
-
-class ConcreteSummaryEdge<S, A> private constructor(val action : A, val source: ConcreteSummaryNode<S, A>, val target: ConcreteSummaryNode<S, A>) {
-    companion object {
-        fun <S, A> create(action: A, source: ConcreteSummaryNode<S, A>, target: ConcreteSummaryNode<S, A>) : ConcreteSummaryEdge<S, A> {
-            val edge = ConcreteSummaryEdge<S, A>(action, source, target)
-            source.addOutEdge(edge)
-            target.addInEdge(edge)
-            return edge
-        }
+    fun getValuation(node: AbstractSummaryNode<S, A>): Valuation {
+        return valuationMap[node]!!
     }
 }

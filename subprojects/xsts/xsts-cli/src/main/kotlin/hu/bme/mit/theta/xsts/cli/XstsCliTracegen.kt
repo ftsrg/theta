@@ -22,11 +22,10 @@ import com.google.common.base.Stopwatch
 import com.google.common.io.MoreFiles
 import com.google.common.io.RecursiveDeleteOption
 import hu.bme.mit.theta.analysis.*
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ExprSummaryStatus
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.InfeasibleExprSummaryStatus
-import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
+import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
@@ -51,25 +50,43 @@ class XstsCliTracegen : XstsCliBaseCommand(
         help = "Directory the traces should be written into. If not specified, output is written into model-directory/traces."
     ).file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
 
+    private fun toCexs(summaryStateMap: Map<AbstractSummaryNode<out XstsState<*>, out XstsAction>, XstsState<ExplState>>): String {
+        val sb = Utils.lispStringBuilder(javaClass.simpleName).body()
+
+        for((node, state) in summaryStateMap) {
+            sb.add(Utils.lispStringBuilder("${node.id}: ${XstsState::class.java.simpleName}")
+                .add(if (state.isInitialized) "post_init" else "pre_init")
+                .add(if (state.lastActionWasEnv()) "last_env" else "last_internal").body()
+                .add(state.state.toString()))
+        }
+
+        for(node in summaryStateMap.keys) {
+            for(outEdge in node.outEdges) {
+                sb.add("${node.id} -> ${outEdge.target.id}")
+            }
+        }
+
+        return sb.toString()
+    }
+
     private fun printResult(
-        concretizationResult: ExprSummaryStatus, abstractSummary: AbstractTraceSummary<out State, out Action>, totalTimeMs: Long, traceDirPath: File) {
+        concretizationResult: Map<AbstractSummaryNode<out XstsState<*>, out XstsAction>, XstsState<ExplState>>, abstractSummary: AbstractTraceSummary<out State, out Action>, totalTimeMs: Long, traceDirPath: File) {
         logger.write(Logger.Level.RESULT, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces in ${totalTimeMs}ms\n")
         // TODO print coverage (full or not)?
 
         val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
         val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".abstract-trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        logger.write(Logger.Level.VERBOSE, "Abstract trace summary was visualized in ${visFile}")
+        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}")
 
-        if(concretizationResult.feasible) {
-            logger.write(Logger.Level.RESULT, "Abstract trace summary successfully concretized\n")
-            val concreteSummaryFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
-            TODO("write to file")
-            logger.write(Logger.Level.VERBOSE, "Concrete trace summary exported to ${concreteSummaryFile}")
-        } else {
-            logger.write(Logger.Level.RESULT, "Abstract trace summary was infeasible, could not be concretized\n")
-            logger.write(Logger.Level.RESULT, "Interpolant: ${(concretizationResult as InfeasibleExprSummaryStatus).itp}\n")
+        val concreteSummaryFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
+
+        val cexsString = toCexs(concretizationResult)
+        PrintWriter(File(concreteSummaryFile)).use { printWriter ->
+            printWriter.write(cexsString)
         }
+
+        logger.write(Logger.Level.SUBSTEP, "Concrete trace summary exported to ${concreteSummaryFile}")
     }
 
     override fun run() {
@@ -109,8 +126,8 @@ class XstsCliTracegen : XstsCliBaseCommand(
         val result = checker.check()
 
         // TODO concretization, writing into file
-        val concretizationResult = TraceGenerationXstsSummaryConcretizerUtil.concretizeSummary(
-            result.summary as AbstractTraceSummary<XstsState<ExprState>, XstsAction>, Z3LegacySolverFactory.getInstance(), xsts
+        val concretizationResult = TraceGenerationXstsSummaryConcretizerUtil.concretize(
+            result.summary as AbstractTraceSummary<XstsState<*>, XstsAction>, Z3LegacySolverFactory.getInstance(), xsts
         )
 
         sw.stop()

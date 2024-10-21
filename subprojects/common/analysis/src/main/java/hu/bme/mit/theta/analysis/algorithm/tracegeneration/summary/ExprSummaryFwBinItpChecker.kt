@@ -49,11 +49,11 @@ class ExprSummaryFwBinItpChecker private constructor(
      * and map of the updated indexings
      */
     fun addNodeToSolver(
-        currentNode: SummaryNode<out ExprState, out ExprAction>,
+        currentNode: AbstractSummaryNode<out ExprState, out ExprAction>,
         A: ItpMarker,
-        indexingMap: MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>,
-    ) : Pair<Optional<SummaryEdge<out ExprState, out ExprAction>>, MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
-        var currentIndexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = indexingMap
+        indexingMap: Map<AbstractSummaryNode<out ExprState, out ExprAction>, VarIndexing>,
+    ) : Pair<Optional<AbstractSummaryEdge<out ExprState, out ExprAction>>, MutableMap<AbstractSummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
+        var currentIndexingMap : MutableMap<AbstractSummaryNode<out ExprState, out ExprAction>, VarIndexing> = indexingMap.toMutableMap()
 
         for (edge in currentNode.outEdges) {
             solver.push()
@@ -104,7 +104,7 @@ class ExprSummaryFwBinItpChecker private constructor(
         Preconditions.checkNotNull(summary)
         val summaryNodeCount = summary.summaryNodes.size
 
-        val indexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = mutableMapOf()
+        val indexingMap : MutableMap<AbstractSummaryNode<out ExprState, out ExprAction>, VarIndexing> = mutableMapOf()
         indexingMap[summary.initNode] = VarIndexingFactory.indexing(0)
 
         solver.push()
@@ -126,13 +126,12 @@ class ExprSummaryFwBinItpChecker private constructor(
         // concretizable case: we don't have a target, thus we don't even need B in this case
         val status = if (concretizable) {
             val model = solver.model
-            val valuations = mutableMapOf<SummaryNode<out ExprState, out ExprAction>, Valuation>()
+            val valuations = mutableMapOf<AbstractSummaryNode<out ExprState, out ExprAction>, Valuation>()
             for ((node, indexing) in updatedIndexingMap.entries) {
                 valuations[node] = PathUtils.extractValuation(model, indexing)
             }
 
-            val builder = ConcreteSummaryBuilder<ExprState, ExprAction>()
-            val concreteSummary = builder.build(valuations, summary)
+            val concreteSummary = ConcreteSummary(valuations, summary)
             FeasibleExprSummaryStatus(concreteSummary)
         } else {
             checkState(result.first.isPresent, "If summary not concretizable, border edge must be present!")

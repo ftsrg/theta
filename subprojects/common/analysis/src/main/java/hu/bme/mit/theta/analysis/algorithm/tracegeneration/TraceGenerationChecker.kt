@@ -7,7 +7,7 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationSummaryBuilder
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryBuilder
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
@@ -60,7 +60,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
             }.toList())
 
         assert(!getFullTraces)
-        val summaryBuilder = TraceGenerationSummaryBuilder<S, A>()
+        val summaryBuilder = AbstractSummaryBuilder<S, A>()
         argTraces.forEach { trace -> summaryBuilder.addTrace(trace) }
         val traceSetSummary = summaryBuilder.build()
 

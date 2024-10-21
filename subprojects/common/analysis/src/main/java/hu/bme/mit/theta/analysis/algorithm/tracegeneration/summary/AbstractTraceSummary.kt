@@ -18,14 +18,13 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.Witness
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 
-class TraceGenerationSummaryBuilder<S : State, A : Action> {
+class AbstractSummaryBuilder<S : State, A : Action> {
     val argTraces: MutableList<ArgTrace<S, A>> = mutableListOf()
 
     fun addTrace(trace: ArgTrace<S, A>) {
@@ -72,9 +71,9 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
 
         // create summary nodes
 
-        val argNodeSummaryNodeMap = mutableMapOf<ArgNode<S, A>, SummaryNode<S, A>>()
+        val argNodeSummaryNodeMap = mutableMapOf<ArgNode<S, A>, AbstractSummaryNode<S, A>>()
         for (nodeGroup in nodeGroups) {
-            val summaryNode = SummaryNode.create(nodeGroup)
+            val summaryNode = AbstractSummaryNode.create(nodeGroup)
             for(node in nodeGroup) {
                 argNodeSummaryNodeMap[node] = summaryNode
             }
@@ -84,20 +83,20 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
         checkState(initSummaryNodes.size==1, "Initial arg node must be in exactly 1 summary node!")
         val initNode = initSummaryNodes.get(0)
 
-        val summaryEdges = mutableSetOf<SummaryEdge<S, A>>()
+        val abstractSummaryEdges = mutableSetOf<AbstractSummaryEdge<S, A>>()
         // save edges as well, so we can easily connect edge sources and targets
         for(summaryNode in summaryNodes) {
             for(argNode in summaryNode.argNodes) {
                 for(edge in argNode.outEdges) {
                     if(edge.target in argNodes) {
                         // summary edge adds itself to source and target as well
-                        summaryEdges.add(SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!))
+                        abstractSummaryEdges.add(AbstractSummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!))
                     }
                 }
             }
         }
 
-        return AbstractTraceSummary(argTraces, summaryEdges, summaryNodes, initNode)
+        return AbstractTraceSummary(argTraces, abstractSummaryEdges, summaryNodes, initNode)
     }
 }
 
@@ -108,28 +107,28 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
  */
 data class AbstractTraceSummary<S : State, A : Action> (
     val sourceTraces : Collection<ArgTrace<S, A>>,
-    val summaryEdges : Collection<SummaryEdge<S, A>>,
-    val summaryNodes : Collection<SummaryNode<S, A>>,
-    val initNode : SummaryNode<S, A>
+    val abstractSummaryEdges : Collection<AbstractSummaryEdge<S, A>>,
+    val summaryNodes : Collection<AbstractSummaryNode<S, A>>,
+    val initNode : AbstractSummaryNode<S, A>
     ) : Witness {
 }
 
 /**
  * Groups arg nodes based on coverages, but also stores the traces they appear in, coverage relations and arg nodes
  */
-class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: Long,
+class AbstractSummaryNode<S : State, A: Action> private constructor (val id: Long,
                                                              val argNodes: Set<ArgNode<S, A>>,
                                                              val leastOverApproximatedNode : ArgNode<S, A>,
                                                              val mostOverApproximatedNode : ArgNode<S, A>,
                                                             ) {
     // not immutable for edges, as both source and target has to exist when creating edge :c
-    var inEdges : MutableSet<SummaryEdge<S, A>> = mutableSetOf()
-    var outEdges : MutableSet<SummaryEdge<S, A>> = mutableSetOf()
+    var inEdges : MutableSet<AbstractSummaryEdge<S, A>> = mutableSetOf()
+    var outEdges : MutableSet<AbstractSummaryEdge<S, A>> = mutableSetOf()
 
     companion object {
         var counter : Long = 0
 
-        fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : SummaryNode<S, A> {
+        fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : AbstractSummaryNode<S, A> {
             // all of the nodes should be in some kind of coverage relationship with each other, otherwise, split this summary node
             for(node in argNodes) {
                 for(node2 in argNodes) {
@@ -172,7 +171,7 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
                 }
             }
 
-            return SummaryNode(counter++, argNodes, leastOverApproximatedNode, mostOverApproximatedNode)
+            return AbstractSummaryNode(counter++, argNodes, leastOverApproximatedNode, mostOverApproximatedNode)
         }
     }
 
@@ -197,27 +196,27 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
         return getLabel()
     }
 
-    fun addOutEdge(summaryEdge: SummaryEdge<S, A>) {
-        outEdges.add(summaryEdge)
+    fun addOutEdge(abstractSummaryEdge: AbstractSummaryEdge<S, A>) {
+        outEdges.add(abstractSummaryEdge)
     }
 
-    fun addInEdge(summaryEdge: SummaryEdge<S, A>) {
-        inEdges.add(summaryEdge)
+    fun addInEdge(abstractSummaryEdge: AbstractSummaryEdge<S, A>) {
+        inEdges.add(abstractSummaryEdge)
     }
 }
 
-class SummaryEdge<S: State, A: Action> private constructor (
+class AbstractSummaryEdge<S: State, A: Action> private constructor (
     val argEdge: ArgEdge<S, A>,
-    val source: SummaryNode<S, A>,
-    val target: SummaryNode<S, A>,
+    val source: AbstractSummaryNode<S, A>,
+    val target: AbstractSummaryNode<S, A>,
     val action: A = argEdge.action,
 ) {
     companion object {
-        fun <S: State, A: Action> create(argEdge: ArgEdge<S, A>, source : SummaryNode<S, A>, target : SummaryNode<S, A>) : SummaryEdge<S, A> {
-            val summaryEdge = SummaryEdge(argEdge, source, target)
-            source.addOutEdge(summaryEdge)
-            target.addInEdge(summaryEdge)
-            return summaryEdge
+        fun <S: State, A: Action> create(argEdge: ArgEdge<S, A>, source : AbstractSummaryNode<S, A>, target : AbstractSummaryNode<S, A>) : AbstractSummaryEdge<S, A> {
+            val abstractSummaryEdge = AbstractSummaryEdge(argEdge, source, target)
+            source.addOutEdge(abstractSummaryEdge)
+            target.addInEdge(abstractSummaryEdge)
+            return abstractSummaryEdge
         }
     }
 

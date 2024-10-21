@@ -53,18 +53,18 @@ object AbstractTraceSummaryVisualizer {
                 .fillColor(fillColor).lineColor(lineColor)
                 .lineStyle(lineStyle).build()
 
-            graph.addNode(stateNodeSummary.nodeSummaryId.toString(), nAttribute)
+            graph.addNode(stateNodeSummary.id.toString(), nAttribute)
         }
 
-        for(summaryEdge in abstractTraceSummary.summaryEdges) {
+        for(summaryEdge in abstractTraceSummary.abstractSummaryEdges) {
             val eAttribute = EdgeAttributes.builder()
                 .label(summaryEdge.getLabel())
                 .color(lineColor)
                 .lineStyle(lineStyle).build()
 
             graph.addEdge(
-                summaryEdge.source.nodeSummaryId.toString(),
-                summaryEdge.target.nodeSummaryId.toString(),
+                summaryEdge.source.id.toString(),
+                summaryEdge.target.id.toString(),
                 eAttribute
             )
         }

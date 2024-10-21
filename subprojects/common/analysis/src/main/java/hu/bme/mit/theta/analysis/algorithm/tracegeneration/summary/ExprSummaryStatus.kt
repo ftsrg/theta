@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 
 abstract class ExprSummaryStatus(val feasible : Boolean)
 
-class FeasibleExprSummaryStatus<S : Valuation, A : Action>(val summary : ConcreteSummary<S,A>)
+class FeasibleExprSummaryStatus<S : State, A : Action>(val summary : ConcreteSummary<S,A>)
     : ExprSummaryStatus(true)
 
 class InfeasibleExprSummaryStatus(val itp : Expr<BoolType>) : ExprSummaryStatus(false)

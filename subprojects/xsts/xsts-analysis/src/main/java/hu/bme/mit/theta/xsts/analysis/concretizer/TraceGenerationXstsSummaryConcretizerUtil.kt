@@ -1,10 +1,9 @@
 package hu.bme.mit.theta.xsts.analysis.concretizer
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ExprSummaryStatus
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprSummaryFwBinItpChecker
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.common.Tuple2
@@ -24,15 +23,29 @@ object TraceGenerationXstsSummaryConcretizerUtil {
         private set
     private var foundInfeasible = false
 
-    fun concretizeSummary(
-        summary: AbstractTraceSummary<XstsState<ExprState>, XstsAction>, solverFactory: SolverFactory, xsts: XSTS
-    ): ExprSummaryStatus {
+    fun concretize(
+        summary: AbstractTraceSummary<XstsState<*>, XstsAction>, solverFactory: SolverFactory, xsts: XSTS
+    ): Map<AbstractSummaryNode<out XstsState<*>, out XstsAction>, XstsState<ExplState>> {
         val varFilter = VarFilter.of(xsts)
         val checker: ExprSummaryFwBinItpChecker = ExprSummaryFwBinItpChecker.create(
             xsts.initFormula, solverFactory.createItpSolver()
         )
+        val status = checker.check(summary)
 
-        return checker.check(summary)
+        checkState(status.feasible, "Summary could not be concretized")
+
+        val concreteSummary = (status as FeasibleExprSummaryStatus<XstsState<*>, XstsAction>).summary
+
+        val xstsStateMap : MutableMap<AbstractSummaryNode<out XstsState<*>, out XstsAction>, XstsState<ExplState>> = mutableMapOf()
+        for ((abstractNode, valuation) in concreteSummary.valuationMap) {
+            xstsStateMap[abstractNode] = XstsState.of<ExplState>(
+                ExplState.of(varFilter.filter(valuation)),
+                abstractNode.getStates().iterator().next().lastActionWasEnv(),
+                abstractNode.getStates().iterator().next().isInitialized()
+            )
+        }
+
+        return xstsStateMap
     }
 
     private fun addToReport(refutation: ItpRefutation, abstractTrace: Trace<XstsState<ExplState>, XstsAction>) {
