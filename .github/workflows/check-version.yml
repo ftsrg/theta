@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize, reopened]
 
 concurrency: 
-  group: version-${{ github.head_ref }}
+  group: version-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
