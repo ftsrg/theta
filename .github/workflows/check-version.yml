@@ -10,6 +10,8 @@ concurrency:
 jobs:
   check-version:
     runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write 
     steps:
       - name: Set java home to java 17
         run: |
