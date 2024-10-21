@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Recursive, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-08-05 09:02:32 UTC
+tool:                    Theta 6.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1110-357
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3242.261 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Recursive
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------
+recursive-simple/id_o100.yml                                                           Parsing OK                      14.22        6.94        None
+recursive-simple/id2_i5_o5-2.yml                                                       true                            12.10        4.85        None
+recursified_nla-digbench/recursified_geo2-ll.yml                                       TIMEOUT                         20.82       16.28        None
+recursive/recHanoi03-2.yml                                                             TIMEOUT                         21.53        9.52        None
+recursified_nla-digbench/recursified_lcm2.yml                                          TIMEOUT                         20.26       14.24        None
+recursive-simple/id_b3_o2-2.yml                                                        Parsing OK                      10.78        5.01        None
+recursified_nla-digbench/recursified_ps3-ll.yml                                        TIMEOUT                         17.11       61.02        None
+recursive-simple/afterrec-2.yml                                                        true                             6.08        2.84        None
+recursive-simple/id_i10_o10-2.yml                                                      Parsing OK                      17.20        6.78        None
+recursified_loop-crafted/recursified_simple_array_index_value_1-2.yml                  ERROR (frontend failed)          1.86        0.78        None
+recursified_loop-simple/recursified_nested_1b.yml                                      TIMEOUT                         21.72        8.36        None
+recursive/EvenOdd03.yml                                                                false(unreach-call)              6.12        2.80        None
+recursified_nla-digbench/recursified_egcd2-ll.yml                                      ERROR (frontend failed)          2.18        0.86        None
+recursive-simple/id_o200.yml                                                           Parsing OK                      17.08        7.18        None
+recursified_nla-digbench/recursified_geo1-u.yml                                        TIMEOUT                         20.20       14.52        None
+recursive/BallRajamani-SPIN2000-Fig1.yml                                               TIMEOUT                         21.05        7.69        None
+recursive-simple/id2_b3_o5.yml                                                         true                            15.04        6.61        None
+recursified_loop-invariants/recursified_eq2.yml                                        true                            11.84        5.69        None
+recursified_loop-simple/recursified_nested_6.yml                                       ERROR (frontend failed)          1.82        0.77        None
+recursified_nla-digbench/recursified_ps6-ll.yml                                        TIMEOUT                         16.75       60.05        None
+recursified_nla-digbench/recursified_ps5-ll.yml                                        TIMEOUT                         13.51       61.02        None
+recursified_nla-digbench/recursified_divbin.yml                                        TIMEOUT                         20.38       12.17        None
+recursive-simple/id_i25_o25-2.yml                                                      false(unreach-call)              9.91        4.07        None
+recursified_loop-simple/recursified_nested_2.yml                                       ERROR (frontend failed)          1.67        0.70        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+lhb-reducer.yml    ERROR (frontend failed)          1.76        0.74        None
+recursive-simple/fibo_2calls_5-2.yml                                                   false(unreach-call)              8.33        3.40        None
+recursive-simple/fibo_15-2.yml                                                         TIMEOUT                         20.76       10.75        None
+recursive/Addition02.yml                                                               TIMEOUT                         21.14        7.65        None
+recursive/Fibonacci03.yml                                                              TIMEOUT                         21.10        7.73        None
+recursive/Fibonacci05.yml                                                              TIMEOUT                         20.66        7.90        None
+recursive-simple/id_b5_o10-2.yml                                                       true                            10.19        4.81        None
+recursive-simple/sum_15x0-2.yml                                                        false(unreach-call)              8.61        3.47        None
+recursive-simple/id2_b2_o3.yml                                                         true                            15.25        6.70        None
+recursified_loop-simple/recursified_deep-nested.yml                                    ERROR (frontend failed)          1.97        0.80        None
+recursified_loop-invariants/recursified_linear-inequality-inv-a.yml                    TIMEOUT                         21.73        8.44        None
+recursified_nla-digbench/recursified_hard-ll.yml                                       TIMEOUT                         21.48        9.09        None
+recursified_nla-digbench/recursified_mannadiv.yml                                      TIMEOUT                         21.52        9.15        None
+recursified_nla-digbench/recursified_ps2-ll.yml                                        TIMEOUT                         20.45       10.52        None
+recursified_loop-crafted/recursified_simple_vardep_1.yml                               TIMEOUT                         21.45        8.43        None
+recursive-simple/fibo_25-1.yml                                                         TIMEOUT                         20.80       10.80        None
+recursive-simple/fibo_2calls_5-1.yml                                                   TIMEOUT                         20.79        9.13        None
+recursive-simple/id2_b5_o10.yml                                                        TIMEOUT                         20.21       11.33        None
+recursive-simple/fibo_5-2.yml                                                          false(unreach-call)              8.02        3.34        None
+recursified_loop-invariants/recursified_mod4.yml                                       TIMEOUT                         20.17        9.28        None
+recursive/McCarthy91-2.yml                                                             TIMEOUT                         21.71        7.53        None
+recursive-simple/fibo_20-1.yml                                                         TIMEOUT                         20.39       11.36        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+nlh-reducer.yml    ERROR (frontend failed)          1.78        0.74        None
+recursified_loop-simple/recursified_nested_4.yml                                       ERROR (frontend failed)          1.83        0.78        None
+recursive-simple/afterrec-1.yml                                                        false(unreach-call)              6.58        3.19        None
+recursive-simple/id_b3_o5-2.yml                                                        true                            10.57        5.08        None
+----------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                              done                           205.24      505.03           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:              13
+    correct true:        7
+    correct false:       6
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              37
+  Score:                20 (max: 80)

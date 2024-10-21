@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Hardware, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Wed, 2024-03-20 11:15:21 UTC
+tool:                    Theta 5.0.6
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1055-417
+os:                      Linux-6.5.0-1016-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.167 MHz
+ram:                     16757.3504 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Hardware
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                            status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml      TIMEOUT                        120.31      115.80        None
+btor2c-lazyMod.cambridge.5.prop1-back-serstep.yml    TIMEOUT (Parsing OK)           120.43       97.46        None
+btor2c-lazyMod.extinction.4.prop1-func-interl.yml    TIMEOUT (Parsing OK)           120.43       94.32        None
+btor2c-lazyMod.lup.2.prop1-func-interl.yml           Parsing OK                     119.33       97.71        None
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml    Parsing OK                      86.29       62.97        None
+------------------------------------------------------------------------------------------------------------------
+Run set 1                                            done                           177.10      469.89           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               5
+  Score:                 0 (max: 9)

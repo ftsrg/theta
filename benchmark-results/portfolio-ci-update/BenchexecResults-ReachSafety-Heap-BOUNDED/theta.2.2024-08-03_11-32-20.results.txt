@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Heap, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-08-03 11:32:20 UTC
+tool:                    Theta 6.3.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1114-532
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3207.666 MHz
+ram:                     16757.334016 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Heap
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                 status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------
+test09.yml                Parsing OK                       9.61        5.54        None
+test15.yml                Parsing OK                       8.82        5.36        None
+just_assert.yml           true                             4.99        2.60        None
+volatile_alias.yml        Parsing OK                       8.08        5.06        None
+mutex_lock_int.c_1.yml    Parsing OK                       8.90        5.34        None
+oomInt.yml                true                             5.21        2.62        None
+test16.yml                Parsing OK                       9.45        5.32        None
+mutex_lock_int.yml        Parsing OK                       8.74        5.34        None
+test18.yml                Parsing OK                       3.50        1.59        None
+volatile_alias.c_1.yml    Parsing OK                       8.18        5.08        None
+callfpointer.yml          Parsing OK                       7.69        4.79        None
+---------------------------------------------------------------------------------------
+Run set 1                 done                            83.08       49.79           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             11 Files
+  correct:               2
+    correct true:        2
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               9
+  Score:                 4 (max: 20)

@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call, SV-COMP24_no-data-race, SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-08-03 11:27:56 UTC
+tool:                    Theta 6.3.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1771-943
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3242.386 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call
+Run set 1 of 4: skipped because it has no files
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows
+Run set 3 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread-ext/18_read_write_lock-pthread.yml                                                             Parsing OK                       4.33        1.51        None
+pthread-atomic/read_write_lock-1.yml                                                                   Parsing OK                       4.41        1.53        None
+pthread-wmm/rfi003_tso.yml                                                                             Parsing OK                       5.71        1.92        None
+pthread/lazy01.yml                                                                                     Parsing OK                       3.50        1.26        None
+pthread-wmm/mix000.oepc.yml                                                                            Parsing OK                       5.19        1.74        None
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml                                      Parsing OK                       3.82        1.37        None
+pthread-wmm/safe032_tso.yml                                                                            Parsing OK                       4.72        1.62        None
+goblint-regression/13-privatized_37-traces-ex-4_true.yml                                               Parsing OK                       3.83        1.35        None
+pthread-C-DAC/pthread-demo-datarace-3.yml                                                              Parsing OK                       5.72        1.94        None
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml                                      Parsing OK                       4.28        1.53        None
+pthread-ext/31_simple_loop5_vs-pthread.yml                                                             Parsing OK                       3.58        1.27        None
+pthread-wmm/safe030_tso.yml                                                                            Parsing OK                       4.54        1.58        None
+pthread-wmm/safe018_power.opt.yml                                                                      Parsing OK                       5.18        1.75        None
+pthread-wmm/safe026_tso.yml                                                                            Parsing OK                       4.27        1.49        None
+pthread/fib_safe-11.yml                                                                                Parsing OK                       5.00        1.75        None
+pthread-wmm/safe024_tso.yml                                                                            Parsing OK                       4.59        1.62        None
+pthread-ext/08_rand_cas.yml                                                                            Parsing OK                       5.14        1.74        None
+goblint-regression/13-privatized_19-publish-precision_unknown_2_pos.yml                                Parsing OK                       3.85        1.37        None
+pthread-wmm/mix057_power.oepc_pso.oepc_rmo.oepc.yml                                                    Parsing OK                       6.13        2.07        None
+pthread-wmm/mix023_power.opt_pso.opt_rmo.opt.yml                                                       Parsing OK                       5.83        1.98        None
+pthread-wmm/mix032.oepc.yml                                                                            Parsing OK                       4.78        1.60        None
+pthread-wmm/mix030_power.opt_pso.opt_rmo.opt.yml                                                       Parsing OK                       5.67        1.91        None
+pthread-wmm/mix036_pso.opt_tso.opt.yml                                                                 Parsing OK                       6.02        2.03        None
+pthread-wmm/mix034_pso.opt_tso.opt.yml                                                                 Parsing OK                       4.83        1.65        None
+pthread-wmm/safe012_rmo.oepc.yml                                                                       Parsing OK                       5.43        1.83        None
+pthread-wmm/mix005.opt.yml                                                                             Parsing OK                       5.80        1.95        None
+pthread-wmm/rfi004.yml                                                                                 Parsing OK                       4.92        1.67        None
+pthread-ext/11_fmaxsymopt-pthread.yml                                                                  Parsing OK                       4.64        1.63        None
+pthread-wmm/mix019.opt.yml                                                                             Parsing OK                       5.61        1.90        None
+pthread-wmm/safe019_power.opt.yml                                                                      Parsing OK                       5.08        1.70        None
+pthread-wmm/safe031_power.oepc_pso.oepc_rmo.oepc.yml                                                   Parsing OK                       5.31        1.79        None
+pthread/triangular-longest-2.yml                                                                       Parsing OK                       3.78        1.33        None
+pthread-wmm/mix016_pso.opt_tso.opt.yml                                                                 Parsing OK                       5.43        1.82        None
+goblint-regression/28-race_reach_46-escape_racefree.yml                                                Parsing OK                       4.15        1.50        None
+pthread-wmm/mix019_power.oepc_pso.oepc_rmo.oepc.yml                                                    Parsing OK                       5.64        1.90        None
+pthread-wmm/mix018_power.oepc_pso.oepc_rmo.oepc.yml                                                    Parsing OK                       5.09        1.71        None
+pthread-wmm/safe007_pso.oepc_pso.opt_tso.oepc_tso.opt-thin001_pso.oepc_pso.opt_tso.oepc_tso.opt.yml    Parsing OK                       3.90        1.38        None
+pthread-wmm/safe005_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml                         Parsing OK                       5.55        1.87        None
+pthread-ext/40_barrier_vf-pthread.yml                                                                  Parsing OK                       3.46        1.23        None
+pthread-wmm/safe015_rmo.yml                                                                            Parsing OK                       6.18        2.06        None
+goblint-regression/13-privatized_18-first-reads_unknown_1_neg.yml                                      Parsing OK                       4.14        1.47        None
+pthread/fib_unsafe-11.yml                                                                              Parsing OK                       5.08        1.73        None
+pthread-lit/qw2004-2b.yml                                                                              Parsing OK                       4.73        1.64        None
+pthread-wmm/mix055_tso.oepc.yml                                                                        Parsing OK                       5.93        1.98        None
+pthread-deagle/circular_buffer_ok.yml                                                                  Parsing OK                       5.27        1.78        None
+pthread-wmm/safe035_power.yml                                                                          Parsing OK                       5.92        1.98        None
+pthread-ext/14_spin2003.yml                                                                            Parsing OK                       3.93        1.40        None
+pthread/fib_safe-10.yml                                                                                Parsing OK                       5.12        1.74        None
+pthread-ext/45_monabsex1_vs.yml                                                                        Parsing OK                       3.40        1.20        None
+pthread-wmm/safe004_tso.yml                                                                            Parsing OK                       4.71        1.64        None
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 3                                                                                              done                           243.06       88.60           -
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 100)

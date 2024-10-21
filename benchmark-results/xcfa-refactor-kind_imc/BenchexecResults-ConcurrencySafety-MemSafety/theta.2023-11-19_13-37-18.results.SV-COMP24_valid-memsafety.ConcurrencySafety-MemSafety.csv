@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	ERROR (frontend failed)	3.771954	1.430032403000041	252.825600
+pthread-atomic/read_write_lock-1.yml	true	10.902838	4.648156617999973	480.903168
+pthread-wmm/rfi003_tso.yml	true	11.987912	5.046127861000002	465.448960
+pthread/lazy01.yml	true	9.274391	4.24133764100003	453.009408
+pthread-wmm/mix000.oepc.yml	true	11.588863	4.961763231999953	461.090816
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml	true	10.184933	4.3877736119999895	449.638400
+pthread-wmm/safe032_tso.yml	true	10.13414	4.474498052999991	432.115712
+goblint-regression/13-privatized_37-traces-ex-4_true.yml	true	8.72841	4.11111126000003	449.085440
+pthread-C-DAC/pthread-demo-datarace-3.yml	ERROR (frontend failed)	5.164484	1.9021621310000114	316.276736
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml	true	9.650907	4.3558854270000325	453.697536

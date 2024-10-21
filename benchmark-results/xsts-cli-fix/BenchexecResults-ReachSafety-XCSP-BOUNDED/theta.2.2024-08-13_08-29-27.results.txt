@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-XCSP, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Tue, 2024-08-13 08:29:27 UTC
+tool:                    Theta 6.5.1
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1432-390
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2616.12 MHz
+ram:                     16757.338112 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-XCSP
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------
+CostasArray-14.yml         TIMEOUT                         20.21       14.67        None
+Dubois-025.yml             TIMEOUT                         20.93       16.69        None
+aim-100-2-0-unsat-4.yml    TIMEOUT                         21.10       16.53        None
+AllInterval-014.yml        TIMEOUT                         20.09       15.27        None
+AllInterval-005.yml        TIMEOUT                         21.02       16.58        None
+aim-100-1-6-unsat-4.yml    TIMEOUT                         20.99       16.51        None
+AllInterval-012.yml        TIMEOUT                         20.11       15.18        None
+Dubois-100.yml             TIMEOUT                         21.12       15.94        None
+AllInterval-009.yml        TIMEOUT                         20.06       15.40        None
+aim-200-1-6-unsat-2.yml    TIMEOUT                         21.13       16.20        None
+aim-200-1-6-unsat-1.yml    TIMEOUT                         21.12       16.23        None
+aim-100-1-6-unsat-3.yml    TIMEOUT                         21.05       16.57        None
+Dubois-023.yml             TIMEOUT                         20.91       16.64        None
+Dubois-028.yml             TIMEOUT                         20.99       16.44        None
+Haystacks-17.yml           TIMEOUT                         20.76       13.52        None
+Dubois-055.yml             TIMEOUT                         20.02       15.23        None
+Dubois-035.yml             TIMEOUT                         20.93       16.56        None
+aim-100-3-4-sat-4.yml      TIMEOUT                         21.10       16.24        None
+Dubois-016.yml             TIMEOUT                         21.02       16.48        None
+aim-200-3-4-sat-4.yml      TIMEOUT                         20.16       14.75        None
+AllInterval-018.yml        TIMEOUT                         20.08       15.21        None
+Dubois-095.yml             TIMEOUT                         21.15       16.08        None
+Haystacks-16.yml           TIMEOUT                         20.64       13.74        None
+aim-100-2-0-unsat-1.yml    TIMEOUT                         20.97       16.46        None
+Haystacks-18.yml           TIMEOUT                         20.71       13.57        None
+aim-200-1-6-unsat-4.yml    TIMEOUT                         21.12       16.14        None
+aim-100-6-0-sat-2.yml      TIMEOUT                         21.13       16.15        None
+AllInterval-017.yml        TIMEOUT                         20.10       15.19        None
+aim-200-1-6-sat-1.yml      TIMEOUT                         21.06       16.34        None
+aim-100-1-6-sat-3.yml      TIMEOUT                         21.09       16.47        None
+aim-200-2-0-sat-1.yml      TIMEOUT                         21.07       16.30        None
+aim-100-3-4-sat-2.yml      TIMEOUT                         21.07       16.47        None
+Dubois-090.yml             TIMEOUT                         20.05       14.93        None
+Dubois-030.yml             TIMEOUT                         20.95       16.48        None
+Dubois-017.yml             TIMEOUT                         20.94       16.64        None
+Haystacks-12.yml           TIMEOUT                         20.38       14.43        None
+aim-200-6-0-sat-2.yml      TIMEOUT                         20.30       14.28        None
+Dubois-050.yml             TIMEOUT                         21.02       16.30        None
+aim-200-3-4-sat-1.yml      TIMEOUT                         20.09       14.86        None
+AllInterval-019.yml        TIMEOUT                         21.14       16.27        None
+aim-200-2-0-unsat-1.yml    TIMEOUT                         20.12       15.03        None
+Dubois-019.yml             TIMEOUT                         21.00       16.84        None
+Dubois-018.yml             TIMEOUT                         20.97       16.78        None
+AllInterval-010.yml        TIMEOUT                         20.21       15.01        None
+aim-100-2-0-unsat-2.yml    TIMEOUT                         21.03       16.32        None
+Dubois-027.yml             TIMEOUT                         20.91       16.71        None
+AllInterval-011.yml        TIMEOUT                         20.08       15.26        None
+aim-100-2-0-unsat-3.yml    TIMEOUT                         21.01       16.41        None
+aim-200-6-0-sat-3.yml      TIMEOUT                         20.29       14.39        None
+CostasArray-10.yml         TIMEOUT                         20.15       15.14        None
+----------------------------------------------------------------------------------------
+Run set 1                  done                             5.82      798.50           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 79)

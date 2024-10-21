@@ -1,0 +1,8 @@
+tool		Theta 6.3.0	Theta 6.3.0	Theta 6.3.0	Theta 6.3.0
+run set		SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware
+../sv-benchmarks/c/hardware-verification-bv/		status	cputime (s)	walltime (s)	memory (MB)
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml	false	TIMEOUT	120.618042	111.95440423899993	1288.146944
+btor2c-lazyMod.cambridge.5.prop1-back-serstep.yml	true	TIMEOUT	120.476906	94.79696198099998	6272.966656
+btor2c-lazyMod.extinction.4.prop1-func-interl.yml	true	TIMEOUT	120.403555	96.23855485700005	5842.341888
+btor2c-lazyMod.lup.2.prop1-func-interl.yml	true	TIMEOUT	122.108683	96.57996835899996	4843.175936
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml	true	TIMEOUT	120.08907	84.15869549499996	4588.724224

@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-atomic/read_write_lock-1.yml	ERROR (server error)	3.433789	1.9981256599999142	192.286720
+pthread-wmm/rfi003_tso.yml	ERROR (server error)	3.654611	2.0860773910000034	223.780864
+pthread/lazy01.yml	ERROR (server error)	3.239146	1.8862341750000269	195.895296
+pthread-wmm/mix000.oepc.yml	ERROR (server error)	3.357974	1.8798399209999843	206.557184
+pthread-wmm/safe032_tso.yml	ERROR (server error)	3.430439	1.9130550999999514	199.172096
+pthread-wmm/safe030_tso.yml	ERROR (server error)	3.48323	1.9572528700000476	216.932352
+pthread-wmm/safe018_power.opt.yml	ERROR (server error)	3.432456	1.9037273010000035	198.496256
+pthread-wmm/safe026_tso.yml	ERROR (server error)	3.238254	1.7961222720000478	199.622656
+pthread/fib_safe-11.yml	ERROR (server error)	3.044418	1.7194884789998923	199.299072
+pthread-wmm/safe024_tso.yml	ERROR (server error)	3.451411	1.9365706869999713	199.696384
