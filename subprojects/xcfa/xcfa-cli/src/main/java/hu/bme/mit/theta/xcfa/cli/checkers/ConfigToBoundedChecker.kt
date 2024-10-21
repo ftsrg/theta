@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
@@ -31,42 +30,40 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getBoundedChecker(
-    xcfa: XCFA, mcm: MCM,
-    config: XcfaConfig<*, *>,
-    logger: Logger
+  xcfa: XCFA,
+  mcm: MCM,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
 ): SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
-    val boundedConfig = config.backendConfig.specConfig as BoundedConfig
+  val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
-    return BoundedChecker(
-        monolithicExpr = xcfa.toMonolithicExpr(),
-        bmcSolver = tryGetSolver(
-            boundedConfig.bmcConfig.bmcSolver,
-            boundedConfig.bmcConfig.validateBMCSolver
-        )?.createSolver(),
-        bmcEnabled = { !boundedConfig.bmcConfig.disable },
-        lfPathOnly = { !boundedConfig.bmcConfig.nonLfPath },
-        itpSolver = tryGetSolver(
-            boundedConfig.itpConfig.itpSolver,
-            boundedConfig.itpConfig.validateItpSolver
-        )?.createItpSolver(),
-        imcEnabled = { !boundedConfig.itpConfig.disable },
-        indSolver = tryGetSolver(
-            boundedConfig.indConfig.indSolver,
-            boundedConfig.indConfig.validateIndSolver
-        )?.createSolver(),
-        kindEnabled = { !boundedConfig.indConfig.disable },
-        valToState = { xcfa.valToState(it) },
-        biValToAction = { val1, val2 -> xcfa.valToAction(val1, val2) },
-        logger = logger
-    ) as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
-
+  return BoundedChecker(
+    monolithicExpr = xcfa.toMonolithicExpr(),
+    bmcSolver =
+      tryGetSolver(boundedConfig.bmcConfig.bmcSolver, boundedConfig.bmcConfig.validateBMCSolver)
+        ?.createSolver(),
+    bmcEnabled = { !boundedConfig.bmcConfig.disable },
+    lfPathOnly = { !boundedConfig.bmcConfig.nonLfPath },
+    itpSolver =
+      tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
+        ?.createItpSolver(),
+    imcEnabled = { !boundedConfig.itpConfig.disable },
+    indSolver =
+      tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)
+        ?.createSolver(),
+    kindEnabled = { !boundedConfig.indConfig.disable },
+    valToState = { xcfa.valToState(it) },
+    biValToAction = { val1, val2 -> xcfa.valToAction(val1, val2) },
+    logger = logger,
+  )
+    as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 }
 
 private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {
-    try {
-        return getSolver(name, validate)
-    } catch (e: Throwable) {
-        return null
-    }
+  try {
+    return getSolver(name, validate)
+  } catch (e: Throwable) {
+    return null
+  }
 }

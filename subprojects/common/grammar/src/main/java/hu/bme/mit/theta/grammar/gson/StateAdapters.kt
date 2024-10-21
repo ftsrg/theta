@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.grammar.gson
 
 import com.google.gson.Gson
@@ -35,71 +34,68 @@ import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 
 class ExplStateAdapter(val scope: Scope, val env: Env) : TypeAdapter<ExplState>() {
 
-    override fun write(writer: JsonWriter, value: ExplState) {
-        writer.beginObject()
-        writer.name("bottom").value(value.isBottom)
-        writer.name("decls").beginArray()
-        value.toMap().forEach {
-            writer.beginObject().name(it.key.name).value(it.value.toString()).endObject()
-        }
-        writer.endArray().endObject()
+  override fun write(writer: JsonWriter, value: ExplState) {
+    writer.beginObject()
+    writer.name("bottom").value(value.isBottom)
+    writer.name("decls").beginArray()
+    value.toMap().forEach {
+      writer.beginObject().name(it.key.name).value(it.value.toString()).endObject()
     }
+    writer.endArray().endObject()
+  }
 
-    override fun read(reader: JsonReader): ExplState {
-        var ret: ExplState? = null
-        reader.beginObject()
-        check(reader.nextName() == "bottom")
-        if (reader.nextBoolean()) ret = ExplState.bottom()
-        check(reader.nextName() == "decls")
-        reader.beginArray()
-        val mutableValuation = MutableValuation()
-        while (reader.peek() != JsonToken.END_ARRAY) {
-            reader.beginObject()
-            val name = reader.nextName()
-            val variable: VarDecl<*> = env.eval(scope.resolve(name).orElseThrow()) as VarDecl<*>
-            val value = ExpressionWrapper(scope, reader.nextString()).instantiate(env) as LitExpr<*>
-            mutableValuation.put(variable, value)
-            reader.endObject()
-        }
-        if (ret == null) ret = ExplState.of(mutableValuation)
-        reader.endArray()
-        reader.endObject()
-        return ret!!
+  override fun read(reader: JsonReader): ExplState {
+    var ret: ExplState? = null
+    reader.beginObject()
+    check(reader.nextName() == "bottom")
+    if (reader.nextBoolean()) ret = ExplState.bottom()
+    check(reader.nextName() == "decls")
+    reader.beginArray()
+    val mutableValuation = MutableValuation()
+    while (reader.peek() != JsonToken.END_ARRAY) {
+      reader.beginObject()
+      val name = reader.nextName()
+      val variable: VarDecl<*> = env.eval(scope.resolve(name).orElseThrow()) as VarDecl<*>
+      val value = ExpressionWrapper(scope, reader.nextString()).instantiate(env) as LitExpr<*>
+      mutableValuation.put(variable, value)
+      reader.endObject()
     }
-
+    if (ret == null) ret = ExplState.of(mutableValuation)
+    reader.endArray()
+    reader.endObject()
+    return ret!!
+  }
 }
 
 class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env) :
-    TypeAdapter<PredState>() {
+  TypeAdapter<PredState>() {
 
-    lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: PredState) {
-        initGson()
-        writer.beginObject()
-        writer.name("bottom").value(value.isBottom)
-        writer.name("preds")
-        gson.toJson(gson.toJsonTree(value.preds), writer)
-        writer.endObject()
-    }
+  lateinit var gson: Gson
 
-    override fun read(reader: JsonReader): PredState {
-        initGson()
-        var ret: PredState? = null
-        reader.beginObject()
-        check(reader.nextName() == "bottom")
-        if (reader.nextBoolean()) ret = PredState.bottom()
-        check(reader.nextName() == "preds")
-        val preds = gson.fromJson<Set<Expr<BoolType>>>(
-            reader,
-            object : TypeToken<Set<Expr<BoolType>>>() {}.type
-        )
-        if (ret == null) ret = PredState.of(preds)
-        reader.endObject()
-        return ret!!
-    }
+  override fun write(writer: JsonWriter, value: PredState) {
+    initGson()
+    writer.beginObject()
+    writer.name("bottom").value(value.isBottom)
+    writer.name("preds")
+    gson.toJson(gson.toJsonTree(value.preds), writer)
+    writer.endObject()
+  }
 
-    private fun initGson() {
-        if (!this::gson.isInitialized) gson = gsonSupplier()
-    }
+  override fun read(reader: JsonReader): PredState {
+    initGson()
+    var ret: PredState? = null
+    reader.beginObject()
+    check(reader.nextName() == "bottom")
+    if (reader.nextBoolean()) ret = PredState.bottom()
+    check(reader.nextName() == "preds")
+    val preds =
+      gson.fromJson<Set<Expr<BoolType>>>(reader, object : TypeToken<Set<Expr<BoolType>>>() {}.type)
+    if (ret == null) ret = PredState.of(preds)
+    reader.endObject()
+    return ret!!
+  }
 
+  private fun initGson() {
+    if (!this::gson.isInitialized) gson = gsonSupplier()
+  }
 }

@@ -19,11 +19,9 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Collection;
 
 public interface SolverBase extends AutoCloseable {
-
 
     /**
      * Check if the currently added expressions are satisfiable.
@@ -45,16 +43,12 @@ public interface SolverBase extends AutoCloseable {
      */
     void pop(final int n);
 
-    /**
-     * Remove expressions added after the previous {@link #push()} call.
-     */
+    /** Remove expressions added after the previous {@link #push()} call. */
     default void pop() {
         pop(1);
     }
 
-    /**
-     * Reset the solver state.
-     */
+    /** Reset the solver state. */
     void reset();
 
     /**

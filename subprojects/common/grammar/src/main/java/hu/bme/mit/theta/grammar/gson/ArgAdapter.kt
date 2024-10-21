@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.grammar.gson
 
 import com.google.gson.Gson
@@ -27,29 +26,29 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import java.lang.reflect.Type
 
 class ArgAdapter(
-    val gsonSupplier: () -> Gson,
-    private val partialOrdSupplier: () -> PartialOrd<out State>,
-    private val argTypeSupplier: () -> Type
+  val gsonSupplier: () -> Gson,
+  private val partialOrdSupplier: () -> PartialOrd<out State>,
+  private val argTypeSupplier: () -> Type,
 ) : TypeAdapter<ARG<*, *>>() {
 
-    private lateinit var gson: Gson
-    private lateinit var partialOrd: PartialOrd<State>
-    private lateinit var argType: Type
+  private lateinit var gson: Gson
+  private lateinit var partialOrd: PartialOrd<State>
+  private lateinit var argType: Type
 
-    override fun write(writer: JsonWriter, value: ARG<*, *>) {
-        initGson()
-        gson.toJson(gson.toJsonTree(ArgAdapterHelper(value)), writer)
-    }
+  override fun write(writer: JsonWriter, value: ARG<*, *>) {
+    initGson()
+    gson.toJson(gson.toJsonTree(ArgAdapterHelper(value)), writer)
+  }
 
-    override fun read(reader: JsonReader): ARG<*, *> {
-        initGson()
-        if (!this::partialOrd.isInitialized) partialOrd = partialOrdSupplier() as PartialOrd<State>
-        if (!this::argType.isInitialized) argType = argTypeSupplier()
-        val argAdapterHelper: ArgAdapterHelper<State, Action> = gson.fromJson(reader, argType)
-        return argAdapterHelper.instantiate(partialOrd)
-    }
+  override fun read(reader: JsonReader): ARG<*, *> {
+    initGson()
+    if (!this::partialOrd.isInitialized) partialOrd = partialOrdSupplier() as PartialOrd<State>
+    if (!this::argType.isInitialized) argType = argTypeSupplier()
+    val argAdapterHelper: ArgAdapterHelper<State, Action> = gson.fromJson(reader, argType)
+    return argAdapterHelper.instantiate(partialOrd)
+  }
 
-    private fun initGson() {
-        if (!this::gson.isInitialized) gson = gsonSupplier()
-    }
+  private fun initGson() {
+    if (!this::gson.isInitialized) gson = gsonSupplier()
+  }
 }

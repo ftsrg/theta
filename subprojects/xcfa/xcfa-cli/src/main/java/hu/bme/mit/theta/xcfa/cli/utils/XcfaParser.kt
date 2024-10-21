@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -32,113 +31,142 @@ import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
-import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.system.exitProcess
+import org.antlr.v4.runtime.CharStreams
 
+fun getXcfa(
+  config: XcfaConfig<*, *>,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueWarningLogger: Logger,
+) =
+  try {
+    when (config.frontendConfig.inputType) {
+      InputType.CHC -> {
+        val chcConfig = config.frontendConfig.specConfig as CHCFrontendConfig
+        parseChc(
+          config.inputConfig.input!!,
+          chcConfig.chcTransformation,
+          parseContext,
+          logger,
+          uniqueWarningLogger,
+        )
+      }
 
-fun getXcfa(config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger, uniqueWarningLogger: Logger) =
-    try {
-        when (config.frontendConfig.inputType) {
-            InputType.CHC -> {
-                val chcConfig = config.frontendConfig.specConfig as CHCFrontendConfig
-                parseChc(
-                    config.inputConfig.input!!, chcConfig.chcTransformation, parseContext, logger,
-                    uniqueWarningLogger
-                )
-            }
+      InputType.C -> {
+        parseC(
+          config.inputConfig.input!!,
+          config.inputConfig.property,
+          parseContext,
+          logger,
+          uniqueWarningLogger,
+        )
+      }
 
-            InputType.C -> {
-                parseC(
-                    config.inputConfig.input!!, config.inputConfig.property, parseContext, logger,
-                    uniqueWarningLogger
-                )
-            }
+      InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
 
-            InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
+      InputType.LITMUS -> LitmusInterpreter.getXcfa(config.inputConfig.input!!)
 
-            InputType.LITMUS -> LitmusInterpreter.getXcfa(config.inputConfig.input!!)
+      InputType.JSON -> {
+        val gson = getGson()
+        gson.fromJson(config.inputConfig.input!!.readText(), XCFA::class.java)
+      }
 
-            InputType.JSON -> {
-                val gson = getGson()
-                gson.fromJson(config.inputConfig.input!!.readText(), XCFA::class.java)
-            }
-
-            InputType.DSL -> {
-                val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
-                kotlinEngine.eval(FileReader(config.inputConfig.input!!)) as XCFA
-            }
-        }
-    } catch (e: Exception) {
-        if (config.debugConfig.stacktrace) e.printStackTrace()
-        val location = e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-        logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
-        exitProcess(ExitCodes.FRONTEND_FAILED.code)
+      InputType.DSL -> {
+        val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+        kotlinEngine.eval(FileReader(config.inputConfig.input!!)) as XCFA
+      }
     }
+  } catch (e: Exception) {
+    if (config.debugConfig.stacktrace) e.printStackTrace()
+    val location =
+      e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
+    logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
+    exitProcess(ExitCodes.FRONTEND_FAILED.code)
+  }
 
 private fun parseC(
-    input: File, explicitProperty: ErrorDetection, parseContext: ParseContext, logger: Logger,
-    uniqueWarningLogger: Logger
+  input: File,
+  explicitProperty: ErrorDetection,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueWarningLogger: Logger,
 ): XCFA {
-    val xcfaFromC = try {
-        val stream = FileInputStream(input)
-        getXcfaFromC(
-            stream, parseContext, false,
-            explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger
-        ).first
+  val xcfaFromC =
+    try {
+      val stream = FileInputStream(input)
+      getXcfaFromC(
+          stream,
+          parseContext,
+          false,
+          explicitProperty == ErrorDetection.OVERFLOW,
+          uniqueWarningLogger,
+        )
+        .first
     } catch (e: Throwable) {
-        if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
-            parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
-            logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
-            val stream = FileInputStream(input)
-            val xcfa = getXcfaFromC(
-                stream, parseContext, false,
-                explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger
-            ).first
-            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
-            xcfa
-        } else {
-            throw e
-        }
+      if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+        parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+        logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
+        val stream = FileInputStream(input)
+        val xcfa =
+          getXcfaFromC(
+              stream,
+              parseContext,
+              false,
+              explicitProperty == ErrorDetection.OVERFLOW,
+              uniqueWarningLogger,
+            )
+            .first
+        parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
+        xcfa
+      } else {
+        throw e
+      }
     }
-    logger.write(
-        Logger.Level.RESULT,
-        "Arithmetic: ${parseContext.arithmeticTraits}\n"
-    )
-    return xcfaFromC
+  logger.write(Logger.Level.RESULT, "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  return xcfaFromC
 }
 
 private fun parseChc(
-    input: File, chcTransformation: ChcFrontend.ChcTransformation, parseContext: ParseContext,
-    logger: Logger, uniqueWarningLogger: Logger
+  input: File,
+  chcTransformation: ChcFrontend.ChcTransformation,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueWarningLogger: Logger,
 ): XCFA {
-    var chcFrontend: ChcFrontend
-    val xcfaBuilder =
-        if (chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO) { // try forward, fallback to backward
-            chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
-            try {
-                chcFrontend.buildXcfa(
-                    CharStreams.fromStream(FileInputStream(input)),
-                    ChcPasses(parseContext, uniqueWarningLogger)
-                )
-            } catch (e: UnsupportedOperationException) {
-                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...\n")
-                chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
-                chcFrontend.buildXcfa(
-                    CharStreams.fromStream(FileInputStream(input)),
-                    ChcPasses(parseContext, uniqueWarningLogger)
-                )
-            }
-        } else {
-            chcFrontend = ChcFrontend(chcTransformation)
-            chcFrontend.buildXcfa(
-                CharStreams.fromStream(FileInputStream(input)),
-                ChcPasses(parseContext, uniqueWarningLogger)
-            )
-        }
-    return xcfaBuilder.build()
+  var chcFrontend: ChcFrontend
+  val xcfaBuilder =
+    if (
+      chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO
+    ) { // try forward, fallback to backward
+      chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
+      try {
+        chcFrontend.buildXcfa(
+          CharStreams.fromStream(FileInputStream(input)),
+          ChcPasses(parseContext, uniqueWarningLogger),
+        )
+      } catch (e: UnsupportedOperationException) {
+        logger.write(
+          Logger.Level.INFO,
+          "Non-linear CHC found, retrying using backward transformation...\n",
+        )
+        chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
+        chcFrontend.buildXcfa(
+          CharStreams.fromStream(FileInputStream(input)),
+          ChcPasses(parseContext, uniqueWarningLogger),
+        )
+      }
+    } else {
+      chcFrontend = ChcFrontend(chcTransformation)
+      chcFrontend.buildXcfa(
+        CharStreams.fromStream(FileInputStream(input)),
+        ChcPasses(parseContext, uniqueWarningLogger),
+      )
+    }
+  return xcfaBuilder.build()
 }

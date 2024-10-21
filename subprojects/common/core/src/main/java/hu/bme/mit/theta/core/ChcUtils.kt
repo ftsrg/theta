@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core
 
 import com.google.common.base.Preconditions.checkArgument
@@ -41,77 +40,92 @@ head_name(grounds) // facts
  */
 
 open class Relation(val name: String, vararg paramTypes: Type) {
-    companion object {
+  companion object {
 
-        private fun funcType(params: List<Type>, finalType: Type): FuncType<*, *> {
-            return if (params.size == 1) {
-                FuncType.of(params[0], finalType)
-            } else if (params.size > 1) {
-                FuncType.of(params[0], funcType(params.subList(1, params.size), finalType))
-            } else {
-                error("Nullary functions aren't handled here.")
-            }
-        }
+    private fun funcType(params: List<Type>, finalType: Type): FuncType<*, *> {
+      return if (params.size == 1) {
+        FuncType.of(params[0], finalType)
+      } else if (params.size > 1) {
+        FuncType.of(params[0], funcType(params.subList(1, params.size), finalType))
+      } else {
+        error("Nullary functions aren't handled here.")
+      }
     }
+  }
 
-    val arity: Int = paramTypes.size
-    val rules: MutableList<Rule> = LinkedList()
-    val constDecl = if (arity == 0) Const(name, Bool()) else Const(name, funcType(paramTypes.toList(), Bool()))
-    open operator fun invoke(params: List<Expr<*>>) = RelationApp(this, params)
-    open operator fun invoke(vararg params: Expr<*>) = RelationApp(this, params.toList())
+  val arity: Int = paramTypes.size
+  val rules: MutableList<Rule> = LinkedList()
+  val constDecl =
+    if (arity == 0) Const(name, Bool()) else Const(name, funcType(paramTypes.toList(), Bool()))
+
+  open operator fun invoke(params: List<Expr<*>>) = RelationApp(this, params)
+
+  open operator fun invoke(vararg params: Expr<*>) = RelationApp(this, params.toList())
 }
 
 data class RelationApp(
-    val relation: Relation, val params: List<Expr<*>>,
-    val constraints: List<Expr<BoolType>> = emptyList()
+  val relation: Relation,
+  val params: List<Expr<*>>,
+  val constraints: List<Expr<BoolType>> = emptyList(),
 ) {
 
-    init {
-        checkArgument(params.size == relation.arity)
-    }
+  init {
+    checkArgument(params.size == relation.arity)
+  }
 
-    val expr: Expr<BoolType> by lazy {
-        val coreExpr = if (params.size >= 1) {
-            FuncExprs.App(relation.constDecl.ref as Expr<FuncType<in Type, BoolType>>, params.map { it })
-        } else {
-            relation.constDecl.ref as Expr<BoolType>
-        }
-        if (constraints.isEmpty()) {
-            coreExpr
-        } else {
-            And(constraints + coreExpr)
-        }
+  val expr: Expr<BoolType> by lazy {
+    val coreExpr =
+      if (params.size >= 1) {
+        FuncExprs.App(
+          relation.constDecl.ref as Expr<FuncType<in Type, BoolType>>,
+          params.map { it },
+        )
+      } else {
+        relation.constDecl.ref as Expr<BoolType>
+      }
+    if (constraints.isEmpty()) {
+      coreExpr
+    } else {
+      And(constraints + coreExpr)
     }
+  }
 
-    operator fun plusAssign(constraints: List<Expr<BoolType>>) {
-        relation.rules.add(Rule(expr, constraints))
-    }
+  operator fun plusAssign(constraints: List<Expr<BoolType>>) {
+    relation.rules.add(Rule(expr, constraints))
+  }
 
-    operator fun plusAssign(constraint: Expr<BoolType>) {
-        relation.rules.add(Rule(expr, listOf(constraint)))
-    }
+  operator fun plusAssign(constraint: Expr<BoolType>) {
+    relation.rules.add(Rule(expr, listOf(constraint)))
+  }
 
-    operator fun not() {
-        relation.rules.add(Rule(False(), listOf(expr)))
-    }
+  operator fun not() {
+    relation.rules.add(Rule(False(), listOf(expr)))
+  }
 
-    operator fun unaryPlus() {
-        relation.rules.add(Rule(expr, listOf()))
-    }
+  operator fun unaryPlus() {
+    relation.rules.add(Rule(expr, listOf()))
+  }
 
-    infix fun with(constraints: List<Expr<BoolType>>) = copy(constraints = this.constraints + constraints)
-    infix fun with(constraint: Expr<BoolType>) = copy(constraints = this.constraints + constraint)
+  infix fun with(constraints: List<Expr<BoolType>>) =
+    copy(constraints = this.constraints + constraints)
+
+  infix fun with(constraint: Expr<BoolType>) = copy(constraints = this.constraints + constraint)
 }
 
 data class Rule(val head: Expr<BoolType>, val constraints: List<Expr<BoolType>>) {
 
-    fun toExpr() = Forall(ExprUtils.getParams(head) + ExprUtils.getParams(constraints), Imply(And(constraints), head))
+  fun toExpr() =
+    Forall(
+      ExprUtils.getParams(head) + ExprUtils.getParams(constraints),
+      Imply(And(constraints), head),
+    )
 }
 
 operator fun Expr<BoolType>.plus(other: Expr<BoolType>) = listOf(this, other)
 
 data class ParamHolder<T : Type>(private val type: T) {
 
-    private val lookup = LinkedHashMap<Int, ParamDecl<T>>()
-    operator fun get(i: Int) = lookup.getOrPut(i) { Param("P$i", type) }.ref
+  private val lookup = LinkedHashMap<Int, ParamDecl<T>>()
+
+  operator fun get(i: Int) = lookup.getOrPut(i) { Param("P$i", type) }.ref
 }

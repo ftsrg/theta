@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mcm.analysis
 
 import hu.bme.mit.theta.common.Tuple
@@ -23,37 +22,34 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 
-/**
- * WiP solver for memory-model related tasks.
- */
+/** WiP solver for memory-model related tasks. */
 class PartialSolver<T>(
-    private val mcm: Collection<GraphConstraint>,
-    private val partialGraph: CandidateExecutionGraph,
-    private val graphPatternCompiler: GraphPatternCompiler<T, *>,
-    private val graphPatternSolver: GraphSolver<T>
+  private val mcm: Collection<GraphConstraint>,
+  private val partialGraph: CandidateExecutionGraph,
+  private val graphPatternCompiler: GraphPatternCompiler<T, *>,
+  private val graphPatternSolver: GraphSolver<T>,
 ) {
 
-    fun getSolution(): CandidateExecutionGraph? {
-        graphPatternCompiler.addEvents(partialGraph.nodes)
-        graphPatternCompiler.addFacts(partialGraph.knownEvents)
+  fun getSolution(): CandidateExecutionGraph? {
+    graphPatternCompiler.addEvents(partialGraph.nodes)
+    graphPatternCompiler.addFacts(partialGraph.knownEvents)
 
-        val exprs = mcm.map { it.accept(graphPatternCompiler) }
-        exprs.forEach { graphPatternSolver.add(it) }
+    val exprs = mcm.map { it.accept(graphPatternCompiler) }
+    exprs.forEach { graphPatternSolver.add(it) }
 
-        val namedPatterns = mcm.map { it.collectSubRelations() }.flatten().toSet()
+    val namedPatterns = mcm.map { it.collectSubRelations() }.flatten().toSet()
 
-        val status = graphPatternSolver.check()
+    val status = graphPatternSolver.check()
 
-        return if (status.isSat) {
-            val (nodes, events) = graphPatternCompiler.getCompleteGraph(namedPatterns, graphPatternSolver.getModel())
-            CandidateExecutionGraph(nodes, events)
-        } else null
-    }
-
+    return if (status.isSat) {
+      val (nodes, events) =
+        graphPatternCompiler.getCompleteGraph(namedPatterns, graphPatternSolver.getModel())
+      CandidateExecutionGraph(nodes, events)
+    } else null
+  }
 }
 
 data class CandidateExecutionGraph(
-    val nodes: List<Int>,
-    val knownEvents: Map<Pair<String, Tuple>, ThreeVL>
-) {
-}
+  val nodes: List<Int>,
+  val knownEvents: Map<Pair<String, Tuple>, ThreeVL>,
+) {}

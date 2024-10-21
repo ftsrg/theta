@@ -13,34 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
-fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection = config.inputConfig.propertyFile?.run {
+fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection =
+  config.inputConfig.propertyFile?.run {
     val propertyFile = config.inputConfig.propertyFile!!
     when {
-        propertyFile.name.endsWith("unreach-call.prp") -> {
-            ErrorDetection.ERROR_LOCATION
-        }
+      propertyFile.name.endsWith("unreach-call.prp") -> {
+        ErrorDetection.ERROR_LOCATION
+      }
 
-        propertyFile.name.endsWith("no-data-race.prp") -> {
-            ErrorDetection.DATA_RACE
-        }
+      propertyFile.name.endsWith("no-data-race.prp") -> {
+        ErrorDetection.DATA_RACE
+      }
 
-        propertyFile.name.endsWith("no-overflow.prp") -> {
-            ErrorDetection.OVERFLOW
-        }
+      propertyFile.name.endsWith("no-overflow.prp") -> {
+        ErrorDetection.OVERFLOW
+      }
 
-        else -> {
-            logger.write(
-                Logger.Level.INFO,
-                "Unknown property $propertyFile, using full state space exploration (no refinement)\n"
-            )
-            ErrorDetection.NO_ERROR
-        }
+      else -> {
+        logger.write(
+          Logger.Level.INFO,
+          "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+        )
+        ErrorDetection.NO_ERROR
+      }
     }
-} ?: config.inputConfig.property
+  } ?: config.inputConfig.property

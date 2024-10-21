@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import com.google.gson.Gson
@@ -25,53 +24,54 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import java.lang.reflect.Type
 
 class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) :
-    TypeAdapter<XcfaState<*>>() {
+  TypeAdapter<XcfaState<*>>() {
 
-    private lateinit var gson: Gson
-    private lateinit var stateType: Type
-    override fun write(writer: JsonWriter, value: XcfaState<*>) {
-        initGson()
-        writer.beginObject()
-        writer.name("processes")
-        gson.toJson(gson.toJsonTree(value.processes), writer)
-        writer.name("sGlobal")
-        gson.toJson(gson.toJsonTree(value.sGlobal), writer)
-        writer.name("mutexes")
-        gson.toJson(gson.toJsonTree(value.mutexes), writer)
-        writer.name("threadLookup")
-        gson.toJson(gson.toJsonTree(value.threadLookup), writer)
-        writer.name("bottom")
-        gson.toJson(gson.toJsonTree(value.bottom), writer)
-        writer.endObject()
-    }
+  private lateinit var gson: Gson
+  private lateinit var stateType: Type
 
-    override fun read(reader: JsonReader): XcfaState<*> {
-        initGson()
-        if (!this::stateType.isInitialized) stateType = stateTypeSupplier()
-        reader.beginObject()
-        check(reader.nextName() == "processes")
-        val processes: Map<Int, XcfaProcessState> = gson.fromJson(reader, Map::class.java)
-        check(reader.nextName() == "sGlobal")
-        val sGlobal: ExprState = gson.fromJson(reader, stateType)
-        check(reader.nextName() == "mutexes")
-        val mutexes: Map<String, Int> = gson.fromJson(reader, Map::class.java)
-        check(reader.nextName() == "threadLookup")
-        val threadLookup: Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
-        check(reader.nextName() == "bottom")
-        val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
+  override fun write(writer: JsonWriter, value: XcfaState<*>) {
+    initGson()
+    writer.beginObject()
+    writer.name("processes")
+    gson.toJson(gson.toJsonTree(value.processes), writer)
+    writer.name("sGlobal")
+    gson.toJson(gson.toJsonTree(value.sGlobal), writer)
+    writer.name("mutexes")
+    gson.toJson(gson.toJsonTree(value.mutexes), writer)
+    writer.name("threadLookup")
+    gson.toJson(gson.toJsonTree(value.threadLookup), writer)
+    writer.name("bottom")
+    gson.toJson(gson.toJsonTree(value.bottom), writer)
+    writer.endObject()
+  }
 
-        reader.endObject()
-        return XcfaState(
-            xcfa = null,
-            processes = processes,
-            sGlobal = sGlobal,
-            mutexes = mutexes,
-            threadLookup = threadLookup,
-            bottom = bottom
-        )
-    }
+  override fun read(reader: JsonReader): XcfaState<*> {
+    initGson()
+    if (!this::stateType.isInitialized) stateType = stateTypeSupplier()
+    reader.beginObject()
+    check(reader.nextName() == "processes")
+    val processes: Map<Int, XcfaProcessState> = gson.fromJson(reader, Map::class.java)
+    check(reader.nextName() == "sGlobal")
+    val sGlobal: ExprState = gson.fromJson(reader, stateType)
+    check(reader.nextName() == "mutexes")
+    val mutexes: Map<String, Int> = gson.fromJson(reader, Map::class.java)
+    check(reader.nextName() == "threadLookup")
+    val threadLookup: Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
+    check(reader.nextName() == "bottom")
+    val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
 
-    private fun initGson() {
-        if (!this::gson.isInitialized) gson = gsonSupplier()
-    }
+    reader.endObject()
+    return XcfaState(
+      xcfa = null,
+      processes = processes,
+      sGlobal = sGlobal,
+      mutexes = mutexes,
+      threadLookup = threadLookup,
+      bottom = bottom,
+    )
+  }
+
+  private fun initGson() {
+    if (!this::gson.isInitialized) gson = gsonSupplier()
+  }
 }

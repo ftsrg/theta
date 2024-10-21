@@ -16,119 +16,121 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 
 data class WitnessEdge(
-    val startlineRange: Pair<Int, Int>?,
-    val endlineRange: Pair<Int, Int>?,
-    val startoffsetRange: Pair<Int, Int>?,
-    val endoffsetRange: Pair<Int, Int>?,
-    val assumption: Regex?,
+  val startlineRange: Pair<Int, Int>?,
+  val endlineRange: Pair<Int, Int>?,
+  val startoffsetRange: Pair<Int, Int>?,
+  val endoffsetRange: Pair<Int, Int>?,
+  val assumption: Regex?,
 )
 
 class XcfaCliWitnessTest {
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun cFiles(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of(
-                    "/c/litmustest/singlethread/witness_test.c", null, listOf(
-                        WitnessEdge(
-                            startlineRange = Pair(5, 5),
-                            endlineRange = Pair(5, 5),
-                            startoffsetRange = Pair(100, 130),
-                            endoffsetRange = Pair(100, 130),
-                            assumption = Regex("i *== *-1"),
-                        ),
-                    )
-                ),
-                Arguments.of(
-                    "/c/litmustest/singlethread/witness_test.c", "--backend BOUNDED", listOf(
-                        WitnessEdge(
-                            startlineRange = Pair(5, 5),
-                            endlineRange = Pair(5, 5),
-                            startoffsetRange = Pair(100, 130),
-                            endoffsetRange = Pair(100, 130),
-                            assumption = Regex("i *== *-1"),
-                        ),
-                    )
-                ),
+    @JvmStatic
+    fun cFiles(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of(
+          "/c/litmustest/singlethread/witness_test.c",
+          null,
+          listOf(
+            WitnessEdge(
+              startlineRange = Pair(5, 5),
+              endlineRange = Pair(5, 5),
+              startoffsetRange = Pair(100, 130),
+              endoffsetRange = Pair(100, 130),
+              assumption = Regex("i *== *-1"),
             )
-        }
-
-    }
-
-    @ParameterizedTest
-    @MethodSource("cFiles")
-    fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
-        val temp = createTempDirectory()
-        val params = arrayOf(
-            "--enable-output",
-            "--input-type", "C",
-            "--input", javaClass.getResource(filePath)!!.path,
-            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-            "--stacktrace",
-            "--output-directory", temp.absolutePathString(),
-            "--debug",
-        )
-        main(params)
-        Assertions.assertTrue(temp.resolve("witness.graphml").exists())
-        val witnessContents = temp.resolve("witness.graphml").toFile().readText()
-        val edges = mutableListOf<Map<String, String>>()
-        val edgeMatcher = Regex("(?s)<edge.*?</edge")
-        for (match in edgeMatcher.findAll(witnessContents)) {
-            val dataMatcher = Regex("<data key=\"(.*)\">(.*)</data>")
-            val data = mutableMapOf<String, String>()
-            for (dataMatch in dataMatcher.findAll(match.value)) {
-                val (key, value) = dataMatch.destructured
-                data.put(key, value)
-            }
-            edges.add(data)
-            println("Found edge containing data: ${data.entries.map { "${it.key}: ${it.value}" }.joinToString(", ")}")
-        }
-        for (expectedWitnessEdge in expectedWitnessEdges) {
-            Assertions.assertFalse(
-                edges.none { edge ->
-                    val startline = expectedWitnessEdge.startlineRange?.let {
-                        edge["startline"]?.let { v ->
-                            Pair(it, Integer.parseInt(v))
-                        }
-                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val endline = expectedWitnessEdge.endlineRange?.let {
-                        edge["endline"]?.let { v ->
-                            Pair(it, Integer.parseInt(v))
-                        }
-                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val startoffset = expectedWitnessEdge.startoffsetRange?.let {
-                        edge["startoffset"]?.let { v ->
-                            Pair(it, Integer.parseInt(v))
-                        }
-                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val endoffset = expectedWitnessEdge.endoffsetRange?.let {
-                        edge["endoffset"]?.let { v ->
-                            Pair(it, Integer.parseInt(v))
-                        }
-                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val assumption = expectedWitnessEdge.assumption?.let {
-                        edge["assumption"]?.let { v ->
-                            Pair(it, v)
-                        }
-                    }?.let { it.first.matches(it.second) } ?: false
-                    startline && endline && startoffset && endoffset && assumption
-                },
-                "Expected witness edge not found: $expectedWitnessEdge"
+          ),
+        ),
+        Arguments.of(
+          "/c/litmustest/singlethread/witness_test.c",
+          "--backend BOUNDED",
+          listOf(
+            WitnessEdge(
+              startlineRange = Pair(5, 5),
+              endlineRange = Pair(5, 5),
+              startoffsetRange = Pair(100, 130),
+              endoffsetRange = Pair(100, 130),
+              assumption = Regex("i *== *-1"),
             )
-        }
-        temp.toFile().deleteRecursively()
+          ),
+        ),
+      )
     }
+  }
 
-
+  @ParameterizedTest
+  @MethodSource("cFiles")
+  fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--enable-output",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--stacktrace",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--debug",
+      )
+    main(params)
+    Assertions.assertTrue(temp.resolve("witness.graphml").exists())
+    val witnessContents = temp.resolve("witness.graphml").toFile().readText()
+    val edges = mutableListOf<Map<String, String>>()
+    val edgeMatcher = Regex("(?s)<edge.*?</edge")
+    for (match in edgeMatcher.findAll(witnessContents)) {
+      val dataMatcher = Regex("<data key=\"(.*)\">(.*)</data>")
+      val data = mutableMapOf<String, String>()
+      for (dataMatch in dataMatcher.findAll(match.value)) {
+        val (key, value) = dataMatch.destructured
+        data.put(key, value)
+      }
+      edges.add(data)
+      println(
+        "Found edge containing data: ${data.entries.map { "${it.key}: ${it.value}" }.joinToString(", ")}"
+      )
+    }
+    for (expectedWitnessEdge in expectedWitnessEdges) {
+      Assertions.assertFalse(
+        edges.none { edge ->
+          val startline =
+            expectedWitnessEdge.startlineRange
+              ?.let { edge["startline"]?.let { v -> Pair(it, Integer.parseInt(v)) } }
+              ?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+          val endline =
+            expectedWitnessEdge.endlineRange
+              ?.let { edge["endline"]?.let { v -> Pair(it, Integer.parseInt(v)) } }
+              ?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+          val startoffset =
+            expectedWitnessEdge.startoffsetRange
+              ?.let { edge["startoffset"]?.let { v -> Pair(it, Integer.parseInt(v)) } }
+              ?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+          val endoffset =
+            expectedWitnessEdge.endoffsetRange
+              ?.let { edge["endoffset"]?.let { v -> Pair(it, Integer.parseInt(v)) } }
+              ?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+          val assumption =
+            expectedWitnessEdge.assumption
+              ?.let { edge["assumption"]?.let { v -> Pair(it, v) } }
+              ?.let { it.first.matches(it.second) } ?: false
+          startline && endline && startoffset && endoffset && assumption
+        },
+        "Expected witness edge not found: $expectedWitnessEdge",
+      )
+    }
+    temp.toFile().deleteRecursively()
+  }
 }

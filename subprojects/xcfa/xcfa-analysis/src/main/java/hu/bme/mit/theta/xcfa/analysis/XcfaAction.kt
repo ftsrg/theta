@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.ptr.PtrAction
@@ -25,39 +24,38 @@ import hu.bme.mit.theta.xcfa.passes.flatten
 data class XcfaAction
 @JvmOverloads
 constructor(
-    val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTriples = emptyMap(),
-    private val nextCnt: Int = 0
-) :
-    PtrAction(lastWrites, nextCnt) {
+  val pid: Int,
+  val edge: XcfaEdge,
+  private val lastWrites: WriteTriples = emptyMap(),
+  private val nextCnt: Int = 0,
+) : PtrAction(lastWrites, nextCnt) {
 
-    val source: XcfaLocation = edge.source
-    val target: XcfaLocation = edge.target
-    val label: XcfaLabel = edge.label
-    private val stmts: List<Stmt> = label.toStmt().flatten()
+  val source: XcfaLocation = edge.source
+  val target: XcfaLocation = edge.target
+  val label: XcfaLabel = edge.label
+  private val stmts: List<Stmt> = label.toStmt().flatten()
 
-    constructor(
-        pid: Int,
-        source: XcfaLocation,
-        target: XcfaLocation,
-        label: XcfaLabel = NopLabel,
-        lastWrites: WriteTriples = emptyMap(),
-        nextCnt: Int = 0
-    ) :
-        this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
+  constructor(
+    pid: Int,
+    source: XcfaLocation,
+    target: XcfaLocation,
+    label: XcfaLabel = NopLabel,
+    lastWrites: WriteTriples = emptyMap(),
+    nextCnt: Int = 0,
+  ) : this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
 
-    override val stmtList: List<Stmt>
-        get() = stmts
+  override val stmtList: List<Stmt>
+    get() = stmts
 
-    override fun toString(): String {
-        return "$pid: $source -> $target [${getStmts()}]"
-    }
+  override fun toString(): String {
+    return "$pid: $source -> $target [${getStmts()}]"
+  }
 
-    fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel, nextCnt = nextCnt)
-    }
+  fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
+    return XcfaAction(pid, source, target, sequenceLabel, nextCnt = nextCnt)
+  }
 
-    fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
-        return XcfaAction(pid, source, target, label, writeTriples, nextCnt)
-    }
-
+  fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
+    return XcfaAction(pid, source, target, label, writeTriples, nextCnt)
+  }
 }

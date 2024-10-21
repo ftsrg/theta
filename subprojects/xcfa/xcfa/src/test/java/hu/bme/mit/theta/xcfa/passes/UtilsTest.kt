@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decl
@@ -30,54 +29,56 @@ import org.junit.jupiter.params.provider.MethodSource
 
 class UtilsTest {
 
-    companion object {
+  companion object {
 
-        private val x = Var("x", Int())
-        private val y = Var("y", Int())
-        private val xPrime = Var("x'", Int())
-        private val map: Map<Decl<*>, VarDecl<*>> = mapOf(Pair(x, xPrime))
+    private val x = Var("x", Int())
+    private val y = Var("y", Int())
+    private val xPrime = Var("x'", Int())
+    private val map: Map<Decl<*>, VarDecl<*>> = mapOf(Pair(x, xPrime))
 
-        @JvmStatic
-        fun getLabels(): List<Arguments> = listOf(
-            Arguments.of(
-                InvokeLabel("", listOf(x.ref, y.ref), EmptyMetaData),
-                InvokeLabel("", listOf(xPrime.ref, y.ref), EmptyMetaData)
-            ),
-            Arguments.of(JoinLabel(x, EmptyMetaData), JoinLabel(xPrime, EmptyMetaData)),
-            Arguments.of(NondetLabel(setOf(NopLabel), EmptyMetaData), NondetLabel(setOf(NopLabel), EmptyMetaData)),
-            Arguments.of(
-                SequenceLabel(listOf(NopLabel), EmptyMetaData),
-                SequenceLabel(listOf(NopLabel), EmptyMetaData)
-            ),
-            Arguments.of(ReadLabel(x, y, setOf(), EmptyMetaData), ReadLabel(xPrime, y, setOf(), EmptyMetaData)),
-            Arguments.of(WriteLabel(x, y, setOf(), EmptyMetaData), WriteLabel(xPrime, y, setOf(), EmptyMetaData)),
-            Arguments.of(FenceLabel(setOf(), EmptyMetaData), FenceLabel(setOf(), EmptyMetaData)),
-            Arguments.of(
-                StartLabel("", listOf(x.ref), y, EmptyMetaData),
-                StartLabel("", listOf(xPrime.ref), y, EmptyMetaData)
-            ),
-            Arguments.of(ReturnLabel(JoinLabel(x, EmptyMetaData)), ReturnLabel(JoinLabel(xPrime, EmptyMetaData))),
+    @JvmStatic
+    fun getLabels(): List<Arguments> =
+      listOf(
+        Arguments.of(
+          InvokeLabel("", listOf(x.ref, y.ref), EmptyMetaData),
+          InvokeLabel("", listOf(xPrime.ref, y.ref), EmptyMetaData),
+        ),
+        Arguments.of(JoinLabel(x, EmptyMetaData), JoinLabel(xPrime, EmptyMetaData)),
+        Arguments.of(
+          NondetLabel(setOf(NopLabel), EmptyMetaData),
+          NondetLabel(setOf(NopLabel), EmptyMetaData),
+        ),
+        Arguments.of(
+          SequenceLabel(listOf(NopLabel), EmptyMetaData),
+          SequenceLabel(listOf(NopLabel), EmptyMetaData),
+        ),
+        Arguments.of(
+          ReadLabel(x, y, setOf(), EmptyMetaData),
+          ReadLabel(xPrime, y, setOf(), EmptyMetaData),
+        ),
+        Arguments.of(
+          WriteLabel(x, y, setOf(), EmptyMetaData),
+          WriteLabel(xPrime, y, setOf(), EmptyMetaData),
+        ),
+        Arguments.of(FenceLabel(setOf(), EmptyMetaData), FenceLabel(setOf(), EmptyMetaData)),
+        Arguments.of(
+          StartLabel("", listOf(x.ref), y, EmptyMetaData),
+          StartLabel("", listOf(xPrime.ref), y, EmptyMetaData),
+        ),
+        Arguments.of(
+          ReturnLabel(JoinLabel(x, EmptyMetaData)),
+          ReturnLabel(JoinLabel(xPrime, EmptyMetaData)),
+        ),
+        Arguments.of(StmtLabel(Assign(x, y.ref)), StmtLabel(Assign(xPrime, y.ref))),
+        Arguments.of(StmtLabel(Havoc(x)), StmtLabel(Havoc(xPrime))),
+        Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref))), StmtLabel(Assume(Eq(xPrime.ref, y.ref)))),
+        Arguments.of(StmtLabel(Skip()), StmtLabel(Skip())),
+      )
+  }
 
-            Arguments.of(
-                StmtLabel(Assign(x, y.ref)),
-                StmtLabel(Assign(xPrime, y.ref))
-            ),
-            Arguments.of(
-                StmtLabel(Havoc(x)),
-                StmtLabel(Havoc(xPrime))
-            ),
-            Arguments.of(
-                StmtLabel(Assume(Eq(x.ref, y.ref))),
-                StmtLabel(Assume(Eq(xPrime.ref, y.ref)))
-            ),
-            Arguments.of(StmtLabel(Skip()), StmtLabel(Skip())),
-        )
-    }
-
-    @ParameterizedTest
-    @MethodSource("getLabels")
-    fun testChangeVars(labelIn: XcfaLabel, labelExp: XcfaLabel) {
-        Assertions.assertEquals(labelExp, labelIn.changeVars(map))
-    }
-
+  @ParameterizedTest
+  @MethodSource("getLabels")
+  fun testChangeVars(labelIn: XcfaLabel, labelExp: XcfaLabel) {
+    Assertions.assertEquals(labelExp, labelIn.changeVars(map))
+  }
 }

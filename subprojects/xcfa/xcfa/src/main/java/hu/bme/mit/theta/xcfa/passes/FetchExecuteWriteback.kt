@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
@@ -39,126 +38,143 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
 
-    companion object {
+  companion object {
 
-        var enabled = false
+    var enabled = false
 
-        private var cnt = 0
-            get() = field++
+    private var cnt = 0
+      get() = field++
+  }
+
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!enabled) return builder
+    checkNotNull(builder.metaData["deterministic"])
+    val localDerefs = builder.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } }
+
+    if (localDerefs.isNotEmpty()) {
+      val edges = builder.getEdges().filter { it.label.dereferences.isNotEmpty() }.toSet()
+      for (edge in edges) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(edge.label.replaceDerefs(builder)))
+      }
+
+      return DeterministicPass().run(NormalizePass().run(builder))
     }
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        if (!enabled) return builder
-        checkNotNull(builder.metaData["deterministic"])
-        val localDerefs = builder.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } }
+    return builder
+  }
 
-        if (localDerefs.isNotEmpty()) {
-            val edges = builder.getEdges().filter { it.label.dereferences.isNotEmpty() }.toSet()
-            for (edge in edges) {
-                builder.removeEdge(edge)
-                builder.addEdge(edge.withLabel(edge.label.replaceDerefs(builder)))
-            }
-
-            return DeterministicPass().run(NormalizePass().run(builder))
-        }
-
-        return builder
-    }
-
-    private fun XcfaLabel.replaceDerefs(builder: XcfaProcedureBuilder): XcfaLabel =
-        if (dereferences.isNotEmpty()) {
-            when (this) {
-                is NondetLabel -> NondetLabel(labels.map { it.replaceDerefs(builder) }.toSet(), metadata)
-                is SequenceLabel -> SequenceLabel(labels.map { it.replaceDerefs(builder) }, metadata)
-                is InvokeLabel -> {
-                    val lut = getDerefLut(dereferences, builder)
-                    SequenceLabel(lut.map {
-                        StmtLabel(
-                            Assign(
-                                cast(it.value, it.value.type),
-                                cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)
-                            )
-                        )
-                    } + InvokeLabel(
-                        this.name, this.params.map { it.replaceDerefs(lut) }, metadata,
-                        tempLookup
-                    ), metadata
-                    )
-                }
-
-                is StartLabel -> {
-                    val lut = getDerefLut(dereferences, builder)
-                    SequenceLabel(lut.map {
-                        StmtLabel(
-                            Assign(
-                                cast(it.value, it.value.type),
-                                cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)
-                            )
-                        )
-                    } + StartLabel(name, params.map { it.replaceDerefs(lut) }, pidVar, metadata, tempLookup), metadata)
-                }
-
-                is StmtLabel -> SequenceLabel(
-                    stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
-                    metadata
-                )
-
-                else -> error("Not implemented for ${this.javaClass.simpleName}")
-            }
-        } else this
-
-    private fun getDerefLut(
-        dereferences: List<Dereference<*, *, *>>,
-        builder: XcfaProcedureBuilder
-    ) = dereferences.associateWith {
-        val tmpVar = Var("__THETA_heap_tmp_$cnt", it.type)
-        builder.addVar(tmpVar)
-        tmpVar
-    }
-
-    private fun Stmt.replaceDerefs(builder: XcfaProcedureBuilder): List<Stmt> {
-        val lut = getDerefLut(dereferences, builder)
-        val stmt: Stmt = when (this) {
-            is MemoryAssignStmt<*, *, *> -> if (this.deref in lut)
-                Assign(cast(lut[deref], expr.type), cast(expr.replaceDerefs(lut), expr.type))
-            else {
-                MemoryAssign(deref.map { it.replaceDerefs(lut) } as Dereference<*, *, Type>,
-                    cast(expr.replaceDerefs(lut), expr.type))
-            }
-
-            is AssignStmt<*> -> AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.replaceDerefs(lut), varDecl.type))
-            is AssumeStmt -> AssumeStmt.of(cond.replaceDerefs(lut) as Expr<BoolType>)
-            else -> this
-        }
-        val ret = ArrayList<Stmt>()
-        val accessType = dereferencesWithAccessTypes.filter { dereferences.contains(it.first) }
-        for (dereference in accessType.filter { it.second.isRead }.map { it.first }) {
-            ret.add(
+  private fun XcfaLabel.replaceDerefs(builder: XcfaProcedureBuilder): XcfaLabel =
+    if (dereferences.isNotEmpty()) {
+      when (this) {
+        is NondetLabel -> NondetLabel(labels.map { it.replaceDerefs(builder) }.toSet(), metadata)
+        is SequenceLabel -> SequenceLabel(labels.map { it.replaceDerefs(builder) }, metadata)
+        is InvokeLabel -> {
+          val lut = getDerefLut(dereferences, builder)
+          SequenceLabel(
+            lut.map {
+              StmtLabel(
                 Assign(
-                    cast(lut[dereference]!!, dereference.type),
-                    cast(dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) }, dereference.type)
+                  cast(it.value, it.value.type),
+                  cast(it.key.map { it.replaceDerefs(lut) }, it.value.type),
                 )
-            )
+              )
+            } +
+              InvokeLabel(
+                this.name,
+                this.params.map { it.replaceDerefs(lut) },
+                metadata,
+                tempLookup,
+              ),
+            metadata,
+          )
         }
-        ret.add(stmt)
-        for (dereference in accessType.filter { it.second.isWritten }.map { it.first }) {
-            ret.add(
-                MemoryAssign(
-                    cast(
-                        dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) },
-                        dereference.type
-                    ) as Dereference<*, *, Type>,
-                    cast(lut[dereference]!!, dereference.type).ref
+
+        is StartLabel -> {
+          val lut = getDerefLut(dereferences, builder)
+          SequenceLabel(
+            lut.map {
+              StmtLabel(
+                Assign(
+                  cast(it.value, it.value.type),
+                  cast(it.key.map { it.replaceDerefs(lut) }, it.value.type),
                 )
-            )
+              )
+            } +
+              StartLabel(name, params.map { it.replaceDerefs(lut) }, pidVar, metadata, tempLookup),
+            metadata,
+          )
         }
-        return ret
+
+        is StmtLabel ->
+          SequenceLabel(
+            stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
+            metadata,
+          )
+
+        else -> error("Not implemented for ${this.javaClass.simpleName}")
+      }
+    } else this
+
+  private fun getDerefLut(dereferences: List<Dereference<*, *, *>>, builder: XcfaProcedureBuilder) =
+    dereferences.associateWith {
+      val tmpVar = Var("__THETA_heap_tmp_$cnt", it.type)
+      builder.addVar(tmpVar)
+      tmpVar
     }
 
-    private fun Expr<*>.replaceDerefs(lut: Map<Dereference<*, *, *>, VarDecl<*>>): Expr<*> =
-        if (this in lut) {
-            lut[this]!!.ref
-        } else {
-            withOps(ops.map { it.replaceDerefs(lut) })
-        }
+  private fun Stmt.replaceDerefs(builder: XcfaProcedureBuilder): List<Stmt> {
+    val lut = getDerefLut(dereferences, builder)
+    val stmt: Stmt =
+      when (this) {
+        is MemoryAssignStmt<*, *, *> ->
+          if (this.deref in lut)
+            Assign(cast(lut[deref], expr.type), cast(expr.replaceDerefs(lut), expr.type))
+          else {
+            MemoryAssign(
+              deref.map { it.replaceDerefs(lut) } as Dereference<*, *, Type>,
+              cast(expr.replaceDerefs(lut), expr.type),
+            )
+          }
+
+        is AssignStmt<*> ->
+          AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.replaceDerefs(lut), varDecl.type))
+        is AssumeStmt -> AssumeStmt.of(cond.replaceDerefs(lut) as Expr<BoolType>)
+        else -> this
+      }
+    val ret = ArrayList<Stmt>()
+    val accessType = dereferencesWithAccessTypes.filter { dereferences.contains(it.first) }
+    for (dereference in accessType.filter { it.second.isRead }.map { it.first }) {
+      ret.add(
+        Assign(
+          cast(lut[dereference]!!, dereference.type),
+          cast(
+            dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) },
+            dereference.type,
+          ),
+        )
+      )
+    }
+    ret.add(stmt)
+    for (dereference in accessType.filter { it.second.isWritten }.map { it.first }) {
+      ret.add(
+        MemoryAssign(
+          cast(
+            dereference.map { it.replaceDerefs(lut.filter { it.key != dereference }) },
+            dereference.type,
+          )
+            as Dereference<*, *, Type>,
+          cast(lut[dereference]!!, dereference.type).ref,
+        )
+      )
+    }
+    return ret
+  }
+
+  private fun Expr<*>.replaceDerefs(lut: Map<Dereference<*, *, *>, VarDecl<*>>): Expr<*> =
+    if (this in lut) {
+      lut[this]!!.ref
+    } else {
+      withOps(ops.map { it.replaceDerefs(lut) })
+    }
 }

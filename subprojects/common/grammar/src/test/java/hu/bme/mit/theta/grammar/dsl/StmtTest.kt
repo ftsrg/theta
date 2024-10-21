@@ -35,74 +35,68 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 class StmtTest {
 
-    @Parameterized.Parameter(0)
-    lateinit var memory: Stmt
+  @Parameterized.Parameter(0) lateinit var memory: Stmt
 
-    @Parameterized.Parameter(1)
-    lateinit var serialized: String
+  @Parameterized.Parameter(1) lateinit var serialized: String
 
-    @Parameterized.Parameter(2)
-    lateinit var decls: Map<Symbol, Decl<*>>
+  @Parameterized.Parameter(2) lateinit var decls: Map<Symbol, Decl<*>>
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        @Parameterized.Parameters
-        fun data(): Collection<Array<Any>> {
-            val x = Var("x", Int())
-            val addr = x.hashCode()
+    @JvmStatic
+    @Parameterized.Parameters
+    fun data(): Collection<Array<Any>> {
+      val x = Var("x", Int())
+      val addr = x.hashCode()
 
-            return listOf(
-                arrayOf(
-                    Assign(x, Int(1)), "(assign x 1)",
-                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))
-                ),
-                arrayOf(
-                    MemoryAssign(Dereference(Int(addr), Int(0), Int()), Int(1)),
-                    "(memassign (deref $addr 0 Int) 1)",
-                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))
-                ),
-                arrayOf(
-                    Assume(Eq(x.ref, Int(1))), "(assume (= x 1))",
-                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))
-                ),
-                arrayOf(Havoc(x), "(havoc x)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
-            )
-        }
+      return listOf(
+        arrayOf(Assign(x, Int(1)), "(assign x 1)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
+        arrayOf(
+          MemoryAssign(Dereference(Int(addr), Int(0), Int()), Int(1)),
+          "(memassign (deref $addr 0 Int) 1)",
+          mapOf(Pair(ExprTest.NamedSymbol("x"), x)),
+        ),
+        arrayOf(
+          Assume(Eq(x.ref, Int(1))),
+          "(assume (= x 1))",
+          mapOf(Pair(ExprTest.NamedSymbol("x"), x)),
+        ),
+        arrayOf(Havoc(x), "(havoc x)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
+      )
     }
+  }
 
-    @Test
-    fun testSerialize() {
-        Assert.assertEquals(serialized, memory.toString())
+  @Test
+  fun testSerialize() {
+    Assert.assertEquals(serialized, memory.toString())
+  }
+
+  @Test
+  fun testDeserialize() {
+    if (decls.any { it.value is ParamDecl }) return
+    val symbolTable = SymbolTable()
+    decls.forEach { symbolTable.add(it.key) }
+    val env = Env()
+    decls.forEach { env.define(it.key, it.value) }
+    val stmt = StatementWrapper(serialized, SimpleScope(symbolTable)).instantiate(env)
+    Assert.assertEquals(memory, stmt)
+  }
+
+  @Test
+  fun testRoundTrip() {
+    if (decls.any { it.value is ParamDecl }) return
+    val symbolTable = SymbolTable()
+    decls.forEach { symbolTable.add(it.key) }
+    val env = Env()
+    decls.forEach { env.define(it.key, it.value) }
+    val stmt = StatementWrapper(memory.toString(), SimpleScope(symbolTable)).instantiate(env)
+    Assert.assertEquals(memory, stmt)
+  }
+
+  data class NamedSymbol(val _name: String) : Symbol {
+
+    override fun getName(): String {
+      return _name
     }
-
-    @Test
-    fun testDeserialize() {
-        if (decls.any { it.value is ParamDecl }) return
-        val symbolTable = SymbolTable()
-        decls.forEach { symbolTable.add(it.key) }
-        val env = Env()
-        decls.forEach { env.define(it.key, it.value) }
-        val stmt = StatementWrapper(serialized, SimpleScope(symbolTable)).instantiate(env)
-        Assert.assertEquals(memory, stmt)
-    }
-
-    @Test
-    fun testRoundTrip() {
-        if (decls.any { it.value is ParamDecl }) return
-        val symbolTable = SymbolTable()
-        decls.forEach { symbolTable.add(it.key) }
-        val env = Env()
-        decls.forEach { env.define(it.key, it.value) }
-        val stmt = StatementWrapper(memory.toString(), SimpleScope(symbolTable)).instantiate(env)
-        Assert.assertEquals(memory, stmt)
-    }
-
-    data class NamedSymbol(val _name: String) : Symbol {
-
-        override fun getName(): String {
-            return _name
-        }
-
-    }
+  }
 }
