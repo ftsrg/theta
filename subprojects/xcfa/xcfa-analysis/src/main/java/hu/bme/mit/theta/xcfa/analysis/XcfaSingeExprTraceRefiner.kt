@@ -72,20 +72,15 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val cexToConcretize = optionalNewCex.get()
         val rawTrace = cexToConcretize.toTrace()
         val (_, states, actions) = rawTrace.actions.foldIndexed(
-            Triple(
-                Pair(emptyMap(), 0), listOf(rawTrace.getState(0)),
-                listOf()
-            )
-        ) { i: Int, (wTripleCnt: Pair<WriteTriples, Int>, states: List<S>, actions: List<A>): Triple<Pair<WriteTriples, Int>, List<S>, List<A>>, a: A ->
+            Triple(Pair(emptyMap(), 0), listOf(rawTrace.getState(0)),
+                listOf())) { i: Int, (wTripleCnt: Pair<WriteTriples, Int>, states: List<S>, actions: List<A>): Triple<Pair<WriteTriples, Int>, List<S>, List<A>>, a: A ->
             val (wTriple, cnt) = wTripleCnt
             val newA = (a as XcfaAction).withLastWrites(wTriple, cnt)
             val newState = (rawTrace.getState(i + 1) as XcfaState<PtrState<*>>).let {
                 it.withState(PtrState(it.sGlobal.innerState.patch(newA.nextWriteTriples())))
             }
-            Triple(
-                Pair(newA.nextWriteTriples(), newA.cnts.values.maxOrNull() ?: newA.inCnt), states + (newState as S),
-                actions + (newA as A)
-            )
+            Triple(Pair(newA.nextWriteTriples(), newA.cnts.values.maxOrNull() ?: newA.inCnt), states + (newState as S),
+                actions + (newA as A))
         }
         val traceToConcretize = Trace.of(states, actions)
 

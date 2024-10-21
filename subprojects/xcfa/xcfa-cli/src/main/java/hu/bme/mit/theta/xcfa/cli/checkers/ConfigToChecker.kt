@@ -31,11 +31,9 @@ import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getChecker(
-    xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: ParseContext,
+fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: ParseContext,
     logger: Logger,
-    uniqueLogger: Logger
-): SafetyChecker<*, *, XcfaPrec<*>> =
+    uniqueLogger: Logger): SafetyChecker<*, *, XcfaPrec<*>> =
     if (config.backendConfig.inProcess) {
         InProcessChecker(xcfa, config, parseContext, logger)
     } else {

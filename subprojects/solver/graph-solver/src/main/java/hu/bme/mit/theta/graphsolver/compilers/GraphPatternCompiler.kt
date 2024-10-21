@@ -59,8 +59,6 @@ interface GraphPatternCompiler<T1, T2> {
     fun compile(pattern: UnionNode): T2
     fun compile(pattern: BasicEventSet): T2
     fun compile(pattern: BasicRelation): T2
-    fun getCompleteGraph(
-        namedPatterns: Set<GraphPattern>,
-        model: Valuation
-    ): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>>
+    fun getCompleteGraph(namedPatterns: Set<GraphPattern>,
+        model: Valuation): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>>
 }

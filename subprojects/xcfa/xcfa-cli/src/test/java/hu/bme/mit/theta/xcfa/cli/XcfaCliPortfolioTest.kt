@@ -63,23 +63,17 @@ class XcfaCliPortfolioTest {
 
     @ParameterizedTest
     @MethodSource("portfolios")
-    fun testPortfolio(
-        portfolio: (
-            xcfa: XCFA,
-            mcm: MCM,
-            parseContext: ParseContext,
-            portfolioConfig: XcfaConfig<*, *>,
-            logger: Logger,
-            uniqueLogger: Logger
-        ) -> STM
-    ) {
+    fun testPortfolio(portfolio: (xcfa: XCFA,
+        mcm: MCM,
+        parseContext: ParseContext,
+        portfolioConfig: XcfaConfig<*, *>,
+        logger: Logger,
+        uniqueLogger: Logger) -> STM) {
 
         for (value in ArithmeticTrait.values()) {
 
-            val stm = portfolio(
-                XCFA("name", setOf()), emptySet(), ParseContext(),
-                XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(), NullLogger.getInstance(), NullLogger.getInstance()
-            )
+            val stm = portfolio(XCFA("name", setOf()), emptySet(), ParseContext(),
+                XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(), NullLogger.getInstance(), NullLogger.getInstance())
 
             Assertions.assertTrue(stm.visualize().isNotEmpty())
         }

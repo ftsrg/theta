@@ -110,10 +110,8 @@ abstract class DefaultGraphPatternCompiler<T> : GraphPatternCompiler<T?, T?> {
     override fun compile(pattern: BasicEventSet): T? = null
     override fun compile(pattern: BasicRelation): T? = null
 
-    override fun getCompleteGraph(
-        mcm: Set<GraphPattern>,
-        model: Valuation
-    ): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> {
+    override fun getCompleteGraph(mcm: Set<GraphPattern>,
+        model: Valuation): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> {
         error("Not implemented")
     }
 }

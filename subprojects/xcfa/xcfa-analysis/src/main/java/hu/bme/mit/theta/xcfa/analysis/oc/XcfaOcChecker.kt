@@ -112,7 +112,7 @@ class XcfaOcChecker(
             logger.writeln(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}")
         logger.writeln(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
-        ocChecker.solver.statistics.let {
+      ocChecker.solver.statistics.let {
             logger.writeln(Logger.Level.INFO, "Solver statistics:")
             it.forEach { (k, v) -> logger.writeln(Logger.Level.INFO, "$k: $v") }
         }

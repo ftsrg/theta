@@ -139,47 +139,27 @@ class TestChcUtils {
 
         val init = Relation("init", i2i, i2i, i2i, i2i, Int()) // br, co, rf, com
 
-        val T0 = Relation(
-            "T0", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0G = Relation(
-            "T0_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0C = Relation(
-            "T0_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0CF = Relation(
-            "T0_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0F = Relation(
-            "T0_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0CF = Relation("T0_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
-        val T1 = Relation(
-            "T1", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1G = Relation(
-            "T1_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1C = Relation(
-            "T1_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1CF = Relation(
-            "T1_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1F = Relation(
-            "T1_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
-            Int()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1CF = Relation("T1_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
         val W = Relation("W", i2i, i2i, i2i, i2i, Int(), Int(), Int()) // br, co, rf, com, eid, vid, val
 
@@ -460,39 +440,23 @@ class TestChcUtils {
 
         val init = Relation("init", i2i, i2i, i2i, i2i, Int()) // br, co, rf, com
 
-        val T0 = Relation(
-            "T0", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0G = Relation(
-            "T0_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0C = Relation(
-            "T0_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0F = Relation(
-            "T0_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
-        val T1 = Relation(
-            "T1", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1G = Relation(
-            "T1_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1C = Relation(
-            "T1_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1F = Relation(
-            "T1_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
-            Bool()
-        ) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
         val W = Relation("W", i2i, i2i, i2i, i2i, Int(), Int(), Bool()) // br, co, rf, com, eid, vid, val
 

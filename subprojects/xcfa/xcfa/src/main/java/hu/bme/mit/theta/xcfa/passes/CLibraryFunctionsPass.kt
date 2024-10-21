@@ -73,13 +73,9 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                                 val param = invokeLabel.params[4]
 
-                                listOf(
-                                    StartLabel(
-                                        (funcptr as RefExpr<out Type>).decl.name,
-                                        listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
-                                        (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata
-                                    )
-                                )
+                                listOf(StartLabel((funcptr as RefExpr<out Type>).decl.name,
+                                    listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
+                                    (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
                             }
 
                             "pthread_mutex_lock" -> {
@@ -107,10 +103,8 @@ class CLibraryFunctionsPass : ProcedurePass {
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(
-                                    FenceLabel(
-                                        setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
-                                        metadata
-                                    ),
+                                    FenceLabel(setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
+                                        metadata),
                                     FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"), metadata)
                                 )
                             }
