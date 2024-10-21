@@ -48,10 +48,8 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override fun getCompleteGraph(
-        namedPatterns: Set<GraphPattern>,
-        model: Valuation
-    ): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> {
+    override fun getCompleteGraph(namedPatterns: Set<GraphPattern>,
+        model: Valuation): Pair<List<Int>, Map<Pair<String, Tuple>, ThreeVL>> {
         val ret = LinkedHashMap<Pair<String, Tuple>, ThreeVL>()
         ret.putAll(facts)
         ret.putAll(namedLookup.map { n ->
@@ -202,8 +200,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
                 val const = if (pattern.patternName != null) {
                     val const = namedLookup[Pair(pattern.patternName!!, Tuple2.of(a, b))] ?: Const(
-                        "RTC_" + uuid + "_" + a + "_" + b, Bool()
-                    )
+                        "RTC_" + uuid + "_" + a + "_" + b, Bool())
                     namedLookup[Pair(pattern.patternName!!, Tuple2.of(a, b))] = const
                     const
                 } else {
@@ -266,8 +263,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
                 val const = if (pattern.patternName != null) {
                     val const = namedLookup[Pair(pattern.patternName!!, Tuple2.of(a, b))] ?: Const(
-                        "TC_" + uuid + "_" + a + "_" + b, Bool()
-                    )
+                        "TC_" + uuid + "_" + a + "_" + b, Bool())
                     namedLookup[Pair(pattern.patternName!!, Tuple2.of(a, b))] = const
                     const
                 } else {
@@ -318,8 +314,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
     override fun compile(pattern: BasicEventSet): Map<Tuple, Expr<BoolType>> {
         return events.associate { a ->
-            Pair(
-                Tuple1.of(a),
+            Pair(Tuple1.of(a),
                 when (facts[Pair(pattern.name, Tuple1.of(a))]) {
                     ThreeVL.FALSE -> False()
                     ThreeVL.TRUE -> True()
@@ -328,16 +323,14 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
                         namedLookup[Pair(pattern.name, Tuple1.of(a))] = cnst
                         cnst
                     }.ref
-                }
-            )
+                })
         }
     }
 
     override fun compile(pattern: BasicRelation): Map<Tuple, Expr<BoolType>> {
         return events.map { a ->
             events.map { b ->
-                Pair(
-                    Tuple2.of(a, b),
+                Pair(Tuple2.of(a, b),
                     when (facts[Pair(pattern.name, Tuple2.of(a, b))]) {
                         ThreeVL.FALSE -> False()
                         ThreeVL.TRUE -> True()
@@ -346,8 +339,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
                             namedLookup[Pair(pattern.name, Tuple2.of(a, b))] = cnst
                             cnst
                         }.ref
-                    }
-                )
+                    })
             }
         }.flatten().toMap()
     }

@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.unit.UnitState
  * Serves as a control initial function for a multi analysis if the product is nested and this analysis is going to be a part of a larger product.
  */
 internal class MultiControlInitFunc<LControl : State, RControl : State, LControlPrec : Prec, RControlPrec : Prec, MState : MultiState<LControl, RControl, UnitState>, MPrec : MultiPrec<LControlPrec, RControlPrec, UnitPrec>>
-    (
+(
     private val leftControlInitFunc: InitFunc<LControl, LControlPrec>,
     private val rightControlInitFunc: InitFunc<RControl, RControlPrec>,
     private val createState: (lState: LControl, rState: RControl) -> MState

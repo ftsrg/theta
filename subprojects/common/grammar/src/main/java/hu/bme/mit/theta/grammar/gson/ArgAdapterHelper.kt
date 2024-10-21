@@ -54,14 +54,11 @@ data class ArgAdapterHelper<S : State, A : Action>(
         while (waitSet.isNotEmpty()) {
             val entry = waitSet.firstOrNull { lut.keys.contains(checkNotNull(edges[it]).source) }
             check(
-                entry != null
-            ) { "Unreachable node(s) present: $waitSet\nedges: $edges\nlut: $lut" }
+                entry != null) { "Unreachable node(s) present: $waitSet\nedges: $edges\nlut: $lut" }
             waitSet.remove(entry)
             val edge = checkNotNull(edges[entry])
-            lut[entry] = arg.createSuccNode(
-                lut[edge.source], edge.action, checkNotNull(nodes[entry]).state,
-                checkNotNull(nodes[entry]).target
-            )
+            lut[entry] = arg.createSuccNode(lut[edge.source], edge.action, checkNotNull(nodes[entry]).state,
+                checkNotNull(nodes[entry]).target)
                 .also { n -> if (checkNotNull(nodes[entry]).expanded) n.expanded = true }
         }
         coveringEdges.forEach { checkNotNull(lut[it.key]).cover(lut[it.value]) }

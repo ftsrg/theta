@@ -60,12 +60,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                     val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
                     builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
                     parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-                    val assign = StmtLabel(
-                        AssignStmt.of(
-                            cast(varDecl, varDecl.type),
-                            cast(lit, varDecl.type)
-                        )
-                    )
+                    val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
+                        cast(lit, varDecl.type)))
                     Pair(varDecl, assign)
                 }
         }
@@ -81,12 +77,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 val varDecl = Var(it.name + "*", ptrType.smtType)
                 builder.addVar(varDecl)
                 parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-                val assign = StmtLabel(
-                    AssignStmt.of(
-                        cast(varDecl, varDecl.type),
-                        cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)
-                    )
-                )
+                val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
+                    cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
                 Pair(varDecl, assign)
             } + globalReferredVars
 
@@ -114,37 +106,25 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
 
     @JvmOverloads
-    fun XcfaLabel.changeReferredVars(
-        varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
-        parseContext: ParseContext? = null
-    ): XcfaLabel =
+    fun XcfaLabel.changeReferredVars(varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
+        parseContext: ParseContext? = null): XcfaLabel =
         if (varLut.isNotEmpty())
             when (this) {
-                is InvokeLabel -> InvokeLabel(
-                    name, params.map { it.changeReferredVars(varLut, parseContext) },
-                    metadata = metadata
-                )
+                is InvokeLabel -> InvokeLabel(name, params.map { it.changeReferredVars(varLut, parseContext) },
+                    metadata = metadata)
 
-                is NondetLabel -> NondetLabel(
-                    labels.map { it.changeReferredVars(varLut, parseContext) }.toSet(),
-                    metadata = metadata
-                )
+                is NondetLabel -> NondetLabel(labels.map { it.changeReferredVars(varLut, parseContext) }.toSet(),
+                    metadata = metadata)
 
-                is SequenceLabel -> SequenceLabel(
-                    labels.map { it.changeReferredVars(varLut, parseContext) },
-                    metadata = metadata
-                )
+                is SequenceLabel -> SequenceLabel(labels.map { it.changeReferredVars(varLut, parseContext) },
+                    metadata = metadata)
 
-                is StartLabel -> StartLabel(
-                    name, params.map { it.changeReferredVars(varLut, parseContext) },
-                    pidVar, metadata = metadata
-                )
+                is StartLabel -> StartLabel(name, params.map { it.changeReferredVars(varLut, parseContext) },
+                    pidVar, metadata = metadata)
 
                 is StmtLabel -> SequenceLabel(stmt.changeReferredVars(varLut, parseContext).map {
-                    StmtLabel(
-                        it, metadata = metadata,
-                        choiceType = this.choiceType
-                    )
+                    StmtLabel(it, metadata = metadata,
+                        choiceType = this.choiceType)
                 }).let { if (it.labels.size == 1) it.labels[0] else it }
 
                 else -> this
@@ -152,10 +132,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         else this
 
     @JvmOverloads
-    fun Stmt.changeReferredVars(
-        varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
-        parseContext: ParseContext? = null
-    ): List<Stmt> {
+    fun Stmt.changeReferredVars(varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
+        parseContext: ParseContext? = null): List<Stmt> {
         val stmts = when (this) {
             is AssignStmt<*> -> if (this.varDecl in varLut.keys) {
                 val newVar = varLut[this.varDecl]!!.first
@@ -164,31 +142,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                         Dereference(
                             cast(newVar.ref, newVar.type),
                             cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
-                            this.expr.type
-                        ),
-                        this.expr.changeReferredVars(varLut, parseContext)
-                    )
-                )
+                            this.expr.type),
+                        this.expr.changeReferredVars(varLut, parseContext)))
             } else {
-                listOf(
-                    AssignStmt.of(
-                        cast(this.varDecl, this.varDecl.type),
-                        cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type)
-                    )
-                )
+                listOf(AssignStmt.of(cast(this.varDecl, this.varDecl.type),
+                    cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type)))
             }
 
             is MemoryAssignStmt<*, *, *> -> listOf(
-                MemoryAssignStmt.create(
-                    deref.changeReferredVars(varLut, parseContext) as Dereference<*, *, *>,
-                    expr.changeReferredVars(varLut, parseContext)
-                )
-            )
+                MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *, *>,
+                    expr.changeReferredVars(varLut, parseContext)))
 
             is AssumeStmt -> listOf(AssumeStmt.of(cond.changeReferredVars(varLut, parseContext)))
             is SequenceStmt -> listOf(
-                SequenceStmt.of(this.stmts.flatMap { it.changeReferredVars(varLut, parseContext) })
-            )
+                SequenceStmt.of(this.stmts.flatMap { it.changeReferredVars(varLut, parseContext) }))
 
             is SkipStmt -> listOf(this)
             else -> TODO("Not yet implemented ($this)")
@@ -203,10 +170,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
 
     @JvmOverloads
-    fun <T : Type> Expr<T>.changeReferredVars(
-        varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
-        parseContext: ParseContext? = null
-    ): Expr<T> =
+    fun <T : Type> Expr<T>.changeReferredVars(varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>,
+        parseContext: ParseContext? = null): Expr<T> =
         if (this is RefExpr<T>) {
             (decl as VarDecl<T>).changeReferredVars(varLut)
         } else if (this is Reference<*, *> && this.expr is RefExpr<*> && (this.expr as RefExpr<*>).decl in varLut.keys) {
@@ -220,13 +185,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         }
 
     fun <T : Type> VarDecl<T>.changeReferredVars(
-        varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>
-    ): Expr<T> =
+        varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>): Expr<T> =
         varLut[this]?.first?.let {
-            Dereference(
-                cast(it.ref, it.type), cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
-                this.type
-            ) as Expr<T>
+            Dereference(cast(it.ref, it.type), cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+                this.type) as Expr<T>
         } ?: this.ref
 
 }

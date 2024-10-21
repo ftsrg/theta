@@ -73,28 +73,20 @@ class MultiNondetDiningPhilosophersTest {
         val phil3cfa = phil3rawCfa.copyWithReplacingVars(variables.associateBy { it.name })
         val phil4cfa = phil4rawCfa.copyWithReplacingVars(variables.associateBy { it.name })
 
-        val cfa1ConfigBuilder = CfaConfigBuilder(
-            CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
-            Z3LegacySolverFactory.getInstance()
-        )
+        val cfa1ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
+            Z3LegacySolverFactory.getInstance())
         cfa1ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa1ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil1cfa)
-        val cfa2ConfigBuilder = CfaConfigBuilder(
-            CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
-            Z3LegacySolverFactory.getInstance()
-        )
+        val cfa2ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
+            Z3LegacySolverFactory.getInstance())
         cfa2ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa2ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil2cfa)
-        val cfa3ConfigBuilder = CfaConfigBuilder(
-            CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
-            Z3LegacySolverFactory.getInstance()
-        )
+        val cfa3ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
+            Z3LegacySolverFactory.getInstance())
         cfa3ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa3ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil3cfa)
-        val cfa4ConfigBuilder = CfaConfigBuilder(
-            CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
-            Z3LegacySolverFactory.getInstance()
-        )
+        val cfa4ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
+            Z3LegacySolverFactory.getInstance())
         cfa4ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa4ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil4cfa)
 
@@ -118,15 +110,13 @@ class MultiNondetDiningPhilosophersTest {
         var prop: Expr<BoolType> = True()
         variables.forEach { prop = And(prop, Eq(it.ref, True())) }
         val dataPredicate = ExplStatePredicate(prop, solver)
-        val multiConfigBuilder = StmtMultiConfigBuilder.ItpStmtMultiConfigBuilder(
-            totalProduct, prop,
+        val multiConfigBuilder = StmtMultiConfigBuilder.ItpStmtMultiConfigBuilder(totalProduct, prop,
             MultiStatePredicate(dataPredicate),
             RefToMultiPrec(cfaRefToPrec, cfaRefToPrec, ItpRefToExplPrec()),
             RefToMultiPrec(cfaRefToPrec, cfaRefToPrec, ItpRefToExplPrec()), ItpRefToExplPrec(),
             MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec),
             MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec), dataInitPrec, Z3LegacySolverFactory.getInstance(),
-            logger
-        )
+            logger)
         val result = multiConfigBuilder.build().check()
 
         Assertions.assertTrue(result.isUnsafe)

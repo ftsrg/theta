@@ -169,14 +169,12 @@ class XcfaCliParseTest {
     @ParameterizedTest
     @MethodSource("cFiles")
     fun testCParse(filePath: String) {
-        main(
-            arrayOf(
-                "--input-type", "C",
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE", "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE", "--stacktrace",
+            "--debug"
+        ))
     }
 
 //    @ParameterizedTest
@@ -194,71 +192,61 @@ class XcfaCliParseTest {
     @ParameterizedTest
     @MethodSource("chcFiles")
     fun testCHCParse(filePath: String, chcTransformation: ChcFrontend.ChcTransformation) {
-        main(
-            arrayOf(
-                "--input-type", "CHC",
-                "--chc-transformation", chcTransformation.toString(),
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE",
-                "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "CHC",
+            "--chc-transformation", chcTransformation.toString(),
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE",
+            "--stacktrace",
+            "--debug"
+        ))
     }
 
     @ParameterizedTest
     @MethodSource("dslFiles")
     fun testDSLParse(filePath: String) {
-        main(
-            arrayOf(
-                "--input-type", "DSL",
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE",
-                "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "DSL",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE",
+            "--stacktrace",
+            "--debug"
+        ))
     }
 
     @ParameterizedTest
     @MethodSource("jsonFiles")
     fun testJSONParse(filePath: String) {
-        main(
-            arrayOf(
-                "--input-type", "JSON",
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE",
-                "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "JSON",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE",
+            "--stacktrace",
+            "--debug"
+        ))
     }
 
     @ParameterizedTest
     @MethodSource("cFiles")
     fun testJSONParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
-        main(
-            arrayOf(
-                "--enable-output",
-                "--input-type", "C",
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE",
-                "--stacktrace",
-                "--output-directory", temp.toAbsolutePath().toString(),
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--enable-output",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE",
+            "--stacktrace",
+            "--output-directory", temp.toAbsolutePath().toString(),
+            "--debug"
+        ))
         val xcfaJson = temp.resolve("xcfa.json").toFile()
-        main(
-            arrayOf(
-                "--input-type", "JSON",
-                "--input", xcfaJson.absolutePath.toString(),
-                "--backend", "NONE",
-                "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "JSON",
+            "--input", xcfaJson.absolutePath.toString(),
+            "--backend", "NONE",
+            "--stacktrace",
+            "--debug"
+        ))
         temp.toFile().deleteRecursively()
     }
 
@@ -266,28 +254,24 @@ class XcfaCliParseTest {
     @MethodSource("simpleCFiles")
     fun testCParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
-        main(
-            arrayOf(
-                "--enable-output",
-                "--input-type", "C",
-                "--input", javaClass.getResource(filePath)!!.path,
-                "--backend", "NONE",
-                "--stacktrace",
-                "--output-directory", temp.toAbsolutePath().toString(),
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--enable-output",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--backend", "NONE",
+            "--stacktrace",
+            "--output-directory", temp.toAbsolutePath().toString(),
+            "--debug"
+        ))
         val xcfaC = temp.resolve("xcfa.c").toFile()
         checkState(xcfaC.exists(), "File does not exist: $xcfaC")
-        main(
-            arrayOf(
-                "--input-type", "C",
-                "--input", xcfaC.absolutePath.toString(),
-                "--backend", "NONE",
-                "--stacktrace",
-                "--debug"
-            )
-        )
+        main(arrayOf(
+            "--input-type", "C",
+            "--input", xcfaC.absolutePath.toString(),
+            "--backend", "NONE",
+            "--stacktrace",
+            "--debug"
+        ))
         temp.toFile().deleteRecursively()
     }
 
