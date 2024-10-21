@@ -17,13 +17,12 @@ package hu.bme.mit.theta.xta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import java.util.ArrayList;
+import java.util.Collection;
 
 final class LuZoneInitFunc implements InitFunc<LuZoneState, ZonePrec> {
 
@@ -50,5 +49,4 @@ final class LuZoneInitFunc implements InitFunc<LuZoneState, ZonePrec> {
         }
         return result;
     }
-
 }

@@ -46,5 +46,4 @@ public final class ExprOrd implements PartialOrd<ExprState> {
             return solver.check().isUnsat();
         }
     }
-
 }

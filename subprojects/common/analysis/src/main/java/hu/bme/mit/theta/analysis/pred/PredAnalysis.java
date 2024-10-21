@@ -31,16 +31,19 @@ public final class PredAnalysis<A extends ExprAction> implements Analysis<PredSt
     private final InitFunc<PredState, PredPrec> initFunc;
     private final TransFunc<PredState, A, PredPrec> transFunc;
 
-    private PredAnalysis(final Solver solver, final PredAbstractor predAbstractor,
-                         final Expr<BoolType> initExpr) {
+    private PredAnalysis(
+            final Solver solver,
+            final PredAbstractor predAbstractor,
+            final Expr<BoolType> initExpr) {
         partialOrd = PredOrd.create(solver);
         initFunc = PredInitFunc.create(predAbstractor, initExpr);
         transFunc = PredTransFunc.create(predAbstractor);
     }
 
-    public static <A extends ExprAction> PredAnalysis<A> create(final Solver solver,
-                                                                final PredAbstractor predAbstractor,
-                                                                final Expr<BoolType> initExpr) {
+    public static <A extends ExprAction> PredAnalysis<A> create(
+            final Solver solver,
+            final PredAbstractor predAbstractor,
+            final Expr<BoolType> initExpr) {
         return new PredAnalysis<A>(solver, predAbstractor, initExpr);
     }
 
@@ -60,5 +63,4 @@ public final class PredAnalysis<A extends ExprAction> implements Analysis<PredSt
     public TransFunc<PredState, A, PredPrec> getTransFunc() {
         return transFunc;
     }
-
 }

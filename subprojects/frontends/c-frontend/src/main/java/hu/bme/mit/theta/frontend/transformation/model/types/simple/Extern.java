@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Extern extends CSimpleType {
 
-    public final static Extern instance = new Extern();
+    public static final Extern instance = new Extern();
 
-    private Extern() {
-    }
+    private Extern() {}
 
     @Override
     public CSimpleType copyOf() {
@@ -29,7 +27,6 @@ public class Extern extends CSimpleType {
         setUpCopy(declaredNameRet);
         return declaredNameRet;
     }
-
 
     @Override
     protected void patch(CSimpleType cSimpleType) {

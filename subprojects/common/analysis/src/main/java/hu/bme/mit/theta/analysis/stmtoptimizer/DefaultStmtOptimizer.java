@@ -28,5 +28,4 @@ public class DefaultStmtOptimizer<S extends State> implements StmtOptimizer<S> {
     public Stmt optimizeStmt(S state, Stmt stmt) {
         return stmt;
     }
-
 }

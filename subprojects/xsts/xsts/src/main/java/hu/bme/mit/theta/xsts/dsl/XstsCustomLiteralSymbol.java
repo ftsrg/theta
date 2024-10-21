@@ -49,8 +49,8 @@ public class XstsCustomLiteralSymbol implements Symbol {
         return EnumLitExpr.of(type, EnumType.getShortName(literal));
     }
 
-    public static XstsCustomLiteralSymbol copyWithName(XstsCustomLiteralSymbol symbol, String newName) {
+    public static XstsCustomLiteralSymbol copyWithName(
+            XstsCustomLiteralSymbol symbol, String newName) {
         return new XstsCustomLiteralSymbol(symbol.type, newName);
     }
-
 }

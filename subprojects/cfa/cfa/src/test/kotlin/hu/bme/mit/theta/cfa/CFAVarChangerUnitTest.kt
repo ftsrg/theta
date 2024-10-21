@@ -18,23 +18,21 @@ package hu.bme.mit.theta.cfa
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.type.inttype.IntType
-import org.junit.jupiter.api.Test
 import java.io.FileInputStream
+import org.junit.jupiter.api.Test
 
 class CFAVarChangerUnitTest {
 
-    @Test
-    fun `single variable changing`() {
-        var origCfa: CFA
-        FileInputStream("src/test/resources/counter5_true.cfa").use { inputStream ->
-            origCfa = CfaDslManager.createCfa(inputStream)
-        }
-        val newVar = Decls.Var("x", IntType.getInstance())
-        val newCfa = origCfa.copyWithReplacingVars(listOf(newVar).associateBy { it.name })
-
-        assert(!newCfa.vars.any {
-            origCfa.vars.contains(it)
-        })
-        assert(origCfa.vars.iterator().next() != newCfa.vars.iterator().next())
+  @Test
+  fun `single variable changing`() {
+    var origCfa: CFA
+    FileInputStream("src/test/resources/counter5_true.cfa").use { inputStream ->
+      origCfa = CfaDslManager.createCfa(inputStream)
     }
+    val newVar = Decls.Var("x", IntType.getInstance())
+    val newCfa = origCfa.copyWithReplacingVars(listOf(newVar).associateBy { it.name })
+
+    assert(!newCfa.vars.any { origCfa.vars.contains(it) })
+    assert(origCfa.vars.iterator().next() != newCfa.vars.iterator().next())
+  }
 }

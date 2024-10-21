@@ -15,14 +15,12 @@
  */
 package hu.bme.mit.theta.common.table;
 
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
 
 public class TableWriterTest {
 

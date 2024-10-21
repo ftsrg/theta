@@ -104,5 +104,4 @@ public final class LispLexer {
             throw new LexerException("Expecting " + x + ", found " + c);
         }
     }
-
 }

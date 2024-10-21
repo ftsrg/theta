@@ -29,8 +29,7 @@ import hu.bme.mit.theta.common.Utils;
  */
 public abstract class RefinerResult<S extends State, A extends Action, P extends Prec> {
 
-    private RefinerResult() {
-    }
+    private RefinerResult() {}
 
     /**
      * Create a new spurious result.
@@ -62,9 +61,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
     public abstract Unsafe<S, A, P> asUnsafe();
 
-    /**
-     * Represents the spurious result with a refined precision.
-     */
+    /** Represents the spurious result with a refined precision. */
     public static final class Spurious<S extends State, A extends Action, P extends Prec>
             extends RefinerResult<S, A, P> {
 
@@ -96,7 +93,9 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         @Override
         public Unsafe<S, A, P> asUnsafe() {
             throw new ClassCastException(
-                    "Cannot cast " + Spurious.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Spurious.class.getSimpleName()
+                            + " to "
                             + Unsafe.class.getSimpleName());
         }
 
@@ -108,11 +107,9 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         }
     }
 
-    /**
-     * Represents the unsafe result with a feasible counterexample.
-     */
-    public static final class Unsafe<S extends State, A extends Action, P extends Prec> extends
-            RefinerResult<S, A, P> {
+    /** Represents the unsafe result with a feasible counterexample. */
+    public static final class Unsafe<S extends State, A extends Action, P extends Prec>
+            extends RefinerResult<S, A, P> {
 
         private final Trace<S, A> cex;
 
@@ -137,7 +134,9 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         @Override
         public Spurious<S, A, P> asSpurious() {
             throw new ClassCastException(
-                    "Cannot cast " + Unsafe.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Unsafe.class.getSimpleName()
+                            + " to "
                             + Spurious.class.getSimpleName());
         }
 

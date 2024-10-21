@@ -133,5 +133,4 @@ public class DiffBoundTest {
         assertEquals("(10, <=)", asString(Leq(10)));
         assertEquals("(-10, <=)", asString(Leq(-10)));
     }
-
 }

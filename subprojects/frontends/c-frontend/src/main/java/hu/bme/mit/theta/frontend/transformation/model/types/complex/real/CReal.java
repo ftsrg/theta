@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.real;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -34,8 +33,8 @@ public abstract class CReal extends CComplexType {
 
     @Override
     public int width() {
-        return parseContext.getArchitecture().getBitWidth(getTypeName() + "_s") +
-                parseContext.getArchitecture().getBitWidth(getTypeName() + "_e");
+        return parseContext.getArchitecture().getBitWidth(getTypeName() + "_s")
+                + parseContext.getArchitecture().getBitWidth(getTypeName() + "_e");
     }
 
     @Override

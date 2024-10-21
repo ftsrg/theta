@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.common;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public final class Utils {
 
-    private Utils() {
-    }
+    private Utils() {}
 
     public static <T> T singleElementOf(final Iterable<? extends T> collection) {
         final Iterator<? extends T> iterator = collection.iterator();
@@ -55,8 +54,8 @@ public final class Utils {
 
     ////
 
-    public static <T> boolean anyMatch(final Optional<T> optional,
-                                       final Predicate<? super T> predicate) {
+    public static <T> boolean anyMatch(
+            final Optional<T> optional, final Predicate<? super T> predicate) {
         if (optional.isPresent()) {
             return predicate.test(optional.get());
         } else {
@@ -64,8 +63,8 @@ public final class Utils {
         }
     }
 
-    public static <T> boolean allMatch(final Optional<T> optional,
-                                       final Predicate<? super T> predicate) {
+    public static <T> boolean allMatch(
+            final Optional<T> optional, final Predicate<? super T> predicate) {
         if (optional.isPresent()) {
             return predicate.test(optional.get());
         } else {
@@ -80,5 +79,4 @@ public final class Utils {
     public static LispStringBuilder lispStringBuilder(final String prefix) {
         return new LispStringBuilder(prefix);
     }
-
 }

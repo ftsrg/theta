@@ -35,7 +35,7 @@ public class XstsPropInitPrec implements XstsInitPrec {
 
     @Override
     public Prod2Prec<ExplPrec, PredPrec> createProd2ExplPred(XSTS xsts) {
-        return Prod2Prec.of(ExplPrec.of(xsts.getCtrlVars()),
-                PredPrec.of(ExprUtils.getAtoms(xsts.getProp())));
+        return Prod2Prec.of(
+                ExplPrec.of(xsts.getCtrlVars()), PredPrec.of(ExprUtils.getAtoms(xsts.getProp())));
     }
 }

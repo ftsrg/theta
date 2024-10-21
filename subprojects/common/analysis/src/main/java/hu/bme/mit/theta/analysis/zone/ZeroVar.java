@@ -25,11 +25,9 @@ final class ZeroVar {
 
     private static final VarDecl<RatType> ZERO_VAR = Var("_zero", Rat());
 
-    private ZeroVar() {
-    }
+    private ZeroVar() {}
 
     static VarDecl<RatType> getInstance() {
         return ZERO_VAR;
     }
-
 }

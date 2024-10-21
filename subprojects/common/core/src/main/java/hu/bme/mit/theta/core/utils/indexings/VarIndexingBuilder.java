@@ -13,11 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils.indexings;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Map;
 
 public interface VarIndexingBuilder {

@@ -18,7 +18,6 @@ package hu.bme.mit.theta.solver.smtlib.impl.boolector;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
-
 import java.nio.file.Path;
 
 public class BoolectorSmtLibSolverFactory extends GenericSmtLibSolverFactory {

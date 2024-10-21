@@ -17,13 +17,12 @@ package hu.bme.mit.theta.solver.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import hu.bme.mit.theta.solver.Stack;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import hu.bme.mit.theta.solver.Stack;
 
 public class StackImpl<T> implements Stack<T> {
 

@@ -13,16 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.grammar.expression;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class UnsupportedInitializer extends NullaryExpr<IntType> {
 
@@ -33,7 +32,8 @@ public class UnsupportedInitializer extends NullaryExpr<IntType> {
 
     @Override
     public LitExpr<IntType> eval(Valuation val) {
-        throw new UnsupportedFrontendElementException("UnsupportedInitializer expressions are not supported.");
+        throw new UnsupportedFrontendElementException(
+                "UnsupportedInitializer expressions are not supported.");
     }
 
     @Override

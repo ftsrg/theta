@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-
 import java.util.List;
 
 public class CFunction extends CStatement {
@@ -28,12 +26,18 @@ public class CFunction extends CStatement {
     private final CStatement compound;
     private final List<VarDecl<?>> flatVariables;
 
-    public CFunction(CDeclaration funcDecl, CStatement compound, List<VarDecl<?>> flatVariables, ParseContext parseContext) {
+    public CFunction(
+            CDeclaration funcDecl,
+            CStatement compound,
+            List<VarDecl<?>> flatVariables,
+            ParseContext parseContext) {
         super(parseContext);
         this.funcDecl = funcDecl;
         this.compound = compound;
         this.flatVariables = flatVariables;
-        parseContext.getMetadata().lookupMetadata(funcDecl)
+        parseContext
+                .getMetadata()
+                .lookupMetadata(funcDecl)
                 .forEach((s, o) -> parseContext.getMetadata().create(this, s, o));
     }
 

@@ -13,11 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.MddTransformationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
-public interface StateSpaceEnumerationProvider extends MddTransformationProvider.Cached<AbstractNextStateDescriptor>, MddTransformationProvider.Initializable<AbstractNextStateDescriptor, AbstractNextStateDescriptor.Postcondition> {
-}
+public interface StateSpaceEnumerationProvider
+        extends MddTransformationProvider.Cached<AbstractNextStateDescriptor>,
+                MddTransformationProvider.Initializable<
+                        AbstractNextStateDescriptor, AbstractNextStateDescriptor.Postcondition> {}

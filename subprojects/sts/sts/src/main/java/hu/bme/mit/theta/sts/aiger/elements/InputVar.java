@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents an input variable.
- */
+/** Represents an input variable. */
 public final class InputVar extends AigerNode {
 
     private final Collection<AigerWire> outWires;

@@ -16,5 +16,7 @@
 package hu.bme.mit.theta.analysis.multi;
 
 public enum MultiSide {
-    LEFT, RIGHT, BOTH
+    LEFT,
+    RIGHT,
+    BOTH
 }

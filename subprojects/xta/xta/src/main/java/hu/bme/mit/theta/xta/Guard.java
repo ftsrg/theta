@@ -24,8 +24,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class Guard {
 
-    private Guard() {
-    }
+    private Guard() {}
 
     static DataGuard dataGuard(final Expr<BoolType> expr) {
         return new DataGuard(expr);
@@ -125,7 +124,5 @@ public abstract class Guard {
         public String toString() {
             return clockConstr.toString();
         }
-
     }
-
 }

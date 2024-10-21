@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -24,14 +23,14 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
 data class MonolithicExpr(
-    val initExpr: Expr<BoolType>,
-    val transExpr: Expr<BoolType>,
-    val propExpr: Expr<BoolType>,
-    val transOffsetIndex: VarIndexing = VarIndexingFactory.indexing(1),
-    val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0)
+  val initExpr: Expr<BoolType>,
+  val transExpr: Expr<BoolType>,
+  val propExpr: Expr<BoolType>,
+  val transOffsetIndex: VarIndexing = VarIndexingFactory.indexing(1),
+  val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0),
 ) {
 
-    fun vars(): Collection<VarDecl<*>> {
-        return getVars(initExpr) union getVars(transExpr) union getVars(propExpr)
-    }
+  fun vars(): Collection<VarDecl<*>> {
+    return getVars(initExpr) union getVars(transExpr) union getVars(propExpr)
+  }
 }

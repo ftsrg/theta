@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.LitExpr;
-
 import java.util.Map;
 
 public final class ExplLattice implements Lattice<ExplState> {

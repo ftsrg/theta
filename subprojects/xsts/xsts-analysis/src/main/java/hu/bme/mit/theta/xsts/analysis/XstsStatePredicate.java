@@ -16,11 +16,10 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-
 import java.util.function.Predicate;
 
-public class XstsStatePredicate<P extends Predicate, S extends ExprState> implements
-        Predicate<XstsState<S>> {
+public class XstsStatePredicate<P extends Predicate, S extends ExprState>
+        implements Predicate<XstsState<S>> {
 
     private final P pred;
 

@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
@@ -98,182 +100,114 @@ import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-
 public final class ExprCanonizer {
 
-    private static final DispatchTable<Expr<?>> TABLE = DispatchTable.<Expr<?>>builder()
-
-            // Boolean
-
-            .addCase(NotExpr.class, ExprCanonizer::canonizeNot)
-
-            .addCase(ImplyExpr.class, ExprCanonizer::canonizeImply)
-
-            .addCase(IffExpr.class, ExprCanonizer::canonizeIff)
-
-            .addCase(XorExpr.class, ExprCanonizer::canonizeXor)
-
-            .addCase(AndExpr.class, ExprCanonizer::canonizeAnd)
-
-            .addCase(OrExpr.class, ExprCanonizer::canonizeOr)
-
-            // Rational
-
-            .addCase(RatAddExpr.class, ExprCanonizer::canonizeRatAdd)
-
-            .addCase(RatSubExpr.class, ExprCanonizer::canonizeRatSub)
-
-            .addCase(RatPosExpr.class, ExprCanonizer::canonizeRatPos)
-
-            .addCase(RatNegExpr.class, ExprCanonizer::canonizeRatNeg)
-
-            .addCase(RatMulExpr.class, ExprCanonizer::canonizeRatMul)
-
-            .addCase(RatDivExpr.class, ExprCanonizer::canonizeRatDiv)
-
-            .addCase(RatEqExpr.class, ExprCanonizer::canonizeRatEq)
-
-            .addCase(RatNeqExpr.class, ExprCanonizer::canonizeRatNeq)
-
-            .addCase(RatGeqExpr.class, ExprCanonizer::canonizeRatGeq)
-
-            .addCase(RatGtExpr.class, ExprCanonizer::canonizeRatGt)
-
-            .addCase(RatLeqExpr.class, ExprCanonizer::canonizeRatLeq)
-
-            .addCase(RatLtExpr.class, ExprCanonizer::canonizeRatLt)
-
-            .addCase(RatToIntExpr.class, ExprCanonizer::canonizeRatToInt)
-
-            // Integer
-
-            .addCase(IntToRatExpr.class, ExprCanonizer::canonizeIntToRat)
-
-            .addCase(IntAddExpr.class, ExprCanonizer::canonizeIntAdd)
-
-            .addCase(IntSubExpr.class, ExprCanonizer::canonizeIntSub)
-
-            .addCase(IntPosExpr.class, ExprCanonizer::canonizeIntPos)
-
-            .addCase(IntNegExpr.class, ExprCanonizer::canonizeIntNeg)
-
-            .addCase(IntMulExpr.class, ExprCanonizer::canonizeIntMul)
-
-            .addCase(IntDivExpr.class, ExprCanonizer::canonizeIntDiv)
-
-            .addCase(IntModExpr.class, ExprCanonizer::canonizeMod)
-
-            .addCase(IntEqExpr.class, ExprCanonizer::canonizeIntEq)
-
-            .addCase(IntNeqExpr.class, ExprCanonizer::canonizeIntNeq)
-
-            .addCase(IntGeqExpr.class, ExprCanonizer::canonizeIntGeq)
-
-            .addCase(IntGtExpr.class, ExprCanonizer::canonizeIntGt)
-
-            .addCase(IntLeqExpr.class, ExprCanonizer::canonizeIntLeq)
-
-            .addCase(IntLtExpr.class, ExprCanonizer::canonizeIntLt)
-
-            // Array
-
-            .addCase(ArrayReadExpr.class, ExprCanonizer::canonizeArrayRead)
-
-            .addCase(ArrayWriteExpr.class, ExprCanonizer::canonizeArrayWrite)
-
-            // Bitvectors
-
-            .addCase(BvConcatExpr.class, ExprCanonizer::canonizeBvConcat)
-
-            .addCase(BvExtractExpr.class, ExprCanonizer::canonizeBvExtract)
-
-            .addCase(BvZExtExpr.class, ExprCanonizer::canonizeBvZExt)
-
-            .addCase(BvSExtExpr.class, ExprCanonizer::canonizeBvSExt)
-
-            .addCase(BvAddExpr.class, ExprCanonizer::canonizeBvAdd)
-
-            .addCase(BvSubExpr.class, ExprCanonizer::canonizeBvSub)
-
-            .addCase(BvPosExpr.class, ExprCanonizer::canonizeBvPos)
-
-            .addCase(BvSignChangeExpr.class, ExprCanonizer::canonizeBvSignChange)
-
-            .addCase(BvNegExpr.class, ExprCanonizer::canonizeBvNeg)
-
-            .addCase(BvMulExpr.class, ExprCanonizer::canonizeBvMul)
-
-            .addCase(BvUDivExpr.class, ExprCanonizer::canonizeBvUDiv)
-
-            .addCase(BvSDivExpr.class, ExprCanonizer::canonizeBvSDiv)
-
-            .addCase(BvSModExpr.class, ExprCanonizer::canonizeBvSMod)
-
-            .addCase(BvURemExpr.class, ExprCanonizer::canonizeBvURem)
-
-            .addCase(BvSRemExpr.class, ExprCanonizer::canonizeBvSRem)
-
-            .addCase(BvAndExpr.class, ExprCanonizer::canonizeBvAnd)
-
-            .addCase(BvOrExpr.class, ExprCanonizer::canonizeBvOr)
-
-            .addCase(BvXorExpr.class, ExprCanonizer::canonizeBvXor)
-
-            .addCase(BvNotExpr.class, ExprCanonizer::canonizeBvNot)
-
-            .addCase(BvShiftLeftExpr.class, ExprCanonizer::canonizeBvShiftLeft)
-
-            .addCase(BvArithShiftRightExpr.class, ExprCanonizer::canonizeBvArithShiftRight)
-
-            .addCase(BvLogicShiftRightExpr.class, ExprCanonizer::canonizeBvLogicShiftRight)
-
-            .addCase(BvRotateLeftExpr.class, ExprCanonizer::canonizeBvRotateLeft)
-
-            .addCase(BvRotateRightExpr.class, ExprCanonizer::canonizeBvRotateRight)
-
-            .addCase(BvEqExpr.class, ExprCanonizer::canonizeBvEq)
-
-            .addCase(BvNeqExpr.class, ExprCanonizer::canonizeBvNeq)
-
-            .addCase(BvUGeqExpr.class, ExprCanonizer::canonizeBvUGeq)
-
-            .addCase(BvUGtExpr.class, ExprCanonizer::canonizeBvUGt)
-
-            .addCase(BvULeqExpr.class, ExprCanonizer::canonizeBvULeq)
-
-            .addCase(BvULtExpr.class, ExprCanonizer::canonizeBvULt)
-
-            .addCase(BvSGeqExpr.class, ExprCanonizer::canonizeBvSGeq)
-
-            .addCase(BvSGtExpr.class, ExprCanonizer::canonizeBvSGt)
-
-            .addCase(BvSLeqExpr.class, ExprCanonizer::canonizeBvSLeq)
-
-            .addCase(BvSLtExpr.class, ExprCanonizer::canonizeBvSLt)
-
-            // General
-
-            .addCase(RefExpr.class, ExprCanonizer::canonizeRef)
-
-            .addCase(IteExpr.class, ExprCanonizer::canonizeIte)
-
-            // Default
-
-            .addDefault((o) -> {
-                final Expr<?> expr = (Expr<?>) o;
-                return expr.map(e -> canonize(e));
-            })
-
-            .build();
-
-    private ExprCanonizer() {
-    }
+    private static final DispatchTable<Expr<?>> TABLE =
+            DispatchTable.<Expr<?>>builder()
+
+                    // Boolean
+
+                    .addCase(NotExpr.class, ExprCanonizer::canonizeNot)
+                    .addCase(ImplyExpr.class, ExprCanonizer::canonizeImply)
+                    .addCase(IffExpr.class, ExprCanonizer::canonizeIff)
+                    .addCase(XorExpr.class, ExprCanonizer::canonizeXor)
+                    .addCase(AndExpr.class, ExprCanonizer::canonizeAnd)
+                    .addCase(OrExpr.class, ExprCanonizer::canonizeOr)
+
+                    // Rational
+
+                    .addCase(RatAddExpr.class, ExprCanonizer::canonizeRatAdd)
+                    .addCase(RatSubExpr.class, ExprCanonizer::canonizeRatSub)
+                    .addCase(RatPosExpr.class, ExprCanonizer::canonizeRatPos)
+                    .addCase(RatNegExpr.class, ExprCanonizer::canonizeRatNeg)
+                    .addCase(RatMulExpr.class, ExprCanonizer::canonizeRatMul)
+                    .addCase(RatDivExpr.class, ExprCanonizer::canonizeRatDiv)
+                    .addCase(RatEqExpr.class, ExprCanonizer::canonizeRatEq)
+                    .addCase(RatNeqExpr.class, ExprCanonizer::canonizeRatNeq)
+                    .addCase(RatGeqExpr.class, ExprCanonizer::canonizeRatGeq)
+                    .addCase(RatGtExpr.class, ExprCanonizer::canonizeRatGt)
+                    .addCase(RatLeqExpr.class, ExprCanonizer::canonizeRatLeq)
+                    .addCase(RatLtExpr.class, ExprCanonizer::canonizeRatLt)
+                    .addCase(RatToIntExpr.class, ExprCanonizer::canonizeRatToInt)
+
+                    // Integer
+
+                    .addCase(IntToRatExpr.class, ExprCanonizer::canonizeIntToRat)
+                    .addCase(IntAddExpr.class, ExprCanonizer::canonizeIntAdd)
+                    .addCase(IntSubExpr.class, ExprCanonizer::canonizeIntSub)
+                    .addCase(IntPosExpr.class, ExprCanonizer::canonizeIntPos)
+                    .addCase(IntNegExpr.class, ExprCanonizer::canonizeIntNeg)
+                    .addCase(IntMulExpr.class, ExprCanonizer::canonizeIntMul)
+                    .addCase(IntDivExpr.class, ExprCanonizer::canonizeIntDiv)
+                    .addCase(IntModExpr.class, ExprCanonizer::canonizeMod)
+                    .addCase(IntEqExpr.class, ExprCanonizer::canonizeIntEq)
+                    .addCase(IntNeqExpr.class, ExprCanonizer::canonizeIntNeq)
+                    .addCase(IntGeqExpr.class, ExprCanonizer::canonizeIntGeq)
+                    .addCase(IntGtExpr.class, ExprCanonizer::canonizeIntGt)
+                    .addCase(IntLeqExpr.class, ExprCanonizer::canonizeIntLeq)
+                    .addCase(IntLtExpr.class, ExprCanonizer::canonizeIntLt)
+
+                    // Array
+
+                    .addCase(ArrayReadExpr.class, ExprCanonizer::canonizeArrayRead)
+                    .addCase(ArrayWriteExpr.class, ExprCanonizer::canonizeArrayWrite)
+
+                    // Bitvectors
+
+                    .addCase(BvConcatExpr.class, ExprCanonizer::canonizeBvConcat)
+                    .addCase(BvExtractExpr.class, ExprCanonizer::canonizeBvExtract)
+                    .addCase(BvZExtExpr.class, ExprCanonizer::canonizeBvZExt)
+                    .addCase(BvSExtExpr.class, ExprCanonizer::canonizeBvSExt)
+                    .addCase(BvAddExpr.class, ExprCanonizer::canonizeBvAdd)
+                    .addCase(BvSubExpr.class, ExprCanonizer::canonizeBvSub)
+                    .addCase(BvPosExpr.class, ExprCanonizer::canonizeBvPos)
+                    .addCase(BvSignChangeExpr.class, ExprCanonizer::canonizeBvSignChange)
+                    .addCase(BvNegExpr.class, ExprCanonizer::canonizeBvNeg)
+                    .addCase(BvMulExpr.class, ExprCanonizer::canonizeBvMul)
+                    .addCase(BvUDivExpr.class, ExprCanonizer::canonizeBvUDiv)
+                    .addCase(BvSDivExpr.class, ExprCanonizer::canonizeBvSDiv)
+                    .addCase(BvSModExpr.class, ExprCanonizer::canonizeBvSMod)
+                    .addCase(BvURemExpr.class, ExprCanonizer::canonizeBvURem)
+                    .addCase(BvSRemExpr.class, ExprCanonizer::canonizeBvSRem)
+                    .addCase(BvAndExpr.class, ExprCanonizer::canonizeBvAnd)
+                    .addCase(BvOrExpr.class, ExprCanonizer::canonizeBvOr)
+                    .addCase(BvXorExpr.class, ExprCanonizer::canonizeBvXor)
+                    .addCase(BvNotExpr.class, ExprCanonizer::canonizeBvNot)
+                    .addCase(BvShiftLeftExpr.class, ExprCanonizer::canonizeBvShiftLeft)
+                    .addCase(BvArithShiftRightExpr.class, ExprCanonizer::canonizeBvArithShiftRight)
+                    .addCase(BvLogicShiftRightExpr.class, ExprCanonizer::canonizeBvLogicShiftRight)
+                    .addCase(BvRotateLeftExpr.class, ExprCanonizer::canonizeBvRotateLeft)
+                    .addCase(BvRotateRightExpr.class, ExprCanonizer::canonizeBvRotateRight)
+                    .addCase(BvEqExpr.class, ExprCanonizer::canonizeBvEq)
+                    .addCase(BvNeqExpr.class, ExprCanonizer::canonizeBvNeq)
+                    .addCase(BvUGeqExpr.class, ExprCanonizer::canonizeBvUGeq)
+                    .addCase(BvUGtExpr.class, ExprCanonizer::canonizeBvUGt)
+                    .addCase(BvULeqExpr.class, ExprCanonizer::canonizeBvULeq)
+                    .addCase(BvULtExpr.class, ExprCanonizer::canonizeBvULt)
+                    .addCase(BvSGeqExpr.class, ExprCanonizer::canonizeBvSGeq)
+                    .addCase(BvSGtExpr.class, ExprCanonizer::canonizeBvSGt)
+                    .addCase(BvSLeqExpr.class, ExprCanonizer::canonizeBvSLeq)
+                    .addCase(BvSLtExpr.class, ExprCanonizer::canonizeBvSLt)
+
+                    // General
+
+                    .addCase(RefExpr.class, ExprCanonizer::canonizeRef)
+                    .addCase(IteExpr.class, ExprCanonizer::canonizeIte)
+
+                    // Default
+
+                    .addDefault(
+                            (o) -> {
+                                final Expr<?> expr = (Expr<?>) o;
+                                return expr.map(e -> canonize(e));
+                            })
+                    .build();
+
+    private ExprCanonizer() {}
 
     @SuppressWarnings("unchecked")
     public static <T extends Type> Expr<T> canonize(final Expr<T> expr) {
@@ -307,8 +241,8 @@ public final class ExprCanonizer {
         return canonizeGenericArrayRead(expr);
     }
 
-    private static <IT extends Type, ET extends Type> Expr<ET>
-    canonizeGenericArrayRead(final ArrayReadExpr<IT, ET> expr) {
+    private static <IT extends Type, ET extends Type> Expr<ET> canonizeGenericArrayRead(
+            final ArrayReadExpr<IT, ET> expr) {
         Expr<ArrayType<IT, ET>> arr = canonize(expr.getArray());
         Expr<IT> index = canonize(expr.getIndex());
 
@@ -319,8 +253,8 @@ public final class ExprCanonizer {
         return canonizeGenericArrayWrite(expr);
     }
 
-    private static <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
-    canonizeGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr) {
+    private static <IT extends Type, ET extends Type>
+            Expr<ArrayType<IT, ET>> canonizeGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr) {
         Expr<ArrayType<IT, ET>> arr = canonize(expr.getArray());
         Expr<IT> index = canonize(expr.getIndex());
         Expr<ET> elem = canonize(expr.getElem());
@@ -345,8 +279,9 @@ public final class ExprCanonizer {
         return expr.with(leftOp, rightOp);
     }
 
-    private static <OpType extends Type, ExprType extends Type> Expr<ExprType>
-    canonizeGenericCommutativeBinaryExpr(final BinaryExpr<OpType, ExprType> expr) {
+    private static <OpType extends Type, ExprType extends Type>
+            Expr<ExprType> canonizeGenericCommutativeBinaryExpr(
+                    final BinaryExpr<OpType, ExprType> expr) {
         final Expr<OpType> leftOp = canonize(expr.getLeftOp());
         final Expr<OpType> rightOp = canonize(expr.getRightOp());
 
@@ -368,12 +303,14 @@ public final class ExprCanonizer {
         return canonizeGenericCommutativeBinaryExpr(expr);
     }
 
-    private static <OpType extends Type, ExprType extends Type> Expr<ExprType>
-    canonizeGenericCommutativeMultiaryExpr(final MultiaryExpr<OpType, ExprType> expr) {
-        final List<Expr<OpType>> orderedCanonizedOps = expr.getOps().stream()
-                .map(ExprCanonizer::canonize)
-                .sorted(Comparator.comparingInt(Object::hashCode))
-                .collect(Collectors.toList());
+    private static <OpType extends Type, ExprType extends Type>
+            Expr<ExprType> canonizeGenericCommutativeMultiaryExpr(
+                    final MultiaryExpr<OpType, ExprType> expr) {
+        final List<Expr<OpType>> orderedCanonizedOps =
+                expr.getOps().stream()
+                        .map(ExprCanonizer::canonize)
+                        .sorted(Comparator.comparingInt(Object::hashCode))
+                        .collect(Collectors.toList());
 
         return expr.withOps(orderedCanonizedOps);
     }
@@ -682,5 +619,4 @@ public final class ExprCanonizer {
     private static Expr<BoolType> canonizeBvSLt(final BvSLtExpr expr) {
         throw new UnsupportedOperationException();
     }
-
 }

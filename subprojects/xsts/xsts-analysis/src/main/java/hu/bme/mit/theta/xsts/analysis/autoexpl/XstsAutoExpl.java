@@ -21,5 +21,4 @@ import hu.bme.mit.theta.xsts.XSTS;
 public interface XstsAutoExpl {
 
     AutoExpl create(final XSTS xsts);
-
 }

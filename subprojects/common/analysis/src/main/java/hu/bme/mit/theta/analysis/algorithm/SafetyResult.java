@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.common.Utils;
-
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SafetyResult<W extends Witness, C extends Cex> implements Result<W> {
     private final W witness;
@@ -50,7 +49,8 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         return new Safe<>(witness, Optional.empty());
     }
 
-    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness) {
+    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(
+            final C cex, final W witness) {
         return new Unsafe<>(cex, witness, Optional.empty());
     }
 
@@ -58,12 +58,13 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         return new Unknown<>();
     }
 
-    public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness, final Statistics stats) {
+    public static <W extends Witness, C extends Cex> Safe<W, C> safe(
+            final W witness, final Statistics stats) {
         return new Safe<>(witness, Optional.of(stats));
     }
 
-    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness,
-                                                                         final Statistics stats) {
+    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(
+            final C cex, final W witness, final Statistics stats) {
         return new Unsafe<>(cex, witness, Optional.of(stats));
     }
 
@@ -104,12 +105,16 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         @Override
         public Unsafe<W, C> asUnsafe() {
             throw new ClassCastException(
-                    "Cannot cast " + Safe.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
+                    "Cannot cast "
+                            + Safe.class.getSimpleName()
+                            + " to "
+                            + Unsafe.class.getSimpleName());
         }
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
+                    .add(Safe.class.getSimpleName())
                     .toString();
         }
     }
@@ -139,7 +144,10 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         @Override
         public Safe<W, C> asSafe() {
             throw new ClassCastException(
-                    "Cannot cast " + Unsafe.class.getSimpleName() + " to " + Safe.class.getSimpleName());
+                    "Cannot cast "
+                            + Unsafe.class.getSimpleName()
+                            + " to "
+                            + Safe.class.getSimpleName());
         }
 
         @Override
@@ -149,8 +157,10 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
-                    .add("Trace length: " + cex.length()).toString();
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
+                    .add(Unsafe.class.getSimpleName())
+                    .add("Trace length: " + cex.length())
+                    .toString();
         }
     }
 
@@ -191,5 +201,4 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
                     .toString();
         }
     }
-
 }

@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Typedef extends CSimpleType {
 
-    public final static Typedef instance = new Typedef();
+    public static final Typedef instance = new Typedef();
 
-    private Typedef() {
-    }
+    private Typedef() {}
 
     @Override
     public CSimpleType copyOf() {
@@ -29,7 +27,6 @@ public class Typedef extends CSimpleType {
         setUpCopy(declaredNameRet);
         return declaredNameRet;
     }
-
 
     @Override
     protected void patch(CSimpleType cSimpleType) {

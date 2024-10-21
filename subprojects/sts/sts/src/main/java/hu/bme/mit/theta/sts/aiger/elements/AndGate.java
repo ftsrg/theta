@@ -17,14 +17,11 @@ package hu.bme.mit.theta.sts.aiger.elements;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.google.common.collect.ImmutableList;
-
-/**
- * Represents an and gate with exactly two inputs.
- */
+/** Represents an and gate with exactly two inputs. */
 public class AndGate extends AigerNode {
 
     private final Collection<AigerWire> outWires;
@@ -69,5 +66,4 @@ public class AndGate extends AigerNode {
         checkArgument(outWire.getSource().equals(this));
         outWires.add(outWire);
     }
-
 }

@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.Collection;
 
 public interface ClockConstr {
 
@@ -29,5 +28,4 @@ public interface ClockConstr {
     Expr<BoolType> toExpr();
 
     <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
-
 }

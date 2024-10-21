@@ -35,174 +35,181 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
-
 class GenericSmtLibHornSolverTest {
-    companion object {
+  companion object {
 
-        private var solverManager: SmtLibSolverManager? = null
-        private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
+    private var solverManager: SmtLibSolverManager? = null
+    private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
-        private val SOLVERS: List<Pair<String, String>> = listOf(
-            Pair("z3", "4.13.0"),
-            Pair("z3", "4.12.6"),
-            Pair("eldarica", "2.1"),
-            Pair("golem", "0.5.0"),
+    private val SOLVERS: List<Pair<String, String>> =
+      listOf(
+        Pair("z3", "4.13.0"),
+        Pair("z3", "4.12.6"),
+        Pair("eldarica", "2.1"),
+        Pair("golem", "0.5.0"),
+      )
+
+    @JvmStatic
+    fun solvers(): List<Arguments> {
+      return SOLVERS.map { Arguments.of(it) }
+    }
+
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+        val home = SmtLibSolverManager.HOME
+
+        solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+        for ((solver, version) in SOLVERS) {
+
+          try {
+            solverManager!!.install(solver, version, version, null, false)
+          } catch (e: SmtLibSolverInstallerException) {
+            e.printStackTrace()
+          }
+
+          solverFactories.put(
+            Pair(solver, version),
+            solverManager!!.getSolverFactory(solver, version),
+          )
+        }
+      }
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun destroy() {
+      for ((solver, version) in SOLVERS) {
+        try {
+          solverManager?.uninstall(solver, version)
+        } catch (e: SmtLibSolverInstallerException) {
+          e.printStackTrace()
+        }
+      }
+    }
+  }
+
+  @BeforeEach
+  fun before() {
+    Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("solvers")
+  fun testSolvable(name: Pair<String, String>) {
+    val solverFactory = solverFactories[name]!!
+    val solver = solverFactory.createHornSolver()
+    solver.use { hornSolver ->
+      val p = ParamHolder(Int())
+      val init = Relation("init", Int(), Int())
+      val inv = Relation("inv", Int(), Int())
+
+      init(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(1))
+      inv(p[0], p[1]) += init(p[0], p[1]).expr
+      inv(p[0], p[2]) += inv(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(1)))
+
+      !(inv(p[0], p[1]) with Lt(p[1], Int(1)))
+
+      hornSolver.add(init)
+      hornSolver.add(inv)
+
+      val status = hornSolver.check()
+      Assertions.assertTrue(status.isSat)
+      val model = hornSolver.model.toMap()
+
+      Assertions.assertTrue(model.containsKey(inv.constDecl))
+      Assertions.assertTrue(model.containsKey(init.constDecl))
+
+      val checkerSolver =
+        solverFactories.filter { it.key.first.equals("z3") }.values.first().createSolver()
+      checkerSolver.use {
+        val p0 = Const("p0", Int())
+        val p1 = Const("p1", Int())
+        checkerSolver.add(
+          App(
+            App(
+              model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
+              p0.ref,
+            ),
+            p1.ref,
+          )
         )
 
-        @JvmStatic
-        fun solvers(): List<Arguments> {
-            return SOLVERS.map { Arguments.of(it) }
-        }
-
-        @BeforeAll
-        @JvmStatic
-        fun init() {
-            if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
-                val home = SmtLibSolverManager.HOME
-
-                solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
-                for ((solver, version) in SOLVERS) {
-
-                    try {
-                        solverManager!!.install(solver, version, version, null, false)
-                    } catch (e: SmtLibSolverInstallerException) {
-                        e.printStackTrace()
-                    }
-
-                    solverFactories.put(Pair(solver, version), solverManager!!.getSolverFactory(solver, version))
-                }
-            }
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun destroy() {
-            for ((solver, version) in SOLVERS) {
-                try {
-                    solverManager?.uninstall(solver, version)
-                } catch (e: SmtLibSolverInstallerException) {
-                    e.printStackTrace()
-                }
-            }
-        }
+        checkerSolver.add(Lt(p1.ref, Int(0)))
+        Assertions.assertTrue(checkerSolver.check().isUnsat)
+        System.err.println(model.toMap())
+      }
     }
+  }
 
-    @BeforeEach
-    fun before() {
-        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("solvers")
+  fun testUnsolvable(name: Pair<String, String>) {
+    val solverFactory = solverFactories[name]!!
+    val solver = solverFactory.createHornSolver()
+
+    solver.use { hornSolver ->
+      val p = ParamHolder(Int())
+      val init = Relation("init", Int(), Int())
+      val inv = Relation("inv", Int(), Int())
+
+      init(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(1))
+      inv(p[0], p[1]) += init(p[0], p[1]).expr
+      inv(p[0], p[2]) += inv(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(1)))
+
+      !(inv(p[0], p[1]) with Leq(p[1], Int(1)))
+
+      hornSolver.add(init)
+      hornSolver.add(inv)
+
+      val status = hornSolver.check()
+      Assertions.assertTrue(status.isUnsat)
+
+      val proof = hornSolver.proof
+      Assertions.assertTrue(proof != null)
+      System.err.println(proof)
     }
+  }
 
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("solvers")
-    fun testSolvable(name: Pair<String, String>) {
-        val solverFactory = solverFactories[name]!!
-        val solver = solverFactory.createHornSolver()
-        solver.use { hornSolver ->
-            val p = ParamHolder(Int())
-            val init = Relation("init", Int(), Int())
-            val inv = Relation("inv", Int(), Int())
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("solvers")
+  fun testNonlinearUnsolvable(name: Pair<String, String>) {
+    val solverFactory = solverFactories[name]!!
+    val solver = solverFactory.createHornSolver()
 
-            init(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(1))
-            inv(p[0], p[1]) += init(p[0], p[1]).expr
-            inv(p[0], p[2]) += inv(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(1)))
+    solver.use { hornSolver ->
+      val p = ParamHolder(Int())
+      val init1 = Relation("init1", Int(), Int())
+      val init2 = Relation("init2", Int(), Int())
+      val inv1 = Relation("inv1", Int(), Int())
+      val inv2 = Relation("inv2", Int(), Int())
 
-            !(inv(p[0], p[1]) with Lt(p[1], Int(1)))
+      val err = Relation("err", Int(), Int())
 
-            hornSolver.add(init)
-            hornSolver.add(inv)
+      init1(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(0))
+      init2(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(0))
+      inv1(p[0], p[1]) += init1(p[0], p[1]).expr
+      inv1(p[0], p[2]) += inv1(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(3)))
+      inv2(p[0], p[1]) += init2(p[0], p[1]).expr
+      inv2(p[0], p[2]) += inv2(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(5)))
 
-            val status = hornSolver.check()
-            Assertions.assertTrue(status.isSat)
-            val model = hornSolver.model.toMap()
+      err(p[0], p[2]) += inv1(p[0], p[1]).expr + inv2(p[0], p[1]).expr + Gt(p[1], Int(0))
 
-            Assertions.assertTrue(model.containsKey(inv.constDecl))
-            Assertions.assertTrue(model.containsKey(init.constDecl))
+      !err(p[0], p[1])
 
-            val checkerSolver = solverFactories.filter { it.key.first.equals("z3") }.values.first().createSolver()
-            checkerSolver.use {
-                val p0 = Const("p0", Int())
-                val p1 = Const("p1", Int())
-                checkerSolver.add(
-                    App(
-                        App(
-                            model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
-                            p0.ref),
-                        p1.ref))
+      hornSolver.add(init1)
+      hornSolver.add(init2)
+      hornSolver.add(inv1)
+      hornSolver.add(inv2)
+      hornSolver.add(err)
 
-                checkerSolver.add(Lt(p1.ref, Int(0)))
-                Assertions.assertTrue(checkerSolver.check().isUnsat)
-                System.err.println(model.toMap())
-            }
-        }
+      val status = hornSolver.check()
+      Assertions.assertTrue(status.isUnsat)
+
+      val proof = hornSolver.proof
+      Assertions.assertTrue(proof != null)
+      System.err.println(proof)
     }
-
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("solvers")
-    fun testUnsolvable(name: Pair<String, String>) {
-        val solverFactory = solverFactories[name]!!
-        val solver = solverFactory.createHornSolver()
-
-        solver.use { hornSolver ->
-            val p = ParamHolder(Int())
-            val init = Relation("init", Int(), Int())
-            val inv = Relation("inv", Int(), Int())
-
-            init(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(1))
-            inv(p[0], p[1]) += init(p[0], p[1]).expr
-            inv(p[0], p[2]) += inv(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(1)))
-
-            !(inv(p[0], p[1]) with Leq(p[1], Int(1)))
-
-            hornSolver.add(init)
-            hornSolver.add(inv)
-
-            val status = hornSolver.check()
-            Assertions.assertTrue(status.isUnsat)
-
-            val proof = hornSolver.proof
-            Assertions.assertTrue(proof != null)
-            System.err.println(proof)
-        }
-    }
-
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("solvers")
-    fun testNonlinearUnsolvable(name: Pair<String, String>) {
-        val solverFactory = solverFactories[name]!!
-        val solver = solverFactory.createHornSolver()
-
-        solver.use { hornSolver ->
-            val p = ParamHolder(Int())
-            val init1 = Relation("init1", Int(), Int())
-            val init2 = Relation("init2", Int(), Int())
-            val inv1 = Relation("inv1", Int(), Int())
-            val inv2 = Relation("inv2", Int(), Int())
-
-            val err = Relation("err", Int(), Int())
-
-            init1(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(0))
-            init2(p[0], p[1]) += Eq(p[0], Int(0)) + Eq(p[1], Int(0))
-            inv1(p[0], p[1]) += init1(p[0], p[1]).expr
-            inv1(p[0], p[2]) += inv1(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(3)))
-            inv2(p[0], p[1]) += init2(p[0], p[1]).expr
-            inv2(p[0], p[2]) += inv2(p[0], p[1]).expr + Eq(p[2], Add(p[1], Int(5)))
-
-            err(p[0], p[2]) += inv1(p[0], p[1]).expr + inv2(p[0], p[1]).expr + Gt(p[1], Int(0))
-
-            !err(p[0], p[1])
-
-            hornSolver.add(init1)
-            hornSolver.add(init2)
-            hornSolver.add(inv1)
-            hornSolver.add(inv2)
-            hornSolver.add(err)
-
-            val status = hornSolver.check()
-            Assertions.assertTrue(status.isUnsat)
-
-            val proof = hornSolver.proof
-            Assertions.assertTrue(proof != null)
-            System.err.println(proof)
-        }
-    }
+  }
 }

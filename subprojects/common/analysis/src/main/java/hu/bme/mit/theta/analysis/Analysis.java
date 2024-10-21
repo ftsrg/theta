@@ -44,5 +44,4 @@ public interface Analysis<S extends State, A extends Action, P extends Prec> {
      * @return
      */
     TransFunc<S, A, P> getTransFunc();
-
 }

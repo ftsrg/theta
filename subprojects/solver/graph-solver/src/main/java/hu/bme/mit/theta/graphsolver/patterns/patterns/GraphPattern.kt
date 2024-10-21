@@ -13,13 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.graphsolver.patterns.patterns
 
 import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
 sealed class GraphPattern {
 
-    var patternName: String? = null
-    abstract fun <T> accept(compiler: GraphPatternCompiler<*, T>): T
+  var patternName: String? = null
+
+  abstract fun <T> accept(compiler: GraphPatternCompiler<*, T>): T
 }

@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-
 import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 final class JavaSMTItpMarker<T> implements ItpMarker {
 
@@ -46,5 +45,4 @@ final class JavaSMTItpMarker<T> implements ItpMarker {
     public Collection<T> getTerms() {
         return terms.toCollection();
     }
-
 }

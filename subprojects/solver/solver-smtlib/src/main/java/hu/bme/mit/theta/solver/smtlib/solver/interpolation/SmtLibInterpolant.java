@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.interpolation;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
-
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SmtLibInterpolant implements Interpolant {
 
@@ -39,5 +38,4 @@ public class SmtLibInterpolant implements Interpolant {
         checkNotNull(itpExpr);
         return itpExpr;
     }
-
 }

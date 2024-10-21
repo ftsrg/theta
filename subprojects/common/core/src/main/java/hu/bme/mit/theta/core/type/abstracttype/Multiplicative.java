@@ -23,5 +23,4 @@ public interface Multiplicative<ExprType extends Multiplicative<ExprType>> exten
     MulExpr<ExprType> Mul(Iterable<? extends Expr<ExprType>> ops);
 
     DivExpr<ExprType> Div(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
-
 }

@@ -36,5 +36,4 @@ public class XstsEmptyInitPrec implements XstsInitPrec {
     public Prod2Prec<ExplPrec, PredPrec> createProd2ExplPred(final XSTS sts) {
         return Prod2Prec.of(ExplPrec.empty(), PredPrec.of());
     }
-
 }

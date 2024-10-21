@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.interpolation;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-
 import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SmtLibItpMarker implements ItpMarker {
 

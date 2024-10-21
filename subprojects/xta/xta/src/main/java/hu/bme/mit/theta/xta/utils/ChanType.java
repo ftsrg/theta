@@ -22,8 +22,7 @@ public final class ChanType implements Type {
 
     private static final ChanType INSTANCE = new ChanType();
 
-    private ChanType() {
-    }
+    private ChanType() {}
 
     public static ChanType getInstance() {
         return INSTANCE;

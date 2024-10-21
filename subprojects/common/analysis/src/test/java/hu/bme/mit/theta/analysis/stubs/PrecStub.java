@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Collection;
 import java.util.Set;
 

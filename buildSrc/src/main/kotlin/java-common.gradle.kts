@@ -68,7 +68,7 @@ tasks {
 }
 
 spotless {
-    ratchetFrom("origin/master")
+    //ratchetFrom("origin/master")
 
     isEnforceCheck = false
     

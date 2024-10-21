@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
-
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class RatNegExpr extends NegExpr<RatType> {
 
@@ -81,5 +81,4 @@ public final class RatNegExpr extends NegExpr<RatType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

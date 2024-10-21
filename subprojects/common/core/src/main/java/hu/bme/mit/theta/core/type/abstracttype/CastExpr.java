@@ -25,5 +25,4 @@ public abstract class CastExpr<SourceType extends Castable<SourceType>, TargetTy
     public CastExpr(final Expr<SourceType> op) {
         super(op);
     }
-
 }

@@ -36,5 +36,4 @@ public interface ContainerFactory {
     <E> Set<E> createSet(int initialCapacity, float loadFactor);
 
     <E> Set<E> createSet(Collection<? extends E> c);
-
 }

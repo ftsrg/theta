@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BasicDynamicScope implements DynamicScope {
 

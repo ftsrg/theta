@@ -34,5 +34,4 @@ public class StsPropInitPrec implements StsInitPrec {
     public PredPrec createPred(final STS sts) {
         return PredPrec.of(ExprUtils.getAtoms(sts.getProp()));
     }
-
 }

@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
-
-import java.util.List;
-
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
+import java.util.List;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 
@@ -91,5 +90,4 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

@@ -31,8 +31,7 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         INSTANCE = new Z3LegacySolverFactory();
     }
 
-    private Z3LegacySolverFactory() {
-    }
+    private Z3LegacySolverFactory() {}
 
     public static Z3LegacySolverFactory getInstance() {
         return INSTANCE;
@@ -58,12 +57,12 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3Solver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
 
     @Override
@@ -72,12 +71,12 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3Solver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
 
     @Override
@@ -86,12 +85,11 @@ public final class Z3LegacySolverFactory implements SolverFactory {
         final com.microsoft.z3legacy.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3ItpSolver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3ItpSolver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
-
 }

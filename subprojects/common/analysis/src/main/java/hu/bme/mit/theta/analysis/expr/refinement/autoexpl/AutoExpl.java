@@ -24,5 +24,4 @@ public interface AutoExpl {
     boolean isExpl(final VarDecl<?> decl);
 
     void update(final Expr<BoolType> itp);
-
 }

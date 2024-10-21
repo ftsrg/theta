@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -27,7 +30,6 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
@@ -35,6 +37,12 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.impl.StackImpl;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.sosy_lab.java_smt.api.BasicProverEnvironment;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.Formula;
@@ -42,16 +50,6 @@ import org.sosy_lab.java_smt.api.Model;
 import org.sosy_lab.java_smt.api.Model.ValueAssignment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverException;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 final class JavaSMTSolver implements UCSolver, Solver {
 
@@ -67,15 +65,15 @@ final class JavaSMTSolver implements UCSolver, Solver {
     private Valuation model;
     private Collection<Expr<BoolType>> unsatCore;
 
-
     private final Map<String, Expr<BoolType>> assumptions;
     private SolverStatus status;
 
-    public JavaSMTSolver(final JavaSMTSymbolTable symbolTable,
-                         final JavaSMTTransformationManager transformationManager,
-                         final JavaSMTTermTransformer termTransformer,
-                         final SolverContext context,
-                         final BasicProverEnvironment solver) {
+    public JavaSMTSolver(
+            final JavaSMTSymbolTable symbolTable,
+            final JavaSMTTransformationManager transformationManager,
+            final JavaSMTTermTransformer termTransformer,
+            final SolverContext context,
+            final BasicProverEnvironment solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -91,8 +89,7 @@ final class JavaSMTSolver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        final BooleanFormula term = (BooleanFormula) transformationManager.toTerm(
-                assertion);
+        final BooleanFormula term = (BooleanFormula) transformationManager.toTerm(assertion);
         add(assertion, term);
     }
 
@@ -107,7 +104,6 @@ final class JavaSMTSolver implements UCSolver, Solver {
         clearState();
         return ret;
     }
-
 
     @Override
     public void track(final Expr<BoolType> assertion) {
@@ -126,7 +122,6 @@ final class JavaSMTSolver implements UCSolver, Solver {
         return Collections.unmodifiableCollection(unsatCore);
     }
 
-
     private Collection<Expr<BoolType>> extractUnsatCore() {
         assert status == SolverStatus.UNSAT;
         assert unsatCore == null;
@@ -144,7 +139,6 @@ final class JavaSMTSolver implements UCSolver, Solver {
 
         return unsatCore;
     }
-
 
     @Override
     public SolverStatus check() {
@@ -276,7 +270,8 @@ final class JavaSMTSolver implements UCSolver, Solver {
                 }
             }
 
-            @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+            @SuppressWarnings("unchecked")
+            final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
             return Optional.ofNullable(tVal);
         }
 
@@ -342,7 +337,8 @@ final class JavaSMTSolver implements UCSolver, Solver {
 
         private Collection<ConstDecl<?>> constDeclsOf(final Model model) {
             final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-            for (final Formula symbol : model.asList().stream().map(ValueAssignment::getKey).toList()) {
+            for (final Formula symbol :
+                    model.asList().stream().map(ValueAssignment::getKey).toList()) {
                 if (symbolTable.definesSymbol(symbol)) {
                     final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
                     builder.add(constDecl);
@@ -351,5 +347,4 @@ final class JavaSMTSolver implements UCSolver, Solver {
             return builder.build();
         }
     }
-
 }

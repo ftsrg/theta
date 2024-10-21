@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.waitlist;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.Utils;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,11 +25,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.Utils;
-
-/**
- * A waitlist where items are removed in a random order.
- */
+/** A waitlist where items are removed in a random order. */
 public final class RandomWaitlist<T> implements Waitlist<T> {
 
     private final List<T> items;
@@ -89,5 +86,4 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
     }
-
 }

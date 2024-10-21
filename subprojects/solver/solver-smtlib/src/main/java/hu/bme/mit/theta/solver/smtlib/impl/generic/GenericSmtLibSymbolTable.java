@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
-
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
@@ -60,8 +59,11 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     @Override
     public boolean definesSymbol(final String symbol) {
-        return constToSymbol.inverse().containsKey(
-                symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        return constToSymbol
+                .inverse()
+                .containsKey(
+                        symbol.replaceAll(
+                                problematicCharactersRegex, problematicCharactersReplacement));
     }
 
     @Override
@@ -98,10 +100,13 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         checkNotNull(symbol);
         checkNotNull(declaration);
         checkState(!constToSymbol.containsKey(constDecl), "Constant not found.");
-        constToSymbol.put(constDecl,
+        constToSymbol.put(
+                constDecl,
                 symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
-        constToDeclaration.put(constDecl,
-                declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        constToDeclaration.put(
+                constDecl,
+                declaration.replaceAll(
+                        problematicCharactersRegex, problematicCharactersReplacement));
     }
 
     @Override

@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsAnalysis<S extends ExprState, P extends Prec>
         implements Analysis<XstsState<S>, XstsAction, P> {

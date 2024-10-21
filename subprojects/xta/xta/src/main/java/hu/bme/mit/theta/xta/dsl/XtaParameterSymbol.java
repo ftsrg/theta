@@ -20,9 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toCollection;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -31,6 +28,8 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ParameterIdContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.xta.utils.RangeType;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 final class XtaParameterSymbol implements Symbol {
 
@@ -40,8 +39,10 @@ final class XtaParameterSymbol implements Symbol {
 
     private final XtaType type;
 
-    public XtaParameterSymbol(final Scope scope, final TypeContext typeContext,
-                              final ParameterIdContext parameterIdContext) {
+    public XtaParameterSymbol(
+            final Scope scope,
+            final TypeContext typeContext,
+            final ParameterIdContext parameterIdContext) {
         checkNotNull(typeContext);
         checkNotNull(parameterIdContext);
         name = parameterIdContext.fArrayId.fId.getText();
@@ -78,5 +79,4 @@ final class XtaParameterSymbol implements Symbol {
         final Set<Expr<?>> values = rangeType.values().collect(toCollection(LinkedHashSet::new));
         return values;
     }
-
 }

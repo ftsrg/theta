@@ -21,8 +21,7 @@ public final class LuZoneOrd implements PartialOrd<LuZoneState> {
 
     private static final LuZoneOrd INSTANCE = new LuZoneOrd();
 
-    private LuZoneOrd() {
-    }
+    private LuZoneOrd() {}
 
     public static LuZoneOrd getInstance() {
         return INSTANCE;
@@ -32,5 +31,4 @@ public final class LuZoneOrd implements PartialOrd<LuZoneState> {
     public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
         return state1.isLeq(state2);
     }
-
 }

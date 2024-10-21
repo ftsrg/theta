@@ -19,12 +19,9 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-
 import java.util.Collection;
 
-/**
- * Interface for stopping criterions during abstraction.
- */
+/** Interface for stopping criterions during abstraction. */
 public interface StopCriterion<S extends State, A extends Action> {
 
     /**
@@ -39,7 +36,7 @@ public interface StopCriterion<S extends State, A extends Action> {
      * Check if abstraction can stop based on the whole ARG or based on the new successor nodes
      * (optimization: the whole ARG might not be needed).
      *
-     * @param arg      ARG
+     * @param arg ARG
      * @param newNodes New successor nodes
      * @return True if abstraction can stop
      */

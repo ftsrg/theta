@@ -19,5 +19,4 @@
  *
  * @see hu.bme.mit.theta.common.table.TableWriter
  */
-
 package hu.bme.mit.theta.common.table;

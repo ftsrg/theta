@@ -26,15 +26,17 @@ public final class PtNetInitializer implements AbstractNextStateDescriptor.Postc
     private AbstractNextStateDescriptor continuation;
 
     public PtNetInitializer(
-            final Place assignedPlace, final int initialMarking, final AbstractNextStateDescriptor continuation
-    ) {
+            final Place assignedPlace,
+            final int initialMarking,
+            final AbstractNextStateDescriptor continuation) {
         this.assignedPlace = assignedPlace;
         this.initialMarking = initialMarking;
         this.continuation = continuation;
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+            final StateSpaceInfo localStateSpace) {
         if (assignedPlace == localStateSpace.getTraceInfo()) {
             return IntObjMapView.singleton(initialMarking, continuation);
         } else {

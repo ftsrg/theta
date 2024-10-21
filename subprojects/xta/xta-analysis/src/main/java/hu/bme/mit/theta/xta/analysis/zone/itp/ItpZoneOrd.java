@@ -21,8 +21,7 @@ public final class ItpZoneOrd implements PartialOrd<ItpZoneState> {
 
     private static final ItpZoneOrd INSTANCE = new ItpZoneOrd();
 
-    private ItpZoneOrd() {
-    }
+    private ItpZoneOrd() {}
 
     public static ItpZoneOrd getInstance() {
         return INSTANCE;
@@ -34,5 +33,4 @@ public final class ItpZoneOrd implements PartialOrd<ItpZoneState> {
     public boolean isLeq(final ItpZoneState state1, final ItpZoneState state2) {
         return state1.isLeq(state2);
     }
-
 }

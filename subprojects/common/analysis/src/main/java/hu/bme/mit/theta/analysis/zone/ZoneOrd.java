@@ -21,8 +21,7 @@ public final class ZoneOrd implements PartialOrd<ZoneState> {
 
     private static final ZoneOrd INSTANCE = new ZoneOrd();
 
-    private ZoneOrd() {
-    }
+    private ZoneOrd() {}
 
     public static ZoneOrd getInstance() {
         return INSTANCE;
@@ -32,5 +31,4 @@ public final class ZoneOrd implements PartialOrd<ZoneState> {
     public boolean isLeq(final ZoneState state1, final ZoneState state2) {
         return state1.isLeq(state2);
     }
-
 }

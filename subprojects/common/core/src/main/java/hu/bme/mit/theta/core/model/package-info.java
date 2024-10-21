@@ -24,5 +24,4 @@
  * valuation. - {@link hu.bme.mit.theta.core.model.ImmutableValuation} implements an immutable
  * valuation.
  */
-
 package hu.bme.mit.theta.core.model;

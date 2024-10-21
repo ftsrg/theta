@@ -20,5 +20,4 @@
  * @see hu.bme.mit.theta.common.visualization.Graph
  * @see hu.bme.mit.theta.common.visualization.writer.GraphWriter
  */
-
 package hu.bme.mit.theta.common.visualization;

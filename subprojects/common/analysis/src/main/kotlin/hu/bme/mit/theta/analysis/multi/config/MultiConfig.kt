@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.multi.config
 
 import hu.bme.mit.theta.analysis.Action
@@ -28,14 +27,21 @@ import hu.bme.mit.theta.analysis.multi.MultiPrec
 import hu.bme.mit.theta.analysis.multi.MultiState
 
 class MultiConfig<
-    DataState : State, LControl : State, RControl : State,
-    LAction : Action, RAction : Action,
-    LPrec : Prec, RPrec : Prec, DataPrec : Prec,
-    MState : MultiState<LControl, RControl, DataState>,
-    MAction : MultiAction<LAction, RAction>>(
-    val checker: SafetyChecker<ARG<MState, MAction>, Trace<MState, MAction>, MultiPrec<LPrec, RPrec, DataPrec>>,
-    val initPrec: MultiPrec<LPrec, RPrec, DataPrec>
+  DataState : State,
+  LControl : State,
+  RControl : State,
+  LAction : Action,
+  RAction : Action,
+  LPrec : Prec,
+  RPrec : Prec,
+  DataPrec : Prec,
+  MState : MultiState<LControl, RControl, DataState>,
+  MAction : MultiAction<LAction, RAction>,
+>(
+  val checker:
+    SafetyChecker<ARG<MState, MAction>, Trace<MState, MAction>, MultiPrec<LPrec, RPrec, DataPrec>>,
+  val initPrec: MultiPrec<LPrec, RPrec, DataPrec>,
 ) {
 
-    fun check(): SafetyResult<ARG<MState, MAction>, Trace<MState, MAction>> = checker.check(initPrec)
+  fun check(): SafetyResult<ARG<MState, MAction>, Trace<MState, MAction>> = checker.check(initPrec)
 }

@@ -35,23 +35,17 @@ public abstract class Statistics {
         stats = new LinkedHashMap<>();
     }
 
-    /**
-     * Add a new statistic.
-     */
+    /** Add a new statistic. */
     protected void addStat(final String key, final Supplier<Object> value) {
         stats.put(key, value);
     }
 
-    /**
-     * Gets the set of keys.
-     */
+    /** Gets the set of keys. */
     public final Set<String> keySet() {
         return Collections.unmodifiableSet(stats.keySet());
     }
 
-    /**
-     * Gets the value for a given key. The key must exist.
-     */
+    /** Gets the value for a given key. The key must exist. */
     public final Object get(final String key) {
         checkArgument(stats.containsKey(key), "Key not found");
         return stats.get(key).get();

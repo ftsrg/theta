@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class RatToIntExpr extends UnaryExpr<RatType, IntType> {
 
@@ -84,5 +84,4 @@ public final class RatToIntExpr extends UnaryExpr<RatType, IntType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

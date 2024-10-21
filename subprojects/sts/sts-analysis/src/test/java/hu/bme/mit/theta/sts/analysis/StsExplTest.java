@@ -15,15 +15,28 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static org.junit.Assert.assertTrue;
+
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
@@ -52,23 +65,9 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.function.Predicate;
-
-import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class StsExplTest {
 
@@ -88,8 +87,10 @@ public class StsExplTest {
 
         builder.addInit(Eq(x, Int(0)));
         builder.addInit(Eq(y, Int(0)));
-        builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
-                Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+        builder.addTrans(
+                And(
+                        Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+                        Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
         builder.addTrans(Eq(Prime(y), Int(0)));
         builder.setProp(Not(Eq(x, Int(mod))));
 
@@ -98,34 +99,40 @@ public class StsExplTest {
         final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         final UCSolver refinementSolver = Z3LegacySolverFactory.getInstance().createUCSolver();
 
-        final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(
-                abstractionSolver, sts.getInit());
-        final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()),
-                abstractionSolver);
+        final Analysis<ExplState, ExprAction, ExplPrec> analysis =
+                ExplAnalysis.create(abstractionSolver, sts.getInit());
+        final Predicate<ExprState> target =
+                new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
 
         final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
 
         final LTS<State, StsAction> lts = StsLts.create(sts);
 
-        final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
-                analysis, target);
+        final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder =
+                ArgBuilder.create(lts, analysis, target);
 
-        final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(
-                        argBuilder)
-                .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
+        final Abstractor<ExplState, StsAction, ExplPrec> abstractor =
+                BasicAbstractor.builder(argBuilder)
+                        .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs()))
+                        .logger(logger)
+                        .build();
 
-        final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(
-                sts.getInit(),
-                Not(sts.getProp()), refinementSolver);
+        final ExprTraceChecker<VarsRefutation> exprTraceChecker =
+                ExprTraceUnsatCoreChecker.create(
+                        sts.getInit(), Not(sts.getProp()), refinementSolver);
 
-        final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
-                .create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()),
-                        PruneStrategy.LAZY, logger);
+        final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner =
+                SingleExprTraceRefiner.create(
+                        exprTraceChecker,
+                        JoiningPrecRefiner.create(new VarsRefToExplPrec()),
+                        PruneStrategy.LAZY,
+                        logger);
 
-        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = CegarChecker.create(
-                abstractor, refiner, logger);
+        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec>
+                checker = CegarChecker.create(abstractor, refiner, logger);
 
-        final SafetyResult<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>> safetyStatus = checker.check(prec);
+        final SafetyResult<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>> safetyStatus =
+                checker.check(prec);
 
         final ARG<ExplState, StsAction> arg = safetyStatus.getWitness();
         assertTrue(isWellLabeled(arg, abstractionSolver));
@@ -133,5 +140,4 @@ public class StsExplTest {
         // System.out.println(new
         // GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
     }
-
 }

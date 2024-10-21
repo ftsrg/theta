@@ -18,8 +18,8 @@ package hu.bme.mit.theta.cfa.analysis;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -32,8 +32,8 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
     private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
     private final TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> transFunc;
 
-    private CfaAnalysis(final Loc initLoc,
-                        final Analysis<S, ? super CfaAction, ? super P> analysis) {
+    private CfaAnalysis(
+            final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
         checkNotNull(initLoc);
         checkNotNull(analysis);
         partialOrd = CfaOrd.create(analysis.getPartialOrd());
@@ -41,8 +41,8 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
         transFunc = CfaTransFunc.create(analysis.getTransFunc());
     }
 
-    public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
-                                                                                 final Analysis<S, ? super CfaAction, ? super P> analysis) {
+    public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(
+            final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
         return new CfaAnalysis<>(initLoc, analysis);
     }
 
@@ -60,5 +60,4 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
     public TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransFunc() {
         return transFunc;
     }
-
 }

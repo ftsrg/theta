@@ -13,15 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 
@@ -36,5 +35,4 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     public Type visit(CVoid type, Void param) {
         return Int();
     }
-
 }

@@ -20,5 +20,4 @@ public interface MutableScope extends Scope {
     void add(final Symbol symbol);
 
     void addAll(final Iterable<? extends Symbol> symbols);
-
 }

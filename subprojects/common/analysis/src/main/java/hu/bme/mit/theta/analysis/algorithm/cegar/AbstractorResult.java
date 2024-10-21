@@ -17,9 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.common.Utils;
 
-/**
- * Represents the result of the Abstractor component, that can be either safe or unsafe.
- */
+/** Represents the result of the Abstractor component, that can be either safe or unsafe. */
 public final class AbstractorResult {
 
     private final boolean safe;
@@ -46,7 +44,8 @@ public final class AbstractorResult {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(isSafe() ? "Safe" : "Unsafe")
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(isSafe() ? "Safe" : "Unsafe")
                 .toString();
     }
 }

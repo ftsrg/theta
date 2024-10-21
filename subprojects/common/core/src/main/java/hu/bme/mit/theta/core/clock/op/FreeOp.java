@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.core.clock.op;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public final class FreeOp implements ClockOp {
 
@@ -90,5 +89,4 @@ public final class FreeOp implements ClockOp {
     public String toString() {
         return Utils.lispStringBuilder("free").add(varDecl.getName()).toString();
     }
-
 }

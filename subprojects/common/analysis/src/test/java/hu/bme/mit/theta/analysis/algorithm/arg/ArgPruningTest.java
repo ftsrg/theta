@@ -18,10 +18,6 @@ package hu.bme.mit.theta.analysis.algorithm.arg;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
@@ -30,9 +26,6 @@ import hu.bme.mit.theta.analysis.stubs.StateStub;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class ArgPruningTest {
 
@@ -69,7 +62,8 @@ public class ArgPruningTest {
         assertEquals(2, n0.getCoveredNodes().count());
 
         System.out.println(
-                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance()
+                        .writeString(ArgVisualizer.getDefault().visualize(arg)));
         System.out.println("=========================");
 
         arg.prune(n00);
@@ -83,6 +77,7 @@ public class ArgPruningTest {
         assertFalse(n02.getCoveringNode().isPresent());
 
         System.out.println(
-                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance()
+                        .writeString(ArgVisualizer.getDefault().visualize(arg)));
     }
 }

@@ -19,13 +19,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
-/**
- * Utilities related to the STS formalism.
- */
+/** Utilities related to the STS formalism. */
 public final class StsUtils {
 
-    private StsUtils() {
-    }
+    private StsUtils() {}
 
     /**
      * Transform STS into an equivalent new STS, without if-then-else constructs.

@@ -26,36 +26,48 @@ import hu.bme.mit.theta.xta.analysis.XtaState;
 
 public final class LazyXtaCheckerFactory {
 
-    private LazyXtaCheckerFactory() {
-    }
+    private LazyXtaCheckerFactory() {}
 
-    public static SafetyChecker<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> create(final XtaSystem system,
-                                                                                                                                                     final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
-        final CombinedStrategy<?, ?> algorithmStrategy = combineStrategies(system, dataStrategy, clockStrategy);
-        final SafetyChecker<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> checker = LazyXtaChecker.create(
-                system,
-                algorithmStrategy, searchStrategy);
+    public static SafetyChecker<
+                    ? extends ARG<? extends XtaState<?>, XtaAction>,
+                    ? extends Trace<? extends XtaState<?>, XtaAction>,
+                    UnitPrec>
+            create(
+                    final XtaSystem system,
+                    final DataStrategy dataStrategy,
+                    final ClockStrategy clockStrategy,
+                    final SearchStrategy searchStrategy) {
+        final CombinedStrategy<?, ?> algorithmStrategy =
+                combineStrategies(system, dataStrategy, clockStrategy);
+        final SafetyChecker<
+                        ? extends ARG<? extends XtaState<?>, XtaAction>,
+                        ? extends Trace<? extends XtaState<?>, XtaAction>,
+                        UnitPrec>
+                checker = LazyXtaChecker.create(system, algorithmStrategy, searchStrategy);
         return checker;
     }
 
-    private static CombinedStrategy<?, ?> combineStrategies(final XtaSystem system,
-                                                            final DataStrategy dataStrategy,
-                                                            final ClockStrategy clockStrategy) {
+    private static CombinedStrategy<?, ?> combineStrategies(
+            final XtaSystem system,
+            final DataStrategy dataStrategy,
+            final ClockStrategy clockStrategy) {
 
         switch (dataStrategy) {
             case BWITP:
-
                 switch (clockStrategy) {
                     case BWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createBwItpStrategy(system),
                                 ClockStrategies.createBwItpStrategy(system));
                     case FWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createBwItpStrategy(system),
                                 ClockStrategies.createFwItpStrategy(system));
                     case LU:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createBwItpStrategy(system),
                                 ClockStrategies.createLuStrategy(system));
                     default:
@@ -63,18 +75,20 @@ public final class LazyXtaCheckerFactory {
                 }
 
             case FWITP:
-
                 switch (clockStrategy) {
                     case BWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createFwItpStrategy(system),
                                 ClockStrategies.createBwItpStrategy(system));
                     case FWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createFwItpStrategy(system),
                                 ClockStrategies.createFwItpStrategy(system));
                     case LU:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createFwItpStrategy(system),
                                 ClockStrategies.createLuStrategy(system));
                     default:
@@ -82,18 +96,20 @@ public final class LazyXtaCheckerFactory {
                 }
 
             case NONE:
-
                 switch (clockStrategy) {
                     case BWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createExplStrategy(system),
                                 ClockStrategies.createBwItpStrategy(system));
                     case FWITP:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createExplStrategy(system),
                                 ClockStrategies.createFwItpStrategy(system));
                     case LU:
-                        return new CombinedStrategy<>(system,
+                        return new CombinedStrategy<>(
+                                system,
                                 DataStrategies.createExplStrategy(system),
                                 ClockStrategies.createLuStrategy(system));
                     default:

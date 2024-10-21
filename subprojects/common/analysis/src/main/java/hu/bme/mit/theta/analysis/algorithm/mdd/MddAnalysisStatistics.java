@@ -25,8 +25,12 @@ public class MddAnalysisStatistics extends Statistics {
     private final Long queryCount;
     private final Long cacheSize;
 
-
-    public MddAnalysisStatistics(Long violatingSize, Long stateSpaceSize, Long hitCount, Long queryCount, Long cacheSize) {
+    public MddAnalysisStatistics(
+            Long violatingSize,
+            Long stateSpaceSize,
+            Long hitCount,
+            Long queryCount,
+            Long cacheSize) {
         this.violatingSize = violatingSize;
         this.stateSpaceSize = stateSpaceSize;
         this.hitCount = hitCount;

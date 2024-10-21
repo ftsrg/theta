@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.validator;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -22,10 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverStatus;
-
 import java.util.Collection;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class SolverValidatorWrapper implements Solver {
     private final Solver solver;
@@ -46,7 +44,8 @@ public class SolverValidatorWrapper implements Solver {
             final Valuation model = solver.getModel();
             for (Expr<BoolType> assertion : solver.getAssertions()) {
                 if (!assertion.eval(model).equals(True())) {
-                    throw new SolverValidationException("Solver problem: " + assertion + " not True over {" + model + "}");
+                    throw new SolverValidationException(
+                            "Solver problem: " + assertion + " not True over {" + model + "}");
                 }
             }
         }

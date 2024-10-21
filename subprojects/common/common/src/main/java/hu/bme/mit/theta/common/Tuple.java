@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.common;
 
-import com.google.common.collect.ImmutableList;
-
-import java.util.Iterator;
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
+
+import com.google.common.collect.ImmutableList;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class Tuple implements Iterable<Object> {
 
@@ -82,5 +81,4 @@ public abstract class Tuple implements Iterable<Object> {
     public final String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
     }
-
 }

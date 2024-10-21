@@ -20,13 +20,12 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PredOrdTest {
 

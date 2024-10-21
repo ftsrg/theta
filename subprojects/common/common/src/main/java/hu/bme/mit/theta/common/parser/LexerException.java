@@ -26,5 +26,4 @@ public final class LexerException extends RuntimeException {
     public LexerException(final Throwable cause) {
         super(cause);
     }
-
 }

@@ -19,5 +19,5 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
 class Complement(val op: EdgePattern) : EdgePattern() {
 
-    override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
+  override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
 }

@@ -22,8 +22,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 final class ExprIndexedVarCollector {
 
-    private ExprIndexedVarCollector() {
-    }
+    private ExprIndexedVarCollector() {}
 
     static void collectIndexedVars(final Expr<?> expr, final IndexedVars.Builder builder) {
         if (expr instanceof RefExpr) {
@@ -38,5 +37,4 @@ final class ExprIndexedVarCollector {
 
         expr.getOps().stream().forEach(op -> collectIndexedVars(op, builder));
     }
-
 }

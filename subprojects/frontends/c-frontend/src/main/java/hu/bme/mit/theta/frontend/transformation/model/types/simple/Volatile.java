@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Volatile extends CSimpleType {
 
-    public final static Volatile instance = new Volatile();
+    public static final Volatile instance = new Volatile();
 
-    private Volatile() {
-    }
+    private Volatile() {}
 
     @Override
     public CSimpleType copyOf() {
@@ -29,7 +27,6 @@ public class Volatile extends CSimpleType {
         setUpCopy(declaredNameRet);
         return declaredNameRet;
     }
-
 
     @Override
     protected void patch(CSimpleType cSimpleType) {

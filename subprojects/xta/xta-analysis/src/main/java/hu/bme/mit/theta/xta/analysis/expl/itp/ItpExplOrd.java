@@ -19,8 +19,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 final class ItpExplOrd implements PartialOrd<ItpExplState> {
 
-    private ItpExplOrd() {
-    }
+    private ItpExplOrd() {}
 
     private static final class LazyHolder {
 
@@ -41,5 +40,4 @@ final class ItpExplOrd implements PartialOrd<ItpExplState> {
             return state1.getAbstrState().isLeq(state2.getAbstrState());
         }
     }
-
 }

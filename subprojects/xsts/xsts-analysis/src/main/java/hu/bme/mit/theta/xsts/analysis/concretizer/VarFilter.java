@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.xsts.XSTS;
-
 import java.util.Optional;
 
 public final class VarFilter {
@@ -45,5 +44,4 @@ public final class VarFilter {
         }
         return filteredValuation;
     }
-
 }

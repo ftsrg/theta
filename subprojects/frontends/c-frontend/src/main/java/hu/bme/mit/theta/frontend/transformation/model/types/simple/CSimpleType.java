@@ -13,11 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-
 import java.util.List;
 
 /**
@@ -68,8 +66,8 @@ public abstract class CSimpleType {
 
     public void setBool(boolean bool) {
         if (bool) {
-            setSigned(
-                    false); // _Bool isn't signed, but signed might be the default value in some cases
+            setSigned(false); // _Bool isn't signed, but signed might be the default value in some
+            // cases
         }
         this.bool = bool;
     }

@@ -19,5 +19,5 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
 class Sequence(val op1: EdgePattern, val op2: EdgePattern) : EdgePattern() {
 
-    override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
+  override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
 }

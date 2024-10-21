@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
+import org.junit.Assert;
+import org.junit.Test;
 
 public final class Z3ModelTest {
 

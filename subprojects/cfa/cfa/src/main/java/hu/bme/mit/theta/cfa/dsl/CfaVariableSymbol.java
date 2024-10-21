@@ -41,5 +41,4 @@ final class CfaVariableSymbol implements Symbol {
     public VarDecl<?> instantiate() {
         return Var(name, type.instantiate());
     }
-
 }

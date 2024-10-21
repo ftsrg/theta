@@ -22,5 +22,4 @@
  * @see hu.bme.mit.theta.core.utils.StmtUtils
  * @see hu.bme.mit.theta.core.utils.TypeUtils
  */
-
 package hu.bme.mit.theta.core.utils;

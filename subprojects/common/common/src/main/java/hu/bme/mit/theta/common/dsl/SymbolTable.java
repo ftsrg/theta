@@ -34,7 +34,8 @@ public final class SymbolTable {
 
     public void add(final Symbol symbol) {
         checkNotNull(symbol);
-        checkArgument(!stringToSymbol.containsKey(symbol.getName()),
+        checkArgument(
+                !stringToSymbol.containsKey(symbol.getName()),
                 String.format("Symbol %s is already declared in this scope", symbol.getName()));
         stringToSymbol.put(symbol.getName(), symbol);
     }
@@ -59,5 +60,4 @@ public final class SymbolTable {
         }
         return sj.toString();
     }
-
 }

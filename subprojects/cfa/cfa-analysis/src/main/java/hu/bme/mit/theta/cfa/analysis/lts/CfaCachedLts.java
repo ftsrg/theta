@@ -15,15 +15,12 @@
  */
 package hu.bme.mit.theta.cfa.analysis.lts;
 
-import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Map;
-
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.common.container.Containers;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * A caching layer over CFA LTS implementations. It only computes actions for each location once and
@@ -47,5 +44,4 @@ public final class CfaCachedLts implements CfaLts {
         }
         return actionCache.get(loc);
     }
-
 }

@@ -56,6 +56,13 @@ public final class PetriNet extends Identified {
 
     @Override
     public String toString() {
-        return getId() + "(" + places.size() + " places, " + transitions.size() + " transitions, " + (ptArcs.size() + tpArcs.size()) + " arcs)";
+        return getId()
+                + "("
+                + places.size()
+                + " places, "
+                + transitions.size()
+                + " transitions, "
+                + (ptArcs.size() + tpArcs.size())
+                + " arcs)";
     }
 }

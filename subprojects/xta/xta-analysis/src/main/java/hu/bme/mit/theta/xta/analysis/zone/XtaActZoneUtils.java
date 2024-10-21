@@ -15,13 +15,7 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.List;
-import java.util.Set;
-
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -32,14 +26,16 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public final class XtaActZoneUtils {
 
-    private XtaActZoneUtils() {
-    }
+    private XtaActZoneUtils() {}
 
-    public static Set<VarDecl<RatType>> pre(final Set<VarDecl<RatType>> activeVars,
-                                            final XtaAction action) {
+    public static Set<VarDecl<RatType>> pre(
+            final Set<VarDecl<RatType>> activeVars, final XtaAction action) {
         final Set<VarDecl<RatType>> result = Containers.createSet();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -137,5 +133,4 @@ public final class XtaActZoneUtils {
 
         return result;
     }
-
 }

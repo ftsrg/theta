@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.solver.Solver;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class SemanticExprMeetStrategy implements ExprLattice.MeetStrategy {
 

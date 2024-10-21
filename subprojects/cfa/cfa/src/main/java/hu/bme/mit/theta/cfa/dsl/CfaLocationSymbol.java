@@ -67,5 +67,4 @@ final class CfaLocationSymbol implements Symbol {
 
         return loc;
     }
-
 }

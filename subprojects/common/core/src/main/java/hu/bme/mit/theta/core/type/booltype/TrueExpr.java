@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.model.Valuation;
-
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class TrueExpr extends BoolLitExpr {
 
@@ -25,8 +25,7 @@ public final class TrueExpr extends BoolLitExpr {
     private static final int HASH_SEED = 242181;
     private static final String OPERATOR = "true";
 
-    private TrueExpr() {
-    }
+    private TrueExpr() {}
 
     public static TrueExpr getInstance() {
         return INSTANCE;
@@ -61,5 +60,4 @@ public final class TrueExpr extends BoolLitExpr {
     public String toString() {
         return OPERATOR;
     }
-
 }

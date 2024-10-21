@@ -25,5 +25,4 @@ public abstract class BoolLitExpr extends NullaryExpr<BoolType> implements LitEx
     public static BoolLitExpr of(final boolean value) {
         return value ? TrueExpr.getInstance() : FalseExpr.getInstance();
     }
-
 }

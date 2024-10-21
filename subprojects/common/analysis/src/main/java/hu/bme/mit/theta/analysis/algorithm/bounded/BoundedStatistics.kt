@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.analysis.algorithm.Statistics
 
 class BoundedStatistics(val iterations: Int) : Statistics() {
 
-    init {
-        addStat("iterations", this::iterations)
-    }
-
+  init {
+    addStat("iterations", this::iterations)
+  }
 }

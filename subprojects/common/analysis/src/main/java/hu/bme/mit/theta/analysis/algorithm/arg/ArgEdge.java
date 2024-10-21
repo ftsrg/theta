@@ -40,5 +40,4 @@ public final class ArgEdge<S extends State, A extends Action> {
     public A getAction() {
         return action;
     }
-
 }

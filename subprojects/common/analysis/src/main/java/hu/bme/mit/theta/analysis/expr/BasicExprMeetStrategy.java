@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 public final class BasicExprMeetStrategy implements ExprLattice.MeetStrategy {
 
     private static final BasicExprMeetStrategy INSTANCE = new BasicExprMeetStrategy();
 
-    private BasicExprMeetStrategy() {
-    }
+    private BasicExprMeetStrategy() {}
 
     public static BasicExprMeetStrategy getInstance() {
         return INSTANCE;

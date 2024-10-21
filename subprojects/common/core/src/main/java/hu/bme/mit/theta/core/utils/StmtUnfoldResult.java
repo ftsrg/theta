@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
 import java.util.Collection;
 
 public final class StmtUnfoldResult {
@@ -27,14 +26,14 @@ public final class StmtUnfoldResult {
     final Collection<Expr<BoolType>> exprs;
     final VarIndexing indexing;
 
-    private StmtUnfoldResult(final Iterable<? extends Expr<BoolType>> exprs,
-                             final VarIndexing indexing) {
+    private StmtUnfoldResult(
+            final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
         this.exprs = ImmutableList.copyOf(exprs);
         this.indexing = indexing;
     }
 
-    public static StmtUnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs,
-                                      final VarIndexing indexing) {
+    public static StmtUnfoldResult of(
+            final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
         return new StmtUnfoldResult(exprs, indexing);
     }
 

@@ -18,9 +18,6 @@ package hu.bme.mit.theta.cfa.analysis.impact;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -34,6 +31,8 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PredImpactRefiner implements ImpactRefiner<CfaState<PredState>, CfaAction> {
 
@@ -84,5 +83,4 @@ public final class PredImpactRefiner implements ImpactRefiner<CfaState<PredState
             throw new AssertionError();
         }
     }
-
 }

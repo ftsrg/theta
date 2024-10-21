@@ -20,9 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents an output variable.
- */
+/** Represents an output variable. */
 public class OutputVar extends AigerNode {
 
     private AigerWire inWire;

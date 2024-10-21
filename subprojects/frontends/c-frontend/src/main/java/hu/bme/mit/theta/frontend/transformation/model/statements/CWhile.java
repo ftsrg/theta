@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
 
 public class CWhile extends CStatement {
 
-    //TODO: guard should not be multiple compounds inside!
+    // TODO: guard should not be multiple compounds inside!
     private final CStatement body;
     private final CStatement guard;
 

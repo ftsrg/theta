@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.common.logging;
 
-/**
- * Base class for loggers. Only prints entries above a given level.
- */
+/** Base class for loggers. Only prints entries above a given level. */
 public abstract class BaseLogger implements Logger {
 
     private final Level minLevel;
@@ -35,5 +33,4 @@ public abstract class BaseLogger implements Logger {
     }
 
     protected abstract void writeStr(String str);
-
 }

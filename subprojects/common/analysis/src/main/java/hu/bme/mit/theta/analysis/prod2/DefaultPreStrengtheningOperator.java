@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.prod2;
 
-import hu.bme.mit.theta.analysis.State;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class DefaultPreStrengtheningOperator<S1 extends State, S2 extends State> implements
-        PreStrengtheningOperator<S1, S2> {
+import hu.bme.mit.theta.analysis.State;
 
-    private DefaultPreStrengtheningOperator() {
-    }
+public final class DefaultPreStrengtheningOperator<S1 extends State, S2 extends State>
+        implements PreStrengtheningOperator<S1, S2> {
+
+    private DefaultPreStrengtheningOperator() {}
 
     public static <S1 extends State, S2 extends State> PreStrengtheningOperator<S1, S2> create() {
         return new DefaultPreStrengtheningOperator<>();

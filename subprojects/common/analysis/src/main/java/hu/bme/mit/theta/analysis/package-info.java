@@ -19,5 +19,4 @@
  *
  * @see hu.bme.mit.theta.analysis.Analysis
  */
-
 package hu.bme.mit.theta.analysis;

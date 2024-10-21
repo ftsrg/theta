@@ -15,16 +15,13 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
-/**
- * A skip statement is a placeholder that does not perform any operation.
- */
+/** A skip statement is a placeholder that does not perform any operation. */
 public final class SkipStmt implements Stmt {
 
     private static final int HASH_CODE = 1310147;
     private static final String STMT_LABEL = "skip";
 
-    private SkipStmt() {
-    }
+    private SkipStmt() {}
 
     private static class LazyHolder {
 
@@ -60,5 +57,4 @@ public final class SkipStmt implements Stmt {
     public String toString() {
         return STMT_LABEL;
     }
-
 }

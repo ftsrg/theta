@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.analysis;
 
-/**
- * Common interface for states.
- */
+/** Common interface for states. */
 public interface State {
 
     /**
@@ -26,5 +24,4 @@ public interface State {
      * @return
      */
     boolean isBottom();
-
 }

@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents a compisite node of the visualizable graph.
- */
+/** Represents a compisite node of the visualizable graph. */
 public final class CompositeNode extends Node {
 
     private final Collection<Node> children;

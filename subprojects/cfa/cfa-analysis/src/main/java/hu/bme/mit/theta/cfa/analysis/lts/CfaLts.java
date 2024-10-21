@@ -19,6 +19,4 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
-public interface CfaLts extends LTS<CfaState<?>, CfaAction> {
-
-}
+public interface CfaLts extends LTS<CfaState<?>, CfaAction> {}

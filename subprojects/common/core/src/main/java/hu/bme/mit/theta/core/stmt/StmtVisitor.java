@@ -25,7 +25,8 @@ public interface StmtVisitor<P, R> {
 
     <DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
-    <PtrType extends Type, OffsetType extends Type, DeclType extends Type> R visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, P param);
+    <PtrType extends Type, OffsetType extends Type, DeclType extends Type> R visit(
+            MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, P param);
 
     <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
@@ -38,5 +39,4 @@ public interface StmtVisitor<P, R> {
     R visit(LoopStmt stmt, P param);
 
     R visit(IfStmt stmt, P param);
-
 }

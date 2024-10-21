@@ -18,5 +18,4 @@
  *
  * @see hu.bme.mit.theta.cfa.dsl.CfaDslManager
  */
-
 package hu.bme.mit.theta.cfa.dsl;

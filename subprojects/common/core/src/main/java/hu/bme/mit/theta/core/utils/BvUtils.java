@@ -13,20 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
-
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-
-import java.math.BigInteger;
 
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import java.math.BigInteger;
+
 public final class BvUtils {
 
-    private BvUtils() {
-
-    }
+    private BvUtils() {}
 
     public static BigInteger neutralBvLitExprToBigInteger(final BvLitExpr expr) {
         return unsignedBvLitExprToBigInteger(expr);

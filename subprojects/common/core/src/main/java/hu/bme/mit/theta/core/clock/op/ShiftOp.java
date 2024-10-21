@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.core.clock.op;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class ShiftOp implements ClockOp {
 
@@ -99,5 +98,4 @@ public final class ShiftOp implements ClockOp {
     public String toString() {
         return Utils.lispStringBuilder("shift").add(varDecl.getName()).add(offset).toString();
     }
-
 }

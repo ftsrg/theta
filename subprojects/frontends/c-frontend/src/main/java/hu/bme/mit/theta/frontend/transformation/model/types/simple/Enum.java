@@ -13,11 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.core.type.Expr;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -61,5 +59,4 @@ public class Enum extends CSimpleType {
         setUpCopy(declaredNameRet);
         return declaredNameRet;
     }
-
 }

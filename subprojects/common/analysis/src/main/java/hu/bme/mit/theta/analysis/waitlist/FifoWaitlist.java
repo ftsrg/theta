@@ -17,17 +17,14 @@ package hu.bme.mit.theta.analysis.waitlist;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.Utils;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.Utils;
-
-/**
- * FIFO (First In First Out) waitlist. Items are removed in the same order as they were added.
- */
+/** FIFO (First In First Out) waitlist. Items are removed in the same order as they were added. */
 public final class FifoWaitlist<T> implements Waitlist<T> {
 
     private final Queue<T> items;

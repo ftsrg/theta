@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsOrd<S extends ExprState> implements PartialOrd<XstsState<S>> {
 

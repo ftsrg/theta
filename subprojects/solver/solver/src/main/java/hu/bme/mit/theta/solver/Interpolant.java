@@ -32,5 +32,4 @@ public interface Interpolant {
      * @return Expression
      */
     Expr<BoolType> eval(final ItpMarker marker);
-
 }

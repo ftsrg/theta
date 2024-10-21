@@ -21,13 +21,10 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ArgUtils {
 
-    private ArgUtils() {
-    }
+    private ArgUtils() {}
 
     public static <S extends ExprState, A extends ExprAction> boolean isWellLabeled(
-            final ARG<S, A> arg,
-            final Solver solver) {
+            final ARG<S, A> arg, final Solver solver) {
         return ArgChecker.create(solver).isWellLabeled(arg);
     }
-
 }

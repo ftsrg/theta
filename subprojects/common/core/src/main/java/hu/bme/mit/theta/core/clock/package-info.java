@@ -20,5 +20,4 @@
  * @see hu.bme.mit.theta.core.clock.constr.ClockConstrs
  * @see hu.bme.mit.theta.core.clock.op.ClockOps
  */
-
 package hu.bme.mit.theta.core.clock;

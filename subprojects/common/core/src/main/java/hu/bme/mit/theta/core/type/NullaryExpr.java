@@ -18,9 +18,8 @@ package hu.bme.mit.theta.core.type;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprType> {
 
@@ -40,5 +39,4 @@ public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprTyp
     public final int getArity() {
         return 0;
     }
-
 }

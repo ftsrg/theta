@@ -17,8 +17,6 @@ package hu.bme.mit.theta.core.parser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.Reader;
-
 import hu.bme.mit.theta.common.parser.LispLexer;
 import hu.bme.mit.theta.common.parser.LispParser;
 import hu.bme.mit.theta.common.parser.SExpr;
@@ -26,6 +24,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import java.io.Reader;
 
 public final class CoreParser {
 
@@ -64,5 +63,4 @@ public final class CoreParser {
         final Stmt stmt = interpreter.stmt(sexpr);
         return stmt;
     }
-
 }

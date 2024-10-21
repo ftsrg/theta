@@ -17,11 +17,10 @@ package hu.bme.mit.theta.analysis;
 
 import static com.google.common.collect.ImmutableList.of;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TraceTest {
 

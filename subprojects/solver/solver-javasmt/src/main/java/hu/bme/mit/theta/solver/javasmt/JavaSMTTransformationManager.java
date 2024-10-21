@@ -28,7 +28,8 @@ final class JavaSMTTransformationManager {
     private final JavaSMTDeclTransformer declTransformer;
     private final JavaSMTExprTransformer exprTransformer;
 
-    public JavaSMTTransformationManager(final JavaSMTSymbolTable symbolTable, final SolverContext context) {
+    public JavaSMTTransformationManager(
+            final JavaSMTSymbolTable symbolTable, final SolverContext context) {
         this.typeTransformer = new JavaSMTTypeTransformer(context);
         this.declTransformer = new JavaSMTDeclTransformer(this, symbolTable, context);
         this.exprTransformer = new JavaSMTExprTransformer(this, symbolTable, context);

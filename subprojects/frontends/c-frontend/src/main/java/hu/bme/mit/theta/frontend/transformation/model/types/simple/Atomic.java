@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Atomic extends CSimpleType {
 
-    public final static Atomic instance = new Atomic();
+    public static final Atomic instance = new Atomic();
 
-    private Atomic() {
-    }
+    private Atomic() {}
 
     @Override
     public CSimpleType copyOf() {

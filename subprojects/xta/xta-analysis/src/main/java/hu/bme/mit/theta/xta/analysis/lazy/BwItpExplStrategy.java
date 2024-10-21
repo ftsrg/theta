@@ -17,8 +17,6 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -33,6 +31,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
+import java.util.Collection;
 
 final class BwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
@@ -41,8 +40,11 @@ final class BwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
     }
 
     @Override
-    protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-                                  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    protected Valuation blockExpl(
+            final ArgNode<S, XtaAction> node,
+            final Expr<BoolType> expr,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         assert !node.getState().isBottom();
 
         final ExplState abstractExpl = getLens().get(node.getState()).getAbstrState();
@@ -70,5 +72,4 @@ final class BwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
         return valI;
     }
-
 }

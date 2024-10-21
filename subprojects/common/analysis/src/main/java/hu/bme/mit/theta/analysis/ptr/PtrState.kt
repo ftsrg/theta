@@ -19,16 +19,15 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-data class PtrState<S : ExprState> @JvmOverloads constructor(
-    val innerState: S,
-    val nextCnt: Int = 0,
-) : ExprState {
+data class PtrState<S : ExprState>
+@JvmOverloads
+constructor(val innerState: S, val nextCnt: Int = 0) : ExprState {
 
-    override fun isBottom(): Boolean {
-        return innerState.isBottom()
-    }
+  override fun isBottom(): Boolean {
+    return innerState.isBottom()
+  }
 
-    override fun toExpr(): Expr<BoolType> {
-        return innerState.toExpr()
-    }
+  override fun toExpr(): Expr<BoolType> {
+    return innerState.toExpr()
+  }
 }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -39,7 +38,6 @@ public class CArray extends CInteger {
         return visitor.visit(this, param);
     }
 
-
     @Override
     public CInteger getSignedVersion() {
         return this;
@@ -50,10 +48,8 @@ public class CArray extends CInteger {
         return this;
     }
 
-
     @Override
     public String getTypeName() {
         return new CUnsignedLong(null, parseContext).getTypeName();
     }
-
 }

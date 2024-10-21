@@ -15,14 +15,12 @@
  */
 package hu.bme.mit.theta.analysis.waitlist;
 
-import java.util.NoSuchElementException;
-
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.util.NoSuchElementException;
+import org.junit.Test;
 
 public class WaitlistTest {
 

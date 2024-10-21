@@ -22,8 +22,7 @@ public final class Unit {
 
     private static final Unit UNIT = new Unit();
 
-    private Unit() {
-    }
+    private Unit() {}
 
     public static Unit unit() {
         return UNIT;
@@ -43,5 +42,4 @@ public final class Unit {
     public String toString() {
         return TO_STRING;
     }
-
 }

@@ -81,5 +81,4 @@ public class FailClockConstrVisitor<P, R> implements ClockConstrVisitor<P, R> {
     public R visit(final AndConstr constr, final P param) {
         throw new UnsupportedOperationException();
     }
-
 }

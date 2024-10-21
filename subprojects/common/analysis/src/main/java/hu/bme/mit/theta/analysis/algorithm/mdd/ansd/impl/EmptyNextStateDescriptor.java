@@ -15,15 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
-import java.util.Optional;
-
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import java.util.Optional;
 
 public final class EmptyNextStateDescriptor implements AbstractNextStateDescriptor {
-    private EmptyNextStateDescriptor() {
-    }
+    private EmptyNextStateDescriptor() {}
 
     public static final EmptyNextStateDescriptor INSTANCE = new EmptyNextStateDescriptor();
 

@@ -29,5 +29,4 @@ public final class ConsoleLogger extends BaseLogger {
     protected void writeStr(final String str) {
         CONSOLE.print(str);
     }
-
 }

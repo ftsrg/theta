@@ -42,5 +42,4 @@ public interface ClockConstrVisitor<P, R> {
     R visit(final DiffEqConstr constr, final P param);
 
     R visit(final AndConstr constr, final P param);
-
 }

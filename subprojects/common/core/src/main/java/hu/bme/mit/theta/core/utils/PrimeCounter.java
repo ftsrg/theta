@@ -23,20 +23,18 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-
 import java.util.List;
 
 final class PrimeCounter {
 
-    private PrimeCounter() {
-    }
+    private PrimeCounter() {}
 
     static VarIndexing countPrimes(final Expr<?> expr) {
         return collectPrimes(expr, 0).build();
     }
 
-    private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(final Expr<?> expr,
-                                                                          final int nPrimes) {
+    private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(
+            final Expr<?> expr, final int nPrimes) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) expr;
             final Decl<?> decl = ref.getDecl();
@@ -53,9 +51,10 @@ final class PrimeCounter {
         }
 
         final List<? extends Expr<?>> ops = expr.getOps();
-        return ops.stream().map(op -> collectPrimes(op, nPrimes))
-                .reduce(VarIndexingFactory.basicIndexingBuilder(0),
+        return ops.stream()
+                .map(op -> collectPrimes(op, nPrimes))
+                .reduce(
+                        VarIndexingFactory.basicIndexingBuilder(0),
                         BasicVarIndexing.BasicVarIndexingBuilder::join);
     }
-
 }

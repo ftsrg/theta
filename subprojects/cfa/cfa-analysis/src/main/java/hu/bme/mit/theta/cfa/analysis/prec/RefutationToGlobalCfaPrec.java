@@ -21,7 +21,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 
-public class RefutationToGlobalCfaPrec<P extends Prec, R extends Refutation> implements RefutationToPrec<CfaPrec<P>, R> {
+public class RefutationToGlobalCfaPrec<P extends Prec, R extends Refutation>
+        implements RefutationToPrec<CfaPrec<P>, R> {
     private final RefutationToPrec<P, R> refToPrec;
 
     private final CFA.Loc referenceLocation;
@@ -39,6 +40,7 @@ public class RefutationToGlobalCfaPrec<P extends Prec, R extends Refutation> imp
 
     @Override
     public GlobalCfaPrec<P> join(CfaPrec<P> prec1, CfaPrec<P> prec2) {
-        return GlobalCfaPrec.create(refToPrec.join(prec1.getPrec(referenceLocation), prec2.getPrec(referenceLocation)));
+        return GlobalCfaPrec.create(
+                refToPrec.join(prec1.getPrec(referenceLocation), prec2.getPrec(referenceLocation)));
     }
 }

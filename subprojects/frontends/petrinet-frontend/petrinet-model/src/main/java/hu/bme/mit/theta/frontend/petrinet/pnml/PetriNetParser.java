@@ -19,7 +19,6 @@ import fr.lip6.move.pnml.framework.hlapi.HLAPIRootClass;
 import fr.lip6.move.pnml.framework.utils.PNMLUtils;
 import fr.lip6.move.pnml.ptnet.hlapi.PetriNetDocHLAPI;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
-
 import java.io.File;
 import java.util.List;
 import java.util.Objects;

@@ -31,78 +31,87 @@ import org.junit.Test
 
 class XcfaDslTest {
 
-    private fun getSyncXcfa() = xcfa("example") {
-        val proc1 = procedure("proc1") {
-            val a = "a" type Int() direction IN
-            val b = "b" type Int() direction OUT
+  private fun getSyncXcfa() =
+    xcfa("example") {
+      val proc1 =
+        procedure("proc1") {
+          val a = "a" type Int() direction IN
+          val b = "b" type Int() direction OUT
 
-            (init to final) {
-                b assign a.ref
-            }
+          (init to final) { b assign a.ref }
         }
-        val main = procedure("main") {
-            val tmp = "tmp" type Int()
-            (init to "L1") {
-                proc1("1", tmp.ref)
-            }
-            ("L1" to final) {
-                assume("(= tmp 1)")
-            }
-            ("L1" to err) {
-                assume("(/= tmp 1)")
-            }
+      val main =
+        procedure("main") {
+          val tmp = "tmp" type Int()
+          (init to "L1") { proc1("1", tmp.ref) }
+          ("L1" to final) { assume("(= tmp 1)") }
+          ("L1" to err) { assume("(/= tmp 1)") }
         }
 
-        main.start()
+      main.start()
     }
 
-    private fun getAsyncXcfa() = xcfa("example") {
-        val proc1 = procedure("proc1") {
-            val a = "a" type Int() direction IN
-            val b = "b" type Int() direction OUT
+  private fun getAsyncXcfa() =
+    xcfa("example") {
+      val proc1 =
+        procedure("proc1") {
+          val a = "a" type Int() direction IN
+          val b = "b" type Int() direction OUT
 
-            (init to final) {
-                b assign a.ref
-            }
+          (init to final) { b assign a.ref }
         }
-        val main = procedure("main") {
-            val tmp = "tmp" type Int()
-            val thr1 = "thr1" type Int()
-            (init to "L1") {
-                thr1.start(proc1, "1", tmp.ref)
-            }
-            ("L1" to final) {
-                thr1.join()
-                assume("(= tmp 1)")
-            }
-            ("L1" to err) {
-                thr1.join()
-                assume("(/= tmp 1)")
-            }
+      val main =
+        procedure("main") {
+          val tmp = "tmp" type Int()
+          val thr1 = "thr1" type Int()
+          (init to "L1") { thr1.start(proc1, "1", tmp.ref) }
+          ("L1" to final) {
+            thr1.join()
+            assume("(= tmp 1)")
+          }
+          ("L1" to err) {
+            thr1.join()
+            assume("(/= tmp 1)")
+          }
         }
 
-        main.start()
+      main.start()
     }
 
-    @Test
-    fun verifyXcfa() {
-        SolverManager.registerSolverManager(Z3SolverManager.create())
-        val config = XcfaConfig<SpecFrontendConfig, CegarConfig>(
-            backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
-        run {
-            val xcfa = getSyncXcfa()
-            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
-                NullLogger.getInstance())
-            val safetyResult = checker.check()
-            Assert.assertTrue(safetyResult.isSafe)
-        }
-        run {
-            val xcfa = getAsyncXcfa()
-            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
-                NullLogger.getInstance())
-            val safetyResult = checker.check()
-            Assert.assertTrue(safetyResult.isUnsafe)
-        }
+  @Test
+  fun verifyXcfa() {
+    SolverManager.registerSolverManager(Z3SolverManager.create())
+    val config =
+      XcfaConfig<SpecFrontendConfig, CegarConfig>(
+        backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig())
+      )
+    run {
+      val xcfa = getSyncXcfa()
+      val checker =
+        getChecker(
+          xcfa,
+          emptySet(),
+          config,
+          ParseContext(),
+          NullLogger.getInstance(),
+          NullLogger.getInstance(),
+        )
+      val safetyResult = checker.check()
+      Assert.assertTrue(safetyResult.isSafe)
     }
-
+    run {
+      val xcfa = getAsyncXcfa()
+      val checker =
+        getChecker(
+          xcfa,
+          emptySet(),
+          config,
+          ParseContext(),
+          NullLogger.getInstance(),
+          NullLogger.getInstance(),
+        )
+      val safetyResult = checker.check()
+      Assert.assertTrue(safetyResult.isUnsafe)
+    }
+  }
 }

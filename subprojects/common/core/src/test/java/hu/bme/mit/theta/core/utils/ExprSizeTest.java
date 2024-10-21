@@ -25,20 +25,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ExprSizeTest {
@@ -57,21 +55,15 @@ public class ExprSizeTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {True(), 1},
-
-                {A, 1},
-
-                {And(A, True()), 3},
-
-                {And(A, True(), False()), 4},
-
-                {And(A, And(True(), False())), 5},
-
-                {Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {True(), 1},
+                    {A, 1},
+                    {And(A, True()), 3},
+                    {And(A, True(), False()), 4},
+                    {And(A, And(True(), False())), 5},
+                    {Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
+                });
     }
 
     @Test

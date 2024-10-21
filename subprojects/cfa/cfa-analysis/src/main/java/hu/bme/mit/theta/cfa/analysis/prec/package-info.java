@@ -20,5 +20,4 @@
  * @see hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
  * @see hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec
  */
-
 package hu.bme.mit.theta.cfa.analysis.prec;

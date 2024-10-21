@@ -41,5 +41,4 @@ public final class StsConfig<S extends State, A extends Action, P extends Prec> 
     public SafetyResult<ARG<S, A>, Trace<S, A>> check() {
         return checker.check(initPrec);
     }
-
 }

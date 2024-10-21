@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.frontend.chc;
 
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCParser;
-import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
 
 public interface ChcXcfaBuilder {

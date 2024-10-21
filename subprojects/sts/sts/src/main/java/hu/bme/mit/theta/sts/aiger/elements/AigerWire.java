@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.sts.aiger.elements;
 
-/**
- * Represents a wire between {@link AigerNode}s.
- */
+/** Represents a wire between {@link AigerNode}s. */
 public final class AigerWire {
 
     private AigerNode source;
@@ -51,5 +49,4 @@ public final class AigerWire {
     public void invert() {
         isPonated = !isPonated;
     }
-
 }

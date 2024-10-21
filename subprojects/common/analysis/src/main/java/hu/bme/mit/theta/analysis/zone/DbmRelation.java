@@ -16,7 +16,10 @@
 package hu.bme.mit.theta.analysis.zone;
 
 enum DbmRelation {
-    LESS(true, false), GREATER(false, true), EQUAL(true, true), INCOMPARABLE(false, false);
+    LESS(true, false),
+    GREATER(false, true),
+    EQUAL(true, true),
+    INCOMPARABLE(false, false);
 
     private final boolean leq;
     private final boolean geq;

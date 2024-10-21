@@ -26,4 +26,3 @@ public enum FpRoundingMode {
         return RNE; /* Default because it is default in the C standard */
     }
 }
- 

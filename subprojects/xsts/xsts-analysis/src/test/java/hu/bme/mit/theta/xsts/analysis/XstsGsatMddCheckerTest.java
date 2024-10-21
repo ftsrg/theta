@@ -39,7 +39,7 @@ public class XstsGsatMddCheckerTest {
 
     @Test
     public void test() throws Exception {
-        XstsMddCheckerTest.runTestWithIterationStrategy(filePath, propPath, safe, IterationStrategy.GSAT);
+        XstsMddCheckerTest.runTestWithIterationStrategy(
+                filePath, propPath, safe, IterationStrategy.GSAT);
     }
-
 }

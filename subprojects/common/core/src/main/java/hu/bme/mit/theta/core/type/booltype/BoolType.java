@@ -26,8 +26,7 @@ public final class BoolType implements Equational<BoolType> {
     private static final int HASH_SEED = 754364;
     private static final String TYPE_LABEL = "Bool";
 
-    private BoolType() {
-    }
+    private BoolType() {}
 
     public static BoolType getInstance() {
         return INSTANCE;
@@ -64,5 +63,4 @@ public final class BoolType implements Equational<BoolType> {
     public DomainSize getDomainSize() {
         return DomainSize.TWO;
     }
-
 }

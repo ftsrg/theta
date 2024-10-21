@@ -17,12 +17,11 @@ package hu.bme.mit.theta.solver.z3legacy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Map;
-
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
+import java.util.Map;
 
 final class Z3Interpolant implements Interpolant {
 
@@ -39,5 +38,4 @@ final class Z3Interpolant implements Interpolant {
         checkNotNull(itpExpr);
         return itpExpr;
     }
-
 }

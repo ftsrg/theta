@@ -23,13 +23,13 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class AasporRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
+public final class AasporRefiner<S extends ExprState, A extends ExprAction, P extends Prec>
+        implements Refiner<S, A, P> {
 
     private final Refiner<S, A, P> refiner;
 
@@ -37,17 +37,20 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
 
     private final Map<VarDecl<?>, Set<S>> ignoredVarRegistry;
 
-    private AasporRefiner(final Refiner<S, A, P> refiner,
-                          final PruneStrategy pruneStrategy,
-                          final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
+    private AasporRefiner(
+            final Refiner<S, A, P> refiner,
+            final PruneStrategy pruneStrategy,
+            final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
         this.refiner = refiner;
         this.pruneStrategy = pruneStrategy;
         this.ignoredVarRegistry = ignoredVarRegistry;
     }
 
-    public static <S extends ExprState, A extends ExprAction, P extends Prec> AasporRefiner<S, A, P> create(
-            final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
-            final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
+    public static <S extends ExprState, A extends ExprAction, P extends Prec>
+            AasporRefiner<S, A, P> create(
+                    final Refiner<S, A, P> refiner,
+                    final PruneStrategy pruneStrategy,
+                    final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
         return new AasporRefiner<>(refiner, pruneStrategy, ignoredVarRegistry);
     }
 
@@ -60,15 +63,25 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
         final Set<VarDecl<?>> newlyAddedVars = new HashSet<>(newPrec.getUsedVars());
         newlyAddedVars.removeAll(prec.getUsedVars());
 
-        newlyAddedVars.forEach(newVar -> {
-            if (ignoredVarRegistry.containsKey(newVar)) {
-                Set<ArgNode<S, A>> nodesToReExpand = ignoredVarRegistry.get(newVar).stream().flatMap(stateToPrune ->
-                        arg.getNodes().filter(node -> node.getState().equals(stateToPrune)) // TODO one state can be in one ARG node?
-                ).collect(Collectors.toSet());
-                nodesToReExpand.forEach(arg::markForReExpansion);
-                ignoredVarRegistry.remove(newVar);
-            }
-        });
+        newlyAddedVars.forEach(
+                newVar -> {
+                    if (ignoredVarRegistry.containsKey(newVar)) {
+                        Set<ArgNode<S, A>> nodesToReExpand =
+                                ignoredVarRegistry.get(newVar).stream()
+                                        .flatMap(
+                                                stateToPrune ->
+                                                        arg.getNodes()
+                                                                .filter(
+                                                                        node ->
+                                                                                node.getState()
+                                                                                        .equals(
+                                                                                                stateToPrune)) // TODO one state can be in one ARG node?
+                                                )
+                                        .collect(Collectors.toSet());
+                        nodesToReExpand.forEach(arg::markForReExpansion);
+                        ignoredVarRegistry.remove(newVar);
+                    }
+                });
 
         return result;
     }

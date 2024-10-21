@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -24,7 +23,11 @@ public class CIf extends CStatement {
     private final CStatement body;
     private final CStatement elseStatement;
 
-    public CIf(CStatement guard, CStatement body, CStatement elseStatement, ParseContext parseContext) {
+    public CIf(
+            CStatement guard,
+            CStatement body,
+            CStatement elseStatement,
+            ParseContext parseContext) {
         super(parseContext);
         this.guard = guard;
         this.body = body;

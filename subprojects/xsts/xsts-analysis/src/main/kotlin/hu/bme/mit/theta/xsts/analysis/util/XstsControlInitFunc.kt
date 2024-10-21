@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.analysis.util
 
 import hu.bme.mit.theta.analysis.Prec
@@ -21,5 +20,5 @@ import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.xsts.analysis.XstsInitFunc
 
 fun <P : Prec> xstsControlInitFunc(): XstsInitFunc<UnitState, P> {
-    return XstsInitFunc.create { _: P -> listOf<UnitState>(UnitState.getInstance()) }
+  return XstsInitFunc.create { _: P -> listOf<UnitState>(UnitState.getInstance()) }
 }

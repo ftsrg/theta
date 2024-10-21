@@ -19,5 +19,4 @@
  *
  * @see hu.bme.mit.theta.sts.dsl.StsDslManager
  */
-
 package hu.bme.mit.theta.sts.dsl;

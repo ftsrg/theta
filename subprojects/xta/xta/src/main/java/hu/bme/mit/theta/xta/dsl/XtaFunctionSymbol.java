@@ -29,5 +29,4 @@ final class XtaFunctionSymbol implements Symbol {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("TODO: auto-generated method stub");
     }
-
 }

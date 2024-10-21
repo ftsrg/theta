@@ -13,15 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
+
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvSDivExpr extends DivExpr<BvType> {
 
@@ -82,8 +81,8 @@ public final class BvSDivExpr extends DivExpr<BvType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvSDivExpr that = (BvSDivExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }

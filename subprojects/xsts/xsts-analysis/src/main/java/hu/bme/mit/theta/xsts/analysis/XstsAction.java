@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
-
 import java.util.List;
 
 public final class XstsAction extends StmtAction {

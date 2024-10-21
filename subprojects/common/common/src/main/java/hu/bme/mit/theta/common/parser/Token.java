@@ -70,5 +70,4 @@ public final class Token {
     public String toString() {
         return string;
     }
-
 }

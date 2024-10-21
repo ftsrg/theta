@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-
-import java.math.BigInteger;
-import java.util.List;
-
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import java.math.BigInteger;
+import java.util.List;
 
 public final class IntMulExpr extends MulExpr<IntType> {
 
@@ -88,5 +87,4 @@ public final class IntMulExpr extends MulExpr<IntType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

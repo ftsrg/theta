@@ -15,5 +15,4 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-public interface Witness {
-}
+public interface Witness {}

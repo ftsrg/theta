@@ -21,11 +21,10 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ValuationTest {
 
@@ -106,6 +105,5 @@ public class ValuationTest {
         Assert.assertTrue(v1.equals(v2));
         Assert.assertFalse(v1.equals(v3));
         Assert.assertFalse(v1.equals(v4));
-
     }
 }

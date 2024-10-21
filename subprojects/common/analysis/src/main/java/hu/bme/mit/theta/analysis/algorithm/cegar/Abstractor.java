@@ -41,5 +41,4 @@ public interface Abstractor<S extends State, A extends Action, P extends Prec> {
      * @return
      */
     AbstractorResult check(ARG<S, A> arg, P prec);
-
 }

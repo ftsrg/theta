@@ -18,12 +18,11 @@ package hu.bme.mit.theta.xsts.analysis;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
-public final class XstsInitFunc<S extends ExprState, P extends Prec> implements
-        InitFunc<XstsState<S>, P> {
+public final class XstsInitFunc<S extends ExprState, P extends Prec>
+        implements InitFunc<XstsState<S>, P> {
 
     private final InitFunc<S, ? super P> initFunc;
 

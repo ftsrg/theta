@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 public class XstsStmtOptimizer<S extends ExprState> implements StmtOptimizer<XstsState<S>> {

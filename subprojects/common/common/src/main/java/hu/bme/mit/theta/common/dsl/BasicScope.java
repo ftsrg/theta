@@ -57,5 +57,4 @@ public final class BasicScope implements Scope {
             return enclosingScope.get().resolve(name);
         }
     }
-
 }

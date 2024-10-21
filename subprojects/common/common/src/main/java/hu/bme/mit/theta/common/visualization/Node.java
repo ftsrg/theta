@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents a simple node of the visualizable graph.
- */
+/** Represents a simple node of the visualizable graph. */
 public class Node {
 
     private final String id;
@@ -90,5 +88,4 @@ public class Node {
     public boolean isRoot() {
         return getParent() == null;
     }
-
 }

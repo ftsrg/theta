@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers;
 
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
@@ -30,7 +29,11 @@ public abstract class BaseInstructionHandler implements InstructionHandler {
     }
 
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         if (next != null)
             next.handleInstruction(instruction, globalState, functionState, blockState);
     }

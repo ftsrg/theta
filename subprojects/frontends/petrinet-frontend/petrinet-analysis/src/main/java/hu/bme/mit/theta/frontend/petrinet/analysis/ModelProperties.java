@@ -16,13 +16,20 @@
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
 import hu.bme.mit.theta.common.table.TableWriter;
-
 import java.util.Arrays;
 
 public final class ModelProperties {
-    private static final String[] headers = new String[]{"id", "Name", "Type", "#Place", "#Transition", "#Arc",
-            "HasReadOnlyEffect",
-            "HasReadOnlyEffectOnTop"};
+    private static final String[] headers =
+            new String[] {
+                "id",
+                "Name",
+                "Type",
+                "#Place",
+                "#Transition",
+                "#Arc",
+                "HasReadOnlyEffect",
+                "HasReadOnlyEffectOnTop"
+            };
 
     private final PtNetSystem model;
     private final String id;

@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents a latch (1 bit memory).
- */
+/** Represents a latch (1 bit memory). */
 public class Latch extends AigerNode {
 
     private final Collection<AigerWire> outWires;

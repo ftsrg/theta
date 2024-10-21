@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.common;
 
-import java.util.function.Supplier;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.function.Supplier;
 
 public abstract class Try<T> {
 
-    private Try() {
-    }
+    private Try() {}
 
     public static <T> Try<T> attempt(final Supplier<? extends T> supplier) {
         try {
@@ -184,5 +183,4 @@ public abstract class Try<T> {
             return Utils.lispStringBuilder("Faliure").add(exception).toString();
         }
     }
-
 }

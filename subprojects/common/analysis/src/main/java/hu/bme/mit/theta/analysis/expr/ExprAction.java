@@ -25,5 +25,4 @@ public interface ExprAction extends Action {
     Expr<BoolType> toExpr();
 
     VarIndexing nextIndexing();
-
 }

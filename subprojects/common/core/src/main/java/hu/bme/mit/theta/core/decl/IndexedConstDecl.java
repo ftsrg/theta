@@ -47,5 +47,4 @@ public final class IndexedConstDecl<DeclType extends Type> extends ConstDecl<Dec
     public int getIndex() {
         return index;
     }
-
 }

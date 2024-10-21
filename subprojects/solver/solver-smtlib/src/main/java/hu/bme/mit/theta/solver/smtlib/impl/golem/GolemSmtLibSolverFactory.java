@@ -25,7 +25,6 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
-
 import java.nio.file.Path;
 
 public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
@@ -55,7 +54,8 @@ public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args);
 
-        return new GenericHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new GenericHornSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary);
     }
 
     @Override

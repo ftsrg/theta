@@ -16,5 +16,8 @@
 package hu.bme.mit.theta.common.parser;
 
 public enum TokenType {
-    EOF, LPAREN, RPAREN, ATOM
+    EOF,
+    LPAREN,
+    RPAREN,
+    ATOM
 }

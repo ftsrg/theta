@@ -19,5 +19,5 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
 class Domain(val op: EdgePattern) : NodePattern() {
 
-    override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
+  override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
 }

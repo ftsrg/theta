@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class DeclSymbol implements Symbol {
 
@@ -73,5 +73,4 @@ public final class DeclSymbol implements Symbol {
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(decl).toString();
     }
-
 }

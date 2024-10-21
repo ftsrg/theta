@@ -21,7 +21,6 @@ import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.core.stmt.Stmt;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,8 +28,7 @@ import java.io.OutputStreamWriter;
 
 public final class CfaWriter {
 
-    private CfaWriter() {
-    }
+    private CfaWriter() {}
 
     public static void write(final CFA cfa, final OutputStream outStream) throws IOException {
         final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outStream));

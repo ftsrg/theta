@@ -19,18 +19,12 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.sts.STS;
 
-/**
- * Common interface for inferring initial precision for STSs.
- */
+/** Common interface for inferring initial precision for STSs. */
 public interface StsInitPrec {
 
-    /**
-     * Creates initial ExplPrec based on an STS.
-     */
+    /** Creates initial ExplPrec based on an STS. */
     ExplPrec createExpl(STS sts);
 
-    /**
-     * Creates initial PredPrec based on an STS.
-     */
+    /** Creates initial PredPrec based on an STS. */
     PredPrec createPred(STS sts);
 }

@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.multi;
 
-
 import hu.bme.mit.theta.analysis.Action;
 
 public interface MultiAction<L extends Action, R extends Action> extends Action {

@@ -67,5 +67,4 @@ public abstract class Decl<DeclType extends Type> {
     public final boolean equals(final Object obj) {
         return this == obj;
     }
-
 }

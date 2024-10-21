@@ -22,11 +22,10 @@ import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collection;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocPrecTest {
 
@@ -121,6 +120,5 @@ public class LocPrecTest {
         final LocalCfaPrec<PrecStub> refinedBack = refined.refine(l1, p0);
 
         Assert.assertEquals(original, refinedBack);
-
     }
 }

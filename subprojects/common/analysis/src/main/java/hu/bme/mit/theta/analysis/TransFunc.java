@@ -17,9 +17,7 @@ package hu.bme.mit.theta.analysis;
 
 import java.util.Collection;
 
-/**
- * Common interface for transfer functions.
- */
+/** Common interface for transfer functions. */
 @FunctionalInterface
 public interface TransFunc<S extends State, A extends Action, P extends Prec> {
 
@@ -32,5 +30,4 @@ public interface TransFunc<S extends State, A extends Action, P extends Prec> {
      * @return Collection of successor states
      */
     Collection<? extends S> getSuccStates(S state, A action, P prec);
-
 }

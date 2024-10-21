@@ -24,8 +24,13 @@ public class ParseException extends RuntimeException {
     }
 
     public ParseException(ParserRuleContext ctx, String message, Throwable cause) {
-        super("Line " + ctx.getStart().getLine() + " col " + ctx.getStart().getCharPositionInLine()
-                + ": " + message, cause);
+        super(
+                "Line "
+                        + ctx.getStart().getLine()
+                        + " col "
+                        + ctx.getStart().getCharPositionInLine()
+                        + ": "
+                        + message,
+                cause);
     }
-
 }

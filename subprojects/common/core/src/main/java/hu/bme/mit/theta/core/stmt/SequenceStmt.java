@@ -17,7 +17,6 @@ package hu.bme.mit.theta.core.stmt;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
-
 import java.util.List;
 
 public final class SequenceStmt implements Stmt {
@@ -76,5 +75,4 @@ public final class SequenceStmt implements Stmt {
     public String toString() {
         return Utils.lispStringBuilder().addAll(stmts).toString();
     }
-
 }

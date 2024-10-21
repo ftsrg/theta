@@ -17,12 +17,10 @@ package hu.bme.mit.theta.common.parser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.parser.SExpr.SAtom;
 import hu.bme.mit.theta.common.parser.SExpr.SList;
+import java.util.List;
 
 public final class LispParser {
 
@@ -88,5 +86,4 @@ public final class LispParser {
         lookahead();
         lookahead = null;
     }
-
 }

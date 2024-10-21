@@ -17,9 +17,7 @@ package hu.bme.mit.theta.sts.aiger.elements;
 
 import java.util.Collection;
 
-/**
- * Base class for nodes in an {@link AigerSystem}.
- */
+/** Base class for nodes in an {@link AigerSystem}. */
 public abstract class AigerNode {
 
     private final String name;

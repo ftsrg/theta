@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.type.bvtype;
 
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvNotExpr extends UnaryExpr<BvType, BvType> {
 
@@ -80,5 +80,4 @@ public final class BvNotExpr extends UnaryExpr<BvType, BvType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

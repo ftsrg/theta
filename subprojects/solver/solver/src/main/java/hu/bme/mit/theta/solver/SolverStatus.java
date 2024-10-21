@@ -16,7 +16,8 @@
 package hu.bme.mit.theta.solver;
 
 public enum SolverStatus {
-    SAT(true), UNSAT(false);
+    SAT(true),
+    UNSAT(false);
 
     private final boolean sat;
 
@@ -31,5 +32,4 @@ public enum SolverStatus {
     public boolean isUnsat() {
         return !sat;
     }
-
 }

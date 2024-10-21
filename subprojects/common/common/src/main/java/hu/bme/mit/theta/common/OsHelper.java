@@ -19,12 +19,12 @@ import com.google.common.base.StandardSystemProperty;
 
 public final class OsHelper {
 
-    private OsHelper() {
-
-    }
+    private OsHelper() {}
 
     public enum OperatingSystem {
-        WINDOWS, LINUX, MAC
+        WINDOWS,
+        LINUX,
+        MAC
     }
 
     public static OperatingSystem getOs() {
@@ -44,7 +44,8 @@ public final class OsHelper {
     }
 
     public enum Architecture {
-        X86, X64
+        X86,
+        X64
     }
 
     public static Architecture getArch() {

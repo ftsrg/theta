@@ -17,12 +17,10 @@ package hu.bme.mit.theta.core.clock.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.Collection;
 
 public abstract class UnitConstr extends AtomicConstr {
 
@@ -70,5 +68,4 @@ public abstract class UnitConstr extends AtomicConstr {
     protected abstract int getHashSeed();
 
     protected abstract String getOperatorLabel();
-
 }

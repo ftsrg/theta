@@ -16,9 +16,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.*;
-import hu.bme.mit.theta.analysis.algorithm.Checker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
 @FunctionalInterface
 public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Checker<W, I> {
@@ -29,5 +26,4 @@ public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Chec
     default SafetyResult<W, C> check() {
         return check(null);
     }
-
 }

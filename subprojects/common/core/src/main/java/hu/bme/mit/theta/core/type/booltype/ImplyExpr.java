@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
@@ -79,8 +79,8 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final ImplyExpr that = (ImplyExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }
@@ -95,5 +95,4 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

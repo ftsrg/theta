@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.Action;
-
 import java.util.Objects;
 
 public class ActionStub implements Action {

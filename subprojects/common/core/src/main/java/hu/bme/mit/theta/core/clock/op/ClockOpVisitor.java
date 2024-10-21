@@ -26,5 +26,4 @@ public interface ClockOpVisitor<P, R> {
     R visit(final ResetOp op, final P param);
 
     R visit(final ShiftOp op, final P param);
-
 }

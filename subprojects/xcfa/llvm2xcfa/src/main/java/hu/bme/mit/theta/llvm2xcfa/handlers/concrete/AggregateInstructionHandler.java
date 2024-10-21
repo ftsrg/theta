@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
 
 import hu.bme.mit.theta.llvm2xcfa.handlers.BaseInstructionHandler;
@@ -24,7 +23,11 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
 public class AggregateInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "extractvalue":
                 extractvalue(instruction, globalState, functionState, blockState);
@@ -36,14 +39,21 @@ public class AggregateInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void insertvalue(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void insertvalue(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void extractvalue(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void extractvalue(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 }

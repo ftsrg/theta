@@ -13,18 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.model
 
 abstract class MetaData
 
 object EmptyMetaData : MetaData() {
-    // TODO why is this necessary? {@see GsonTest.kt}
+  // TODO why is this necessary? {@see GsonTest.kt}
 
-    private val hash = 123123
+  private val hash = 123123
 
-    override fun equals(other: Any?): Boolean =
-        other is EmptyMetaData
+  override fun equals(other: Any?): Boolean = other is EmptyMetaData
 
-    override fun hashCode(): Int = hash
+  override fun hashCode(): Int = hash
 }

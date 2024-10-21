@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntDivExpr extends DivExpr<IntType> {
 
@@ -79,8 +79,8 @@ public final class IntDivExpr extends DivExpr<IntType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntDivExpr that = (IntDivExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }
@@ -95,5 +95,4 @@ public final class IntDivExpr extends DivExpr<IntType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

@@ -18,9 +18,6 @@ package hu.bme.mit.theta.sts.aiger.utils;
 import static java.lang.System.lineSeparator;
 
 import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Set;
-
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
@@ -28,10 +25,9 @@ import hu.bme.mit.theta.sts.aiger.elements.AndGate;
 import hu.bme.mit.theta.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.sts.aiger.elements.Latch;
+import java.util.Set;
 
-/**
- * Visualizer for AIGER systems.
- */
+/** Visualizer for AIGER systems. */
 public final class AigerVisualizer {
 
     private static final String INPUTNODE =
@@ -43,8 +39,7 @@ public final class AigerVisualizer {
             "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
     private static final String INVHEAD = "odot";
 
-    private AigerVisualizer() {
-    }
+    private AigerVisualizer() {}
 
     /**
      * Visualize an AIGER system in dot format.
@@ -83,8 +78,9 @@ public final class AigerVisualizer {
         system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
         wires.addAll(system.getOutput().getInWires());
         for (final AigerWire wire : wires) {
-            sb.append(String.format("\t%s -> %s", wire.getSource().getName(),
-                    wire.getTarget().getName()));
+            sb.append(
+                    String.format(
+                            "\t%s -> %s", wire.getSource().getName(), wire.getTarget().getName()));
             if (!wire.isPonated()) {
                 sb.append(" [arrowhead=" + INVHEAD + "]");
             }

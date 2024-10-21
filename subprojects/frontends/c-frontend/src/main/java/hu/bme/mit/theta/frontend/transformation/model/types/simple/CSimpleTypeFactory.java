@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -49,7 +47,8 @@ public class CSimpleTypeFactory {
         return Typedef.instance;
     }
 
-    public static NamedType NamedType(final String namedType, ParseContext parseContext, Logger uniqueWarningLogger) {
+    public static NamedType NamedType(
+            final String namedType, ParseContext parseContext, Logger uniqueWarningLogger) {
         return new NamedType(parseContext, namedType, uniqueWarningLogger);
     }
 
@@ -61,7 +60,8 @@ public class CSimpleTypeFactory {
         return new Enum(id, fields);
     }
 
-    public static Struct Struct(final String name, ParseContext parseContext, Logger uniqueWarningLogger) {
+    public static Struct Struct(
+            final String name, ParseContext parseContext, Logger uniqueWarningLogger) {
         return new Struct(name, parseContext, uniqueWarningLogger);
     }
 

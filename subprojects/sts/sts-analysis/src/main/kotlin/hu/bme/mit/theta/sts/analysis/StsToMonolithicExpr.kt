@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.sts.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
@@ -22,13 +21,13 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.sts.STS
 
 fun STS.toMonolithicExpr(): MonolithicExpr {
-    return MonolithicExpr(this.init, this.trans, this.prop)
+  return MonolithicExpr(this.init, this.trans, this.prop)
 }
 
 fun STS.valToAction(val1: Valuation, val2: Valuation): StsAction {
-    return StsAction(this);
+  return StsAction(this)
 }
 
 fun STS.valToState(val1: Valuation): ExplState {
-    return ExplState.of(val1);
+  return ExplState.of(val1)
 }

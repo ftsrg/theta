@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -23,14 +27,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.stream.Stream;
-
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class SolverUtilsTest {
 
@@ -49,5 +48,4 @@ public class SolverUtilsTest {
         // Act
         models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
     }
-
 }

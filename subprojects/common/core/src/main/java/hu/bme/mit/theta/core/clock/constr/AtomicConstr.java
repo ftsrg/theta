@@ -26,5 +26,4 @@ public abstract class AtomicConstr implements ClockConstr {
     public final int getBound() {
         return bound;
     }
-
 }

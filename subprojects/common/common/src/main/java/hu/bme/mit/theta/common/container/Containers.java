@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.common.container;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.container.factory.ContainerFactory;
 import hu.bme.mit.theta.common.container.factory.LinkedHashContainerFactory;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Containers {
 
@@ -64,5 +63,4 @@ public class Containers {
     public static <E> Set<E> createSet(Collection<? extends E> c) {
         return containerFactory.createSet(c);
     }
-
 }

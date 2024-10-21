@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.unit;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Collection;
 import java.util.Set;
 
@@ -25,8 +24,7 @@ public final class UnitPrec implements Prec {
 
     private static final UnitPrec INSTANCE = new UnitPrec();
 
-    private UnitPrec() {
-    }
+    private UnitPrec() {}
 
     public static UnitPrec getInstance() {
         return INSTANCE;

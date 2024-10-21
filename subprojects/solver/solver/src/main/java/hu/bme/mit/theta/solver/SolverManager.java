@@ -40,9 +40,7 @@ public abstract class SolverManager implements AutoCloseable {
         throw new UnsupportedOperationException("Solver " + name + " not supported");
     }
 
-    /**
-     * Closes all SolverManager instances registered
-     */
+    /** Closes all SolverManager instances registered */
     public static void closeAll() throws Exception {
         for (final var solverManager : solverManagers) {
             solverManager.close();
@@ -53,5 +51,4 @@ public abstract class SolverManager implements AutoCloseable {
     public abstract boolean managesSolver(final String name);
 
     public abstract SolverFactory getSolverFactory(final String name) throws Exception;
-
 }

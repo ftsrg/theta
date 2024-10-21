@@ -41,13 +41,14 @@ public class ChcFrontend {
         ChcUtils.init(charStream);
         CHCParser parser = new CHCParser(new CommonTokenStream(new CHCLexer(charStream)));
         parser.setErrorHandler(new BailErrorStrategy());
-        ChcXcfaBuilder chcXcfaBuilder = switch (chcTransformation) {
-            case FORWARD -> new ChcForwardXcfaBuilder(procedurePassManager);
-            case BACKWARD -> new ChcBackwardXcfaBuilder(procedurePassManager);
-            default ->
-                    throw new RuntimeException("Should not be here; adapt PORTFOLIO to FW/BW beforehand.");
-        };
+        ChcXcfaBuilder chcXcfaBuilder =
+                switch (chcTransformation) {
+                    case FORWARD -> new ChcForwardXcfaBuilder(procedurePassManager);
+                    case BACKWARD -> new ChcBackwardXcfaBuilder(procedurePassManager);
+                    default ->
+                            throw new RuntimeException(
+                                    "Should not be here; adapt PORTFOLIO to FW/BW beforehand.");
+                };
         return chcXcfaBuilder.buildXcfa(parser);
     }
 }
-

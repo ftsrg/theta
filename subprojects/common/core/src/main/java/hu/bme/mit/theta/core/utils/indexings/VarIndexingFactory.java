@@ -13,11 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils.indexings;
 
 public class VarIndexingFactory {
-
 
     public static BasicVarIndexing basicVarIndexing(final int defaultOffset) {
         return BasicVarIndexing.all(defaultOffset);

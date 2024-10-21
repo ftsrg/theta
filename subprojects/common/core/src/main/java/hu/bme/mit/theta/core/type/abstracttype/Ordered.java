@@ -27,5 +27,4 @@ public interface Ordered<OpType extends Ordered<OpType>> extends Type {
     GtExpr<OpType> Gt(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
     GeqExpr<OpType> Geq(Expr<OpType> leftOp, Expr<OpType> rightOp);
-
 }

@@ -19,8 +19,7 @@ import java.io.PrintStream;
 
 public class CliUtils {
 
-    private CliUtils() {
-    }
+    private CliUtils() {}
 
     public static void printVersion(PrintStream ps) {
         String ver = new CliUtils().getClass().getPackage().getImplementationVersion();

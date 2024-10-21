@@ -24,5 +24,4 @@ public interface Lattice<S extends State> extends PartialOrd<S> {
     S meet(S state1, S state2);
 
     S join(S state1, S state2);
-
 }

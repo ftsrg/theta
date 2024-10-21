@@ -17,12 +17,10 @@ package hu.bme.mit.theta.core.clock.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.Collection;
 
 public abstract class DiffConstr extends AtomicConstr {
 
@@ -31,8 +29,8 @@ public abstract class DiffConstr extends AtomicConstr {
 
     private volatile int hashCode = 0;
 
-    protected DiffConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar,
-                         final int bound) {
+    protected DiffConstr(
+            final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
         super(bound);
         this.leftVar = checkNotNull(leftVar);
         this.rightVar = checkNotNull(rightVar);
@@ -80,5 +78,4 @@ public abstract class DiffConstr extends AtomicConstr {
     protected abstract int getHashSeed();
 
     protected abstract String getOperatorLabel();
-
 }

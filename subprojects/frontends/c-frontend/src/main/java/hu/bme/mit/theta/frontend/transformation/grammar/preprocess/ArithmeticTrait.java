@@ -13,9 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 public enum ArithmeticTrait {
-    LIN_INT, NONLIN_INT, BITWISE, FLOAT, ARR, MULTITHREAD
+    LIN_INT,
+    NONLIN_INT,
+    BITWISE,
+    FLOAT,
+    ARR,
+    MULTITHREAD
 }

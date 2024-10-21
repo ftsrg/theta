@@ -13,13 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.ParameterException
 
 fun rule(name: String, test: () -> Boolean) {
-    if (test()) {
-        throw ParameterException("Validation failed for rule $name")
-    }
+  if (test()) {
+    throw ParameterException("Validation failed for rule $name")
+  }
 }

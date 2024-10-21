@@ -41,5 +41,4 @@ public class FailClockOpVisitor<P, R> implements ClockOpVisitor<P, R> {
     public R visit(final ShiftOp op, final P param) {
         throw new UnsupportedOperationException();
     }
-
 }

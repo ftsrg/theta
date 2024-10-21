@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntPosExpr extends PosExpr<IntType> {
 
@@ -81,5 +81,4 @@ public final class IntPosExpr extends PosExpr<IntType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

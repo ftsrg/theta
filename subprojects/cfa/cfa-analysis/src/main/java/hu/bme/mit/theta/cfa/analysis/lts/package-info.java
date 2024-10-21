@@ -20,5 +20,4 @@
  * @see hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts
  * @see hu.bme.mit.theta.cfa.analysis.lts.CfaCachedLts
  */
-
 package hu.bme.mit.theta.cfa.analysis.lts;

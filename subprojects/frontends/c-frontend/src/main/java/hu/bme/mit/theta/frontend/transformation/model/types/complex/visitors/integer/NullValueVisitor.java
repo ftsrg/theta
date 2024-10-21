@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
 

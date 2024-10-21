@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xsts.dsl;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-
 import java.util.Objects;
 
 public final class XstsCustomTypeSymbol implements Symbol {

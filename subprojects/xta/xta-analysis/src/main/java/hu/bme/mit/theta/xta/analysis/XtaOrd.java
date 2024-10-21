@@ -36,8 +36,7 @@ final class XtaOrd<S extends State> implements PartialOrd<XtaState<S>> {
     public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
         checkNotNull(state1);
         checkNotNull(state2);
-        return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(),
-                state2.getState());
+        return state1.getLocs().equals(state2.getLocs())
+                && partialOrd.isLeq(state1.getState(), state2.getState());
     }
-
 }

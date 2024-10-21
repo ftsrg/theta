@@ -13,14 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.common.table;
 
 import java.io.PrintStream;
 
-/**
- * A table writer that prints tables to a PrintStream in HTML format.
- */
+/** A table writer that prints tables to a PrintStream in HTML format. */
 public class HtmlTableWriter implements TableWriter {
 
     private final PrintStream stream;

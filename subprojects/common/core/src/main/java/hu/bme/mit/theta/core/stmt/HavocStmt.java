@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Havoc statement of the form havoc VARIABLE, which performs a non-deterministic assignment to

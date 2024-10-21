@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.common.Tuple2;
@@ -22,7 +21,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +29,10 @@ public class CStruct extends CInteger {
 
     private final List<Tuple2<String, CComplexType>> fields;
 
-    public CStruct(CSimpleType origin, List<Tuple2<String, CComplexType>> fields, ParseContext parseContext) {
+    public CStruct(
+            CSimpleType origin,
+            List<Tuple2<String, CComplexType>> fields,
+            ParseContext parseContext) {
         super(origin, parseContext);
         this.fields = fields;
     }

@@ -13,29 +13,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.cfa
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.changeVars
 
 /**
- * Extension function for CFA. Creates a new CFA which looks exactly the same, but any variable whose name is present in
- * the parameter gets replaced to the associated instance.
+ * Extension function for CFA. Creates a new CFA which looks exactly the same, but any variable
+ * whose name is present in the parameter gets replaced to the associated instance.
  */
 fun CFA.copyWithReplacingVars(variableMapping: Map<String, VarDecl<*>>): CFA {
-    val builder = CFA.builder()
-    val locationMap: Map<String, CFA.Loc> = locs.associate { it.name to builder.createLoc(it.name) }
-    builder.initLoc = locationMap[initLoc.name]
-    if (errorLoc.isPresent)
-        builder.errorLoc = locationMap[errorLoc.get().name]
-    if (finalLoc.isPresent)
-        builder.finalLoc = locationMap[finalLoc.get().name]
-    edges.forEach {
-        builder.createEdge(
-            locationMap[it.source.name], locationMap[it.target.name],
-            it.stmt.changeVars(variableMapping)
-        )
-    }
-    return builder.build()
+  val builder = CFA.builder()
+  val locationMap: Map<String, CFA.Loc> = locs.associate { it.name to builder.createLoc(it.name) }
+  builder.initLoc = locationMap[initLoc.name]
+  if (errorLoc.isPresent) builder.errorLoc = locationMap[errorLoc.get().name]
+  if (finalLoc.isPresent) builder.finalLoc = locationMap[finalLoc.get().name]
+  edges.forEach {
+    builder.createEdge(
+      locationMap[it.source.name],
+      locationMap[it.target.name],
+      it.stmt.changeVars(variableMapping),
+    )
+  }
+  return builder.build()
 }

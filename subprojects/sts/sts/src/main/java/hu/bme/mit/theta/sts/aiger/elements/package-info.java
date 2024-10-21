@@ -18,5 +18,4 @@
  *
  * @see hu.bme.mit.theta.sts.aiger.elements.AigerSystem
  */
-
 package hu.bme.mit.theta.sts.aiger.elements;

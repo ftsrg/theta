@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
-
 import java.util.Collection;
 import java.util.Collections;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
 
@@ -44,10 +43,9 @@ public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
     @Override
     public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
         checkNotNull(prec);
-        final Collection<ExplState> initStates = ExprStates.createStatesForExpr(solver, initExpr, 0,
-                prec::createState,
-                VarIndexingFactory.indexing(0));
+        final Collection<ExplState> initStates =
+                ExprStates.createStatesForExpr(
+                        solver, initExpr, 0, prec::createState, VarIndexingFactory.indexing(0));
         return initStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : initStates;
     }
-
 }

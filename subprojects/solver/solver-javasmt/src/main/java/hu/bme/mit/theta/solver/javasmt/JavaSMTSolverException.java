@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.javasmt;
 
 public class JavaSMTSolverException extends RuntimeException {
@@ -29,5 +28,4 @@ public class JavaSMTSolverException extends RuntimeException {
     public JavaSMTSolverException(Throwable cause) {
         super(cause);
     }
-
 }

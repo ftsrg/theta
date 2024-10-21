@@ -22,5 +22,4 @@ public interface Result<W extends Witness> {
     W getWitness();
 
     Optional<Statistics> getStats();
-
 }

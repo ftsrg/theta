@@ -22,5 +22,4 @@ public interface Scope {
     Optional<? extends Scope> enclosingScope();
 
     Optional<? extends Symbol> resolve(String name);
-
 }

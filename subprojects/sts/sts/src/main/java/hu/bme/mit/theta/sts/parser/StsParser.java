@@ -17,13 +17,12 @@ package hu.bme.mit.theta.sts.parser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.Reader;
-
 import hu.bme.mit.theta.common.parser.LispLexer;
 import hu.bme.mit.theta.common.parser.LispParser;
 import hu.bme.mit.theta.common.parser.SExpr;
 import hu.bme.mit.theta.core.parser.Env;
 import hu.bme.mit.theta.sts.STS;
+import java.io.Reader;
 
 public final class StsParser {
 
@@ -43,5 +42,4 @@ public final class StsParser {
         final STS sts = interpreter.sts(sexpr);
         return sts;
     }
-
 }

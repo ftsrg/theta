@@ -18,5 +18,4 @@
  *
  * @see hu.bme.mit.theta.analysis.waitlist.Waitlist
  */
-
 package hu.bme.mit.theta.analysis.waitlist;

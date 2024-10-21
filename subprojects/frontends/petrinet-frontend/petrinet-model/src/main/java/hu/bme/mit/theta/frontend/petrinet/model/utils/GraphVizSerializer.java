@@ -23,18 +23,28 @@ public final class GraphVizSerializer {
         sb.append("digraph PN {\n");
 
         for (Place p : pn.getPlaces()) {
-            sb.append("\"" +
-                    p.getId() +
-                    "\" [label=\"" +
-                    p.getId() +
-                    (p.getInitialMarking() != 0 ? "\\n(" + p.getInitialMarking() + ")" : "") +
-                    "\"];\n");
+            sb.append(
+                    "\""
+                            + p.getId()
+                            + "\" [label=\""
+                            + p.getId()
+                            + (p.getInitialMarking() != 0
+                                    ? "\\n(" + p.getInitialMarking() + ")"
+                                    : "")
+                            + "\"];\n");
         }
         for (Transition t : pn.getTransitions()) {
             sb.append("\"" + t.getId() + "\" [shape=box,label=\"" + t.getId() + "\"];\n");
         }
         for (PTArc pt : pn.getPtArcs()) {
-            sb.append("\"" + pt.getSource().getId() + "\" -> \"" + pt.getTarget().getId() + "\" [label=\"" + (pt.getWeight() != 1 ? pt.getWeight() : "") + "\"");
+            sb.append(
+                    "\""
+                            + pt.getSource().getId()
+                            + "\" -> \""
+                            + pt.getTarget().getId()
+                            + "\" [label=\""
+                            + (pt.getWeight() != 1 ? pt.getWeight() : "")
+                            + "\"");
 
             if (pt.isInhibitor()) {
                 sb.append(",arrowhead=dot");
@@ -43,7 +53,14 @@ public final class GraphVizSerializer {
             sb.append("];\n");
         }
         for (TPArc tp : pn.getTpArcs()) {
-            sb.append("\"" + tp.getSource().getId() + "\" -> \"" + tp.getTarget().getId() + "\" [label=\"" + (tp.getWeight() != 1 ? tp.getWeight() : "") + "\"];\n");
+            sb.append(
+                    "\""
+                            + tp.getSource().getId()
+                            + "\" -> \""
+                            + tp.getTarget().getId()
+                            + "\" [label=\""
+                            + (tp.getWeight() != 1 ? tp.getWeight() : "")
+                            + "\"];\n");
         }
 
         sb.append("}\n");

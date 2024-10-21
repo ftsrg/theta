@@ -56,5 +56,4 @@ public class GrowingIntArray {
         System.arraycopy(array, 0, newArray, 0, array.length);
         array = newArray;
     }
-
 }

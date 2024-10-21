@@ -21,7 +21,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 
-public class InvalidLitExpr<ExprType extends Type> extends NullaryExpr<ExprType> implements LitExpr<ExprType> {
+public class InvalidLitExpr<ExprType extends Type> extends NullaryExpr<ExprType>
+        implements LitExpr<ExprType> {
 
     private final ExprType type;
 

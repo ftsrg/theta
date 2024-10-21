@@ -25,8 +25,7 @@ public final class UnitState implements ExprState {
 
     private static final UnitState INSTANCE = new UnitState();
 
-    private UnitState() {
-    }
+    private UnitState() {}
 
     public static UnitState getInstance() {
         return INSTANCE;
@@ -46,5 +45,4 @@ public final class UnitState implements ExprState {
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }

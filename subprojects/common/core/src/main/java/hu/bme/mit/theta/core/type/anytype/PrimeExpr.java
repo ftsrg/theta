@@ -75,5 +75,4 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
     public final String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

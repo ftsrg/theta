@@ -20,12 +20,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Common interface for SMT solvers.
- * <p>
- * Use the {@link #add(Expr)} methods to add expressions to the solver. Then use {@link #check()}
+ *
+ * <p>Use the {@link #add(Expr)} methods to add expressions to the solver. Then use {@link #check()}
  * method to check their satisfiability. The result can be queried by {@link #getStatus()}. If the
  * expressions are satisfiable, a satisfying assignment can be obtained by {@link #getModel()}.
- * <p>
- * The solver can also support incremental solving by {@link #push()} and {@link #pop()}.
+ *
+ * <p>The solver can also support incremental solving by {@link #push()} and {@link #pop()}.
  */
 public interface Solver extends SolverBase {
 

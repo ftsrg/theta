@@ -16,9 +16,7 @@
 package hu.bme.mit.theta.solver.smtlib.impl.bitwuzla;
 
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
-
 import java.nio.file.Path;
 
 public class BitwuzlaSmtLibSolverFactory extends GenericSmtLibSolverFactory {

@@ -24,5 +24,4 @@ public class PartialOrdStub implements PartialOrd<State> {
     public boolean isLeq(final State state1, final State state2) {
         return state1.equals(state2);
     }
-
 }

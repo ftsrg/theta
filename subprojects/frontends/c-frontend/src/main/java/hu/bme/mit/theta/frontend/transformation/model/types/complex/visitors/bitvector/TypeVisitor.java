@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
 import hu.bme.mit.theta.core.type.Type;
@@ -65,5 +64,4 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     public Type visit(CVoid type, Void param) {
         return BvType.of(1, false);
     }
-
 }

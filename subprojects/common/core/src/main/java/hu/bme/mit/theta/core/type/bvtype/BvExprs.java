@@ -13,19 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-
 import java.util.List;
 
 public final class BvExprs {
 
-    private BvExprs() {
-
-    }
+    private BvExprs() {}
 
     public static BvType BvType(final int size, final Boolean signedness) {
         return BvType.of(size, signedness);
@@ -43,13 +39,12 @@ public final class BvExprs {
         return Bv(value, null);
     }
 
-
     public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
         return BvConcatExpr.of(ops);
     }
 
-    public static BvExtractExpr Extract(final Expr<BvType> bitvec, final IntLitExpr from,
-                                        final IntLitExpr until) {
+    public static BvExtractExpr Extract(
+            final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
         return BvExtractExpr.of(bitvec, from, until);
     }
 
@@ -121,23 +116,23 @@ public final class BvExprs {
         return BvShiftLeftExpr.of(leftOp, rightOp);
     }
 
-    public static BvArithShiftRightExpr ArithShiftRight(final Expr<BvType> leftOp,
-                                                        final Expr<BvType> rightOp) {
+    public static BvArithShiftRightExpr ArithShiftRight(
+            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvArithShiftRightExpr.of(leftOp, rightOp);
     }
 
-    public static BvLogicShiftRightExpr LogicShiftRight(final Expr<BvType> leftOp,
-                                                        final Expr<BvType> rightOp) {
+    public static BvLogicShiftRightExpr LogicShiftRight(
+            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvLogicShiftRightExpr.of(leftOp, rightOp);
     }
 
-    public static BvRotateLeftExpr RotateLeft(final Expr<BvType> leftOp,
-                                              final Expr<BvType> rightOp) {
+    public static BvRotateLeftExpr RotateLeft(
+            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvRotateLeftExpr.of(leftOp, rightOp);
     }
 
-    public static BvRotateRightExpr RotateRight(final Expr<BvType> leftOp,
-                                                final Expr<BvType> rightOp) {
+    public static BvRotateRightExpr RotateRight(
+            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         return BvRotateRightExpr.of(leftOp, rightOp);
     }
 

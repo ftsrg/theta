@@ -18,10 +18,6 @@ package hu.bme.mit.theta.cfa.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Builder;
 import hu.bme.mit.theta.cfa.CFA.Loc;
@@ -34,6 +30,9 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 final class CfaProcessSymbol implements Symbol, Scope {
 
@@ -162,5 +161,4 @@ final class CfaProcessSymbol implements Symbol, Scope {
         }
         return result;
     }
-
 }

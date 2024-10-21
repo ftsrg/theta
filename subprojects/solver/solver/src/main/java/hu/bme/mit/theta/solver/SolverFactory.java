@@ -50,5 +50,4 @@ public interface SolverFactory {
     default HornSolver createHornSolver() {
         throw new UnsupportedOperationException();
     }
-
 }

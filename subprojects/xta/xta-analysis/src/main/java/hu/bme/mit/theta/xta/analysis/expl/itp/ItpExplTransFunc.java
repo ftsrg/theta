@@ -17,14 +17,13 @@ package hu.bme.mit.theta.xta.analysis.expl.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState, A, UnitPrec> {
 
@@ -40,15 +39,15 @@ final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState
     }
 
     @Override
-    public Collection<ItpExplState> getSuccStates(final ItpExplState state, final A action,
-                                                  final UnitPrec prec) {
+    public Collection<ItpExplState> getSuccStates(
+            final ItpExplState state, final A action, final UnitPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final ExplState subState = state.getConcrState();
-        final Collection<? extends ExplState> subSuccStates = transFunc.getSuccStates(subState,
-                action, prec);
+        final Collection<? extends ExplState> subSuccStates =
+                transFunc.getSuccStates(subState, action, prec);
 
         if (subSuccStates.isEmpty()) {
             final ItpExplState succState = ItpExplState.of(ExplState.bottom(), ExplState.top());
@@ -62,5 +61,4 @@ final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState
             return result;
         }
     }
-
 }

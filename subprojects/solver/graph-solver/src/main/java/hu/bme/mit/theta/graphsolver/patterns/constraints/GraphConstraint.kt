@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.graphsolver.patterns.constraints
 
 import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
@@ -22,5 +21,5 @@ typealias MCM = Collection<GraphConstraint>
 
 sealed interface GraphConstraint {
 
-    fun <T> accept(compiler: GraphPatternCompiler<T, *>): T
+  fun <T> accept(compiler: GraphPatternCompiler<T, *>): T
 }

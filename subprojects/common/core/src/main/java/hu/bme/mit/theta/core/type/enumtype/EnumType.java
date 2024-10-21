@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.type.enumtype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -23,15 +25,12 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public final class EnumType implements Equational<EnumType>, Type {
 
@@ -59,9 +58,10 @@ public final class EnumType implements Equational<EnumType>, Type {
     }
 
     public static String getShortName(String longName) {
-        if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR))
-            return longName;
-        return longName.substring(longName.indexOf(FULLY_QUALIFIED_NAME_SEPARATOR) + FULLY_QUALIFIED_NAME_SEPARATOR.length());
+        if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR)) return longName;
+        return longName.substring(
+                longName.indexOf(FULLY_QUALIFIED_NAME_SEPARATOR)
+                        + FULLY_QUALIFIED_NAME_SEPARATOR.length());
     }
 
     @Override
@@ -84,7 +84,9 @@ public final class EnumType implements Equational<EnumType>, Type {
     }
 
     public Set<String> getLongValues() {
-        return literals.keySet().stream().map(val -> makeLongName(this, val)).collect(Collectors.toSet());
+        return literals.keySet().stream()
+                .map(val -> makeLongName(this, val))
+                .collect(Collectors.toSet());
     }
 
     public String getName() {
@@ -96,7 +98,9 @@ public final class EnumType implements Equational<EnumType>, Type {
     }
 
     public int getIntValue(String literal) {
-        checkArgument(literals.containsKey(literal), String.format("Enum type %s does not contain literal '%s'", name, literal));
+        checkArgument(
+                literals.containsKey(literal),
+                String.format("Enum type %s does not contain literal '%s'", name, literal));
         return literals.get(literal);
     }
 
@@ -105,11 +109,13 @@ public final class EnumType implements Equational<EnumType>, Type {
             throw new RuntimeException(String.format("%s is an invalid enum longname"));
         String[] parts = longName.split(Pattern.quote(FULLY_QUALIFIED_NAME_SEPARATOR));
         String type = parts[0];
-        checkArgument(name.equals(type), String.format("%s does not belong to type %s", type, name));
+        checkArgument(
+                name.equals(type), String.format("%s does not belong to type %s", type, name));
         try {
             return EnumLitExpr.of(this, parts[1]);
         } catch (Exception e) {
-            throw new RuntimeException(String.format("%s is not valid for type %s", longName, name), e);
+            throw new RuntimeException(
+                    String.format("%s is not valid for type %s", longName, name), e);
         }
     }
 

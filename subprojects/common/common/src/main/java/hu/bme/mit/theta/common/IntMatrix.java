@@ -182,5 +182,4 @@ public final class IntMatrix {
             }
         }
     }
-
 }

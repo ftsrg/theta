@@ -18,7 +18,8 @@ package hu.bme.mit.theta.analysis.ptr
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 
-data class PtrPrec<P : Prec>(val innerPrec: P, val set: Set<Any> = emptySet(), val smth: Int = 0) : Prec {
+data class PtrPrec<P : Prec>(val innerPrec: P, val set: Set<Any> = emptySet(), val smth: Int = 0) :
+  Prec {
 
-    override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
+  override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
 }

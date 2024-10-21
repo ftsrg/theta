@@ -17,11 +17,6 @@ package hu.bme.mit.theta.core.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-
 import hu.bme.mit.theta.common.dsl.BasicScope;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslLexer;
@@ -34,10 +29,12 @@ import hu.bme.mit.theta.core.dsl.impl.TypeCreatorVisitor;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
-/**
- * Utility class for parsing types, expressions and statements.
- */
+/** Utility class for parsing types, expressions and statements. */
 public final class CoreDslManager {
 
     private final BasicScope scope;
@@ -93,5 +90,4 @@ public final class CoreDslManager {
         final CoreDslParser parser = new CoreDslParser(tokens);
         return parser;
     }
-
 }

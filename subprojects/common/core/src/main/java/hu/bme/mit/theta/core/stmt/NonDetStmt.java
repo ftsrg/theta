@@ -17,7 +17,6 @@ package hu.bme.mit.theta.core.stmt;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
-
 import java.util.List;
 
 public final class NonDetStmt implements Stmt {
@@ -77,5 +76,4 @@ public final class NonDetStmt implements Stmt {
     public String toString() {
         return Utils.lispStringBuilder(STMT_LABEL).addAll(stmts).toString();
     }
-
 }

@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.multi;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Collection;
 
 @SuppressWarnings("java:S119")
@@ -31,8 +30,6 @@ public record MultiPrec<LPrec extends Prec, RPrec extends Prec, DataPrec extends
 
     @Override
     public String toString() {
-        return "MultiPrec{" +
-                "dataPrec=" + dataPrec +
-                '}';
+        return "MultiPrec{" + "dataPrec=" + dataPrec + '}';
     }
 }

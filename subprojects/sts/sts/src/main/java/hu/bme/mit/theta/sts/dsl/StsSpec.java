@@ -19,15 +19,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.sts.STS;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public final class StsSpec {
 
@@ -46,7 +45,8 @@ public final class StsSpec {
     ////
 
     public Collection<STS> getAllSts() {
-        return stsSpecSymbol.getPropDeclSymbols().stream().map(s -> s.instantiate(assignment))
+        return stsSpecSymbol.getPropDeclSymbols().stream()
+                .map(s -> s.instantiate(assignment))
                 .collect(toList());
     }
 
@@ -88,5 +88,4 @@ public final class StsSpec {
         final PropDeclSymbol propDeclSymbol = (PropDeclSymbol) symbol;
         return propDeclSymbol;
     }
-
 }

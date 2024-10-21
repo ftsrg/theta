@@ -19,9 +19,9 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
 class BasicRelation(val name: String) : EdgePattern() {
 
-    init {
-        patternName = name
-    }
+  init {
+    patternName = name
+  }
 
-    override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
+  override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
 }

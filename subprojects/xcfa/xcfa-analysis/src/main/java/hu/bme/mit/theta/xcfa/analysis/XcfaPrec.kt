@@ -13,23 +13,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 
-data class XcfaPrec<P : Prec>(val p: P, val noPop: MutableList<XcfaState<*>> = mutableListOf()) : Prec {
+data class XcfaPrec<P : Prec>(val p: P, val noPop: MutableList<XcfaState<*>> = mutableListOf()) :
+  Prec {
 
-    override fun getUsedVars(): Collection<VarDecl<*>> {
-        return p.usedVars
-    }
+  override fun getUsedVars(): Collection<VarDecl<*>> {
+    return p.usedVars
+  }
 
-    fun refine(runningPrec: P): XcfaPrec<P> {
-        return if (this.p == runningPrec) {
-            this
-        } else {
-            XcfaPrec(runningPrec)
-        }
+  fun refine(runningPrec: P): XcfaPrec<P> {
+    return if (this.p == runningPrec) {
+      this
+    } else {
+      XcfaPrec(runningPrec)
     }
+  }
 }

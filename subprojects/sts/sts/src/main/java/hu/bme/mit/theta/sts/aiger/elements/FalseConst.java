@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents a constant false signal.
- */
+/** Represents a constant false signal. */
 public final class FalseConst extends AigerNode {
 
     private final Collection<AigerWire> outWires;

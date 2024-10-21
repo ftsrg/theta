@@ -13,12 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.common.datalog;
 
 /*
  * Every atom used with the Datalog engine must implement this interface
  */
-public interface DatalogArgument {
-
-}
+public interface DatalogArgument {}

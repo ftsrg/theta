@@ -15,10 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.reachedset;
 
-import hu.bme.mit.theta.common.container.Containers;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,5 +61,4 @@ public final class Partition<T, K> {
         final List<T> partition = classes.getOrDefault(key, Collections.emptyList());
         return partition;
     }
-
 }

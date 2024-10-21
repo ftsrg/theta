@@ -34,5 +34,4 @@ public interface Stack<T> extends Iterable<T> {
     Collection<T> toCollection();
 
     void clear();
-
 }

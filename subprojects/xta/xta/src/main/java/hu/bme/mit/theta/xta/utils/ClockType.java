@@ -22,8 +22,7 @@ public final class ClockType implements Type {
 
     private static final ClockType INSTANCE = new ClockType();
 
-    private ClockType() {
-    }
+    private ClockType() {}
 
     public static ClockType getInstance() {
         return INSTANCE;

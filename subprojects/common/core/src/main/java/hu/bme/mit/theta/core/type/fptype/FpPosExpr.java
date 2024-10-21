@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
 public final class FpPosExpr extends PosExpr<FpType> {
 
@@ -80,5 +80,4 @@ public final class FpPosExpr extends PosExpr<FpType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

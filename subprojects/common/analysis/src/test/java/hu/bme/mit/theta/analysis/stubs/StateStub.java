@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.State;
-
 import java.util.Objects;
 
 public class StateStub implements State {

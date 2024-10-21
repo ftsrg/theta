@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.oc
 
 import hu.bme.mit.theta.core.decl.ConstDecl
@@ -28,60 +27,70 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-/**
- * Important! Empty collection is converted to true (not false).
- */
-internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
+/** Important! Empty collection is converted to true (not false). */
+internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> =
+  when (size) {
     0 -> BoolExprs.True()
     1 -> first()
     else -> BoolExprs.And(this)
+  }
+
+enum class EventType {
+  WRITE,
+  READ,
 }
 
-enum class EventType { WRITE, READ }
 abstract class Event(
-    val const: IndexedConstDecl<*>,
-    val type: EventType,
-    var guard: Set<Expr<BoolType>>,
-    val pid: Int,
-    val clkId: Int
+  val const: IndexedConstDecl<*>,
+  val type: EventType,
+  var guard: Set<Expr<BoolType>>,
+  val pid: Int,
+  val clkId: Int,
 ) {
 
-    val guardExpr: Expr<BoolType> get() = guard.toAnd()
-    var assignment: Expr<BoolType>? = null
-    var enabled: Boolean? = null
+  val guardExpr: Expr<BoolType>
+    get() = guard.toAnd()
 
-    fun enabled(valuation: Valuation): Boolean? {
-        val e = try {
-            (guardExpr.eval(valuation) as? BoolLitExpr)?.value
-        } catch (e: Exception) {
-            null
-        }
-        enabled = e
-        return e
-    }
+  var assignment: Expr<BoolType>? = null
+  var enabled: Boolean? = null
 
-    override fun toString(): String {
-        return "Event(pid=$pid, clkId=$clkId, ${const.name}[${type.toString()[0]}], guard=$guard)"
-    }
+  fun enabled(valuation: Valuation): Boolean? {
+    val e =
+      try {
+        (guardExpr.eval(valuation) as? BoolLitExpr)?.value
+      } catch (e: Exception) {
+        null
+      }
+    enabled = e
+    return e
+  }
+
+  override fun toString(): String {
+    return "Event(pid=$pid, clkId=$clkId, ${const.name}[${type.toString()[0]}], guard=$guard)"
+  }
 }
 
-enum class RelationType { PO, RF }
-data class Relation<E : Event>(
-    val type: RelationType,
-    val from: E,
-    val to: E,
-) {
+enum class RelationType {
+  PO,
+  RF,
+}
 
-    val decl: ConstDecl<BoolType> =
-        Decls.Const("${type.toString().lowercase()}_${from.const.name}_${to.const.name}", BoolExprs.Bool())
-    val declRef: RefExpr<BoolType> = RefExpr.of(decl)
-    var enabled: Boolean? = null
+data class Relation<E : Event>(val type: RelationType, val from: E, val to: E) {
 
-    override fun toString() =
-        "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
+  val decl: ConstDecl<BoolType> =
+    Decls.Const(
+      "${type.toString().lowercase()}_${from.const.name}_${to.const.name}",
+      BoolExprs.Bool(),
+    )
+  val declRef: RefExpr<BoolType> = RefExpr.of(decl)
+  var enabled: Boolean? = null
 
-    fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
-        enabled = if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
-        return enabled
-    }
+  override fun toString() =
+    "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
+
+  fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
+    enabled =
+      if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
+    return enabled
+  }
 }

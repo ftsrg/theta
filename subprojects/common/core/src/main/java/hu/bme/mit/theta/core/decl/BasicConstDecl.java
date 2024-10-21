@@ -27,5 +27,4 @@ public final class BasicConstDecl<DeclType extends Type> extends ConstDecl<DeclT
     BasicConstDecl(final String name, final DeclType type) {
         super(name, type);
     }
-
 }

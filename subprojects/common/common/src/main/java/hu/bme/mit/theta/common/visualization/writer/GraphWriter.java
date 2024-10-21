@@ -15,13 +15,10 @@
  */
 package hu.bme.mit.theta.common.visualization.writer;
 
+import hu.bme.mit.theta.common.visualization.Graph;
 import java.io.FileNotFoundException;
 
-import hu.bme.mit.theta.common.visualization.Graph;
-
-/**
- * Inteface for writing graphs to strings and files.
- */
+/** Inteface for writing graphs to strings and files. */
 public interface GraphWriter {
 
     String writeString(Graph graph);

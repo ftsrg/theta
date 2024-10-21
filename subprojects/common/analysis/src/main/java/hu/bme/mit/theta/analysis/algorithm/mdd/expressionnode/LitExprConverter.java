@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -28,18 +30,13 @@ import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-
 import java.math.BigInteger;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
-/**
- * Util class for converting between integers and {@link LitExpr}
- */
+/** Util class for converting between integers and {@link LitExpr} */
 public class LitExprConverter {
 
     private static int cnt = 0;
-    private final static BiMap<Object, Integer> objToInt = HashBiMap.create();
+    private static final BiMap<Object, Integer> objToInt = HashBiMap.create();
 
     public static int toInt(LitExpr<?> litExpr) {
         if (litExpr instanceof IntLitExpr) {
@@ -80,5 +77,4 @@ public class LitExprConverter {
         }
         throw new UnsupportedOperationException("Unsupported type");
     }
-
 }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete.checks;
 
 import hu.bme.mit.theta.llvm2xcfa.handlers.BaseInstructionHandler;
@@ -24,12 +23,17 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
 public class PointerArithmeticCheck extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "getelementptr":
             case "ptrtoint":
             case "inttoptr":
-                throw new UnsupportedOperationException("Pointer arithmetic or structs are not yet supported!");
+                throw new UnsupportedOperationException(
+                        "Pointer arithmetic or structs are not yet supported!");
             default:
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;

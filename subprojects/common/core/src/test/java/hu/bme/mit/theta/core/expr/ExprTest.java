@@ -29,5 +29,4 @@ public class ExprTest {
         Assert.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
         Assert.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
     }
-
 }

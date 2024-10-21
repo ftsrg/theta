@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.cvc4;
 
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
-
 import java.nio.file.Path;
 import java.util.EnumSet;
 

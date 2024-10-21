@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.common.table;
 
-/**
- * Interface for printing tables with cells and rows.
- */
+/** Interface for printing tables with cells and rows. */
 public interface TableWriter {
 
     default TableWriter cell(final Object obj) {

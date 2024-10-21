@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.common;
 
-import java.util.function.Function;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.function.Function;
 
 @FunctionalInterface
 public interface QuadFunction<T, U, V, W, R> {

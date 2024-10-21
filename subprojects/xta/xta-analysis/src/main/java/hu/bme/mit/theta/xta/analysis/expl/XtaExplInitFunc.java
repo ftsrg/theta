@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.xta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singleton;
+
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
-
 import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singleton;
 
 final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 
@@ -43,5 +42,4 @@ final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
         final ExplState initState = ExplState.of(system.getInitVal());
         return singleton(initState);
     }
-
 }

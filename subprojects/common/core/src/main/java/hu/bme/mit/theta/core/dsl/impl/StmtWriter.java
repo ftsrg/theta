@@ -51,7 +51,8 @@ public class StmtWriter implements StmtVisitor<Void, String> {
     }
 
     @Override
-    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> String visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
+    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> String visit(
+            MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
         return stmt.getDeref() + " := " + writeExpr(stmt.getExpr());
     }
 
@@ -83,5 +84,4 @@ public class StmtWriter implements StmtVisitor<Void, String> {
     public String visit(IfStmt stmt, Void param) {
         throw new UnsupportedOperationException();
     }
-
 }

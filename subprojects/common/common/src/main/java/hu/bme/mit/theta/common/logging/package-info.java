@@ -20,5 +20,4 @@
  * @see hu.bme.mit.theta.common.logging.ConsoleLogger
  * @see hu.bme.mit.theta.common.logging.FileLogger
  */
-
 package hu.bme.mit.theta.common.logging;

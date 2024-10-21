@@ -22,8 +22,7 @@ public final class NullLogger implements Logger {
         private static final NullLogger INSTANCE = new NullLogger();
     }
 
-    private NullLogger() {
-    }
+    private NullLogger() {}
 
     public static NullLogger getInstance() {
         return LazyHolder.INSTANCE;
@@ -33,5 +32,4 @@ public final class NullLogger implements Logger {
     public Logger write(final Level level, final String pattern, final Object... objects) {
         return this;
     }
-
 }

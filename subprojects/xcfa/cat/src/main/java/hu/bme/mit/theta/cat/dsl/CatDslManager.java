@@ -13,26 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.cat.dsl;
 
 import hu.bme.mit.theta.cat.dsl.gen.CatLexer;
 import hu.bme.mit.theta.cat.dsl.gen.CatParser;
 import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class CatDslManager {
 
     public static Collection<GraphConstraint> createMCM(final File file) throws IOException {
         final CatParser.McmContext context = setupCatAntlr(file);
-        final hu.bme.mit.theta.cat.dsl.CatVisitor visitor = new hu.bme.mit.theta.cat.dsl.CatVisitor(file);
+        final hu.bme.mit.theta.cat.dsl.CatVisitor visitor =
+                new hu.bme.mit.theta.cat.dsl.CatVisitor(file);
         context.accept(visitor);
         return visitor.getMcm();
     }
@@ -51,5 +50,4 @@ public class CatDslManager {
         inputStream.close();
         return parser.mcm();
     }
-
 }

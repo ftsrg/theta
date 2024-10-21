@@ -17,13 +17,11 @@ package hu.bme.mit.theta.core.clock.constr;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.Collection;
 
 public final class FalseConstr implements ClockConstr {
 
@@ -42,8 +40,8 @@ public final class FalseConstr implements ClockConstr {
     }
 
     @Override
-    public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-                           final P param) {
+    public <P, R> R accept(
+            final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
         return visitor.visit(this, param);
     }
 

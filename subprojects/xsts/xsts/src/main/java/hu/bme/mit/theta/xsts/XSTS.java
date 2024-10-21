@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xsts;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
@@ -22,12 +24,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
 
@@ -69,9 +68,13 @@ public final class XSTS {
         return ctrlVars;
     }
 
-    public XSTS(final Set<VarDecl<?>> ctrlVars,
-                final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
-                final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+    public XSTS(
+            final Set<VarDecl<?>> ctrlVars,
+            final NonDetStmt init,
+            final NonDetStmt tran,
+            final NonDetStmt env,
+            final Expr<BoolType> initFormula,
+            final Expr<BoolType> prop) {
         this.tran = checkNotNull(tran);
         this.init = checkNotNull(init);
         this.env = checkNotNull(env);
@@ -87,5 +90,4 @@ public final class XSTS {
         tmpVars.addAll(ExprUtils.getVars(prop));
         this.vars = Collections.unmodifiableCollection(tmpVars);
     }
-
 }

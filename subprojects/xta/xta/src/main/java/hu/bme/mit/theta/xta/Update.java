@@ -23,8 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 public abstract class Update {
 
-    private Update() {
-    }
+    private Update() {}
 
     static DataUpdate dataUpdate(final Stmt stmt) {
         return new DataUpdate(stmt);
@@ -81,7 +80,6 @@ public abstract class Update {
         public String toString() {
             return stmt.toString();
         }
-
     }
 
     public static final class ClockUpdate extends Update {
@@ -125,7 +123,5 @@ public abstract class Update {
         public String toString() {
             return clockOp.toString();
         }
-
     }
-
 }

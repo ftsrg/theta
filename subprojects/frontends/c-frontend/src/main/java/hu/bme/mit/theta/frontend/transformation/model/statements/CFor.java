@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -25,7 +24,12 @@ public class CFor extends CStatement {
     private final CStatement guard;
     private final CStatement increment;
 
-    public CFor(CStatement body, CStatement init, CStatement guard, CStatement increment, ParseContext parseContext) {
+    public CFor(
+            CStatement body,
+            CStatement init,
+            CStatement guard,
+            CStatement increment,
+            ParseContext parseContext) {
         super(parseContext);
         this.body = body;
         this.init = init;

@@ -18,22 +18,22 @@ package hu.bme.mit.theta.xta.analysis;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaSystem;
 
-public final class XtaAnalysis<S extends State, P extends Prec> implements
-        Analysis<XtaState<S>, XtaAction, P> {
+public final class XtaAnalysis<S extends State, P extends Prec>
+        implements Analysis<XtaState<S>, XtaAction, P> {
 
     private final PartialOrd<XtaState<S>> partialOrd;
     private final InitFunc<XtaState<S>, P> initFunc;
     private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
 
-    private XtaAnalysis(final XtaSystem system,
-                        final Analysis<S, ? super XtaAction, ? super P> analysis) {
+    private XtaAnalysis(
+            final XtaSystem system, final Analysis<S, ? super XtaAction, ? super P> analysis) {
         checkNotNull(system);
         checkNotNull(analysis);
         partialOrd = XtaOrd.create(analysis.getPartialOrd());
@@ -41,8 +41,8 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements
         transFunc = XtaTransFunc.create(analysis.getTransFunc());
     }
 
-    public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(final XtaSystem system,
-                                                                             final Analysis<S, ? super XtaAction, ? super P> analysis) {
+    public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(
+            final XtaSystem system, final Analysis<S, ? super XtaAction, ? super P> analysis) {
         return new XtaAnalysis<>(system, analysis);
     }
 
@@ -60,5 +60,4 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements
     public TransFunc<XtaState<S>, XtaAction, P> getTransFunc() {
         return transFunc;
     }
-
 }

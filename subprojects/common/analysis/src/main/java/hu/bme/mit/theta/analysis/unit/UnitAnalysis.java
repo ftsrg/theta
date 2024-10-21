@@ -17,16 +17,15 @@ package hu.bme.mit.theta.analysis.unit;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
 
 public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec> {
 
     private static final UnitAnalysis INSTANCE = new UnitAnalysis();
 
-    private UnitAnalysis() {
-    }
+    private UnitAnalysis() {}
 
     public static UnitAnalysis getInstance() {
         return INSTANCE;
@@ -46,5 +45,4 @@ public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec>
     public TransFunc<UnitState, Action, UnitPrec> getTransFunc() {
         return UnitTransFunc.getInstance();
     }
-
 }

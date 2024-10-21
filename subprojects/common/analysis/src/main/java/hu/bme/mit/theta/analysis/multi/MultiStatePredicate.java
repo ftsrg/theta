@@ -16,11 +16,15 @@
 package hu.bme.mit.theta.analysis.multi;
 
 import hu.bme.mit.theta.analysis.State;
-
 import java.util.function.Predicate;
 
 @SuppressWarnings("java:S119")
-public class MultiStatePredicate<LState extends State, RState extends State, DataState extends State, MState extends MultiState<LState, RState, DataState>> implements Predicate<MState> {
+public class MultiStatePredicate<
+                LState extends State,
+                RState extends State,
+                DataState extends State,
+                MState extends MultiState<LState, RState, DataState>>
+        implements Predicate<MState> {
 
     private final Predicate<? super DataState> dataStatePredicate;
 

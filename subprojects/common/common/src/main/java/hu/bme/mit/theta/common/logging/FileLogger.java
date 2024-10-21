@@ -24,8 +24,11 @@ public final class FileLogger extends BaseLogger {
     private final PrintWriter pw;
     private final boolean instantFlush;
 
-    public FileLogger(final Level minLevel, final String fileName, final boolean instantFlush,
-                      final boolean append)
+    public FileLogger(
+            final Level minLevel,
+            final String fileName,
+            final boolean instantFlush,
+            final boolean append)
             throws FileNotFoundException {
         super(minLevel);
         pw = new PrintWriter(new FileOutputStream(fileName, append));
@@ -43,5 +46,4 @@ public final class FileLogger extends BaseLogger {
             pw.flush();
         }
     }
-
 }

@@ -13,16 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.states;
+
+import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class BuiltState {
     private XCFA xcfa;

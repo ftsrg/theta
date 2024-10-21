@@ -16,5 +16,7 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
 public enum DataStrategy {
-    NONE, FWITP, BWITP
+    NONE,
+    FWITP,
+    BWITP
 }

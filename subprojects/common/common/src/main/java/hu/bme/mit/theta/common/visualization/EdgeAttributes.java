@@ -28,9 +28,13 @@ public final class EdgeAttributes {
     private final int weight;
     private final Alignment alignment;
 
-    private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle,
-                           final String font,
-                           final int weight, final Alignment alignment) {
+    private EdgeAttributes(
+            final String label,
+            final Color color,
+            final LineStyle lineStyle,
+            final String font,
+            final int weight,
+            final Alignment alignment) {
         this.label = label;
         this.color = color;
         this.lineStyle = lineStyle;

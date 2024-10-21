@@ -24,8 +24,7 @@ public final class ExplOrd implements PartialOrd<ExplState> {
         private static final ExplOrd INSTANCE = new ExplOrd();
     }
 
-    private ExplOrd() {
-    }
+    private ExplOrd() {}
 
     public static ExplOrd getInstance() {
         return LazyHolder.INSTANCE;
@@ -35,5 +34,4 @@ public final class ExplOrd implements PartialOrd<ExplState> {
     public boolean isLeq(final ExplState state1, final ExplState state2) {
         return state1.isLeq(state2);
     }
-
 }

@@ -13,19 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.expr;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.ExpressionUtils;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class IdentityTest {
@@ -35,10 +33,11 @@ public class IdentityTest {
     @Parameter(value = 1)
     public Expr<?> expr;
 
-
     @Parameters(name = "Expression {0}: {1}")
     public static Collection<Object[]> data() {
-        return ExpressionUtils.AllExpressions().entrySet().stream().map(e -> new Object[]{e.getKey(), e.getValue()}).toList();
+        return ExpressionUtils.AllExpressions().entrySet().stream()
+                .map(e -> new Object[] {e.getKey(), e.getValue()})
+                .toList();
     }
 
     @Test

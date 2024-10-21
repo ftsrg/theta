@@ -20,22 +20,26 @@ import java.util.stream.Collectors
 
 class EliminateSelfLoops : ProcedurePass {
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val selfLoops: Set<XcfaEdge> = builder.getEdges().stream()
-            .filter { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }.collect(Collectors.toSet())
-        for (selfLoop in selfLoops) {
-            builder.removeEdge(selfLoop)
-            val source = selfLoop.source
-            val target = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter())
-            builder.addLoc(target)
-            for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
-                builder.removeEdge(outgoingEdge)
-                builder.addEdge(XcfaEdge(target, outgoingEdge.target, outgoingEdge.label))
-            }
-            builder.addEdge(XcfaEdge(source, target, selfLoop.label))
-            builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel))))
-        }
-        builder.metaData["noSelfLoops"] = Unit
-        return builder
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val selfLoops: Set<XcfaEdge> =
+      builder
+        .getEdges()
+        .stream()
+        .filter { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }
+        .collect(Collectors.toSet())
+    for (selfLoop in selfLoops) {
+      builder.removeEdge(selfLoop)
+      val source = selfLoop.source
+      val target = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter())
+      builder.addLoc(target)
+      for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
+        builder.removeEdge(outgoingEdge)
+        builder.addEdge(XcfaEdge(target, outgoingEdge.target, outgoingEdge.label))
+      }
+      builder.addEdge(XcfaEdge(source, target, selfLoop.label))
+      builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel))))
     }
+    builder.metaData["noSelfLoops"] = Unit
+    return builder
+  }
 }

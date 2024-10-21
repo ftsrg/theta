@@ -25,5 +25,4 @@ public interface DynamicScope extends Scope {
     void declareAll(final Collection<? extends Symbol> symbols);
 
     Optional<? extends DynamicScope> enclosingScope();
-
 }

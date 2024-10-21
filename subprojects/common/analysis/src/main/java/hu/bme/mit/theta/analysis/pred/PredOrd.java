@@ -43,5 +43,4 @@ public final class PredOrd implements PartialOrd<PredState> {
             return solver.check().isUnsat();
         }
     }
-
 }
