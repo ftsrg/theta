@@ -17,6 +17,7 @@ package hu.bme.mit.theta.sts.analysis;
  */
 
 
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -111,10 +112,12 @@ public class BMCAbstractTest {
                 mE -> BoundedCheckerBuilderKt.buildBMC(
                         mE,
                         Z3LegacySolverFactory.getInstance().createSolver(),
-                        valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                        mE.getValToState(),
                         (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                         new ConsoleLogger(Logger.Level.INFO)
                 ),
+                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                (v1, v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                 new ConsoleLogger(Logger.Level.INFO),
                 Z3LegacySolverFactory.getInstance());
         Assert.assertEquals(isSafe, checker.check().isSafe());

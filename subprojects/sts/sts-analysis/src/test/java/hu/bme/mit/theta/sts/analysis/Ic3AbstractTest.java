@@ -19,14 +19,10 @@ package hu.bme.mit.theta.sts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -117,9 +113,11 @@ public class Ic3AbstractTest {
                         mE,
                         true,
                         Z3LegacySolverFactory.getInstance(),
-                        mE::getValToState,
+                        mE.getValToState()::invoke,
                         (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2)
                 ),
+                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                (v1, v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                 new ConsoleLogger(Logger.Level.INFO),
                 Z3LegacySolverFactory.getInstance());
         Assert.assertEquals(isSafe, checker.check().isSafe());

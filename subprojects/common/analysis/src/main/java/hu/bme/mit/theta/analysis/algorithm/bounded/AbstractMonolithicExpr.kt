@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
@@ -48,8 +49,11 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
         initOffsetIndex = VarIndexingFactory.indexing(0),
         vars = activationLiterals,
         valToState = { valuation: Valuation ->
-            PredState.of(valuation.toMap().keys.stream().map {
-                literalToPred[it]
+            PredState.of(valuation.toMap().entries.stream().map {
+                when((it.value as BoolLitExpr).value) {
+                    true -> literalToPred[it.key]
+                    false -> Not(literalToPred[it.key])
+                }
             }.toList())
         }
     )
