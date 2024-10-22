@@ -93,7 +93,7 @@ public class StsTest {
 
     @Test
     public void test() throws IOException {
-        STS sts = null;
+        final STS sts;
         if (filePath.endsWith("aag")) {
             sts = AigerToSts.createSts(AigerParser.parse(filePath));
         } else {
@@ -151,6 +151,8 @@ public class StsTest {
                         ExplState::of,
                         (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getPropExpr(), mE.getPropExpr()))
                 ),
+                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                (v1, v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                 new ConsoleLogger(Logger.Level.INFO),
                 Z3LegacySolverFactory.getInstance());
 //        final var checker = new Ic3Checker(monolithicExpr, Z3SolverFactory.getInstance());

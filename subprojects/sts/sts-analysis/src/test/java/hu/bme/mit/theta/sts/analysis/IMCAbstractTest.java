@@ -117,6 +117,8 @@ public class IMCAbstractTest {
                         (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                         new ConsoleLogger(Logger.Level.INFO)
                 ),
+                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                (v1, v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
                 new ConsoleLogger(Logger.Level.INFO),
                 Z3LegacySolverFactory.getInstance());
         Assert.assertEquals(isSafe, checker.check().isSafe());
