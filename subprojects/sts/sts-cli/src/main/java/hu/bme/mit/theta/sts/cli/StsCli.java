@@ -28,8 +28,9 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -73,6 +74,8 @@ import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
+
 /**
  * A command line interface for running a CEGAR configuration on an STS.
  */
@@ -103,6 +106,17 @@ public class StsCli {
 
 
 
+    @Parameter(names = {"--forwardStep"}, description = "Sets the forwardStep parameter")
+    int forwardStep = 1;
+
+    @Parameter(names = {"--reverseStep"}, description = "Sets the reverseStep parameter")
+    int reverseStep = 1;
+
+    @Parameter(names = {"--forwardFrameOffset"}, description = "Sets the forwardFrameOffset parameter")
+    int forwardFrameOffset = 1;
+
+    @Parameter(names = {"--reverseFrameOffset"}, description = "Sets the reverseFrameOffset parameter")
+    int reverseFrameOffset = 1;
 
     @Parameter(names = {"--notB"}, description = "Enables the not B optimalization")
     Flag notB = Flag.Enabled;
@@ -118,6 +132,12 @@ public class StsCli {
 
     @Parameter(names = {"--filter"}, description = "Enables the filter optimalization")
     Flag filter = Flag.Enabled;
+
+    @Parameter(names = {"--propertyOpt"}, description = "Enables the property optimalization")
+    Flag property = Flag.Enabled;
+
+    @Parameter(names = {"--blockOpt"}, description = "Enables the blocking optimalization")
+    Flag block = Flag.Enabled;
 
     @Parameter(names = {"--direction"}, description = "IC3 Direction")
     Direction direction = Direction.Forward;
@@ -217,6 +237,8 @@ public class StsCli {
                 final boolean propagateOpt;
                 final boolean filterOpt;
                 final boolean formerFramesOpt;
+                final boolean propertyOpt;
+                final boolean blockOpt;
                 if(former.equals(Flag.Enabled)){
                     formerFramesOpt = true;
                 }else{
@@ -242,13 +264,23 @@ public class StsCli {
                 }else{
                     filterOpt = false;
                 }
+                if(property.equals(Flag.Enabled)){
+                    propertyOpt = true;
+                }else{
+                    propertyOpt = false;
+                }
+                if(block.equals(Flag.Enabled)){
+                    blockOpt = true;
+                }else{
+                    blockOpt = false;
+                }
                 if(direction.equals(Direction.Connected)){
                     checker = new ConnectedIc3Checker<>(
                             monolithicExpr,
                             Z3LegacySolverFactory.getInstance(),
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
-                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
+                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt, propertyOpt, blockOpt,forwardStep,reverseStep,forwardFrameOffset,reverseFrameOffset);
                 }else if(direction.equals(Direction.Reverse)){
                     checker = new Ic3Checker<>(
                             ReversedMonolithicExprKt.createReversed(monolithicExpr),
@@ -256,7 +288,7 @@ public class StsCli {
                             Z3LegacySolverFactory.getInstance(),
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
-                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
+                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt,propertyOpt, blockOpt);
                 }else{
                     checker = new Ic3Checker<>(
                             monolithicExpr,
@@ -264,9 +296,14 @@ public class StsCli {
                             Z3LegacySolverFactory.getInstance(),
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
-                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
+                            formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt,propertyOpt, blockOpt);
                 }
                 status = checker.check();
+//                var solverFactory = Z3LegacySolverFactory.getInstance();
+//                final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker = ExprTraceFwBinItpChecker.create(sts.getInit(), Not(sts.getProp()), solverFactory.createItpSolver());
+//                final ExprTraceStatus<ItpRefutation> concretizationResult = exprTraceFwBinItpChecker.check((Trace<? extends ExprState, ? extends ExprAction>) status.asUnsafe().getCex());
+//                var a =concretizationResult.isFeasible();
+//                System.out.println(a);
 
             } else {
                 throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");

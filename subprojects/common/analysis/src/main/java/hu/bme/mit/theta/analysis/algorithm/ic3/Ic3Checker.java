@@ -24,9 +24,10 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
+import static hu.bme.mit.theta.core.utils.ExprUtils.transformEquiSatCnf;
 
 public class Ic3Checker<S extends ExprState, A extends ExprAction> implements SafetyChecker<EmptyWitness, Trace<S, A>, UnitPrec> {
     private final MonolithicExpr monolithicExpr;
@@ -46,23 +47,29 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     private int currentFrameNumber;
 
     private final boolean forwardTrace;
+    private final boolean propertyOpt;
 
-    public Set<Expr<BoolType>> getcurrentFrame() {
-        if(currentFrameNumber == 0){
-            return frames.get(currentFrameNumber).getExprs();
+    private final boolean blockOpt;
+
+    public Set<Expr<BoolType>> getcurrentFrame(int offset) {
+        if(currentFrameNumber - offset < 0){
+            return frames.get(0).getExprs();
         }
-        return frames.get(currentFrameNumber-1).getExprs();
+        return frames.get(currentFrameNumber-offset).getExprs();
     }
 
-    public int getCurrentFrameNumber() {
-        return currentFrameNumber;
+    public int getCurrentFrameNumber(int offset) {
+        if(currentFrameNumber- offset < 0){
+            return 0;
+        }
+        return currentFrameNumber-offset;
     }
 
-    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction) {
-        this(monolithicExpr, forwardTrace,solverFactory, valToState, biValToAction, true, true, true, true, true);
+    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean blockOpt) {
+        this(monolithicExpr, forwardTrace,solverFactory, valToState, biValToAction, true, true, true, true, true, true, true);
     }
 
-    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt) {
+    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean propertyOpt, boolean blockOpt) {
         this.monolithicExpr = monolithicExpr;
         this.valToState = valToState;
         this.biValToAction = biValToAction;
@@ -72,6 +79,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
         this.propagateOpt = propagateOpt;
         this.filterOpt = filterOpt;
         this.forwardTrace = forwardTrace;
+        this.propertyOpt = propertyOpt;
+        this.blockOpt = blockOpt;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();
         frames.add(new Frame(null, solver, monolithicExpr));
@@ -102,26 +111,43 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
 
             if (counterExample != null) {
                 //Trace<S, A> trace = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
-                var proofObligationLinkedList = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
-                if (proofObligationLinkedList != null) {
-                    var trace = traceMaker(new LinkedList<ProofObligation>(),proofObligationLinkedList);
-                    return SafetyResult.unsafe(trace, EmptyWitness.getInstance());
+                //var proofObligationLinkedList = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
+
+
+                if(blockOpt){
+                    var proofList = new ArrayList<Set<Expr<BoolType>>>();
+                    proofList.add(new HashSet<>(counterExample));
+
+                    var proofObligationLinkedList = tryBlockMultiple(new MultipleProofObligation(proofList, currentFrameNumber));
+                    if (proofObligationLinkedList != null) {
+                        var trace = traceMakerMultiple(proofObligationLinkedList);
+                        //var trace = traceMaker(new LinkedList<ProofObligation>(),proofObligationLinkedList);
+                        return SafetyResult.unsafe(trace, EmptyWitness.getInstance());
+                    }
+                }else{
+                    var proofObligationsList = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
+                    if (proofObligationsList != null) {
+                        var trace = traceMaker(new LinkedList<ProofObligation>(),proofObligationsList);
+                        return SafetyResult.unsafe(trace, EmptyWitness.getInstance());
+                    }
+
                 }
+
             } else {
-                if(propagate()){
+                if(propagate(null)){
                     return SafetyResult.safe(EmptyWitness.getInstance());
                 }
             }
         }
     }
 
-    LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
-        final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
+    LinkedList<MultipleProofObligation> tryBlockMultiple(MultipleProofObligation mainProofObligation) {
+        final LinkedList<MultipleProofObligation> proofObligationsQueue = new LinkedList<MultipleProofObligation>();
         proofObligationsQueue.add(mainProofObligation);
         while (!proofObligationsQueue.isEmpty()) {
-            final ProofObligation proofObligation = proofObligationsQueue.getLast();
+            final MultipleProofObligation proofObligationsList = proofObligationsQueue.getLast();
 
-            if (proofObligation.getTime() == 0) {
+            if (proofObligationsList.getTime() == 0) {
                 return proofObligationsQueue;
 //                var stateList= new ArrayList<S>();
 //                var actionList = new ArrayList<A>();
@@ -149,9 +175,87 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
 //                return Trace.of(stateList,actionList);
             }
 
+            final ArrayList<Set<Expr<BoolType>>> b;
+
+            final Collection<Expr<BoolType>> unSatCore;
+            Expr currentExpression = null;
+            for(var bi : proofObligationsList.getExpressionsList()){
+                if(currentExpression == null){
+                    currentExpression = And(bi);
+                }
+                currentExpression = Or(currentExpression,And(bi));
+            }
+            //currentExpression=transformEquiSatCnf(currentExpression);
+            Collection<Expr<BoolType>> currentExpressionList = getConjuncts(currentExpression);
+            try (var wpp = new WithPushPop(solver)) {
+                frames.get(proofObligationsList.getTime() - 1).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                if(notBOpt){
+                    solver.track(PathUtils.unfold(Not(currentExpression),0)); //?? ez jó?
+                }
+                if (proofObligationsList.getTime() > 2 && formerFramesOpt){ //lehet, hogy 1, vagy 2??
+                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligationsList.getTime() - 2).getExprs())),monolithicExpr.getTransOffsetIndex())); //2 vel korábbi frame-ban levő dolgok
+                }
+
+                getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+
+                //currentExpressionList.forEach(ex -> solver.track(PathUtils.unfold(ex, monolithicExpr.getTransOffsetIndex())));
+                solver.track(PathUtils.unfold(currentExpression, monolithicExpr.getTransOffsetIndex()));
+
+                if (solver.check().isSat()) {
+                    b = new ArrayList<>();
+                    int i = 0;
+                    do {
+                        final Valuation model = solver.getModel();
+                        final Collection<Expr<BoolType>> current;
+                        if(filterOpt){
+
+                            final MutableValuation filteredModel = new MutableValuation();
+                            monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                            monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                            current = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
+                        }else{
+                            current = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(model, 0).toExpr(), 0));
+                        }
+                        int finalI = i;
+                        b.add(new HashSet<>());
+                        current.forEach(ex -> b.get(finalI).add(ex));
+                        solver.track(PathUtils.unfold(Not(And(current)),0));
+                        i++;
+                    }while(blockOpt && solver.check().isSat());
+
+                    unSatCore = null;
+                } else {
+                    b = null;
+                    unSatCore = solver.getUnsatCore();
+                }
+            }
+            if (b == null) {
+                for(int i = 1; i<=proofObligationsList.getTime(); ++i){
+                    for(var bi : proofObligationsList.getExpressionsList()){
+                        frames.get(i).refine(SmartBoolExprs.Not(currentExpression));
+                    }
+                    //mindegyik framehez hozzáadjuk a formulát
+                }
+                proofObligationsQueue.removeLast();
+            } else {
+                proofObligationsQueue.add(new MultipleProofObligation(b, proofObligationsList.getTime() - 1));
+            }
+        }
+        return null;
+
+    }
+    LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
+        final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
+        proofObligationsQueue.add(mainProofObligation);
+        while (!proofObligationsQueue.isEmpty()) {
+            final ProofObligation proofObligation = proofObligationsQueue.getLast();
+
+            if (proofObligation.getTime() == 0) {
+                return proofObligationsQueue;
+            }
+
             final Collection<Expr<BoolType>> b;
             final Collection<Expr<BoolType>> unSatCore;
-
             try (var wpp = new WithPushPop(solver)) {
 
                 frames.get(proofObligation.getTime() - 1).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -159,7 +263,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                     solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())),0));
                 }
                 if (proofObligation.getTime() > 2 && formerFramesOpt){ //lehet, hogy 1, vagy 2??
-                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),0)); //2 vel korábbi frame-ban levő dolgok
+                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),monolithicExpr.getTransOffsetIndex())); //2 vel korábbi frame-ban levő dolgok
                 }
 
                 getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -205,7 +309,6 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                         }
                     }
                 }
-
                 for(int i = 1; i<=proofObligation.getTime(); ++i){
                     frames.get(i).refine(SmartBoolExprs.Not(And(newCore))); //mindegyik framehez hozzáadjuk a formulát
                 }
@@ -224,20 +327,56 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
             solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
             if (solver.check().isSat()) {
                 return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
-            }else{
-                return null;
             }
         }
+        if(propertyOpt){
+            try (var wpp = new WithPushPop(solver)) {
+                solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
+                solver.track(PathUtils.unfold(monolithicExpr.getTransExpr(), 0));
+                solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), monolithicExpr.getTransOffsetIndex()));
+                if (solver.check().isSat()) {
+                    return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
+                }else {
+                    return null;
+                }
+            }
+        } else {
+            return null;
+        }
+
     }
 
     public Collection<Expr<BoolType>> checkCurrentFrame(Expr<BoolType> target){
-        return frames.get(currentFrameNumber).check(target);
+        if (propertyOpt) {
+            try (var wpp = new WithPushPop(solver)) {
+                frames.get(currentFrameNumber).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
+                if (solver.check().isSat()) {
+                    final Valuation model = solver.getModel();
+                    final MutableValuation filteredModel = new MutableValuation();
+                    monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
+                }else {
+                    return null;
+                }
+            }
+        } else {
+            return frames.get(currentFrameNumber).check(target);
+        }
+
     }
 
-    public boolean propagate(){
+    public boolean propagate(Expr<BoolType> prop){
         frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
         currentFrameNumber++;
-        //frames.get(currentFrameNumber).refine(prop); //todo korábbiakhot hozzáadni esetleg?
+        if(propertyOpt){
+            for(int j=1; j<=currentFrameNumber;j++){
+                frames.get(j).refine(monolithicExpr.getPropExpr());
+            }
+        }
+
         if(propagateOpt){
             for(int j=1;j<currentFrameNumber;j++){
                 for(var c : frames.get(j).getExprs()){
@@ -254,7 +393,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                     return true;
                 }
             }
-        } else if(frames.get(currentFrameNumber-1).equalsParent()){
+        } else if(currentFrameNumber>1 && frames.get(currentFrameNumber-1).equalsParent()){
             return true;
         }
         return false;
@@ -264,6 +403,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
         var stateList= new ArrayList<S>();
         var actionList = new ArrayList<A>();
         Valuation lastValuation = null;
+
         while(!forwardProofObligations.isEmpty()) {
             final ProofObligation currentProofObligation;
             if(forwardTrace){
@@ -290,6 +430,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
             lastValuation=mutableValuation;
 
         }
+
 //        backwardProofObligations.removeFirst();
 //        while(!backwardProofObligations.isEmpty()) {
 //            ProofObligation currentProofObligation = backwardProofObligations.getFirst();
@@ -311,4 +452,16 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
 //        }
         return Trace.of(stateList,actionList);
     }
+
+
+    public Trace<S, A> traceMakerMultiple(LinkedList<MultipleProofObligation> forwardProofObligations){
+        try (var wpp = new WithPushPop(solver)) {
+            if (solver.check().isSat()) {
+                return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
+            }else {
+                return null;
+            }
+        }
+    }
+
 }
