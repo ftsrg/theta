@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Floats, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-19 13:38:05 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1148-398
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2959.577 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Floats
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                          status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------
+float-benchs/float_double.yml                      ERROR (portfolio error)          6.66        4.17        None
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml    ERROR (portfolio error)          7.30        4.35        None
+float-benchs/float_int_inv_square.yml              ERROR (portfolio error)          7.46        4.32        None
+floats-cdfpl/square_3.yml                          ERROR (portfolio error)          7.04        4.27        None
+floats-cbmc-regression/float11.yml                 ERROR (portfolio error)          6.88        4.34        None
+float-benchs/nan_double.yml                        ERROR (portfolio error)          6.65        4.19        None
+float-benchs/Rump_double.yml                       ERROR (portfolio error)          6.91        4.21        None
+floats-cdfpl/newton_2_2.yml                        ERROR (portfolio error)          7.90        4.45        None
+floats-cdfpl/sine_3.yml                            ERROR (portfolio error)          7.32        4.30        None
+float-benchs/zonotope_3.c.v+lhb-reducer.yml        ERROR (portfolio error)         12.07        5.51        None
+----------------------------------------------------------------------------------------------------------------
+Run set 1                                          done                            76.19       45.15           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              10
+  Score:                 0 (max: 16)

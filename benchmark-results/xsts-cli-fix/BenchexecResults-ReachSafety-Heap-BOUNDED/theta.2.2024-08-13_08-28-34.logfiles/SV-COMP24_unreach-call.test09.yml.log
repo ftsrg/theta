@@ -1,0 +1,422 @@
+Theta/theta-start.sh sv-benchmarks/c/ldv-regression/test09.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio BOUNDED --input sv-benchmarks/c/ldv-regression/test09.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/ldv-regression/test09.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: []
+Frontend finished:   (in 311 ms)
+ParsingResult Success
+Alias graph size: 2 -> [3, 2]
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using bounded portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=30000, inProcess=true, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+server: line 1:9 no viable alternative at input '*'
+server: Could not parse (assign a* 2)
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@5471388b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@66ea1466, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@7c36db44, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@65c33b92, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@7903d448, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff1bc099f38@4e08acf9) }
+server: env: Env( (Frame a <- (var a Int) b <- (var b Int) p1 <- (var p1 Int) p2 <- (var p2 Int) a* <- (var a* Int) b* <- (var b* Int) reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) f_ret <- (var f_ret Int) f::v <- (var f::v Int) main_ret <- (var main_ret Int) call_f_ret1 <- (var call_f_ret1 Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) call_abort_ret3 <- (var call_abort_ret3 Int)) )
+server: type: StmtLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:764)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.expr(StmtParser.java:608)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.assignStmt(StmtParser.java:397)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.stmt(StmtParser.java:210)
+server: 	at hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper.<init>(StmtParser.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.model.StmtLabel$Companion.fromString(XcfaLabel.kt:153)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:736)
+server: 	... 33 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=true, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+server: line 1:9 no viable alternative at input '*'
+server: Could not parse (assign a* 2)
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@5471388b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@66ea1466, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@7c36db44, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@65c33b92, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@7903d448, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007feb78099f38@4e08acf9) }
+server: env: Env( (Frame a <- (var a Int) b <- (var b Int) p1 <- (var p1 Int) p2 <- (var p2 Int) a* <- (var a* Int) b* <- (var b* Int) reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) f_ret <- (var f_ret Int) f::v <- (var f::v Int) main_ret <- (var main_ret Int) call_f_ret1 <- (var call_f_ret1 Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) call_abort_ret3 <- (var call_abort_ret3 Int)) )
+server: type: StmtLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:764)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.expr(StmtParser.java:608)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.assignStmt(StmtParser.java:397)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.stmt(StmtParser.java:210)
+server: 	at hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper.<init>(StmtParser.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.model.StmtLabel$Companion.fromString(XcfaLabel.kt:153)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:736)
+server: 	... 33 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=true, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=false, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+server: line 1:9 no viable alternative at input '*'
+server: Could not parse (assign a* 2)
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@5471388b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@66ea1466, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@7c36db44, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@65c33b92, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@7903d448, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007fa6f8099f38@4e08acf9) }
+server: env: Env( (Frame a <- (var a Int) b <- (var b Int) p1 <- (var p1 Int) p2 <- (var p2 Int) a* <- (var a* Int) b* <- (var b* Int) reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) f_ret <- (var f_ret Int) f::v <- (var f::v Int) main_ret <- (var main_ret Int) call_f_ret1 <- (var call_f_ret1 Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) call_abort_ret3 <- (var call_abort_ret3 Int)) )
+server: type: StmtLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:764)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.expr(StmtParser.java:608)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.assignStmt(StmtParser.java:397)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.stmt(StmtParser.java:210)
+server: 	at hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper.<init>(StmtParser.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.model.StmtLabel$Companion.fromString(XcfaLabel.kt:153)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:736)
+server: 	... 33 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=true, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=false, itpSolver=mathsat:5.6.10, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+server: line 1:9 no viable alternative at input '*'
+server: Could not parse (assign a* 2)
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@5471388b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@66ea1466, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@7c36db44, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@65c33b92, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@7903d448, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f0d90099f38@4e08acf9) }
+server: env: Env( (Frame a <- (var a Int) b <- (var b Int) p1 <- (var p1 Int) p2 <- (var p2 Int) a* <- (var a* Int) b* <- (var b* Int) reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) f_ret <- (var f_ret Int) f::v <- (var f::v Int) main_ret <- (var main_ret Int) call_f_ret1 <- (var call_f_ret1 Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) call_abort_ret3 <- (var call_abort_ret3 Int)) )
+server: type: StmtLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:764)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.expr(StmtParser.java:608)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.assignStmt(StmtParser.java:397)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.stmt(StmtParser.java:210)
+server: 	at hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper.<init>(StmtParser.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.model.StmtLabel$Companion.fromString(XcfaLabel.kt:153)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:736)
+server: 	... 33 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=30000, inProcess=false, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+Starting iteration 1
+	Starting BMC
+Process failed! (hu.bme.mit.theta.solver.z3legacy.Z3ExprTransformer.toTerm(Z3ExprTransformer.java:333), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=false, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=false, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+Starting iteration 1
+	Starting BMC
+Process failed! (hu.bme.mit.theta.solver.z3legacy.Z3ExprTransformer.toTerm(Z3ExprTransformer.java:333), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=false, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=true, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=false, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+Starting iteration 1
+	Starting IMC
+Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:436), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=false, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=true, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=false, itpSolver=mathsat:5.6.10, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+Starting iteration 1
+	Starting IMC
+Process failed! (hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer.toTerm(GenericSmtLibExprTransformer.java:436), com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: com.google.common.util.concurrent.UncheckedExecutionException: java.lang.IllegalStateException: Incomplete dereferences (missing uniquenessIdx) are not handled properly.)
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [])
+Caught exception: ErrorCodeException(code=202)
+Could not handle trigger ErrorCodeException(code=202) (Available triggers: [])
+ErrorCodeException(code=202)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitProcess(ExitCodes.kt:46)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:94)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.BoundedKt$boundedPortfolio$checker$1.invoke(bounded.kt:43)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)

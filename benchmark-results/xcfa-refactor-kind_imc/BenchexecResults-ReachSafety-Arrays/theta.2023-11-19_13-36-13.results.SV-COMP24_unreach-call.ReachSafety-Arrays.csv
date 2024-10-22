@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	ERROR (portfolio error)	2.15504	0.897577316999957	177.831936
+array-crafted/mapavg4.yml	ERROR (portfolio error)	2.158073	0.9070127919999891	180.948992
+array-programs/copysome2-1.yml	ERROR (portfolio error)	2.173457	0.9057906780000167	179.826688
+array-examples/sanfoundry_24-1.yml	ERROR (portfolio error)	2.096383	0.9025034210000058	183.570432
+array-multidimensional/max-2-u.yml	ERROR (portfolio error)	2.086866	0.8707920859999945	175.783936
+array-examples/sorting_bubblesort_ground-1.yml	ERROR (portfolio error)	2.153106	0.8957568310000283	181.661696
+array-crafted/bAnd2.yml	ERROR (portfolio error)	2.183736	0.9040169059999812	177.803264
+array-multidimensional/rev-2-n-u.yml	ERROR (portfolio error)	2.094455	0.884614197000019	183.189504
+array-examples/data_structures_set_multi_proc_trivial_ground.yml	ERROR (portfolio error)	2.264016	0.9351925629999869	177.008640
+array-patterns/array21_pattern.yml	ERROR (portfolio error)	2.167982	0.9028571260000149	177.852416

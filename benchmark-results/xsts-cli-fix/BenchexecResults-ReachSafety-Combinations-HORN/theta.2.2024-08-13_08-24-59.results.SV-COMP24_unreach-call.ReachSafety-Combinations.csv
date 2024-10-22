@@ -1,0 +1,53 @@
+tool		Theta 6.5.1	Theta 6.5.1	Theta 6.5.1	Theta 6.5.1
+run set		SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations
+../sv-benchmarks/c/combinations/		status	cputime (s)	walltime (s)	memory (MB)
+pc_sfifo_3.cil+token_ring.02.cil-2.yml	false	TIMEOUT	21.076141	10.634855102000017	2244.218880
+Problem05_label47+token_ring.02.cil-1.yml	false	TIMEOUT	22.267365	7.304552644000012	1469.370368
+pc_sfifo_3.cil+token_ring.11.cil-1.yml	false	TIMEOUT	20.447181	14.17755902600004	555.790336
+Problem05_label45+token_ring.01.cil-2.yml	false	TIMEOUT	22.98053	7.196231618000013	1498.931200
+pals_lcr.3.1.ufo.UNBOUNDED.pals+Problem12_label04.yml	false	TIMEOUT	20.347752	9.18480534500003	1897.463808
+pals_lcr.6_overflow.ufo.UNBOUNDED.pals+Problem12_label04.yml	false	TIMEOUT	20.065877	7.595651020999981	1850.843136
+gcd_3+newton_3_8.yml	false	TIMEOUT	20.935026	10.184577441999977	618.270720
+pals_lcr.4_overflow.ufo.UNBOUNDED.pals+Problem12_label09.yml	false	TIMEOUT	21.025276	8.768945079000048	1724.387328
+gcd_2+newton_3_3.yml	true	TIMEOUT	21.224696	9.83877516399997	614.649856
+pals_lcr.7.ufo.BOUNDED-14.pals+Problem12_label09.yml	true	TIMEOUT	20.753357	8.941092301999959	1692.307456
+Problem05_label42+token_ring.05.cil-1.yml	true	TIMEOUT	22.322094	7.314450778000037	1373.917184
+Problem05_label42+token_ring.07.cil-1.yml	true	TIMEOUT	23.314747	7.17255830299996	1523.236864
+pals_lcr.7.ufo.UNBOUNDED.pals+Problem12_label00.yml	false	TIMEOUT	20.757892	9.060274295	1864.466432
+pals_lcr.5.ufo.UNBOUNDED.pals+Problem12_label02.yml	true	TIMEOUT	20.956165	8.823815889999992	1909.448704
+Problem05_label46+token_ring.09.cil-2.yml	false	TIMEOUT	23.395766	7.281235043000038	1331.208192
+gcd_1+newton_3_6.yml	false	TIMEOUT	21.633477	9.746781885000019	619.302912
+pc_sfifo_1.cil-2+token_ring.06.cil-1.yml	false	TIMEOUT	20.706906	13.825620453000056	1696.014336
+pals_lcr.3_overflow.ufo.UNBOUNDED.pals+Problem12_label09.yml	false	TIMEOUT	20.676492	8.976125159000048	2104.705024
+Problem05_label46+token_ring.11.cil-1.yml	false	TIMEOUT	23.210458	7.220229411999981	1545.584640
+gcd_2+newton_2_8.yml	false	TIMEOUT	21.397553	9.777088788000015	620.478464
+Problem05_label46+token_ring.01.cil-2.yml	false	TIMEOUT	23.010111	7.088450941000019	1209.184256
+Problem05_label49+token_ring.11.cil-2.yml	true	TIMEOUT	22.130872	7.296075396999981	1550.856192
+pals_lcr.4.ufo.BOUNDED-8.pals+Problem12_label05.yml	true	TIMEOUT	21.136854	8.637639700000022	1590.669312
+Problem05_label45+token_ring.09.cil-1.yml	true	TIMEOUT	22.629021	7.263277916999982	1517.838336
+pals_lcr.4.1.ufo.BOUNDED-8.pals+Problem12_label05.yml	false	TIMEOUT	20.940759	8.816524784999956	1964.769280
+Problem05_label45+token_ring.11.cil-1.yml	false	TIMEOUT	22.306977	7.289398116999905	1656.422400
+gcd_1+newton_3_8.yml	false	TIMEOUT	21.631148	9.777261414000009	633.868288
+Problem05_label46+token_ring.03.cil-2.yml	true	TIMEOUT	22.901014	7.328853111999933	1566.142464
+Problem05_label42+token_ring.11.cil-1.yml	false	TIMEOUT	22.474246	7.223170264000032	1409.085440
+pals_lcr.5.ufo.BOUNDED-10.pals+Problem12_label05.yml	true	TIMEOUT	21.227682	8.742431191000037	1716.490240
+Problem05_label49+token_ring.06.cil-1.yml	false	TIMEOUT	23.105261	7.333960327999989	1645.133824
+pc_sfifo_1.cil-2+token_ring.03.cil-2.yml	true	TIMEOUT	22.667414	10.090039845999968	1734.602752
+Problem05_label46+token_ring.11.cil-2.yml	true	TIMEOUT	22.502011	7.224921484999982	1641.766912
+pals_lcr.4.ufo.BOUNDED-8.pals+Problem12_label09.yml	true	TIMEOUT	20.123339	7.550231405999966	1924.644864
+gcd_1+newton_3_7.yml	false	TIMEOUT	22.721526	9.854405947000032	623.878144
+pals_lcr.4.1.ufo.BOUNDED-8.pals+Problem12_label01.yml	false	TIMEOUT	20.711891	9.059279731999936	1896.570880
+pc_sfifo_1.cil-2+token_ring.08.cil-2.yml	false	TIMEOUT	20.767695	13.530258666999998	1411.534848
+gcd_1+newton_2_5.yml	true	TIMEOUT	21.010665	9.937260637000009	619.368448
+pc_sfifo_1.cil-2+token_ring.09.cil-1.yml	true	TIMEOUT	20.749364	13.725674000000026	1496.911872
+Problem05_label46+token_ring.09.cil-1.yml	true	TIMEOUT	23.216598	7.283556913999973	1371.324416
+pc_sfifo_1.cil-2+token_ring.10.cil-2.yml	true	TIMEOUT	20.797444	13.866697397000053	1099.657216
+pc_sfifo_1.cil-2+token_ring.02.cil-2.yml	false	TIMEOUT	21.50573	8.404506371000025	1595.985920
+pals_lcr.6.ufo.UNBOUNDED.pals+Problem12_label00.yml	false	TIMEOUT	20.866741	8.639778471	1140.789248
+gcd_3+newton_1_8.yml	false	TIMEOUT (Parsing OK)	20.378679	9.850181197999973	589.541376
+pals_lcr.7.ufo.UNBOUNDED.pals+Problem12_label05.yml	true	TIMEOUT	21.015164	8.85121145200003	1919.234048
+Problem05_label44+token_ring.12.cil-2.yml	false	TIMEOUT	22.586374	7.313388626000005	1450.160128
+pals_lcr.3.ufo.BOUNDED-6.pals+Problem12_label03.yml	false	TIMEOUT	20.118107	7.525593082	1196.584960
+Problem05_label43+token_ring.06.cil-2.yml	true	TIMEOUT	22.512619	7.25387506900006	1537.683456
+gcd_1+newton_1_4.yml	false	TIMEOUT (Parsing OK)	20.504963	9.621769243999893	624.332800
+Problem05_label48+token_ring.13.cil-2.yml	false	TIMEOUT	22.344929	7.337807567000027	1558.634496

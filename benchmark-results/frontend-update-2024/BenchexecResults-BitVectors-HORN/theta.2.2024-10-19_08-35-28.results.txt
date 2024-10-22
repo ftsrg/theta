@@ -1,0 +1,90 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.BitVectors, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-10-19 08:35:28 UTC
+tool:                    Theta 6.6.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1152-915
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3173.689 MHz
+ram:                     16757.338112 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.BitVectors
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                   status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------
+bitvector/byte_add-1.yml                                    TIMEOUT                         20.41        8.50        None
+bitvector/byte_add_1-1.yml                                  TIMEOUT                         20.86        8.20        None
+bitvector/byte_add_2-2.yml                                  TIMEOUT                         23.13        8.08        None
+bitvector/gcd_1.yml                                         TIMEOUT                         22.55        8.32        None
+bitvector/gcd_2.yml                                         TIMEOUT                         22.41        8.14        None
+bitvector/gcd_3.yml                                         TIMEOUT                         22.60        8.17        None
+bitvector/gcd_4.yml                                         TIMEOUT                         22.67        8.14        None
+bitvector/interleave_bits.yml                               TIMEOUT                         22.27        8.32        None
+bitvector/jain_1-1.yml                                      true                             6.11        3.04        None
+bitvector/jain_2-1.yml                                      TIMEOUT                         20.75       16.60        None
+bitvector/jain_4-2.yml                                      TIMEOUT                         20.74       16.63        None
+bitvector/jain_5-2.yml                                      TIMEOUT                         20.67       16.83        None
+bitvector/jain_6-1.yml                                      TIMEOUT                         20.75       16.58        None
+bitvector/jain_7-2.yml                                      TIMEOUT                         20.82       16.35        None
+bitvector/modulus-2.yml                                     TIMEOUT                         22.47        8.31        None
+bitvector/num_conversion_1.yml                              true                             5.92        2.75        None
+bitvector/num_conversion_2.yml                              TIMEOUT                         22.84        8.31        None
+bitvector/parity.yml                                        TIMEOUT                         21.99        8.35        None
+bitvector/s3_clnt_2.BV.c.cil-1a.yml                         TIMEOUT                         21.28        8.32        None
+bitvector/s3_clnt_2.BV.c.cil-2a.yml                         TIMEOUT                         21.63        8.17        None
+bitvector/s3_clnt_3.BV.c.cil-1a.yml                         TIMEOUT                         21.66        8.18        None
+bitvector/s3_clnt_3.BV.c.cil-2a.yml                         TIMEOUT                         21.83        8.27        None
+bitvector/s3_srvr_1a.BV.c.cil.yml                           TIMEOUT                         21.55        8.26        None
+bitvector/s3_srvr_2a.BV.c.cil.yml                           TIMEOUT                         22.10        8.18        None
+bitvector/s3_srvr_2a_alt.BV.c.cil.yml                       TIMEOUT                         21.86        8.29        None
+bitvector/s3_srvr_3a.BV.c.cil.yml                           TIMEOUT                         21.41        8.28        None
+bitvector/s3_srvr_3a_alt.BV.c.cil.yml                       TIMEOUT                         21.23        8.23        None
+bitvector/soft_float_1-2a.c.cil.yml                         TIMEOUT                         21.18        7.89        None
+bitvector/soft_float_1-3a.c.cil.yml                         TIMEOUT                         21.76        7.76        None
+bitvector/soft_float_2a.c.cil.yml                           TIMEOUT                         20.31       14.14        None
+bitvector/soft_float_3a.c.cil.yml                           
+bitvector/soft_float_4-2a.c.cil.yml                         
+bitvector/soft_float_4-3a.c.cil.yml                         
+bitvector/soft_float_5a.c.cil.yml                           
+bitvector/sum02-1.yml                                       
+bitvector/sum02-2.yml                                       
+bitvector-regression/implicitfloatconversion.yml            
+bitvector-regression/implicitunsignedconversion-1.yml       
+bitvector-regression/implicitunsignedconversion-2.yml       
+bitvector-regression/integerpromotion-2.yml                 
+bitvector-regression/integerpromotion-3.yml                 
+bitvector-regression/recHanoi03-1.yml                       
+bitvector-regression/signextension-1.yml                    
+bitvector-regression/signextension-2.yml                    
+bitvector-regression/signextension2-1.yml                   
+bitvector-regression/signextension2-2.yml                   
+bitvector-loops/diamond_2-1.yml                             
+bitvector-loops/overflow_1-2.yml                            
+bitvector-loops/verisec_sendmail_tTflag_arr_one_loop.yml    
+-------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                   done                            15.40      298.75           -
+
+Statistics:             30 Files
+  correct:               2
+    correct true:        2
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              28
+  Score:                 4 (max: 56)

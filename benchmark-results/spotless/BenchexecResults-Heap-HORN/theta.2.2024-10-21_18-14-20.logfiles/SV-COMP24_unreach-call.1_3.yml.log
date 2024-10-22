@@ -1,0 +1,16 @@
+Theta/theta-start.sh sv-benchmarks/c/ldv-regression/1_3.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio HORN --input sv-benchmarks/c/ldv-regression/1_3.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/ldv-regression/1_3.i as C
+line 32:30 no viable alternative at input 'sizeof*'
+Retrying parsing with bitvector arithmetic...
+line 32:30 no viable alternative at input 'sizeof*'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.assignmentExpression(CParser.java:2394), org.antlr.v4.runtime.misc.ParseCancellationException)

@@ -1,0 +1,99 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-BitVectors, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-08-05 08:57:00 UTC
+tool:                    Theta 6.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az530-335
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.656 MHz
+ram:                     16757.338112 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-BitVectors
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------
+bitvector/gcd_4.yml                                      true                            17.98        8.55        None
+bitvector/soft_float_1-3a.c.cil.yml                      TIMEOUT                         20.90        7.88        None
+bitvector-regression/integerpromotion-3.yml              false(unreach-call)              4.82        3.08        None
+bitvector/sum02-1.yml                                    TIMEOUT                         20.68       16.80        None
+bitvector-loops/diamond_2-1.yml                          TIMEOUT                         20.37       14.89        None
+bitvector/gcd_1.yml                                      TIMEOUT                         22.51        8.21        None
+bitvector-regression/signextension-1.yml                 false(unreach-call)              5.59        2.90        None
+bitvector/s3_srvr_3a.BV.c.cil.yml                        TIMEOUT                         21.66        8.23        None
+bitvector-regression/signextension2-2.yml                false(unreach-call)              5.72        2.91        None
+bitvector/interleave_bits.yml                            TIMEOUT                         22.22        8.29        None
+bitvector/s3_clnt_2.BV.c.cil-1a.yml                      TIMEOUT                         20.87        8.33        None
+bitvector/s3_srvr_2a.BV.c.cil.yml                        TIMEOUT                         21.74        8.25        None
+bitvector/s3_clnt_2.BV.c.cil-2a.yml                      TIMEOUT                         20.98        8.24        None
+bitvector/num_conversion_2.yml                           TIMEOUT                         22.76        8.35        None
+bitvector/s3_srvr_1a.BV.c.cil.yml                        TIMEOUT                         21.44        8.29        None
+bitvector-regression/integerpromotion-2.yml              true                             5.13        2.60        None
+bitvector/parity.yml                                     TIMEOUT                         21.95        8.34        None
+bitvector/jain_1-1.yml                                   true                             5.83        3.00        None
+bitvector/soft_float_5a.c.cil.yml                        TIMEOUT                         20.37       13.99        None
+bitvector/jain_6-1.yml                                   TIMEOUT                         20.68       16.81        None
+bitvector/sum02-2.yml                                    true                             6.38        3.10        None
+bitvector/soft_float_4-3a.c.cil.yml                      TIMEOUT                         22.22        7.96        None
+bitvector-regression/recHanoi03-1.yml                    Parsing OK                       2.27        0.90        None
+bitvector/byte_add_2-2.yml                               TIMEOUT                         23.09        8.13        None
+bitvector/modulus-2.yml                                  TIMEOUT                         22.58        8.30        None
+bitvector-regression/implicitfloatconversion.yml         Parsing OK                      14.59        8.18        None
+bitvector/jain_4-2.yml                                   TIMEOUT                         20.72       16.69        None
+bitvector/byte_add-1.yml                                 TIMEOUT                         22.92        8.15        None
+bitvector/s3_srvr_3a_alt.BV.c.cil.yml                    TIMEOUT                         21.95        8.21        None
+bitvector/gcd_2.yml                                      TIMEOUT                         22.52        8.02        None
+bitvector/soft_float_1-2a.c.cil.yml                      TIMEOUT                         21.90        7.90        None
+bitvector/soft_float_3a.c.cil.yml                        TIMEOUT                         20.48       13.75        None
+bitvector-regression/implicitunsignedconversion-2.yml    true                             5.62        2.65        None
+bitvector/jain_5-2.yml                                   TIMEOUT                         20.62       17.01        None
+bitvector-regression/signextension-2.yml                 true                             5.64        2.83        None
+bitvector/gcd_3.yml                                      TIMEOUT                         22.50        8.26        None
+bitvector-regression/signextension2-1.yml                true                             5.58        2.87        None
+bitvector/s3_srvr_2a_alt.BV.c.cil.yml                    TIMEOUT                         21.96        8.25        None
+bitvector/num_conversion_1.yml                           true                             5.94        2.77        None
+bitvector/soft_float_2a.c.cil.yml                        TIMEOUT                         20.43       13.87        None
+bitvector/soft_float_4-2a.c.cil.yml                      TIMEOUT                         22.28        7.97        None
+bitvector/byte_add_1-1.yml                               TIMEOUT                         23.02        8.12        None
+bitvector-loops/overflow_1-2.yml                         TIMEOUT                         20.95       15.93        None
+bitvector-regression/implicitunsignedconversion-1.yml    false(unreach-call)              5.46        2.87        None
+bitvector/jain_2-1.yml                                   TIMEOUT                         20.69       16.78        None
+bitvector/jain_7-2.yml                                   TIMEOUT                         20.80       16.43        None
+----------------------------------------------------------------------------------------------------------------------
+Run set 1                                                done                           100.13      408.69           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             46 Files
+  correct:              12
+    correct true:        8
+    correct false:       4
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              34
+  Score:                20 (max: 79)

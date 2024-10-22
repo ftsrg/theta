@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call, SV-COMP24_no-data-race.NoDataRace-Main, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-08-05 09:00:04 UTC
+tool:                    Theta 6.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az740-591
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3244.943 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call
+Run set 1 of 4: skipped because it has no files
+
+
+SV-COMP24_no-data-race.NoDataRace-Main
+Run set 2 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread-ext/18_read_write_lock-pthread.yml                                                             Parsing OK                      11.08        5.53        None
+pthread-atomic/read_write_lock-1.yml                                                                   true                            10.81        4.48        None
+pthread-wmm/rfi003_tso.yml                                                                             TIMEOUT (true)                  20.22        7.82        None
+pthread/lazy01.yml                                                                                     true                             8.21        3.46        None
+pthread-wmm/mix000.oepc.yml                                                                            true                            19.24        7.43        None
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml                                      true                            11.44        5.34        None
+pthread-wmm/safe032_tso.yml                                                                            true                            15.43        6.51        None
+goblint-regression/13-privatized_37-traces-ex-4_true.yml                                               true                            11.04        5.15        None
+pthread-C-DAC/pthread-demo-datarace-3.yml                                                              true                            19.57        7.64        None
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml                                      true                            11.74        5.45        None
+pthread-ext/31_simple_loop5_vs-pthread.yml                                                             TIMEOUT                         20.83       11.21        None
+pthread-wmm/safe030_tso.yml                                                                            true                            15.88        6.72        None
+pthread-wmm/safe018_power.opt.yml                                                                      TIMEOUT                         21.94        8.11        None
+pthread-wmm/safe026_tso.yml                                                                            true                            14.61        6.27        None
+pthread/fib_safe-11.yml                                                                                true                            19.17        7.52        None
+pthread-wmm/safe024_tso.yml                                                                            true                            15.55        6.53        None
+pthread-ext/08_rand_cas.yml                                                                            TIMEOUT                         20.72       11.09        None
+goblint-regression/13-privatized_19-publish-precision_unknown_2_pos.yml                                true                            10.97        5.07        None
+pthread-wmm/mix057_power.oepc_pso.oepc_rmo.oepc.yml                                                    TIMEOUT                         22.15        8.16        None
+pthread-wmm/mix023_power.opt_pso.opt_rmo.opt.yml                                                       TIMEOUT                         21.81        8.24        None
+pthread-wmm/mix032.oepc.yml                                                                            TIMEOUT                         22.01        8.28        None
+pthread-wmm/mix030_power.opt_pso.opt_rmo.opt.yml                                                       TIMEOUT                         22.24        8.35        None
+pthread-wmm/mix036_pso.opt_tso.opt.yml                                                                 TIMEOUT                         22.38        8.41        None
+pthread-wmm/mix034_pso.opt_tso.opt.yml                                                                 true                            15.69        6.42        None
+pthread-wmm/safe012_rmo.oepc.yml                                                                       true                            19.44        7.35        None
+pthread-wmm/mix005.opt.yml                                                                             TIMEOUT                         22.21        8.28        None
+pthread-wmm/rfi004.yml                                                                                 true                            15.78        6.50        None
+pthread-ext/11_fmaxsymopt-pthread.yml                                                                  TIMEOUT                         20.46       11.18        None
+pthread-wmm/mix019.opt.yml                                                                             TIMEOUT (true)                  20.54        7.79        None
+pthread-wmm/safe019_power.opt.yml                                                                      TIMEOUT                         22.46        8.13        None
+pthread-wmm/safe031_power.oepc_pso.oepc_rmo.oepc.yml                                                   TIMEOUT (true)                  20.33        7.70        None
+pthread/triangular-longest-2.yml                                                                       Parsing OK                      14.81        6.17        None
+pthread-wmm/mix016_pso.opt_tso.opt.yml                                                                 true                            19.26        7.55        None
+goblint-regression/28-race_reach_46-escape_racefree.yml                                                true                            11.20        5.15        None
+pthread-wmm/mix019_power.oepc_pso.oepc_rmo.oepc.yml                                                    TIMEOUT                         21.94        8.34        None
+pthread-wmm/mix018_power.oepc_pso.oepc_rmo.oepc.yml                                                    TIMEOUT                         22.20        8.30        None
+pthread-wmm/safe007_pso.oepc_pso.opt_tso.oepc_tso.opt-thin001_pso.oepc_pso.opt_tso.oepc_tso.opt.yml    true                            14.11        5.98        None
+pthread-wmm/safe005_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml                         TIMEOUT                         22.42        8.27        None
+pthread-ext/40_barrier_vf-pthread.yml                                                                  TIMEOUT                         20.69       11.27        None
+pthread-wmm/safe015_rmo.yml                                                                            TIMEOUT (true)                  21.76        8.09        None
+goblint-regression/13-privatized_18-first-reads_unknown_1_neg.yml                                      true                            10.95        5.05        None
+pthread/fib_unsafe-11.yml                                                                              true                            18.85        7.26        None
+pthread-lit/qw2004-2b.yml                                                                              true                             9.30        3.74        None
+pthread-wmm/mix055_tso.oepc.yml                                                                        TIMEOUT                         21.76        8.22        None
+pthread-deagle/circular_buffer_ok.yml                                                                  TIMEOUT                         21.59        9.15        None
+pthread-wmm/safe035_power.yml                                                                          TIMEOUT                         21.95        8.14        None
+pthread-ext/14_spin2003.yml                                                                            TIMEOUT                         20.68       10.99        None
+pthread/fib_safe-10.yml                                                                                true                            18.65        7.15        None
+pthread-ext/45_monabsex1_vs.yml                                                                        TIMEOUT                         20.58       11.58        None
+pthread-wmm/safe004_tso.yml                                                                            true                            14.25        5.85        None
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 2                                                                                              done                           462.30      380.10           -
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:              24
+    correct true:       24
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              26
+  Score:                48 (max: 100)

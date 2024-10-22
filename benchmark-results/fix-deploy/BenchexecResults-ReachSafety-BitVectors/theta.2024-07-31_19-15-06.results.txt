@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-BitVectors, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Wed, 2024-07-31 19:15:06 UTC
+tool:                    Theta 6.3.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az888-179
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2847.431 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-BitVectors
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                      status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------
+bitvector/gcd_4.yml                            true                             6.73        2.94        None
+bitvector/soft_float_1-3a.c.cil.yml            false(unreach-call)             33.00       17.57        None
+bitvector-regression/integerpromotion-3.yml    false(unreach-call)              4.93        2.86        None
+bitvector/sum02-1.yml                          Parsing OK                      34.82       18.29        None
+bitvector-loops/diamond_2-1.yml                TIMEOUT                        121.05      109.93        None
+------------------------------------------------------------------------------------------------------------
+Run set 1                                      done                            74.59      152.21           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               3
+    correct true:        1
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               2
+  Score:                 4 (max: 6)

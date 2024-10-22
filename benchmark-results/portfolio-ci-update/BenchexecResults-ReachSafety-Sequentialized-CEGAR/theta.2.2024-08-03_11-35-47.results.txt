@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Sequentialized, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-08-03 11:35:47 UTC
+tool:                    Theta 6.3.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az661-818
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3195.298 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Sequentialized
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                 status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------------------------------------
+systemc/transmitter.12.cil.yml                                            TIMEOUT                         20.10       14.83        None
+seq-mthreaded/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.yml                TIMEOUT                         22.84        7.83        None
+systemc/pipeline.cil-1.yml                                                TIMEOUT                         20.14       12.23        None
+seq-mthreaded/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.yml            TIMEOUT                         21.64        7.40        None
+seq-mthreaded/pals_floodmax.3.2.ufo.BOUNDED-6.pals.yml                    TIMEOUT                         22.90        7.31        None
+seq-mthreaded/pals_opt-floodmax.5.ufo.BOUNDED-10.pals.yml                 TIMEOUT                         20.80        8.61        None
+systemc/toy.cil.yml                                                       TIMEOUT                         23.14        7.49        None
+seq-mthreaded/pals_opt-floodmax.3.2.ufo.UNBOUNDED.pals.yml                TIMEOUT                         22.93        7.69        None
+systemc/mem_slave_tlm.5.cil.yml                                           TIMEOUT                         22.79        7.69        None
+systemc/token_ring.09.cil-1.yml                                           TIMEOUT                         20.68       14.03        None
+seq-mthreaded/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.yml          TIMEOUT                         22.87        7.89        None
+systemc/token_ring.11.cil-2.yml                                           TIMEOUT                         20.28       14.27        None
+seq-mthreaded/pals_lcr.7.ufo.BOUNDED-14.pals.yml                          TIMEOUT                         23.10        7.41        None
+seq-mthreaded/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.yml          TIMEOUT                         20.77       14.11        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.ufo.UNBOUNDED.pals.yml         TIMEOUT                         22.68        7.72        None
+systemc/transmitter.01.cil.yml                                            false(unreach-call)             18.65        6.59        None
+seq-mthreaded/pals_floodmax.5.2.ufo.UNBOUNDED.pals.yml                    TIMEOUT                         22.09        8.17        None
+systemc/pc_sfifo_1.cil-2.yml                                              TIMEOUT                         22.32        7.58        None
+systemc/transmitter.03.cil.yml                                            TIMEOUT                         22.72        7.68        None
+systemc/token_ring.07.cil-1.yml                                           TIMEOUT                         20.41       12.36        None
+seq-mthreaded/pals_lcr.4.ufo.UNBOUNDED.pals.yml                           TIMEOUT                         21.17        7.20        None
+seq-mthreaded/pals_STARTPALS_Triplicated.1.ufo.BOUNDED-10.pals.yml        TIMEOUT                         22.56        7.62        None
+seq-mthreaded/pals_opt-floodmax.3.3.ufo.UNBOUNDED.pals.yml                TIMEOUT                         23.23        7.59        None
+systemc/token_ring.03.cil-2.yml                                           TIMEOUT                         22.38        7.94        None
+seq-mthreaded/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.yml          TIMEOUT                         20.85        7.24        None
+seq-mthreaded/pals_floodmax.4_overflow.ufo.UNBOUNDED.pals.yml             TIMEOUT                         22.76        7.54        None
+systemc/toy2.cil.yml                                                      TIMEOUT                         22.85        7.60        None
+seq-mthreaded/pals_floodmax.4.1.ufo.BOUNDED-8.pals.yml                    TIMEOUT                         23.19        7.43        None
+seq-mthreaded/pals_opt-floodmax.5.2.ufo.UNBOUNDED.pals.yml                TIMEOUT                         21.80        8.30        None
+seq-mthreaded/pals_lcr.6.ufo.UNBOUNDED.pals.yml                           TIMEOUT                         22.83        7.34        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_2.ufo.BOUNDED-10.pals.yml    TIMEOUT                         21.99        8.70        None
+seq-mthreaded/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.yml         TIMEOUT                         21.23       13.61        None
+seq-mthreaded/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.yml          TIMEOUT                         21.52        7.42        None
+seq-mthreaded/pals_STARTPALS_Triplicated.2.ufo.BOUNDED-10.pals.yml        TIMEOUT                         20.31        9.91        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_2.ufo.UNBOUNDED.pals.yml     TIMEOUT                         22.60        7.89        None
+seq-mthreaded/pals_floodmax.3.ufo.BOUNDED-6.pals.yml                      TIMEOUT                         22.89        7.28        None
+seq-mthreaded/pals_lcr.6.1.ufo.UNBOUNDED.pals.yml                         TIMEOUT                         22.85        7.33        None
+seq-mthreaded/pals_floodmax.3.1.ufo.BOUNDED-6.pals.yml                    TIMEOUT                         22.86        7.28        None
+seq-mthreaded/pals_opt-floodmax.5.ufo.UNBOUNDED.pals.yml                  TIMEOUT                         21.42        8.36        None
+seq-mthreaded/pals_lcr.6.ufo.BOUNDED-12.pals.yml                          TIMEOUT                         22.88        7.30        None
+seq-mthreaded/pals_floodmax.5.1.ufo.UNBOUNDED.pals.yml                    TIMEOUT                         22.06        8.21        None
+systemc/mem_slave_tlm.4.cil.yml                                           TIMEOUT                         22.99        7.66        None
+seq-mthreaded/rekcba_ctm.4.yml                                            TIMEOUT                         21.80        7.53        None
+seq-mthreaded/pals_floodmax.4.ufo.UNBOUNDED.pals.yml                      TIMEOUT                         22.73        7.66        None
+seq-mthreaded/pals_lcr-var-start-time.6.ufo.UNBOUNDED.pals.yml            TIMEOUT                         22.74        7.29        None
+seq-mthreaded/pals_opt-floodmax.4.ufo.BOUNDED-8.pals.yml                  TIMEOUT                         23.20        7.49        None
+seq-mthreaded/pals_lcr-var-start-time.5.1.ufo.UNBOUNDED.pals.yml          TIMEOUT                         22.79        7.32        None
+seq-mthreaded/pals_opt-floodmax.4_overflow.ufo.UNBOUNDED.pals.yml         TIMEOUT                         22.08        7.46        None
+seq-mthreaded/pals_opt-floodmax.3.2.ufo.BOUNDED-6.pals.yml                TIMEOUT                         21.17        7.30        None
+seq-mthreaded/pals_floodmax.3.ufo.UNBOUNDED.pals.yml                      TIMEOUT                         22.27        7.29        None
+---------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                 done                            24.40      447.93           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               1
+    correct true:        0
+    correct false:       1
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              49
+  Score:                 1 (max: 72)

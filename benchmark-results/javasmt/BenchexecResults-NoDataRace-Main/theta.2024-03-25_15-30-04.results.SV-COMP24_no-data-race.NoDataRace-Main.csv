@@ -1,0 +1,8 @@
+tool	Theta 5.1.0	Theta 5.1.0	Theta 5.1.0	Theta 5.1.0
+run set	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	Parsing OK	5.963414	2.6655665939999835	387.268608
+pthread-atomic/read_write_lock-1.yml	true	12.409464	4.538700796999933	572.071936
+pthread-wmm/rfi003_tso.yml	true	13.887156	5.07670825799994	627.593216
+pthread/lazy01.yml	true	7.843727	3.2676251390000743	435.183616
+pthread-wmm/mix000.oepc.yml	true	13.992922	5.038263611999923	572.956672

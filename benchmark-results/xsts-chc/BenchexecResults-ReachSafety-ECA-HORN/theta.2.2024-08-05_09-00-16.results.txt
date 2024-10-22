@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-ECA, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-08-05 09:00:16 UTC
+tool:                    Theta 6.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az740-591
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3248.324 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-ECA
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------
+eca-rers2012/Problem06_label18.yml     TIMEOUT                         20.57        8.06        None
+eca-rers2012/Problem06_label11.yml     TIMEOUT                         21.60        7.59        None
+eca-programs/Problem101_label07.yml    TIMEOUT                         20.63        7.85        None
+eca-rers2012/Problem05_label44.yml     TIMEOUT                         22.50        7.32        None
+eca-rers2012/Problem04_label05.yml     TIMEOUT                         22.12        7.38        None
+eca-rers2012/Problem18_label36.yml     TIMEOUT                         22.57        7.55        None
+eca-rers2012/Problem06_label57.yml     TIMEOUT                         22.25        7.56        None
+eca-rers2012/Problem16_label24.yml     TIMEOUT                         21.28        7.47        None
+eca-rers2012/Problem19_label22.yml     TIMEOUT                         22.20        7.29        None
+eca-rers2012/Problem18_label55.yml     TIMEOUT                         21.97        7.61        None
+eca-rers2012/Problem13_label46.yml     TIMEOUT                         22.58        7.48        None
+eca-programs/Problem103_label35.yml    TIMEOUT                         20.82        7.88        None
+eca-rers2012/Problem02_label56.yml     TIMEOUT                         21.92        7.38        None
+eca-rers2012/Problem10_label11.yml     TIMEOUT                         23.08        7.41        None
+eca-rers2012/Problem01_label40.yml     TIMEOUT                         22.29        7.39        None
+eca-rers2012/Problem01_label14.yml     TIMEOUT                         22.77        7.52        None
+eca-programs/Problem102_label51.yml    TIMEOUT                         20.21        8.12        None
+eca-rers2012/Problem04_label10.yml     TIMEOUT                         22.30        7.36        None
+eca-rers2012/Problem16_label02.yml     TIMEOUT                         22.45        7.72        None
+eca-rers2012/Problem02_label00.yml     TIMEOUT                         22.24        7.45        None
+eca-rers2012/Problem16_label32.yml     TIMEOUT                         22.35        7.52        None
+eca-rers2012/Problem11_label39.yml     TIMEOUT                         22.89        7.61        None
+eca-rers2012/Problem15_label23.yml     TIMEOUT                         20.77        7.58        None
+eca-rers2012/Problem07_label23.yml     TIMEOUT                         20.59        7.93        None
+eca-rers2012/Problem01_label30.yml     TIMEOUT                         22.04        7.38        None
+eca-rers2012/Problem15_label37.yml     TIMEOUT                         22.38        7.44        None
+eca-rers2012/Problem13_label54.yml     TIMEOUT                         22.21        7.53        None
+eca-programs/Problem102_label31.yml    TIMEOUT                         20.70        7.87        None
+eca-rers2012/Problem06_label34.yml     TIMEOUT                         22.18        7.48        None
+eca-rers2012/Problem15_label57.yml     TIMEOUT                         21.40        7.43        None
+eca-rers2012/Problem11_label07.yml     TIMEOUT                         22.76        7.38        None
+eca-rers2012/Problem02_label29.yml     TIMEOUT                         22.38        7.35        None
+eca-rers2012/Problem04_label39.yml     TIMEOUT                         22.19        7.36        None
+eca-rers2012/Problem19_label05.yml     TIMEOUT                         21.30        7.48        None
+eca-programs/Problem103_label57.yml    TIMEOUT                         20.80        7.85        None
+eca-rers2012/Problem01_label38.yml     TIMEOUT                         22.78        7.44        None
+eca-rers2012/Problem06_label17.yml     TIMEOUT                         22.02        7.44        None
+eca-rers2012/Problem19_label30.yml     TIMEOUT                         21.29        7.38        None
+eca-rers2012/Problem08_label11.yml     TIMEOUT                         20.57        7.99        None
+eca-rers2012/Problem10_label01.yml     TIMEOUT                         22.91        7.37        None
+eca-rers2012/Problem19_label27.yml     TIMEOUT                         21.90        7.30        None
+eca-rers2012/Problem14_label08.yml     TIMEOUT                         23.04        7.48        None
+eca-rers2012/Problem15_label08.yml     TIMEOUT                         22.30        7.55        None
+eca-rers2012/Problem15_label27.yml     TIMEOUT                         21.44        7.55        None
+eca-rers2012/Problem06_label43.yml     TIMEOUT                         22.51        7.52        None
+eca-rers2012/Problem11_label59.yml     TIMEOUT                         22.81        7.40        None
+eca-rers2012/Problem10_label05.yml     TIMEOUT                         23.13        7.41        None
+eca-rers2012/Problem11_label50.yml     TIMEOUT                         22.70        7.66        None
+eca-rers2012/Problem01_label00.yml     TIMEOUT                         22.85        7.42        None
+eca-rers2012/Problem18_label11.yml     TIMEOUT                         22.21        7.50        None
+----------------------------------------------------------------------------------------------------
+Run set 1                              done                             5.97      393.64           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 82)

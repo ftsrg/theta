@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+bitvector/gcd_4.yml	true	true	8.860879	3.6308658970000067	489.672704
+bitvector/soft_float_1-3a.c.cil.yml	false	ERROR (portfolio error)	11.247511	5.560498705999976	363.114496
+bitvector-regression/integerpromotion-3.yml	false	ERROR (portfolio error)	6.519098	4.116901972999983	272.650240
+bitvector/sum02-1.yml	false	ERROR (portfolio error)	23.316304	10.917763446999999	470.720512
+bitvector-loops/diamond_2-1.yml	false	ERROR (portfolio error)	30.941801	12.971117345999971	477.794304
+bitvector/gcd_1.yml	true	ERROR (portfolio error)	17.574688	8.892838740000002	370.847744
+bitvector-regression/signextension-1.yml	false	false(unreach-call)	6.928688	3.6596008289999986	356.978688
+bitvector/s3_srvr_3a.BV.c.cil.yml	true	ERROR (portfolio error)	13.144832	5.844787091000001	390.496256
+bitvector-regression/signextension2-2.yml	false	false(unreach-call)	6.943417	3.619550093999976	348.278784
+bitvector/interleave_bits.yml	true	ERROR (portfolio error)	7.849105	4.500577947000011	300.736512

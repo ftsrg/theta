@@ -1,0 +1,52 @@
+tool		Theta 6.6.0	Theta 6.6.0	Theta 6.6.0	Theta 6.6.0
+run set		SV-COMP24_unreach-call.BitVectors	SV-COMP24_unreach-call.BitVectors	SV-COMP24_unreach-call.BitVectors	SV-COMP24_unreach-call.BitVectors
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+bitvector/byte_add-1.yml	false	TIMEOUT	20.410598	8.497710197999993	823.697408
+bitvector/byte_add_1-1.yml	true	TIMEOUT	20.858622	8.203784498000005	796.053504
+bitvector/byte_add_2-2.yml	true	TIMEOUT	23.132432	8.083525530999964	816.156672
+bitvector/gcd_1.yml	true	TIMEOUT	22.554152	8.315435175999994	721.899520
+bitvector/gcd_2.yml	true	TIMEOUT	22.407649	8.142007077000017	740.081664
+bitvector/gcd_3.yml	true	TIMEOUT	22.603188	8.174827768	726.503424
+bitvector/gcd_4.yml	true	TIMEOUT	22.672253	8.139830838000023	758.038528
+bitvector/interleave_bits.yml	true	TIMEOUT	22.268638	8.319489457000032	691.720192
+bitvector/jain_1-1.yml	true	true	6.106677	3.0377698259999875	470.974464
+bitvector/jain_2-1.yml	true	TIMEOUT	20.748777	16.60052155400001	452.820992
+bitvector/jain_4-2.yml	true	TIMEOUT	20.73773	16.62562048999996	465.915904
+bitvector/jain_5-2.yml	true	TIMEOUT	20.668533	16.83172923899997	454.045696
+bitvector/jain_6-1.yml	true	TIMEOUT	20.749999	16.584945038	467.275776
+bitvector/jain_7-2.yml	true	TIMEOUT	20.822576	16.351514377	487.682048
+bitvector/modulus-2.yml	true	TIMEOUT	22.46506	8.310007929999983	709.799936
+bitvector/num_conversion_1.yml	true	true	5.9189	2.7532625720000397	432.263168
+bitvector/num_conversion_2.yml	true	TIMEOUT	22.837784	8.312538507	714.375168
+bitvector/parity.yml	true	TIMEOUT	21.986126	8.348658407000016	782.917632
+bitvector/s3_clnt_2.BV.c.cil-1a.yml	true	TIMEOUT	21.282479	8.32133687299995	716.812288
+bitvector/s3_clnt_2.BV.c.cil-2a.yml	false	TIMEOUT	21.626407	8.166413851000016	721.383424
+bitvector/s3_clnt_3.BV.c.cil-1a.yml	true	TIMEOUT	21.662581	8.178083093000055	753.643520
+bitvector/s3_clnt_3.BV.c.cil-2a.yml	false	TIMEOUT	21.828255	8.271476089999965	742.567936
+bitvector/s3_srvr_1a.BV.c.cil.yml	true	TIMEOUT	21.552172	8.258143329000063	735.997952
+bitvector/s3_srvr_2a.BV.c.cil.yml	true	TIMEOUT	22.100277	8.184778499999993	745.447424
+bitvector/s3_srvr_2a_alt.BV.c.cil.yml	true	TIMEOUT	21.855207	8.290731824999966	738.381824
+bitvector/s3_srvr_3a.BV.c.cil.yml	true	TIMEOUT	21.407938	8.283720614999993	714.276864
+bitvector/s3_srvr_3a_alt.BV.c.cil.yml	true	TIMEOUT	21.231545	8.233815269000047	726.237184
+bitvector/soft_float_1-2a.c.cil.yml	true	TIMEOUT	21.180394	7.888192610000033	890.540032
+bitvector/soft_float_1-3a.c.cil.yml	false	TIMEOUT	21.763999	7.760770017000027	917.123072
+bitvector/soft_float_2a.c.cil.yml	true	TIMEOUT	20.313766	14.13678862900008	1183.219712
+bitvector/soft_float_3a.c.cil.yml	true				
+bitvector/soft_float_4-2a.c.cil.yml	true				
+bitvector/soft_float_4-3a.c.cil.yml	false				
+bitvector/soft_float_5a.c.cil.yml	true				
+bitvector/sum02-1.yml	false				
+bitvector/sum02-2.yml	true				
+bitvector-regression/implicitfloatconversion.yml	false				
+bitvector-regression/implicitunsignedconversion-1.yml	false				
+bitvector-regression/implicitunsignedconversion-2.yml	true				
+bitvector-regression/integerpromotion-2.yml	true				
+bitvector-regression/integerpromotion-3.yml	false				
+bitvector-regression/recHanoi03-1.yml	false				
+bitvector-regression/signextension-1.yml	false				
+bitvector-regression/signextension-2.yml	true				
+bitvector-regression/signextension2-1.yml	true				
+bitvector-regression/signextension2-2.yml	false				
+bitvector-loops/diamond_2-1.yml	false				
+bitvector-loops/overflow_1-2.yml	false				
+bitvector-loops/verisec_sendmail_tTflag_arr_one_loop.yml	false				

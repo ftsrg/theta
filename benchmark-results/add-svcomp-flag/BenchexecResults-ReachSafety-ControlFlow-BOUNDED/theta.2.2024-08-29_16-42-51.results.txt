@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-ControlFlow, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-08-29 16:42:51 UTC
+tool:                    Theta 6.5.2
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az774-457
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.092 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-ControlFlow
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                             status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------------------------------
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                   ERROR (frontend failed)          3.71        1.31        None
+locks/test_locks_11.yml                                               TIMEOUT                         20.20       14.35        None
+locks/test_locks_5.yml                                                TIMEOUT                         20.86       16.34        None
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                   ERROR (frontend failed)          4.24        1.52        None
+longjmp/68-longjmp_11-counting-return_true.yml                        ERROR (frontend failed)          2.11        0.84        None
+locks/test_locks_9.yml                                                TIMEOUT                         20.99       15.85        None
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml               ERROR (frontend failed)          2.12        0.87        None
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml               ERROR (frontend failed)          2.12        0.87        None
+locks/test_locks_14-2.yml                                             false(unreach-call)             12.93        7.02        None
+longjmp/68-longjmp_04-counting-local_true.yml                         ERROR (frontend failed)          2.08        0.84        None
+longjmp/68-longjmp_13-counting-local_unknown_1_pos.yml                ERROR (frontend failed)          2.16        0.87        None
+longjmp/68-longjmp_13-counting-local_true.yml                         ERROR (frontend failed)          2.13        0.86        None
+longjmp/68-longjmp_16-counting-local-one-method_true.yml              ERROR (frontend failed)          2.15        0.87        None
+locks/test_locks_6.yml                                                TIMEOUT                         20.10       14.55        None
+locks/test_locks_12.yml                                               TIMEOUT                         20.59       13.59        None
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml         TIMEOUT                         20.80       16.40        None
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                   ERROR (frontend failed)          4.31        1.56        None
+longjmp/68-longjmp_51-worries_true.yml                                ERROR (frontend failed)          4.55        1.63        None
+locks/test_locks_8.yml                                                TIMEOUT                         20.27       14.24        None
+longjmp/68-longjmp_19-simpler_true.yml                                ERROR (frontend failed)          4.43        1.58        None
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml              TIMEOUT                         20.78       16.52        None
+locks/test_locks_7.yml                                                TIMEOUT                         20.20       14.44        None
+locks/test_locks_13.yml                                               TIMEOUT                         20.70       13.24        None
+openssl-simplified/s3_srvr_1b.cil.yml                                 TIMEOUT                         20.13       14.56        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml    ERROR (frontend failed)          2.18        0.88        None
+longjmp/68-longjmp_15-counting-global-one-method_true.yml             ERROR (frontend failed)          2.13        0.88        None
+locks/test_locks_14-1.yml                                             TIMEOUT                         20.70       13.43        None
+locks/test_locks_15-1.yml                                             false(unreach-call)             16.80       10.46        None
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml              TIMEOUT                         20.63       11.03        None
+longjmp/68-longjmp_12-counting-global_true.yml                        ERROR (frontend failed)          2.08        0.87        None
+longjmp/68-longjmp_07-returns_true.yml                                ERROR (frontend failed)          2.14        0.86        None
+longjmp/68-longjmp_20-simpler-multifun_true.yml                       ERROR (frontend failed)          4.18        1.50        None
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                ERROR (frontend failed)          2.14        0.86        None
+unsignedintegeroverflow-sas23/distance_through_overflow.yml           true                             6.33        2.87        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml    ERROR (frontend failed)          2.19        0.87        None
+unsignedintegeroverflow-sas23/linear_interpolation.yml                TIMEOUT                         20.28       14.12        None
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                   ERROR (frontend failed)          3.79        1.39        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml    ERROR (frontend failed)          2.07        0.83        None
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml               ERROR (frontend failed)          2.08        0.86        None
+longjmp/68-longjmp_44-simple-else-path_true.yml                       ERROR (frontend failed)          4.30        1.54        None
+longjmp/68-longjmp_18-simple-else_true.yml                            ERROR (frontend failed)          4.34        1.56        None
+longjmp/68-longjmp_13-counting-local_unknown_1_neg.yml                ERROR (frontend failed)          2.17        0.88        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml    ERROR (frontend failed)          2.16        0.86        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml     ERROR (frontend failed)          2.10        0.85        None
+locks/test_locks_10.yml                                               TIMEOUT                         20.55       13.59        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml     ERROR (frontend failed)          2.10        0.86        None
+locks/test_locks_15-2.yml                                             TIMEOUT                         20.77       13.19        None
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml               ERROR (frontend failed)          2.05        0.84        None
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                ERROR (frontend failed)          2.25        0.93        None
+longjmp/68-longjmp_14-counting-return-one-method_true.yml             ERROR (frontend failed)          2.11        0.85        None
+-----------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                             done                           122.62      295.62           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               3
+    correct true:        1
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              47
+  Score:                 4 (max: 80)

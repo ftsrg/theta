@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Arrays, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-08-29 16:43:44 UTC
+tool:                    Theta 6.5.2
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1532-187
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3234.9 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Arrays
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                           status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------------------------------
+array-examples/standard_partition_ground-2.yml                      TIMEOUT                          6.27       61.00        None
+array-crafted/mapavg4.yml                                           TIMEOUT                         10.10       61.02        None
+array-programs/copysome2-1.yml                                      TIMEOUT                          6.45       61.03        None
+array-examples/sanfoundry_24-1.yml                                  TIMEOUT                          6.27       61.02        None
+array-multidimensional/max-2-u.yml                                  ERROR (frontend failed)          1.79        0.74        None
+array-examples/sorting_bubblesort_ground-1.yml                      TIMEOUT                          6.30       61.02        None
+array-crafted/bAnd2.yml                                             TIMEOUT                         21.31       10.92        None
+array-multidimensional/rev-2-n-u.yml                                ERROR (frontend failed)          1.87        0.78        None
+array-examples/data_structures_set_multi_proc_trivial_ground.yml    TIMEOUT                          8.06       61.02        None
+array-patterns/array21_pattern.yml                                  ERROR (frontend failed)          1.97        0.81        None
+array-examples/standard_copy3_ground-2.yml                          TIMEOUT                          7.76       61.03        None
+array-examples/standard_copy6_ground-2.yml                          TIMEOUT                          7.77       61.03        None
+array-examples/standard_copyInit_ground.yml                         TIMEOUT                          7.23       60.82        None
+array-examples/standard_init4_ground-1.yml                          TIMEOUT                          7.48       61.02        None
+array-examples/standard_copy9_ground-1.yml                          TIMEOUT                          8.12       61.03        None
+array-crafted/mapsum1.yml                                           TIMEOUT                         13.84       61.03        None
+array-examples/standard_init7_ground-2.yml                          TIMEOUT                          8.04       61.03        None
+array-cav19/array_init_var_plus_ind3.yml                            TIMEOUT                          7.24       60.76        None
+array-tiling/mbpr4.yml                                              TIMEOUT                          8.53       60.42        None
+reducercommutativity/sum20-2.yml                                    true                            16.31        6.22        None
+array-programs/copysome1-1.yml                                      TIMEOUT                          7.40       60.24        None
+array-tiling/pr2.yml                                                TIMEOUT                          7.58       61.02        None
+array-examples/standard_copy8_ground-1.yml                          TIMEOUT                          8.16       61.02        None
+array-examples/standard_init8_ground-2.yml                          TIMEOUT                          7.97       61.03        None
+array-cav19/array_tiling_tcpy.yml                                   TIMEOUT                          7.24       60.75        None
+reducercommutativity/max60-2.yml                                    TIMEOUT                         13.24       60.18        None
+array-examples/standard_init4_ground-2.yml                          TIMEOUT                         11.13       60.92        None
+array-patterns/array29_pattern.yml                                  ERROR (frontend failed)          1.91        0.82        None
+array-examples/standard_init1_ground-1.yml                          TIMEOUT                          7.19       60.92        None
+reducercommutativity/max20-1.yml                                    TIMEOUT                         20.15        9.70        None
+array-examples/standard_copyInitSum_ground.yml                      TIMEOUT                          7.50       61.02        None
+array-examples/standard_reverse_ground.yml                          TIMEOUT                          7.50       61.02        None
+array-examples/standard_find_ground-1.yml                           TIMEOUT                          7.54       61.02        None
+array-examples/standard_palindrome_ground.yml                       TIMEOUT                          7.37       60.35        None
+array-cav19/array_init_pair_symmetr2.yml                            TIMEOUT                          7.91       61.02        None
+reducercommutativity/sum40-2.yml                                    TIMEOUT                         11.47       61.02        None
+array-crafted/bor3.yml                                              TIMEOUT                          7.58       61.02        None
+array-programs/copysome1-2.yml                                      TIMEOUT                          7.64       61.02        None
+array-patterns/array24_pattern.yml                                  ERROR (frontend failed)          1.93        0.78        None
+array-multidimensional/min-2-u.yml                                  ERROR (frontend failed)          1.86        0.78        None
+array-crafted/mapavg1.yml                                           TIMEOUT                         22.03        8.01        None
+array-patterns/array10_pattern.yml                                  TIMEOUT                          7.24       60.74        None
+array-examples/standard_copy9_ground-2.yml                          TIMEOUT                          8.15       61.02        None
+reducercommutativity/sum10-1.yml                                    TIMEOUT                          8.15       61.02        None
+array-tiling/pr3.yml                                                TIMEOUT                          7.50       61.02        None
+array-patterns/array17_pattern.yml                                  ERROR (frontend failed)          1.96        0.80        None
+array-examples/standard_seq_init_ground.yml                         TIMEOUT                          7.10       61.02        None
+array-examples/standard_minInArray_ground-2.yml                     TIMEOUT                          7.60       61.02        None
+array-crafted/zero_sum_m2.yml                                       TIMEOUT                          7.10       61.02        None
+reducercommutativity/max05-1.yml                                    TIMEOUT                          7.85       61.02        None
+---------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                           done                            34.56     2441.72           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               1
+    correct true:        1
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              49
+  Score:                 2 (max: 95)

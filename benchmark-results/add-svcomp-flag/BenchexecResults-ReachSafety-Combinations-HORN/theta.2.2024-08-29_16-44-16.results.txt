@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Combinations, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-08-29 16:44:16 UTC
+tool:                    Theta 6.5.2
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az774-457
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3237.819 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Combinations
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                       status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------------------------
+pc_sfifo_3.cil+token_ring.02.cil-2.yml                          TIMEOUT                         21.30       10.78        None
+Problem05_label47+token_ring.02.cil-1.yml                       TIMEOUT                         21.83        7.38        None
+pc_sfifo_3.cil+token_ring.11.cil-1.yml                          TIMEOUT                         20.29       14.46        None
+Problem05_label45+token_ring.01.cil-2.yml                       TIMEOUT                         22.16        7.34        None
+pals_lcr.3.1.ufo.UNBOUNDED.pals+Problem12_label04.yml           TIMEOUT                         21.10        8.71        None
+pals_lcr.6_overflow.ufo.UNBOUNDED.pals+Problem12_label04.yml    TIMEOUT                         20.73        8.99        None
+gcd_3+newton_3_8.yml                                            TIMEOUT                         21.21        9.84        None
+pals_lcr.4_overflow.ufo.UNBOUNDED.pals+Problem12_label09.yml    TIMEOUT                         20.63        8.96        None
+gcd_2+newton_3_3.yml                                            TIMEOUT                         21.16        9.84        None
+pals_lcr.7.ufo.BOUNDED-14.pals+Problem12_label09.yml            TIMEOUT                         21.08        8.73        None
+Problem05_label42+token_ring.05.cil-1.yml                       TIMEOUT                         22.44        7.29        None
+Problem05_label42+token_ring.07.cil-1.yml                       TIMEOUT                         23.10        7.18        None
+pals_lcr.7.ufo.UNBOUNDED.pals+Problem12_label00.yml             TIMEOUT                         20.87        8.87        None
+pals_lcr.5.ufo.UNBOUNDED.pals+Problem12_label02.yml             TIMEOUT                         20.81        9.06        None
+Problem05_label46+token_ring.09.cil-2.yml                       TIMEOUT                         22.40        7.28        None
+gcd_1+newton_3_6.yml                                            TIMEOUT                         21.21        9.83        None
+pc_sfifo_1.cil-2+token_ring.06.cil-1.yml                        TIMEOUT                         20.63       14.08        None
+pals_lcr.3_overflow.ufo.UNBOUNDED.pals+Problem12_label09.yml    TIMEOUT                         20.89        8.81        None
+Problem05_label46+token_ring.11.cil-1.yml                       TIMEOUT                         22.59        7.25        None
+gcd_2+newton_2_8.yml                                            TIMEOUT                         20.63        9.75        None
+Problem05_label46+token_ring.01.cil-2.yml                       TIMEOUT                         22.36        7.26        None
+Problem05_label49+token_ring.11.cil-2.yml                       TIMEOUT                         22.11        7.34        None
+pals_lcr.4.ufo.BOUNDED-8.pals+Problem12_label05.yml             TIMEOUT                         21.11        8.87        None
+Problem05_label45+token_ring.09.cil-1.yml                       TIMEOUT                         22.09        7.28        None
+pals_lcr.4.1.ufo.BOUNDED-8.pals+Problem12_label05.yml           TIMEOUT                         20.89        8.99        None
+Problem05_label45+token_ring.11.cil-1.yml                       TIMEOUT                         22.68        7.34        None
+gcd_1+newton_3_8.yml                                            TIMEOUT                         21.27        9.62        None
+Problem05_label46+token_ring.03.cil-2.yml                       TIMEOUT                         23.03        7.24        None
+Problem05_label42+token_ring.11.cil-1.yml                       TIMEOUT                         22.31        7.34        None
+pals_lcr.5.ufo.BOUNDED-10.pals+Problem12_label05.yml            TIMEOUT                         20.09        7.48        None
+Problem05_label49+token_ring.06.cil-1.yml                       TIMEOUT                         22.37        7.32        None
+pc_sfifo_1.cil-2+token_ring.03.cil-2.yml                        TIMEOUT                         23.06       10.00        None
+Problem05_label46+token_ring.11.cil-2.yml                       TIMEOUT                         22.45        7.24        None
+pals_lcr.4.ufo.BOUNDED-8.pals+Problem12_label09.yml             TIMEOUT                         21.08        8.81        None
+gcd_1+newton_3_7.yml                                            TIMEOUT                         21.18        9.83        None
+pals_lcr.4.1.ufo.BOUNDED-8.pals+Problem12_label01.yml           TIMEOUT                         20.87        9.08        None
+pc_sfifo_1.cil-2+token_ring.08.cil-2.yml                        TIMEOUT                         20.80       13.29        None
+gcd_1+newton_2_5.yml                                            TIMEOUT (Parsing OK)            20.63        9.60        None
+pc_sfifo_1.cil-2+token_ring.09.cil-1.yml                        TIMEOUT                         20.41       14.31        None
+Problem05_label46+token_ring.09.cil-1.yml                       TIMEOUT                         22.34        7.27        None
+pc_sfifo_1.cil-2+token_ring.10.cil-2.yml                        TIMEOUT                         20.52       14.33        None
+pc_sfifo_1.cil-2+token_ring.02.cil-2.yml                        TIMEOUT                         21.62        8.49        None
+pals_lcr.6.ufo.UNBOUNDED.pals+Problem12_label00.yml             TIMEOUT                         20.98        8.89        None
+gcd_3+newton_1_8.yml                                            TIMEOUT (Parsing OK)            20.39        9.51        None
+pals_lcr.7.ufo.UNBOUNDED.pals+Problem12_label05.yml             TIMEOUT                         20.79        8.98        None
+Problem05_label44+token_ring.12.cil-2.yml                       TIMEOUT                         22.57        7.26        None
+pals_lcr.3.ufo.BOUNDED-6.pals+Problem12_label03.yml             TIMEOUT                         20.47        9.17        None
+Problem05_label43+token_ring.06.cil-2.yml                       TIMEOUT                         22.65        7.31        None
+gcd_1+newton_1_4.yml                                            TIMEOUT                         20.64        9.74        None
+Problem05_label48+token_ring.13.cil-2.yml                       TIMEOUT                         22.60        7.35        None
+-----------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                       done                            46.70      461.44           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 69)

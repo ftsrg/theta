@@ -1,0 +1,107 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ControlFlow, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-10-21 18:31:52 UTC
+tool:                    Theta 6.6.3
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1424-724
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2714.27 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ControlFlow
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------
+openssl-simplified/s3_srvr_1b.cil.yml                                      true                             6.46        3.32        None
+locks/test_locks_10.yml                                                    TIMEOUT                         21.18        9.46        None
+locks/test_locks_11.yml                                                    TIMEOUT                         21.84        7.38        None
+locks/test_locks_12.yml                                                    TIMEOUT                         21.84        7.40        None
+locks/test_locks_13.yml                                                    TIMEOUT                         22.66        7.30        None
+locks/test_locks_14-1.yml                                                  TIMEOUT                         21.75        7.36        None
+locks/test_locks_14-2.yml                                                  TIMEOUT (false(unreach-call))       20.55        7.72        None
+locks/test_locks_15-1.yml                                                  TIMEOUT                         21.05        7.89        None
+locks/test_locks_15-2.yml                                                  TIMEOUT                         22.45        7.40        None
+locks/test_locks_5.yml                                                     true                            14.90        5.54        None
+locks/test_locks_6.yml                                                     TIMEOUT                         20.23        7.47        None
+locks/test_locks_7.yml                                                     TIMEOUT                         20.36        7.49        None
+locks/test_locks_8.yml                                                     TIMEOUT                         20.96        7.39        None
+locks/test_locks_9.yml                                                     TIMEOUT                         20.31        7.42        None
+ntdrivers/cdaudio.i.cil-1.yml                                              ERROR (frontend failed)          6.69        2.27        None
+ntdrivers/diskperf.i.cil-1.yml                                             ERROR (frontend failed)          4.97        1.71        None
+ntdrivers/diskperf.i.cil-2.yml                                             ERROR (frontend failed)          5.40        1.88        None
+ntdrivers/floppy.i.cil-1.yml                                               ERROR (frontend failed)          5.97        2.04        None
+ntdrivers/floppy.i.cil-3.yml                                               ERROR (frontend failed)          6.17        2.11        None
+ntdrivers/kbfiltr.i.cil-2.yml                                              ERROR (frontend failed)          4.86        1.70        None
+ntdrivers/parport.i.cil-1.yml                                              ERROR (frontend failed)          7.93        2.70        None
+ntdrivers/parport.i.cil-2.yml                                              ERROR (frontend failed)          6.46        2.18        None
+memory-model/2SB.yml                                                       ERROR (frontend failed)          2.28        0.87        None
+memory-model/4SB.yml                                                       ERROR (frontend failed)          2.45        0.96        None
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml                   TIMEOUT                         21.06        8.78        None
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml              TIMEOUT                         20.23       14.24        None
+unsignedintegeroverflow-sas23/distance_through_overflow.yml                TIMEOUT                         20.10       14.53        None
+unsignedintegeroverflow-sas23/linear_interpolation.yml                     TIMEOUT                         20.10       14.53        None
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml                   TIMEOUT                         20.74       16.60        None
+longjmp/68-longjmp_04-counting-local_true.yml                              Parsing OK                       8.58        4.60        None
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                     Parsing OK                       8.45        4.18        None
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                     Parsing OK                       8.63        4.15        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_true.yml             ERROR (frontend failed)          3.68        1.33        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_neg.yml    ERROR (frontend failed)          3.64        1.33        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_pos.yml    ERROR (frontend failed)          2.84        1.07        None
+longjmp/68-longjmp_07-returns_true.yml                                     Parsing OK                       8.69        4.11        None
+longjmp/68-longjmp_11-counting-return_true.yml                             Parsing OK                       9.02        4.30        None
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml                    Parsing OK                       8.77        4.18        None
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml                    Parsing OK                       9.84        4.32        None
+longjmp/68-longjmp_12-counting-global_true.yml                             Parsing OK                       8.84        4.20        None
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml                    Parsing OK                       8.40        4.04        None
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml                    Parsing OK                       8.82        4.12        None
+longjmp/68-longjmp_13-counting-local_true.yml                              Parsing OK                       8.97        4.00        None
+longjmp/68-longjmp_13-counting-local_unknown_1_neg.yml                     Parsing OK                       8.31        4.05        None
+longjmp/68-longjmp_13-counting-local_unknown_1_pos.yml                     Parsing OK                       8.57        4.07        None
+longjmp/68-longjmp_14-counting-return-one-method_true.yml                  Parsing OK                       8.66        4.22        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml         Parsing OK                       8.77        3.96        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml         Parsing OK                       8.77        4.17        None
+longjmp/68-longjmp_15-counting-global-one-method_true.yml                  Parsing OK                       8.94        4.13        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml         Parsing OK                       8.81        4.19        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml         Parsing OK                       8.86        4.17        None
+longjmp/68-longjmp_16-counting-local-one-method_true.yml                   Parsing OK                       8.36        4.08        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml          Parsing OK                       8.69        4.02        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml          Parsing OK                       9.00        4.03        None
+longjmp/68-longjmp_18-simple-else_true.yml                                 
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                        
+longjmp/68-longjmp_19-simpler_true.yml                                     
+longjmp/68-longjmp_20-simpler-multifun_true.yml                            
+longjmp/68-longjmp_21-multifun_true.yml                                    
+longjmp/68-longjmp_22-multifun-arg_true.yml                                
+longjmp/68-longjmp_42-poison-reduced_true.yml                              
+longjmp/68-longjmp_44-simple-else-path_true.yml                            
+longjmp/68-longjmp_51-worries_true.yml                                     
+----------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                  done                           267.51      297.42           -
+
+Statistics:             54 Files
+  correct:               2
+    correct true:        2
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              52
+  Score:                 4 (max: 83)
