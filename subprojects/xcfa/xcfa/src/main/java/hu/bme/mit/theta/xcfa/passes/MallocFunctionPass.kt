@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -34,8 +33,8 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
-  private val XcfaBuilder.malloc: VarDecl<*> by lazy {
-    Var("__malloc", CPointer(null, null, parseContext).smtType)
+  companion object {
+    private val mallocVar: VarDecl<*> = Var("__malloc", Int())
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -51,13 +50,12 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           if (predicate((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
             val ret = invokeLabel.params[0] as RefExpr<*>
-            val mallocVar = builder.parent.malloc
             if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
               builder.parent.addVar(
                 XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
               )
               val initProc = builder.parent.getInitProcedures().map { it.first }
-              checkState(initProc.size == 1, "Multiple start procedure are not handled well")
+              check(initProc.size == 1) { "Multiple start procedure are not handled well" }
               initProc.forEach {
                 val initAssign =
                   StmtLabel(

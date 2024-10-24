@@ -15,7 +15,38 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
-fun XCFA.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)? = null): String {
+typealias LabelCustomizer = (XcfaEdge) -> String
+
+fun XCFA.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
+  xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
+
+fun XcfaProcedure.toDot(edgeLabelCustomizer: LabelCustomizer?): String =
+  xcfaProcedureToDot(name, locs, edges, edgeLabelCustomizer)
+
+@Suppress("unused")
+fun XcfaBuilder.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
+  xcfaToDot(name, getProcedures().map { DottableProcedure(it) }, edgeLabelCustomizer)
+
+fun XcfaProcedureBuilder.toDot(edgeLabelCustomizer: LabelCustomizer?): String =
+  xcfaProcedureToDot(name, getLocs(), getEdges(), edgeLabelCustomizer)
+
+private class DottableProcedure(
+  private val procedure: XcfaProcedure?,
+  private val procedureBuilder: XcfaProcedureBuilder?,
+) {
+  constructor(procedure: XcfaProcedure) : this(procedure, null)
+
+  constructor(procedureBuilder: XcfaProcedureBuilder) : this(null, procedureBuilder)
+
+  fun toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
+    procedure?.toDot(edgeLabelCustomizer) ?: procedureBuilder!!.toDot(edgeLabelCustomizer)
+}
+
+private fun xcfaToDot(
+  name: String,
+  procedures: List<DottableProcedure>,
+  edgeLabelCustomizer: LabelCustomizer? = null,
+): String {
   val builder = StringBuilder()
   builder.appendLine("digraph G {")
   builder.appendLine("label=\"$name\";")
@@ -30,7 +61,12 @@ fun XCFA.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)? = null): String {
   return builder.toString()
 }
 
-fun XcfaProcedure.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)?): String {
+private fun xcfaProcedureToDot(
+  name: String,
+  locs: Set<XcfaLocation>,
+  edges: Set<XcfaEdge>,
+  edgeLabelCustomizer: LabelCustomizer? = null,
+): String {
   val builder = StringBuilder()
   builder.appendLine("label=\"$name\";")
   locs.forEach { builder.appendLine("${it.name}[];") }

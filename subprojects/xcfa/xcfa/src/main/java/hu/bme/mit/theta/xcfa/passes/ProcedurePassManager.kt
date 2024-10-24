@@ -41,8 +41,8 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       CLibraryFunctionsPass(),
     ),
     listOf(
-        ReferenceElimination(parseContext),
-        MallocFunctionPass(parseContext),
+      ReferenceElimination(parseContext),
+      MallocFunctionPass(parseContext),
     ),
     listOf(
       // optimizing
