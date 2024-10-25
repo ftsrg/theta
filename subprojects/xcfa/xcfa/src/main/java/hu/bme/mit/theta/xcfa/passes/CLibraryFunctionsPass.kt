@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -64,7 +65,10 @@ class CLibraryFunctionsPass : ProcedurePass {
                   while (handle is Reference<*, *>) handle = handle.expr
                   check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                  listOf(JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
+                  listOf(
+                    JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                  )
                 }
 
                 "pthread_create" -> {
@@ -86,7 +90,8 @@ class CLibraryFunctionsPass : ProcedurePass {
                       ), // int(0) to solve StartLabel not handling return params
                       (handle as RefExpr<out Type>).decl as VarDecl<*>,
                       metadata,
-                    )
+                    ),
+                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
                   )
                 }
 

@@ -90,7 +90,7 @@ class XcfaOcChecker(
             exit("multiple entry points")
 
         logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
-        xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
+        xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
         if (!addToSolver(ocChecker.solver)) // no violations in the model
             return@let SafetyResult.safe<EmptyWitness, Cex>(EmptyWitness.getInstance())
@@ -150,9 +150,9 @@ class XcfaOcChecker(
         private var atomicEntered: Boolean? = null
         private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
-        fun event(d: VarDecl<*>, type: EventType): List<E> {
+        fun event(d: VarDecl<*>, type: EventType, varPid: Int? = null): List<E> {
             check(!inEdge || last.size == 1)
-            val decl = d.threadVar(pid)
+            val decl = d.threadVar(varPid ?: pid)
             val useLastClk = inEdge || atomicEntered == true
             val e =
                 if (useLastClk) E(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
@@ -303,20 +303,27 @@ class XcfaOcChecker(
                             }
 
                             is StartLabel -> {
-                                // TODO StartLabel params
                                 if (label.name in thread.startHistory) {
                                     exit("recursive thread start")
                                 }
                                 val procedure = xcfa.procedures.find { it.name == label.name }
                                     ?: exit("unknown procedure name: ${label.name}")
+                                val newPid = Thread.uniqueId()
+
+                                // assign parameter
+                                val consts = label.params[1].toEvents()
+                                val arg = procedure.params.first { it.second != ParamDirection.OUT }.first
+                                last = event(arg, EventType.WRITE, newPid)
+                                last.first().assignment = Eq(last.first().const.ref, label.params[1].with(consts))
+
                                 last = event(label.pidVar, EventType.WRITE)
                                 val pidVar = label.pidVar.threadVar(pid)
                                 if (threads.any { it.pidVar == pidVar }) {
                                     multipleUsePidVars.add(pidVar)
                                 }
                                 val newHistory = thread.startHistory + thread.procedure.name
-                                val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
-                                last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
+                                val newThread = Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
+                                last.first().assignment = Eq(last.first().const.ref, Int(newPid))
                                 threadLookup[pidVar] = setOf(Pair(guard, newThread))
                                 ThreadProcessor(newThread).process()
                             }

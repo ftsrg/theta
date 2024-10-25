@@ -161,6 +161,7 @@ internal data class Violation(
 )
 
 internal data class Thread(
+  val pid: Int = uniqueId(),
   val procedure: XcfaProcedure,
   val guard: Set<Expr<BoolType>> = setOf(),
   val pidVar: VarDecl<*>? = null,
@@ -168,7 +169,6 @@ internal data class Thread(
   val startHistory: List<String> = listOf(),
   val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
   val joinEvents: MutableSet<XcfaEvent> = mutableSetOf(),
-  val pid: Int = uniqueId(),
 ) {
 
   val finalEvents: MutableSet<XcfaEvent> = mutableSetOf()
@@ -177,7 +177,7 @@ internal data class Thread(
 
     private var cnt: Int = 0
 
-    private fun uniqueId(): Int = cnt++
+    fun uniqueId(): Int = cnt++
   }
 }
 

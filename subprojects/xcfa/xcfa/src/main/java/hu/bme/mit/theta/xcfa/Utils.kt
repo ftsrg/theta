@@ -691,3 +691,17 @@ fun Collection<VarDecl<*>>.pointsTo(xcfa: XCFA) =
   flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
 
 fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
+
+@Suppress("FunctionName")
+fun <T : Type> AssignStmtLabel(
+  lhs: VarDecl<T>,
+  rhs: Expr<T>,
+  metadata: MetaData = EmptyMetaData,
+): StmtLabel = StmtLabel(Assign(lhs, rhs), metadata = metadata)
+
+@Suppress("FunctionName")
+fun <T1 : Type, T2 : Type> AssignStmtLabel(
+  lhs: RefExpr<T1>,
+  rhs: Expr<T2>,
+  metadata: MetaData = EmptyMetaData,
+): StmtLabel = AssignStmtLabel(cast(lhs.decl as VarDecl<*>, rhs.type), rhs, metadata = metadata)

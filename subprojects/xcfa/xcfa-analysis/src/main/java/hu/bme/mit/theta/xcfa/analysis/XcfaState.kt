@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -131,14 +132,9 @@ constructor(
                   .withIndex()
                   .filter { it.value.second != ParamDirection.IN }
                   .map { iVal ->
-                    StmtLabel(
-                      Assign(
-                        cast(
-                          (it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
-                          iVal.value.first.type,
-                        ),
-                        cast(iVal.value.first.ref, iVal.value.first.type),
-                      ),
+                    AssignStmtLabel(
+                      it.params[iVal.index] as RefExpr<*>,
+                      cast(iVal.value.first.ref, iVal.value.first.type),
                       metadata = it.metadata,
                     )
                   }

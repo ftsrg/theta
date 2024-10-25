@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -25,6 +24,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -78,27 +78,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               }
             }
             val assign1 =
-              AssignStmt.of(
+              AssignStmtLabel(
                 cast(mallocVar, ret.type),
                 cast(
                   Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
                   ret.type,
                 ),
+                invokeLabel.metadata,
               )
-            val assign2 =
-              AssignStmt.of(cast(ret.decl as VarDecl<*>, ret.type), cast(mallocVar.ref, ret.type))
-            builder.addEdge(
-              XcfaEdge(
-                it.source,
-                it.target,
-                SequenceLabel(
-                  listOf(
-                    StmtLabel(assign1, metadata = invokeLabel.metadata),
-                    StmtLabel(assign2, metadata = invokeLabel.metadata),
-                  )
-                ),
-              )
-            )
+            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+            builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(assign1, assign2))))
           } else {
             builder.addEdge(it)
           }
