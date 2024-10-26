@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.List;
@@ -99,7 +100,7 @@ public class CAssignment extends CStatement {
                 ret = BvExprs.Or(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             default:
-                throw new RuntimeException("Bad operator: " + operator);
+                throw new UnsupportedFrontendElementException("Unsupported operator: " + operator);
         }
         parseContext.getMetadata().create(ret, "cType", CComplexType.getType(lValue, parseContext));
         ret = CComplexType.getType(lValue, parseContext).castTo(ret);

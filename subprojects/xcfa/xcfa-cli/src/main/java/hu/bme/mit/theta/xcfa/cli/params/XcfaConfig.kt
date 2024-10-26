@@ -355,11 +355,12 @@ data class OutputConfig(
 ) : Config {
 
     override fun getObjects(): Set<Config> {
-        return super.getObjects() union cOutputConfig.getObjects() union xcfaOutputConfig.getObjects() union witnessConfig.getObjects() union argConfig.getObjects()
+        return super.getObjects() union cOutputConfig.getObjects() union xcfaOutputConfig.getObjects() union chcOutputConfig.getObjects() union witnessConfig.getObjects() union argConfig.getObjects()
     }
 
     override fun update(): Boolean =
-        listOf(cOutputConfig, xcfaOutputConfig, witnessConfig, argConfig).map { it.update() }.any { it }
+        listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, witnessConfig, argConfig).map { it.update() }
+            .any { it }
 }
 
 data class XcfaOutputConfig(
@@ -389,6 +390,9 @@ data class COutputConfig(
 data class WitnessConfig(
     @Parameter(names = ["--disable-witness-generation"])
     var disable: Boolean = false,
+
+    @Parameter(names = ["--only-svcomp-witness"])
+    var svcomp: Boolean = false,
 
     @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
     var concretizerSolver: String = "Z3",

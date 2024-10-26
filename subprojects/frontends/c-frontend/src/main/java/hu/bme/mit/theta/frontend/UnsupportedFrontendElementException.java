@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
 
-import java.util.Optional;
+package hu.bme.mit.theta.frontend;
 
-public interface Result<Pr extends Proof> {
-
-    Pr getProof();
-
-    Optional<Statistics> getStats();
+public class UnsupportedFrontendElementException extends RuntimeException {
+    public UnsupportedFrontendElementException(String message) {
+        super(message);
+    }
 }

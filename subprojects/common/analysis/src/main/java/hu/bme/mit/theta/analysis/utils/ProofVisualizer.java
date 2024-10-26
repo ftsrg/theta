@@ -13,13 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.utils;
 
-import java.util.Optional;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.common.visualization.Graph;
 
-public interface Result<Pr extends Proof> {
+public interface ProofVisualizer<Pr extends Proof> {
 
-    Pr getProof();
-
-    Optional<Statistics> getStats();
+    Graph visualize(Pr proof);
 }

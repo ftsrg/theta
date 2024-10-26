@@ -13,29 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-package hu.bme.mit.theta.frontend.transformation.model.types.complex;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.mdd.MddInterpreter;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 
-import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+public class MddProof implements Proof {
 
-public class CVoid extends CComplexType {
+    private final MddHandle stateSpace;
 
-    public CVoid(CSimpleType origin, ParseContext parseContext) {
-        super(origin, parseContext);
+    private MddProof(MddHandle stateSpace) {
+        this.stateSpace = stateSpace;
     }
 
-    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-        return visitor.visit(this, param);
+    public static MddProof of(MddHandle stateSpace) {
+        return new MddProof(stateSpace);
     }
 
-    @Override
-    public CComplexType getSmallestCommonType(CComplexType type) {
-        return type;
+    public Long size() {
+        return MddInterpreter.calculateNonzeroCount(stateSpace);
     }
 
-    @Override
-    public String getTypeName() {
-        return "void";
+    public MddHandle getMdd() {
+        return stateSpace;
     }
 }

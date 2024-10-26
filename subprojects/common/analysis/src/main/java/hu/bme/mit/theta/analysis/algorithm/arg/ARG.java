@@ -15,28 +15,22 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.arg;
 
+import static com.google.common.base.Preconditions.*;
+import static java.util.stream.Collectors.toList;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Collection;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
-
-/**
- * Represents an abstract reachability graph (ARG). See the related class
- * ArgBuilder.
- */
-public final class ARG<S extends State, A extends Action> implements Witness {
+/** Represents an abstract reachability graph (ARG). See the related class ArgBuilder. */
+public final class ARG<S extends State, A extends Action> implements Proof {
 
     private final Collection<ArgNode<S, A>> initNodes;
     public boolean initialized; // Set by ArgBuilder
@@ -49,7 +43,8 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         this.initialized = false;
     }
 
-    public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
+    public static <S extends State, A extends Action> ARG<S, A> create(
+            final PartialOrd<S> partialOrd) {
         return new ARG<>(partialOrd);
     }
 
@@ -75,7 +70,6 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
     }
 
-
     PartialOrd<S> getPartialOrd() {
         return partialOrd;
     }
@@ -83,24 +77,19 @@ public final class ARG<S extends State, A extends Action> implements Witness {
     ////
 
     /**
-     * Checks if the ARG is complete, i.e., whether it is initialized and all of
-     * its nodes are complete.
+     * Checks if the ARG is complete, i.e., whether it is initialized and all of its nodes are
+     * complete.
      */
     public boolean isComplete() {
         return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
     }
 
-    /**
-     * Checks if the ARG is safe, i.e., whether all of its nodes are safe.
-     */
+    /** Checks if the ARG is safe, i.e., whether all of its nodes are safe. */
     public boolean isSafe() {
         return getNodes().allMatch(ArgNode::isSafe);
     }
 
-    /**
-     * Checks if the ARG is initialized, i.e., all of its initial nodes are
-     * present.
-     */
+    /** Checks if the ARG is initialized, i.e., all of its initial nodes are present. */
     public boolean isInitialized() {
         return initialized;
     }
@@ -115,8 +104,8 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         return initNode;
     }
 
-    public ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
-                                        final boolean target) {
+    public ArgNode<S, A> createSuccNode(
+            final ArgNode<S, A> node, final A action, final S succState, final boolean target) {
         checkNotNull(node);
         checkNotNull(action);
         checkNotNull(succState);
@@ -133,7 +122,8 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         return node;
     }
 
-    private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+    private ArgEdge<S, A> createEdge(
+            final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
         final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
         source.outEdges.add(edge);
         target.inEdge = Optional.of(edge);
@@ -141,9 +131,7 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         return edge;
     }
 
-    /**
-     * Removes a node along with its subtree.
-     */
+    /** Removes a node along with its subtree. */
     public void prune(final ArgNode<S, A> node) {
         checkNotNull(node);
         checkArgument(node.arg == this, "Node does not belong to this ARG");
@@ -162,17 +150,13 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         node.descendants().forEach(ArgNode::clearCoveredNodes);
     }
 
-    /**
-     * Prune the whole ARG, making it uninitialized.
-     */
+    /** Prune the whole ARG, making it uninitialized. */
     public void pruneAll() {
         initNodes.clear();
         this.initialized = false;
     }
 
-    /**
-     * Marks the node for reexpanding without pruning it.
-     */
+    /** Marks the node for reexpanding without pruning it. */
     public void markForReExpansion(final ArgNode<S, A> node) {
         node.expanded = false;
     }
@@ -192,24 +176,19 @@ public final class ARG<S extends State, A extends Action> implements Witness {
 
     ////
 
-    /**
-     * Gets all counterexamples, i.e., traces leading to target nodes.
-     */
+    /** Gets all counterexamples, i.e., traces leading to target nodes. */
     public Stream<ArgTrace<S, A>> getCexs() {
         return getUnsafeNodes().map(ArgTrace::to);
     }
 
-    /**
-     * Gets the size of the ARG, i.e., the number of nodes.
-     */
+    /** Gets the size of the ARG, i.e., the number of nodes. */
     public long size() {
         return getNodes().count();
     }
 
     /**
-     * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
-     * starts (at the initial nodes) from 0. Depth is undefined for an empty
-     * ARG.
+     * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth starts (at the initial
+     * nodes) from 0. Depth is undefined for an empty ARG.
      */
     public int getDepth() {
         final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
@@ -217,12 +196,11 @@ public final class ARG<S extends State, A extends Action> implements Witness {
         return maxOpt.getAsInt();
     }
 
-    /**
-     * Gets the mean branching factor of the expanded nodes.
-     */
+    /** Gets the mean branching factor of the expanded nodes. */
     public double getMeanBranchingFactor() {
         final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
-        final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
+        final double mean =
+                nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
         return mean;
     }
 }

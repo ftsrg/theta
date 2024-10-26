@@ -3,10 +3,6 @@ name: Reformat code
 on: 
   workflow_dispatch:
     inputs:
-      file_mask:
-        description: 'File mask to reformat'
-        required: true
-        default: '*.java,*.kts,*.kt'
       direct-commit:
         type: boolean
         default: false
@@ -28,10 +24,9 @@ jobs:
         token: ${{ steps.generate-token.outputs.token }}
         
     - name: Do reformat
-      uses: leventeBajczi/intellij-idea-format@v1.0
+      uses: ./.github/actions/cache-build
       with:
-        settings-file: "./.idea/codeStyles/Project.xml"
-        file-mask: ${{ inputs.file_mask }}
+        arguments: spotlessApply
 
     - name: Create Pull Request
       if: ${{ !inputs.direct-commit }}

@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -30,18 +33,13 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-/**
- * Basic implementation for the abstractor, relying on an ArgBuilder.
- */
-public class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements Abstractor<S, A, P> {
+/** Basic implementation for the abstractor, relying on an ArgBuilder. */
+public class BasicArgAbstractor<S extends State, A extends Action, P extends Prec>
+        implements ArgAbstractor<S, A, P> {
 
     protected final ArgBuilder<S, A, P> argBuilder;
     protected final Function<? super S, ?> projection;
@@ -49,8 +47,12 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
     protected final StopCriterion<S, A> stopCriterion;
     protected final Logger logger;
 
-    protected BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-                              final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
+    protected BasicArgAbstractor(
+            final ArgBuilder<S, A, P> argBuilder,
+            final Function<? super S, ?> projection,
+            final Waitlist<ArgNode<S, A>> waitlist,
+            final StopCriterion<S, A> stopCriterion,
+            final Logger logger) {
         this.argBuilder = checkNotNull(argBuilder);
         this.projection = checkNotNull(projection);
         this.waitlist = checkNotNull(waitlist);
@@ -64,7 +66,7 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
     }
 
     @Override
-    public ARG<S, A> createArg() {
+    public ARG<S, A> createProof() {
         return argBuilder.createArg();
     }
 
@@ -82,11 +84,16 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
 
         assert arg.isInitialized();
 
-        logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
-                arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
+        logger.write(
+                Level.INFO,
+                "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n",
+                arg.getNodes().count(),
+                arg.getIncompleteNodes().count(),
+                arg.getUnsafeNodes().count());
         logger.write(Level.SUBSTEP, "|  |  Building ARG...");
 
-        final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
+        final Partition<ArgNode<S, A>, ?> reachedSet =
+                Partition.of(n -> projection.apply(n.getState()));
         waitlist.clear();
 
         reachedSet.addAll(arg.getNodes());
@@ -109,8 +116,12 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
         }
 
         logger.write(Level.SUBSTEP, "done%n");
-        logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
-                arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
+        logger.write(
+                Level.INFO,
+                "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n",
+                arg.getNodes().count(),
+                arg.getIncompleteNodes().count(),
+                arg.getUnsafeNodes().count());
 
         waitlist.clear(); // Optimization
 
@@ -174,9 +185,9 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
             return this;
         }
 
-        public BasicAbstractor<S, A, P> build() {
-            return new BasicAbstractor<>(argBuilder, projection, waitlist, stopCriterion, logger);
+        public BasicArgAbstractor<S, A, P> build() {
+            return new BasicArgAbstractor<>(
+                    argBuilder, projection, waitlist, stopCriterion, logger);
         }
     }
-
 }
