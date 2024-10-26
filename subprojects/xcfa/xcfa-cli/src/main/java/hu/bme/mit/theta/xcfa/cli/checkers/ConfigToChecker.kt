@@ -45,6 +45,7 @@ fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: Par
             Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
             Backend.NONE -> SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
             Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
+            Backend.TRACEGEN -> getTracegenChecker(xcfa, mcm, config, logger)
         }
     }
 

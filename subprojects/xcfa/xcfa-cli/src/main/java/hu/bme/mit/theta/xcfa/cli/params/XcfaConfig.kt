@@ -169,6 +169,7 @@ data class BackendConfig<T : SpecBackendConfig>(
             Backend.OC -> OcConfig() as T
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
+            Backend.TRACEGEN -> TracegenConfig() as T
             Backend.NONE -> null
         }
     }
@@ -201,6 +202,13 @@ data class CegarConfig(
     override fun update(): Boolean =
         listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
 }
+
+data class TracegenConfig(
+    @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
+    var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
+
+    val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
+) : SpecBackendConfig
 
 data class CegarAbstractorConfig(
     @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")

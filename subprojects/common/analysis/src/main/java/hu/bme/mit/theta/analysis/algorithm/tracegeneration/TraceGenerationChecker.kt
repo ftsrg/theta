@@ -13,7 +13,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 import kotlin.collections.ArrayList
 
-class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
+class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
@@ -21,7 +21,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
-        fun <S : State, A : Action, P : Prec?> create(
+        fun <S : State, A : Action, P : Prec> create(
             logger: Logger,
             abstractor: Abstractor<S, A, P>,
             getFullTraces: Boolean

@@ -70,6 +70,7 @@ enum class Backend {
     OC,
     LAZY,
     PORTFOLIO,
+    TRACEGEN,
     NONE,
 }
 
@@ -299,6 +300,11 @@ enum class Search {
     };
 
     abstract fun getComp(cfa: XCFA): ArgNodeComparator
+}
+
+enum class TracegenAbstraction{
+    NONE,
+    // TODO add EXPL
 }
 
 enum class InitPrec(

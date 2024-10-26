@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTrace
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 
-class XstsTracegenConfig<S : State, A : Action, P : Prec?> private constructor(
+class XstsTracegenConfig<S : State, A : Action, P : Prec> private constructor(
     private val checker: TraceGenerationChecker<S, A, P>,
     private val prec: P
 ) {
