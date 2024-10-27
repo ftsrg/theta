@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker.Companion.create
 import hu.bme.mit.theta.analysis.expl.*
@@ -69,8 +69,8 @@ class XstsTracegenBuilder(
         val argBuilder = ArgBuilder.create(lts, analysis, target, true)
 
         if (abstraction==TracegenerationAbstraction.VARLIST) {
-            val abstractor: Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
-                BasicAbstractor.builder(argBuilder)
+            val abstractor: BasicArgAbstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
+                BasicArgAbstractor.builder(argBuilder)
                     .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
                     .stopCriterion(StopCriterions.fullExploration())
                     .logger(logger).build()
@@ -105,8 +105,8 @@ class XstsTracegenBuilder(
             }
         } else {
             assert(abstraction==TracegenerationAbstraction.NONE)
-            val abstractor: Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
-                BasicAbstractor.builder(argBuilder)
+            val abstractor: BasicArgAbstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
+                BasicArgAbstractor.builder(argBuilder)
                     .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
                     .stopCriterion(StopCriterions.fullExploration())
                     .logger(logger).build()
@@ -141,7 +141,7 @@ class XstsTracegenBuilder(
         val argBuilder = ArgBuilder.create(lts, analysis, target, true)
 
         val abstractor: Abstractor<XstsState<PredState>?, XstsAction?, PredPrec?> =
-            BasicAbstractor.builder(argBuilder)
+            BasicArgAbstractor.builder(argBuilder)
                 .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
                 .stopCriterion(StopCriterions.fullExploration())
                 .logger(logger).build()

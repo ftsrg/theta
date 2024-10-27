@@ -19,7 +19,7 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.Witness
+import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
@@ -110,7 +110,7 @@ data class AbstractTraceSummary<S : State, A : Action> (
     val abstractSummaryEdges : Collection<AbstractSummaryEdge<S, A>>,
     val summaryNodes : Collection<AbstractSummaryNode<S, A>>,
     val initNode : AbstractSummaryNode<S, A>
-    ) : Witness {
+    ) : Proof {
 }
 
 /**

@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.Checker
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
@@ -33,7 +34,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: ParseContext,
     logger: Logger,
-    uniqueLogger: Logger): SafetyChecker<*, *, XcfaPrec<*>> =
+    uniqueLogger: Logger): Checker<*, XcfaPrec<*>> =
     if (config.backendConfig.inProcess) {
         InProcessChecker(xcfa, config, parseContext, logger)
     } else {

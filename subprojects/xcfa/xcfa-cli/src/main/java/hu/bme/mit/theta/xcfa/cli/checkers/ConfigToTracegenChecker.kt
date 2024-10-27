@@ -22,9 +22,11 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.Checker
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
@@ -70,7 +72,7 @@ fun getTracegenChecker(xcfa: XCFA, mcm: MCM,
     val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
         if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
         else getStackPartialOrder(globalStatePartialOrd)
-    val abstractor: Abstractor<ExprState, ExprAction, Prec> = tracegenConfig.abstractorConfig.domain.abstractor(
+    val abstractor: BasicArgAbstractor<ExprState, ExprAction, Prec> = tracegenConfig.abstractorConfig.domain.abstractor(
         xcfa,
         abstractionSolverInstance,
         tracegenConfig.abstractorConfig.maxEnum,
@@ -81,18 +83,12 @@ fun getTracegenChecker(xcfa: XCFA, mcm: MCM,
         config.inputConfig.property,
         corePartialOrd,
         tracegenConfig.abstractorConfig.havocMemory
-    ) as Abstractor<ExprState, ExprAction, Prec>
+    ) as BasicArgAbstractor<ExprState, ExprAction, Prec>
 
     val tracegenChecker = TraceGenerationChecker.create(logger, abstractor, false)
 
-    return tracegenChecker
-
-    /*object:
-        Checker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
-        override fun check(
-            prec: XcfaPrec<*>): TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction> {
-             return tracegenChecker.check(
-                prec) as TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>
-        }*/
+    return Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> { prec ->
+        tracegenChecker.check(prec)
+            as Result<AbstractTraceSummary<XcfaState<*>, XcfaAction>>
     }
 }

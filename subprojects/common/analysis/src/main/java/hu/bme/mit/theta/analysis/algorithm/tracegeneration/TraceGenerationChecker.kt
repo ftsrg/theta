@@ -5,7 +5,7 @@ import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryBuilder
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
@@ -15,7 +15,7 @@ import kotlin.collections.ArrayList
 
 class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     private val logger: Logger,
-    private val abstractor: Abstractor<S, A, P>,
+    private val abstractor: BasicArgAbstractor<S, A, P>,
     private val getFullTraces : Boolean,
 ) : Checker<AbstractTraceSummary<S, A>, P> {
     private var traces: List<Trace<S, A>> = ArrayList()
@@ -23,7 +23,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     companion object {
         fun <S : State, A : Action, P : Prec> create(
             logger: Logger,
-            abstractor: Abstractor<S, A, P>,
+            abstractor: BasicArgAbstractor<S, A, P>,
             getFullTraces: Boolean
         ): TraceGenerationChecker<S, A, P> {
             return TraceGenerationChecker(logger, abstractor, getFullTraces)
@@ -34,17 +34,15 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
         logger.write(Logger.Level.SUBSTEP, "Printing prec for trace generation...\n" + System.lineSeparator())
         logger.write(Logger.Level.SUBSTEP, prec.toString())
 
-        val arg = abstractor.createArg()
+        val arg = abstractor.createProof()
         abstractor.check(arg, prec)
-
         logger.write(Logger.Level.SUBSTEP, "ARG done, fetching traces...\n")
 
-        // TODO remove xsts specific parts
-
-        // bad node: XSTS specific thing, that the last state (last_env nodes) doubles up and the leaf is covered by the
+        // bad node: mostly XSTS specific thing, that the last state (last_env nodes) doubles up and the leaf is covered by the
         // last_env before which is superfluous.
         // Possible side effect if not handled: possibly a "non-existing leaf" and superfluous traces or just traces that are 1 longer than they should be
-        val badNodes = XstsDoubleEndNodeRemover.collectBadLeaves(arg)
+        val badNodes = DoubleEndNodeRemover.collectBadLeaves(arg)
+        logger.write(Logger.Level.INFO, "Number of bad nodes filtered out: ${badNodes.size}")
 
         // leaves
         val endNodes = arg.nodes.filter { obj: ArgNode<S, A> -> obj.isLeaf }

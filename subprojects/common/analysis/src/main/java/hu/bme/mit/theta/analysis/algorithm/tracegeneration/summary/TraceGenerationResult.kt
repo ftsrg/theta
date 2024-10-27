@@ -22,9 +22,9 @@ import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.Statistics
 import java.util.*
 
-class TraceGenerationResult<W : AbstractTraceSummary<S, A>, S : State, A : Action>(val summary : W) : Result<W> {
+class TraceGenerationResult<Pr : AbstractTraceSummary<S, A>, S : State, A : Action>(val summary : Pr) : Result<Pr> {
 
-    override fun getWitness(): W {
+    override fun getProof(): Pr {
         return summary
     }
 
