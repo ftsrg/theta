@@ -26,14 +26,12 @@ import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryNode
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
@@ -56,6 +54,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
@@ -277,7 +276,7 @@ private fun safetyBackend(
         return result
     } else {
         val stopwatch = Stopwatch.createStarted()
-        val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger) as SafetyChecker<*, *, XcfaPrec<*>>
+        val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
         val result =
             exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
                 checker.check()

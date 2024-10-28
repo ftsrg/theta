@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -40,7 +41,7 @@ fun boundedPortfolio(
     logger: Logger,
     uniqueLogger: Logger): STM {
 
-    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) as SafetyResult<*, *> }
 
     var baseConfig = XcfaConfig(
         inputConfig = InputConfig(

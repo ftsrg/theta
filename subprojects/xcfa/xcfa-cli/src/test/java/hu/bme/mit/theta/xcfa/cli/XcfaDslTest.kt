@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
-import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
@@ -91,14 +91,14 @@ class XcfaDslTest {
             backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
         run {
             val xcfa = getSyncXcfa()
-            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+            val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
                 NullLogger.getInstance())
             val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isSafe)
         }
         run {
             val xcfa = getAsyncXcfa()
-            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+            val checker = getSafetyChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
                 NullLogger.getInstance())
             val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isUnsafe)
