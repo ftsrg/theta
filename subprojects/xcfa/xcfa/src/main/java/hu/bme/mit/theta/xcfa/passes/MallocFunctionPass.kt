@@ -79,11 +79,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             }
             val assign1 =
               AssignStmtLabel(
-                cast(mallocVar, ret.type),
-                cast(
-                  Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                  ret.type,
-                ),
+                mallocVar,
+                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
+                ret.type,
                 invokeLabel.metadata,
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))

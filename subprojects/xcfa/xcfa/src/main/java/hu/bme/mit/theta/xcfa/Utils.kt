@@ -692,8 +692,7 @@ fun Collection<VarDecl<*>>.pointsTo(xcfa: XCFA) =
 
 fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
 
-@Suppress("FunctionName")
-fun <T : Type> AssignStmtLabel(
+private fun <T : Type> assignStmtLabelOf(
   lhs: VarDecl<T>,
   rhs: Expr<T>,
   metadata: MetaData = EmptyMetaData,
@@ -701,7 +700,22 @@ fun <T : Type> AssignStmtLabel(
 
 @Suppress("FunctionName")
 fun <T1 : Type, T2 : Type> AssignStmtLabel(
+  lhs: VarDecl<T1>,
+  rhs: Expr<T2>,
+  metadata: MetaData = EmptyMetaData,
+): StmtLabel = assignStmtLabelOf(lhs, cast(rhs, lhs.type), metadata)
+
+@Suppress("FunctionName")
+fun <T1 : Type, T2 : Type, T3: Type> AssignStmtLabel(
+  lhs: VarDecl<T1>,
+  rhs: Expr<T2>,
+  type: T3,
+  metadata: MetaData = EmptyMetaData,
+): StmtLabel = assignStmtLabelOf(cast(lhs, type), cast(rhs, type), metadata)
+
+@Suppress("FunctionName")
+fun <T1 : Type, T2 : Type> AssignStmtLabel(
   lhs: RefExpr<T1>,
   rhs: Expr<T2>,
   metadata: MetaData = EmptyMetaData,
-): StmtLabel = AssignStmtLabel(cast(lhs.decl as VarDecl<*>, rhs.type), rhs, metadata = metadata)
+): StmtLabel = assignStmtLabelOf(cast(lhs.decl as VarDecl<*>, rhs.type), rhs, metadata)

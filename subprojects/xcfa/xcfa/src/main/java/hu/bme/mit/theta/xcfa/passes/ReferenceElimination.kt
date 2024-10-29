@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
@@ -27,10 +26,12 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.references
@@ -43,10 +44,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
     private var cnt = 2 // counts upwards, uses 3k+2
       get() = field.also { field += 3 }
-  }
 
-  private val XcfaBuilder.pointer: VarDecl<*> by lazy {
-    Var("__sp", CPointer(null, null, parseContext).smtType)
+    private val ptrVar: VarDecl<*> = Var("__sp", Int())
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -64,8 +63,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-            val assign =
-              StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type), cast(lit, varDecl.type)))
+            val assign = AssignStmtLabel(varDecl, lit)
             Pair(varDecl, SequenceLabel(listOf(assign)))
           }
       }
@@ -82,15 +80,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         .associateWith {
           val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
 
-          val ptrVar = builder.parent.pointer
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             Contract.checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach {
-              val initAssign =
-                StmtLabel(Assign(cast(ptrVar, ptrVar.type), cast(initVal, ptrVar.type)))
+              val initAssign = AssignStmtLabel(ptrVar, initVal)
               val newEdges =
                 it.initLoc.outgoingEdges.map {
                   it.withLabel(
@@ -102,17 +98,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             }
           }
           val assign1 =
-            StmtLabel(
-              AssignStmt.of(
-                cast(ptrVar, ptrType.smtType),
-                cast(Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType),
-              )
-            )
+            AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
           val varDecl = Var(it.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-          val assign2 =
-            StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type), cast(ptrVar.ref, varDecl.type)))
+          val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           Pair(varDecl, SequenceLabel(listOf(assign1, assign2)))
         }
     if (
