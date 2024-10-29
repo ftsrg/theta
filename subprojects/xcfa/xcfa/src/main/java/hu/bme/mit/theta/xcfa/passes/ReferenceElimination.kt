@@ -105,43 +105,40 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           Pair(varDecl, SequenceLabel(listOf(assign1, assign2)))
         }
-    if (
-      globalReferredVars.isNotEmpty() &&
-        builder.parent.getInitProcedures().any { it.first == builder }
-    ) { // we only need this for main
-      val initLabels = globalReferredVars.values.flatMap { it.second.labels }
-      val initEdges = builder.initLoc.outgoingEdges
-      val newInitEdges =
-        initEdges.map {
-          it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
-        }
-      initEdges.forEach(builder::removeEdge)
-      newInitEdges.forEach(builder::addEdge)
+
+    if (builder.parent.getInitProcedures().any { it.first == builder }) {
+      addRefInitializations(builder, globalReferredVars) // we only need this for main
     }
+    addRefInitializations(builder, referredVars)
 
-    if (referredVars.isNotEmpty()) {
-      val initLabels = referredVars.values.flatMap { it.second.labels }
-      val initEdges = builder.initLoc.outgoingEdges
-      val newInitEdges =
-        initEdges.map {
-          it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
-        }
-      initEdges.forEach(builder::removeEdge)
-      newInitEdges.forEach(builder::addEdge)
-
+    val allReferredVars = referredVars + globalReferredVars
+    if (allReferredVars.isNotEmpty()) {
       val edges = LinkedHashSet(builder.getEdges())
-      val allReferredVars = referredVars + globalReferredVars
       for (edge in edges) {
         builder.removeEdge(edge)
         builder.addEdge(
           edge.withLabel(edge.label.changeReferredVars(allReferredVars, parseContext))
         )
       }
-
       return DeterministicPass().run(NormalizePass().run(builder))
     }
 
     return builder
+  }
+
+  private fun addRefInitializations(
+    builder: XcfaProcedureBuilder,
+    referredVars: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
+  ) {
+    if (referredVars.isEmpty()) return
+    val initLabels = referredVars.values.flatMap { it.second.labels }
+    val initEdges = builder.initLoc.outgoingEdges
+    val newInitEdges =
+      initEdges.map {
+        it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
+      }
+    initEdges.forEach(builder::removeEdge)
+    newInitEdges.forEach(builder::addEdge)
   }
 
   @JvmOverloads

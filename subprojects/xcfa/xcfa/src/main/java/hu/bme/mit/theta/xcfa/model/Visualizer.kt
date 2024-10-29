@@ -20,14 +20,14 @@ typealias LabelCustomizer = (XcfaEdge) -> String
 fun XCFA.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaToDot(name, procedures.map { DottableProcedure(it) }, edgeLabelCustomizer)
 
-fun XcfaProcedure.toDot(edgeLabelCustomizer: LabelCustomizer?): String =
+fun XcfaProcedure.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaProcedureToDot(name, locs, edges, edgeLabelCustomizer)
 
 @Suppress("unused")
 fun XcfaBuilder.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaToDot(name, getProcedures().map { DottableProcedure(it) }, edgeLabelCustomizer)
 
-fun XcfaProcedureBuilder.toDot(edgeLabelCustomizer: LabelCustomizer?): String =
+fun XcfaProcedureBuilder.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
   xcfaProcedureToDot(name, getLocs(), getEdges(), edgeLabelCustomizer)
 
 private class DottableProcedure(
