@@ -41,6 +41,10 @@ internal fun findAutoConflicts(
   val conflicts = mutableListOf<Reason>()
 
   fun findSimplePath(from: E, to: E): Reason? {
+    if (from.clkId == to.clkId) {
+      if (from.id < to.id) return PoReason
+      return null
+    }
     if (po(from, to)) return PoReason
     return flatRfs.find { po(from, it.from) && po(it.to, to) }?.let { RelationReason(it) }
   }
@@ -50,6 +54,8 @@ internal fun findAutoConflicts(
     for (j in i + 1 until flatRfs.size) {
       val rf1 = flatRfs[i]
       val rf2 = flatRfs[j]
+      val clkId = rf1.from.clkId
+      if (rf1.to.clkId == clkId && rf2.from.clkId == clkId && rf2.to.clkId == clkId) continue
       if (po(rf1.to, rf2.from) && po(rf2.to, rf1.from)) {
         conflicts.add(RelationReason(rf1) and RelationReason(rf2))
       }
@@ -78,6 +84,5 @@ internal fun findAutoConflicts(
   }
 
   logger.writeln(Logger.Level.INFO, "WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
-
   return conflicts
 }

@@ -130,8 +130,8 @@ sealed class Reason {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is Reason) return false
-    if (exprs != other.exprs) return false
-    return true
+    if (other.javaClass != javaClass) return false
+    return exprs == other.exprs
   }
 }
 
@@ -161,6 +161,15 @@ sealed class DerivedReason<E : Event>(
     listOfNotNull(rf.declRef, w.guardExpr, rf.from.interferenceCond(w)) + wRfRelation.exprs
 
   override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
+
+  override fun hashCode(): Int = 31 * (31 * (31 + w.hashCode()) + rf.hashCode()) + wRfRelation.hashCode()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is DerivedReason<*>) return false
+    if (other.javaClass != javaClass) return false
+    return w == other.w && rf == other.rf && wRfRelation == other.wRfRelation
+  }
 }
 
 class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, val wBeforeRf: Reason) :

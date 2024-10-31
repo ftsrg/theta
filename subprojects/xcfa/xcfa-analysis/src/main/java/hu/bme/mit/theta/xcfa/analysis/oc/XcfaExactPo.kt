@@ -33,7 +33,7 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
 
   fun isPo(from: E?, to: E): Boolean {
     from ?: return true
-    if (Edge(from) == Edge(to)) return from.id < to.id
+    if (from.clkId == to.clkId) return true
     val possiblePathPoints = mutableListOf(Edge(from))
     val visited = mutableSetOf<Edge>()
     while (possiblePathPoints.isNotEmpty()) {

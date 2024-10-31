@@ -492,11 +492,4 @@ class XcfaOcChecker(
     private fun exit(msg: String): Nothing {
         error("Feature not supported by OC checker: $msg.")
     }
-
-    fun printXcfa() = xcfa.toDot { edge ->
-        "(${
-            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-                .joinToString(",") { it.const.name }
-        })"
-    }
 }

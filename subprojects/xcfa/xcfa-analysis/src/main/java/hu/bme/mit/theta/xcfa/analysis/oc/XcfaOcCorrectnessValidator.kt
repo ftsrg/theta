@@ -131,6 +131,8 @@ internal class XcfaOcCorrectnessValidator(
 
     var possibleOrders =
       if (from == null) {
+        val clkId = reasons.first().from.clkId
+        if (reasons.all { it.from.clkId == clkId && it.to.clkId == clkId }) return false
         listOf(listOf(reasons.first()) to reasons.slice(1 until reasons.size))
       } else {
         reasons.filter { isPo(from, it.from) }.map { listOf(it) to reasons - it }
