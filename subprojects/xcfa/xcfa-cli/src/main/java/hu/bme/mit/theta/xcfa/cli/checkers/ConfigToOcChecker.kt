@@ -15,15 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
-import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -34,7 +31,7 @@ fun getOcChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
   val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
     XcfaOcChecker(
