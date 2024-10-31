@@ -13,12 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
@@ -36,32 +35,37 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa2chc.toCHC
 
-fun getHornChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, logger: Logger):
-    SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+fun getHornChecker(
+  xcfa: XCFA,
+  mcm: MCM,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
-    checkState(xcfa.isInlined, "Only inlined XCFAs work right now")
-    checkState(xcfa.initProcedures.size == 1, "Only one-procedure XCFAs work right now")
+  checkState(xcfa.isInlined, "Only inlined XCFAs work right now")
+  checkState(xcfa.initProcedures.size == 1, "Only one-procedure XCFAs work right now")
 
-    val hornConfig = config.backendConfig.specConfig as HornConfig
+  val hornConfig = config.backendConfig.specConfig as HornConfig
 
-    val checker = HornChecker(
-        relations = xcfa.initProcedures[0].first.toCHC(),
-        hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
-        logger = logger,
+  val checker =
+    HornChecker(
+      relations = xcfa.initProcedures[0].first.toCHC(),
+      hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
+      logger = logger,
     )
 
-    return SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-        val result = checker.check(null)
+  return SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    val result = checker.check(null)
 
-        if (result.isSafe) {
-            SafetyResult.safe(EmptyWitness.getInstance())
-        } else if (result.isUnsafe) {
-            val proof = result.asUnsafe().cex
-            val state = XcfaState<PtrState<PredState>>(xcfa, mapOf(), PtrState(PredState.of(proof.proofNode.expr)))
-            SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyWitness.getInstance())
-        } else {
-            SafetyResult.unknown()
-        }
+    if (result.isSafe) {
+      SafetyResult.safe(EmptyProof.getInstance())
+    } else if (result.isUnsafe) {
+      val proof = result.asUnsafe().cex
+      val state =
+        XcfaState<PtrState<PredState>>(xcfa, mapOf(), PtrState(PredState.of(proof.proofNode.expr)))
+      SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyProof.getInstance())
+    } else {
+      SafetyResult.unknown()
     }
-
+  }
 }

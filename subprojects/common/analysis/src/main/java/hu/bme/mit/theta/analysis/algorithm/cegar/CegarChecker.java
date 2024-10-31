@@ -15,70 +15,77 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.ProofVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
-
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation,
- * that uses an Abstractor to explore the abstract state space and a Refiner to
- * check counterexamples and refine them if needed. It also provides certain
- * statistics about its execution.
+ * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation, that uses an Abstractor
+ * to explore the abstract state space and a Refiner to check counterexamples and refine them if
+ * needed. It also provides certain statistics about its execution.
  */
-public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
+public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
+        implements SafetyChecker<Pr, C, P> {
 
-    private final Abstractor<S, A, P> abstractor;
-    private final Refiner<S, A, P> refiner;
+    private final Abstractor<P, Pr> abstractor;
+    private final Refiner<P, Pr, C> refiner;
     private final Logger logger;
-    private final ARG<S, A> arg; // TODO I don't think putting the ARG up here from check below causes any issues, but keep it in mind, that it might
+    private final Pr proof;
+    private final ProofVisualizer<? super Pr> proofVisualizer;
 
-    private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
+    private CegarChecker(
+            final Abstractor<P, Pr> abstractor,
+            final Refiner<P, Pr, C> refiner,
+            final Logger logger,
+            final ProofVisualizer<? super Pr> proofVisualizer) {
         this.abstractor = checkNotNull(abstractor);
         this.refiner = checkNotNull(refiner);
         this.logger = checkNotNull(logger);
-        arg = abstractor.createArg();
+        proof = abstractor.createProof();
+        this.proofVisualizer = checkNotNull(proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
-        return new CegarChecker<>(abstractor, refiner, NullLogger.getInstance());
+    public static <P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor,
+            final Refiner<P, Pr, C> refiner,
+            final ProofVisualizer<Pr> proofVisualizer) {
+        return create(abstractor, refiner, NullLogger.getInstance(), proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
-        return new CegarChecker<>(abstractor, refiner, logger);
+    public static <P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor,
+            final Refiner<P, Pr, C> refiner,
+            final Logger logger,
+            final ProofVisualizer<? super Pr> proofVisualizer) {
+        return new CegarChecker<>(abstractor, refiner, logger, proofVisualizer);
     }
 
-    public ARG<S, A> getArg() {
-        return arg;
+    public Pr getProof() {
+        return proof;
     }
 
     @Override
-    public SafetyResult<ARG<S, A>, Trace<S, A>> check(final P initPrec) {
+    public SafetyResult<Pr, C> check(final P initPrec) {
         logger.write(Level.INFO, "Configuration: %s%n", this);
         final Stopwatch stopwatch = Stopwatch.createStarted();
         long abstractorTime = 0;
         long refinerTime = 0;
-        RefinerResult<S, A, P> refinerResult = null;
-        AbstractorResult abstractorResult = null;
+        RefinerResult<P, C> refinerResult = null;
+        AbstractorResult abstractorResult;
         P prec = initPrec;
         int iteration = 0;
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
@@ -88,12 +95,14 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-            abstractorResult = abstractor.check(arg, prec);
+            abstractorResult = abstractor.check(proof, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
-            logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
+            logger.write(
+                    Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
             if (WebDebuggerLogger.enabled()) {
-                String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
+                String argGraph =
+                        JSONWriter.getInstance().writeString(proofVisualizer.visualize(proof));
                 String precString = prec.toString();
                 wdl.addIteration(iteration, argGraph, precString);
             }
@@ -104,35 +113,44 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
                 P lastPrec = prec;
                 logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
                 final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-                refinerResult = refiner.refine(arg, prec);
+                refinerResult = refiner.refine(proof, prec);
                 refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
-                logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
+                logger.write(
+                        Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
 
                 if (refinerResult.isSpurious()) {
                     prec = refinerResult.asSpurious().getRefinedPrec();
                 }
 
                 if (lastPrec.equals(prec)) {
-                    logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration" + System.lineSeparator());
+                    logger.write(
+                            Level.MAINSTEP,
+                            "! Precision did NOT change in this iteration"
+                                    + System.lineSeparator());
                 } else {
-                    logger.write(Level.MAINSTEP, "! Precision DID change in this iteration" + System.lineSeparator());
+                    logger.write(
+                            Level.MAINSTEP,
+                            "! Precision DID change in this iteration" + System.lineSeparator());
                 }
-
             }
 
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         stopwatch.stop();
-        SafetyResult<ARG<S, A>, Trace<S, A>> cegarResult = null;
-        final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
-                refinerTime, iteration);
+        SafetyResult<Pr, C> cegarResult = null;
+        final CegarStatistics stats =
+                new CegarStatistics(
+                        stopwatch.elapsed(TimeUnit.MILLISECONDS),
+                        abstractorTime,
+                        refinerTime,
+                        iteration);
 
-        assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
+        assert abstractorResult.isSafe() || refinerResult.isUnsafe();
 
         if (abstractorResult.isSafe()) {
-            cegarResult = SafetyResult.safe(arg, stats);
+            cegarResult = SafetyResult.safe(proof, stats);
         } else if (refinerResult.isUnsafe()) {
-            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
+            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), proof, stats);
         }
 
         assert cegarResult != null;
@@ -143,6 +161,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(abstractor)
+                .add(refiner)
+                .toString();
     }
 }

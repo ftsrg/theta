@@ -33,7 +33,7 @@ data class WitnessEdge(
   val assumption: Regex?,
 )
 
-class XcfaCliWitnessTest {
+class XcfaCliProofTest {
   companion object {
 
     @JvmStatic

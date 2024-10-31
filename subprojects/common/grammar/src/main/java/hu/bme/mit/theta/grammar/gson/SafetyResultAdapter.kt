@@ -46,7 +46,7 @@ class SafetyResultAdapter(
     initGson()
     writer.beginObject()
     writer.name("arg")
-    gson.toJson(gson.toJsonTree(value.witness), writer)
+    gson.toJson(gson.toJsonTree(value.proof), writer)
     writer.name("stats")
     //        gson.toJson(gson.toJsonTree(value.stats), writer)
     gson.toJson(gson.toJsonTree(Optional.empty<Statistics>()), writer)

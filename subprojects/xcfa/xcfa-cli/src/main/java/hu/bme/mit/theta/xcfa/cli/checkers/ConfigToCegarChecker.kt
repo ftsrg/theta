@@ -22,9 +22,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
@@ -83,7 +83,7 @@ fun getCegarChecker(
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
     else getStackPartialOrder(globalStatePartialOrd)
-  val abstractor: Abstractor<ExprState, ExprAction, Prec> =
+  val abstractor: ArgAbstractor<ExprState, ExprAction, Prec> =
     cegarConfig.abstractorConfig.domain.abstractor(
       xcfa,
       abstractionSolverInstance,
@@ -99,7 +99,7 @@ fun getCegarChecker(
         corePartialOrd
       },
       cegarConfig.abstractorConfig.havocMemory,
-    ) as Abstractor<ExprState, ExprAction, Prec>
+    ) as ArgAbstractor<ExprState, ExprAction, Prec>
 
   val ref: ExprTraceChecker<Refutation> =
     cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
@@ -110,7 +110,7 @@ fun getCegarChecker(
     ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
-  val refiner: Refiner<ExprState, ExprAction, Prec> =
+  val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
     if (cegarConfig.refinerConfig.refinement == Refinement.MULTI_SEQ)
       if (cegarConfig.porLevel == POR.AASPOR)
         MultiExprTraceRefiner.create(
@@ -145,17 +145,17 @@ fun getCegarChecker(
 
   val cegarChecker =
     if (cegarConfig.porLevel == POR.AASPOR)
-      CegarChecker.create(
+      ArgCegarChecker.create(
         abstractor,
         AasporRefiner.create(refiner, cegarConfig.refinerConfig.pruneStrategy, ignoredVarRegistry),
         logger,
       )
-    else CegarChecker.create(abstractor, refiner, logger)
+    else ArgCegarChecker.create(abstractor, refiner, logger)
 
   // initialize monitors
   MonitorCheckpoint.reset()
   if (cegarConfig.cexMonitor == CexMonitorOptions.CHECK) {
-    val cm = CexMonitor(logger, cegarChecker.arg)
+    val cm = CexMonitor(logger, cegarChecker.proof)
     MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
   }
 

@@ -19,7 +19,7 @@ import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
 import hu.bme.mit.theta.analysis.EmptyCex
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
@@ -42,13 +42,13 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   val config: XcfaConfig<F, B>,
   val parseContext: ParseContext,
   val logger: Logger,
-) : SafetyChecker<EmptyWitness, EmptyCex, XcfaPrec<*>> {
+) : SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> {
 
-  override fun check(prec: XcfaPrec<*>?): SafetyResult<EmptyWitness, EmptyCex> {
+  override fun check(prec: XcfaPrec<*>?): SafetyResult<EmptyProof, EmptyCex> {
     return check()
   }
 
-  override fun check(): SafetyResult<EmptyWitness, EmptyCex> {
+  override fun check(): SafetyResult<EmptyProof, EmptyCex> {
     val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
 
     val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
@@ -125,7 +125,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
     }
     tempDir.toFile().deleteRecursively()
 
-    return booleanSafetyResult as SafetyResult<EmptyWitness, EmptyCex>
+    return booleanSafetyResult as SafetyResult<EmptyProof, EmptyCex>
   }
 
   private class ProcessHandler : NuAbstractProcessHandler() {
@@ -145,10 +145,10 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
         stdoutRemainder += str
         if (stdoutRemainder.contains("SafetyResult Safe")) {
-          safetyResult = SafetyResult.safe<EmptyWitness, EmptyCex>(EmptyWitness.getInstance())
+          safetyResult = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
         }
         if (stdoutRemainder.contains("SafetyResult Unsafe")) {
-          safetyResult = SafetyResult.unsafe(EmptyCex.getInstance(), EmptyWitness.getInstance())
+          safetyResult = SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
         }
 
         val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""

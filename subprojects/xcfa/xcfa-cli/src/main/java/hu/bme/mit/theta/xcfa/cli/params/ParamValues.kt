@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -110,7 +110,7 @@ enum class Domain(
       errorDetectionType: ErrorDetection,
       partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
       isHavoc: Boolean,
-    ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
+    ) -> ArgAbstractor<out ExprState, out ExprAction, out Prec>,
   val itpPrecRefiner:
     (exprSplitter: ExprSplitter) -> PrecRefiner<
         out ExprState,

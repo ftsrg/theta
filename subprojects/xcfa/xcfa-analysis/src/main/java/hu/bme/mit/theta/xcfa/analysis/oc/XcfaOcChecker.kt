@@ -13,18 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.Cex
-import hu.bme.mit.theta.analysis.EmptyCex
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.ConstDecl
@@ -49,7 +48,9 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
@@ -62,7 +63,7 @@ class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
     conflictInput: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
     private val autoConflictConfig: AutoConflictFinderConfig
-) : SafetyChecker<EmptyWitness, Cex, XcfaPrec<UnitPrec>> {
+) : SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -85,15 +86,17 @@ class XcfaOcChecker(
 
     override fun check(
         prec: XcfaPrec<UnitPrec>?
-    ): SafetyResult<EmptyWitness, Cex> = let {
+    ): SafetyResult<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
         if (xcfa.initProcedures.size > 1)
             exit("multiple entry points")
 
         logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
-        if (!addToSolver(ocChecker.solver)) // no violations in the model
-            return@let SafetyResult.safe<EmptyWitness, Cex>(EmptyWitness.getInstance())
+        if (!addToSolver(ocChecker.solver))
+            return@let SafetyResult.safe<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(
+                EmptyProof.getInstance()
+            ) // no violations in the model
 
         // "Manually" add some conflicts
         logger.writeln(Logger.Level.INFO, "Auto conflict time (ms): " + measureTime {
@@ -124,14 +127,14 @@ class XcfaOcChecker(
                         }.inWholeMilliseconds
                     }"
                 )
-                SafetyResult.safe(EmptyWitness.getInstance())
+                SafetyResult.safe(EmptyProof.getInstance())
             }
 
             status?.isSat == true -> {
                 if (ocChecker is XcfaOcCorrectnessValidator)
                     return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyWitness.getInstance())
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-                SafetyResult.unsafe<EmptyWitness, Cex>(trace, EmptyWitness.getInstance())
+                SafetyResult.unsafe(trace, EmptyProof.getInstance())
             }
 
             else -> SafetyResult.unknown()

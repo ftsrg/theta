@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -34,7 +34,7 @@ fun getBoundedChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+): SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
   val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
@@ -57,7 +57,7 @@ fun getBoundedChecker(
     biValToAction = { val1, val2 -> xcfa.valToAction(val1, val2) },
     logger = logger,
   )
-    as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
+    as SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 }
 
 private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {

@@ -13,7 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-public interface Witness {
-}
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+
+/**
+ * Common interface for the abstractor component. It can create an initial ARG and check an ARG with
+ * a given precision.
+ */
+public interface ArgAbstractor<S extends State, A extends Action, P extends Prec>
+        extends Abstractor<P, ARG<S, A>> {}

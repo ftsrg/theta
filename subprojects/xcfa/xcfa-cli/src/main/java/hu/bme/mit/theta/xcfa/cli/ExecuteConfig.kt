@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
@@ -216,14 +216,14 @@ private fun backend(
   throwDontExit: Boolean,
 ): SafetyResult<*, *> =
   if (config.backendConfig.backend == Backend.NONE) {
-    SafetyResult.unknown<EmptyWitness, EmptyCex>()
+    SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
     if (
       xcfa.procedures.all {
         it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
       }
     ) {
-      val result = SafetyResult.safe<EmptyWitness, EmptyCex>(EmptyWitness.getInstance())
+      val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.write(Logger.Level.INFO, "Input is trivially safe\n")
 
       logger.write(RESULT, result.toString() + "\n")
@@ -243,12 +243,12 @@ private fun backend(
           }
           .let { result ->
             when {
-              result.isSafe &&
-                LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
+              result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
+                // cannot report safe if force unroll was used
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
-                else SafetyResult.unknown<EmptyWitness, EmptyCex>()
+                SafetyResult.unknown<EmptyProof, EmptyCex>()
               }
 
               else -> result
@@ -352,12 +352,11 @@ private fun postVerificationLogging(
 
       // TODO eliminate the need for the instanceof check
       if (
-        !config.outputConfig.argConfig.disable &&
-          safetyResult.witness is ARG<out State, out Action>?
+        !config.outputConfig.argConfig.disable && safetyResult.proof is ARG<out State, out Action>?
       ) {
         val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
         val g: Graph =
-          ArgVisualizer.getDefault().visualize(safetyResult.witness as ARG<out State, out Action>?)
+          ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>?)
         argFile.writeText(GraphvizWriter.getInstance().writeString(g))
       }
 

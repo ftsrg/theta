@@ -16,9 +16,9 @@
 package hu.bme.mit.theta.analysis.algorithm.chc
 
 import hu.bme.mit.theta.analysis.Cex
+import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.Witness
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.Relation
@@ -29,7 +29,7 @@ import hu.bme.mit.theta.solver.ProofNode
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 
-data class Invariant(val lookup: Map<Relation, Expr<BoolType>>) : Witness
+data class Invariant(val lookup: Map<Relation, Expr<BoolType>>) : Proof
 
 data class CexTree(val proofNode: ProofNode) : Cex {
 

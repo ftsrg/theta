@@ -17,9 +17,9 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
@@ -93,7 +93,7 @@ class XcfaPredAnalysisTest {
         lts,
         ErrorDetection.ERROR_LOCATION,
       )
-        as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+        as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val precRefiner =
       XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
@@ -110,9 +110,9 @@ class XcfaPredAnalysisTest {
         precRefiner,
         PruneStrategy.FULL,
         NullLogger.getInstance(),
-      ) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+      ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-    val cegarChecker = CegarChecker.create(abstractor, refiner)
+    val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
 
     val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
@@ -150,7 +150,7 @@ class XcfaPredAnalysisTest {
         lts,
         ErrorDetection.ERROR_LOCATION,
       )
-        as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+        as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val precRefiner =
       XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
@@ -167,9 +167,9 @@ class XcfaPredAnalysisTest {
         precRefiner,
         PruneStrategy.FULL,
         NullLogger.getInstance(),
-      ) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+      ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-    val cegarChecker = CegarChecker.create(abstractor, refiner)
+    val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
 
     val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
@@ -206,7 +206,7 @@ class XcfaPredAnalysisTest {
         lts,
         ErrorDetection.ERROR_LOCATION,
       )
-        as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+        as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val precRefiner =
       XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
@@ -223,9 +223,9 @@ class XcfaPredAnalysisTest {
         precRefiner,
         PruneStrategy.FULL,
         ConsoleLogger(Logger.Level.DETAIL),
-      ) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+      ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-    val cegarChecker = CegarChecker.create(abstractor, refiner)
+    val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
 
     val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
@@ -263,7 +263,7 @@ class XcfaPredAnalysisTest {
         lts,
         ErrorDetection.ERROR_LOCATION,
       )
-        as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+        as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val precRefiner =
       XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
@@ -282,10 +282,10 @@ class XcfaPredAnalysisTest {
         PruneStrategy.FULL,
         NullLogger.getInstance(),
         atomicNodePruner,
-      ) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+      ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val cegarChecker =
-      CegarChecker.create(
+      ArgCegarChecker.create(
         abstractor,
         AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()),
       )
@@ -325,7 +325,7 @@ class XcfaPredAnalysisTest {
         lts,
         ErrorDetection.ERROR_LOCATION,
       )
-        as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+        as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
     val precRefiner =
       XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(
@@ -342,9 +342,9 @@ class XcfaPredAnalysisTest {
         precRefiner,
         PruneStrategy.FULL,
         NullLogger.getInstance(),
-      ) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
+      ) as ArgRefiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-    val cegarChecker = CegarChecker.create(abstractor, refiner)
+    val cegarChecker = ArgCegarChecker.create(abstractor, refiner)
 
     val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
