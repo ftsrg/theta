@@ -20,6 +20,11 @@ import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.ExprUtils
 
+/**
+ * Collects vars from a statement to a fixpoint. Collects recursively only variables that are
+ * dependant on the input set on themselves. To collect all variables from a statement, use
+ * [hu.bme.mit.theta.core.utils.StmtUtils.getVars] instead.
+ */
 class VarCollectorStmtVisitor : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
 
   companion object {

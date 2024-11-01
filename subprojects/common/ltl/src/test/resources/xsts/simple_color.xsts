@@ -1,0 +1,24 @@
+type Colors : { Red, Green, Blue}
+var envColor : Colors = Red
+var modelColor : Colors = Red
+
+trans {
+    choice {
+        assume envColor == Red;
+        modelColor := Green;
+    } or {
+        assume envColor == Green;
+        modelColor := Blue;
+    } or {
+        assume envColor == Blue;
+        modelColor := Red;
+    }
+}
+
+init{}
+
+env {
+    havoc envColor;
+}
+
+prop{true}

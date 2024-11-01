@@ -15,30 +15,30 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction
 
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGEdge
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.LDGTrace
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGEdge
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGNode
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
 
-typealias BacktrackResult<S, A> = Pair<Set<LDGNode<S, A>>?, List<LDGTrace<S, A>>?>
+typealias BacktrackResult<S, A> = Pair<Set<ASGNode<S, A>>?, List<ASGTrace<S, A>>?>
 
 fun <S : ExprState, A : ExprAction> combineLassos(results: Collection<BacktrackResult<S, A>>) =
-  Pair(setOf<LDGNode<S, A>>(), results.flatMap { it.second ?: emptyList() })
+  Pair(setOf<ASGNode<S, A>>(), results.flatMap { it.second ?: emptyList() })
 
 abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
 
   internal fun <S : ExprState, A : ExprAction> expandFromInitNodeUntilTarget(
-    initNode: LDGNode<S, A>,
+    initNode: ASGNode<S, A>,
     stopAtLasso: Boolean,
     expand: NodeExpander<S, A>,
     logger: Logger,
-  ): Collection<LDGTrace<S, A>> {
+  ): Collection<ASGTrace<S, A>> {
     return expandThroughNode(
         emptyMap(),
-        LDGEdge(null, initNode, null, false),
+        ASGEdge(null, initNode, null, false),
         emptyList(),
         0,
         stopAtLasso,
@@ -49,15 +49,15 @@ abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
   }
 
   private fun <S : ExprState, A : ExprAction> expandThroughNode(
-    pathSoFar: Map<LDGNode<S, A>, Int>,
-    incomingEdge: LDGEdge<S, A>,
-    edgesSoFar: List<LDGEdge<S, A>>,
+    pathSoFar: Map<ASGNode<S, A>, Int>,
+    incomingEdge: ASGEdge<S, A>,
+    edgesSoFar: List<ASGEdge<S, A>>,
     targetsSoFar: Int,
     stopAtLasso: Boolean,
     expand: NodeExpander<S, A>,
     logger: Logger,
   ): BacktrackResult<S, A> {
-    val expandingNode: LDGNode<S, A> = incomingEdge.target
+    val expandingNode: ASGNode<S, A> = incomingEdge.target
     logger.write(
       Logger.Level.VERBOSE,
       "Expanding through %s edge to %s node with state %s%n",
@@ -86,7 +86,7 @@ abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
           targetsThatFar,
         )
       }
-      val lasso: LDGTrace<S, A> = LDGTrace(edgesSoFar + incomingEdge, expandingNode)
+      val lasso: ASGTrace<S, A> = ASGTrace(edgesSoFar + incomingEdge, expandingNode)
       logger.write(Logger.Level.DETAIL, "Built the following lasso:%n")
       lasso.print(logger, Logger.Level.DETAIL)
       return BacktrackResult(null, listOf(lasso))
@@ -102,7 +102,7 @@ abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
         }
     val expandStrategy: NodeExpander<S, A> =
       if (needsTraversing) expand else { _ -> mutableSetOf() }
-    val outgoingEdges: Collection<LDGEdge<S, A>> = expandStrategy(expandingNode)
+    val outgoingEdges: Collection<ASGEdge<S, A>> = expandStrategy(expandingNode)
     val results: MutableList<BacktrackResult<S, A>> = mutableListOf()
     for (newEdge in outgoingEdges) {
       val result: BacktrackResult<S, A> =
@@ -120,7 +120,7 @@ abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
     }
     val result: BacktrackResult<S, A> = combineLassos(results)
     if (result.second != null) return result
-    val validLoopHondas: Collection<LDGNode<S, A>> = results.flatMap { it.first ?: emptyList() }
+    val validLoopHondas: Collection<ASGNode<S, A>> = results.flatMap { it.first ?: emptyList() }
     expandingNode.validLoopHondas.addAll(validLoopHondas)
     return BacktrackResult(validLoopHondas.toSet(), null)
   }
@@ -129,13 +129,13 @@ abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
 object GdfsSearchStrategy : AbstractSearchStrategy() {
 
   override fun <S : ExprState, A : ExprAction> search(
-    initNodes: Collection<LDGNode<S, A>>,
+    initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
     logger: Logger,
-  ): Collection<LDGTrace<S, A>> {
+  ): Collection<ASGTrace<S, A>> {
     for (initNode in initNodes) {
-      val possibleTraces: Collection<LDGTrace<S, A>> =
+      val possibleTraces: Collection<ASGTrace<S, A>> =
         expandFromInitNodeUntilTarget(initNode, true, expand, logger)
       if (!possibleTraces.isEmpty()) {
         return possibleTraces
@@ -148,7 +148,7 @@ object GdfsSearchStrategy : AbstractSearchStrategy() {
 object FullSearchStrategy : AbstractSearchStrategy() {
 
   override fun <S : ExprState, A : ExprAction> search(
-    initNodes: Collection<LDGNode<S, A>>,
+    initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
     logger: Logger,

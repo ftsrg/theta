@@ -15,22 +15,18 @@
  */
 package hu.bme.mit.theta.cfa;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.lang.String.format;
 
-import java.util.*;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
+import java.util.*;
 
 /**
  * Represents an immutable Control Flow Automata (CFA). Use the builder class to create a new
@@ -45,6 +41,7 @@ public final class CFA {
     private final Collection<VarDecl<?>> vars;
     private final Collection<Loc> locs;
     private final Collection<Edge> edges;
+    private final Collection<Edge> acceptingEdges;
 
     private CFA(final Builder builder) {
         initLoc = builder.initLoc;
@@ -52,14 +49,18 @@ public final class CFA {
         errorLoc = Optional.ofNullable(builder.errorLoc);
         locs = ImmutableSet.copyOf(builder.locs);
         edges = ImmutableList.copyOf(builder.edges);
-        vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream())
-                .collect(toImmutableSet());
+        vars =
+                edges.stream()
+                        .flatMap(e -> StmtUtils.getVars(e.getStmt()).stream())
+                        .collect(toImmutableSet());
         Set<String> varNames = Containers.createSet();
         for (var v : vars) {
-            checkArgument(!varNames.contains(v.getName()),
+            checkArgument(
+                    !varNames.contains(v.getName()),
                     "Variable with name '" + v.getName() + "' already exists in the CFA.");
             varNames.add(v.getName());
         }
+        acceptingEdges = builder.acceptingEdges;
     }
 
     public Loc getInitLoc() {
@@ -74,9 +75,7 @@ public final class CFA {
         return errorLoc;
     }
 
-    /**
-     * Get the variables appearing on the edges of the CFA.
-     */
+    /** Get the variables appearing on the edges of the CFA. */
     public Collection<VarDecl<?>> getVars() {
         return vars;
     }
@@ -89,15 +88,23 @@ public final class CFA {
         return edges;
     }
 
+    public Collection<Edge> getAcceptingEdges() {
+        return acceptingEdges;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder("process").aligned().addAll(vars).body()
+        return Utils.lispStringBuilder("process")
+                .aligned()
+                .addAll(vars)
+                .body()
                 .addAll(locs.stream().map(this::locToString))
-                .addAll(edges.stream().map(this::edgeToString)).toString();
+                .addAll(edges.stream().map(this::edgeToString))
+                .toString();
     }
 
     private String locToString(final Loc loc) {
@@ -113,9 +120,11 @@ public final class CFA {
     }
 
     private String edgeToString(final Edge edge) {
-        return Utils.lispStringBuilder("edge").add(edge.getSource().getName())
+        return Utils.lispStringBuilder("edge")
+                .add(edge.getSource().getName())
                 .add(edge.getTarget().getName())
-                .add(edge.getStmt()).toString();
+                .add(edge.getStmt())
+                .toString();
     }
 
     public static final class Loc {
@@ -185,6 +194,7 @@ public final class CFA {
 
         private final Collection<Loc> locs;
         private final Collection<Edge> edges;
+        private final Collection<Edge> acceptingEdges;
 
         private final Set<String> locNames;
 
@@ -196,6 +206,7 @@ public final class CFA {
             locs = Containers.createSet();
             locNames = Containers.createSet();
             edges = new LinkedList<>();
+            acceptingEdges = Containers.createSet();
             built = false;
         }
 
@@ -240,7 +251,8 @@ public final class CFA {
 
         public Loc createLoc(final String name) {
             checkNotBuilt();
-            checkArgument(!locNames.contains(name),
+            checkArgument(
+                    !locNames.contains(name),
                     "Location with name '" + name + "' already exists in the CFA.");
             final Loc loc = new Loc(name);
             locs.add(loc);
@@ -264,14 +276,23 @@ public final class CFA {
             return edge;
         }
 
+        public void setAcceptingEdge(final Edge acceptingEdge) {
+            checkNotBuilt();
+            checkNotNull(acceptingEdge);
+            checkArgument(edges.contains(acceptingEdge), "Accepting edge not present in CFA.");
+            acceptingEdges.add(acceptingEdge);
+        }
+
         public CFA build() {
             checkState(initLoc != null, "Initial location must be set.");
             if (finalLoc != null) {
-                checkState(finalLoc.getOutEdges().isEmpty(),
+                checkState(
+                        finalLoc.getOutEdges().isEmpty(),
                         "Final location cannot have outgoing edges.");
             }
             if (errorLoc != null) {
-                checkState(errorLoc.getOutEdges().isEmpty(),
+                checkState(
+                        errorLoc.getOutEdges().isEmpty(),
                         "Error location cannot have outgoing edges.");
             }
             built = true;
@@ -282,5 +303,4 @@ public final class CFA {
             checkState(!built, "A CFA was already built.");
         }
     }
-
 }

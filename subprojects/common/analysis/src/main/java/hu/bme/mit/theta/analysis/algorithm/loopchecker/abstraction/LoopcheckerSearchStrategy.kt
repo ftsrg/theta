@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction
 
+import hu.bme.mit.theta.analysis.algorithm.asg.ASG
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGEdge
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.LDGTrace
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDG
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGEdge
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGNode
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 
-typealias NodeExpander<S, A> = (LDGNode<S, A>) -> Collection<LDGEdge<S, A>>
+typealias NodeExpander<S, A> = (ASGNode<S, A>) -> Collection<ASGEdge<S, A>>
 
 enum class LoopcheckerSearchStrategy(private val strategy: ILoopcheckerSearchStrategy) {
   GDFS(GdfsSearchStrategy),
@@ -38,19 +38,19 @@ enum class LoopcheckerSearchStrategy(private val strategy: ILoopcheckerSearchStr
   }
 
   fun <S : ExprState, A : ExprAction> search(
-    ldg: LDG<S, A>,
+    ASG: ASG<S, A>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
     logger: Logger = NullLogger.getInstance(),
-  ): Collection<LDGTrace<S, A>> = strategy.search(ldg.initNodes, target, expand, logger)
+  ): Collection<ASGTrace<S, A>> = strategy.search(ASG.initNodes, target, expand, logger)
 }
 
 interface ILoopcheckerSearchStrategy {
 
   fun <S : ExprState, A : ExprAction> search(
-    initNodes: Collection<LDGNode<S, A>>,
+    initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
     logger: Logger,
-  ): Collection<LDGTrace<S, A>>
+  ): Collection<ASGTrace<S, A>>
 }

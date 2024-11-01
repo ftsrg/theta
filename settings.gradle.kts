@@ -21,6 +21,8 @@ include(
     "common/core",
     "common/grammar",
     "common/multi-tests",
+    "common/ltl",
+    "common/ltl-cli",
 
     "frontends/c-frontend",
     "frontends/petrinet-frontend/petrinet-model",

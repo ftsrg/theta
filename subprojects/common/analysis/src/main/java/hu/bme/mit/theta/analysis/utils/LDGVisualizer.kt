@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.utils
 
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.LDGTrace
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDG
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGEdge
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASG
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGEdge
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.visualization.*
@@ -26,34 +26,34 @@ import hu.bme.mit.theta.common.visualization.Alignment.LEFT
 import hu.bme.mit.theta.common.visualization.Shape.RECTANGLE
 import java.awt.Color
 
-class LdgVisualizer<S : ExprState, A : ExprAction>(
+class AsgVisualizer<S : ExprState, A : ExprAction>(
   private val stateToString: (S) -> String,
   private val actionToString: (A) -> String,
-) : ProofVisualizer<LDG<S, A>> {
+) : ProofVisualizer<ASG<S, A>> {
 
-  private var traceNodes: MutableSet<LDGNode<out S, out A>> = mutableSetOf()
-  private var traceEdges: MutableSet<LDGEdge<out S, out A>> = mutableSetOf()
+  private var traceNodes: MutableSet<ASGNode<out S, out A>> = mutableSetOf()
+  private var traceEdges: MutableSet<ASGEdge<out S, out A>> = mutableSetOf()
 
-  override fun visualize(ldg: LDG<S, A>): Graph {
+  override fun visualize(ASG: ASG<S, A>): Graph {
     traceNodes = mutableSetOf()
     traceEdges = mutableSetOf()
-    return createVisualization(ldg)
+    return createVisualization(ASG)
   }
 
-  fun visualize(ldg: LDG<out S, out A>, trace: LDGTrace<out S, out A>): Graph {
+  fun visualize(ASG: ASG<out S, out A>, trace: ASGTrace<out S, out A>): Graph {
     traceEdges = mutableSetOf()
     traceEdges.addAll(trace.edges)
     traceNodes = mutableSetOf()
     trace.edges.map { it.source!! }.forEach(traceNodes::add)
-    return createVisualization(ldg)
+    return createVisualization(ASG)
   }
 
-  private fun createVisualization(ldg: LDG<out S, out A>): Graph {
+  private fun createVisualization(ASG: ASG<out S, out A>): Graph {
     val graph = Graph(LDG_ID, LDG_LABEL)
 
-    val traversed: MutableSet<LDGNode<out S, out A>> = mutableSetOf()
+    val traversed: MutableSet<ASGNode<out S, out A>> = mutableSetOf()
 
-    for (initNode in ldg.initNodes) {
+    for (initNode in ASG.initNodes) {
       traverse(graph, initNode, traversed)
       val nAttributes =
         NodeAttributes.builder()
@@ -78,8 +78,8 @@ class LdgVisualizer<S : ExprState, A : ExprAction>(
 
   private fun traverse(
     graph: Graph,
-    node: LDGNode<out S, out A>,
-    traversed: MutableSet<LDGNode<out S, out A>>,
+    node: ASGNode<out S, out A>,
+    traversed: MutableSet<ASGNode<out S, out A>>,
   ) {
     if (traversed.contains(node)) {
       return

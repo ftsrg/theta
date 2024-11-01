@@ -45,7 +45,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
     private final Refiner<P, Pr, C> refiner;
     private final Logger logger;
     private final Pr proof;
-    private final ProofVisualizer<? super Pr> proofVisualizer;
+    public final ProofVisualizer<? super Pr> proofVisualizer;
 
     private CegarChecker(
             final Abstractor<P, Pr> abstractor,

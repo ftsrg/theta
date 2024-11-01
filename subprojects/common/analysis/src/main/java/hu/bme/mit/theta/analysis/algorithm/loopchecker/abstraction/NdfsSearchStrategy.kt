@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction
 
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGEdge
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.LDGTrace
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGEdge
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.ldg.LDGNode
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
@@ -26,11 +26,11 @@ import hu.bme.mit.theta.common.logging.Logger
 object NdfsSearchStrategy : ILoopcheckerSearchStrategy {
 
   override fun <S : ExprState, A : ExprAction> search(
-    initNodes: Collection<LDGNode<S, A>>,
+    initNodes: Collection<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
     logger: Logger,
-  ): Collection<LDGTrace<S, A>> {
+  ): Collection<ASGTrace<S, A>> {
     for (node in initNodes) {
       for (edge in expand(node)) {
         val result = blueSearch(edge, emptyList(), mutableSetOf(), mutableSetOf(), target, expand)
@@ -41,18 +41,18 @@ object NdfsSearchStrategy : ILoopcheckerSearchStrategy {
   }
 
   private fun <S : ExprState, A : ExprAction> redSearch(
-    seed: LDGNode<S, A>,
-    edge: LDGEdge<S, A>,
-    trace: List<LDGEdge<S, A>>,
-    redNodes: MutableSet<LDGNode<S, A>>,
+    seed: ASGNode<S, A>,
+    edge: ASGEdge<S, A>,
+    trace: List<ASGEdge<S, A>>,
+    redNodes: MutableSet<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-  ): List<LDGEdge<S, A>> {
+  ): List<ASGEdge<S, A>> {
     val targetNode = edge.target
     if (targetNode.state.isBottom) {
       return emptyList()
     }
-    if (targetNode == seed) {
+    if (targetNode == seed && trace.isNotEmpty()) {
       return trace + edge
     }
     if (redNodes.contains(targetNode)) {
@@ -60,7 +60,7 @@ object NdfsSearchStrategy : ILoopcheckerSearchStrategy {
     }
     redNodes.add(edge.target)
     for (nextEdge in expand(targetNode)) {
-      val redSearch: List<LDGEdge<S, A>> =
+      val redSearch: List<ASGEdge<S, A>> =
         redSearch(seed, nextEdge, trace + edge, redNodes, target, expand)
       if (redSearch.isNotEmpty()) return redSearch
     }
@@ -68,13 +68,13 @@ object NdfsSearchStrategy : ILoopcheckerSearchStrategy {
   }
 
   private fun <S : ExprState, A : ExprAction> blueSearch(
-    edge: LDGEdge<S, A>,
-    trace: List<LDGEdge<S, A>>,
-    blueNodes: MutableSet<LDGNode<S, A>>,
-    redNodes: Set<LDGNode<S, A>>,
+    edge: ASGEdge<S, A>,
+    trace: List<ASGEdge<S, A>>,
+    blueNodes: MutableSet<ASGNode<S, A>>,
+    redNodes: Set<ASGNode<S, A>>,
     target: AcceptancePredicate<S, A>,
     expand: NodeExpander<S, A>,
-  ): Collection<LDGTrace<S, A>> {
+  ): Collection<ASGTrace<S, A>> {
     val targetNode = edge.target
     if (targetNode.state.isBottom) {
       return emptyList()
@@ -83,18 +83,20 @@ object NdfsSearchStrategy : ILoopcheckerSearchStrategy {
       // Edge source can only be null artificially, and is only used when calling other search
       // strategies
       val accNode = if (targetNode.accepting) targetNode else edge.source!!
-      val redSearch: List<LDGEdge<S, A>> =
-        redSearch(accNode, edge, trace, mutableSetOf(), target, expand)
-      if (redSearch.isNotEmpty()) return setOf(LDGTrace(redSearch, accNode))
+      for (outEdge in expand(edge.target)) {
+        val redSearch: List<ASGEdge<S, A>> =
+          redSearch(accNode, outEdge, trace + edge, mutableSetOf(), target, expand)
+        if (redSearch.isNotEmpty()) return setOf(ASGTrace(redSearch, accNode))
+      }
     }
     if (blueNodes.contains(targetNode)) {
       return emptyList()
     }
     blueNodes.add(edge.target)
     for (nextEdge in expand(targetNode)) {
-      val blueSearch: Collection<LDGTrace<S, A>> =
+      val blueSearch: Collection<ASGTrace<S, A>> =
         blueSearch(nextEdge, trace + edge, blueNodes, redNodes, target, expand)
-      if (!blueSearch.isEmpty()) return blueSearch
+      if (blueSearch.isNotEmpty()) return blueSearch
     }
     return emptyList()
   }
