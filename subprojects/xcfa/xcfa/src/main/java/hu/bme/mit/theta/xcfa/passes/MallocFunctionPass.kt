@@ -20,10 +20,10 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
@@ -34,10 +34,17 @@ import hu.bme.mit.theta.xcfa.model.*
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
-    private val mallocVar: VarDecl<*> = Var("__malloc", Int())
+    private lateinit var mallocVar: VarDecl<*>
+
+    private fun initializeMallocVar(parseContext: ParseContext) {
+      if (!::mallocVar.isInitialized) {
+        mallocVar = Var("__malloc", CPointer(null, null, parseContext).smtType)
+      }
+    }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    initializeMallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)

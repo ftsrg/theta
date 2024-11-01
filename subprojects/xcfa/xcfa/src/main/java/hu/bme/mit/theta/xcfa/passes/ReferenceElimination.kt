@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -45,10 +44,17 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     private var cnt = 2 // counts upwards, uses 3k+2
       get() = field.also { field += 3 }
 
-    private val ptrVar: VarDecl<*> = Var("__sp", Int())
+    private lateinit var ptrVar: VarDecl<*>
+
+    private fun initializePtrVar(parseContext: ParseContext) {
+      if (!::ptrVar.isInitialized) {
+        ptrVar = Var("__sp", CPointer(null, null, parseContext).smtType)
+      }
+    }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    initializePtrVar(parseContext)
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
         builder.parent
