@@ -1,0 +1,9 @@
+ctrl var x: integer = 5
+
+trans {
+    x:=x;
+}
+
+init {}
+
+env {}
