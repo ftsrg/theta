@@ -44,22 +44,21 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     private var cnt = 2 // counts upwards, uses 3k+2
       get() = field.also { field += 3 }
 
-    private lateinit var ptrVar: VarDecl<*>
+    private val ptrVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
-    private fun initializePtrVar(parseContext: ParseContext) {
-      if (!::ptrVar.isInitialized) {
-        ptrVar = Var("__sp", CPointer(null, null, parseContext).smtType)
-      }
-    }
+    private fun XcfaBuilder.ptrVar(parseContext: ParseContext) =
+      ptrVars.getOrPut(this) { Var("__sp", CPointer(null, null, parseContext).smtType) }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    initializePtrVar(parseContext)
+    val ptrVar = builder.parent.ptrVar(parseContext)
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
         builder.parent
           .getProcedures()
-          .flatMap { it.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } } }
+          .flatMap { p ->
+            p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
+          }
           .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
@@ -79,33 +78,33 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val referredVars =
       builder
         .getEdges()
-        .flatMap { it.label.getFlatLabels().flatMap { it.references } }
+        .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
         .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
-        .associateWith {
-          val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
+        .associateWith { v ->
+          val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             Contract.checkState(initProc.size == 1, "Multiple start procedure are not handled well")
-            initProc.forEach {
+            initProc.forEach { proc ->
               val initAssign = AssignStmtLabel(ptrVar, initVal)
               val newEdges =
-                it.initLoc.outgoingEdges.map {
+                proc.initLoc.outgoingEdges.map {
                   it.withLabel(
                     SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
                   )
                 }
-              it.initLoc.outgoingEdges.forEach(it::removeEdge)
-              newEdges.forEach(it::addEdge)
+              proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
+              newEdges.forEach(proc::addEdge)
             }
           }
           val assign1 =
             AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
-          val varDecl = Var(it.name + "*", ptrType.smtType)
+          val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
@@ -269,7 +268,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       ret
     }
 
-  fun <T : Type> VarDecl<T>.changeReferredVars(
+  private fun <T : Type> VarDecl<T>.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>
   ): Expr<T> =
     varLut[this]?.first?.let {
