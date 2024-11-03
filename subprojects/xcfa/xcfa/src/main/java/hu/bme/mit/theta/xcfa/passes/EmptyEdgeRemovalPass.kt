@@ -30,7 +30,8 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         while (true) {
             val edge = builder.getEdges().find {
                 it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial &&
-                    (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1)
+                    (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1) &&
+                    it.metadata is EmptyMetaData
             } ?: return builder
             val collapseBefore = edge.source.outgoingEdges.size == 1
             builder.removeEdge(edge)
@@ -55,5 +56,5 @@ class EmptyEdgeRemovalPass : ProcedurePass {
             is NopLabel -> true
             is StmtLabel -> stmt == Assume(True())
             else -> false
-        }
+        }.and(metadata is EmptyMetaData)
 }
