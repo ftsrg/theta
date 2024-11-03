@@ -37,9 +37,10 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
         source: XcfaLocation,
         target: XcfaLocation,
         label: XcfaLabel = NopLabel,
+        metaData: MetaData = EmptyMetaData,
         lastWrites: WriteTriples = emptyMap(),
         nextCnt: Int = 0) :
-        this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
+        this(pid, XcfaEdge(source, target, label, metaData), lastWrites, nextCnt)
 
     override val stmtList: List<Stmt>
         get() = stmts
@@ -49,11 +50,11 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel, nextCnt = nextCnt)
+        return XcfaAction(pid, source, target, sequenceLabel, edge.metadata, nextCnt = nextCnt)
     }
 
     fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
-        return XcfaAction(pid, source, target, label, writeTriples, nextCnt)
+        return XcfaAction(pid, source, target, label, edge.metadata, writeTriples, nextCnt)
     }
 
 }

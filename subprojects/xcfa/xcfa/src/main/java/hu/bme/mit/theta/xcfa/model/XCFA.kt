@@ -112,7 +112,7 @@ data class XcfaLocation @JvmOverloads constructor(
     val initial: Boolean = false,                                   // is this the initial location?
     val final: Boolean = false,                                     // is this the final location?
     val error: Boolean = false,                                     // is this the error location?
-    val metadata: MetaData = EmptyMetaData,
+    val metadata: MetaData,
 ) {
 
     val incomingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all incoming edges in the current procedure
@@ -129,16 +129,16 @@ data class XcfaLocation @JvmOverloads constructor(
     }
 }
 
-data class XcfaEdge @JvmOverloads constructor(
+data class XcfaEdge(
     val source: XcfaLocation,                                       // source location
     val target: XcfaLocation,                                       // target location
     val label: XcfaLabel = NopLabel,                                // edge label
-    val metadata: MetaData = EmptyMetaData,
+    val metadata: MetaData
 ) {
 
-    fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
-    fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
-    fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
+    fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label, metadata)
+    fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label, metadata)
+    fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label, metadata)
 }
 
 data class XcfaGlobalVar @JvmOverloads constructor(
