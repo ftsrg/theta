@@ -350,11 +350,11 @@ private fun postVerificationLogging(
 
       // TODO eliminate the need for the instanceof check
       if (
-        !config.outputConfig.argConfig.disable && safetyResult.proof is ARG<out State, out Action>?
+        !config.outputConfig.argConfig.disable && safetyResult.proof is ARG<out State, out Action>
       ) {
         val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
         val g: Graph =
-          ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>?)
+          ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>)
         argFile.writeText(GraphvizWriter.getInstance().writeString(g))
       }
 
@@ -366,7 +366,7 @@ private fun postVerificationLogging(
         ) {
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             XcfaTraceConcretizer.concretize(
-              safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+              safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
               getSolver(
                 config.outputConfig.witnessConfig.concretizerSolver,
                 config.outputConfig.witnessConfig.validateConcretizerSolver,
@@ -399,7 +399,7 @@ private fun postVerificationLogging(
           }
         }
         val witnessFile = File(resultFolder, "witness.graphml")
-        XcfaWitnessWriter()
+        GraphmlWitnessWriter()
           .writeWitness(
             safetyResult,
             config.inputConfig.input!!,
@@ -409,6 +409,20 @@ private fun postVerificationLogging(
             ),
             parseContext,
             witnessFile,
+          )
+        val yamlWitnessFile = File(resultFolder, "witness.yml")
+        YmlWitnessWriter()
+          .writeWitness(
+            safetyResult,
+            config.inputConfig.input!!,
+            config.inputConfig.property,
+            (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+            yamlWitnessFile,
           )
       }
     } catch (e: Throwable) {

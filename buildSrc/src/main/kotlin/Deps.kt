@@ -79,4 +79,6 @@ object Deps {
     }
 
     val clikt = "com.github.ajalt.clikt:clikt:${Versions.clikt}"
+
+    val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 }
