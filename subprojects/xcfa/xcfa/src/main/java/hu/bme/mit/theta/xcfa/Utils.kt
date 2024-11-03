@@ -706,7 +706,7 @@ fun <T1 : Type, T2 : Type> AssignStmtLabel(
 ): StmtLabel = assignStmtLabelOf(lhs, cast(rhs, lhs.type), metadata)
 
 @Suppress("FunctionName")
-fun <T1 : Type, T2 : Type, T3: Type> AssignStmtLabel(
+fun <T1 : Type, T2 : Type, T3 : Type> AssignStmtLabel(
   lhs: VarDecl<T1>,
   rhs: Expr<T2>,
   type: T3,

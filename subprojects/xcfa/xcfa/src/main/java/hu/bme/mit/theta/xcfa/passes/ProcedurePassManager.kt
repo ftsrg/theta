@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 
 open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
@@ -40,10 +39,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(),
     ),
-    listOf(
-      ReferenceElimination(parseContext),
-      MallocFunctionPass(parseContext),
-    ),
+    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
       // optimizing
       SimplifyExprsPass(parseContext),
@@ -58,9 +54,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       RemoveDeadEnds(),
       EliminateSelfLoops(),
     ),
-    listOf(
-      StaticCoiPass(),
-    ),
+    listOf(StaticCoiPass()),
     listOf(
       // handling remaining function calls
       NoSideEffectPass(parseContext),
@@ -74,9 +68,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
-    listOf(
-      FetchExecuteWriteback(parseContext)
-    )
+    listOf(FetchExecuteWriteback(parseContext)),
   )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :

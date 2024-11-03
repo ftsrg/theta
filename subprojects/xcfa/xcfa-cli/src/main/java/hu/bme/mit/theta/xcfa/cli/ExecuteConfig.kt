@@ -248,8 +248,7 @@ private fun backend(
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
-                else
-                  SafetyResult.unknown<EmptyProof, EmptyCex>()
+                else SafetyResult.unknown<EmptyProof, EmptyCex>()
               }
 
               else -> result

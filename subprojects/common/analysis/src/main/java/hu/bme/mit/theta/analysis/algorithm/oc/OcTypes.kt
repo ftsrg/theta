@@ -162,7 +162,8 @@ sealed class DerivedReason<E : Event>(
 
   override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
 
-  override fun hashCode(): Int = 31 * (31 * (31 + w.hashCode()) + rf.hashCode()) + wRfRelation.hashCode()
+  override fun hashCode(): Int =
+    31 * (31 * (31 + w.hashCode()) + rf.hashCode()) + wRfRelation.hashCode()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
