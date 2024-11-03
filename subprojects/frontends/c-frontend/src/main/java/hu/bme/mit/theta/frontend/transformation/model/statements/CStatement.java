@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Every Program, Function and Statement is a subclass of this base class.
@@ -39,6 +40,7 @@ public abstract class CStatement {
     private int offsetStart = -1;
     private int offsetEnd = -1;
     private String sourceText = "";
+    private ParserRuleContext ctx;
 
     protected CStatement(ParseContext parseContext) {
         this.parseContext = parseContext;
@@ -136,5 +138,13 @@ public abstract class CStatement {
 
     public void setSourceText(String sourceText) {
         this.sourceText = sourceText;
+    }
+
+    public ParserRuleContext getCtx() {
+        return ctx;
+    }
+
+    public void setCtx(ParserRuleContext ctx) {
+        this.ctx = ctx;
     }
 }

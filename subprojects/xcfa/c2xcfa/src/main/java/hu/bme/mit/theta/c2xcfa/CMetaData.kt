@@ -19,6 +19,7 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import org.antlr.v4.runtime.ParserRuleContext
 
 data class CMetaData(
     val lineNumberStart: Int?,
@@ -27,7 +28,8 @@ data class CMetaData(
     val colNumberStop: Int?,
     val offsetStart: Int?,
     val offsetEnd: Int?,
-    val sourceText: String?
+    val sourceText: String?,
+    val ctx: ParserRuleContext?,
 ) : MetaData()
 
 fun XcfaLabel.getCMetaData(): CMetaData? {

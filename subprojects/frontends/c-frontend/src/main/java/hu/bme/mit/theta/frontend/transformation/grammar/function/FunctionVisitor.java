@@ -74,6 +74,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private final TypedefVisitor typedefVisitor;
     private final Logger uniqueWarningLogger;
 
+    private ParserRuleContext currentStatementContext = null;
+
     public void clear() {
         variables.clear();
         flatVariables.clear();
@@ -168,6 +170,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     public void recordMetadata(ParserRuleContext ctx, CStatement statement) {
+        if (currentStatementContext != null) {
+            ctx = currentStatementContext; // this will overwrite the current ASt element's ctx with the statement's ctx
+        }
         Token start = ctx.getStart();
         Token stop = ctx.getStop();
         String stopText = stop.getText();
@@ -186,6 +191,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         statement.setOffsetStart(offsetStart);
         statement.setOffsetEnd(offsetEnd);
         statement.setSourceText(textWithWS(ctx));
+        statement.setCtx(ctx);
     }
 
 
@@ -258,7 +264,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
             variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
         for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
+            final var save = currentStatementContext;
+            currentStatementContext = blockItemContext;
             compound.getcStatementList().add(blockItemContext.accept(this));
+            currentStatementContext = save;
         }
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
             variables.pop();
@@ -420,7 +429,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitStatement(CParser.StatementContext ctx) {
-        return ctx.children.get(0).accept(this);
+        final var save = currentStatementContext;
+        currentStatementContext = ctx;
+        final var ret = ctx.children.get(0).accept(this);
+        currentStatementContext = save;
+        return ret;
     }
 
     @Override
