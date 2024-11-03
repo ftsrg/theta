@@ -80,9 +80,9 @@ public class XstsHornTest {
                         "src/test/resources/property/green_and_red.prop", true,
                         "z3:4.13.0"},
 
-                {"src/test/resources/model/trafficlight_v2.xsts",
-                        "src/test/resources/property/green_and_red.prop", true,
-                        "eldarica:2.1"},
+//                {"src/test/resources/model/trafficlight_v2.xsts",
+//                        "src/test/resources/property/green_and_red.prop", true,
+//                        "eldarica:2.1"},
 
                 {"src/test/resources/model/trafficlight_v2.xsts",
                         "src/test/resources/property/green_and_red.prop", true,

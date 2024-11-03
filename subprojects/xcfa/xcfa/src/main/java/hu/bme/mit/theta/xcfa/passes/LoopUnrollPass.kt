@@ -112,7 +112,7 @@ class LoopUnrollPass : ProcedurePass {
         private fun copyBody(builder: XcfaProcedureBuilder, startLoc: XcfaLocation, index: Int, removeCond: Boolean)
             : XcfaLocation {
             val locs = loopLocs.associateWith {
-                val loc = XcfaLocation("${it.name}_loop${index}")
+                val loc = XcfaLocation("${it.name}_loop${index}", metadata = it.metadata)
                 builder.addLoc(loc)
                 loc
             }

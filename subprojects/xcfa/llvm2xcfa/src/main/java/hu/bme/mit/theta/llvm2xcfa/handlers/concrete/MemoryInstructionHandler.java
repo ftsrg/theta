@@ -109,7 +109,7 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
                 functionState.getValues().put(op1.getName(), var.getRef());
                 functionState.getValues().put(op2.getName(), var.getRef());
             } else {
-                XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+                XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
                 Stmt stmt = Assign(cast(var, var.getType()), cast(op1.getExpr(functionState.getValues()), var.getType()));
                 XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));

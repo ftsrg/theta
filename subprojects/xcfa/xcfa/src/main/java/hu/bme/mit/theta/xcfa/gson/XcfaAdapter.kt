@@ -57,6 +57,8 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                         .name("target").value(it.target.name)
                         .name("label")
                     gson.toJson(gson.toJsonTree(it.label), writer)
+                    writer.name("metadata")
+                    gson.toJson(gson.toJsonTree(it.metadata), writer)
                     writer.endObject()
                 }
             }.endArray()
@@ -139,6 +141,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
         val varsType = object : TypeToken<Set<VarDecl<*>>>() {}.type
         val locsType = object : TypeToken<Set<XcfaLocation>>() {}.type
         val labelType = object : TypeToken<XcfaLabel>() {}.type
+        val metadataType = object : TypeToken<MetaData>() {}.type
 
         while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
@@ -173,14 +176,16 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                             lateinit var source: XcfaLocation
                             lateinit var target: XcfaLocation
                             lateinit var label: XcfaLabel
+                            lateinit var metadata: MetaData
                             while (reader.peek() != JsonToken.END_OBJECT) {
                                 when (reader.nextName()) {
                                     "source" -> source = checkNotNull(locs[reader.nextString()])
                                     "target" -> target = checkNotNull(locs[reader.nextString()])
                                     "label" -> label = gson.fromJson(reader, labelType)
+                                    "metadata" -> metadata = gson.fromJson(reader, metadataType)
                                 }
                             }
-                            val edge = XcfaEdge(source, target, label)
+                            val edge = XcfaEdge(source, target, label, metadata)
                             edges.add(edge)
                             source.outgoingEdges.add(edge)
                             target.incomingEdges.add(edge)

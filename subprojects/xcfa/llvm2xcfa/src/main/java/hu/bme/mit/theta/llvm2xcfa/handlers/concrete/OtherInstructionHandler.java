@@ -36,11 +36,7 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.utils.PlaceholderAssignmentStmt;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
-import hu.bme.mit.theta.xcfa.model.SequenceLabel;
-import hu.bme.mit.theta.xcfa.model.StmtLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +46,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 import static hu.bme.mit.theta.llvm2xcfa.Utils.getOrCreateVar;
@@ -94,7 +85,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
 
     private void call(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument functionName = instruction.getArguments().get(instruction.getArguments().size() - 1);
-        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
         if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
             System.err.println("More than one function.");
             System.exit(-80);
@@ -144,7 +135,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
-            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1()), new XcfaLocation(key.get2()), new ArrayList<>(), instruction.getLineNumber()));
+            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), EmptyMetaData.INSTANCE), new XcfaLocation(key.get2(), EmptyMetaData.INSTANCE), new ArrayList<>(), instruction.getLineNumber()));
             checkState(phiVar.getType().equals(value.getType()), "phiVar and value has to be of the same type!");
             Stmt stmt;
             Expr<?> expr;

@@ -77,7 +77,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                         builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
                             listOf(
                                 StmtLabel(assign1, metadata = invokeLabel.metadata),
-                                StmtLabel(assign2, metadata = invokeLabel.metadata)))))
+                                StmtLabel(assign2, metadata = invokeLabel.metadata))), it.metadata))
                     } else {
                         builder.addEdge(it)
                     }

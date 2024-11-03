@@ -17,11 +17,18 @@
 package hu.bme.mit.theta.llvm2xcfa;
 
 import hu.bme.mit.theta.xcfa.model.MetaData;
+import org.jetbrains.annotations.NotNull;
 
 public class LlvmMetadata extends MetaData {
     private final int lineNumber;
 
     public LlvmMetadata(int lineNumber) {
         this.lineNumber = lineNumber;
+    }
+
+    @NotNull
+    @Override
+    public MetaData combine(@NotNull MetaData other) {
+        return this;
     }
 }

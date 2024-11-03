@@ -16,14 +16,14 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import java.util.stream.Stream
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.exists
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 
 data class WitnessEdge(
   val startlineRange: Pair<Int, Int>?,
@@ -46,8 +46,8 @@ class XcfaCliProofTest {
             WitnessEdge(
               startlineRange = Pair(5, 5),
               endlineRange = Pair(5, 5),
-              startoffsetRange = Pair(100, 130),
-              endoffsetRange = Pair(100, 130),
+              startoffsetRange = Pair(80, 82),
+              endoffsetRange = Pair(112, 114),
               assumption = Regex("i *== *-1"),
             )
           ),
@@ -59,8 +59,8 @@ class XcfaCliProofTest {
             WitnessEdge(
               startlineRange = Pair(5, 5),
               endlineRange = Pair(5, 5),
-              startoffsetRange = Pair(100, 130),
-              endoffsetRange = Pair(100, 130),
+              startoffsetRange = Pair(80, 82),
+              endoffsetRange = Pair(112, 114),
               assumption = Regex("i *== *-1"),
             )
           ),

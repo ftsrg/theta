@@ -39,7 +39,10 @@ class FinalLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
                         builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(
                             listOf(
                                 StmtLabel(Stmts.Assume(BoolExprs.False()), metadata = it.metadata)),
-                            metadata = it.metadata)))
+                            metadata = it.metadata
+                        ), it.metadata
+                        )
+                        )
                     } else {
                         builder.addEdge(it)
                     }

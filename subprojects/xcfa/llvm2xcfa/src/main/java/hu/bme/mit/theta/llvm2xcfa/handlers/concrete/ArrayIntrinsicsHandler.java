@@ -77,7 +77,7 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
         checkState(arr.getType() instanceof ArrayType<?, ?>, "getArrayElement used on non-array type.");
         checkState(idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
 
-        XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+        XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
         VarDecl<?> var = functionState.getLocalVars().get(arr.getName()).get1();
 
         Expr<?> expr = ArrayExprs.Write(cast(var.getRef(), ArrayType.of(Int(), val.getType())), cast(idx.getExpr(functionState.getValues()), Int()), cast(val.getExpr(functionState.getValues()), val.getType()));

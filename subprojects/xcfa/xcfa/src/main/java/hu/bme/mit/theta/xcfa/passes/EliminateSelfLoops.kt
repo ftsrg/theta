@@ -26,14 +26,14 @@ class EliminateSelfLoops : ProcedurePass {
         for (selfLoop in selfLoops) {
             builder.removeEdge(selfLoop)
             val source = selfLoop.source
-            val target = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter())
+            val target = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData)
             builder.addLoc(target)
             for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
                 builder.removeEdge(outgoingEdge)
-                builder.addEdge(XcfaEdge(target, outgoingEdge.target, outgoingEdge.label))
+                builder.addEdge(XcfaEdge(target, outgoingEdge.target, outgoingEdge.label, outgoingEdge.metadata))
             }
-            builder.addEdge(XcfaEdge(source, target, selfLoop.label))
-            builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel))))
+            builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))
+            builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel)), selfLoop.metadata))
         }
         builder.metaData["noSelfLoops"] = Unit
         return builder

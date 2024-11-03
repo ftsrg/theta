@@ -20,8 +20,8 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.dsl.Env
@@ -95,8 +95,7 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: () ->
     gsonBuilder.registerTypeHierarchyAdapter(FrontendConfig::class.java, SpecFrontendConfigTypeAdapter { gson })
     gsonBuilder.registerTypeHierarchyAdapter(BackendConfig::class.java, SpecBackendConfigTypeAdapter { gson })
     gsonBuilder.registerTypeHierarchyAdapter(File::class.java, StringTypeAdapter { File(it) })
-    gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java,
-        StringTypeAdapter(xcfaLocationAdapter))
+    gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, XcfaLocationAdapter { gson })
     gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
     gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
         VarDeclAdapter({ gson }, scope, env, !newScope))

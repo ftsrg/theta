@@ -182,7 +182,7 @@ public class Utils {
         //noinspection OptionalGetWithoutIsPresent
         RegArgument ret = instruction.getRetVar().get();
         if (ret instanceof LocalArgument) {
-            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;

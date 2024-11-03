@@ -46,8 +46,7 @@ class GsonTest {
     private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean): Gson {
         val gsonBuilder = GsonBuilder()
         lateinit var gson: Gson
-        gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java,
-            StringTypeAdapter(xcfaLocationAdapter))
+        gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, XcfaLocationAdapter { gson })
         gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
         gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
             VarDeclAdapter({ gson }, scope, env, !newScope))

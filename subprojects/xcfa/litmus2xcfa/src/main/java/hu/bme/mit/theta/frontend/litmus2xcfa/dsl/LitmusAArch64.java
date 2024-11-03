@@ -105,7 +105,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         for (Integer threadId : threadIds) {
             XcfaProcedureBuilder procBuilder = builders.get(threadId);
             procBuilder.createFinalLoc();
-            procBuilder.addEdge(new XcfaEdge(lastLocation.get(threadId), procBuilder.getFinalLoc().get()));
+            procBuilder.addEdge(new XcfaEdge(lastLocation.get(threadId), procBuilder.getFinalLoc().get(), NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
         }
         return builder.build();
     }
@@ -142,7 +142,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
 
     private XcfaLocation getOrCreateLoc(final String name) {
         if (!locations.get(currentProc).containsKey(name)) {
-            final XcfaLocation xcfaLocation = new XcfaLocation(name);
+            final XcfaLocation xcfaLocation = new XcfaLocation(name, EmptyMetaData.INSTANCE);
             builders.get(currentProc).addLoc(xcfaLocation);
             locations.get(currentProc).put(name, xcfaLocation);
         }
@@ -278,11 +278,11 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
                     branchTo,
-                    stmt1));
+                    stmt1, EmptyMetaData.INSTANCE));
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
                     newLoc,
-                    stmt2));
+                    stmt2, EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;
         }
@@ -303,11 +303,11 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
                     branchTo,
-                    stmt1));
+                    stmt1, EmptyMetaData.INSTANCE));
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
                     newLoc,
-                    stmt2));
+                    stmt2, EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;
         }
@@ -318,7 +318,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final XcfaLocation newLoc = newAnonymousLoc();
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
-                    branchTo));
+                    branchTo, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;
         }
@@ -328,7 +328,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final XcfaLocation newLoc = getOrCreateLoc(ctx.label().getText());
             builders.get(currentProc).addEdge(new XcfaEdge(
                     lastLocation.get(currentProc),
-                    newLoc));
+                    newLoc, NopLabel.INSTANCE, EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;
         }
@@ -341,7 +341,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
                 builders.get(currentProc).addEdge(new XcfaEdge(
                         lastLocation.get(currentProc),
                         newLoc,
-                        label));
+                        label, EmptyMetaData.INSTANCE));
                 lastLocation.put(currentProc, newLoc);
                 return newLoc;
             }

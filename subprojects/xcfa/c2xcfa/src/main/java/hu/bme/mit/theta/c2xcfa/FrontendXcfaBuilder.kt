@@ -83,7 +83,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         offsetStart = source.offsetStart.takeIf { it != -1 },
         offsetEnd = source.offsetEnd.takeIf { it != -1 },
         sourceText = source.sourceText,
-        ctx = source.ctx,
     )
 
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {

@@ -38,11 +38,11 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
-import java.util.*
-import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.*
+import kotlin.random.Random
 
 class XcfaPredAnalysisTest {
 
@@ -62,8 +62,6 @@ class XcfaPredAnalysisTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
   fun testNoporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
@@ -295,8 +293,6 @@ class XcfaPredAnalysisTest {
     Assertions.assertTrue(verdict(safetyResult))
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
   fun testAadporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     XcfaDporLts.random = Random(seed)
     println("Testing AADPOR on $filepath...")

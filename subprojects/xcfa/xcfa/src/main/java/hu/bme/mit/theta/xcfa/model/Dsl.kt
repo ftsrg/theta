@@ -275,14 +275,14 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     }
 
     infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> XcfaEdge {
-        val loc1 = locationLut.getOrElse(this) { XcfaLocation(this) }
+        val loc1 = locationLut.getOrElse(this) { XcfaLocation(this, metadata = EmptyMetaData) }
         locationLut.putIfAbsent(this, loc1)
         builder.addLoc(loc1)
-        val loc2 = locationLut.getOrElse(to) { XcfaLocation(to) }
+        val loc2 = locationLut.getOrElse(to) { XcfaLocation(to, metadata = EmptyMetaData) }
         locationLut.putIfAbsent(to, loc2)
         builder.addLoc(loc2)
         return { lambda ->
-            val edge = XcfaEdge(loc1, loc2, lambda(SequenceLabelContext()))
+            val edge = XcfaEdge(loc1, loc2, lambda(SequenceLabelContext()), EmptyMetaData)
             builder.addEdge(edge)
             edge
         }

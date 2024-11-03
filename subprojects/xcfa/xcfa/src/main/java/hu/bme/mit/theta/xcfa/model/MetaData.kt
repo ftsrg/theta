@@ -16,12 +16,18 @@
 
 package hu.bme.mit.theta.xcfa.model
 
-abstract class MetaData
+abstract class MetaData {
+
+    abstract fun combine(other: MetaData): MetaData
+}
 
 object EmptyMetaData : MetaData() {
     // TODO why is this necessary? {@see GsonTest.kt}
-
     private val hash = 123123
+
+    override fun combine(other: MetaData): MetaData {
+        return other
+    }
 
     override fun equals(other: Any?): Boolean =
         other is EmptyMetaData

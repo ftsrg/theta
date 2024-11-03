@@ -99,7 +99,7 @@ public class FunctionState {
                 loc = procedureBuilder.getInitLoc();
                 first = false;
             } else {
-                loc = new XcfaLocation(block);
+                loc = new XcfaLocation(block, EmptyMetaData.INSTANCE);
                 procedureBuilder.addLoc(loc);
             }
             locations.put(block, loc);

@@ -22,14 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
-import hu.bme.mit.theta.xcfa.model.SequenceLabel;
-import hu.bme.mit.theta.xcfa.model.StmtLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
+import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 
 import java.util.ArrayList;
@@ -37,10 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.createVars;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.getTailConditionLabels;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformConst;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformSort;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.*;
 
 public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements ChcXcfaBuilder {
     private final ProcedurePassManager procedurePassManager;
@@ -88,7 +78,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             builder.addVar(var);
             transformConst(Decls.Const(varName, type), true);
         }
-        XcfaLocation location = new XcfaLocation(name);
+        XcfaLocation location = new XcfaLocation(name, EmptyMetaData.INSTANCE);
         locations.put(name, new UPred(location, vars));
         locations.put(ctx.symbol().getText(), new UPred(location, vars));
         builder.addLoc(location);
@@ -118,7 +108,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             from = initLocation;
             to = locations.get(locName).location;
         }
-        XcfaEdge edge = new XcfaEdge(from, to, new SequenceLabel(labels));
+        XcfaEdge edge = new XcfaEdge(from, to, new SequenceLabel(labels), EmptyMetaData.INSTANCE);
         builder.addEdge(edge);
         return super.visitChc_assert(ctx);
     }
@@ -130,7 +120,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
         List<XcfaLabel> labels = new ArrayList<>();
         labels.addAll(getIncomingAssignments(ctx.chc_tail(), vars));
         labels.addAll(getTailConditionLabels(ctx.chc_tail(), vars));
-        XcfaEdge edge = new XcfaEdge(from, errorLocation, new SequenceLabel(labels));
+        XcfaEdge edge = new XcfaEdge(from, errorLocation, new SequenceLabel(labels), EmptyMetaData.INSTANCE);
         builder.addEdge(edge);
         return super.visitChc_query(ctx);
     }
