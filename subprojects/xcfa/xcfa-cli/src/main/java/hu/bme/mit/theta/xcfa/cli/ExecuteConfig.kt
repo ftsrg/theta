@@ -399,7 +399,7 @@ private fun postVerificationLogging(
           }
         }
         val witnessFile = File(resultFolder, "witness.graphml")
-        XcfaWitnessWriter()
+        GraphmlWitnessWriter()
           .writeWitness(
             safetyResult,
             config.inputConfig.input!!,
@@ -409,6 +409,20 @@ private fun postVerificationLogging(
             ),
             parseContext,
             witnessFile,
+          )
+        val yamlWitnessFile = File(resultFolder, "witness.yml")
+        YmlWitnessWriter()
+          .writeWitness(
+            safetyResult,
+            config.inputConfig.input!!,
+            config.inputConfig.property,
+            (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+            yamlWitnessFile,
           )
       }
     } catch (e: Throwable) {
