@@ -18,6 +18,7 @@
 package hu.bme.mit.theta.c2xcfa
 
 import com.google.common.base.Preconditions
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -52,7 +53,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.math.BigInteger
 import java.util.stream.Collectors
-import org.abego.treelayout.internal.util.Contract.checkState
 
 class FrontendXcfaBuilder(
   val parseContext: ParseContext,

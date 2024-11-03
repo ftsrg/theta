@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
@@ -33,7 +34,6 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa2chc.toCHC
-import org.abego.treelayout.internal.util.Contract.checkState
 
 fun getHornChecker(
   xcfa: XCFA,

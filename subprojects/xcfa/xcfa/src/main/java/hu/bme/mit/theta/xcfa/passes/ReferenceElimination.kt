@@ -34,7 +34,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.references
-import org.abego.treelayout.internal.util.Contract
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
@@ -87,7 +86,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val initVal = ptrType.getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
             val initProc = builder.parent.getInitProcedures().map { it.first }
-            Contract.checkState(initProc.size == 1, "Multiple start procedure are not handled well")
+            checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach {
               val initAssign =
                 StmtLabel(Assign(cast(ptrVar, ptrVar.type), cast(initVal, ptrVar.type)))
