@@ -32,10 +32,14 @@ class ErrorLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
                     (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 edges.forEach {
-                    if (predicate((it.label as SequenceLabel).labels[0])) {
+                    val label = (it.label as SequenceLabel).labels[0]
+                    if (predicate(label)) {
                         if (builder.errorLoc.isEmpty) builder.createErrorLoc()
                         builder.addEdge(
-                            XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf())))
+                            XcfaEdge(
+                                it.source, builder.errorLoc.get(), SequenceLabel(listOf()), metadata = label.metadata
+                            )
+                        )
                     } else {
                         builder.addEdge(it)
                     }
