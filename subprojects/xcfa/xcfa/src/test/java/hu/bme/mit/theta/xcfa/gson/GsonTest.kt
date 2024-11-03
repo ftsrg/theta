@@ -107,6 +107,34 @@ class GsonTest {
   }
 
   @Test
+  fun testAsyncRoundtrip() {
+    val xcfaSource =
+      xcfa("example") {
+        global {
+          "x" type Int() init "0"
+          "thr1" type Int() init "0"
+        }
+        procedure("main") { (init to final) { "thr1".start("proc1", "(mod x 0)") } }
+        procedure("proc1") { (init to final) { assume("true") } }
+      }
+
+    val symbolTable = XcfaScope(SymbolTable())
+    val x_symbol = NamedSymbol("x")
+    val thr1_symbol = NamedSymbol("thr1")
+    symbolTable.add(x_symbol)
+    symbolTable.add(thr1_symbol)
+    val env = Env()
+    env.define(x_symbol, xcfaSource.vars.find { it.wrappedVar.name == "x" }!!.wrappedVar)
+    env.define(thr1_symbol, xcfaSource.vars.find { it.wrappedVar.name == "thr1" }!!.wrappedVar)
+    val gson = getGson(symbolTable, env, true)
+
+    val output = gson.fromJson(gson.toJson(xcfaSource), XCFA::class.java)
+    println(xcfaSource)
+    println(output)
+    assertEquals(xcfaSource, output)
+  }
+
+  @Test
   fun testParseContextRoundTrip() {
     val parseContext = ParseContext()
     parseContext.metadata.create("owner", "key", "value")
