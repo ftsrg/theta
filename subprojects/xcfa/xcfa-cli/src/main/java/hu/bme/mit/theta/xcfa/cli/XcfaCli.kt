@@ -67,9 +67,11 @@ class XcfaCli(private val args: Array<String>) {
                         "--disable-chc-serialization",
                         "--disable-c-serialization",
                         "--only-svcomp-witness",
-                        "--backend", "PORTFOLIO"
                     )
                 )
+                if (!remainingFlags.contains("--backend")) {
+                    remainingFlags.addAll(listOf("--backend", "PORTFOLIO"))
+                }
             }
             while (remainingFlags.isNotEmpty()) {
                 val nextArgs = remainingFlags.toTypedArray()
