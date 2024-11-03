@@ -35,3 +35,4 @@ xcfa.dot
 xcfa.json
 *.plantuml
 xcfa-*.smt2
+witness.yml

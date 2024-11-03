@@ -38,6 +38,7 @@ fun gradlePlugin(id: String, version: String): String = "$id:$id.gradle.plugin:$
 dependencies {
     compileOnly(gradleKotlinDsl())
     implementation(kotlin("gradle-plugin", kotlinVersion))
+    implementation(kotlin("serialization", kotlinVersion))
     implementation(gradlePlugin("com.github.johnrengelman.shadow", shadowVersion))
     implementation(gradlePlugin("com.diffplug.spotless", spotlessVersion))
 }

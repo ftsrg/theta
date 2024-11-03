@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -35,17 +40,16 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
-
 public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         if (instruction.getOpName().equals("call")) {
-            String name = instruction.getArguments().get(instruction.getArguments().size() - 1).getName();
+            String name =
+                    instruction.getArguments().get(instruction.getArguments().size() - 1).getName();
             if (name.startsWith("getArrayElement")) {
                 getArrayElement(instruction, globalState, functionState, blockState);
                 return;
@@ -57,36 +61,69 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
         super.handleInstruction(instruction, globalState, functionState, blockState);
     }
 
-    private void getArrayElement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void getArrayElement(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument arr = instruction.getArguments().get(0);
         Argument idx = instruction.getArguments().get(1);
 
-        checkState(arr.getType() instanceof ArrayType<?, ?>, "getArrayElement used on non-array type.");
-        checkState(idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
-        checkState(instruction.getRetVar().isPresent(), "getArrayElement used without return value.");
+        checkState(
+                arr.getType() instanceof ArrayType<?, ?>,
+                "getArrayElement used on non-array type.");
+        checkState(
+                idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
+        checkState(
+                instruction.getRetVar().isPresent(), "getArrayElement used without return value.");
 
         //noinspection unchecked
-        foldExpression(instruction, functionState, blockState, null, ArrayExprs.Read((Expr<ArrayType<IntType, Type>>) arr.getExpr(functionState.getValues()), cast(idx.getExpr(functionState.getValues()), Int())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                ArrayExprs.Read(
+                        (Expr<ArrayType<IntType, Type>>) arr.getExpr(functionState.getValues()),
+                        cast(idx.getExpr(functionState.getValues()), Int())),
+                0);
     }
 
-    private void setArrayElement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void setArrayElement(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument arr = instruction.getArguments().get(0);
         Argument idx = instruction.getArguments().get(1);
         Argument val = instruction.getArguments().get(2);
 
-        checkState(arr.getType() instanceof ArrayType<?, ?>, "getArrayElement used on non-array type.");
-        checkState(idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
+        checkState(
+                arr.getType() instanceof ArrayType<?, ?>,
+                "getArrayElement used on non-array type.");
+        checkState(
+                idx.getType() == IntType.getInstance(), "getArrayElement used with non-int index.");
 
-        XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+        XcfaLocation loc =
+                new XcfaLocation(
+                        blockState.getName() + "_" + blockState.getBlockCnt(),
+                        EmptyMetaData.INSTANCE);
         VarDecl<?> var = functionState.getLocalVars().get(arr.getName()).get1();
 
-        Expr<?> expr = ArrayExprs.Write(cast(var.getRef(), ArrayType.of(Int(), val.getType())), cast(idx.getExpr(functionState.getValues()), Int()), cast(val.getExpr(functionState.getValues()), val.getType()));
+        Expr<?> expr =
+                ArrayExprs.Write(
+                        cast(var.getRef(), ArrayType.of(Int(), val.getType())),
+                        cast(idx.getExpr(functionState.getValues()), Int()),
+                        cast(val.getExpr(functionState.getValues()), val.getType()));
         Stmt stmt = Assign(cast(var, var.getType()), cast(expr, var.getType()));
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));
+        XcfaEdge edge =
+                new XcfaEdge(
+                        blockState.getLastLocation(),
+                        loc,
+                        new StmtLabel(stmt),
+                        new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addLoc(loc);
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(loc);
     }
-
-
 }

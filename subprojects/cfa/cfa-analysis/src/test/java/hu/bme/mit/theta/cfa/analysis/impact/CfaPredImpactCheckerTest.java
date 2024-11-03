@@ -17,60 +17,65 @@ package hu.bme.mit.theta.cfa.analysis.impact;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.solver.Solver;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import org.junit.Test;
 
 public final class CfaPredImpactCheckerTest {
 
     @Test
     public void test() throws FileNotFoundException, IOException {
         // Arrange
-        final CFA cfa = CfaDslManager.createCfa(
-                new FileInputStream("src/test/resources/counter5_true.cfa"));
+        final CFA cfa =
+                CfaDslManager.createCfa(
+                        new FileInputStream("src/test/resources/counter5_true.cfa"));
 
         final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
 
-        final PredImpactChecker checker = PredImpactChecker.create(
-                CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
-                l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
+        final PredImpactChecker checker =
+                PredImpactChecker.create(
+                        CfaLbeLts.of(cfa.getErrorLoc().get()),
+                        cfa.getInitLoc(),
+                        l -> l.equals(cfa.getErrorLoc().get()),
+                        abstractionSolver,
+                        refinementSolver);
 
         // Act
-        final SafetyResult<ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>> status = checker.check(
-                UnitPrec.getInstance());
+        final SafetyResult<
+                        ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>>
+                status = checker.check(UnitPrec.getInstance());
 
         // Assert
         assertTrue(status.isSafe());
 
-        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getWitness();
+        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getProof();
         arg.minimize();
 
         final ArgChecker argChecker = ArgChecker.create(abstractionSolver);
         assertTrue(argChecker.isWellLabeled(arg));
 
         System.out.println(
-                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance()
+                        .writeString(ArgVisualizer.getDefault().visualize(arg)));
     }
 }

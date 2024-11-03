@@ -15,24 +15,16 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 
 /**
- * Common interface for refiners. It takes an ARG and a precision, checks if the counterexample in
- * the ARG is feasible and if not, it refines the precision and may also prune the ARG.
+ * Common interface for refiners. It takes a witness and a precision, checks if the counterexample
+ * in the witness is feasible and if not, it refines the precision
  */
-public interface Refiner<S extends State, A extends Action, P extends Prec> {
+public interface Refiner<P extends Prec, Pr extends Proof, C extends Cex> {
 
-    /**
-     * Checks if the counterexample in the ARG is feasible. If not, refines the precision and prunes
-     * the ARG.
-     *
-     * @param arg
-     * @param prec
-     * @return
-     */
-    RefinerResult<S, A, P> refine(ARG<S, A> arg, P prec);
+    /** Checks if the counterexample in the witness is feasible. If not, refines the precision */
+    RefinerResult<P, C> refine(Pr witness, P prec);
 }
