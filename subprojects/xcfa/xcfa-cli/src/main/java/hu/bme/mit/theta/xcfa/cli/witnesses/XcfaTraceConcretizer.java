@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.witnesses;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
@@ -39,20 +40,19 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import kotlin.Triple;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
+import kotlin.Triple;
 
 /**
- * Similar to CfaTraceConcretizer
- * Takes a trace given by an unsafe result and uses and SMT solver to output a concrete counterexample
+ * Similar to CfaTraceConcretizer Takes a trace given by an unsafe result and uses and SMT solver to
+ * output a concrete counterexample
  */
 public class XcfaTraceConcretizer {
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
-            final Trace<XcfaState<PtrState<?>>, XcfaAction> trace, SolverFactory solverFactory, ParseContext parseContext) {
+            final Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            SolverFactory solverFactory,
+            ParseContext parseContext) {
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
@@ -60,15 +60,26 @@ public class XcfaTraceConcretizer {
 
         Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         for (int i = 0; i < trace.getActions().size(); ++i) {
-            final XcfaEdge edge = new XcfaEdge(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabel(), trace.getAction(i).getEdge().getMetadata());
-            final XcfaAction action = new XcfaAction(trace.getAction(i).getPid(), edge, nextW, trace.getAction(i).getInCnt());
+            final XcfaEdge edge =
+                    new XcfaEdge(
+                            trace.getAction(i).getSource(),
+                            trace.getAction(i).getTarget(),
+                            trace.getAction(i).getLabel(),
+                            trace.getAction(i).getEdge().getMetadata());
+            final XcfaAction action =
+                    new XcfaAction(
+                            trace.getAction(i).getPid(),
+                            edge,
+                            nextW,
+                            trace.getAction(i).getInCnt());
             sbeActions.add(action);
             nextW = action.nextWriteTriples();
             sbeStates.add(trace.getState(i + 1).withState(new PtrState<>(ExplState.top())));
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
-        final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(BoolExprs.True(),
-                BoolExprs.True(), solverFactory.createItpSolver());
+        final ExprTraceChecker<ItpRefutation> checker =
+                ExprTraceFwBinItpChecker.create(
+                        BoolExprs.True(), BoolExprs.True(), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
@@ -78,7 +89,19 @@ public class XcfaTraceConcretizer {
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         final Set<VarDecl<?>> varSoFar = new LinkedHashSet<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
-            cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(ImmutableValuation.from(valuations.getState(i).toMap().entrySet().stream().filter(it -> varSoFar.contains(it.getKey())).collect(Collectors.toMap(Map.Entry<Decl<?>, LitExpr<?>>::getKey, Map.Entry::getValue))))));
+            cfaStates.add(
+                    new XcfaState<>(
+                            null,
+                            sbeTrace.getState(i).getProcesses(),
+                            ExplState.of(
+                                    ImmutableValuation.from(
+                                            valuations.getState(i).toMap().entrySet().stream()
+                                                    .filter(it -> varSoFar.contains(it.getKey()))
+                                                    .collect(
+                                                            Collectors.toMap(
+                                                                    Map.Entry<Decl<?>, LitExpr<?>>
+                                                                            ::getKey,
+                                                                    Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
                 varSoFar.addAll(ExprUtils.getVars(sbeTrace.getAction(i).toExpr()));
             }
@@ -86,5 +109,4 @@ public class XcfaTraceConcretizer {
 
         return Trace.of(cfaStates, sbeActions);
     }
-
 }

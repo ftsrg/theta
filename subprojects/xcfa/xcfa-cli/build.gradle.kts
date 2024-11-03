@@ -51,4 +51,3 @@ dependencies {
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
-

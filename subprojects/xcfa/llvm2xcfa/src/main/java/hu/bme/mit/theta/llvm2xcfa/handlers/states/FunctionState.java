@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.states;
+
+import static hu.bme.mit.theta.llvm2xcfa.Utils.createVariable;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
@@ -32,7 +33,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,8 +42,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.llvm2xcfa.Utils.createVariable;
-
 public class FunctionState {
     private final GlobalState globalState;
     private final Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function;
@@ -52,20 +50,26 @@ public class FunctionState {
     private final Set<VarDecl<?>> params;
     private final Map<String, Expr<?>> values;
     private final Map<String, XcfaLocation> locations;
-    private final Map<Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>> interBlockEdges;
+    private final Map<
+                    Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>>
+            interBlockEdges;
     private VarDecl<?> returnVar = null;
 
-    public FunctionState(GlobalState globalState, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function) {
+    public FunctionState(
+            GlobalState globalState,
+            Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function) {
         this.globalState = globalState;
         this.function = function;
         procedureBuilder = new XcfaProcedureBuilder(function.get1(), new ProcedurePassManager());
-//        procedureBuilder.setName(function.get1());
+        //        procedureBuilder.setName(function.get1());
         localVars = new HashMap<>();
         params = new HashSet<>();
         values = new HashMap<>();
         interBlockEdges = new HashMap<>();
 
-        globalState.getGlobalVars().forEach((s, varDecl) -> localVars.put(s, Tuple2.of(varDecl, 1)));
+        globalState
+                .getGlobalVars()
+                .forEach((s, varDecl) -> localVars.put(s, Tuple2.of(varDecl, 1)));
 
         // Adding return variable
         if (function.get2().isPresent()) {
@@ -74,7 +78,7 @@ public class FunctionState {
             procedureBuilder.addParam(var, ParamDirection.OUT);
             localVars.put(function.get1() + "_ret", Tuple2.of(var, 1));
             params.add(var);
-//            procedureBuilder.setRetType(var.getType());
+            //            procedureBuilder.setRetType(var.getType());
         }
 
         // Adding params
@@ -106,22 +110,39 @@ public class FunctionState {
         }
 
         localVars.forEach((s, var) -> values.put(s, var.get1().getRef()));
-
     }
 
     public void finalizeFunctionState(BuiltState builtState) {
-        interBlockEdges.forEach((_obj, edgeTup) -> {
-            List<Stmt> stmts = edgeTup.get3().stream().filter(stmt ->
-                    !(stmt instanceof PlaceholderAssignmentStmt) || !((PlaceholderAssignmentStmt<?>) stmt).isSelfAssignment(getValues())
-            ).map(stmt -> {
-                if (stmt instanceof PlaceholderAssignmentStmt) {
-                    return ((PlaceholderAssignmentStmt<?>) stmt).toAssignStmt(getValues());
-                }
-                return stmt;
-            }).collect(Collectors.toUnmodifiableList());
-            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(edgeTup.get4()));
-            procedureBuilder.addEdge(edge);
-        });
+        interBlockEdges.forEach(
+                (_obj, edgeTup) -> {
+                    List<Stmt> stmts =
+                            edgeTup.get3().stream()
+                                    .filter(
+                                            stmt ->
+                                                    !(stmt instanceof PlaceholderAssignmentStmt)
+                                                            || !((PlaceholderAssignmentStmt<?>)
+                                                                            stmt)
+                                                                    .isSelfAssignment(getValues()))
+                                    .map(
+                                            stmt -> {
+                                                if (stmt instanceof PlaceholderAssignmentStmt) {
+                                                    return ((PlaceholderAssignmentStmt<?>) stmt)
+                                                            .toAssignStmt(getValues());
+                                                }
+                                                return stmt;
+                                            })
+                                    .collect(Collectors.toUnmodifiableList());
+                    XcfaEdge edge =
+                            new XcfaEdge(
+                                    edgeTup.get1(),
+                                    edgeTup.get2(),
+                                    new SequenceLabel(
+                                            stmts.stream()
+                                                    .map(stmt -> new StmtLabel(stmt))
+                                                    .toList()),
+                                    new LlvmMetadata(edgeTup.get4()));
+                    procedureBuilder.addEdge(edge);
+                });
     }
 
     public GlobalState getGlobalState() {
@@ -148,7 +169,8 @@ public class FunctionState {
         return locations;
     }
 
-    public Map<Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>> getInterBlockEdges() {
+    public Map<Tuple2<String, String>, Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer>>
+            getInterBlockEdges() {
         return interBlockEdges;
     }
 
@@ -160,4 +182,3 @@ public class FunctionState {
         return returnVar;
     }
 }
-

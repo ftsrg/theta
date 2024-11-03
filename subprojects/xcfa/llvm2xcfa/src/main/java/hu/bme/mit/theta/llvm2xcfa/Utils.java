@@ -13,8 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa;
+
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -41,19 +48,10 @@ import hu.bme.mit.theta.xcfa.model.NopLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class Utils {
     private static final int doublePrecision = 1 << 8;
@@ -86,7 +84,8 @@ public class Utils {
             case "i1":
                 return Bool();
             default:
-//                new RuntimeException("Type " + type + " not known! (Using 32 bit int instead)").printStackTrace();
+                //                new RuntimeException("Type " + type + " not known! (Using 32 bit
+                // int instead)").printStackTrace();
                 if (arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
                 return Int();
         }
@@ -100,7 +99,9 @@ public class Utils {
 
     public static LitExpr<? extends Type> parseConstant(Type type, String value) {
         if (type instanceof RatType)
-            return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(value) * doublePrecision)), BigInteger.valueOf(doublePrecision));
+            return RatLitExpr.of(
+                    BigInteger.valueOf((long) (Float.parseFloat(value) * doublePrecision)),
+                    BigInteger.valueOf(doublePrecision));
         return IntLitExpr.of(new BigInteger(value));
     }
 
@@ -111,15 +112,20 @@ public class Utils {
     public static LitExpr<? extends Type> createConstant(Type type, String value) {
         String[] arguments = value.split(" ");
         if (arguments.length != 2) {
-            System.err.println("Constant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got: " + value);
+            System.err.println(
+                    "Constant should be of form \"(type=[a-zA-Z0-9]*) (value=[\\.0-9fe+-]*)\", got:"
+                            + " "
+                            + value);
             return getDefaultValue(type);
-
         }
 
         switch (arguments[0]) {
             case "double":
             case "float":
-                return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(arguments[1]) * doublePrecision)), BigInteger.valueOf(doublePrecision));
+                return RatLitExpr.of(
+                        BigInteger.valueOf(
+                                (long) (Float.parseFloat(arguments[1]) * doublePrecision)),
+                        BigInteger.valueOf(doublePrecision));
             case "i64":
                 if (arithmeticType == ArithmeticType.bitvector)
                     return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 64);
@@ -136,7 +142,9 @@ public class Utils {
             case "i1":
                 return BoolLitExpr.of(arguments[1].equals("true"));
             default:
-                new RuntimeException("Type " + arguments[0] + " not known! (Using int32(0) instead)").printStackTrace();
+                new RuntimeException(
+                                "Type " + arguments[0] + " not known! (Using int32(0) instead)")
+                        .printStackTrace();
                 if (arithmeticType == ArithmeticType.bitvector)
                     return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger("0"), 32);
                 return IntLitExpr.of(BigInteger.ZERO);
@@ -147,16 +155,25 @@ public class Utils {
         if (type instanceof RatType) return RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE);
         else if (type instanceof BvType)
             return BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize());
-        else if (type instanceof ArrayType) return ArrayLitExpr.of(
-                List.of(Tuple2.of(IntLitExpr.of(BigInteger.ZERO), cast(getDefaultValue(((ArrayType<?, ?>) type).getElemType()), ((ArrayType<?, ?>) type).getElemType()))),
-                cast(getDefaultValue(((ArrayType<?, ?>) type).getElemType()), ((ArrayType<?, ?>) type).getElemType()),
-                ArrayType.of(Int(), ((ArrayType<?, ?>) type).getElemType()));
+        else if (type instanceof ArrayType)
+            return ArrayLitExpr.of(
+                    List.of(
+                            Tuple2.of(
+                                    IntLitExpr.of(BigInteger.ZERO),
+                                    cast(
+                                            getDefaultValue(((ArrayType<?, ?>) type).getElemType()),
+                                            ((ArrayType<?, ?>) type).getElemType()))),
+                    cast(
+                            getDefaultValue(((ArrayType<?, ?>) type).getElemType()),
+                            ((ArrayType<?, ?>) type).getElemType()),
+                    ArrayType.of(Int(), ((ArrayType<?, ?>) type).getElemType()));
         return IntLitExpr.of(BigInteger.ZERO);
     }
 
     public static VarDecl<?> getOrCreateVar(FunctionState functionState, Argument regArgument) {
         VarDecl<?> var;
-        Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
+        Tuple2<VarDecl<?>, Integer> objects =
+                functionState.getLocalVars().get(regArgument.getName());
         if (objects == null) {
             var = Var(regArgument.getName(), regArgument.getType());
             functionState.getProcedureBuilder().getVars().add(var);
@@ -178,28 +195,48 @@ public class Utils {
         }
     }
 
-    public static void foldExpression(Instruction instruction, FunctionState functionState, BlockState blockState, String opName, Expr<?> op, int ref) {
+    public static void foldExpression(
+            Instruction instruction,
+            FunctionState functionState,
+            BlockState blockState,
+            String opName,
+            Expr<?> op,
+            int ref) {
         //noinspection OptionalGetWithoutIsPresent
         RegArgument ret = instruction.getRetVar().get();
         if (ret instanceof LocalArgument) {
-            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
+            XcfaLocation loc =
+                    new XcfaLocation(
+                            blockState.getName() + "_" + blockState.getBlockCnt(),
+                            EmptyMetaData.INSTANCE);
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;
             if (!lhs.getRef().equals(op))
-                edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));
+                edge =
+                        new XcfaEdge(
+                                blockState.getLastLocation(),
+                                loc,
+                                new StmtLabel(stmt),
+                                new LlvmMetadata(instruction.getLineNumber()));
             else
-                edge = new XcfaEdge(blockState.getLastLocation(), loc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
+                edge =
+                        new XcfaEdge(
+                                blockState.getLastLocation(),
+                                loc,
+                                NopLabel.INSTANCE,
+                                new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(loc);
         } else {
             if (functionState.getLocalVars().containsKey(opName)) {
                 Tuple2<VarDecl<?>, Integer> oldVar = functionState.getLocalVars().get(opName);
-                functionState.getLocalVars().put(ret.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() + ref));
+                functionState
+                        .getLocalVars()
+                        .put(ret.getName(), Tuple2.of(oldVar.get1(), oldVar.get2() + ref));
             }
             functionState.getValues().put(ret.getName(), op);
         }
     }
-
 }

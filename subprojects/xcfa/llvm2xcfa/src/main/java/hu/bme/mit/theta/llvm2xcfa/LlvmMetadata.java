@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa;
 
 import hu.bme.mit.theta.xcfa.model.MetaData;
@@ -26,8 +25,7 @@ public class LlvmMetadata extends MetaData {
         this.lineNumber = lineNumber;
     }
 
-    @NotNull
-    @Override
+    @NotNull @Override
     public MetaData combine(@NotNull MetaData other) {
         return this;
     }

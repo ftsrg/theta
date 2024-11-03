@@ -16,71 +16,83 @@
 package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.xcfa.model.*
-import org.antlr.v4.runtime.ParserRuleContext
 import kotlin.math.max
 import kotlin.math.min
 
 data class CMetaData(
-    val lineNumberStart: Int?,
-    val colNumberStart: Int?,
-    val lineNumberStop: Int?,
-    val colNumberStop: Int?,
-    val offsetStart: Int?,
-    val offsetEnd: Int?,
-    val sourceText: String?,
+  val lineNumberStart: Int?,
+  val colNumberStart: Int?,
+  val lineNumberStop: Int?,
+  val colNumberStop: Int?,
+  val offsetStart: Int?,
+  val offsetEnd: Int?,
+  val sourceText: String?,
 ) : MetaData() {
 
-    override fun combine(other: MetaData): MetaData {
-        if (other is CMetaData) {
-            return CMetaData(
-                lineNumberStart = min(
-                    lineNumberStart ?: other.lineNumberStart ?: -1, other.lineNumberStart ?: lineNumberStart ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                colNumberStart = min(
-                    colNumberStart ?: other.colNumberStart ?: -1, other.colNumberStart ?: colNumberStart ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                offsetStart = min(
-                    offsetStart ?: other.offsetStart ?: -1, other.offsetStart ?: offsetStart ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                lineNumberStop = max(
-                    lineNumberStop ?: other.lineNumberStop ?: -1, other.lineNumberStop ?: lineNumberStop ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                colNumberStop = max(
-                    colNumberStop ?: other.colNumberStop ?: -1, other.colNumberStop ?: colNumberStop ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                offsetEnd = max(
-                    offsetEnd ?: other.offsetEnd ?: -1, other.offsetEnd ?: offsetEnd ?: -1
-                ).takeIf { it > 0 } ?: 0,
-                sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
+  override fun combine(other: MetaData): MetaData {
+    if (other is CMetaData) {
+      return CMetaData(
+        lineNumberStart =
+          min(
+              lineNumberStart ?: other.lineNumberStart ?: -1,
+              other.lineNumberStart ?: lineNumberStart ?: -1,
             )
-        } else if (other is EmptyMetaData) {
-            return this
-        } else {
-            error("Cannot combine metadata of different types: $this vs $other")
-        }
+            .takeIf { it > 0 } ?: 0,
+        colNumberStart =
+          min(
+              colNumberStart ?: other.colNumberStart ?: -1,
+              other.colNumberStart ?: colNumberStart ?: -1,
+            )
+            .takeIf { it > 0 } ?: 0,
+        offsetStart =
+          min(offsetStart ?: other.offsetStart ?: -1, other.offsetStart ?: offsetStart ?: -1)
+            .takeIf { it > 0 } ?: 0,
+        lineNumberStop =
+          max(
+              lineNumberStop ?: other.lineNumberStop ?: -1,
+              other.lineNumberStop ?: lineNumberStop ?: -1,
+            )
+            .takeIf { it > 0 } ?: 0,
+        colNumberStop =
+          max(
+              colNumberStop ?: other.colNumberStop ?: -1,
+              other.colNumberStop ?: colNumberStop ?: -1,
+            )
+            .takeIf { it > 0 } ?: 0,
+        offsetEnd =
+          max(offsetEnd ?: other.offsetEnd ?: -1, other.offsetEnd ?: offsetEnd ?: -1).takeIf {
+            it > 0
+          } ?: 0,
+        sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
+      )
+    } else if (other is EmptyMetaData) {
+      return this
+    } else {
+      error("Cannot combine metadata of different types: $this vs $other")
     }
+  }
 }
 
 fun XcfaLabel.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
-    }
+  return if (this.metadata is CMetaData) {
+    this.metadata as CMetaData
+  } else {
+    null
+  }
 }
 
 fun XcfaLocation.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
-    }
+  return if (this.metadata is CMetaData) {
+    this.metadata as CMetaData
+  } else {
+    null
+  }
 }
 
 fun XcfaEdge.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
-    }
+  return if (this.metadata is CMetaData) {
+    this.metadata as CMetaData
+  } else {
+    null
+  }
 }

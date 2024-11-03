@@ -16,14 +16,14 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 
 data class WitnessEdge(
   val startlineRange: Pair<Int, Int>?,

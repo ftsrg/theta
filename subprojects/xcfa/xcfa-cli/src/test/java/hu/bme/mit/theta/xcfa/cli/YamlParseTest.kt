@@ -13,60 +13,56 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli
 
 import com.charleskorn.kaml.Yaml
 import hu.bme.mit.theta.xcfa.cli.witnesses.*
+import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.util.*
 
 class YamlParseTest {
-    @Test
-    fun serialize() {
-        val witness = YamlWitness(
-            entryType = EntryType.VIOLATION,
-            metadata = Metadata(
-                formatVersion = "2.0",
-                uuid = UUID.randomUUID().toString(),
-                creationTime = getIsoDate(),
-                producer = Producer(
-                    name = "test",
-                    version = "1.0.0",
-                ),
-                task = Task(
-                    inputFiles = listOf("example.c"),
-                    inputFileHashes = listOf("hash"),
-                    specification = "unreach_call",
-                    dataModel = DataModel.LP64,
-                    language = Language.C,
+  @Test
+  fun serialize() {
+    val witness =
+      YamlWitness(
+        entryType = EntryType.VIOLATION,
+        metadata =
+          Metadata(
+            formatVersion = "2.0",
+            uuid = UUID.randomUUID().toString(),
+            creationTime = getIsoDate(),
+            producer = Producer(name = "test", version = "1.0.0"),
+            task =
+              Task(
+                inputFiles = listOf("example.c"),
+                inputFileHashes = listOf("hash"),
+                specification = "unreach_call",
+                dataModel = DataModel.LP64,
+                language = Language.C,
+              ),
+          ),
+        content =
+          listOf(
+            ContentItem(
+              Segment(
+                Waypoint(
+                  type = WaypointType.ASSUMPTION,
+                  constraint = Constraint(value = "1 < x", format = Format.C_EXPRESSION),
+                  location = Location(fileName = "example.c", line = 15),
+                  action = Action.FOLLOW,
                 )
-            ),
-            content = listOf(
-                ContentItem(
-                    Segment(Waypoint(
-                        type = WaypointType.ASSUMPTION,
-                        constraint = Constraint(
-                            value = "1 < x",
-                            format = Format.C_EXPRESSION,
-                        ),
-                        location = Location(
-                            fileName = "example.c",
-                            line = 15,
-                        ),
-                        action = Action.FOLLOW,
-                    ))
-                ),
-            ),
-        )
+              )
+            )
+          ),
+      )
 
-        val result = WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness)
+    val result = WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness)
 
-        System.err.println(result)
+    System.err.println(result)
 
-        val parsedPack = Yaml.default.decodeFromString(YamlWitness.serializer(), result)
+    val parsedPack = Yaml.default.decodeFromString(YamlWitness.serializer(), result)
 
-        Assertions.assertEquals(witness, parsedPack)
-    }
+    Assertions.assertEquals(witness, parsedPack)
+  }
 }

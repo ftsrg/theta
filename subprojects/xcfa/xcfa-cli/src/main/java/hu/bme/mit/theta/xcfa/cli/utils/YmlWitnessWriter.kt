@@ -37,159 +37,189 @@ import hu.bme.mit.theta.xcfa.toC
 import java.io.File
 import java.util.*
 
-
 class YmlWitnessWriter {
 
-    fun writeWitness(
-        safetyResult: SafetyResult<*, *>,
-        inputFile: File,
-        property: ErrorDetection,
-        architecture: ArchitectureConfig.ArchitectureType?,
-        cexSolverFactory: SolverFactory,
-        parseContext: ParseContext,
-        witnessfile: File,
-    ) {
-        val metadata = Metadata(
-            formatVersion = "2.0",
-            uuid = UUID.randomUUID().toString(),
-            creationTime = getIsoDate(),
-            producer = Producer(
-                name = (System.getenv("VERIFIER_NAME")?:"").ifEmpty { "Theta" },
-                version = (System.getenv("VERIFIER_VERSION")?:"").ifEmpty { "no version found" },
-            ),
-            task = Task(
-                inputFiles = listOf(inputFile.name),
-                inputFileHashes = listOf(createTaskHash(inputFile.path)),
-                specification = property.name,
-                dataModel = architecture?.let { if(it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32 else DataModel.LP64 } ?: DataModel.ILP32,
-                language = Language.C,
-            )
+  fun writeWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: ErrorDetection,
+    architecture: ArchitectureConfig.ArchitectureType?,
+    cexSolverFactory: SolverFactory,
+    parseContext: ParseContext,
+    witnessfile: File,
+  ) {
+    val metadata =
+      Metadata(
+        formatVersion = "2.0",
+        uuid = UUID.randomUUID().toString(),
+        creationTime = getIsoDate(),
+        producer =
+          Producer(
+            name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
+            version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
+          ),
+        task =
+          Task(
+            inputFiles = listOf(inputFile.name),
+            inputFileHashes = listOf(createTaskHash(inputFile.path)),
+            specification = property.name,
+            dataModel =
+              architecture?.let {
+                if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
+                else DataModel.LP64
+              } ?: DataModel.ILP32,
+            language = Language.C,
+          ),
+      )
+
+    if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
+      val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+        XcfaTraceConcretizer.concretize(
+          safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+          cexSolverFactory,
+          parseContext,
         )
 
-        if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
-            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?, cexSolverFactory,
-                parseContext)
+      val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
 
-            val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
+      val witness =
+        YamlWitness(
+          entryType = EntryType.VIOLATION,
+          metadata = metadata,
+          content =
+            (0..(witnessTrace.length())).flatMap {
+              listOfNotNull(
+                witnessTrace.states
+                  .get(it)
+                  ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
+                witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+              )
+            },
+        )
 
-            val witness = YamlWitness(
-                entryType = EntryType.VIOLATION,
-                metadata = metadata,
-                content = (0..(witnessTrace.length())).flatMap {
-                    listOfNotNull(
-                        witnessTrace.states.get(it)?.toSegment(witnessTrace.actions.getOrNull(it-1), inputFile),
-                        witnessTrace.actions.getOrNull(it)?.toSegment(inputFile)
-                    )
-                }
-            )
+      witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
+    } else if (safetyResult.isSafe) {
 
-            witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
-        } else if (safetyResult.isSafe) {
+      val witness =
+        YamlWitness(
+          entryType = EntryType.INVARIANTS,
+          metadata = metadata,
+          content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
+        )
 
-            val witness = YamlWitness(
-                entryType = EntryType.INVARIANTS,
-                metadata = metadata,
-                content = safetyResult.asSafe().proof.toContent(inputFile, parseContext)
-            )
-
-            witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
-        }
+      witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
     }
+  }
 }
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
-    val line = (metadata as? CMetaData)?.lineNumberStart ?: (metadata as? CMetaData)?.lineNumberStop ?: return null
-    val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
-    return Location(
-        fileName = inputFile.name,
-        line = line,
-        column = column,
-    )
+  val line =
+    (metadata as? CMetaData)?.lineNumberStart
+      ?: (metadata as? CMetaData)?.lineNumberStop
+      ?: return null
+  val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
+  return Location(fileName = inputFile.name, line = line, column = column)
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
-    if(witnessEdge == null) return null
-    val endLoc = Location(
-        fileName = inputFile.name,
-        line = witnessEdge.endline ?: witnessEdge.startline ?: return null,
-        column = (witnessEdge.endcol ?: witnessEdge.startcol)?.plus(1),
+  if (witnessEdge == null) return null
+  val endLoc =
+    Location(
+      fileName = inputFile.name,
+      line = witnessEdge.endline ?: witnessEdge.startline ?: return null,
+      column = (witnessEdge.endcol ?: witnessEdge.startcol)?.plus(1),
     )
-    return endLoc
+  return endLoc
 }
 
 private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): ContentItem? {
-    if(violation) {
-        val loc = xcfaLocations.values.first().first()
-        val locLoc = getLocation(inputFile, loc.metadata) ?: getLocation(inputFile, witnessEdge) ?: getLocation(inputFile, witnessEdge?.edge?.metadata) ?: return null
-        return ContentItem(Segment(
-            Waypoint(
-                type = WaypointType.TARGET,
-                location = locLoc,
-                action = Action.FOLLOW
-            )
-        ))
-    } else {
-        return null
-    }
+  if (violation) {
+    val loc = xcfaLocations.values.first().first()
+    val locLoc =
+      getLocation(inputFile, loc.metadata)
+        ?: getLocation(inputFile, witnessEdge)
+        ?: getLocation(inputFile, witnessEdge?.edge?.metadata)
+        ?: return null
+    return ContentItem(
+      Segment(Waypoint(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW))
+    )
+  } else {
+    return null
+  }
 }
 
 private fun WitnessEdge.toSegment(inputFile: File): ContentItem? {
-    val endLoc = Location(
-        fileName = inputFile.name,
-        line = endline ?: startline ?: return null,
-        column = (endcol ?: startcol)?.plus(1),
+  val endLoc =
+    Location(
+      fileName = inputFile.name,
+      line = endline ?: startline ?: return null,
+      column = (endcol ?: startcol)?.plus(1),
     )
-    val startLoc = Location(
-        fileName = inputFile.name,
-        line = startline ?: endline ?: return null,
-        column = (startcol ?: endcol)?.plus(1),
+  val startLoc =
+    Location(
+      fileName = inputFile.name,
+      line = startline ?: endline ?: return null,
+      column = (startcol ?: endcol)?.plus(1),
     )
 
-    val (loc, constraint, type) = if(assumption != null) {
-        Triple(endLoc, Constraint(value = assumption, format = Format.C_EXPRESSION), WaypointType.ASSUMPTION)
-    } else if(control != null) {
-        Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
-    } else if(enterLoopHead) {
-        Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
-    } else if(enterFunction != null) {
-        Triple(startLoc, Constraint(value = enterFunction), WaypointType.FUNCTION_ENTER)
-    } else if(returnFromFunction != null) {
-        Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
+  val (loc, constraint, type) =
+    if (assumption != null) {
+      Triple(
+        endLoc,
+        Constraint(value = assumption, format = Format.C_EXPRESSION),
+        WaypointType.ASSUMPTION,
+      )
+    } else if (control != null) {
+      Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
+    } else if (enterLoopHead) {
+      Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
+    } else if (enterFunction != null) {
+      Triple(startLoc, Constraint(value = enterFunction), WaypointType.FUNCTION_ENTER)
+    } else if (returnFromFunction != null) {
+      Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
     } else return null
-    return ContentItem(Segment(
-        Waypoint(
-            type = type,
-            constraint = constraint,
-            location = loc,
-            action = Action.FOLLOW
-        )
-    ))
+  return ContentItem(
+    Segment(Waypoint(type = type, constraint = constraint, location = loc, action = Action.FOLLOW))
+  )
 }
 
 private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<ContentItem> {
-    if(this is ARG<*, *>) {
-        val locMap = nodes.toList().mapNotNull {
-            it as ArgNode<XcfaState<*>, XcfaAction>
-            val loc = it.state.processes.values.firstOrNull()?.locs?.peek() ?: return@mapNotNull null
-            val locLoc = Location(
-                fileName = inputFile.name,
-                line = (loc.metadata as? CMetaData)?.lineNumberStart ?: (loc.metadata as? CMetaData)?.lineNumberStop ?: return@mapNotNull null,
-                column = (loc.metadata as? CMetaData)?.colNumberStart ?: (loc.metadata as? CMetaData)?.colNumberStop,
+  if (this is ARG<*, *>) {
+    val locMap =
+      nodes
+        .toList()
+        .mapNotNull {
+          it as ArgNode<XcfaState<*>, XcfaAction>
+          val loc = it.state.processes.values.firstOrNull()?.locs?.peek() ?: return@mapNotNull null
+          val locLoc =
+            Location(
+              fileName = inputFile.name,
+              line =
+                (loc.metadata as? CMetaData)?.lineNumberStart
+                  ?: (loc.metadata as? CMetaData)?.lineNumberStop
+                  ?: return@mapNotNull null,
+              column =
+                (loc.metadata as? CMetaData)?.colNumberStart
+                  ?: (loc.metadata as? CMetaData)?.colNumberStop,
             )
-            locLoc to it.state.sGlobal.toExpr()
-        }.groupBy{ it.first }
-        val invs = locMap.mapValues { entry -> ExprUtils.simplify(Or(entry.value.map { it.second })) }.map {
-            ContentItem(
-                invariant = Invariant(
-                    type = InvariantType.LOCATION_INVARIANT,
-                    location = it.key,
-                    value = it.value.toC(parseContext),
-                    format = Format.C_EXPRESSION
-                )
-            )
+          locLoc to it.state.sGlobal.toExpr()
         }
-        return invs
-    }
-    return listOf()
+        .groupBy { it.first }
+    val invs =
+      locMap
+        .mapValues { entry -> ExprUtils.simplify(Or(entry.value.map { it.second })) }
+        .map {
+          ContentItem(
+            invariant =
+              Invariant(
+                type = InvariantType.LOCATION_INVARIANT,
+                location = it.key,
+                value = it.value.toC(parseContext),
+                format = Format.C_EXPRESSION,
+              )
+          )
+        }
+    return invs
+  }
+  return listOf()
 }

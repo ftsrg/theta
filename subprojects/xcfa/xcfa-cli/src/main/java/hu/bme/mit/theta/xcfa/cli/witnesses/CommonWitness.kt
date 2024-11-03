@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.witnesses
 
 import hu.bme.mit.theta.analysis.Action
@@ -32,87 +31,80 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 data class WitnessNode(
-    val id: String,
-    val entry: Boolean = false,
-    val sink: Boolean = false,
-    val violation: Boolean = false,
-
-    val xcfaLocations: Map<Int, List<XcfaLocation>> = emptyMap(),
-    val cSources: Map<Int, List<String>> = emptyMap(),
-    val globalState: ExplState? = null
+  val id: String,
+  val entry: Boolean = false,
+  val sink: Boolean = false,
+  val violation: Boolean = false,
+  val xcfaLocations: Map<Int, List<XcfaLocation>> = emptyMap(),
+  val cSources: Map<Int, List<String>> = emptyMap(),
+  val globalState: ExplState? = null,
 ) : State {
 
-    override fun isBottom(): Boolean {
-        error("Not applicable for witness states.")
-    }
+  override fun isBottom(): Boolean {
+    error("Not applicable for witness states.")
+  }
 }
 
 data class WitnessEdge(
-    val sourceId: String,
-    val targetId: String,
-    val assumption: String? = null,
-    val assumption_scope: String? = null,
-    val assumption_resultfunction: String? = null,
-    val control: Boolean? = null,
-    val startline: Int? = null,
-    val endline: Int? = null,
-    val startoffset: Int? = null,
-    val endoffset: Int? = null,
-    val startcol: Int? = null,
-    val endcol: Int? = null,
-    val enterLoopHead: Boolean = false,
-    val enterFunction: String? = null,
-    val returnFromFunction: String? = null,
-    val threadId: String? = null,
-    val createThread: String? = null,
-
-    val stmt: String? = null,
-    val cSource: String? = null,
-    val edge: XcfaEdge? = null,
-) : Action {
-}
+  val sourceId: String,
+  val targetId: String,
+  val assumption: String? = null,
+  val assumption_scope: String? = null,
+  val assumption_resultfunction: String? = null,
+  val control: Boolean? = null,
+  val startline: Int? = null,
+  val endline: Int? = null,
+  val startoffset: Int? = null,
+  val endoffset: Int? = null,
+  val startcol: Int? = null,
+  val endcol: Int? = null,
+  val enterLoopHead: Boolean = false,
+  val enterFunction: String? = null,
+  val returnFromFunction: String? = null,
+  val threadId: String? = null,
+  val createThread: String? = null,
+  val stmt: String? = null,
+  val cSource: String? = null,
+  val edge: XcfaEdge? = null,
+) : Action {}
 
 fun createTaskHash(programFile: String): String {
-    var md: MessageDigest? = null
-    try {
-        md = MessageDigest.getInstance("SHA-256")
-    } catch (e: NoSuchAlgorithmException) {
-        e.printStackTrace()
+  var md: MessageDigest? = null
+  try {
+    md = MessageDigest.getInstance("SHA-256")
+  } catch (e: NoSuchAlgorithmException) {
+    e.printStackTrace()
+  }
+  try {
+    Files.newInputStream(Paths.get(programFile)).use { `is` ->
+      DigestInputStream(`is`, md).use { dis -> while (dis.read() != -1) {} }
     }
-    try {
-        Files.newInputStream(Paths.get(programFile)).use { `is` ->
-            DigestInputStream(`is`, md).use { dis ->
-                while (dis.read() != -1) {
-                }
-            }
-        }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
-    assert(md != null)
-    val digest = md!!.digest()
-    return bytesToHex(digest)
+  } catch (e: IOException) {
+    e.printStackTrace()
+  }
+  assert(md != null)
+  val digest = md!!.digest()
+  return bytesToHex(digest)
 }
 
 // source: https://www.baeldung.com/sha-256-hashing-java
 fun bytesToHex(hash: ByteArray): String {
-    val hexString = StringBuilder(2 * hash.size)
-    for (i in hash.indices) {
-        val hex = Integer.toHexString(0xff and hash[i].toInt())
-        if (hex.length == 1) {
-            hexString.append('0')
-        }
-        hexString.append(hex)
+  val hexString = StringBuilder(2 * hash.size)
+  for (i in hash.indices) {
+    val hex = Integer.toHexString(0xff and hash[i].toInt())
+    if (hex.length == 1) {
+      hexString.append('0')
     }
-    return hexString.toString()
+    hexString.append(hex)
+  }
+  return hexString.toString()
 }
 
 fun getIsoDate(): String {
-    val tz: TimeZone = TimeZone.getTimeZone("UTC")
-    val df: DateFormat = SimpleDateFormat(
-        "yyyy-MM-dd'T'HH:mm:ss'Z'"
-    ) // Quoted "Z" to indicate UTC, no timezone offset
+  val tz: TimeZone = TimeZone.getTimeZone("UTC")
+  val df: DateFormat =
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
 
-    df.timeZone = tz
-    return df.format(Date())
+  df.timeZone = tz
+  return df.format(Date())
 }

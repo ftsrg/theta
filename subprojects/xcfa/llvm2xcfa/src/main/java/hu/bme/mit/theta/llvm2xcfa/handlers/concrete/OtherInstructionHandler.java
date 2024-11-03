@@ -13,8 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.getOrCreateVar;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple4;
@@ -37,23 +45,17 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.utils.PlaceholderAssignmentStmt;
 import hu.bme.mit.theta.xcfa.model.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.getOrCreateVar;
-
 public class OtherInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "icmp":
                 icmp(instruction, globalState, functionState, blockState);
@@ -80,13 +82,21 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void call(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        Argument functionName = instruction.getArguments().get(instruction.getArguments().size() - 1);
-        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
-        if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
+    private void call(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
+        Argument functionName =
+                instruction.getArguments().get(instruction.getArguments().size() - 1);
+        XcfaLocation newLoc =
+                new XcfaLocation(
+                        blockState.getName() + "_" + blockState.getBlockCnt(),
+                        EmptyMetaData.INSTANCE);
+        if (globalState.getProcedures().stream()
+                .anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
             System.err.println("More than one function.");
             System.exit(-80);
         } else {
@@ -95,39 +105,64 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 stmts.add(havocVar(instruction.getRetVar().get(), functionState, blockState));
             }
             for (Argument argument : instruction.getArguments()) {
-                Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(argument.getName());
+                Tuple2<VarDecl<?>, Integer> objects =
+                        functionState.getLocalVars().get(argument.getName());
                 if (objects != null && objects.get2() > 0)
                     stmts.add(havocVar(argument, functionState, blockState));
             }
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(instruction.getLineNumber()));
+            XcfaEdge edge =
+                    new XcfaEdge(
+                            blockState.getLastLocation(),
+                            newLoc,
+                            new SequenceLabel(
+                                    stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()),
+                            new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
         }
         blockState.setLastLocation(newLoc);
     }
 
-
     private Stmt havocVar(Argument reg, FunctionState functionState, BlockState blockState) {
         VarDecl<?> callVar = getOrCreateVar(functionState, reg);
         return Havoc(callVar);
     }
 
-    private void select(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void select(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument cond = instruction.getArguments().get(0);
         Argument op1 = instruction.getArguments().get(1);
         Argument op2 = instruction.getArguments().get(2);
 
-        checkState(cond.getType() == BoolType.getInstance(), "Select only supports boolean condition!");
+        checkState(
+                cond.getType() == BoolType.getInstance(),
+                "Select only supports boolean condition!");
         checkState(op1.getType().equals(op2.getType()), "Select only supports common types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         Expr<?> expr1 = op1.getExpr(functionState.getValues());
-        //TODO: what to do, when null?
+        // TODO: what to do, when null?
         Expr<?> expr2 = op2.getExpr(functionState.getValues());
-        foldExpression(instruction, functionState, blockState, null, Ite(cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()), cast(expr1, expr1.getType()), cast(expr2, expr1.getType())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Ite(
+                        cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),
+                        cast(expr1, expr1.getType()),
+                        cast(expr2, expr1.getType())),
+                0);
     }
 
     // Phi nodes are the only possible place where an argument might not be known yet.
-    private void phi(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void phi(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Optional<RegArgument> retVar = instruction.getRetVar();
         checkState(retVar.isPresent(), "Return var must be present!");
         VarDecl<?> phiVar = getOrCreateVar(functionState, retVar.get());
@@ -135,8 +170,19 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
-            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), EmptyMetaData.INSTANCE), new XcfaLocation(key.get2(), EmptyMetaData.INSTANCE), new ArrayList<>(), instruction.getLineNumber()));
-            checkState(phiVar.getType().equals(value.getType()), "phiVar and value has to be of the same type!");
+            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val =
+                    functionState
+                            .getInterBlockEdges()
+                            .getOrDefault(
+                                    key,
+                                    Tuple4.of(
+                                            new XcfaLocation(key.get1(), EmptyMetaData.INSTANCE),
+                                            new XcfaLocation(key.get2(), EmptyMetaData.INSTANCE),
+                                            new ArrayList<>(),
+                                            instruction.getLineNumber()));
+            checkState(
+                    phiVar.getType().equals(value.getType()),
+                    "phiVar and value has to be of the same type!");
             Stmt stmt;
             Expr<?> expr;
             if ((expr = value.getExpr(functionState.getValues())) != null) {
@@ -152,39 +198,105 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         }
     }
 
-    private void fcmp(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fcmp(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
         Argument op3 = instruction.getArguments().get(2);
 
-        checkState(op1 instanceof StringArgument, "Icmp has to have string argument as first operand!");
+        checkState(
+                op1 instanceof StringArgument,
+                "Icmp has to have string argument as first operand!");
         checkState(op2.getType() == RatType.getInstance(), "Icmp only supports integer types!");
         checkState(op3.getType() == RatType.getInstance(), "Icmp only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         switch (op1.getName()) {
             case "ueq":
             case "oeq":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Eq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Eq(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "one":
             case "une":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Neq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Neq(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "ugt":
             case "ogt":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Gt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Gt(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "uge":
             case "oge":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Geq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Geq(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "ult":
             case "olt":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Lt(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Lt(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "ole":
             case "ule":
-                foldExpression(instruction, functionState, blockState, null, RatExprs.Leq(cast(op2.getExpr(functionState.getValues()), RatType.getInstance()), cast(op3.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        RatExprs.Leq(
+                                cast(op2.getExpr(functionState.getValues()), RatType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        RatType.getInstance())),
+                        0);
                 break;
             case "ord":
             case "true":
@@ -198,37 +310,103 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         }
     }
 
-    private void icmp(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void icmp(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
         Argument op3 = instruction.getArguments().get(2);
 
-        checkState(op1 instanceof StringArgument, "Icmp has to have string argument as first operand!");
+        checkState(
+                op1 instanceof StringArgument,
+                "Icmp has to have string argument as first operand!");
         checkState(op2.getType() == IntType.getInstance(), "Icmp only supports integer types!");
         checkState(op3.getType() == IntType.getInstance(), "Icmp only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         switch (op1.getName()) {
             case "eq":
-                foldExpression(instruction, functionState, blockState, null, Eq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Eq(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             case "ne":
-                foldExpression(instruction, functionState, blockState, null, Neq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Neq(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             case "ugt":
             case "sgt":
-                foldExpression(instruction, functionState, blockState, null, Gt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Gt(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             case "uge":
             case "sge":
-                foldExpression(instruction, functionState, blockState, null, Geq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Geq(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             case "ult":
             case "slt":
-                foldExpression(instruction, functionState, blockState, null, Lt(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Lt(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             case "ule":
             case "sle":
-                foldExpression(instruction, functionState, blockState, null, Leq(cast(op2.getExpr(functionState.getValues()), IntType.getInstance()), cast(op3.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+                foldExpression(
+                        instruction,
+                        functionState,
+                        blockState,
+                        null,
+                        Leq(
+                                cast(op2.getExpr(functionState.getValues()), IntType.getInstance()),
+                                cast(
+                                        op3.getExpr(functionState.getValues()),
+                                        IntType.getInstance())),
+                        0);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + op1.getName());

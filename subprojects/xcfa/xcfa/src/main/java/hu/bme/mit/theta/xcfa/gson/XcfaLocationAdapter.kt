@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.gson
 
 import com.google.gson.Gson
@@ -26,47 +25,47 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 class XcfaLocationAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaLocation>() {
 
-    private lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: XcfaLocation) {
-        initGson()
-        writer.beginObject()
-        writer.name("name").value(value.name)
-        writer.name("initial").value(value.initial)
-        writer.name("final").value(value.final)
-        writer.name("error").value(value.error)
-        writer.name("metadata")
-        gson.toJson(gson.toJsonTree(value.metadata), writer)
-        writer.endObject()
+  private lateinit var gson: Gson
+
+  override fun write(writer: JsonWriter, value: XcfaLocation) {
+    initGson()
+    writer.beginObject()
+    writer.name("name").value(value.name)
+    writer.name("initial").value(value.initial)
+    writer.name("final").value(value.final)
+    writer.name("error").value(value.error)
+    writer.name("metadata")
+    gson.toJson(gson.toJsonTree(value.metadata), writer)
+    writer.endObject()
+  }
+
+  override fun read(reader: JsonReader): XcfaLocation {
+    initGson()
+    reader.beginObject()
+
+    lateinit var name: String
+    var initial = false
+    var final = false
+    var error = false
+    var metaData: MetaData? = null
+
+    while (reader.hasNext()) {
+      val jsonName = reader.nextName()
+      when (jsonName) {
+        "name" -> name = reader.nextString()
+        "initial" -> initial = reader.nextBoolean()
+        "final" -> final = reader.nextBoolean()
+        "error" -> error = reader.nextBoolean()
+        "metaData" -> metaData = gson.fromJson(reader, MetaData::class.java)
+        else -> reader.skipValue()
+      }
     }
+    reader.endObject()
 
-    override fun read(reader: JsonReader): XcfaLocation {
-        initGson()
-        reader.beginObject()
+    return XcfaLocation(name, initial, final, error, metaData ?: EmptyMetaData)
+  }
 
-        lateinit var name: String
-        var initial = false
-        var final = false
-        var error = false
-        var metaData: MetaData? = null
-
-        while (reader.hasNext()) {
-            val jsonName = reader.nextName()
-            when (jsonName) {
-                "name" -> name = reader.nextString()
-                "initial" -> initial = reader.nextBoolean()
-                "final" -> final = reader.nextBoolean()
-                "error" -> error = reader.nextBoolean()
-                "metaData" -> metaData = gson.fromJson(reader, MetaData::class.java)
-                else -> reader.skipValue()
-            }
-        }
-        reader.endObject()
-
-        return XcfaLocation(name, initial, final, error, metaData ?: EmptyMetaData)
-    }
-
-    private fun initGson() {
-        if (!this::gson.isInitialized) gson = gsonSupplier()
-    }
-
+  private fun initGson() {
+    if (!this::gson.isInitialized) gson = gsonSupplier()
+  }
 }
