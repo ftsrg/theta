@@ -35,7 +35,9 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
         builder.removeEdge(edge)
         edges.forEach {
           if (predicate((it.label as SequenceLabel).labels[0])) {
-            builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(NopLabel))))
+            builder.addEdge(
+              XcfaEdge(it.source, it.target, SequenceLabel(listOf(NopLabel)), it.metadata)
+            )
           } else {
             builder.addEdge(it)
           }

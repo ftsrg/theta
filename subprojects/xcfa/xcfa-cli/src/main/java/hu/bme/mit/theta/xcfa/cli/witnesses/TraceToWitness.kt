@@ -51,6 +51,7 @@ fun traceToWitness(
 
   for (i in 0 until trace.length()) {
     val state = trace.states[i]
+    val action = trace.actions[i]
     val nextState = trace.states[i + 1]
     val newThreads = nextState.processes.keys - state.processes.keys
     val node =
@@ -75,18 +76,26 @@ fun traceToWitness(
           sourceId = lastNode.id,
           targetId = node.id,
           threadId = trace.actions[i].pid.toString(),
+          edge = action.edge,
         )
       newActions.add(edge)
       lastNode = node
     }
 
-    val action = trace.actions[i]
     val flattenedSequence = flattenSequence(action.edge.label)
     for (xcfaLabel in flattenedSequence) {
       val node =
         WitnessNode(id = "N${newStates.size}", entry = false, sink = false, violation = false)
       var edge =
-        labelToEdge(lastNode, node, xcfaLabel, action.pid, nextState.sGlobal.getVal(), parseContext)
+        labelToEdge(
+          lastNode,
+          node,
+          xcfaLabel,
+          action.pid,
+          nextState.sGlobal.getVal(),
+          parseContext,
+          action.edge,
+        )
       if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
         edge = edge.copy(createThread = newThreads.joinToString(","))
       }
@@ -113,7 +122,12 @@ fun traceToWitness(
       globalState = lastState.sGlobal,
     )
   newStates.add(node)
-  val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id)
+  val edge =
+    WitnessEdge(
+      sourceId = lastNode.id,
+      targetId = node.id,
+      edge = trace.actions[trace.length() - 1].edge,
+    )
   newActions.add(edge)
 
   return Trace.of(newStates, newActions)
@@ -135,6 +149,7 @@ private fun labelToEdge(
   pid: Int,
   valuation: Valuation,
   parseContext: ParseContext,
+  edge: XcfaEdge,
 ): WitnessEdge =
   WitnessEdge(
     sourceId = lastNode.id,
@@ -162,9 +177,12 @@ private fun labelToEdge(
     endline = xcfaLabel.getCMetaData()?.lineNumberStop,
     startoffset = xcfaLabel.getCMetaData()?.offsetStart,
     endoffset = xcfaLabel.getCMetaData()?.offsetEnd,
+    startcol = xcfaLabel.getCMetaData()?.colNumberStart,
+    endcol = xcfaLabel.getCMetaData()?.colNumberStop,
     threadId = if (pid != null) "$pid" else null,
     stmt = if (xcfaLabel is StmtLabel) xcfaLabel.stmt.toString() else null,
     cSource = xcfaLabel.getCMetaData()?.sourceText,
+    edge = edge,
   )
 
 private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =

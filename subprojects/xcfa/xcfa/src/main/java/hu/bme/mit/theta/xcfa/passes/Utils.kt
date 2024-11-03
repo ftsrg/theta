@@ -50,13 +50,13 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)
   for (i in 2..(newLabels.size)) {
-    locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter()))
+    locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData))
   }
   locations.add(target)
 
   val newEdges = ArrayList<XcfaEdge>()
   for ((i, label) in newLabels.withIndex()) {
-    newEdges.add(XcfaEdge(locations[i], locations[i + 1], label))
+    newEdges.add(XcfaEdge(locations[i], locations[i + 1], label, metadata))
   }
   return newEdges
 }
@@ -183,3 +183,8 @@ private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
   metaData[if (recursive) "recursive" else "canInline"] = Unit
   return !recursive
 }
+
+fun combineMetadata(vararg metaData: MetaData): MetaData = combineMetadata(metaData.toList())
+
+fun combineMetadata(metaData: Collection<MetaData>): MetaData =
+  metaData.reduce { i1, i2 -> i1.combine(i2) }

@@ -83,12 +83,12 @@ class FrontendXcfaBuilder(
 
   private fun getMetadata(source: CStatement): CMetaData =
     CMetaData(
-      lineNumberStart = source.lineNumberStart,
-      lineNumberStop = source.lineNumberStop,
-      colNumberStart = source.colNumberStart,
-      colNumberStop = source.colNumberStop,
-      offsetStart = source.offsetStart,
-      offsetEnd = source.offsetEnd,
+      lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
+      lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
+      colNumberStart = source.colNumberStart.takeIf { it != -1 },
+      colNumberStop = source.colNumberStop.takeIf { it != -1 },
+      offsetStart = source.offsetStart.takeIf { it != -1 },
+      offsetEnd = source.offsetEnd.takeIf { it != -1 },
       sourceText = source.sourceText,
     )
 
@@ -679,7 +679,12 @@ class FrontendXcfaBuilder(
     builder.addLoc(initLoc)
     var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(edge)
-    edge = XcfaEdge(initLoc, getLoc(builder, statement.label, metadata = getMetadata(statement)))
+    edge =
+      XcfaEdge(
+        initLoc,
+        getLoc(builder, statement.label, metadata = getMetadata(statement)),
+        metadata = getMetadata(statement),
+      )
     builder.addLoc(getLoc(builder, statement.label, metadata = getMetadata(statement)))
     val unreachableLoc: XcfaLocation =
       XcfaLocation("Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))

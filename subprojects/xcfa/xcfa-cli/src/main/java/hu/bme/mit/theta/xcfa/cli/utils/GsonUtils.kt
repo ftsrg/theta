@@ -113,10 +113,7 @@ private fun getGson(
     SpecBackendConfigTypeAdapter { gson },
   )
   gsonBuilder.registerTypeHierarchyAdapter(File::class.java, StringTypeAdapter { File(it) })
-  gsonBuilder.registerTypeHierarchyAdapter(
-    XcfaLocation::class.java,
-    StringTypeAdapter(xcfaLocationAdapter),
-  )
+  gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java, XcfaLocationAdapter { gson })
   gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
   gsonBuilder.registerTypeHierarchyAdapter(
     VarDecl::class.java,

@@ -208,7 +208,14 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         nondetLabel = NondetLabel(oldLabels)
         builder.removeEdge(edge)
       }
-      builder.addEdge(XcfaEdge(source, target, nondetLabel))
+      builder.addEdge(
+        XcfaEdge(
+          source,
+          target,
+          nondetLabel,
+          combineMetadata(edgesToTarget.map(XcfaEdge::metadata)),
+        )
+      )
       if (edgesToTarget.size >= 2 && !locationsToVisit.contains(key)) {
         locationsToVisit.add(key)
       }
@@ -283,7 +290,14 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
       val newLabels = mutableListOf<XcfaLabel>()
       newLabels.addAll(inEdge.getFlatLabels())
       newLabels.addAll(outEdge.getFlatLabels())
-      builder.addEdge(XcfaEdge(inEdge.source, outEdge.target, SequenceLabel(newLabels)))
+      builder.addEdge(
+        XcfaEdge(
+          inEdge.source,
+          outEdge.target,
+          SequenceLabel(newLabels),
+          combineMetadata(inEdge.metadata, outEdge.metadata),
+        )
+      )
     }
     return true
   }

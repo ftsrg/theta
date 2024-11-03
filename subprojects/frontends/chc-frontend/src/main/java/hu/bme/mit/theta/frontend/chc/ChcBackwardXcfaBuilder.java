@@ -15,6 +15,12 @@
  */
 package hu.bme.mit.theta.frontend.chc;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.createVars;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.getTailConditionLabels;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformConst;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformSort;
+
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCBaseVisitor;
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCParser;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -36,20 +42,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
-import kotlin.Pair;
-import org.antlr.v4.runtime.RuleContext;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.createVars;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.getTailConditionLabels;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformConst;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformSort;
+import kotlin.Pair;
+import org.antlr.v4.runtime.RuleContext;
 
 public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements ChcXcfaBuilder {
     private final Map<String, XcfaProcedureBuilder> procedures = new HashMap<>();
@@ -67,8 +66,8 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
         visit(parser.benchmark());
 
-//        xcfaBuilder.addProcess(procBuilder);
-//        xcfaBuilder.setMainProcess(procBuilder);
+        //        xcfaBuilder.addProcess(procBuilder);
+        //        xcfaBuilder.setMainProcess(procBuilder);
         return xcfaBuilder;
     }
 
@@ -103,9 +102,19 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
                     vars.put(ctx.chc_head().u_pred_atom().symbol(i++).getText(), param.getFirst());
             }
             XcfaLocation middle = createLocation(procedure);
-            XcfaEdge edge = new XcfaEdge(procedure.getInitLoc(), middle, new SequenceLabel(getTailConditionLabels(ctx.chc_tail(), vars)));
+            XcfaEdge edge =
+                    new XcfaEdge(
+                            procedure.getInitLoc(),
+                            middle,
+                            new SequenceLabel(getTailConditionLabels(ctx.chc_tail(), vars)),
+                            EmptyMetaData.INSTANCE);
             procedure.addEdge(edge);
-            createCalls(procedure, middle, procedure.getFinalLoc().get(), ctx.chc_tail().u_pred_atom(), vars);
+            createCalls(
+                    procedure,
+                    middle,
+                    procedure.getFinalLoc().get(),
+                    ctx.chc_tail().u_pred_atom(),
+                    vars);
         } else {
             String procName;
             if (ctx.chc_head() != null) {
@@ -115,7 +124,12 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             }
             procedure = procedures.get(procName);
             Stmt returnTrue = AssignStmt.create(getOutParam(procedure), BoolLitExpr.of(true));
-            XcfaEdge edge = new XcfaEdge(procedure.getInitLoc(), procedure.getFinalLoc().get(), new StmtLabel(returnTrue));
+            XcfaEdge edge =
+                    new XcfaEdge(
+                            procedure.getInitLoc(),
+                            procedure.getFinalLoc().get(),
+                            new StmtLabel(returnTrue),
+                            EmptyMetaData.INSTANCE);
             procedure.addEdge(edge);
         }
         return super.visitChc_assert(ctx);
@@ -128,16 +142,26 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
         Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl());
         XcfaLocation middle = createLocation(mainProcedure);
-        XcfaEdge edge = new XcfaEdge(mainProcedure.getInitLoc(), middle, new SequenceLabel(getTailConditionLabels(ctx.chc_tail(), vars)));
+        XcfaEdge edge =
+                new XcfaEdge(
+                        mainProcedure.getInitLoc(),
+                        middle,
+                        new SequenceLabel(getTailConditionLabels(ctx.chc_tail(), vars)),
+                        EmptyMetaData.INSTANCE);
         mainProcedure.addEdge(edge);
-        createCalls(mainProcedure, middle, mainProcedure.getErrorLoc().get(), ctx.chc_tail().u_pred_atom(), vars);
+        createCalls(
+                mainProcedure,
+                middle,
+                mainProcedure.getErrorLoc().get(),
+                ctx.chc_tail().u_pred_atom(),
+                vars);
         return super.visitChc_query(ctx);
     }
 
     private int uniqeCounter = 0;
 
     private XcfaLocation createLocation(XcfaProcedureBuilder builder) {
-        XcfaLocation location = new XcfaLocation("l_" + uniqeCounter++);
+        XcfaLocation location = new XcfaLocation("l_" + uniqeCounter++, EmptyMetaData.INSTANCE);
         builder.addLoc(location);
         return location;
     }
@@ -156,35 +180,56 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
     }
 
     private VarDecl<?> getOutParam(XcfaProcedureBuilder procedure) {
-        Optional<Pair<VarDecl<?>, ParamDirection>> param = procedure.getParams()
-                .stream().filter(entry -> entry.getSecond() == ParamDirection.OUT).findAny();
+        Optional<Pair<VarDecl<?>, ParamDirection>> param =
+                procedure.getParams().stream()
+                        .filter(entry -> entry.getSecond() == ParamDirection.OUT)
+                        .findAny();
         return param.map(Pair::getFirst).orElse(null);
     }
 
-    private void createCalls(XcfaProcedureBuilder builder, XcfaLocation start, XcfaLocation end, List<CHCParser.U_pred_atomContext> uPreds, Map<String, VarDecl<?>> localVars) {
+    private void createCalls(
+            XcfaProcedureBuilder builder,
+            XcfaLocation start,
+            XcfaLocation end,
+            List<CHCParser.U_pred_atomContext> uPreds,
+            Map<String, VarDecl<?>> localVars) {
         XcfaLocation from = start;
         for (CHCParser.U_pred_atomContext uPred : uPreds) {
             XcfaLocation middle = createLocation(builder);
             XcfaLocation to = createLocation(builder);
 
             XcfaProcedureBuilder calledProcedure = procedures.get(uPred.u_predicate().getText());
-            VarDecl<BoolType> ret = Decls.Var(calledProcedure.getName() + "_ret_" + callCount++, Bool());
+            VarDecl<BoolType> ret =
+                    Decls.Var(calledProcedure.getName() + "_ret_" + callCount++, Bool());
             builder.addVar(ret);
             localVars.put(ret.getName(), ret);
-            List<String> paramNames = new ArrayList<>(uPred.symbol().stream().map(RuleContext::getText).toList());
+            List<String> paramNames =
+                    new ArrayList<>(uPred.symbol().stream().map(RuleContext::getText).toList());
             paramNames.add(0, ret.getName());
-            List<? extends Expr<?>> params = paramNames.stream().map(s -> localVars.get(s).getRef()).toList();
+            List<? extends Expr<?>> params =
+                    paramNames.stream().map(s -> localVars.get(s).getRef()).toList();
 
-            XcfaEdge callEdge = new XcfaEdge(from, middle, new InvokeLabel(calledProcedure.getName(), params, EmptyMetaData.INSTANCE));
+            XcfaEdge callEdge =
+                    new XcfaEdge(
+                            from,
+                            middle,
+                            new InvokeLabel(
+                                    calledProcedure.getName(), params, EmptyMetaData.INSTANCE),
+                            EmptyMetaData.INSTANCE);
             builder.addEdge(callEdge);
 
-            XcfaEdge assertEdge = new XcfaEdge(middle, to, new StmtLabel(AssumeStmt.of(ret.getRef())));
+            XcfaEdge assertEdge =
+                    new XcfaEdge(
+                            middle,
+                            to,
+                            new StmtLabel(AssumeStmt.of(ret.getRef())),
+                            EmptyMetaData.INSTANCE);
             builder.addEdge(assertEdge);
 
             from = to;
         }
         Stmt returnTrue = AssignStmt.create(getOutParam(builder), BoolLitExpr.of(true));
-        XcfaEdge edge = new XcfaEdge(from, end, new StmtLabel(returnTrue));
+        XcfaEdge edge = new XcfaEdge(from, end, new StmtLabel(returnTrue), EmptyMetaData.INSTANCE);
         builder.addEdge(edge);
     }
 }

@@ -109,11 +109,16 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
               val errorLoc = procedure.errorLoc
 
               builder.addEdge(
-                XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts))
+                XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts), e.metadata)
               )
               if (finalLoc.isPresent)
                 builder.addEdge(
-                  XcfaEdge(checkNotNull(newLocs[finalLoc.get()]), target, SequenceLabel(outStmts))
+                  XcfaEdge(
+                    checkNotNull(newLocs[finalLoc.get()]),
+                    target,
+                    SequenceLabel(outStmts),
+                    EmptyMetaData,
+                  )
                 )
               if (errorLoc.isPresent) {
                 if (builder.errorLoc.isEmpty) builder.createErrorLoc()
@@ -121,7 +126,8 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                   XcfaEdge(
                     checkNotNull(newLocs[errorLoc.get()]),
                     builder.errorLoc.get(),
-                    SequenceLabel(listOf()),
+                    SequenceLabel(listOf(NopLabel)),
+                    EmptyMetaData,
                   )
                 )
               }

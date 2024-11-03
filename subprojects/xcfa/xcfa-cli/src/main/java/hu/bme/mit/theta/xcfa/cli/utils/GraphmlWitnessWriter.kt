@@ -23,7 +23,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.witnesses.Witness
+import hu.bme.mit.theta.xcfa.cli.witnesses.GraphmlWitness
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesses.traceToWitness
 import java.io.BufferedWriter
@@ -34,7 +34,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class XcfaWitnessWriter {
+class GraphmlWitnessWriter {
 
   fun writeWitness(
     safetyResult: SafetyResult<*, *>,
@@ -53,8 +53,8 @@ class XcfaWitnessWriter {
         )
 
       val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
-      val witness = Witness(witnessTrace, inputFile)
-      val xml = witness.toPrettyXml()
+      val graphmlWitness = GraphmlWitness(witnessTrace, inputFile)
+      val xml = graphmlWitness.toPrettyXml()
       witnessfile.writeText(xml)
     } else if (safetyResult.isSafe) {
       val taskHash = WitnessWriter.createTaskHash(inputFile.absolutePath)

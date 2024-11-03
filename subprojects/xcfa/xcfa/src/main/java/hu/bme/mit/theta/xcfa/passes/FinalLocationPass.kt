@@ -45,6 +45,7 @@ class FinalLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
                   listOf(StmtLabel(Stmts.Assume(BoolExprs.False()), metadata = it.metadata)),
                   metadata = it.metadata,
                 ),
+                it.metadata,
               )
             )
           } else {

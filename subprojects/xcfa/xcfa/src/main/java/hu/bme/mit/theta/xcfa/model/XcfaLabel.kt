@@ -50,7 +50,7 @@ constructor(
   companion object {
 
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (name, params) = Regex("([^\\(]*)\\((.*)\\)").matchEntire(s)!!.destructured
+      val (name, params) = Regex("^([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
       return InvokeLabel(
         name,
         params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
@@ -90,7 +90,7 @@ data class StartLabel(
 
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val (pidVarName, pidVarType, name, params) =
-        Regex("\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
+        Regex("^\\(var (.*) (.*)\\) = start ([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
       val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
       return StartLabel(
         name,
@@ -112,7 +112,8 @@ data class JoinLabel(val pidVar: VarDecl<*>, override val metadata: MetaData) :
   companion object {
 
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (pidVarName, pidVarType) = Regex("join \\(var (.*) (.*)\\)").matchEntire(s)!!.destructured
+      val (pidVarName, pidVarType) =
+        Regex("^join \\(var (.*) (.*)\\)$").matchEntire(s)!!.destructured
       val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
       return JoinLabel(pidVar, metadata = metadata)
     }
@@ -149,7 +150,7 @@ constructor(
   companion object {
 
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val matchResult = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)
+      val matchResult = Regex("^\\((.*)\\)\\[choiceType=(.*)]$").matchEntire(s)
       if (matchResult != null) {
         val (stmt, choiceTypeStr) = matchResult.destructured
         return StmtLabel(
@@ -203,7 +204,7 @@ data class FenceLabel(val labels: Set<String>, override val metadata: MetaData =
   companion object {
 
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (labelList) = Regex("F\\[(.*)]").matchEntire(s)!!.destructured
+      val (labelList) = Regex("^F\\[(.*)]$").matchEntire(s)!!.destructured
       return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
     }
   }

@@ -41,6 +41,7 @@ class NondetFunctionPass : ProcedurePass {
                 it.source,
                 it.target,
                 SequenceLabel(listOf(StmtLabel(havoc, metadata = invokeLabel.metadata))),
+                it.metadata,
               )
             )
           } else {

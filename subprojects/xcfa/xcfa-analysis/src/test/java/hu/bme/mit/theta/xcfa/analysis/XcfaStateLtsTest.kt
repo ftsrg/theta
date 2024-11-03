@@ -94,7 +94,10 @@ class XcfaStateLtsTest {
     }
 
     actionOrder.add {
-      XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)))
+      XcfaAction(
+        0,
+        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel), EmptyMetaData),
+      )
     }
     expectations.add {
       it.processes[0]!!.locs.size == 1 &&
@@ -131,7 +134,7 @@ class XcfaStateLtsTest {
     actionOrder.add { s ->
       XcfaAction(
         s.foreignKey()!!,
-        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)),
+        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel), EmptyMetaData),
       )
     }
     expectations.add {

@@ -34,7 +34,6 @@ import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.references
-import org.abego.treelayout.internal.util.Contract
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
