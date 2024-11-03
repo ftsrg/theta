@@ -41,12 +41,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import kotlin.Triple;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -65,7 +60,7 @@ public class XcfaTraceConcretizer {
 
         Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         for (int i = 0; i < trace.getActions().size(); ++i) {
-            final XcfaEdge edge = new XcfaEdge(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabel());
+            final XcfaEdge edge = new XcfaEdge(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabel(), trace.getAction(i).getEdge().getMetadata());
             final XcfaAction action = new XcfaAction(trace.getAction(i).getPid(), edge, nextW, trace.getAction(i).getInCnt());
             sbeActions.add(action);
             nextW = action.nextWriteTriples();
