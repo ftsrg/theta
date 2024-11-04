@@ -146,7 +146,7 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                 else -> error("Unsupported library function ${invokeLabel.name}")
               }
-            XcfaEdge(it.source, target, SequenceLabel(labels))
+            XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
               .splitIf { label ->
                 label is FenceLabel && label.labels.any { l -> l.startsWith("start_cond_wait") }
               }
