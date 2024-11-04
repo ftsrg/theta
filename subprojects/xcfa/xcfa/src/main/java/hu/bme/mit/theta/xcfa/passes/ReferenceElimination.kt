@@ -88,7 +88,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val initVal = ptrType.getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
             val initProc = builder.parent.getInitProcedures().map { it.first }
-            Contract.checkState(initProc.size == 1, "Multiple start procedure are not handled well")
+            checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach { proc ->
               val initAssign = AssignStmtLabel(ptrVar, initVal)
               val newEdges =
