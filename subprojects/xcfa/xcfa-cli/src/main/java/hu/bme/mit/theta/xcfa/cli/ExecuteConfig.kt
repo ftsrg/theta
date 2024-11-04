@@ -91,7 +91,6 @@ fun runConfig(
 
     val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-    // TODO tracegen: write to file and log
     postAnalysisLogging(result, mcm, parseContext, config, logger, uniqueLogger)
 
     return result
@@ -263,7 +262,7 @@ private fun safetyBackend(
     logger: Logger,
     uniqueLogger: Logger,
     throwDontExit: Boolean,
-): Result<*> {
+): SafetyResult<*, *> {
     if (
         xcfa.procedures.all {
             it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
@@ -366,15 +365,15 @@ private fun preAnalysisLogging(
 }
 
 private fun postAnalysisLogging(
-    safetyResult: Result<*>,
+    result: Result<*>,
     mcm: MCM,
     parseContext: ParseContext,
     config: XcfaConfig<*, *>,
     logger: Logger,
     uniqueLogger: Logger,
 ) = when(config.backendConfig.backend) {
-    Backend.TRACEGEN -> postTraceGenerationLogging(safetyResult as TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>, mcm, parseContext, config, logger, uniqueLogger)
-    else -> postVerificationLogging(safetyResult as SafetyResult<*, *>, mcm, parseContext, config, logger, uniqueLogger) // safety analysis (or none)
+    Backend.TRACEGEN -> postTraceGenerationLogging(result as TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>, mcm, parseContext, config, logger, uniqueLogger)
+    else -> postVerificationLogging(result as SafetyResult<*, *>, mcm, parseContext, config, logger, uniqueLogger) // safety analysis (or none)
 }
 
 private fun postVerificationLogging(

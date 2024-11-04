@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 abstract class Node(val name: String) {
@@ -37,7 +37,7 @@ ${innerSTM.visualize()}
 }
 
 class ConfigNode(name: String, private val config: XcfaConfig<*, *>,
-    private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>) : Node(name) {
+    private val check: (config: XcfaConfig<*, *>) -> Result<*>) : Node(name) {
 
     override fun execute(): Pair<Any, Any> {
         println("Current configuration: $config")
