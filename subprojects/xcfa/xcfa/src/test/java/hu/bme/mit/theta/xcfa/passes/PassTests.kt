@@ -308,14 +308,20 @@ class PassTests {
           },
           passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
           input = {
-            (init to "L1") { "pthread_create"("0", "x", "0", "thr1", "0") }
-            (init to "L2") { "pthread_join"("0", "x") }
+            (init to "L1") { "pthread_create"("x", "x", "0", "thr1", "0") }
+            (init to "L2") { "pthread_join"("x", "x") }
             (init to "L3") { "pthread_mutex_lock"("0", "x") }
             (init to "L4") { "pthread_mutex_unlock"("0", "x") }
           },
           output = {
-            (init to "L1") { "x".start("thr1", "0", "0") }
-            (init to "L2") { "x".join() }
+            (init to "L1") {
+              "x".start("thr1", "0", "0")
+              "x".assign("0")
+            }
+            (init to "L2") {
+              "x".join()
+              "x".assign("0")
+            }
             (init to "L3") { fence("mutex_lock(x)") }
             (init to "L4") { fence("mutex_unlock(x)") }
           },
