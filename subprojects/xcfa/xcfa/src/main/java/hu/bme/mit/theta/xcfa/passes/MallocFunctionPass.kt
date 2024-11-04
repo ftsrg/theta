@@ -89,7 +89,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 invokeLabel.metadata,
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
-            builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(listOf(assign1, assign2)), e.metadata))
+            builder.addEdge(
+              XcfaEdge(e.source, e.target, SequenceLabel(listOf(assign1, assign2)), e.metadata)
+            )
           } else {
             builder.addEdge(e)
           }
