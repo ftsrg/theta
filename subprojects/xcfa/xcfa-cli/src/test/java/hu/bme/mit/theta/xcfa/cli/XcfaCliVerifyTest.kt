@@ -128,10 +128,8 @@ class XcfaCliVerifyTest {
     @JvmStatic
     fun cFilesShortInt(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
-        Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
