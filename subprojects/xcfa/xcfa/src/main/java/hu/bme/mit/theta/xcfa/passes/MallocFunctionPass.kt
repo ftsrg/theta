@@ -15,10 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -26,6 +24,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -34,11 +33,15 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
-  private val XcfaBuilder.malloc: VarDecl<*> by lazy {
-    Var("__malloc", CPointer(null, null, parseContext).smtType)
+  companion object {
+    private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
+
+    private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
+      mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
@@ -47,18 +50,17 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))
       ) {
         builder.removeEdge(edge)
-        edges.forEach {
-          if (predicate((it.label as SequenceLabel).labels[0])) {
-            val invokeLabel = it.label.labels[0] as InvokeLabel
+        edges.forEach { e ->
+          if (predicate((e.label as SequenceLabel).labels[0])) {
+            val invokeLabel = e.label.labels[0] as InvokeLabel
             val ret = invokeLabel.params[0] as RefExpr<*>
-            val mallocVar = builder.parent.malloc
             if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
               builder.parent.addVar(
                 XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
               )
               val initProc = builder.parent.getInitProcedures().map { it.first }
-              checkState(initProc.size == 1, "Multiple start procedure are not handled well")
-              initProc.forEach {
+              check(initProc.size == 1) { "Multiple start procedure are not handled well" }
+              initProc.forEach { proc ->
                 val initAssign =
                   StmtLabel(
                     Assign(
@@ -67,7 +69,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                     )
                   )
                 val newEdges =
-                  it.initLoc.outgoingEdges.map {
+                  proc.initLoc.outgoingEdges.map {
                     it.withLabel(
                       SequenceLabel(
                         listOf(initAssign) + it.label.getFlatLabels(),
@@ -75,35 +77,23 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                       )
                     )
                   }
-                it.initLoc.outgoingEdges.forEach(it::removeEdge)
-                newEdges.forEach(it::addEdge)
+                proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
+                newEdges.forEach(proc::addEdge)
               }
             }
             val assign1 =
-              AssignStmt.of(
-                cast(mallocVar, ret.type),
-                cast(
-                  Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                  ret.type,
-                ),
+              AssignStmtLabel(
+                mallocVar,
+                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
+                ret.type,
+                invokeLabel.metadata,
               )
-            val assign2 =
-              AssignStmt.of(cast(ret.decl as VarDecl<*>, ret.type), cast(mallocVar.ref, ret.type))
+            val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
             builder.addEdge(
-              XcfaEdge(
-                it.source,
-                it.target,
-                SequenceLabel(
-                  listOf(
-                    StmtLabel(assign1, metadata = invokeLabel.metadata),
-                    StmtLabel(assign2, metadata = invokeLabel.metadata),
-                  )
-                ),
-                it.metadata,
-              )
+              XcfaEdge(e.source, e.target, SequenceLabel(listOf(assign1, assign2)), e.metadata)
             )
           } else {
-            builder.addEdge(it)
+            builder.addEdge(e)
           }
         }
       }

@@ -42,80 +42,81 @@ import org.antlr.v4.runtime.CommonTokenStream
 
 class StatementWrapper(val content: String, scope: Scope) {
 
+  private val scope: Scope
+  private val context: StmtContext
+
+  init {
+    this.scope = Preconditions.checkNotNull(scope)
+    val lexer = StmtLexer(CharStreams.fromString(content))
+    lexer.addErrorListener(ThrowingErrorListener)
+    val parser = StmtParser(CommonTokenStream(lexer))
+    parser.errorHandler = BailErrorStrategy()
+    this.context = Preconditions.checkNotNull<StmtContext>(parser.stmt())
+  }
+
+  fun instantiate(env: Env?): Stmt {
+    val visitor = StmtCreatorVisitor(scope, env)
+    return try {
+      context.accept(visitor)
+    } catch (e: Exception) {
+      System.err.println("Erroneous input: ${context.textWithWS()}")
+      throw e
+    }
+  }
+
+  private class StmtCreatorVisitor(scope: Scope?, env: Env?) : StmtBaseVisitor<Stmt>() {
+
     private val scope: Scope
-    private val context: StmtContext
+    private val env: Env
 
     init {
-        this.scope = Preconditions.checkNotNull(scope)
-        val lexer = StmtLexer(CharStreams.fromString(content))
-        lexer.addErrorListener(ThrowingErrorListener)
-        val parser = StmtParser(CommonTokenStream(lexer))
-        parser.errorHandler = BailErrorStrategy()
-        this.context = Preconditions.checkNotNull<StmtContext>(parser.stmt())
+      this.scope = scope!! // TODO replaced a checkNotNull with !! here
+      this.env = env!! // TODO replaced a checkNotNull with !! here
     }
 
-    fun instantiate(env: Env?): Stmt {
-        val visitor = StmtCreatorVisitor(scope, env)
-        return try {
-            context.accept(visitor)
-        } catch (e: Exception) {
-            System.err.println("Erroneous input: ${context.textWithWS()}")
-            throw e
-        }
+    override fun visitSkipStmt(ctx: SkipStmtContext): Stmt {
+      return SkipStmt.getInstance()
     }
 
-    private class StmtCreatorVisitor(scope: Scope?, env: Env?) : StmtBaseVisitor<Stmt>() {
-
-        private val scope: Scope
-        private val env: Env
-
-        init {
-            this.scope = scope!! // TODO replaced a checkNotNull with !! here
-            this.env = env!! // TODO replaced a checkNotNull with !! here
-        }
-
-        override fun visitSkipStmt(ctx: SkipStmtContext): Stmt {
-            return SkipStmt.getInstance()
-        }
-
-        override fun visitHavocStmt(ctx: HavocStmtContext): Stmt {
-            val lhsId: String = ctx.lhs.getText()
-            val lhsSymbol = scope.resolve(lhsId).get()
-            val `var` = env.eval(lhsSymbol) as VarDecl<*>
-            return Stmts.Havoc(`var`)
-        }
-
-        override fun visitAssumeStmt(ctx: AssumeStmtContext): Stmt {
-            val expression = ExpressionWrapper(scope, ctx.cond.textWithWS())
-            val expr: Expr<BoolType> = TypeUtils.cast(expression.instantiate(env), BoolExprs.Bool())
-            return Stmts.Assume(expr)
-        }
-
-        override fun visitAssignStmt(ctx: AssignStmtContext): Stmt {
-            val lhsId: String = ctx.lhs.getText()
-            val lhsSymbol = scope.resolve(lhsId).get()
-            val `var` = env.eval(lhsSymbol) as VarDecl<*>
-            val expression = ExpressionWrapper(scope, ctx.value.textWithWS())
-            val expr: Expr<*> = expression.instantiate(env)
-            return if (expr.type == `var`.type) {
-                val tVar = `var` as VarDecl<Type>
-                val tExpr = expr as Expr<Type>
-                Stmts.Assign(tVar, tExpr)
-            } else {
-                throw IllegalArgumentException("Type of $`var` is incompatible with $expr")
-            }
-        }
-
-        override fun visitMemAssignStmt(ctx: MemAssignStmtContext): Stmt {
-            val derefExpr: Dereference<*, *, *> = ExpressionWrapper(scope, ctx.derefExpr().textWithWS()).instantiate(
-                env) as Dereference<*, *, *>
-            val value = ExpressionWrapper(scope, ctx.value.textWithWS())
-            val valueE: Expr<*> = value.instantiate(env)
-            return if (derefExpr.type == valueE.type) {
-                MemoryAssignStmt.create(derefExpr, valueE)
-            } else {
-                throw IllegalArgumentException("Type of $derefExpr is incompatible with $valueE")
-            }
-        }
+    override fun visitHavocStmt(ctx: HavocStmtContext): Stmt {
+      val lhsId: String = ctx.lhs.getText()
+      val lhsSymbol = scope.resolve(lhsId).get()
+      val `var` = env.eval(lhsSymbol) as VarDecl<*>
+      return Stmts.Havoc(`var`)
     }
+
+    override fun visitAssumeStmt(ctx: AssumeStmtContext): Stmt {
+      val expression = ExpressionWrapper(scope, ctx.cond.textWithWS())
+      val expr: Expr<BoolType> = TypeUtils.cast(expression.instantiate(env), BoolExprs.Bool())
+      return Stmts.Assume(expr)
+    }
+
+    override fun visitAssignStmt(ctx: AssignStmtContext): Stmt {
+      val lhsId: String = ctx.lhs.getText()
+      val lhsSymbol = scope.resolve(lhsId).get()
+      val `var` = env.eval(lhsSymbol) as VarDecl<*>
+      val expression = ExpressionWrapper(scope, ctx.value.textWithWS())
+      val expr: Expr<*> = expression.instantiate(env)
+      return if (expr.type == `var`.type) {
+        val tVar = `var` as VarDecl<Type>
+        val tExpr = expr as Expr<Type>
+        Stmts.Assign(tVar, tExpr)
+      } else {
+        throw IllegalArgumentException("Type of $`var` is incompatible with $expr")
+      }
+    }
+
+    override fun visitMemAssignStmt(ctx: MemAssignStmtContext): Stmt {
+      val derefExpr: Dereference<*, *, *> =
+        ExpressionWrapper(scope, ctx.derefExpr().textWithWS()).instantiate(env)
+          as Dereference<*, *, *>
+      val value = ExpressionWrapper(scope, ctx.value.textWithWS())
+      val valueE: Expr<*> = value.instantiate(env)
+      return if (derefExpr.type == valueE.type) {
+        MemoryAssignStmt.create(derefExpr, valueE)
+      } else {
+        throw IllegalArgumentException("Type of $derefExpr is incompatible with $valueE")
+      }
+    }
+  }
 }

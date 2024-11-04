@@ -21,47 +21,47 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.chc.ChcFrontend.ChcTransformation
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.toC
+import java.io.FileInputStream
+import java.util.stream.Stream
+import kotlin.io.path.createTempDirectory
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.FileInputStream
-import java.util.stream.Stream
-import kotlin.io.path.createTempDirectory
 
 class XcfaToCTest {
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun chcFiles(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
-                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
-            )
-        }
-
-        @JvmStatic
-        fun dslFiles(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of("/dsl/async.xcfa.kts"),
-                Arguments.of("/dsl/sync.xcfa.kts"),
-            )
-        }
+    @JvmStatic
+    fun chcFiles(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
+        Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
+      )
     }
 
-    @ParameterizedTest
-    @MethodSource("chcFiles")
-    fun testRoundTrip(filePath: String, chcTransformation: ChcTransformation) {
-        val chcFrontend = ChcFrontend(chcTransformation)
-        val xcfa = chcFrontend.buildXcfa(
-            CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)), ChcPasses(
-            ParseContext(), NullLogger.getInstance())).build()
-        val temp = createTempDirectory()
-        val file = temp.resolve("${filePath.split("/").last()}.c").also {
-            it.toFile().writeText(xcfa.toC(ParseContext(),
-                true, false, false))
-        }
-        System.err.println(file)
+    @JvmStatic
+    fun dslFiles(): Stream<Arguments> {
+      return Stream.of(Arguments.of("/dsl/async.xcfa.kts"), Arguments.of("/dsl/sync.xcfa.kts"))
     }
+  }
 
+  @ParameterizedTest
+  @MethodSource("chcFiles")
+  fun testRoundTrip(filePath: String, chcTransformation: ChcTransformation) {
+    val chcFrontend = ChcFrontend(chcTransformation)
+    val xcfa =
+      chcFrontend
+        .buildXcfa(
+          CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)),
+          ChcPasses(ParseContext(), NullLogger.getInstance()),
+        )
+        .build()
+    val temp = createTempDirectory()
+    val file =
+      temp.resolve("${filePath.split("/").last()}.c").also {
+        it.toFile().writeText(xcfa.toC(ParseContext(), true, false, false))
+      }
+    System.err.println(file)
+  }
 }

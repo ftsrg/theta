@@ -49,6 +49,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.math.BigInteger
@@ -310,11 +311,9 @@ class FrontendXcfaBuilder(
         }
 
         is RefExpr<*> -> {
-          StmtLabel(
-            Stmts.Assign(
-              cast(lValue.decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-              cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
-            ),
+          AssignStmtLabel(
+            lValue,
+            cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
             metadata = getMetadata(statement),
           )
         }

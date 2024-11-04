@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
@@ -31,6 +30,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.references
@@ -42,18 +42,22 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
     private var cnt = 2 // counts upwards, uses 3k+2
       get() = field.also { field += 3 }
-  }
 
-  private val XcfaBuilder.pointer: VarDecl<*> by lazy {
-    Var("__sp", CPointer(null, null, parseContext).smtType)
+    private val ptrVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
+
+    private fun XcfaBuilder.ptrVar(parseContext: ParseContext) =
+      ptrVars.getOrPut(this) { Var("__sp", CPointer(null, null, parseContext).smtType) }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val ptrVar = builder.parent.ptrVar(parseContext)
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
         builder.parent
           .getProcedures()
-          .flatMap { it.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } } }
+          .flatMap { p ->
+            p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
+          }
           .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
@@ -63,8 +67,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-            val assign =
-              StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type), cast(lit, varDecl.type)))
+            val assign = AssignStmtLabel(varDecl, lit)
             Pair(varDecl, SequenceLabel(listOf(assign)))
           }
       }
@@ -74,83 +77,72 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val referredVars =
       builder
         .getEdges()
-        .flatMap { it.label.getFlatLabels().flatMap { it.references } }
+        .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
         .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
-        .associateWith {
-          val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
+        .associateWith { v ->
+          val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
-          val ptrVar = builder.parent.pointer
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
-            initProc.forEach {
-              val initAssign =
-                StmtLabel(Assign(cast(ptrVar, ptrVar.type), cast(initVal, ptrVar.type)))
+            initProc.forEach { proc ->
+              val initAssign = AssignStmtLabel(ptrVar, initVal)
               val newEdges =
-                it.initLoc.outgoingEdges.map {
+                proc.initLoc.outgoingEdges.map {
                   it.withLabel(
                     SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
                   )
                 }
-              it.initLoc.outgoingEdges.forEach(it::removeEdge)
-              newEdges.forEach(it::addEdge)
+              proc.initLoc.outgoingEdges.forEach(proc::removeEdge)
+              newEdges.forEach(proc::addEdge)
             }
           }
           val assign1 =
-            StmtLabel(
-              AssignStmt.of(
-                cast(ptrVar, ptrType.smtType),
-                cast(Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType),
-              )
-            )
-          val varDecl = Var(it.name + "*", ptrType.smtType)
+            AssignStmtLabel(ptrVar, Add(ptrVar.ref, ptrType.getValue("3")), ptrType.smtType)
+          val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-          val assign2 =
-            StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type), cast(ptrVar.ref, varDecl.type)))
+          val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           Pair(varDecl, SequenceLabel(listOf(assign1, assign2)))
         }
-    if (
-      globalReferredVars.isNotEmpty() &&
-        builder.parent.getInitProcedures().any { it.first == builder }
-    ) { // we only need this for main
-      val initLabels = globalReferredVars.values.flatMap { it.second.labels }
-      val initEdges = builder.initLoc.outgoingEdges
-      val newInitEdges =
-        initEdges.map {
-          it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
-        }
-      initEdges.forEach(builder::removeEdge)
-      newInitEdges.forEach(builder::addEdge)
+
+    if (builder.parent.getInitProcedures().any { it.first == builder }) {
+      addRefInitializations(builder, globalReferredVars) // we only need this for main
     }
+    addRefInitializations(builder, referredVars)
 
-    if (referredVars.isNotEmpty()) {
-      val initLabels = referredVars.values.flatMap { it.second.labels }
-      val initEdges = builder.initLoc.outgoingEdges
-      val newInitEdges =
-        initEdges.map {
-          it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
-        }
-      initEdges.forEach(builder::removeEdge)
-      newInitEdges.forEach(builder::addEdge)
-
+    val allReferredVars = referredVars + globalReferredVars
+    if (allReferredVars.isNotEmpty()) {
       val edges = LinkedHashSet(builder.getEdges())
-      val allReferredVars = referredVars + globalReferredVars
       for (edge in edges) {
         builder.removeEdge(edge)
         builder.addEdge(
           edge.withLabel(edge.label.changeReferredVars(allReferredVars, parseContext))
         )
       }
-
       return DeterministicPass().run(NormalizePass().run(builder))
     }
 
     return builder
+  }
+
+  private fun addRefInitializations(
+    builder: XcfaProcedureBuilder,
+    referredVars: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
+  ) {
+    if (referredVars.isEmpty()) return
+    val initLabels = referredVars.values.flatMap { it.second.labels }
+    val initEdges = builder.initLoc.outgoingEdges
+    val newInitEdges =
+      initEdges.map {
+        it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
+      }
+    initEdges.forEach(builder::removeEdge)
+    newInitEdges.forEach(builder::addEdge)
   }
 
   @JvmOverloads
@@ -275,7 +267,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       ret
     }
 
-  fun <T : Type> VarDecl<T>.changeReferredVars(
+  private fun <T : Type> VarDecl<T>.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>
   ): Expr<T> =
     varLut[this]?.first?.let {

@@ -243,10 +243,12 @@ private fun backend(
           }
           .let { result ->
             when {
-              result.isSafe &&
-                LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
+              result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
+                // cannot report safe if force unroll was used
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                SafetyResult.unknown<EmptyProof, EmptyCex>()
+                if (config.outputConfig.acceptUnreliableSafe)
+                  result // for comparison with BMC tools
+                else SafetyResult.unknown<EmptyProof, EmptyCex>()
               }
 
               else -> result
