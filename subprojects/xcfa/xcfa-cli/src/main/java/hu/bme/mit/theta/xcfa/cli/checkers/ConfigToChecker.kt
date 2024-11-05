@@ -37,7 +37,7 @@ fun getChecker(
   parseContext: ParseContext,
   logger: Logger,
   uniqueLogger: Logger,
-): SafetyChecker<*, *, XcfaPrec<*>> =
+): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
@@ -48,6 +48,7 @@ fun getChecker(
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      Backend.MDD -> getMddChecker(xcfa, mcm, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
