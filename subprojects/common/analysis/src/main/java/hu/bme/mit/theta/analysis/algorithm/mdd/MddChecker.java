@@ -55,6 +55,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
     private final VarIndexing initIndexing;
     private final A transRel;
     private final Expr<BoolType> safetyProperty;
+    private final List<VarDecl<?>> variableOrdering;
     private final SolverPool solverPool;
     private final Logger logger;
     private IterationStrategy iterationStrategy = IterationStrategy.GSAT;
@@ -70,12 +71,14 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             VarIndexing initIndexing,
             A transRel,
             Expr<BoolType> safetyProperty,
+            List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy) {
         this.initRel = initRel;
         this.initIndexing = initIndexing;
         this.transRel = transRel;
+        this.variableOrdering = variableOrdering;
         this.safetyProperty = safetyProperty;
         this.solverPool = solverPool;
         this.logger = logger;
@@ -87,6 +90,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             VarIndexing initIndexing,
             A transRel,
             Expr<BoolType> safetyProperty,
+            List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger) {
         return new MddChecker<A>(
@@ -94,6 +98,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 initIndexing,
                 transRel,
                 safetyProperty,
+                variableOrdering,
                 solverPool,
                 logger,
                 IterationStrategy.GSAT);
@@ -104,6 +109,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             VarIndexing initIndexing,
             A transRel,
             Expr<BoolType> safetyProperty,
+            List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy) {
@@ -112,6 +118,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 initIndexing,
                 transRel,
                 safetyProperty,
+                variableOrdering,
                 solverPool,
                 logger,
                 iterationStrategy);
@@ -128,9 +135,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
-        final Set<VarDecl<?>> vars =
-                ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
-        for (var v : vars) {
+        for (var v : variableOrdering) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             if (domainSize > 100) {

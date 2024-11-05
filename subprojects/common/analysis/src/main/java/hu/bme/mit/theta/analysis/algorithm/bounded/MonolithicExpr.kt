@@ -28,10 +28,6 @@ data class MonolithicExpr(
     val transExpr: Expr<BoolType>,
     val propExpr: Expr<BoolType>,
     val transOffsetIndex: VarIndexing = VarIndexingFactory.indexing(1),
-    val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0)
-) {
-
-    fun vars(): Collection<VarDecl<*>> {
-        return getVars(initExpr) union getVars(transExpr) union getVars(propExpr)
-    }
-}
+    val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0),
+    val vars: List<VarDecl<*>> = (getVars(initExpr) union getVars(transExpr) union getVars(propExpr)).toList()
+)

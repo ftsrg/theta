@@ -79,7 +79,7 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
 
   val offsetIndex = transUnfold.indexing
 
-  return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex)
+  return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex, vars = listOf(locVar) + this.vars.toList())
 }
 
 fun CFA.valToAction(val1: Valuation, val2: Valuation): CfaAction {

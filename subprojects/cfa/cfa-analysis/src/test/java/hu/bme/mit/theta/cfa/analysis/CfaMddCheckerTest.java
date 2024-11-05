@@ -112,6 +112,7 @@ public class CfaMddCheckerTest {
                                     }
                                 },
                                 monolithicExpr.getPropExpr(),
+                                monolithicExpr.getVars(),
                                 solverPool,
                                 logger,
                                 MddChecker.IterationStrategy.GSAT);
