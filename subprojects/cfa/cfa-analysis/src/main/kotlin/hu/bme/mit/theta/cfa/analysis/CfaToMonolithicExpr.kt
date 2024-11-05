@@ -25,63 +25,56 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr
+import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import java.util.*
 
 fun CFA.toMonolithicExpr(): MonolithicExpr {
     Preconditions.checkArgument(this.errorLoc.isPresent);
+    val enumType = EnumType.of("locType", this.locs.map { it.name }.toList())
 
-    val map = mutableMapOf<CFA.Loc, Int>()
-    for ((i, x) in this.locs.withIndex()) {
-        map[x] = i;
-    }
-    val locVar = Decls.Var("__loc__", Int())
+    val locVar = Decls.Var("__loc__", enumType)
     val tranList = this.edges.map { e ->
         SequenceStmt.of(listOf(
-            AssumeStmt.of(Eq(locVar.ref, Int(map[e.source]!!))),
+            AssumeStmt.of(Eq(locVar.ref, EnumLitExpr.of(enumType, e.source.name))),
             e.stmt,
-            AssignStmt.of(locVar, Int(map[e.target]!!))
+            AssignStmt.of(locVar, EnumLitExpr.of(enumType, e.target.name))
         ))
     }.toList()
     val trans = NonDetStmt.of(tranList);
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0));
     val transExpr = And(transUnfold.exprs)
-    val initExpr = Eq(locVar.ref, Int(map[this.initLoc]!!))
-    val propExpr = Neq(locVar.ref, Int(map[this.errorLoc.orElseThrow()]!!))
+    val initExpr = Eq(locVar.ref, EnumLitExpr.of(enumType, this.initLoc.name))
+    val propExpr = Neq(locVar.ref, EnumLitExpr.of(enumType, this.errorLoc.orElseThrow().name))
 
     val offsetIndex = transUnfold.indexing
 
-    return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex)
+    return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex, ctrlVars = listOf(locVar))
 }
 
 fun CFA.valToAction(val1: Valuation, val2: Valuation): CfaAction {
     val val1Map = val1.toMap()
     val val2Map = val2.toMap()
-    var i = 0
-    val map: MutableMap<CFA.Loc, Int> = mutableMapOf()
-    for (x in this.locs) {
-        map[x] = i++
-    }
+
     return CfaAction.create(
         this.edges.first { edge ->
-            map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
-                map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
+            edge.source.name == (val1Map[val1Map.keys.first { it.name == "__loc__" }] as EnumLitExpr).value &&
+                edge.target.name == (val2Map[val2Map.keys.first { it.name == "__loc__" }] as EnumLitExpr).value
         })
 }
 
 fun CFA.valToState(val1: Valuation): CfaState<ExplState> {
     val valMap = val1.toMap()
-    var i = 0
-    val map: MutableMap<Int, CFA.Loc> = mutableMapOf()
-    for (x in this.locs) {
-        map[i++] = x
-    }
+
     return CfaState.of(
-        map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()],
+        this.locs.first {
+            it.name == (valMap[valMap.keys.first { it.name == "__loc__" }] as EnumLitExpr).value
+        },
         ExplState.of(val1)
     )
 }

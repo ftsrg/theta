@@ -221,7 +221,8 @@ public class StsCli {
         try {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
-
+            System.out.println(sts.getVars().size());
+            System.out.println("itt");
             SafetyResult<?, ? extends Trace<?, ?>> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);

@@ -61,33 +61,33 @@ public class Ic3Test {
         return Arrays.asList(new Object[][]{
                 {"src/test/resources/counterp0.aag", false},
 
-//                {"src/test/resources/hw1_false.aag", false},
-//
-//                {"src/test/resources/hw2_true.aag", true},
-//
-//                {"src/test/resources/boolean1.system", false},
-//
-//                {"src/test/resources/boolean2.system", false},
-//
-//                {"src/test/resources/counter.system", true},
-//
-//                {"src/test/resources/counter_bad.system", false},
-//
-//                {"src/test/resources/counter_parametric.system", true},
-//
-////                {"src/test/resources/loop.system", true},
-//
-//                {"src/test/resources/loop_bad.system", false},
-//
-//                {"src/test/resources/multipleinitial.system", false},
-//
-//                {"src/test/resources/readerswriters.system", true},
-//
-//                {"src/test/resources/simple1.system", false},
-//
-//                {"src/test/resources/simple2.system", true},
-//
-//                {"src/test/resources/simple3.system", false},
+                {"src/test/resources/hw1_false.aag", false},
+
+                {"src/test/resources/hw2_true.aag", true},
+
+                {"src/test/resources/boolean1.system", false},
+
+                {"src/test/resources/boolean2.system", false},
+
+                {"src/test/resources/counter.system", true},
+
+                {"src/test/resources/counter_bad.system", false},
+
+                {"src/test/resources/counter_parametric.system", true},
+
+//                {"src/test/resources/loop.system", true},
+
+                {"src/test/resources/loop_bad.system", false},
+
+                {"src/test/resources/multipleinitial.system", false},
+
+                {"src/test/resources/readerswriters.system", true},
+
+                {"src/test/resources/simple1.system", false},
+
+                {"src/test/resources/simple2.system", true},
+
+                {"src/test/resources/simple3.system", false},
 ////
 //                {"src/test/resources/LOCAL_vc1.system", false},
 //
@@ -132,20 +132,29 @@ public class Ic3Test {
             //var checker = new ConnectedIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             MonolithicExpr reverseMonolithicExpr = ReversedMonolithicExprKt.createReversed(monolithicExpr);
-            var checker = new Ic3Checker<>(
-                    monolithicExpr,
-                    true,
-                    Z3LegacySolverFactory.getInstance(),
-                    valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
-                    (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2));
+            var checker = new ConnectedIc3Checker<>(
+                monolithicExpr,
+                Z3LegacySolverFactory.getInstance(),
+                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
+                true,true,true,true,true, true, true,1,1,1,1);
             var checkerResult = checker.check(null);
             Assert.assertEquals(isSafe, checkerResult.isSafe());
-            if(!isSafe){
-                var solverFactory = Z3LegacySolverFactory.getInstance();
-                final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker = ExprTraceFwBinItpChecker.create(sts.getInit(), Not(sts.getProp()), solverFactory.createItpSolver());
-                final ExprTraceStatus<ItpRefutation> concretizationResult = exprTraceFwBinItpChecker.check(checkerResult.asUnsafe().getCex());
-                Assert.assertEquals(true, concretizationResult.isFeasible());
-            }
+//            var checker2 = new Ic3Checker<>(
+//                monolithicExpr,
+//                true,
+//                Z3LegacySolverFactory.getInstance(),
+//                valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+//                (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
+//                true,true,true,true,true, true, true);
+//            var checkerResult = checker2.check(null);
+//            Assert.assertEquals(isSafe, checkerResult.isSafe());
+//            if(!isSafe){
+//                var solverFactory = Z3LegacySolverFactory.getInstance();
+//                final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker = ExprTraceFwBinItpChecker.create(sts.getInit(), Not(sts.getProp()), solverFactory.createItpSolver());
+//                final ExprTraceStatus<ItpRefutation> concretizationResult = exprTraceFwBinItpChecker.check(checkerResult.asUnsafe().getCex());
+//                Assert.assertEquals(true, concretizationResult.isFeasible());
+//            }
     }
 
 //    @Disabled

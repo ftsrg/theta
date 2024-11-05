@@ -11,6 +11,8 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
@@ -231,45 +233,119 @@ public class ConnectedIc3Checker<S extends ExprState, A extends ExprAction> impl
                 filterOpt,
                 propertyOpt,
                 blockOpt);
+        if(blockOpt){
+            while (true) {
+                Collection counterExample;
+                for(int i=0;i<forwardStep;i++){
+                    counterExample = forward.checkCurrentFrame(And(backward.getcurrentFrame(reverseFrameOffset)));
+                    if(counterExample==null){
+                        if(forward.propagate(null)){
+                            return SafetyResult.safe(EmptyWitness.getInstance());
+                        }
+                    }else{
+                        var proofList = new ArrayList<Set<Expr<BoolType>>>();
+                        proofList.add(new HashSet<>(counterExample));
+                        var forwardProofObligations = forward.tryBlockMultiple(new MultipleProofObligation(proofList, forward.getCurrentFrameNumber(0)));
+                        if(forwardProofObligations != null){
+                            while(true){
+                                var backwardCounterExample = backward.checkFrame(And(counterExample), backward.getCurrentFrameNumber(reverseFrameOffset));
+                                if(backwardCounterExample == null){
+                                    break;
+                                }
+                                var backwardProofList = new ArrayList<Set<Expr<BoolType>>>();
+                                backwardProofList.add(new HashSet<>(backwardCounterExample));
+                                var backwardProofObligations = backward.tryBlockMultiple(new MultipleProofObligation(backwardProofList, backward.getCurrentFrameNumber(reverseFrameOffset)));
+                                if(backwardProofObligations != null){
+                                    return SafetyResult.unsafe(forward.traceMakerMultiple(forwardProofObligations), EmptyWitness.getInstance());
+                                }
+                            }
 
-        while (true) {
-            Collection counterExample;
-            for(int i=0;i<forwardStep;i++){
-                counterExample = forward.checkCurrentFrame(And(backward.getcurrentFrame(reverseFrameOffset)));
-                if(counterExample==null){
-                    if(forward.propagate(null)){
-                        return SafetyResult.safe(EmptyWitness.getInstance());
+                        }
                     }
-                }else{
-                    var forwardProofObligations = forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber(0)));
-                    if(forwardProofObligations != null){
-                        var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber(reverseFrameOffset)));
+                }
+                for(int i=0;i<reverseStep;i++){
+                    counterExample = backward.checkCurrentFrame(And(forward.getcurrentFrame(forwardFrameOffset)));
+                    if(counterExample==null){
+                        if(backward.propagate(null)){
+                            return SafetyResult.safe(EmptyWitness.getInstance());
+                        }
+                    }else{
+                        var proofList = new ArrayList<Set<Expr<BoolType>>>();
+                        proofList.add(new HashSet<>(counterExample));
+                        var backwardProofObligations = backward.tryBlockMultiple(new MultipleProofObligation(proofList, backward.getCurrentFrameNumber(0)));
                         if(backwardProofObligations != null){
-                            return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofObligations), EmptyWitness.getInstance());
+                            while(true){
+                                var forwardCounterExample = forward.checkFrame(And(counterExample), forward.getCurrentFrameNumber(forwardFrameOffset));
+                                if(forwardCounterExample == null){
+                                    break;
+                                }
+                                var forwardProofList = new ArrayList<Set<Expr<BoolType>>>();
+                                forwardProofList.add(new HashSet<>(forwardCounterExample));
+                                var forwardProofobligations= forward.tryBlockMultiple(new MultipleProofObligation(forwardProofList, forward.getCurrentFrameNumber(forwardFrameOffset)));
+                                if(null != forwardProofobligations){
+                                    return SafetyResult.unsafe(forward.traceMakerMultiple(backwardProofObligations), EmptyWitness.getInstance());
+                                }
+                            }
                         }
                     }
                 }
+
+
             }
-            for(int i=0;i<reverseStep;i++){
-                counterExample = backward.checkCurrentFrame(And(forward.getcurrentFrame(forwardFrameOffset)));
-                if(counterExample==null){
-                    if(backward.propagate(null)){
-                        return SafetyResult.safe(EmptyWitness.getInstance());
-                    }
-                }else{
-                    var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber(0)));
-                    if(backwardProofObligations != null){
-                        //counterExample = getConjuncts(Not(And(counterExample)));
-                        var forwardProofobligations= forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber(forwardFrameOffset)));
-                        if(null != forwardProofobligations){
-                            return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofobligations), EmptyWitness.getInstance());
+        }else{
+            while (true) {
+                Collection counterExample;
+                for(int i=0;i<forwardStep;i++){
+                    counterExample = forward.checkCurrentFrame(And(backward.getcurrentFrame(reverseFrameOffset)));
+                    if(counterExample==null){
+                        if(forward.propagate(null)){
+                            return SafetyResult.safe(EmptyWitness.getInstance());
+                        }
+                    }else{
+
+                        var forwardProofObligations = forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber(0)));
+                        if(forwardProofObligations != null){
+                            while(true){
+                                var backwardCounterExample = backward.checkFrame(And(counterExample), backward.getCurrentFrameNumber(reverseFrameOffset));
+                                if(backwardCounterExample == null){
+                                    break;
+                                }
+                                var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(backwardCounterExample), backward.getCurrentFrameNumber(reverseFrameOffset)));
+                                if(backwardProofObligations != null){
+                                    return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofObligations), EmptyWitness.getInstance());
+                                }
+                            }
+
                         }
                     }
                 }
+                for(int i=0;i<reverseStep;i++){
+                    counterExample = backward.checkCurrentFrame(And(forward.getcurrentFrame(forwardFrameOffset)));
+                    if(counterExample==null){
+                        if(backward.propagate(null)){
+                            return SafetyResult.safe(EmptyWitness.getInstance());
+                        }
+                    }else{
+                        var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber(0)));
+                        if(backwardProofObligations != null){
+                            while(true){
+                                var forwardCounterExample = forward.checkFrame(And(counterExample), forward.getCurrentFrameNumber(forwardFrameOffset));
+                                if(forwardCounterExample == null){
+                                    break;
+                                }
+                                var forwardProofobligations= forward.tryBlock(new ProofObligation(new HashSet<>(forwardCounterExample), forward.getCurrentFrameNumber(forwardFrameOffset)));
+                                if(null != forwardProofobligations){
+                                    return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofobligations), EmptyWitness.getInstance());
+                                }
+                            }
+                        }
+                    }
+                }
+
+
             }
-
-
         }
+
 
     }
 

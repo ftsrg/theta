@@ -24,6 +24,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
     val lambdaPrimeList = ArrayList<IffExpr>()
     val activationLiterals = ArrayList<VarDecl<*>>()
     val literalToPred = HashMap<Decl<*>, Expr<BoolType>>()
+
     prec.preds.forEachIndexed { index, expr ->
         run {
             val v = Decls.Var("v$index", BoolType.getInstance())
@@ -35,7 +36,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
     }
 
     var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
-    this.vars.forEach { decl ->
+    this.vars./*filter { it !in ctrlVars }.*/forEach { decl ->
         repeat(transOffsetIndex.get(decl)) {
             indexingBuilder = indexingBuilder.inc(decl)
         }
@@ -47,7 +48,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
         propExpr = Not(And(And(lambdaList), Not(propExpr))),
         transOffsetIndex = indexingBuilder.build(),
         initOffsetIndex = VarIndexingFactory.indexing(0),
-        vars = activationLiterals,
+        vars = activationLiterals/* + ctrlVars*/,
         valToState = { valuation: Valuation ->
             PredState.of(valuation.toMap().entries.stream().map {
                 when((it.value as BoolLitExpr).value) {
@@ -55,6 +56,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
                     false -> Not(literalToPred[it.key])
                 }
             }.toList())
-        }
+        },
+        biValToAction = this.biValToAction
     )
 }

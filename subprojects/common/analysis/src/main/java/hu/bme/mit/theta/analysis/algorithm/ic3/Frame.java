@@ -129,7 +129,7 @@ public class Frame {
                 final Valuation model = solver.getModel();
                 final MutableValuation filteredModel = new MutableValuation();
                 monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                //monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
                 return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
             } else {
                 return null;

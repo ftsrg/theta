@@ -149,7 +149,8 @@ public class StsTest {
                         true,
                         Z3LegacySolverFactory.getInstance(),
                         ExplState::of,
-                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getPropExpr(), mE.getPropExpr()))
+                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getPropExpr(), mE.getPropExpr())),
+                        false
                 ),
                 valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                 (v1, v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),

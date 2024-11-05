@@ -13,8 +13,9 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+//import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
@@ -25,7 +26,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+//import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+//import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 import static hu.bme.mit.theta.core.utils.ExprUtils.transformEquiSatCnf;
 
@@ -52,6 +54,9 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     private final boolean blockOpt;
 
     public Set<Expr<BoolType>> getcurrentFrame(int offset) {
+        if(offset == -1){
+            return frames.get(0).getExprs();
+        }
         if(currentFrameNumber - offset < 0){
             return frames.get(0).getExprs();
         }
@@ -59,6 +64,9 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     }
 
     public int getCurrentFrameNumber(int offset) {
+        if(offset == -1){
+            return 0;
+        }
         if(currentFrameNumber- offset < 0){
             return 0;
         }
@@ -66,7 +74,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     }
 
     public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean blockOpt) {
-        this(monolithicExpr, forwardTrace,solverFactory, valToState, biValToAction, true, true, true, true, true, true, true);
+        this(monolithicExpr, forwardTrace,solverFactory, valToState, biValToAction, true, true, true, true, true, false, blockOpt);
     }
 
     public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt, boolean propertyOpt, boolean blockOpt) {
@@ -177,16 +185,13 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
 
             final ArrayList<Set<Expr<BoolType>>> b;
 
-            final Collection<Expr<BoolType>> unSatCore;
+            Collection<Expr<BoolType>> unSatCore = null;
             Expr currentExpression = null;
+            Collection<Expr<BoolType>> currentExpressionList = new ArrayList<>();
             for(var bi : proofObligationsList.getExpressionsList()){
-                if(currentExpression == null){
-                    currentExpression = And(bi);
-                }
-                currentExpression = Or(currentExpression,And(bi));
+                currentExpressionList.add(And(bi));
             }
-            //currentExpression=transformEquiSatCnf(currentExpression);
-            Collection<Expr<BoolType>> currentExpressionList = getConjuncts(currentExpression);
+            currentExpression = Or(currentExpressionList);
             try (var wpp = new WithPushPop(solver)) {
                 frames.get(proofObligationsList.getTime() - 1).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
                 if(notBOpt){
@@ -207,35 +212,99 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                     do {
                         final Valuation model = solver.getModel();
                         final Collection<Expr<BoolType>> current;
-                        if(filterOpt){
 
-                            final MutableValuation filteredModel = new MutableValuation();
-                            monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                            monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                            current = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
-                        }else{
-                            current = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(model, 0).toExpr(), 0));
+                        final MutableValuation filteredModel = new MutableValuation();
+                        monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                        //monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+
+                        if(filterOpt){
+                            var vars = new HashSet<>(filteredModel.toMap().keySet());
+                            for(var var: vars){
+                                if(!(var.getType() instanceof BoolType)){
+                                    continue;
+                                }
+                                var origValue = model.eval(var).get();
+                                var negatedValue = BoolLitExpr.of(!((BoolLitExpr) origValue).getValue());
+                                filteredModel.put(var, negatedValue);
+                                try (var wpp2 = new WithPushPop(solver)) {
+                                    solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
+                                    if (solver.check().isSat()) {
+                                        filteredModel.remove(var);
+                                    } else {
+                                        filteredModel.put(var, origValue);
+                                    }
+                                }
+                            }
                         }
+
+                        current = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
+
+
                         int finalI = i;
                         b.add(new HashSet<>());
                         current.forEach(ex -> b.get(finalI).add(ex));
                         solver.track(PathUtils.unfold(Not(And(current)),0));
                         i++;
-                    }while(blockOpt && solver.check().isSat());
+                    }while(blockOpt && solver.check().isSat() && i<3);
 
                     unSatCore = null;
                 } else {
                     b = null;
-                    unSatCore = solver.getUnsatCore();
                 }
             }
             if (b == null) {
-                for(int i = 1; i<=proofObligationsList.getTime(); ++i){
-                    for(var bi : proofObligationsList.getExpressionsList()){
-                        frames.get(i).refine(SmartBoolExprs.Not(currentExpression));
+                for(var bi : proofObligationsList.getExpressionsList()){
+                    final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
+                    newCore.addAll(bi);
+                    if(unSatOpt){
+                        try (var wpp = new WithPushPop(solver)) {
+                            frames.get(proofObligationsList.getTime() - 1).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+//                            if(notBOpt){
+//                                //solver.track(PathUtils.unfold(Not(currentExpression),0)); // ide esetleg bi-t????
+//                                solver.track(PathUtils.unfold(Not(currentExpression),0)); //?? ez jó?
+//                            }
+                            if (proofObligationsList.getTime() > 2 && formerFramesOpt){ //lehet, hogy 1, vagy 2??
+                                solver.track(PathUtils.unfold(Not(And(frames.get(proofObligationsList.getTime() - 2).getExprs())),monolithicExpr.getTransOffsetIndex())); //2 vel korábbi frame-ban levő dolgok
+                            }
+
+                            getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+
+                            //currentExpressionList.forEach(ex -> solver.track(PathUtils.unfold(ex, monolithicExpr.getTransOffsetIndex())));
+                            bi.forEach(ex -> solver.track(PathUtils.unfold(ex, monolithicExpr.getTransOffsetIndex())));
+
+                            if(solver.check().isUnsat()){
+                                unSatCore = solver.getUnsatCore();
+                            }else{
+                                throw new RuntimeException("Unexpected sat result");
+                            }
+                        }
+                        for (Expr<BoolType> i : bi) {
+                            if (!unSatCore.contains(PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
+                                newCore.remove(i);
+                                final boolean isSat;
+                                try (var wpp = new WithPushPop(solver)) {
+                                    for (Expr<BoolType> solverex : newCore) {
+                                        solver.track(PathUtils.unfold(solverex, 0));
+                                    }
+                                    solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
+                                    isSat = solver.check().isSat();
+                                }
+                                if (isSat) {
+                                    newCore.add(i);
+                                }
+                            }
+                        }
                     }
-                    //mindegyik framehez hozzáadjuk a formulát
+                    for(int i = 1; i<=proofObligationsList.getTime(); ++i){
+                        frames.get(i).refine(Not(And(newCore))); //mindegyik framehez hozzáadjuk a formulát
+                    }
                 }
+//                for(int i = 1; i<=proofObligationsList.getTime(); ++i){
+//                    for(var bi : proofObligationsList.getExpressionsList()){
+//                        frames.get(i).refine(Not(currentExpression));
+//                    }
+//                    //mindegyik framehez hozzáadjuk a formulát
+//                }
                 proofObligationsQueue.removeLast();
             } else {
                 proofObligationsQueue.add(new MultipleProofObligation(b, proofObligationsList.getTime() - 1));
@@ -272,15 +341,32 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                 if (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
 
+                    final MutableValuation filteredModel = new MutableValuation();
+                    monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    //monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+
                     if(filterOpt){
-                        final MutableValuation filteredModel = new MutableValuation();
-                        monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                        monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                        b = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
-                    }else{
-                        b = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(model, 0).toExpr(), 0));
+                        var vars = new HashSet<>(filteredModel.toMap().keySet());
+                        for(var var: vars){
+                            if(!(var.getType() instanceof BoolType)){
+                                continue;
+                            }
+                            var origValue = model.eval(var).get();
+                            var negatedValue = BoolLitExpr.of(!((BoolLitExpr) origValue).getValue());
+                            filteredModel.put(var, negatedValue);
+                            try (var wpp2 = new WithPushPop(solver)) {
+                                solver.track(PathUtils.unfold(filteredModel.toExpr(), 0));
+                                if (solver.check().isSat()) {
+                                    filteredModel.remove(var);
+                                } else {
+                                    filteredModel.put(var, origValue);
+                                }
+                            }
+                        }
                     }
 
+
+                    b = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
                     unSatCore = null;
                 } else {
                     b = null;
@@ -310,7 +396,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                     }
                 }
                 for(int i = 1; i<=proofObligation.getTime(); ++i){
-                    frames.get(i).refine(SmartBoolExprs.Not(And(newCore))); //mindegyik framehez hozzáadjuk a formulát
+                    frames.get(i).refine(Not(And(newCore))); //mindegyik framehez hozzáadjuk a formulát
                 }
                 proofObligationsQueue.removeLast();
             } else {
@@ -335,6 +421,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                 solver.track(PathUtils.unfold(monolithicExpr.getTransExpr(), 0));
                 solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), monolithicExpr.getTransOffsetIndex()));
                 if (solver.check().isSat()) {
+                    //todo fix
                     return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
                 }else {
                     return null;
@@ -356,7 +443,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
                     final Valuation model = solver.getModel();
                     final MutableValuation filteredModel = new MutableValuation();
                     monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
-                    monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    //monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
                     return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
                 }else {
                     return null;
@@ -364,6 +451,27 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
             }
         } else {
             return frames.get(currentFrameNumber).check(target);
+        }
+
+    }
+    public Collection<Expr<BoolType>> checkFrame(Expr<BoolType> target, int frameNumber){
+        if (propertyOpt) {
+            try (var wpp = new WithPushPop(solver)) {
+                frames.get(frameNumber).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                solver.track(PathUtils.unfold(target, monolithicExpr.getTransOffsetIndex()));
+                if (solver.check().isSat()) {
+                    final Valuation model = solver.getModel();
+                    final MutableValuation filteredModel = new MutableValuation();
+                    monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    //monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
+                    return getConjuncts(PathUtils.foldin(filteredModel.toExpr(), 0));
+                }else {
+                    return null;
+                }
+            }
+        } else {
+            return frames.get(frameNumber).check(target);
         }
 
     }
