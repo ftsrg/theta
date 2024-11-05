@@ -946,6 +946,9 @@ public final class ExprSimplifier {
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             final IntLitExpr leftLit = (IntLitExpr) leftOp;
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            if(rightLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+                return expr.with(leftOp, rightOp);
+            }
             return leftLit.div(rightLit);
         }
 
@@ -959,6 +962,9 @@ public final class ExprSimplifier {
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             final IntLitExpr leftLit = (IntLitExpr) leftOp;
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            if(rightLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+                return expr.with(leftOp, rightOp);
+            }
             return leftLit.mod(rightLit);
         } else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
             return leftOp;

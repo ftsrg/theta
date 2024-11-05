@@ -24,10 +24,15 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 
 import java.math.BigInteger;
 
@@ -48,7 +53,7 @@ public class LitExprConverter {
         if (litExpr instanceof BoolLitExpr) {
             return ((BoolLitExpr) litExpr).getValue() ? 1 : 0;
         }
-        if (litExpr instanceof ArrayLitExpr<?, ?>) {
+        if (litExpr instanceof ArrayLitExpr<?, ?> || litExpr instanceof BvLitExpr || litExpr instanceof FpLitExpr) {
             if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
@@ -72,7 +77,7 @@ public class LitExprConverter {
             }
             return BoolLitExpr.of(integer != 0);
         }
-        if (type instanceof ArrayType<?, ?>) {
+        if (type instanceof ArrayType<?, ?> || type instanceof BvType || type instanceof FpType) {
             return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         if (type instanceof EnumType) {

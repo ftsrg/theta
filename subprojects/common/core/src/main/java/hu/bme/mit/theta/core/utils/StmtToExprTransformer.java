@@ -146,12 +146,12 @@ final class StmtToExprTransformer {
             final List<VarIndexing> indexings = new ArrayList<>();
             VarIndexing jointIndexing = indexing;
             int count = 0;
-            VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
+//            VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
             for (Stmt stmt : nonDetStmt.getStmts()) {
-                final Expr<BoolType> tempExpr = Eq(
-                        ExprUtils.applyPrimes(tempVar.getRef(), indexing), Int(count++));
-                final StmtUnfoldResult result = toExpr(stmt, indexing.inc(tempVar));
-                choices.add(And(tempExpr, And(result.exprs)));
+//                final Expr<BoolType> tempExpr = Eq(
+//                        ExprUtils.applyPrimes(tempVar.getRef(), indexing), Int(count++));
+                final StmtUnfoldResult result = toExpr(stmt, indexing/*.inc(tempVar)*/);
+                choices.add(/*And(tempExpr, */And(result.exprs)/*)*/);
                 indexings.add(result.indexing);
                 jointIndexing = jointIndexing.join(result.indexing);
             }
@@ -175,7 +175,7 @@ final class StmtToExprTransformer {
                 branchExprs.add(And(exprs));
             }
             final Expr<BoolType> expr = Or(branchExprs);
-            VarPoolUtil.returnInt(tempVar);
+//            VarPoolUtil.returnInt(tempVar);
             return StmtUnfoldResult.of(ImmutableList.of(expr), jointIndexing);
         }
 
