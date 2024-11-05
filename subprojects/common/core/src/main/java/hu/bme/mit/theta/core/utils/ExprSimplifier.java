@@ -15,6 +15,12 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
+
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
@@ -39,19 +45,12 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
-import org.kframework.mpfr.BigFloat;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
+import org.kframework.mpfr.BigFloat;
 
 public final class ExprSimplifier {
 
@@ -77,233 +76,149 @@ public final class ExprSimplifier {
         return (Expr<T>) TABLE.dispatch(expr, valuation);
     }
 
-    private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
-
-            // Boolean
-
-            .addCase(NotExpr.class, this::simplifyNot)
-
-            .addCase(ImplyExpr.class, this::simplifyImply)
-
-            .addCase(IffExpr.class, this::simplifyIff)
-
-            .addCase(XorExpr.class, this::simplifyXor)
-
-            .addCase(AndExpr.class, this::simplifyAnd)
-
-            .addCase(OrExpr.class, this::simplifyOr)
-
-            // Rational
-
-            .addCase(RatAddExpr.class, this::simplifyRatAdd)
-
-            .addCase(RatSubExpr.class, this::simplifyRatSub)
-
-            .addCase(RatPosExpr.class, this::simplifyRatPos)
-
-            .addCase(RatNegExpr.class, this::simplifyRatNeg)
-
-            .addCase(RatMulExpr.class, this::simplifyRatMul)
-
-            .addCase(RatDivExpr.class, this::simplifyRatDiv)
-
-            .addCase(RatEqExpr.class, this::simplifyRatEq)
-
-            .addCase(RatNeqExpr.class, this::simplifyRatNeq)
-
-            .addCase(RatGeqExpr.class, this::simplifyRatGeq)
-
-            .addCase(RatGtExpr.class, this::simplifyRatGt)
-
-            .addCase(RatLeqExpr.class, this::simplifyRatLeq)
-
-            .addCase(RatLtExpr.class, this::simplifyRatLt)
-
-            .addCase(RatToIntExpr.class, this::simplifyRatToInt)
-
-            // Integer
-
-            .addCase(IntToRatExpr.class, this::simplifyIntToRat)
-
-            .addCase(IntAddExpr.class, this::simplifyIntAdd)
-
-            .addCase(IntSubExpr.class, this::simplifyIntSub)
-
-            .addCase(IntPosExpr.class, this::simplifyIntPos)
-
-            .addCase(IntNegExpr.class, this::simplifyIntNeg)
-
-            .addCase(IntMulExpr.class, this::simplifyIntMul)
-
-            .addCase(IntDivExpr.class, this::simplifyIntDiv)
-
-            .addCase(IntModExpr.class, this::simplifyMod)
-
-            .addCase(IntRemExpr.class, this::simplifyRem)
-
-            .addCase(IntEqExpr.class, this::simplifyIntEq)
-
-            .addCase(IntNeqExpr.class, this::simplifyIntNeq)
-
-            .addCase(IntGeqExpr.class, this::simplifyIntGeq)
-
-            .addCase(IntGtExpr.class, this::simplifyIntGt)
-
-            .addCase(IntLeqExpr.class, this::simplifyIntLeq)
-
-            .addCase(IntLtExpr.class, this::simplifyIntLt)
-
-            // Enum
-
-            .addCase(EnumEqExpr.class, this::simplifyEnumEqExpr)
-
-            .addCase(EnumNeqExpr.class, this::simplifyEnumNeqExpr)
-
-            // Array
-
-            .addCase(ArrayReadExpr.class, this::simplifyArrayRead)
-
-            .addCase(ArrayWriteExpr.class, this::simplifyArrayWrite)
-
-            //.addCase(ArrayInitExpr.class, this::simplifyArrayInit)
-            .addCase(ArrayInitExpr.class, (arrayInitExpr, valuation) -> this.simplifyArrayInit(arrayInitExpr, valuation))
-
-            // Bitvectors
-
-            .addCase(BvConcatExpr.class, this::simplifyBvConcat)
-
-            .addCase(BvExtractExpr.class, this::simplifyBvExtract)
-
-            .addCase(BvZExtExpr.class, this::simplifyBvZExt)
-
-            .addCase(BvSExtExpr.class, this::simplifyBvSExt)
-
-            .addCase(BvAddExpr.class, this::simplifyBvAdd)
-
-            .addCase(BvSubExpr.class, this::simplifyBvSub)
-
-            .addCase(BvPosExpr.class, this::simplifyBvPos)
-
-            .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
-
-            .addCase(BvNegExpr.class, this::simplifyBvNeg)
-
-            .addCase(BvMulExpr.class, this::simplifyBvMul)
-
-            .addCase(BvUDivExpr.class, this::simplifyBvUDiv)
-
-            .addCase(BvSDivExpr.class, this::simplifyBvSDiv)
-
-            .addCase(BvSModExpr.class, this::simplifyBvSMod)
-
-            .addCase(BvURemExpr.class, this::simplifyBvURem)
-
-            .addCase(BvSRemExpr.class, this::simplifyBvSRem)
-
-            .addCase(BvAndExpr.class, this::simplifyBvAnd)
-
-            .addCase(BvOrExpr.class, this::simplifyBvOr)
-
-            .addCase(BvXorExpr.class, this::simplifyBvXor)
-
-            .addCase(BvNotExpr.class, this::simplifyBvNot)
-
-            .addCase(BvShiftLeftExpr.class, this::simplifyBvShiftLeft)
-
-            .addCase(BvArithShiftRightExpr.class, this::simplifyBvArithShiftRight)
-
-            .addCase(BvLogicShiftRightExpr.class, this::simplifyBvLogicShiftRight)
-
-            .addCase(BvRotateLeftExpr.class, this::simplifyBvRotateLeft)
-
-            .addCase(BvRotateRightExpr.class, this::simplifyBvRotateRight)
-
-            .addCase(BvEqExpr.class, this::simplifyBvEq)
-
-            .addCase(BvNeqExpr.class, this::simplifyBvNeq)
-
-            .addCase(BvUGeqExpr.class, this::simplifyBvUGeq)
-
-            .addCase(BvUGtExpr.class, this::simplifyBvUGt)
-
-            .addCase(BvULeqExpr.class, this::simplifyBvULeq)
-
-            .addCase(BvULtExpr.class, this::simplifyBvULt)
-
-            .addCase(BvSGeqExpr.class, this::simplifyBvSGeq)
-
-            .addCase(BvSGtExpr.class, this::simplifyBvSGt)
-
-            .addCase(BvSLeqExpr.class, this::simplifyBvSLeq)
-
-            .addCase(BvSLtExpr.class, this::simplifyBvSLt)
-
-            // Floating points
-
-            .addCase(FpAddExpr.class, this::simplifyFpAdd)
-
-            .addCase(FpSubExpr.class, this::simplifyFpSub)
-
-            .addCase(FpPosExpr.class, this::simplifyFpPos)
-
-            .addCase(FpNegExpr.class, this::simplifyFpNeg)
-
-            .addCase(FpMulExpr.class, this::simplifyFpMul)
-
-            .addCase(FpDivExpr.class, this::simplifyFpDiv)
-
-            .addCase(FpEqExpr.class, this::simplifyFpEq)
-
-            .addCase(FpAssignExpr.class, this::simplifyFpAssign)
-
-            .addCase(FpGeqExpr.class, this::simplifyFpGeq)
-
-            .addCase(FpLeqExpr.class, this::simplifyFpLeq)
-
-            .addCase(FpGtExpr.class, this::simplifyFpGt)
-
-            .addCase(FpLtExpr.class, this::simplifyFpLt)
-
-            .addCase(FpNeqExpr.class, this::simplifyFpNeq)
-
-            .addCase(FpAbsExpr.class, this::simplifyFpAbs)
-
-            .addCase(FpRoundToIntegralExpr.class, this::simplifyFpRoundToIntegral)
-
-            .addCase(FpMaxExpr.class, this::simplifyFpMax)
-
-            .addCase(FpMinExpr.class, this::simplifyFpMin)
-
-            .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
-
-            .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
-
-            .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
-
-            .addCase(FpToBvExpr.class, this::simplifyFpToBv)
-
-            .addCase(FpToFpExpr.class, this::simplifyFpToFp)
-
-            // General
-
-            .addCase(RefExpr.class, this::simplifyRef)
-
-            .addCase(IteExpr.class, this::simplifyIte)
-
-            // Reference
-
-            .addCase(Dereference.class, this::simplifyDereference)
-
-//            .addCase(Reference.class, this::simplifyReference)
-
-            // Default
-
-            .addDefault((o, val) -> {
-                final Expr<?> expr = (Expr<?>) o;
-                return expr.map(e -> simplify(e, val));
-            })
-
-            .build();
+    private final DispatchTable2<Valuation, Expr<?>> TABLE =
+            DispatchTable2.<Valuation, Expr<?>>builder()
+
+                    // Boolean
+
+                    .addCase(NotExpr.class, this::simplifyNot)
+                    .addCase(ImplyExpr.class, this::simplifyImply)
+                    .addCase(IffExpr.class, this::simplifyIff)
+                    .addCase(XorExpr.class, this::simplifyXor)
+                    .addCase(AndExpr.class, this::simplifyAnd)
+                    .addCase(OrExpr.class, this::simplifyOr)
+
+                    // Rational
+
+                    .addCase(RatAddExpr.class, this::simplifyRatAdd)
+                    .addCase(RatSubExpr.class, this::simplifyRatSub)
+                    .addCase(RatPosExpr.class, this::simplifyRatPos)
+                    .addCase(RatNegExpr.class, this::simplifyRatNeg)
+                    .addCase(RatMulExpr.class, this::simplifyRatMul)
+                    .addCase(RatDivExpr.class, this::simplifyRatDiv)
+                    .addCase(RatEqExpr.class, this::simplifyRatEq)
+                    .addCase(RatNeqExpr.class, this::simplifyRatNeq)
+                    .addCase(RatGeqExpr.class, this::simplifyRatGeq)
+                    .addCase(RatGtExpr.class, this::simplifyRatGt)
+                    .addCase(RatLeqExpr.class, this::simplifyRatLeq)
+                    .addCase(RatLtExpr.class, this::simplifyRatLt)
+                    .addCase(RatToIntExpr.class, this::simplifyRatToInt)
+
+                    // Integer
+
+                    .addCase(IntToRatExpr.class, this::simplifyIntToRat)
+                    .addCase(IntAddExpr.class, this::simplifyIntAdd)
+                    .addCase(IntSubExpr.class, this::simplifyIntSub)
+                    .addCase(IntPosExpr.class, this::simplifyIntPos)
+                    .addCase(IntNegExpr.class, this::simplifyIntNeg)
+                    .addCase(IntMulExpr.class, this::simplifyIntMul)
+                    .addCase(IntDivExpr.class, this::simplifyIntDiv)
+                    .addCase(IntModExpr.class, this::simplifyMod)
+                    .addCase(IntRemExpr.class, this::simplifyRem)
+                    .addCase(IntEqExpr.class, this::simplifyIntEq)
+                    .addCase(IntNeqExpr.class, this::simplifyIntNeq)
+                    .addCase(IntGeqExpr.class, this::simplifyIntGeq)
+                    .addCase(IntGtExpr.class, this::simplifyIntGt)
+                    .addCase(IntLeqExpr.class, this::simplifyIntLeq)
+                    .addCase(IntLtExpr.class, this::simplifyIntLt)
+
+                    // Enum
+
+                    .addCase(EnumEqExpr.class, this::simplifyEnumEqExpr)
+                    .addCase(EnumNeqExpr.class, this::simplifyEnumNeqExpr)
+
+                    // Array
+
+                    .addCase(ArrayReadExpr.class, this::simplifyArrayRead)
+                    .addCase(ArrayWriteExpr.class, this::simplifyArrayWrite)
+
+                    // .addCase(ArrayInitExpr.class, this::simplifyArrayInit)
+                    .addCase(
+                            ArrayInitExpr.class,
+                            (arrayInitExpr, valuation) ->
+                                    this.simplifyArrayInit(arrayInitExpr, valuation))
+
+                    // Bitvectors
+
+                    .addCase(BvConcatExpr.class, this::simplifyBvConcat)
+                    .addCase(BvExtractExpr.class, this::simplifyBvExtract)
+                    .addCase(BvZExtExpr.class, this::simplifyBvZExt)
+                    .addCase(BvSExtExpr.class, this::simplifyBvSExt)
+                    .addCase(BvAddExpr.class, this::simplifyBvAdd)
+                    .addCase(BvSubExpr.class, this::simplifyBvSub)
+                    .addCase(BvPosExpr.class, this::simplifyBvPos)
+                    .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
+                    .addCase(BvNegExpr.class, this::simplifyBvNeg)
+                    .addCase(BvMulExpr.class, this::simplifyBvMul)
+                    .addCase(BvUDivExpr.class, this::simplifyBvUDiv)
+                    .addCase(BvSDivExpr.class, this::simplifyBvSDiv)
+                    .addCase(BvSModExpr.class, this::simplifyBvSMod)
+                    .addCase(BvURemExpr.class, this::simplifyBvURem)
+                    .addCase(BvSRemExpr.class, this::simplifyBvSRem)
+                    .addCase(BvAndExpr.class, this::simplifyBvAnd)
+                    .addCase(BvOrExpr.class, this::simplifyBvOr)
+                    .addCase(BvXorExpr.class, this::simplifyBvXor)
+                    .addCase(BvNotExpr.class, this::simplifyBvNot)
+                    .addCase(BvShiftLeftExpr.class, this::simplifyBvShiftLeft)
+                    .addCase(BvArithShiftRightExpr.class, this::simplifyBvArithShiftRight)
+                    .addCase(BvLogicShiftRightExpr.class, this::simplifyBvLogicShiftRight)
+                    .addCase(BvRotateLeftExpr.class, this::simplifyBvRotateLeft)
+                    .addCase(BvRotateRightExpr.class, this::simplifyBvRotateRight)
+                    .addCase(BvEqExpr.class, this::simplifyBvEq)
+                    .addCase(BvNeqExpr.class, this::simplifyBvNeq)
+                    .addCase(BvUGeqExpr.class, this::simplifyBvUGeq)
+                    .addCase(BvUGtExpr.class, this::simplifyBvUGt)
+                    .addCase(BvULeqExpr.class, this::simplifyBvULeq)
+                    .addCase(BvULtExpr.class, this::simplifyBvULt)
+                    .addCase(BvSGeqExpr.class, this::simplifyBvSGeq)
+                    .addCase(BvSGtExpr.class, this::simplifyBvSGt)
+                    .addCase(BvSLeqExpr.class, this::simplifyBvSLeq)
+                    .addCase(BvSLtExpr.class, this::simplifyBvSLt)
+
+                    // Floating points
+
+                    .addCase(FpAddExpr.class, this::simplifyFpAdd)
+                    .addCase(FpSubExpr.class, this::simplifyFpSub)
+                    .addCase(FpPosExpr.class, this::simplifyFpPos)
+                    .addCase(FpNegExpr.class, this::simplifyFpNeg)
+                    .addCase(FpMulExpr.class, this::simplifyFpMul)
+                    .addCase(FpDivExpr.class, this::simplifyFpDiv)
+                    .addCase(FpEqExpr.class, this::simplifyFpEq)
+                    .addCase(FpAssignExpr.class, this::simplifyFpAssign)
+                    .addCase(FpGeqExpr.class, this::simplifyFpGeq)
+                    .addCase(FpLeqExpr.class, this::simplifyFpLeq)
+                    .addCase(FpGtExpr.class, this::simplifyFpGt)
+                    .addCase(FpLtExpr.class, this::simplifyFpLt)
+                    .addCase(FpNeqExpr.class, this::simplifyFpNeq)
+                    .addCase(FpAbsExpr.class, this::simplifyFpAbs)
+                    .addCase(FpRoundToIntegralExpr.class, this::simplifyFpRoundToIntegral)
+                    .addCase(FpMaxExpr.class, this::simplifyFpMax)
+                    .addCase(FpMinExpr.class, this::simplifyFpMin)
+                    .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
+                    .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
+                    .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
+                    .addCase(FpToBvExpr.class, this::simplifyFpToBv)
+                    .addCase(FpToFpExpr.class, this::simplifyFpToFp)
+
+                    // General
+
+                    .addCase(RefExpr.class, this::simplifyRef)
+                    .addCase(IteExpr.class, this::simplifyIte)
+
+                    // Reference
+
+                    .addCase(Dereference.class, this::simplifyDereference)
+
+                    //            .addCase(Reference.class, this::simplifyReference)
+
+                    // Default
+
+                    .addDefault(
+                            (o, val) -> {
+                                final Expr<?> expr = (Expr<?>) o;
+                                return expr.map(e -> simplify(e, val));
+                            })
+                    .build();
 
     private Expr<?> simplifyRef(final RefExpr<?> expr, final Valuation val) {
         return simplifyGenericRef(expr, val);
@@ -315,8 +230,8 @@ public final class ExprSimplifier {
 
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
-    private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr,
-                                                                      final Valuation val) {
+    private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(
+            final RefExpr<DeclType> expr, final Valuation val) {
         final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
         if (eval.isPresent()) {
             return eval.get();
@@ -331,8 +246,8 @@ public final class ExprSimplifier {
 
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
-    private <ExprType extends Type> Expr<ExprType> simplifyGenericIte(final IteExpr<ExprType> expr,
-                                                                      final Valuation val) {
+    private <ExprType extends Type> Expr<ExprType> simplifyGenericIte(
+            final IteExpr<ExprType> expr, final Valuation val) {
         final Expr<BoolType> cond = simplify(expr.getCond(), val);
 
         if (cond instanceof TrueExpr) {
@@ -358,11 +273,15 @@ public final class ExprSimplifier {
         return simplifyGenericArrayRead(expr, val);
     }
 
-    private <IT extends Type, ET extends Type> Expr<ET>
-    simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
+    private <IT extends Type, ET extends Type> Expr<ET> simplifyGenericArrayRead(
+            final ArrayReadExpr<IT, ET> expr, final Valuation val) {
         Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
         Expr<IT> index = simplify(expr.getIndex(), val);
-        if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
+        if (arr instanceof LitExpr<?>
+                && index
+                        instanceof
+                        LitExpr<?>) { // The index is required to be a literal so that we can use
+            // 'equals' to compare it against existing keys in the array
             return expr.eval(val);
         }
         return expr.with(arr, index);
@@ -372,19 +291,21 @@ public final class ExprSimplifier {
         return simplifyGenericArrayWrite(expr, val);
     }
 
-    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
-    simplifyGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr, final Valuation val) {
+    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>> simplifyGenericArrayWrite(
+            final ArrayWriteExpr<IT, ET> expr, final Valuation val) {
         Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
         Expr<IT> index = simplify(expr.getIndex(), val);
         Expr<ET> elem = simplify(expr.getElem(), val);
-        if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof LitExpr<?>) {
+        if (arr instanceof LitExpr<?>
+                && index instanceof LitExpr<?>
+                && elem instanceof LitExpr<?>) {
             return expr.eval(val);
         }
         return expr.with(arr, index, elem);
     }
 
-    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
-    simplifyArrayInit(final ArrayInitExpr<IT, ET> t, final Valuation val) {
+    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>> simplifyArrayInit(
+            final ArrayInitExpr<IT, ET> t, final Valuation val) {
         boolean nonLiteralFound = false;
         List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
         Expr<ET> newElseElem = simplify(t.getElseElem(), val);
@@ -946,6 +867,9 @@ public final class ExprSimplifier {
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             final IntLitExpr leftLit = (IntLitExpr) leftOp;
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            if (rightLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+                return expr.with(leftOp, rightOp);
+            }
             return leftLit.div(rightLit);
         }
 
@@ -959,8 +883,12 @@ public final class ExprSimplifier {
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             final IntLitExpr leftLit = (IntLitExpr) leftOp;
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            if (rightLit.getValue().compareTo(BigInteger.ZERO) == 0) {
+                return expr.with(leftOp, rightOp);
+            }
             return leftLit.mod(rightLit);
-        } else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
+        } else if (leftOp instanceof IntModExpr
+                && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
             return leftOp;
         }
 
@@ -975,7 +903,8 @@ public final class ExprSimplifier {
             final IntLitExpr leftLit = (IntLitExpr) leftOp;
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
             return leftLit.rem(rightLit);
-        } else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
+        } else if (leftOp instanceof IntRemExpr
+                && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
             return simplify(leftOp, val);
         }
 
@@ -1096,10 +1025,12 @@ public final class ExprSimplifier {
             return Bool(leftLit.equals(rightLit));
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr && level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+        if (leftOp instanceof RefExpr
+                && rightOp instanceof RefExpr
+                && level != LITERAL_ONLY
+                && leftOp.equals(rightOp)) {
             return True();
         }
-
 
         return expr.with(leftOp, rightOp);
     }
@@ -1116,10 +1047,12 @@ public final class ExprSimplifier {
             return Bool(!leftLit.equals(rightLit));
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr && level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+        if (leftOp instanceof RefExpr
+                && rightOp instanceof RefExpr
+                && level != LITERAL_ONLY
+                && leftOp.equals(rightOp)) {
             return False();
         }
-
 
         return expr.with(leftOp, rightOp);
     }
@@ -1147,7 +1080,7 @@ public final class ExprSimplifier {
                 } else {
                     value = value.concat(litOp);
                 }
-//                iterator.remove();
+                //                iterator.remove();
             } else {
                 return expr.withOps(ops);
             }
@@ -1553,7 +1486,8 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
-    private Expr<BvType> simplifyBvArithShiftRight(final BvArithShiftRightExpr expr, final Valuation val) {
+    private Expr<BvType> simplifyBvArithShiftRight(
+            final BvArithShiftRightExpr expr, final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1566,7 +1500,8 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
-    private Expr<BvType> simplifyBvLogicShiftRight(final BvLogicShiftRightExpr expr, final Valuation val) {
+    private Expr<BvType> simplifyBvLogicShiftRight(
+            final BvLogicShiftRightExpr expr, final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1799,7 +1734,9 @@ public final class ExprSimplifier {
                 ops.add(opVisited);
             }
         }
-        final FpLitExpr zero = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+        final FpLitExpr zero =
+                FpUtils.bigFloatToFpLitExpr(
+                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
         FpLitExpr value = zero;
 
         for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
@@ -1836,7 +1773,8 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (leftOp.equals(rightOp)) {
-                return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+                return FpUtils.bigFloatToFpLitExpr(
+                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
             }
         }
 
@@ -1886,13 +1824,16 @@ public final class ExprSimplifier {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpLitExpr) {
-            return Bool((((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
+            return Bool(
+                    (((FpLitExpr) op).isNegativeInfinity()
+                            || ((FpLitExpr) op).isPositiveInfinity()));
         }
 
         return expr.with(op);
     }
 
-    private Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
+    private Expr<FpType> simplifyFpRoundToIntegral(
+            final FpRoundToIntegralExpr expr, final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpRoundToIntegralExpr) {
@@ -1917,8 +1858,15 @@ public final class ExprSimplifier {
             }
         }
 
-        final FpLitExpr ZERO = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-        final FpLitExpr ONE = FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
+        final FpLitExpr ZERO =
+                FpUtils.bigFloatToFpLitExpr(
+                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+        final FpLitExpr ONE =
+                FpUtils.bigFloatToFpLitExpr(
+                        new BigFloat(
+                                1.0f,
+                                FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())),
+                        expr.getType());
 
         FpLitExpr value = ONE;
         for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
@@ -2103,6 +2051,4 @@ public final class ExprSimplifier {
 
         return expr.with(op);
     }
-
-
 }

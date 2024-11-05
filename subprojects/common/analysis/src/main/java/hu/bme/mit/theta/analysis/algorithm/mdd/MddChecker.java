@@ -131,7 +131,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final Set<VarDecl<?>> vars =
                 ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
         for (var v : vars) {
-            final var domainSize = v.getType() instanceof BoolType ? 2 : 0;
+            final var domainSize =
+                    Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             stateOrder.createOnTop(
                     MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));

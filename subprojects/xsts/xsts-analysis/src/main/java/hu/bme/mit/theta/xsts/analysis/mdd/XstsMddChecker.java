@@ -111,8 +111,10 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
         final var initToExprResult =
                 StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 
-        for (var v : xsts.getVars()) {
-            final var domainSize = /*v.getType() instanceof BoolType ? 2 :*/ 0;
+        for (var v : xsts.getStateVars()) {
+            final var
+                    domainSize = /*Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0)*/
+                            0;
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 

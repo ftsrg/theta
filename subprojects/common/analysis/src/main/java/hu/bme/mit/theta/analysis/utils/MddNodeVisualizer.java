@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.utils;
 
+import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
+import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
+
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddNode;
@@ -23,15 +26,11 @@ import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
-
 import java.awt.*;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-
-import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
-import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 public class MddNodeVisualizer {
 
@@ -51,25 +50,23 @@ public class MddNodeVisualizer {
 
     public static long idFor(MddNode n) {
         Long l = registry.get(n);
-        if (l == null)
-            registry.put(n, l = nextId++);
+        if (l == null) registry.put(n, l = nextId++);
         return l;
     }
 
     private static class LazyHolderDefault {
-        static final MddNodeVisualizer INSTANCE = new MddNodeVisualizer(n -> n.toString());
+        static final MddNodeVisualizer INSTANCE = create();
     }
 
     private static class LazyHolderStructureOnly {
-        static final MddNodeVisualizer INSTANCE = new MddNodeVisualizer(n -> "");
+        static final MddNodeVisualizer INSTANCE = create(n -> "");
     }
 
     private MddNodeVisualizer(final Function<MddNode, String> nodeToString) {
         this.nodeToString = nodeToString;
     }
 
-    public static MddNodeVisualizer create(
-            final Function<MddNode, String> nodeToString) {
+    public static MddNodeVisualizer create(final Function<MddNode, String> nodeToString) {
         return new MddNodeVisualizer(nodeToString);
     }
 
@@ -95,8 +92,11 @@ public class MddNodeVisualizer {
         return graph;
     }
 
-    private void traverse(final Graph graph, final MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor,
-                          final Set<MddNode> traversed) {
+    private void traverse(
+            final Graph graph,
+            final MddNode node,
+            RecursiveIntObjCursor<? extends MddNode> cursor,
+            final Set<MddNode> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -106,11 +106,19 @@ public class MddNodeVisualizer {
         final LineStyle lineStyle = CHILD_EDGE_STYLE;
 
         final int peripheries = 1;
-//        final int peripheries = node.isComplete()?2:1;
+        //        final int peripheries = node.isComplete()?2:1;
 
-        final NodeAttributes nAttributes = NodeAttributes.builder().label(nodeToString.apply(node))
-                .alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
-                .peripheries(peripheries).lineStyle(lineStyle).build();
+        final NodeAttributes nAttributes =
+                NodeAttributes.builder()
+                        .label(nodeToString.apply(node))
+                        .alignment(LEFT)
+                        .shape(RECTANGLE)
+                        .font(FONT)
+                        .fillColor(FILL_COLOR)
+                        .lineColor(LINE_COLOR)
+                        .peripheries(peripheries)
+                        .lineStyle(lineStyle)
+                        .build();
 
         graph.addNode(nodeId, nAttributes);
 
@@ -121,8 +129,13 @@ public class MddNodeVisualizer {
             }
             final String sourceId = NODE_ID_PREFIX + idFor(node);
             final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
-            final EdgeAttributes eAttributes = EdgeAttributes.builder()
-                    .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(DEFAULT_EDGE_STYLE).build();
+            final EdgeAttributes eAttributes =
+                    EdgeAttributes.builder()
+                            .alignment(LEFT)
+                            .font(FONT)
+                            .color(LINE_COLOR)
+                            .lineStyle(DEFAULT_EDGE_STYLE)
+                            .build();
             graph.addEdge(sourceId, targetId, eAttributes);
         } else {
             while (cursor.moveNext()) {
@@ -132,20 +145,25 @@ public class MddNodeVisualizer {
                     }
                     final String sourceId = NODE_ID_PREFIX + idFor(node);
                     final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
-                    final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cursor.key() + "")
-                            .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(CHILD_EDGE_STYLE).build();
+                    final EdgeAttributes eAttributes =
+                            EdgeAttributes.builder()
+                                    .label(cursor.key() + "")
+                                    .alignment(LEFT)
+                                    .font(FONT)
+                                    .color(LINE_COLOR)
+                                    .lineStyle(CHILD_EDGE_STYLE)
+                                    .build();
                     graph.addEdge(sourceId, targetId, eAttributes);
                 }
-
             }
         }
-
     }
 
     private static String nodeToString(MddNode node) {
         if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
             return "";
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
+        return node instanceof MddNode.Terminal
+                ? ((MddNode.Terminal<?>) node).getTerminalData().toString()
+                : node.getRepresentation().toString();
     }
-
 }

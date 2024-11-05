@@ -15,11 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.ObjIntMap;
 import com.koloboke.collect.map.hash.HashObjIntMaps;
 import com.koloboke.collect.set.ObjSet;
 import com.koloboke.collect.set.hash.HashObjSets;
+import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.IntStatistics;
@@ -30,16 +33,11 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.delta.Pair;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Objects;
 import java.util.Optional;
-
 import java.util.Set;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public final class MddStateSpaceInfo implements StateSpaceInfo {
     private final MddVariable variable;
@@ -51,8 +49,7 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
         this.variable = variable;
         this.mddNode = mddNode;
 
-        for (var c = mddNode.cursor(); c.moveNext(); ) {
-        } // TODO delete later
+        for (var c = mddNode.cursor(); c.moveNext(); ) {} // TODO delete later
     }
 
     @Override
@@ -109,7 +106,7 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
     public StateSpaceInfo getLocalStateSpace(final Object someLowerComponent) {
         // TODO: Auto-generated method stub.
         throw new UnsupportedOperationException("Not (yet) implemented.");
-        //return null;
+        // return null;
     }
 
     @Override
@@ -119,7 +116,6 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
             structuralRepresentation = representBounds(variable, boundsCollector);
         }
         return structuralRepresentation;
-
     }
 
     private MddNode representBounds(MddVariable variable, BoundsCollector boundsCollector) {
@@ -127,7 +123,8 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
         if (variable.getLower().isPresent()) {
             continuation = representBounds(variable.getLower().get(), boundsCollector);
         } else {
-            final MddGraph<Expr<BoolType>> mddGraph = (MddGraph<Expr<BoolType>>) variable.getMddGraph();
+            final MddGraph<Expr<BoolType>> mddGraph =
+                    (MddGraph<Expr<BoolType>>) variable.getMddGraph();
             continuation = mddGraph.getNodeFor(True());
         }
         final var bounds = boundsCollector.getBoundsFor(variable);
@@ -137,28 +134,28 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
                 template = IntObjMapView.singleton(bounds.get().first, continuation);
             } else {
                 // TODO: canonization of trimmed intobjmapviews could be improved
-                template = new IntObjMapViews.Trimmed<>(
-                        IntObjMapView.empty(continuation),
-                        IntSetView.range(bounds.get().first, bounds.get().second + 1)
-                );
+                template =
+                        new IntObjMapViews.Trimmed<>(
+                                IntObjMapView.empty(continuation),
+                                IntSetView.range(bounds.get().first, bounds.get().second + 1));
             }
         } else {
             template = IntObjMapView.empty(continuation);
         }
 
         return variable.checkInNode(MddStructuralTemplate.of(template));
-
     }
-//    private MddNode collapseEdges(MddNode parent) {
-//
-//        IntSetView setView = IntSetView.empty();
-//        for (var c = parent.cursor(); c.moveNext(); ) {
-//            setView = setView.union(c.value().keySet());
-//        }
-//
-//    }
 
-    private class BoundsCollector {
+    //    private MddNode collapseEdges(MddNode parent) {
+    //
+    //        IntSetView setView = IntSetView.empty();
+    //        for (var c = parent.cursor(); c.moveNext(); ) {
+    //            setView = setView.union(c.value().keySet());
+    //        }
+    //
+    //    }
+
+    private static class BoundsCollector {
 
         private final ObjIntMap<MddVariable> lowerBounds;
         private final ObjIntMap<MddVariable> upperBounds;
@@ -174,29 +171,36 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
             traverse(rootNode, variable, traversed);
         }
 
-        private void traverse(final MddNode node, final MddVariable variable,
-                              final Set<MddNode> traversed) {
+        private void traverse(
+                final MddNode node, final MddVariable variable, final Set<MddNode> traversed) {
             if (traversed.contains(node) || node.isTerminal()) {
                 return;
             } else {
                 traversed.add(node);
             }
+            Preconditions.checkNotNull(variable);
 
-            for (var c = node.cursor(); c.moveNext(); ) {
-            } // TODO delete later
+            for (var c = node.cursor(); c.moveNext(); ) {} // TODO delete later
 
-            if (node.defaultValue() != null) {
-                final MddNode defaultValue = node.defaultValue();
+            final var nodeInterpreter = variable.getNodeInterpreter(node);
+            if (nodeInterpreter.defaultValue() != null) {
+                final MddNode defaultValue = nodeInterpreter.defaultValue();
                 traverse(defaultValue, variable.getLower().orElse(null), traversed);
                 hasDefaultValue.add(variable);
             } else {
-                final IntStatistics statistics = node.statistics();
-                if (variable != null) {
-                    lowerBounds.put(variable, Math.min(lowerBounds.getOrDefault(variable, Integer.MAX_VALUE), statistics.lowestValue()));
-                    upperBounds.put(variable, Math.max(upperBounds.getOrDefault(variable, Integer.MIN_VALUE), statistics.highestValue()));
-                }
+                final IntStatistics statistics = nodeInterpreter.statistics();
+                lowerBounds.put(
+                        variable,
+                        Math.min(
+                                lowerBounds.getOrDefault(variable, Integer.MAX_VALUE),
+                                statistics.lowestValue()));
+                upperBounds.put(
+                        variable,
+                        Math.max(
+                                upperBounds.getOrDefault(variable, Integer.MIN_VALUE),
+                                statistics.highestValue()));
 
-                for (var cur = node.cursor(); cur.moveNext(); ) {
+                for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
                     if (cur.value() != null) {
                         traverse(cur.value(), variable.getLower().orElse(null), traversed);
                     }
@@ -204,13 +208,12 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
             }
         }
 
-
         public Optional<Pair<Integer, Integer>> getBoundsFor(MddVariable variable) {
             if (hasDefaultValue.contains(variable)) return Optional.empty();
             if (!lowerBounds.containsKey(variable) || !upperBounds.containsKey(variable))
                 return Optional.empty();
-            return Optional.of(new Pair<>(lowerBounds.getInt(variable), upperBounds.getInt(variable)));
+            return Optional.of(
+                    new Pair<>(lowerBounds.getInt(variable), upperBounds.getInt(variable)));
         }
     }
-
 }

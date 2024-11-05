@@ -26,18 +26,30 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign
+import hu.bme.mit.theta.core.type.fptype.FpExprs.NaN
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import java.math.BigInteger
 import java.util.*
 
 fun XCFA.toMonolithicExpr(): MonolithicExpr {
@@ -68,8 +80,26 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
+  val defaultValues =
+    this.collectVars()
+      .map {
+        when (it.type) {
+          is IntType -> Eq(it.ref, Int(0))
+          is BoolType -> Eq(it.ref, Bool(false))
+          is BvType ->
+            Eq(
+              it.ref,
+              BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+            )
+          is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
+          else -> throw IllegalArgumentException("Unsupported type")
+        }
+      }
+      .toList()
+      .let { And(it) }
+
   return MonolithicExpr(
-    initExpr = Eq(locVar.ref, IntExprs.Int(map[proc.initLoc]!!)),
+    initExpr = And(Eq(locVar.ref, IntExprs.Int(map[proc.initLoc]!!)), defaultValues),
     transExpr = And(transUnfold.exprs),
     propExpr = Neq(locVar.ref, IntExprs.Int(map[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
