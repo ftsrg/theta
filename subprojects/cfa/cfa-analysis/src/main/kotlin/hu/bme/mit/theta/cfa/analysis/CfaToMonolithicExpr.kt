@@ -61,15 +61,23 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
       }
       .toList()
 
-  val defaultValues = this.vars.map {
-    when (it.type) {
-      is IntType -> Eq(it.ref, Int(0))
-      is BoolType -> Eq(it.ref, Bool(false))
-      is BvType -> Eq(it.ref, BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size))
-      is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
-      else -> throw IllegalArgumentException("Unsupported type")
-    }
-  }.toList().let { And(it)}
+  val defaultValues =
+    this.vars
+      .map {
+        when (it.type) {
+          is IntType -> Eq(it.ref, Int(0))
+          is BoolType -> Eq(it.ref, Bool(false))
+          is BvType ->
+            Eq(
+              it.ref,
+              BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+            )
+          is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
+          else -> throw IllegalArgumentException("Unsupported type")
+        }
+      }
+      .toList()
+      .let { And(it) }
 
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
@@ -79,7 +87,13 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
 
   val offsetIndex = transUnfold.indexing
 
-  return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex, vars = listOf(locVar) + this.vars.toList())
+  return MonolithicExpr(
+    initExpr,
+    transExpr,
+    propExpr,
+    offsetIndex,
+    vars = listOf(locVar) + this.vars.toList(),
+  )
 }
 
 fun CFA.valToAction(val1: Valuation, val2: Valuation): CfaAction {
