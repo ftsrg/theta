@@ -169,7 +169,7 @@ public class MddCheckerTest {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final SafetyResult<MddWitness, MddCex> status;
+        final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddChecker<ExprAction> checker =
                     MddChecker.create(
@@ -198,6 +198,6 @@ public class MddCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
-        assertEquals(stateSpaceSize, status.getWitness().size());
+        assertEquals(stateSpaceSize, status.getProof().size());
     }
 }

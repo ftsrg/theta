@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.*
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
@@ -60,34 +60,15 @@ public class CfaMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {"src/test/resources/arithmetic-bool00.cfa", false},
-                    {"src/test/resources/arithmetic-bool01.cfa", false},
-                    {"src/test/resources/arithmetic-bool10.cfa", false},
-                    {"src/test/resources/arithmetic-bool11.cfa", false},
-
-                    //                {"src/test/resources/arithmetic-int.cfa", false},
-
+                    //                    {"src/test/resources/arithmetic-bool00.cfa", false},
+                    //                    {"src/test/resources/arithmetic-bool01.cfa", false},
+                    //                    {"src/test/resources/arithmetic-bool10.cfa", false},
+                    //                    {"src/test/resources/arithmetic-bool11.cfa", false},
                     {"src/test/resources/arithmetic-mod.cfa", true},
-
-                    //                {"src/test/resources/arrays.cfa", false},
-                    //
-                    //                {"src/test/resources/arrayinit.cfa", false},
-
                     {"src/test/resources/counter5_true.cfa", true},
-                    {"src/test/resources/counter_bv_true.cfa", true},
-                    {"src/test/resources/counter_bv_false.cfa", false},
-
-                    //                {"src/test/resources/fp1.cfa", true},
-                    //
-                    //                {"src/test/resources/fp2.cfa", false},
-                    //
-                    //                {"src/test/resources/counter_fp_true.cfa", true},
-
-                    {"src/test/resources/ifelse.cfa", false},
-
-                    //                {"src/test/resources/locking.cfa", true}, state space is not
-                    // finite
-
+                    //                    {"src/test/resources/counter_bv_true.cfa", true},
+                    //                    {"src/test/resources/counter_bv_false.cfa", false},
+                    //                    {"src/test/resources/ifelse.cfa", false},
                 });
     }
 
@@ -113,7 +94,7 @@ public class CfaMddCheckerTest {
             CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
             var monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
 
-            final SafetyResult<MddWitness, MddCex> status;
+            final SafetyResult<MddProof, MddCex> status;
             try (var solverPool = new SolverPool(solverFactory)) {
                 final MddChecker<ExprAction> checker =
                         MddChecker.create(

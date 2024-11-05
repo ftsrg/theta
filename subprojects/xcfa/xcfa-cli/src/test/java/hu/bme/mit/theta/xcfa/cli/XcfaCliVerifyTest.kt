@@ -306,6 +306,23 @@ class XcfaCliVerifyTest {
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
+  fun testCVerifyMDD(filePath: String, extraArgs: String?) {
+    val params =
+      arrayOf(
+        "--backend",
+        "MDD",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    main(params)
+  }
+
+  @ParameterizedTest
+  @MethodSource("singleThreadedCFiles")
   fun testCVerifyIMC(filePath: String, extraArgs: String?) {
     val params =
       arrayOf(
