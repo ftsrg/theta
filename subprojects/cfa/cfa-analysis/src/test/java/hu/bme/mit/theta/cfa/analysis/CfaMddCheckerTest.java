@@ -60,15 +60,15 @@ public class CfaMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    //                    {"src/test/resources/arithmetic-bool00.cfa", false},
-                    //                    {"src/test/resources/arithmetic-bool01.cfa", false},
-                    //                    {"src/test/resources/arithmetic-bool10.cfa", false},
-                    //                    {"src/test/resources/arithmetic-bool11.cfa", false},
+                    {"src/test/resources/arithmetic-bool00.cfa", false},
+                    {"src/test/resources/arithmetic-bool01.cfa", false},
+                    {"src/test/resources/arithmetic-bool10.cfa", false},
+                    {"src/test/resources/arithmetic-bool11.cfa", false},
                     {"src/test/resources/arithmetic-mod.cfa", true},
                     {"src/test/resources/counter5_true.cfa", true},
-                    //                    {"src/test/resources/counter_bv_true.cfa", true},
-                    //                    {"src/test/resources/counter_bv_false.cfa", false},
-                    //                    {"src/test/resources/ifelse.cfa", false},
+                    {"src/test/resources/counter_bv_true.cfa", true},
+                    {"src/test/resources/counter_bv_false.cfa", false},
+                    {"src/test/resources/ifelse.cfa", false},
                 });
     }
 
