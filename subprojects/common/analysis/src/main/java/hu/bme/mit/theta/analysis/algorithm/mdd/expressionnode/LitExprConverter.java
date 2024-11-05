@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
 /** Util class for converting between integers and {@link LitExpr} */
@@ -49,9 +50,11 @@ public class LitExprConverter {
         if (litExpr instanceof BoolLitExpr) {
             return ((BoolLitExpr) litExpr).getValue() ? 1 : 0;
         }
-        if (litExpr instanceof ArrayLitExpr<?, ?>
-                || litExpr instanceof BvLitExpr
-                || litExpr instanceof FpLitExpr) {
+        if (litExpr instanceof BvLitExpr bvLitExpr) {
+            var ret = BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue();
+            return ret;
+        }
+        if (litExpr instanceof ArrayLitExpr<?, ?> || litExpr instanceof FpLitExpr) {
             if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
@@ -75,7 +78,11 @@ public class LitExprConverter {
             }
             return BoolLitExpr.of(integer != 0);
         }
-        if (type instanceof ArrayType<?, ?> || type instanceof BvType || type instanceof FpType) {
+        if (type instanceof BvType) {
+            return BvUtils.bigIntegerToNeutralBvLitExpr(
+                    BigInteger.valueOf(integer), ((BvType) type).getSize());
+        }
+        if (type instanceof ArrayType<?, ?> || type instanceof FpType) {
             return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         if (type instanceof EnumType) {

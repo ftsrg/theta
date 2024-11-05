@@ -131,8 +131,11 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final Set<VarDecl<?>> vars =
                 ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
         for (var v : vars) {
-            final var domainSize =
-                    Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
+            var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
+
+            if (domainSize > 100) {
+                domainSize = 0;
+            }
 
             stateOrder.createOnTop(
                     MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
@@ -151,7 +154,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 stateSig.getTopVariableHandle()
                         .checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
 
-        logger.write(Level.INFO, "Created initial node");
+        logger.write(Level.INFO, "Created initial node\n");
 
         final Expr<BoolType> transExpr =
                 PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0));

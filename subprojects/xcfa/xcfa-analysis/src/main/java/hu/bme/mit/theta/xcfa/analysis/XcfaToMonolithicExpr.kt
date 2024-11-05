@@ -34,16 +34,14 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign
-import hu.bme.mit.theta.core.type.fptype.FpExprs.NaN
 import hu.bme.mit.theta.core.type.fptype.FpType
-import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -51,6 +49,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.math.BigInteger
 import java.util.*
+import org.kframework.mpfr.BigFloat
 
 fun XCFA.toMonolithicExpr(): MonolithicExpr {
   Preconditions.checkArgument(this.initProcedures.size == 1)
@@ -64,15 +63,15 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   for ((i, x) in proc.locs.withIndex()) {
     map[x] = i
   }
-  val locVar = Decls.Var("__loc_", IntExprs.Int())
+  val locVar = Decls.Var("__loc_", Int())
   val tranList =
     proc.edges
       .map { (source, target, label): XcfaEdge ->
         SequenceStmt.of(
           listOf(
-            AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
+            AssumeStmt.of(Eq(locVar.ref, Int(map[source]!!))),
             label.toStmt(),
-            AssignStmt.of(locVar, IntExprs.Int(map[target]!!)),
+            AssignStmt.of(locVar, Int(map[target]!!)),
           )
         )
       }
@@ -81,7 +80,7 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
   val defaultValues =
-    this.collectVars()
+    StmtUtils.getVars(trans)
       .map {
         when (it.type) {
           is IntType -> Eq(it.ref, Int(0))
@@ -91,7 +90,14 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
               it.ref,
               BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
             )
-          is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
+          is FpType ->
+            FpAssign(
+              it.ref as Expr<FpType>,
+              FpUtils.bigFloatToFpLitExpr(
+                BigFloat.zero((it.type as FpType).significand),
+                it.type as FpType,
+              ),
+            )
           else -> throw IllegalArgumentException("Unsupported type")
         }
       }
@@ -99,9 +105,9 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
       .let { And(it) }
 
   return MonolithicExpr(
-    initExpr = And(Eq(locVar.ref, IntExprs.Int(map[proc.initLoc]!!)), defaultValues),
+    initExpr = And(Eq(locVar.ref, Int(map[proc.initLoc]!!)), defaultValues),
     transExpr = And(transUnfold.exprs),
-    propExpr = Neq(locVar.ref, IntExprs.Int(map[proc.errorLoc.get()]!!)),
+    propExpr = Neq(locVar.ref, Int(map[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
   )
 }

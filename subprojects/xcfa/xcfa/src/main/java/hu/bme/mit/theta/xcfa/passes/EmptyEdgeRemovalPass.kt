@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -24,6 +25,8 @@ class EmptyEdgeRemovalPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     while (true) {
+      builder.getEdges().filter { it.label.isSureStuck() }.forEach { builder.removeEdge(it) }
+
       val edge =
         builder.getEdges().find {
           it.label.isNop() &&
@@ -48,6 +51,14 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       }
     }
   }
+
+  private fun XcfaLabel.isSureStuck(): Boolean =
+    when (this) {
+      is SequenceLabel -> labels.any { it.isSureStuck() }
+      is NondetLabel -> labels.all { it.isSureStuck() }
+      is StmtLabel -> stmt == Assume(False())
+      else -> false
+    }
 
   private fun XcfaLabel.isNop(): Boolean =
     when (this) {
