@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -133,7 +134,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
-        for (var v : variableOrdering) {
+        for (var v : Lists.reverse(variableOrdering)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             if (domainSize > 100) {
