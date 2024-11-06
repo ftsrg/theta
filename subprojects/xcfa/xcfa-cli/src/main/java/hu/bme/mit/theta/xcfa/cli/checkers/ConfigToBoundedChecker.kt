@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 fun getBoundedChecker(
   xcfa: XCFA,
   mcm: MCM,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
@@ -39,7 +41,7 @@ fun getBoundedChecker(
   val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
   return BoundedChecker(
-    monolithicExpr = xcfa.toMonolithicExpr(),
+    monolithicExpr = xcfa.toMonolithicExpr(parseContext),
     bmcSolver =
       tryGetSolver(boundedConfig.bmcConfig.bmcSolver, boundedConfig.bmcConfig.validateBMCSolver)
         ?.createSolver(),

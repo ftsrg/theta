@@ -41,7 +41,10 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -51,7 +54,18 @@ import java.math.BigInteger
 import java.util.*
 import org.kframework.mpfr.BigFloat
 
-fun XCFA.toMonolithicExpr(): MonolithicExpr {
+fun XCFA.toMonolithicExpr(parseContext: ParseContext): MonolithicExpr {
+  val intType = CInt.getUnsignedInt(parseContext).smtType
+
+  fun int(value: Int): Expr<*> =
+    when (intType) {
+      is IntType -> Int(value)
+      is BvType ->
+        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), intType.size)
+
+      else -> error("Unknown integer type: $intType")
+    }
+
   Preconditions.checkArgument(this.initProcedures.size == 1)
   val proc = this.initProcedures.stream().findFirst().orElse(null).first
   Preconditions.checkArgument(
@@ -63,15 +77,15 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   for ((i, x) in proc.locs.withIndex()) {
     map[x] = i
   }
-  val locVar = Decls.Var("__loc_", Int())
+  val locVar = Decls.Var("__loc_", intType)
   val tranList =
     proc.edges
       .map { (source, target, label): XcfaEdge ->
         SequenceStmt.of(
           listOf(
-            AssumeStmt.of(Eq(locVar.ref, Int(map[source]!!))),
+            AssumeStmt.of(Eq(locVar.ref, int(map[source]!!))),
             label.toStmt(),
-            AssignStmt.of(locVar, Int(map[target]!!)),
+            AssignStmt.of(locVar, cast(int(map[target]!!), locVar.type)),
           )
         )
       }
@@ -83,7 +97,7 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
     StmtUtils.getVars(trans)
       .map {
         when (it.type) {
-          is IntType -> Eq(it.ref, Int(0))
+          is IntType -> Eq(it.ref, int(0))
           is BoolType -> Eq(it.ref, Bool(false))
           is BvType ->
             Eq(
@@ -105,9 +119,9 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
       .let { And(it) }
 
   return MonolithicExpr(
-    initExpr = And(Eq(locVar.ref, Int(map[proc.initLoc]!!)), defaultValues),
+    initExpr = And(Eq(locVar.ref, int(map[proc.initLoc]!!)), defaultValues),
     transExpr = And(transUnfold.exprs),
-    propExpr = Neq(locVar.ref, Int(map[proc.errorLoc.get()]!!)),
+    propExpr = Neq(locVar.ref, int(map[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
     vars = listOf(locVar) + this.vars.map { it.wrappedVar }.toList(),
   )

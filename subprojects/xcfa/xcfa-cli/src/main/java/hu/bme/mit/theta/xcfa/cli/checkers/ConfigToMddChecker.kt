@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 fun getMddChecker(
   xcfa: XCFA,
   mcm: MCM,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<MddProof, MddCex, Void> {
@@ -39,7 +41,7 @@ fun getMddChecker(
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
 
-  val monolithicExpr = xcfa.toMonolithicExpr()
+  val monolithicExpr = xcfa.toMonolithicExpr(parseContext)
 
   val initRel = monolithicExpr.initExpr
   val initIndexing = monolithicExpr.initOffsetIndex
@@ -50,7 +52,7 @@ fun getMddChecker(
       override fun nextIndexing() = monolithicExpr.transOffsetIndex
     }
   val safetyProperty = monolithicExpr.propExpr
-
+  val variableOrder = monolithicExpr.vars
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
@@ -59,6 +61,7 @@ fun getMddChecker(
     initIndexing,
     transRel,
     safetyProperty,
+    variableOrder,
     solverPool,
     logger,
     iterationStrategy,

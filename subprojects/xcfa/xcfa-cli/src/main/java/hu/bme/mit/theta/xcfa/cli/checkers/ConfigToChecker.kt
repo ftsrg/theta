@@ -43,12 +43,12 @@ fun getChecker(
   } else {
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
-      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
+      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-      Backend.MDD -> getMddChecker(xcfa, mcm, config, logger)
+      Backend.MDD -> getMddChecker(xcfa, mcm, parseContext, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
