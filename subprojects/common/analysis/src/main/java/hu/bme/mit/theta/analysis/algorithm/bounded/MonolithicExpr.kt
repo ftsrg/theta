@@ -15,14 +15,20 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
-data class MonolithicExpr(
+data class MonolithicExpr
+@JvmOverloads
+constructor(
   val initExpr: Expr<BoolType>,
   val transExpr: Expr<BoolType>,
   val propExpr: Expr<BoolType>,
@@ -30,4 +36,13 @@ data class MonolithicExpr(
   val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0),
   val vars: List<VarDecl<*>> =
     (getVars(initExpr) union getVars(transExpr) union getVars(propExpr)).toList(),
+  val valToState: (Valuation) -> ExprState = ExplState::of,
+  val biValToAction: (Valuation, Valuation) -> ExprAction = { _: Valuation, _: Valuation ->
+    object : ExprAction {
+      override fun toExpr(): Expr<BoolType> = transExpr
+
+      override fun nextIndexing(): VarIndexing = transOffsetIndex
+    }
+  },
+  val ctrlVars: Collection<VarDecl<*>> = listOf(),
 )
