@@ -27,11 +27,13 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign
 import hu.bme.mit.theta.core.type.fptype.FpType
@@ -53,6 +55,14 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.math.BigInteger
 import java.util.*
 import org.kframework.mpfr.BigFloat
+
+private val LitExpr<*>.value: Int
+  get() =
+    when (this) {
+      is IntLitExpr -> value.toInt()
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toInt()
+      else -> error("Unknown integer type: $type")
+    }
 
 fun XCFA.toMonolithicExpr(parseContext: ParseContext): MonolithicExpr {
   val intType = CInt.getUnsignedInt(parseContext).smtType
@@ -142,10 +152,8 @@ fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
         .first { it.name == "main" }
         .edges
         .first { edge ->
-          map[edge.source] ==
-            (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
-            map[edge.target] ==
-              (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
+          map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }])?.value ?: -1 &&
+            map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }])?.value ?: -1
         },
   )
 }
@@ -166,10 +174,7 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
           XcfaProcessState(
             locs =
               LinkedList(
-                listOf(
-                  map[
-                    (valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()]
-                )
+                listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }])?.value ?: -1])
               ),
             varLookup = LinkedList(),
           ),
