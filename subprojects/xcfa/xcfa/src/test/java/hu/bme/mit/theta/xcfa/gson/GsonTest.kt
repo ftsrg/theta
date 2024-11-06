@@ -97,7 +97,7 @@ class GsonTest {
     val x_symbol = NamedSymbol("x")
     symbolTable.add(x_symbol)
     val env = Env()
-    env.define(x_symbol, xcfaSource.vars.find { it.wrappedVar.name == "x" }!!.wrappedVar)
+    env.define(x_symbol, xcfaSource.globalVars.find { it.wrappedVar.name == "x" }!!.wrappedVar)
     val gson = getGson(symbolTable, env, true)
 
     val output = gson.fromJson(gson.toJson(xcfaSource), XCFA::class.java)
@@ -124,8 +124,11 @@ class GsonTest {
     symbolTable.add(x_symbol)
     symbolTable.add(thr1_symbol)
     val env = Env()
-    env.define(x_symbol, xcfaSource.vars.find { it.wrappedVar.name == "x" }!!.wrappedVar)
-    env.define(thr1_symbol, xcfaSource.vars.find { it.wrappedVar.name == "thr1" }!!.wrappedVar)
+    env.define(x_symbol, xcfaSource.globalVars.find { it.wrappedVar.name == "x" }!!.wrappedVar)
+    env.define(
+      thr1_symbol,
+      xcfaSource.globalVars.find { it.wrappedVar.name == "thr1" }!!.wrappedVar,
+    )
     val gson = getGson(symbolTable, env, true)
 
     val output = gson.fromJson(gson.toJson(xcfaSource), XCFA::class.java)

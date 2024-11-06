@@ -133,7 +133,7 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext): MonolithicExpr {
     transExpr = And(transUnfold.exprs),
     propExpr = Neq(locVar.ref, int(map[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
-    vars = this.vars.map { it.wrappedVar }.toList() + listOf(locVar),
+    vars = (StmtUtils.getVars(trans) + listOf(locVar)).toList(),
   )
 }
 

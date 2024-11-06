@@ -59,7 +59,7 @@ fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   }
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
-  vars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
+  globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
 
 fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> =
   procedures
@@ -255,7 +255,7 @@ private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>): VarAccessM
  * second is similar for write access.
  */
 fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): VarAccessMap {
-  val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
+  val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar).toSet()
   val flatLabels = getFlatLabels()
   val mutexes =
     flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
@@ -287,7 +287,7 @@ fun XcfaEdge.getGlobalVarsWithNeededMutexes(
   xcfa: XCFA,
   currentMutexes: Set<String>,
 ): List<GlobalVarAccessWithMutexes> {
-  val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
+  val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar).toSet()
   val neededMutexes = currentMutexes.toMutableSet()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
   getFlatLabels().forEach { label ->

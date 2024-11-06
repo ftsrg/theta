@@ -217,6 +217,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                         stateSpaceProvider.getQueryCount(),
                         stateSpaceProvider.getCacheSize());
 
+        logger.write(Level.MAINSTEP, "%s\n", statistics);
+
         final SafetyResult<MddProof, MddCex> result;
         if (violatingSize != 0) {
             result =
@@ -225,7 +227,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }
-        logger.write(Level.RESULT, "%s%n", result);
+        logger.write(Level.RESULT, "%s\n", result);
         return result;
     }
 }
