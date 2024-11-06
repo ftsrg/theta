@@ -19,9 +19,9 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.Witness;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -39,7 +39,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class MonolithicExprCegarChecker<
-                W extends Witness, S extends ExprState, A extends ExprAction, P extends Prec>
+                W extends Proof, S extends ExprState, A extends ExprAction, P extends Prec>
         implements SafetyChecker<W, Trace<S, A>, PredPrec> {
     private final MonolithicExpr model;
     private final Function<
@@ -92,7 +92,7 @@ public class MonolithicExprCegarChecker<
             final var result = checker.check();
             if (result.isSafe()) {
                 logger.write(Logger.Level.INFO, "Model is safe, stopping CEGAR");
-                return SafetyResult.safe(result.getWitness());
+                return SafetyResult.safe(result.getProof());
             } else {
                 Preconditions.checkState(result.isUnsafe());
                 final Trace<? extends ExprState, ? extends ExprAction> trace =
@@ -122,7 +122,7 @@ public class MonolithicExprCegarChecker<
                             lastValuation = val;
                         }
 
-                        return SafetyResult.unsafe(Trace.of(states, actions), result.getWitness());
+                        return SafetyResult.unsafe(Trace.of(states, actions), result.getProof());
                     } else {
                         final var ref = concretizationResult.asInfeasible().getRefutation();
                         final var newPred = ref.get(ref.getPruneIndex());
