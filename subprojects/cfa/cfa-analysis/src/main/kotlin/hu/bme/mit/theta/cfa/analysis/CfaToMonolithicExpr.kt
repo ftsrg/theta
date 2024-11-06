@@ -92,7 +92,7 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
     transExpr,
     propExpr,
     offsetIndex,
-    vars = listOf(locVar) + this.vars.toList(),
+    vars = this.vars.toList() + listOf(locVar),
   )
 }
 
