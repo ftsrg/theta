@@ -33,20 +33,27 @@ class EmptyEdgeRemovalPass : ProcedurePass {
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&
-            (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1) &&
-            it.metadata is EmptyMetaData
+            (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1)
         } ?: return builder
       val collapseBefore = edge.source.outgoingEdges.size == 1
       builder.removeEdge(edge)
       if (collapseBefore) {
         val incomingEdges = edge.source.incomingEdges.toList()
         incomingEdges.forEach { builder.removeEdge(it) }
-        incomingEdges.forEach { builder.addEdge(it.withTarget(edge.target)) }
+        incomingEdges.forEach {
+          builder.addEdge(
+            it.withTarget(edge.target).withMetadata(it.metadata.combine(edge.metadata))
+          )
+        }
         builder.removeLoc(edge.source)
       } else {
         val outgoingEdges = edge.target.outgoingEdges.toList()
         outgoingEdges.forEach { builder.removeEdge(it) }
-        outgoingEdges.forEach { builder.addEdge(it.withSource(edge.source)) }
+        outgoingEdges.forEach {
+          builder.addEdge(
+            it.withSource(edge.source).withMetadata(edge.metadata.combine(it.metadata))
+          )
+        }
         builder.removeLoc(edge.target)
       }
     }
@@ -67,5 +74,5 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       is NopLabel -> true
       is StmtLabel -> stmt == Assume(True())
       else -> false
-    }.and(metadata is EmptyMetaData)
+    }
 }

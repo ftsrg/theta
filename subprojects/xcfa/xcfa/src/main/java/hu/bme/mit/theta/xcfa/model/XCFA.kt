@@ -144,6 +144,8 @@ data class XcfaEdge(
   fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label, metadata)
 
   fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label, metadata)
+
+  fun withMetadata(metadata: MetaData): XcfaEdge = XcfaEdge(source, target, label, metadata)
 }
 
 data class XcfaGlobalVar
