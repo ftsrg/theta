@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 import com.google.common.collect.Lists;
@@ -36,6 +37,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationP
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -134,6 +136,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
+        checkArgument(variableOrdering.size() == Containers.createSet(variableOrdering).size(), "Variable ordering contains duplicates");
         for (var v : Lists.reverse(variableOrdering)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
@@ -144,6 +147,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             stateOrder.createOnTop(
                     MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
 
+            checkArgument(transRel.nextIndexing().get(v) > 0, "The index of variable %s is incremented in the transition relation", v);
             transOrder.createOnTop(
                     MddVariableDescriptor.create(
                             v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
