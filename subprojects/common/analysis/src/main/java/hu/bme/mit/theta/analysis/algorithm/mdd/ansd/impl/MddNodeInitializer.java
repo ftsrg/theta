@@ -24,6 +24,8 @@ import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 
+import java.util.Objects;
+
 public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondition {
 
     private final MddNode node;
@@ -57,5 +59,19 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
         return new IntObjMapViews.Transforming<>(node, n -> of(n, variableHandle.getLower().orElseThrow()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MddNodeInitializer that = (MddNodeInitializer) o;
+        return Objects.equals(node, that.node)
+                && Objects.equals(variableHandle, that.variableHandle);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node, variableHandle);
     }
 }

@@ -64,23 +64,27 @@ public interface AbstractNextStateDescriptor {
             return IntObjMapView.empty(getValuations(localStateSpace));
         }
 
+        final class TerminalEmpty implements AbstractNextStateDescriptor.Postcondition {
+            @Override
+            public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
+                return IntObjMapView.empty(terminalEmpty());
+            }
+
+            @Override
+            public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+                return Optional.empty();
+            }
+
+            @Override
+            public boolean evaluate() {
+                return false;
+            }
+        }
+
+        TerminalEmpty TERMINAL_EMPTY = new TerminalEmpty();
+
         static AbstractNextStateDescriptor.Postcondition terminalEmpty() {
-            return new AbstractNextStateDescriptor.Postcondition() {
-                @Override
-                public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
-                    return IntObjMapView.empty(terminalEmpty());
-                }
-
-                @Override
-                public Optional<Iterable<AbstractNextStateDescriptor>> split() {
-                    return Optional.empty();
-                }
-
-                @Override
-                public boolean evaluate() {
-                    return false;
-                }
-            };
+            return TERMINAL_EMPTY;
         }
     }
 
