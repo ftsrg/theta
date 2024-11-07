@@ -47,7 +47,11 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
   for ((i, x) in this.locs.withIndex()) {
     map[x] = i
   }
-  val locVar = Decls.Var("__loc__", Int())
+  val locVar =
+    Decls.Var(
+      "__loc__",
+      Int(),
+    ) // TODO: add edge var as well, to avoid parallel edges causing problems
   val tranList =
     this.edges
       .map { e ->

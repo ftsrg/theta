@@ -53,9 +53,11 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
   }
 
   var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
-  this.vars./*filter { it !in ctrlVars }.*/ forEach { decl ->
-    repeat(transOffsetIndex.get(decl)) { indexingBuilder = indexingBuilder.inc(decl) }
-  }
+  this.vars
+    .filter { it !in ctrlVars }
+    .forEach { decl ->
+      repeat(transOffsetIndex.get(decl)) { indexingBuilder = indexingBuilder.inc(decl) }
+    }
 
   return MonolithicExpr(
     initExpr = And(And(lambdaList), initExpr),
@@ -63,13 +65,14 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
     propExpr = Not(And(And(lambdaList), Not(propExpr))),
     transOffsetIndex = indexingBuilder.build(),
     initOffsetIndex = VarIndexingFactory.indexing(0),
-    vars = activationLiterals /* + ctrlVars*/,
+    vars = activationLiterals + ctrlVars,
     valToState = { valuation: Valuation ->
       PredState.of(
         valuation
           .toMap()
           .entries
           .stream()
+          .filter { it.key !in ctrlVars }
           .map {
             when ((it.value as BoolLitExpr).value) {
               true -> literalToPred[it.key]
@@ -80,5 +83,6 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
       )
     },
     biValToAction = this.biValToAction,
+    ctrlVars = ctrlVars,
   )
 }
