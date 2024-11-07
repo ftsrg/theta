@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -61,7 +62,8 @@ fun getMddChecker(
       override fun nextIndexing() = monolithicExpr.transOffsetIndex
     }
   val safetyProperty = monolithicExpr.propExpr
-  val variableOrder = monolithicExpr.vars
+  val stmts = xcfa.procedures.flatMap { it.edges.map { xcfaEdge -> xcfaEdge.label.toStmt() } }.toSet()
+  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
