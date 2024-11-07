@@ -303,7 +303,7 @@ class XcfaOcChecker(
                     val condWithConsts = stmt.cond.with(consts)
                     val asAssign =
                       consts.size == 1 &&
-                        consts.keys.first().let { it is VarDecl<*> && it !in lastWrites }
+                        consts.keys.first().let { it is VarDecl<*> && it.threadVar(pid) !in lastWrites }
                     if (edge.source.outgoingEdges.size > 1 || !asAssign) {
                       guard = guard + condWithConsts
                       if (firstLabel) {
@@ -320,6 +320,7 @@ class XcfaOcChecker(
 
                   is HavocStmt<*> -> {
                     last = event(stmt.varDecl, EventType.WRITE)
+                    last.first().assignment = True()
                   }
 
                   is MemoryAssignStmt<*, *, *> -> {
