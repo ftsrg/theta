@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.bounded;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.*;
@@ -31,16 +31,12 @@ import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.SolverFactory;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class MonolithicExprCegarChecker<
-                W extends Proof, S extends ExprState, A extends ExprAction, P extends Prec>
-        implements SafetyChecker<W, Trace<S, A>, PredPrec> {
+public class MonolithicExprCegarChecker<W extends Proof>
+        implements SafetyChecker<W, Trace<? extends ExprState, ? extends ExprAction>, PredPrec> {
     private final MonolithicExpr model;
     private final Function<
                     MonolithicExpr,
@@ -49,9 +45,6 @@ public class MonolithicExprCegarChecker<
                             ? extends Trace<? extends ExprState, ? extends ExprAction>,
                             UnitPrec>>
             checkerFactory;
-
-    private final Function<Valuation, S> valToState;
-    private final BiFunction<Valuation, Valuation, A> biValToAction;
 
     private final SolverFactory solverFactory;
 
@@ -66,32 +59,31 @@ public class MonolithicExprCegarChecker<
                                     ? extends Trace<? extends ExprState, ? extends ExprAction>,
                                     UnitPrec>>
                     checkerFactory,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
             Logger logger,
             SolverFactory solverFactory) {
         this.model = model;
         this.checkerFactory = checkerFactory;
-        this.valToState = valToState;
-        this.biValToAction = biValToAction;
         this.logger = logger;
         this.solverFactory = solverFactory;
     }
 
-    public SafetyResult<W, Trace<S, A>> check(PredPrec initPrec) {
+    public SafetyResult<W, Trace<? extends ExprState, ? extends ExprAction>> check(
+            PredPrec initPrec) {
         var predPrec =
                 initPrec == null
                         ? PredPrec.of(List.of(model.getInitExpr(), model.getPropExpr()))
                         : initPrec;
 
         while (true) {
+            logger.write(Logger.Level.SUBSTEP, "Current prec: %s\n", predPrec);
+
             final var abstractMonolithicExpr =
                     AbstractMonolithicExprKt.createAbstract(model, predPrec);
             final var checker = checkerFactory.apply(abstractMonolithicExpr);
 
             final var result = checker.check();
             if (result.isSafe()) {
-                logger.write(Logger.Level.INFO, "Model is safe, stopping CEGAR");
+                logger.write(Logger.Level.MAINSTEP, "Model is safe, stopping CEGAR");
                 return SafetyResult.safe(result.getProof());
             } else {
                 Preconditions.checkState(result.isUnsafe());
@@ -100,35 +92,22 @@ public class MonolithicExprCegarChecker<
 
                 final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
                         ExprTraceFwBinItpChecker.create(
-                                model.getInitExpr(),
-                                Not(model.getPropExpr()),
-                                solverFactory.createItpSolver());
+                                True(), True(), solverFactory.createItpSolver());
 
                 if (trace != null) {
+                    logger.write(Logger.Level.VERBOSE, "\tFound trace: %s\n", trace);
                     final ExprTraceStatus<ItpRefutation> concretizationResult =
                             exprTraceFwBinItpChecker.check(trace);
                     if (concretizationResult.isFeasible()) {
-                        logger.write(Logger.Level.INFO, "Model is unsafe, stopping CEGAR");
+                        logger.write(Logger.Level.MAINSTEP, "Model is unsafe, stopping CEGAR\n");
 
-                        final var valTrace = concretizationResult.asFeasible().getValuations();
-                        Valuation lastValuation = null;
-                        final ArrayList<S> states = new ArrayList<>();
-                        final ArrayList<A> actions = new ArrayList<>();
-                        for (var val : valTrace.getStates()) {
-                            states.add(valToState.apply(val));
-                            if (lastValuation != null) {
-                                actions.add(biValToAction.apply(lastValuation, val));
-                            }
-                            lastValuation = val;
-                        }
-
-                        return SafetyResult.unsafe(Trace.of(states, actions), result.getProof());
+                        return SafetyResult.unsafe(trace, result.getProof());
                     } else {
                         final var ref = concretizationResult.asInfeasible().getRefutation();
                         final var newPred = ref.get(ref.getPruneIndex());
                         final var newPrec = PredPrec.of(newPred);
                         predPrec = predPrec.join(newPrec);
-                        logger.write(Logger.Level.INFO, "Added new predicate " + newPrec);
+                        logger.write(Logger.Level.INFO, "Added new predicate " + newPrec + "\n");
                     }
                 }
             }

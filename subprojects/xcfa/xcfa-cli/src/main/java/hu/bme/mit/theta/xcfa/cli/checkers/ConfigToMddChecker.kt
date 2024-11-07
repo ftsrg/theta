@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+import hu.bme.mit.theta.analysis.algorithm.bounded.createAbstract
+import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
@@ -41,7 +43,14 @@ fun getMddChecker(
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
 
-  val monolithicExpr = xcfa.toMonolithicExpr(parseContext)
+  val monolithicExpr =
+    xcfa
+      .toMonolithicExpr(parseContext, initValues = true)
+      .let { if (mddConfig.reversed) it.createReversed() else it }
+      .let {
+        if (mddConfig.cegar) it.createAbstract(mddConfig.initPrec.predPrec(xcfa).p.innerPrec)
+        else it
+      }
 
   val initRel = monolithicExpr.initExpr
   val initIndexing = monolithicExpr.initOffsetIndex

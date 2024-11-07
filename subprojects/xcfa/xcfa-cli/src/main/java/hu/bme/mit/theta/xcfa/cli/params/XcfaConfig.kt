@@ -284,6 +284,12 @@ data class HornConfig(
 data class BoundedConfig(
   @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
   var maxBound: Int = 0,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),
@@ -393,6 +399,12 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
 data class OutputConfig(
