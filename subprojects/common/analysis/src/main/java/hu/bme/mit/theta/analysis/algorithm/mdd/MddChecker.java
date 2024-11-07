@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 import com.google.common.collect.Lists;
@@ -48,6 +50,8 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, Void> {
@@ -137,6 +141,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
         checkArgument(variableOrdering.size() == Containers.createSet(variableOrdering).size(), "Variable ordering contains duplicates");
+        final var identityExprs = new ArrayList<Expr<BoolType>>();
         for (var v : Lists.reverse(variableOrdering)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
@@ -147,10 +152,19 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             stateOrder.createOnTop(
                     MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
 
-            checkArgument(transRel.nextIndexing().get(v) > 0, "The index of variable %s is incremented in the transition relation", v);
-            transOrder.createOnTop(
-                    MddVariableDescriptor.create(
-                            v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
+            final var index = transRel.nextIndexing().get(v);
+            if(index > 0) {
+                transOrder.createOnTop(
+                        MddVariableDescriptor.create(
+                                v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
+            } else {
+                transOrder.createOnTop(
+                        MddVariableDescriptor.create(
+                                v.getConstDecl(1), domainSize));
+                identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
+            }
+
+
             transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
         }
 
@@ -165,7 +179,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         logger.write(Level.INFO, "Created initial node\n");
 
         final Expr<BoolType> transExpr =
-                PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0));
+                And(PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0)), And(identityExprs));
         final MddHandle transitionNode =
                 transSig.getTopVariableHandle()
                         .checkInNode(
