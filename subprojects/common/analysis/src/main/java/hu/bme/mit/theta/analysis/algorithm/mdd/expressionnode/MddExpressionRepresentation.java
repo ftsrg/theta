@@ -247,13 +247,26 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public boolean equals(Object that) {
         if (this == that) return true;
         if (that instanceof MddExpressionRepresentation) {
-            return Objects.equals(expr, ((MddExpressionRepresentation) that).expr)
+            return Objects.equals(mddVariable, ((MddExpressionRepresentation) that).mddVariable)
                     && Objects.equals(decl, ((MddExpressionRepresentation) that).decl)
-                    && Objects.equals(
-                            mddVariable, ((MddExpressionRepresentation) that).mddVariable);
+                    && (Objects.equals(expr, ((MddExpressionRepresentation) that).expr) || semanticEquals(that));
         }
         if (that instanceof MddNode) {
             return this.equals(((MddNode) that).getRepresentation());
+        }
+        return false;
+    }
+
+    private boolean semanticEquals(Object that) {
+
+        if(that instanceof MddExpressionRepresentation thatRepresentation) {
+            if(this.explicitRepresentation.complete && thatRepresentation.explicitRepresentation.complete) {
+                return IntObjMapView.equals(this.explicitRepresentation.getCacheView(), thatRepresentation.explicitRepresentation.getCacheView());
+            }
+        } else if (that instanceof IntObjMapView<?> thatView) {
+            if(this.explicitRepresentation.complete) {
+                return IntObjMapView.equals(thatView, this.explicitRepresentation.getCacheView());
+            }
         }
         return false;
     }
