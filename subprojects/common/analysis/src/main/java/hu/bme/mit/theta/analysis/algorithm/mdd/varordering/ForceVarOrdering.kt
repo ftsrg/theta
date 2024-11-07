@@ -21,6 +21,10 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.utils.StmtUtils
 import kotlin.random.Random
 
+/**
+ * Variable ordering based on the 'FORCE' variable ordering heuristic.
+ * https://doi.org/10.1145/764808.764839
+ */
 fun orderVarsFromRandomStartingPoints(vars: List<VarDecl<*>>, events: Set<Stmt>, numStartingPoints: Int = 5): List<VarDecl<*>> {
     val random = Random(0)
     val startingPoints = (0 until numStartingPoints).map { vars.shuffled(random) }
