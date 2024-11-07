@@ -26,7 +26,6 @@ import hu.bme.mit.theta.xsts.XSTS
 
 fun XSTS.orderVars(): List<VarDecl<*>> {
     val flattened = flattenStmts(tran)
-//    val events = collectStmts(this.tran)
     val orderedVars = orderVarsFromRandomStartingPoints(this.stateVars.toList(), flattened)
     return orderedVars
 }
@@ -55,16 +54,16 @@ private fun flattenStmts(stmt: Stmt): Set<Stmt> {
     }
 }
 
-private fun collectStmts(stmt: Stmt): Set<Stmt> {
-    return when(stmt) {
-        is NonDetStmt -> {
-            stmt.stmts.flatMap { collectStmts(it) }.toSet()
-        }
-        is SequenceStmt -> {
-            stmt.stmts.flatMap { collectStmts(it) }.toSet()
-        }
-        else -> {
-           setOf(stmt)
-        }
-    }
-}
+//private fun collectStmts(stmt: Stmt): Set<Stmt> {
+//    return when(stmt) {
+//        is NonDetStmt -> {
+//            stmt.stmts.flatMap { collectStmts(it) }.toSet()
+//        }
+//        is SequenceStmt -> {
+//            stmt.stmts.flatMap { collectStmts(it) }.toSet()
+//        }
+//        else -> {
+//           setOf(stmt)
+//        }
+//    }
+//}
