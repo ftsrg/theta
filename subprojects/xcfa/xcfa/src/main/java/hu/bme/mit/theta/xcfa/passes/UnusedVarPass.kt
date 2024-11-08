@@ -61,7 +61,10 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
     } while (lastEdges != edges)
 
     val allVars =
-      Sets.union(builder.getVars(), builder.parent.getVars().map { it.wrappedVar }.toSet())
+      Sets.union(
+        builder.parent.getProcedures().flatMap { it.getVars() }.toSet(),
+        builder.parent.getVars().map { it.wrappedVar }.toSet(),
+      )
     val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
     if (!varsAndParams.containsAll(usedVars)) {
       uniqueWarningLogger.writeln(
