@@ -46,6 +46,14 @@ runs:
         do
           java -jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar --home ${{ inputs.name }}/${{ inputs.name }}/solvers install $i
         done
+    - name: Copy specification transformation binary and license
+      shell: bash
+      run: |
+        # This was prepared using `nuitka --onefile --standalone --include-data-dir="cpachecker=cpachecker" src/specification-transformation.py`
+        # from the https://gitlab.com/sosy-lab/software/specification-transformation.git repo, with cpachecker.jar and cpachecker/lib/runtime/*.jar 
+        cp $GITHUB_ACTION_PATH/specification-transformation.bin ${{ inputs.name }}/${{ inputs.name }}/
+        cp $GITHUB_ACTION_PATH/specification-transformation.bin.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
+        cp $GITHUB_ACTION_PATH/offset.sh ${{ inputs.name }}/${{ inputs.name }}/
     - name: ZIP archive
       shell: bash
       run: |
