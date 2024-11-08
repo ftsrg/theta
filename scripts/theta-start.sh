@@ -2,6 +2,9 @@
 scriptdir=$(dirname "$(realpath "$0")")
 IN=$1
 
+export VERIFIER_NAME=TOOL_NAME
+export VERIFIER_VERSION=TOOL_VERSION
+
 JAVA_FALLBACK_PATH="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
 JAVA=$(java --version | grep "openjdk 17" >/dev/null && echo "java" || echo $JAVA_FALLBACK_PATH)
 $JAVA --version >/dev/null || exit
