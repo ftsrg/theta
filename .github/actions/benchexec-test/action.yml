@@ -39,6 +39,8 @@ runs:
           cd sv-benchmarks
           git sparse-checkout add c
           git checkout
+          pwd
+          ls -l
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       name: Get zip
       with:
@@ -53,8 +55,9 @@ runs:
       run: |
         sed -i 's/<option name="--portfolio">STABLE<\/option>/<option name="--portfolio">${{ inputs.portfolio }}<\/option>/g' xml/theta.xml
         cat xml/theta.xml
-        folder=$(dirname $(find . -name "theta-start.sh" | head -n1))
+        folder=$(dirname $(find . -name "theta.jar" | head -n1))
         echo $folder
+        pwd
         for task in $(cat xml/theta.xml | grep 'rundefinition name=' | grep -oP '(?<=").*(?=")')
         do
           echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
