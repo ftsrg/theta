@@ -58,7 +58,7 @@ runs:
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
         echo $folder
         pwd
-        for task in $(cat xml/theta.xml | grep 'rundefinition name=' | grep -oP '(?<=").*(?=")')
+        for task in $(cat xml/theta.xml | grep 'tasks name=' | grep -oP '(?<=").*(?=")')
         do
           echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
           echo "timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
