@@ -55,6 +55,7 @@ runs:
         cat xml/theta.xml
         for task in $(cat xml/theta.xml | grep 'rundefinition name=' | grep -oP '(?<=").*(?=")')
         do
+          echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
           timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -r ${{ inputs.rundef }} -t "$task" || true
         done
     - name: Upload results
