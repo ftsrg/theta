@@ -31,7 +31,7 @@ runs:
     - name: Install nuitka
       shell: bash
       run: |
-        sudo apt update && sudo apt -y --no-install-recommends install nuitka
+        sudo apt update && sudo apt -y --no-install-recommends install nuitka libfuse2
     - name: Run nuitka
       shell: bash
       run: |
