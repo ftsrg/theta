@@ -1,0 +1,17 @@
+diff --git a/src/algorithms/instrumentation_operator.py b/src/algorithms/instrumentation_operator.py
+index 86a7a74e..755410c3 100644
+--- a/src/algorithms/instrumentation_operator.py
++++ b/src/algorithms/instrumentation_operator.py
+@@ -118,9 +118,11 @@ class InstrumentationOperator(TransformationAlgorithm):
+         if specification_pair.from_specification == Specification.overflow:
+             property = "NOOVERFLOW"
+         try:
+             subprocess.run(
+-                [
+-                    f"lib/cpachecker/bin/cpachecker",
++                [   "java", "-cp",
++                    f"{os.path.dirname(os.path.dirname(__file__))}/cpachecker/runtime/*:{os.path.dirname(os.path.dirname(__file__))}/cpachecker/cpachecker.jar",
++                    "org.sosy_lab.cpachecker.cmdline.CPAMain",
+                     "--preprocess",
+                     "--option",
+                     "analysis.algorithm.instrumentation.instrumentationOperator=true",

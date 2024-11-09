@@ -1,0 +1,39 @@
+name: 'Create specification-transformation binary'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Checkout specification-transformation
+      shell: bash
+      run: |
+        git clone https://gitlab.com/sosy-lab/software/specification-transformation.git specification-transformation
+        cd specification-transformation
+        git checkout d966deb4ea0e34c1bc658d7c979a032340c93b13 # Fri Nov 8 10:43:02 2024 
+        git apply $GITHUB_ACTION_PATH/patch.diff
+    - name: Build cpachecker
+      run: |
+      shell: bash
+        cd specification-transformation
+        git submodule update --init || true
+        mv cpachecker lib/
+        cd lib/cpachecker
+        ant jar
+        cd ../../
+        mkdir cpachecker/runtime -p
+        mv lib/cpachecker/java/runtime/*.jar cpachecker/runtime/
+        mv lib/cpachecker/cpachecker.jar cpachecker/
+    - name: Install nuitka
+      shell: bash
+      run: |
+        sudo apt update && sudo apt -y --no-install-recommends install nuitka
+    - name: Run nuitka
+      shell: bash
+      run: |
+        cd specification-transformation
+        nuitka --onefile --standalone --include-data-dir="cpachecker=cpachecker" src/specification-transformation.py 
+    - name: Upload results
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
+      with:
+        name: specification-transformation
+        path: specification-transformation.bin
