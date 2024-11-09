@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 scriptdir=$(dirname "$(realpath "$0")")
 IN=$1
 
