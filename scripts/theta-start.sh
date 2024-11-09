@@ -57,7 +57,5 @@ else
         echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
     elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
         echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
-    else
-        transformed_property="$property"
     fi
 fi

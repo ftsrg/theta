@@ -33,20 +33,26 @@ runs:
             pushd $i
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
-            unzip *.zip
-            rm *.zip
-            correct=0
-            incorrect=0
-            all=0
-            for txt in *.txt
+            for zipfile in *.zip
             do
-              new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ')
-              correct=$((correct + new_correct))
-              new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ')
-              incorrect=$((incorrect + new_incorrect))
-              new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ')
-              all=$((all + new_all))
-              echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
+              mkdir tmp-$zipfile
+              pushd tmp-$zipfile
+              unzip ../$zipfile
+              correct=0
+              incorrect=0
+              all=0
+              for txt in *.txt
+              do
+                new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ')
+                correct=$((correct + new_correct))
+                new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ')
+                incorrect=$((incorrect + new_incorrect))
+                new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ')
+                all=$((all + new_all))
+                echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
+              done
+              popd
+              rm -rf tmp-$zipfile
             done
             echo "Summary: found $correct correct and $incorrect incorrect results out of $all tasks in $i"
             emoji=":white_check_mark:"
