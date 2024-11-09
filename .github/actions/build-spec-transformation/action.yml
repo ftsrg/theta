@@ -26,7 +26,7 @@ runs:
         ant jar
         cd ../../
         mkdir cpachecker/runtime -p
-        mv lib/cpachecker/java/runtime/*.jar cpachecker/runtime/
+        mv lib/cpachecker/lib/java/runtime/*.jar cpachecker/runtime/
         mv lib/cpachecker/cpachecker.jar cpachecker/
     - name: Install nuitka
       shell: bash
