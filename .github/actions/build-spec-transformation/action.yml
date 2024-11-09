@@ -14,10 +14,10 @@ runs:
     - name: Build cpachecker
       shell: bash
       run: |
-        cd specification-transformation
-        git submodule update --init || true
-        mv cpachecker lib/
-        cd lib/cpachecker
+        cd specification-transformation/lib
+        git checkout https://github.com/sosy-lab/cpachecker.git cpachecker
+        cd cpachecker
+        git checkout c087875f139c14692b08a33f7d2cc77006c80ddc
         ant jar
         cd ../../
         mkdir cpachecker/runtime -p
