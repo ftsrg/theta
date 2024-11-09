@@ -15,7 +15,7 @@ runs:
       shell: bash
       run: |
         cd specification-transformation/lib
-        git checkout https://github.com/sosy-lab/cpachecker.git cpachecker
+        git clone https://github.com/sosy-lab/cpachecker.git cpachecker
         cd cpachecker
         git checkout c087875f139c14692b08a33f7d2cc77006c80ddc
         ant jar
