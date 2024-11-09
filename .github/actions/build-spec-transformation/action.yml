@@ -12,8 +12,8 @@ runs:
         git checkout d966deb4ea0e34c1bc658d7c979a032340c93b13 # Fri Nov 8 10:43:02 2024 
         git apply $GITHUB_ACTION_PATH/patch.diff
     - name: Build cpachecker
-      run: |
       shell: bash
+      run: |
         cd specification-transformation
         git submodule update --init || true
         mv cpachecker lib/
