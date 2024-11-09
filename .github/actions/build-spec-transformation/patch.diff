@@ -1,9 +1,8 @@
 diff --git a/src/algorithms/instrumentation_operator.py b/src/algorithms/instrumentation_operator.py
-index 86a7a74e..755410c3 100644
+index 86a7a74e..56f3336a 100644
 --- a/src/algorithms/instrumentation_operator.py
 +++ b/src/algorithms/instrumentation_operator.py
-@@ -118,9 +118,11 @@ class InstrumentationOperator(TransformationAlgorithm):
-         if specification_pair.from_specification == Specification.overflow:
+@@ -119,8 +119,9 @@ class InstrumentationOperator(TransformationAlgorithm):
              property = "NOOVERFLOW"
          try:
              subprocess.run(
