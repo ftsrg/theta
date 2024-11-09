@@ -35,9 +35,6 @@ runs:
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
             for zipfile in *.zip
             do
-              mkdir tmp-$zipfile
-              pushd tmp-$zipfile
-              unzip ../$zipfile
               correct=0
               incorrect=0
               all=0
@@ -51,8 +48,6 @@ runs:
                 all=$((all + new_all))
                 echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
               done
-              popd
-              rm -rf tmp-$zipfile
             done
             echo "Summary: found $correct correct and $incorrect incorrect results out of $all tasks in $i"
             emoji=":white_check_mark:"
