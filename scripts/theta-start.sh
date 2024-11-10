@@ -7,9 +7,13 @@ IN=$1
 export VERIFIER_NAME=TOOL_NAME
 export VERIFIER_VERSION=TOOL_VERSION
 
-JAVA_FALLBACK_PATH="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
-JAVA=$(java --version | grep "openjdk 17" >/dev/null && echo "java" || echo $JAVA_FALLBACK_PATH)
-$JAVA --version >/dev/null || exit
+JAVA_VERSION=17
+JAVA_FALLBACK_PATH="/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64/bin/:/usr/lib/jvm/java-$JAVA_VERSION-openjdk/bin/:/usr/lib/jvm/java-$JAVA_VERSION/bin/"
+grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || export PATH="$JAVA_FALLBACK_PATH":$PATH
+grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {
+    echo "Could not set up openjdk-$JAVA_VERSION. Is the JRE/JDK installed?"
+    exit 1
+}
 
 remove_property() {
     local args=()
@@ -30,7 +34,7 @@ remove_property() {
 }
 
 if [ "$1" == "--version" ]; then
-    LD_LIBRARY_PATH=$scriptdir/lib $JAVA -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version
+    LD_LIBRARY_PATH=$scriptdir/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version
 else
     modified_args=$(remove_property "${@:2}")
     property=$(cat .property && rm .property)
@@ -52,8 +56,8 @@ else
         transformed_property="$property"
     fi
 
-    echo LD_LIBRARY_PATH="$scriptdir"/lib "$JAVA" -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
-    LD_LIBRARY_PATH="$scriptdir"/lib "$JAVA" -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
+    echo LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
+    LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
 
     if [ "$(basename "$property")" == "termination.prp" ]; then
         echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
