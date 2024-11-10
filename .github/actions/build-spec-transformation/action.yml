@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: |
         echo ${{ format('{0}/{1}', github.action_path, 'specification-transformation.bin') }}
-        ls -l ${{ format('{0}/{1}', github.action_path, 'specification-transformation.bin') }} && echo "file_exists=true" >> "$GITHUB_ENV" ||  && echo "file_exists=false" >> "$GITHUB_ENV"
+        ls -l ${{ format('{0}/{1}', github.action_path, 'specification-transformation.bin') }} && echo "file_exists=true" >> "$GITHUB_ENV" || echo "file_exists=false" >> "$GITHUB_ENV"
     - name: Setup java 17
       if: env.file_exists == 'false'
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
