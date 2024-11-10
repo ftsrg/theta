@@ -5,13 +5,13 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Setup java 17
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') == '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) == '' }}
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
         distribution: temurin
         java-version: 17
     - name: Checkout specification-transformation
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') == '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) == '' }}
       shell: bash
       run: |
         git clone https://gitlab.com/sosy-lab/software/specification-transformation.git specification-transformation
@@ -19,7 +19,7 @@ runs:
         git checkout d966deb4ea0e34c1bc658d7c979a032340c93b13 # Fri Nov 8 10:43:02 2024 
         git apply $GITHUB_ACTION_PATH/patch.diff
     - name: Build cpachecker
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') == '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) == '' }}
       shell: bash
       run: |
         cd specification-transformation/lib
@@ -33,18 +33,18 @@ runs:
         mv lib/cpachecker/config cpachecker/
         mv lib/cpachecker/cpachecker.jar cpachecker/
     - name: Install nuitka
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') == '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) == '' }}
       shell: bash
       run: |
         sudo apt update && sudo apt -y --no-install-recommends install nuitka libfuse2
     - name: Run nuitka
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') == '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) == '' }}
       shell: bash
       run: |
         cd specification-transformation
         bash -c "yes yes || true" | nuitka3 --onefile --standalone --include-data-dir="cpachecker=cpachecker" src/specification-transformation.py 
     - name: Move if exists
-      if: ${{ hashFiles(env.GITHUB_ACTION_PATH + '/specification-transformation.bin') != '' }}
+      if: ${{ hashFiles(format("{0}/{1}", env.GITHUB_ACTION_PATH, 'specification-transformation.bin')) != '' }}
       shell: bash
       run: |
         mkdir specification-transformation
