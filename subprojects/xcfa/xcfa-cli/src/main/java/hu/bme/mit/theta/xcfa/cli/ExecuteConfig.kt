@@ -238,7 +238,7 @@ private fun tracegenBackend(
     throwDontExit: Boolean,
 ): Result<*> {
     val stopwatch = Stopwatch.createStarted()
-    val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger) as TraceGenerationChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>>
+    val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger) as Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>>
     val result =
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())))
@@ -503,9 +503,10 @@ private fun postTraceGenerationLogging(
     logger: Logger,
     uniqueLogger: Logger,
 ) {
-    TODO()
-//    logger.write(Logger.Level.RESULT, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces in ${totalTimeMs}ms\n")
-//    // TODO print coverage (full or not)?
+    val abstractSummary = result.summary
+    logger.write(Logger.Level.RESULT, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces.")
+    // TODO implement the rest
+// TODO print coverage (full or not)?
 //
 //    val resultFolder = config.outputConfig.resultFolder
 //    resultFolder.mkdirs()
