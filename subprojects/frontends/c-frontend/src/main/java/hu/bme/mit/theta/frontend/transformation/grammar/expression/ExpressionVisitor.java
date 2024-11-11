@@ -983,7 +983,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 cexpr = new CExpr(expr, parseContext);
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
-                postStatements.add(0, cAssignment);
+                postStatements.add(cAssignment);
                 functionVisitor.recordMetadata(ctx, cAssignment);
                 functionVisitor.recordMetadata(ctx, cexpr);
                 return primary;
@@ -1004,7 +1004,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 cexpr = new CExpr(expr, parseContext);
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
-                postStatements.add(0, cAssignment);
+                postStatements.add(cAssignment);
                 functionVisitor.recordMetadata(ctx, cAssignment);
                 functionVisitor.recordMetadata(ctx, cexpr);
                 return expr;
