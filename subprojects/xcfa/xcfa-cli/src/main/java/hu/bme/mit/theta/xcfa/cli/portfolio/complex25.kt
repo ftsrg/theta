@@ -23,6 +23,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTra
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.optimizeFurther
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
@@ -110,7 +111,7 @@ fun complexPortfolio25(
         AssumeFalseRemovalPass(),
         MutexToVarPass(),
         AtomicReadsOneWritePass(),
-        LoopUnrollPass(2), // TODO: how much to force unroll?
+        LoopUnrollPass(2),
       )
     )
 
@@ -123,11 +124,11 @@ fun complexPortfolio25(
         BackendConfig(
           backend = Backend.OC,
           solverHome = baseConfig.backendConfig.solverHome,
-          timeoutMs = 120_000, // TODO: timeout -- 2min OK?
+          timeoutMs = 400_000,
           inProcess = inProcess,
           specConfig =
             OcConfig(
-              // TODO: settings
+              autoConflict = AutoConflictFinderConfig.RF_WS_FR,
             ),
         ),
       outputConfig = baseConfig.outputConfig,
