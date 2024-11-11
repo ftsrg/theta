@@ -76,6 +76,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     public void clear() {
         variables.clear();
+        atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
     }
@@ -138,6 +139,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
+        atomicVariables.clear();
         variables.push(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
@@ -269,14 +271,24 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             CStatement accept = blockItemListContext.accept(this);
             variables.pop();
             CFunction cFunction =
-                    new CFunction(funcDecl, accept, new ArrayList<>(flatVariables), parseContext);
+                    new CFunction(
+                            funcDecl,
+                            accept,
+                            new ArrayList<>(flatVariables),
+                            parseContext,
+                            atomicVariables);
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
         variables.pop();
         CCompound cCompound = new CCompound(parseContext);
         CFunction cFunction =
-                new CFunction(funcDecl, cCompound, new ArrayList<>(flatVariables), parseContext);
+                new CFunction(
+                        funcDecl,
+                        cCompound,
+                        new ArrayList<>(flatVariables),
+                        parseContext,
+                        atomicVariables);
         recordMetadata(ctx, cCompound);
         recordMetadata(ctx, cFunction);
         return cFunction;
