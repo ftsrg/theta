@@ -36,7 +36,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
     writer.name("name").value(value.name)
     // vars
     writer.name("vars")
-    gson.toJson(gson.toJsonTree(value.vars), writer)
+    gson.toJson(gson.toJsonTree(value.globalVars), writer)
 
     // procedures
     writer.name("procedures").beginArray()

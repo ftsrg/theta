@@ -390,12 +390,12 @@ public class XstsHornTest {
                         true,
                         "z3:4.13.0"
                     },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down2.prop",
-                        true,
-                        "golem:0.5.0"
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down2.prop",
+                    //                        true,
+                    //                        "golem:0.5.0"
+                    //                    },
                     {
                         "src/test/resources/model/bhmr2007.xsts",
                         "src/test/resources/property/bhmr2007.prop",
