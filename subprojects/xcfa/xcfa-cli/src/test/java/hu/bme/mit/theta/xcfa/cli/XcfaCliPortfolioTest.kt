@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
@@ -108,20 +107,18 @@ class XcfaCliPortfolioTest {
         uniqueLogger: Logger,
       ) -> STM
   ) {
+    val stm =
+      portfolio(
+        XCFA("name", setOf()),
+        emptySet(),
+        ParseContext(),
+        XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
+        NullLogger.getInstance(),
+        NullLogger.getInstance(),
+      )
 
-    for (value in ArithmeticTrait.values()) {
-
-      val stm =
-        portfolio(
-          XCFA("name", setOf()),
-          emptySet(),
-          ParseContext(),
-          XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
-          NullLogger.getInstance(),
-          NullLogger.getInstance(),
-        )
-
-      Assertions.assertTrue(stm.visualize().isNotEmpty())
-    }
+    val vis = stm.visualize()
+    System.err.println(vis)
+    Assertions.assertTrue(vis.isNotEmpty())
   }
 }

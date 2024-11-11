@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -38,7 +40,7 @@ fun boundedPortfolio25(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseConfig =
+  var boundedBaseConfig =
     XcfaConfig(
       inputConfig =
         InputConfig(
@@ -84,6 +86,29 @@ fun boundedPortfolio25(
       debugConfig = portfolioConfig.debugConfig,
     )
 
+  val mddBaseConfig =
+    XcfaConfig(
+      inputConfig = boundedBaseConfig.inputConfig,
+      frontendConfig = boundedBaseConfig.frontendConfig,
+      backendConfig =
+        BackendConfig(
+          backend = Backend.MDD,
+          solverHome = portfolioConfig.backendConfig.solverHome,
+          timeoutMs = 0,
+          specConfig =
+            MddConfig(
+              solver = "Z3",
+              validateSolver = false,
+              iterationStrategy = MddChecker.IterationStrategy.GSAT,
+              reversed = false,
+              cegar = false,
+              initPrec = InitPrec.EMPTY,
+            ),
+        ),
+      outputConfig = boundedBaseConfig.outputConfig,
+      debugConfig = boundedBaseConfig.debugConfig,
+    )
+
   if (parseContext.multiThreading) {
     throw UnsupportedOperationException("Multithreading for bounded checkers not supported")
   }
@@ -113,7 +138,7 @@ fun boundedPortfolio25(
 
   val anyError = ExceptionTrigger(label = "Anything")
 
-  fun XcfaConfig<*, BoundedConfig>.adaptConfig(
+  fun XcfaConfig<CFrontendConfig, BoundedConfig>.adaptConfig(
     bmcEnabled: Boolean = false,
     indEnabled: Boolean = false,
     itpEnabled: Boolean = false,
@@ -122,6 +147,9 @@ fun boundedPortfolio25(
     itpSolver: String = "cvc5:1.0.8",
     timeoutMs: Long = 0,
     inProcess: Boolean = this.backendConfig.inProcess,
+    reversed: Boolean = false,
+    cegar: Boolean = false,
+    initprec: InitPrec = InitPrec.EMPTY,
   ): XcfaConfig<*, BoundedConfig> {
     return copy(
       backendConfig =
@@ -130,6 +158,9 @@ fun boundedPortfolio25(
           inProcess = inProcess,
           specConfig =
             backendConfig.specConfig!!.copy(
+              reversed = reversed,
+              cegar = cegar,
+              initPrec = initprec,
               bmcConfig =
                 backendConfig.specConfig!!
                   .bmcConfig
@@ -147,95 +178,204 @@ fun boundedPortfolio25(
     )
   }
 
-  fun getStm(inProcess: Boolean): STM {
+  fun XcfaConfig<CFrontendConfig, MddConfig>.adaptConfig(
+    timeoutMs: Long = 0,
+    inProcess: Boolean = this.backendConfig.inProcess,
+  ): XcfaConfig<*, MddConfig> {
+    return copy(backendConfig = backendConfig.copy(timeoutMs = timeoutMs, inProcess = inProcess))
+  }
+
+  val canUseMathsat = !parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)
+
+  fun getMddConfig(inProcess: Boolean): Node =
+    ConfigNode(
+      "MddZ3-GSAT-$inProcess",
+      mddBaseConfig.adaptConfig(inProcess = inProcess, timeoutMs = 180_000),
+      checker,
+    )
+
+  fun getBmcConfig(inProcess: Boolean): Node {
     val edges = LinkedHashSet<Edge>()
+    lateinit var lastNode: ConfigNode
+
     val configBmcZ3 =
       ConfigNode(
         "BmcZ3-$inProcess",
-        baseConfig.adaptConfig(inProcess = inProcess, bmcEnabled = true, timeoutMs = 30000),
+        boundedBaseConfig.adaptConfig(inProcess = inProcess, bmcEnabled = true, timeoutMs = 30_000),
         checker,
       )
-    val configBmcMathsat =
+    lastNode = configBmcZ3
+    if (canUseMathsat) {
+      val configBmcMathsat =
+        ConfigNode(
+          "BmcMathsat-$inProcess",
+          boundedBaseConfig.adaptConfig(
+            inProcess = inProcess,
+            bmcSolver = "mathsat:5.6.10",
+            bmcEnabled = true,
+            timeoutMs = 30_000,
+          ),
+          checker,
+        )
+      edges.add(Edge(lastNode, configBmcMathsat, solverError))
+      lastNode = configBmcMathsat
+    }
+    val configBmcCvc5 =
       ConfigNode(
-        "BmcMathsat-$inProcess",
-        baseConfig.adaptConfig(
+        "BmcCvc5-$inProcess",
+        boundedBaseConfig.adaptConfig(
           inProcess = inProcess,
-          bmcSolver = "mathsat:5.6.10",
+          bmcSolver = "cvc5:1.0.8",
           bmcEnabled = true,
-          timeoutMs = 30000,
+          timeoutMs = 30_000,
         ),
         checker,
       )
-    val configIndZ3 =
+    edges.add(Edge(lastNode, configBmcCvc5, solverError))
+    lastNode = configBmcCvc5
+
+    return HierarchicalNode("BMC_$inProcess", STM(configBmcZ3, edges))
+  }
+
+  fun getKindConfig(inProcess: Boolean): Node {
+    val edges = LinkedHashSet<Edge>()
+    lateinit var lastNode: ConfigNode
+
+    val configKindZ3 =
       ConfigNode(
-        "IndZ3-$inProcess",
-        baseConfig.adaptConfig(
+        "KindZ3-$inProcess",
+        boundedBaseConfig.adaptConfig(
           inProcess = inProcess,
           bmcEnabled = true,
           indEnabled = true,
-          timeoutMs = 300000,
+          timeoutMs = 300_000,
         ),
         checker,
       )
-    val configIndMathsat =
+    lastNode = configKindZ3
+
+    val configKindCvc5 =
       ConfigNode(
-        "IndMathsat-$inProcess",
-        baseConfig.adaptConfig(
+        "KindCvc5-$inProcess",
+        boundedBaseConfig.adaptConfig(
           inProcess = inProcess,
-          bmcSolver = "mathsat:5.6.10",
-          indSolver = "mathsat:5.6.10",
           bmcEnabled = true,
           indEnabled = true,
-          timeoutMs = 300000,
+          bmcSolver = "cvc5:1.0.8",
+          indSolver = "cvc5:1.0.8",
+          timeoutMs = 300_000,
         ),
         checker,
       )
-    val configItpCvc5 =
+    edges.add(Edge(lastNode, configKindCvc5, solverError))
+    lastNode = configKindCvc5
+
+    if (canUseMathsat) {
+      val configKindMathsat =
+        ConfigNode(
+          "KindMathsat-$inProcess",
+          boundedBaseConfig.adaptConfig(
+            inProcess = inProcess,
+            bmcEnabled = true,
+            indEnabled = true,
+            bmcSolver = "mathsat:5.6.10",
+            indSolver = "mathsat:5.6.10",
+            timeoutMs = 300_000,
+          ),
+          checker,
+        )
+      edges.add(Edge(lastNode, configKindMathsat, solverError))
+      lastNode = configKindMathsat
+    }
+
+    return HierarchicalNode("KIND_$inProcess", STM(configKindZ3, edges))
+  }
+
+  fun getIMCConfig(inProcess: Boolean): Node {
+    val edges = LinkedHashSet<Edge>()
+    lateinit var lastNode: ConfigNode
+
+    val configIMCZ3abstract =
       ConfigNode(
-        "ItpCvc5-$inProcess",
-        baseConfig.adaptConfig(
+        "IMCZ3-abstract-$inProcess",
+        boundedBaseConfig.adaptConfig(
           inProcess = inProcess,
-          itpEnabled = true,
-          itpSolver = "cvc5:1.0.8",
-          timeoutMs = 0,
+          bmcEnabled = true,
+          indEnabled = true,
+          cegar = true,
+          timeoutMs = 300_000,
         ),
         checker,
       )
-    val configItpMathsat =
+    lastNode = configIMCZ3abstract
+
+    val configRIMCZ3 =
       ConfigNode(
-        "ItpMathsat-$inProcess",
-        baseConfig.adaptConfig(
+        "RIMCZ3-$inProcess",
+        boundedBaseConfig.adaptConfig(
           inProcess = inProcess,
-          itpSolver = "mathsat:5.6.10",
-          itpEnabled = true,
-          timeoutMs = 0,
+          bmcEnabled = true,
+          indEnabled = true,
+          reversed = true,
+          timeoutMs = 300_000,
         ),
         checker,
       )
+    edges.add(Edge(lastNode, configRIMCZ3, solverError))
+    lastNode = configRIMCZ3
 
-    edges.add(Edge(configBmcZ3, configBmcMathsat, solverError))
-    edges.add(
-      Edge(configBmcZ3, configIndZ3, if (inProcess) timeoutOrNotSolvableError else anyError)
-    )
-    edges.add(
-      Edge(
-        configBmcMathsat,
-        configIndMathsat,
-        if (inProcess) timeoutOrNotSolvableError else anyError,
+    val configRIMCCvc5 =
+      ConfigNode(
+        "RIMCCvc5-$inProcess",
+        boundedBaseConfig.adaptConfig(
+          inProcess = inProcess,
+          bmcEnabled = true,
+          indEnabled = true,
+          reversed = true,
+          bmcSolver = "cvc5:1.0.8",
+          indSolver = "cvc5:1.0.8",
+          timeoutMs = 300_000,
+        ),
+        checker,
       )
-    )
+    edges.add(Edge(lastNode, configRIMCCvc5, solverError))
+    lastNode = configRIMCCvc5
 
-    edges.add(Edge(configIndZ3, configIndMathsat, solverError))
-    edges.add(
-      Edge(configIndZ3, configItpCvc5, if (inProcess) timeoutOrNotSolvableError else anyError)
-    )
-    edges.add(
-      Edge(configIndMathsat, configItpCvc5, if (inProcess) timeoutOrNotSolvableError else anyError)
-    )
+    if (canUseMathsat) {
+      val configRIMCMathsat =
+        ConfigNode(
+          "RIMCMathsat-$inProcess",
+          boundedBaseConfig.adaptConfig(
+            inProcess = inProcess,
+            bmcEnabled = true,
+            indEnabled = true,
+            reversed = true,
+            bmcSolver = "mathsat:5.6.10",
+            indSolver = "mathsat:5.6.10",
+            timeoutMs = 300_000,
+          ),
+          checker,
+        )
+      edges.add(Edge(lastNode, configRIMCMathsat, solverError))
+      lastNode = configRIMCMathsat
+    }
 
-    edges.add(Edge(configItpCvc5, configItpMathsat, anyError))
+    return HierarchicalNode("IMC_$inProcess", STM(configIMCZ3abstract, edges))
+  }
 
-    return STM(configBmcZ3, edges)
+  fun getStm(inProcess: Boolean): STM {
+    val edges = LinkedHashSet<Edge>()
+
+    val mddConfig = getMddConfig(inProcess)
+    val bmcConfig = getBmcConfig(inProcess)
+    val indConfig = getKindConfig(inProcess)
+    val imcConfig = getIMCConfig(inProcess)
+
+    edges.add(Edge(mddConfig, bmcConfig, if (inProcess) timeoutOrNotSolvableError else anyError))
+    edges.add(Edge(bmcConfig, indConfig, if (inProcess) timeoutOrNotSolvableError else anyError))
+    edges.add(Edge(indConfig, imcConfig, if (inProcess) timeoutOrNotSolvableError else anyError))
+
+    return STM(mddConfig, edges)
   }
 
   logger.write(Logger.Level.RESULT, "Using bounded portfolio\n")
