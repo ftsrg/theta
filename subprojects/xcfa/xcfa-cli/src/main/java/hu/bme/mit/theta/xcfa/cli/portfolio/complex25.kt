@@ -23,11 +23,11 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTra
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.xcfa.analysis.oc.optimizeFurther
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.*
 import java.nio.file.Paths
 
 fun complexPortfolio25(
@@ -104,19 +104,30 @@ fun complexPortfolio25(
       debugConfig = portfolioConfig.debugConfig,
     )
 
-  var ocConfig = { inProcess: Boolean ->
+  val forceUnrolledXcfa =
+    xcfa.optimizeFurther(
+      listOf(
+        AssumeFalseRemovalPass(),
+        MutexToVarPass(),
+        AtomicReadsOneWritePass(),
+        LoopUnrollPass(2), // TODO: how much to force unroll?
+      )
+    )
+
+  val ocConfig = { inProcess: Boolean ->
     XcfaConfig(
-      inputConfig = baseConfig.inputConfig,
+      inputConfig =
+        baseConfig.inputConfig.copy(xcfaWCtx = Triple(forceUnrolledXcfa, mcm, parseContext)),
       frontendConfig = baseConfig.frontendConfig,
       backendConfig =
         BackendConfig(
           backend = Backend.OC,
           solverHome = baseConfig.backendConfig.solverHome,
-          timeoutMs = 120_000,
+          timeoutMs = 120_000, // TODO: timeout -- 2min OK?
           inProcess = inProcess,
           specConfig =
             OcConfig(
-              // TODO
+              // TODO: settings
             ),
         ),
       outputConfig = baseConfig.outputConfig,
