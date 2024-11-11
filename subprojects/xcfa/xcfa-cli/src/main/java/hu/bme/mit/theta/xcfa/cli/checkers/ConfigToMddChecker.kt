@@ -62,7 +62,8 @@ fun getMddChecker(
       override fun nextIndexing() = monolithicExpr.transOffsetIndex
     }
   val safetyProperty = monolithicExpr.propExpr
-  val stmts = xcfa.procedures.flatMap { it.edges.map { xcfaEdge -> xcfaEdge.label.toStmt() } }.toSet()
+  val stmts =
+    xcfa.procedures.flatMap { it.edges.map { xcfaEdge -> xcfaEdge.label.toStmt() } }.toSet()
   val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy

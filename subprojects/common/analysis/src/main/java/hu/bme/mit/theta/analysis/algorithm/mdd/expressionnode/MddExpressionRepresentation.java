@@ -27,6 +27,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.common.GrowingIntArray;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -249,7 +250,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         if (that instanceof MddExpressionRepresentation) {
             return Objects.equals(mddVariable, ((MddExpressionRepresentation) that).mddVariable)
                     && Objects.equals(decl, ((MddExpressionRepresentation) that).decl)
-                    && (Objects.equals(expr, ((MddExpressionRepresentation) that).expr) || semanticEquals(that));
+                    && (Objects.equals(expr, ((MddExpressionRepresentation) that).expr)
+                            || semanticEquals(that));
         }
         if (that instanceof MddNode) {
             return this.equals(((MddNode) that).getRepresentation());
@@ -259,12 +261,15 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     private boolean semanticEquals(Object that) {
 
-        if(that instanceof MddExpressionRepresentation thatRepresentation) {
-            if(this.explicitRepresentation.complete && thatRepresentation.explicitRepresentation.complete) {
-                return IntObjMapView.equals(this.explicitRepresentation.getCacheView(), thatRepresentation.explicitRepresentation.getCacheView());
+        if (that instanceof MddExpressionRepresentation thatRepresentation) {
+            if (this.explicitRepresentation.complete
+                    && thatRepresentation.explicitRepresentation.complete) {
+                return IntObjMapView.equals(
+                        this.explicitRepresentation.getCacheView(),
+                        thatRepresentation.explicitRepresentation.getCacheView());
             }
         } else if (that instanceof IntObjMapView<?> thatView) {
-            if(this.explicitRepresentation.complete) {
+            if (this.explicitRepresentation.complete) {
                 return IntObjMapView.equals(thatView, this.explicitRepresentation.getCacheView());
             }
         }
@@ -292,6 +297,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public void cacheNode(int key, MddNode node) {
             Preconditions.checkState(!complete);
             Preconditions.checkState(defaultValue == null);
+            if (this.cache.size() > 1000) {
+                throw new NotSolvableException();
+            }
             this.cache.put(key, node);
             this.edgeOrdering.add(key);
         }

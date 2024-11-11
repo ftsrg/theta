@@ -108,7 +108,8 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
 
   val defaultValues =
     if (initValues)
-      StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }
+      StmtUtils.getVars(trans)
+        .filter { !it.equals(locVar) and !it.equals(edgeVar) }
         .map {
           when (it.type) {
             is IntType -> Eq(it.ref, int(0))
@@ -139,7 +140,10 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
     transExpr = And(transUnfold.exprs),
     propExpr = Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
-    vars = StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() + edgeVar + locVar,
+    vars =
+      StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
+        edgeVar +
+        locVar,
     valToState = { valToState(it) },
     biValToAction = { val1, val2 -> valToAction(val1, val2) },
     ctrlVars = listOf(locVar, edgeVar),

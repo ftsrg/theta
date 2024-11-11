@@ -53,7 +53,6 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsVarOrderingKt;
-
 import java.util.ArrayList;
 import java.util.List;
 

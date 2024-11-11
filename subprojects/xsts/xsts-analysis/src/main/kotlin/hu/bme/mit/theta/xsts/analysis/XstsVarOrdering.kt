@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
@@ -25,36 +24,38 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.xsts.XSTS
 
 fun XSTS.orderVars(): List<VarDecl<*>> {
-    val flattened = flattenStmts(tran)
-    val orderedVars = orderVarsFromRandomStartingPoints(this.stateVars.toList(), flattened)
-    return orderedVars
+  val flattened = flattenStmts(tran)
+  val orderedVars = orderVarsFromRandomStartingPoints(this.stateVars.toList(), flattened)
+  return orderedVars
 }
 
 fun cartesianProduct(vararg sets: Set<*>): Set<List<*>> =
-    sets
-        .fold(listOf(listOf<Any?>())) { acc, set ->
-            acc.flatMap { list -> set.map { element -> list + element } }
-        }
-        .toSet()
+  sets
+    .fold(listOf(listOf<Any?>())) { acc, set ->
+      acc.flatMap { list -> set.map { element -> list + element } }
+    }
+    .toSet()
 
 private fun flattenStmts(stmt: Stmt): Set<Stmt> {
-    return when(stmt) {
-        is NonDetStmt -> {
-            stmt.stmts.flatMap { flattenStmts(it) }.toSet()
-        }
-        is SequenceStmt -> {
-            cartesianProduct(*(stmt.stmts.map { flattenStmts(it) }.toTypedArray())).map { SequenceStmt.of(it as List<Stmt>) }.toSet()
-        }
-        is IfStmt -> {
-            flattenStmts(stmt.then) + flattenStmts(stmt.elze)
-        }
-        else -> {
-            setOf(stmt)
-        }
+  return when (stmt) {
+    is NonDetStmt -> {
+      stmt.stmts.flatMap { flattenStmts(it) }.toSet()
     }
+    is SequenceStmt -> {
+      cartesianProduct(*(stmt.stmts.map { flattenStmts(it) }.toTypedArray()))
+        .map { SequenceStmt.of(it as List<Stmt>) }
+        .toSet()
+    }
+    is IfStmt -> {
+      flattenStmts(stmt.then) + flattenStmts(stmt.elze)
+    }
+    else -> {
+      setOf(stmt)
+    }
+  }
 }
 
-//private fun collectStmts(stmt: Stmt): Set<Stmt> {
+// private fun collectStmts(stmt: Stmt): Set<Stmt> {
 //    return when(stmt) {
 //        is NonDetStmt -> {
 //            stmt.stmts.flatMap { collectStmts(it) }.toSet()
@@ -66,4 +67,4 @@ private fun flattenStmts(stmt: Stmt): Set<Stmt> {
 //           setOf(stmt)
 //        }
 //    }
-//}
+// }
