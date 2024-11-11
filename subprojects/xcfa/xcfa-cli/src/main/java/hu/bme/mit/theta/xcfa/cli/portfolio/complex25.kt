@@ -1113,7 +1113,9 @@ fun complexPortfolio25(
   var inProcessStm = getStm(mainTrait, true)
   var notInProcessStm = getStm(mainTrait, false)
 
-  if (parseContext.multiThreading) {
+  if (
+    parseContext.multiThreading && baseConfig.inputConfig.property == ErrorDetection.ERROR_LOCATION
+  ) {
     val inProcOc = ConfigNode("OC", ocConfig(true), checker)
     val notInProcOc = ConfigNode("OC", ocConfig(false), checker)
     val inProcessCegar = HierarchicalNode("InProcessCegar", inProcessStm)
