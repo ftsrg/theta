@@ -26,16 +26,19 @@ import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryNode
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
+import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
@@ -70,6 +73,7 @@ import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
+import java.io.PrintWriter
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -250,7 +254,6 @@ private fun tracegenBackend(
         } ms)\n",
     )
 
-    logger.write(RESULT, result.toString() + "\n")
     return result
 }
 
@@ -504,33 +507,57 @@ private fun postTraceGenerationLogging(
     uniqueLogger: Logger,
 ) {
     val abstractSummary = result.summary
-    logger.write(Logger.Level.RESULT, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces.")
-    // TODO implement the rest
-// TODO print coverage (full or not)?
-//
-//    val resultFolder = config.outputConfig.resultFolder
-//    resultFolder.mkdirs()
-//
-//    logger.write(
-//        Logger.Level.INFO,
-//        "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
-//    )
-//
-//    val modelName = config.inputConfig.input!!.name
-//    val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
-//    val visFile = traceDirPath.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
-//    GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-//    logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}")
-//
-//    val concreteSummaryFile = traceDirPath.absolutePath + File.separator + modelName + ".cexs"
-//
-//    /*
-//        val cexsString = toCexs(concretizationResult)
-//        PrintWriter(File(concreteSummaryFile)).use { printWriter ->
-//          printWriter.write(cexsString)
-//        }
-//    */
-//
-//    logger.write(Logger.Level.SUBSTEP, "Concrete trace summary exported to ${concreteSummaryFile}")
-}
+    logger.write(Logger.Level.MAINSTEP, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n")
 
+    val resultFolder = config.outputConfig.resultFolder
+    resultFolder.mkdirs()
+
+    if(config.outputConfig.enableOutput) {
+        logger.write(
+            Logger.Level.MAINSTEP,
+            "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
+        )
+
+        val modelName = config.inputConfig.input!!.name
+        val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+        val visFile = resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
+        GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+
+        var concreteTraces = 0
+        for (abstractTrace in abstractSummary.sourceTraces) {
+            try {
+                val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+                    XcfaTraceConcretizer.concretize(
+                        abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+                        getSolver(
+                            config.outputConfig.witnessConfig.concretizerSolver,
+                            config.outputConfig.witnessConfig.validateConcretizerSolver,
+                        ),
+                        parseContext,
+                    )
+
+                val concreteTraceFile = resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.cex"
+
+                PrintWriter(File(concreteTraceFile)).use { printWriter ->
+                    printWriter.write(concrTrace.toString())
+                }
+
+                val concreteDotFile = File(resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.dot")
+                val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
+                concreteDotFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+
+                logger.write(Logger.Level.MAINSTEP, "Concrete trace exported to ${concreteTraceFile} and ${concreteDotFile}")
+                concreteTraces++
+            } catch (e: IllegalArgumentException) {
+                logger.write(Logger.Level.SUBSTEP, e.toString())
+                logger.write(Logger.Level.SUBSTEP, "Continuing concretization with next trace...")
+            }
+        }
+        logger.write(Logger.Level.RESULT, "Successfully generated ${concreteTraces} concrete traces.\n")
+
+    }
+
+    // TODO implement cexs for xcfa?
+    // TODO print coverage (full or not)?
+}

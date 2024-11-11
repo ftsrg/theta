@@ -31,6 +31,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
+import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
 import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsSummaryConcretizerUtil
@@ -77,7 +78,7 @@ class XstsCliTracegen : XstsCliBaseCommand(
         val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
         val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".abstract-trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}")
+        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
 
         val concreteSummaryFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
 
@@ -86,7 +87,7 @@ class XstsCliTracegen : XstsCliBaseCommand(
             printWriter.write(cexsString)
         }
 
-        logger.write(Logger.Level.SUBSTEP, "Concrete trace summary exported to ${concreteSummaryFile}")
+        logger.write(Logger.Level.SUBSTEP, "Concrete trace summary exported to ${concreteSummaryFile}\n")
     }
 
     override fun run() {
@@ -124,14 +125,13 @@ class XstsCliTracegen : XstsCliBaseCommand(
             XstsTracegenBuilder(Z3SolverFactory.getInstance(), true).logger(logger)
                 .setGetFullTraces(false).build(xsts)
         val result = checker.check()
+        val summary = result.summary as AbstractTraceSummary<XstsState<*>, XstsAction>
 
-        // TODO concretization, writing into file
         val concretizationResult = TraceGenerationXstsSummaryConcretizerUtil.concretize(
-            result.summary as AbstractTraceSummary<XstsState<*>, XstsAction>, Z3LegacySolverFactory.getInstance(), xsts
+            summary, Z3LegacySolverFactory.getInstance(), xsts
         )
 
         sw.stop()
         printResult(concretizationResult, result.summary, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath)
     }
-
 }
