@@ -23,9 +23,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.portfolio.STM
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
+import hu.bme.mit.theta.xcfa.cli.portfolio.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions
@@ -56,6 +54,42 @@ class XcfaCliPortfolioTest {
           logger: Logger,
           uniqueLogger: Logger ->
           complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complexPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          hornPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
       )
     }

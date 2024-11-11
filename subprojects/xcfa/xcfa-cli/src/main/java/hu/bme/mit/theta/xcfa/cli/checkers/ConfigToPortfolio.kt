@@ -59,16 +59,22 @@ fun getPortfolioChecker(
       "STABLE",
       "CEGAR",
       "COMPLEX",
+      "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "EMERGENT",
-      "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "BOUNDED",
+      "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",
-      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN",
+      "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       else -> {
         if (File(portfolioName).exists()) {

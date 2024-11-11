@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import java.nio.file.Paths
 
-fun hornPortfolio(
+fun hornPortfolio25(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
