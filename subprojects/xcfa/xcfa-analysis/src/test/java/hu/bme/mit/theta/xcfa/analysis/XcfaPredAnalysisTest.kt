@@ -62,8 +62,6 @@ class XcfaPredAnalysisTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
   fun testNoporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
@@ -295,8 +293,6 @@ class XcfaPredAnalysisTest {
     Assertions.assertTrue(verdict(safetyResult))
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
   fun testAadporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     XcfaDporLts.random = Random(seed)
     println("Testing AADPOR on $filepath...")

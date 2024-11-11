@@ -16,6 +16,7 @@
 
 plugins {
     id("kotlin-common")
+    id("kaml-serialization")
     id("cli-tool")
 }
 
@@ -50,4 +51,3 @@ dependencies {
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
-

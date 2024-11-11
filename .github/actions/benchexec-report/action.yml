@@ -11,7 +11,7 @@ runs:
         sudo add-apt-repository ppa:sosy-lab/benchmarking
         sudo apt install benchexec
     - name: Download artifacts
-      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
         path: artifacts
     - name: Generate tables
@@ -21,7 +21,7 @@ runs:
         cd artifacts
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
-        header1=$(printf '|task set|'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '%s|')
+        header1=$(printf '| Rundefinition |'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '%s|')
         header2=$(printf '|--|'; for ff in $(for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u); do printf -- '--|'; done)
         echo "$header1" >> $GITHUB_OUTPUT
         printf "$header2" >> $GITHUB_OUTPUT
@@ -33,11 +33,23 @@ runs:
             pushd $i
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
-            unzip *.zip
-            rm *.zip
-            correct=$(tail -n9 *.txt | grep '  correct:' | awk ' { print $2 } ')
-            incorrect=$(tail -n9 *.txt | grep '  incorrect:' | awk ' { print $2 } ')
-            all=$(tail -n9 *.txt | grep 'Statistics:' | awk ' { print $2 } ')
+            for zipfile in *.zip
+            do
+              correct=0
+              incorrect=0
+              all=0
+              for txt in *.txt
+              do
+                new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ')
+                correct=$((correct + new_correct))
+                new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ')
+                incorrect=$((incorrect + new_incorrect))
+                new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ')
+                all=$((all + new_all))
+                echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
+              done
+            done
+            echo "Summary: found $correct correct and $incorrect incorrect results out of $all tasks in $i"
             emoji=":white_check_mark:"
             [ $correct -eq 0 ] && emoji=":question:"
             [ $incorrect -eq 0 ] || emoji=":exclamation:"
@@ -57,7 +69,7 @@ runs:
         echo >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Upload results
-      uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
         name: BenchexecResults
         path: artifacts

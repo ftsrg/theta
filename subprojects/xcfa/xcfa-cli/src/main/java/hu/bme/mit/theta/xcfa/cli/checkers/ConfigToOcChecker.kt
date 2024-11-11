@@ -15,16 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
-import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -35,16 +31,17 @@ fun getOcChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+): SafetyChecker<EmptyProof, Cex, XcfaPrec<*>> {
+  val ocConfig = config.backendConfig.specConfig as OcConfig
   val ocChecker =
-    XcfaOcChecker(xcfa, (config.backendConfig.specConfig as OcConfig).decisionProcedure, logger)
-  return object :
-    SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-    override fun check(
-      prec: XcfaPrec<*>?
-    ): SafetyResult<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = check()
-
-    override fun check(): SafetyResult<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>> =
-      ocChecker.check()
-  }
+    XcfaOcChecker(
+      xcfa,
+      ocConfig.decisionProcedure,
+      logger,
+      ocConfig.inputConflictClauseFile,
+      ocConfig.outputConflictClauses,
+      ocConfig.nonPermissiveValidation,
+      ocConfig.autoConflict,
+    )
+  return SafetyChecker { ocChecker.check() }
 }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -29,81 +28,108 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import java.nio.file.Paths
 
 fun portfolio(
-    xcfa: XCFA,
-    mcm: MCM,
-    parseContext: ParseContext,
-    portfolioConfig: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger): STM {
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+): STM {
 
-    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-    var baseConfig = XcfaConfig(
-        inputConfig = InputConfig(
-            input = null,
-            xcfaWCtx = Triple(xcfa, mcm, parseContext),
-            propertyFile = null,
-            property = portfolioConfig.inputConfig.property),
-        frontendConfig = FrontendConfig(
-            lbeLevel = LbePass.LbeLevel.LBE_SEQ,
-            loopUnroll = 50,
-            inputType = InputType.C,
-            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)),
-        backendConfig = BackendConfig(
-            backend = Backend.CEGAR,
-            solverHome = portfolioConfig.backendConfig.solverHome,
-            timeoutMs = 0,
-            specConfig = CegarConfig(
-                initPrec = InitPrec.EMPTY,
-                porLevel = POR.NOPOR,
-                porRandomSeed = -1,
-                coi = ConeOfInfluenceMode.NO_COI,
-                cexMonitor = CexMonitorOptions.CHECK,
-                abstractorConfig = CegarAbstractorConfig(
-                    abstractionSolver = "Z3",
-                    validateAbstractionSolver = false,
-                    domain = Domain.EXPL,
-                    maxEnum = 1,
-                    search = Search.ERR
-                ),
-                refinerConfig = CegarRefinerConfig(
-                    refinementSolver = "Z3",
-                    validateRefinementSolver = false,
-                    refinement = Refinement.SEQ_ITP,
-                    exprSplitter = ExprSplitterOptions.WHOLE,
-                    pruneStrategy = PruneStrategy.FULL
-                ))),
-        outputConfig = OutputConfig(
-            versionInfo = false,
-            resultFolder = Paths.get("./").toFile(), // cwd
-            cOutputConfig = COutputConfig(disable = true),
-            witnessConfig = WitnessConfig(disable = false, concretizerSolver = "Z3", validateConcretizerSolver = false),
-            argConfig = ArgConfig(disable = true)
+  var baseConfig =
+    XcfaConfig(
+      inputConfig =
+        InputConfig(
+          input = null,
+          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          propertyFile = null,
+          property = portfolioConfig.inputConfig.property,
         ),
-        debugConfig = portfolioConfig.debugConfig
+      frontendConfig =
+        FrontendConfig(
+          lbeLevel = LbePass.LbeLevel.LBE_SEQ,
+          loopUnroll = 50,
+          inputType = InputType.C,
+          specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
+        ),
+      backendConfig =
+        BackendConfig(
+          backend = Backend.CEGAR,
+          solverHome = portfolioConfig.backendConfig.solverHome,
+          timeoutMs = 0,
+          specConfig =
+            CegarConfig(
+              initPrec = InitPrec.EMPTY,
+              porLevel = POR.NOPOR,
+              porRandomSeed = -1,
+              coi = ConeOfInfluenceMode.NO_COI,
+              cexMonitor = CexMonitorOptions.CHECK,
+              abstractorConfig =
+                CegarAbstractorConfig(
+                  abstractionSolver = "Z3",
+                  validateAbstractionSolver = false,
+                  domain = Domain.EXPL,
+                  maxEnum = 1,
+                  search = Search.ERR,
+                ),
+              refinerConfig =
+                CegarRefinerConfig(
+                  refinementSolver = "Z3",
+                  validateRefinementSolver = false,
+                  refinement = Refinement.SEQ_ITP,
+                  exprSplitter = ExprSplitterOptions.WHOLE,
+                  pruneStrategy = PruneStrategy.FULL,
+                ),
+            ),
+        ),
+      outputConfig =
+        OutputConfig(
+          versionInfo = false,
+          resultFolder = Paths.get("./").toFile(), // cwd
+          cOutputConfig = COutputConfig(disable = true),
+          witnessConfig =
+            WitnessConfig(
+              disable = false,
+              concretizerSolver = "Z3",
+              validateConcretizerSolver = false,
+            ),
+          argConfig = ArgConfig(disable = true),
+        ),
+      debugConfig = portfolioConfig.debugConfig,
     )
 
-    if (parseContext.multiThreading) {
-        val baseCegarConfig = baseConfig.backendConfig.specConfig!!
-        val multiThreadedCegarConfig = baseCegarConfig.copy(
-            coi = if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) ConeOfInfluenceMode.NO_COI else ConeOfInfluenceMode.COI,
-            porLevel = if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
-            abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
-        )
-        baseConfig = baseConfig.copy(
-            backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig))
-    }
+  if (parseContext.multiThreading) {
+    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+    val multiThreadedCegarConfig =
+      baseCegarConfig.copy(
+        coi =
+          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
+            ConeOfInfluenceMode.NO_COI
+          else ConeOfInfluenceMode.COI,
+        porLevel =
+          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
+      )
+    baseConfig =
+      baseConfig.copy(
+        backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
+      )
+  }
 
-    if (!xcfa.isInlined) {
-        val baseCegarConfig = baseConfig.backendConfig.specConfig!!
-        val recursiveConfig = baseCegarConfig.copy(
-            abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
-            refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY)
-        )
-        baseConfig = baseConfig.copy(backendConfig = baseConfig.backendConfig.copy(specConfig = recursiveConfig))
-    }
+  if (!xcfa.isInlined) {
+    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+    val recursiveConfig =
+      baseCegarConfig.copy(
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
+        refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY),
+      )
+    baseConfig =
+      baseConfig.copy(backendConfig = baseConfig.backendConfig.copy(specConfig = recursiveConfig))
+  }
 
-    return STM(ConfigNode("BaseConfig", baseConfig, checker), setOf())
+  return STM(ConfigNode("BaseConfig", baseConfig, checker), setOf())
 }
 
 portfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)

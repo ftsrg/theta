@@ -1,11 +1,11 @@
 name: 'Run tests using benchexec'
 description: 'Running benchexec tests on xcfa-cli'
 inputs:
-    task:
-        required: true
-    test_number:
+    rundef:
         required: true
     portfolio:
+        required: true
+    tool:
         required: true
 runs:
   using: "composite"
@@ -39,31 +39,33 @@ runs:
           cd sv-benchmarks
           git sparse-checkout add c
           git checkout
-    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+          pwd
+          ls -l
+    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       name: Get zip
       with:
-        name: Theta_SV-COMP
+        name: ${{ inputs.tool }}
         path: release/
     - name: Unzip 
       shell: bash
       run: |
-        unzip release/Theta.zip
-        sed -i 's/ --input \$1/ --portfolio ${{ inputs.portfolio }} --input \$1/g' Theta/theta-start.sh
-#    - name: Cut setfile if too long
-#      id: setfile
-#      shell: bash
-#      run: |
-#        cd sv-benchmarks/c
-#        for i in $(sed 's/#.*$//g' ${{ inputs.task }}.set); do find . -wholename ./$i; done | while read line; do grep "${line#./}" $GITHUB_ACTION_PATH/unsupported.txt >/dev/null 2>/dev/null || test -z $(yq e '.properties.[] | select(.property_file == "../properties/unreach-call.prp")' $line) >/dev/null 2>/dev/null || echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
-#        head -n${{ inputs.test_number }} all-files.txt > ${{ inputs.task }}.set
-#        echo "length=$(cat ${{ inputs.task }}.set | wc -l)" >> "$GITHUB_OUTPUT"
-#        cat ${{ inputs.task }}.set
+        unzip release/*.zip
     - name: Run benchexec
       shell: bash
       run: |
-        timeout 300 benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -t ${{ inputs.task }} || true
+        sed -i 's/<option name="--portfolio">STABLE<\/option>/<option name="--portfolio">${{ inputs.portfolio }}<\/option>/g' xml/theta.xml
+        cat xml/theta.xml
+        folder=$(dirname $(find . -name "theta.jar" | head -n1))
+        echo $folder
+        pwd
+        for task in $(cat xml/theta.xml | grep 'tasks name=' | grep -oP '(?<=").*(?=")')
+        do
+          echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
+          echo "timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
+          timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
+        done
     - name: Upload results
-      uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
-        name: BenchexecResults-${{ inputs.task }}-${{ inputs.portfolio }}
+        name: BenchexecResults-${{ inputs.rundef }}-${{ inputs.portfolio }}
         path: results

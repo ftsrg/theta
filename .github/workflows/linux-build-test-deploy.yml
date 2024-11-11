@@ -25,7 +25,7 @@ jobs:
       - name: Build
         uses: ./.github/actions/build-action
       - name: Upload JARs
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
         with:
           name: ThetaJars
           path: subprojects/**/*-all.jar
@@ -49,25 +49,21 @@ jobs:
   test-benchexec:
     strategy:
       matrix:
-        task:
-          - Arrays
-          - BitVectors
-          - ControlFlow
-          - ECA
-          - Floats
-          - Heap
-          - Loops
-          - ProductLines
-          - Recursive
-          - Sequentialized
-          - XCSP
-          - Combinations
-          - Hardware
-          - Concurrency
-          - NoDataRace
-          - ConcurrencySafety-NoOverflows
-          - ConcurrencySafety-MemSafety
+        rundef:
+          - SV-COMP25_unreach-call
+          - SV-COMP25_no-data-race
+          - SV-COMP25_valid-memcleanup
+          - SV-COMP25_valid-memsafety
+          - SV-COMP25_no-overflow
+          - SV-COMP25_termination
         portfolio: [CEGAR, BOUNDED, HORN]
+        include:
+          - tool: Theta_SV-COMP
+            portfolio: CEGAR
+          - tool: EmergenTheta_SV-COMP
+            portfolio: BOUNDED
+          - tool: Thorn_SV-COMP
+            portfolio: HORN
     runs-on: ubuntu-latest
     needs: create-archives
     steps:
@@ -76,9 +72,9 @@ jobs:
       - name: Run benchexec
         uses: ./.github/actions/benchexec-test
         with:
-          task: ${{ matrix.task }}
+          rundef: ${{ matrix.rundef }}
           portfolio: ${{ matrix.portfolio }}
-          test_number: 50
+          tool: ${{ matrix.tool }}
   
   collect-results:
     needs: test-benchexec
@@ -89,27 +85,35 @@ jobs:
       - name: Generate report
         uses: ./.github/actions/benchexec-report
 
-  create-archives:
+  create-spec-transformation:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Create theta.zip
+      - name: Create spec-transformation
+        uses: ./.github/actions/build-spec-transformation
+
+  create-archives:
+    runs-on: ubuntu-latest
+    needs: [build, create-spec-transformation]
+    strategy:
+      matrix:
+        tool: [Theta, EmergenTheta, Thorn]
+        include:
+          - tool: Theta
+            portfolio: STABLE
+          - tool: EmergenTheta
+            portfolio: EMERGENT
+          - tool: Thorn
+            portfolio: HORN
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Create ${{matrix.tool}}
         uses: ./.github/actions/build-archive
         with:
-          name: "Theta"
-          inputflag: "--portfolio STABLE"
-      - name: Create emergentheta.zip
-        uses: ./.github/actions/build-archive
-        with:
-          name: "EmergenTheta"
-          inputflag: "--algorithm EMERGENT"
-      - name: Create thorn.zip
-        uses: ./.github/actions/build-archive
-        with:
-          name: "Thorn"
-          inputflag: "--algorithm HORN"
+          name: ${{matrix.tool}}
+          inputflag: "--portfolio ${{matrix.portfolio}}"
 
 
   javadoc:

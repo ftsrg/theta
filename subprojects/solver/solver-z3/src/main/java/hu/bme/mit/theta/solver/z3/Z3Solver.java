@@ -15,8 +15,13 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Statistics;
 import com.microsoft.z3.Status;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -32,12 +37,11 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,9 +49,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 class Z3Solver implements UCSolver, Solver {
 
@@ -68,10 +69,12 @@ class Z3Solver implements UCSolver, Solver {
     protected Collection<Expr<BoolType>> unsatCore;
     protected SolverStatus status;
 
-    public Z3Solver(final Z3SymbolTable symbolTable,
-                    final Z3TransformationManager transformationManager,
-                    final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
-                    final com.microsoft.z3.Solver z3Solver) {
+    public Z3Solver(
+            final Z3SymbolTable symbolTable,
+            final Z3TransformationManager transformationManager,
+            final Z3TermTransformer termTransformer,
+            final com.microsoft.z3.Context z3Context,
+            final com.microsoft.z3.Solver z3Solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -87,8 +90,8 @@ class Z3Solver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
-                assertion);
+        final com.microsoft.z3.BoolExpr term =
+                (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
         add(assertion, term);
     }
 
@@ -103,8 +106,8 @@ class Z3Solver implements UCSolver, Solver {
         checkNotNull(assertion);
 
         assertions.add(assertion);
-        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
-                assertion);
+        final com.microsoft.z3.BoolExpr term =
+                (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
         final String label = String.format(ASSUMPTION_LABEL, labelNum++);
         final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
@@ -235,6 +238,19 @@ class Z3Solver implements UCSolver, Solver {
         z3Context.interrupt();
     }
 
+    @Override
+    public ImmutableMap<String, String> getStatistics() {
+        Statistics stats = z3Solver.getStatistics();
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        Set<String> keys = new HashSet<>();
+        for (String key : stats.getKeys()) {
+            if (keys.contains(key)) continue;
+            builder.put(key, stats.get(key).getValueString());
+            keys.add(key);
+        }
+        return builder.buildOrThrow();
+    }
+
     ////
 
     private final class Z3Model extends Valuation {
@@ -276,7 +292,8 @@ class Z3Solver implements UCSolver, Solver {
                 }
             }
 
-            @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+            @SuppressWarnings("unchecked")
+            final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
             return Optional.ofNullable(tVal);
         }
 
@@ -297,14 +314,14 @@ class Z3Solver implements UCSolver, Solver {
         }
 
         private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
-            final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model,
-                    new ArrayList<>());
+            final Expr<?> expr =
+                    termTransformer.toFuncLitExpr(funcDecl, z3Model, new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 
         private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
-            final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model,
-                    new ArrayList<>());
+            final Expr<?> expr =
+                    termTransformer.toArrayLitExpr(funcDecl, z3Model, new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 
@@ -317,7 +334,8 @@ class Z3Solver implements UCSolver, Solver {
             }
         }
 
-        private LitExpr<?> extractEnumLiteral(final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
+        private LitExpr<?> extractEnumLiteral(
+                final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
             final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
             if (term == null) {
                 return null;
@@ -359,5 +377,4 @@ class Z3Solver implements UCSolver, Solver {
             return builder.build();
         }
     }
-
 }

@@ -93,6 +93,7 @@ fun getCoreXcfaLts() =
                     ReturnLabel(proc.value.returnStmts.peek()),
                   )
                 ),
+                proc.value.locs.peek().metadata,
               ),
               nextCnt = s.sGlobal.nextCnt,
             )
@@ -105,6 +106,7 @@ fun getCoreXcfaLts() =
                 proc.value.locs.peek(),
                 proc.value.locs.peek(),
                 proc.value.paramStmts.peek().first,
+                proc.value.locs.peek().metadata,
               ),
               nextCnt = s.sGlobal.nextCnt,
             )

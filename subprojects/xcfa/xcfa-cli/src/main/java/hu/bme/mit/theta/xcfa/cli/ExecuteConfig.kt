@@ -58,6 +58,7 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
@@ -277,19 +278,27 @@ private fun safetyBackend(
         logger.write(RESULT, result.toString() + "\n")
         return result
     } else {
-        val stopwatch = Stopwatch.createStarted()
-        val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-        val result =
-            exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-                checker.check()
-            }
-                .let { result ->
-                    when {
-                        result.isSafe &&
-                            LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
-                            logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                            SafetyResult.unknown<EmptyProof, EmptyCex>()
-                        }
+      val stopwatch = Stopwatch.createStarted()
+
+      logger.write(
+        Logger.Level.INFO,
+        "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
+      )
+
+      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      val result =
+        exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+            checker.check()
+          }
+          .let { result ->
+            when {
+              result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
+                // cannot report safe if force unroll was used
+                logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+                if (config.outputConfig.acceptUnreliableSafe)
+                  result // for comparison with BMC tools
+                else SafetyResult.unknown<EmptyProof, EmptyCex>()
+              }
 
                         else -> result
                     }
@@ -402,31 +411,31 @@ private fun postVerificationLogging(
                 "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
             )
 
-            // TODO eliminate the need for the instanceof check
-            if (
-                !config.outputConfig.argConfig.disable && safetyResult.proof is ARG<out State, out Action>?
-            ) {
-                val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
-                val g: Graph =
-                    ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>?)
-                argFile.writeText(GraphvizWriter.getInstance().writeString(g))
-            }
+      // TODO eliminate the need for the instanceof check
+      if (
+        !config.outputConfig.argConfig.disable && safetyResult.proof is ARG<out State, out Action>
+      ) {
+        val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
+        val g: Graph =
+          ArgVisualizer.getDefault().visualize(safetyResult.proof as ARG<out State, out Action>)
+        argFile.writeText(GraphvizWriter.getInstance().writeString(g))
+      }
 
-            if (!config.outputConfig.witnessConfig.disable) {
-                if (
-                    safetyResult.isUnsafe &&
-                    safetyResult.asUnsafe().cex != null &&
-                    !config.outputConfig.witnessConfig.svcomp
-                ) {
-                    val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-                        XcfaTraceConcretizer.concretize(
-                            safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-                            getSolver(
-                                config.outputConfig.witnessConfig.concretizerSolver,
-                                config.outputConfig.witnessConfig.validateConcretizerSolver,
-                            ),
-                            parseContext,
-                        )
+      if (!config.outputConfig.witnessConfig.disable) {
+        if (
+          safetyResult.isUnsafe &&
+            safetyResult.asUnsafe().cex != null &&
+            !config.outputConfig.witnessConfig.svcomp
+        ) {
+          val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+            XcfaTraceConcretizer.concretize(
+              safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+              getSolver(
+                config.outputConfig.witnessConfig.concretizerSolver,
+                config.outputConfig.witnessConfig.validateConcretizerSolver,
+              ),
+              parseContext,
+            )
 
                     val traceFile = File(resultFolder, "trace.dot")
                     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
@@ -445,30 +454,44 @@ private fun postVerificationLogging(
                         act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
 
-                    val cSequenceFile = File(resultFolder, "trace-c.plantuml")
-                    writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
-                        val proc = state.processes[act.pid]
-                        val loc = proc?.locs?.peek()
-                        (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
-                    }
-                }
-                val witnessFile = File(resultFolder, "witness.graphml")
-                XcfaWitnessWriter()
-                    .writeWitness(
-                        safetyResult,
-                        config.inputConfig.input!!,
-                        getSolver(
-                            config.outputConfig.witnessConfig.concretizerSolver,
-                            config.outputConfig.witnessConfig.validateConcretizerSolver,
-                        ),
-                        parseContext,
-                        witnessFile,
-                    )
-            }
-        } catch (e: Throwable) {
-            logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+          val cSequenceFile = File(resultFolder, "trace-c.plantuml")
+          writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
+            val proc = state.processes[act.pid]
+            val loc = proc?.locs?.peek()
+            (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
+          }
         }
+        val witnessFile = File(resultFolder, "witness.graphml")
+        GraphmlWitnessWriter()
+          .writeWitness(
+            safetyResult,
+            config.inputConfig.input!!,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+            witnessFile,
+          )
+        val yamlWitnessFile = File(resultFolder, "witness.yml")
+        YmlWitnessWriter()
+          .writeWitness(
+            safetyResult,
+            config.inputConfig.input!!,
+            config.inputConfig.property,
+            (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+            yamlWitnessFile,
+          )
+      }
+    } catch (e: Throwable) {
+      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
+  }
 }
 
 private fun writeSequenceTrace(
@@ -527,6 +550,7 @@ private fun postTraceGenerationLogging(
         var concreteTraces = 0
         for (abstractTrace in abstractSummary.sourceTraces) {
             try {
+                // TODO no concrete summary yet, only traces
                 val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
                     XcfaTraceConcretizer.concretize(
                         abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -558,6 +582,5 @@ private fun postTraceGenerationLogging(
 
     }
 
-    // TODO implement cexs for xcfa?
     // TODO print coverage (full or not)?
 }

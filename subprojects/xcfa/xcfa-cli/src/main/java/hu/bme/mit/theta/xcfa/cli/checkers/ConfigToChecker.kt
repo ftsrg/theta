@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
@@ -43,8 +42,16 @@ fun getSafetyChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContex
             Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
             Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
             Backend.LAZY -> TODO()
-            Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-            Backend.NONE -> SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
+            Backend.PORTFOLIO ->
+                getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+            Backend.NONE ->
+                SafetyChecker<
+                    ARG<XcfaState<PtrState<*>>, XcfaAction>,
+                    Trace<XcfaState<PtrState<*>>, XcfaAction>,
+                    XcfaPrec<*>,
+                    > { _ ->
+                    SafetyResult.unknown()
+                }
             Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
             Backend.TRACEGEN -> throw RuntimeException("Trace generation is NOT safety analysis, can not return safety checker for trace generation")
         }
