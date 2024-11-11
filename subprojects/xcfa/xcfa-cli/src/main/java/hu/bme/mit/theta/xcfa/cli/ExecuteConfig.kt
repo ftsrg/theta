@@ -25,8 +25,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryNode
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -38,7 +36,6 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
@@ -57,7 +54,6 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
-import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
@@ -79,337 +75,371 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun runConfig(
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
-    throwDontExit: Boolean,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  throwDontExit: Boolean,
 ): Result<*> {
-    propagateInputOptions(config, logger, uniqueLogger)
+  propagateInputOptions(config, logger, uniqueLogger)
 
-    registerAllSolverManagers(config.backendConfig.solverHome, logger)
+  registerAllSolverManagers(config.backendConfig.solverHome, logger)
 
-    validateInputOptions(config, logger, uniqueLogger)
+  validateInputOptions(config, logger, uniqueLogger)
 
-    val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+  val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-    preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+  preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-    val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
+  val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-    postAnalysisLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postAnalysisLogging(result, mcm, parseContext, config, logger, uniqueLogger)
 
-    return result
+  return result
 }
 
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
-    config.inputConfig.property = determineProperty(config, logger)
-    LbePass.level = config.frontendConfig.lbeLevel
-    StaticCoiPass.enabled = config.frontendConfig.staticCoi
-    if (config.backendConfig.backend == Backend.CEGAR) {
-        val cegarConfig = config.backendConfig.specConfig
-        cegarConfig as CegarConfig
-        val random = Random(cegarConfig.porRandomSeed)
-        XcfaSporLts.random = random
-        XcfaDporLts.random = random
-    }
-    if (config.debugConfig.argToFile) {
-        WebDebuggerLogger.enableWebDebuggerLogger()
-        WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
-    }
+  config.inputConfig.property = determineProperty(config, logger)
+  LbePass.level = config.frontendConfig.lbeLevel
+  StaticCoiPass.enabled = config.frontendConfig.staticCoi
+  if (config.backendConfig.backend == Backend.CEGAR) {
+    val cegarConfig = config.backendConfig.specConfig
+    cegarConfig as CegarConfig
+    val random = Random(cegarConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
+  if (config.debugConfig.argToFile) {
+    WebDebuggerLogger.enableWebDebuggerLogger()
+    WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
+  }
 
-    LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
-    LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
-    FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
-    ARGWebDebugger.on = config.debugConfig.argdebug
+  LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+  LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+  FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
+  ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
 private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
-    rule("NoCoiWhenDataRace") {
-        config.backendConfig.backend == Backend.CEGAR &&
-            (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
-            config.inputConfig.property == ErrorDetection.DATA_RACE
-    }
-    rule("NoAaporWhenDataRace") {
-        (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isAbstractionAware == true &&
-            config.inputConfig.property == ErrorDetection.DATA_RACE
-    }
-    rule("DPORWithoutDFS") {
-        (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
-            (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
-    }
-    rule("SensibleLoopUnrollLimits") {
-        config.frontendConfig.loopUnroll != -1 &&
-            config.frontendConfig.loopUnroll < config.frontendConfig.forceUnroll
-    }
-    rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
-        (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
-    }
+  rule("NoCoiWhenDataRace") {
+    config.backendConfig.backend == Backend.CEGAR &&
+      (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
+      config.inputConfig.property == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporWhenDataRace") {
+    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isAbstractionAware == true &&
+      config.inputConfig.property == ErrorDetection.DATA_RACE
+  }
+  rule("DPORWithoutDFS") {
+    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
+      (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
+  }
+  rule("SensibleLoopUnrollLimits") {
+    config.frontendConfig.loopUnroll != -1 &&
+      config.frontendConfig.loopUnroll < config.frontendConfig.forceUnroll
+  }
+  rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
+    (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
+  }
 }
 
 fun frontend(
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
 ): Triple<XCFA, MCM, ParseContext> {
-    if (config.inputConfig.xcfaWCtx != null) {
-        val xcfa = config.inputConfig.xcfaWCtx!!.first
-        ConeOfInfluence =
-            if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
-                XcfaCoiMultiThread(xcfa)
-            } else {
-                XcfaCoiSingleThread(xcfa)
-            }
-        return config.inputConfig.xcfaWCtx!!
-    }
-
-    val stopwatch = Stopwatch.createStarted()
-
-    val input = config.inputConfig.input!!
-    logger.write(
-        Logger.Level.INFO,
-        "Parsing the input $input as ${config.frontendConfig.inputType}\n",
-    )
-
-    val parseContext = ParseContext()
-
-    if (config.frontendConfig.inputType == InputType.C) {
-        val cConfig = config.frontendConfig.specConfig
-        cConfig as CFrontendConfig
-        parseContext.arithmetic = cConfig.arithmetic
-        parseContext.architecture = cConfig.architecture
-    }
-
-    val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
-    val mcm =
-        if (config.inputConfig.catFile != null) {
-            CatDslManager.createMCM(config.inputConfig.catFile!!)
-        } else {
-            emptySet()
-        }
-
+  if (config.inputConfig.xcfaWCtx != null) {
+    val xcfa = config.inputConfig.xcfaWCtx!!.first
     ConeOfInfluence =
-        if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
+      if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
+        XcfaCoiMultiThread(xcfa)
+      } else {
+        XcfaCoiSingleThread(xcfa)
+      }
+    return config.inputConfig.xcfaWCtx!!
+  }
 
-    if (
-        parseContext.multiThreading &&
-        (config.backendConfig.specConfig as? CegarConfig)?.let {
-            it.abstractorConfig.search == Search.ERR
-        } == true
-    ) {
-        val cConfig = config.backendConfig.specConfig as CegarConfig
-        cConfig.abstractorConfig.search = Search.DFS
-        uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+  val stopwatch = Stopwatch.createStarted()
+
+  val input = config.inputConfig.input!!
+  logger.write(
+    Logger.Level.INFO,
+    "Parsing the input $input as ${config.frontendConfig.inputType}\n",
+  )
+
+  val parseContext = ParseContext()
+
+  if (config.frontendConfig.inputType == InputType.C) {
+    val cConfig = config.frontendConfig.specConfig
+    cConfig as CFrontendConfig
+    parseContext.arithmetic = cConfig.arithmetic
+    parseContext.architecture = cConfig.architecture
+  }
+
+  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
+
+  val mcm =
+    if (config.inputConfig.catFile != null) {
+      CatDslManager.createMCM(config.inputConfig.catFile!!)
+    } else {
+      emptySet()
     }
 
-    logger.write(
-        Logger.Level.INFO,
-        "Frontend finished: ${xcfa.name}  (in ${
+  ConeOfInfluence =
+    if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
+
+  if (
+    parseContext.multiThreading &&
+      (config.backendConfig.specConfig as? CegarConfig)?.let {
+        it.abstractorConfig.search == Search.ERR
+      } == true
+  ) {
+    val cConfig = config.backendConfig.specConfig as CegarConfig
+    cConfig.abstractorConfig.search = Search.DFS
+    uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+  }
+
+  logger.write(
+    Logger.Level.INFO,
+    "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n",
-    )
+  )
 
-    logger.write(RESULT, "ParsingResult Success\n")
-    logger.write(
-        RESULT,
-        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n",
-    )
+  logger.write(RESULT, "ParsingResult Success\n")
+  logger.write(
+    RESULT,
+    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n",
+  )
 
-    return Triple(xcfa, mcm, parseContext)
+  return Triple(xcfa, mcm, parseContext)
 }
 
 private fun backend(
-    xcfa: XCFA,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
-    throwDontExit: Boolean,
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  throwDontExit: Boolean,
 ): Result<*> =
-    when(config.backendConfig.backend) {
-        Backend.TRACEGEN -> tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
-        Backend.NONE -> SafetyResult.unknown<EmptyProof, EmptyCex>()
-        else -> safetyBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit) // safety analysis
-    }
+  when (config.backendConfig.backend) {
+    Backend.TRACEGEN ->
+      tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
+    Backend.NONE -> SafetyResult.unknown<EmptyProof, EmptyCex>()
+    else ->
+      safetyBackend(
+        xcfa,
+        mcm,
+        parseContext,
+        config,
+        logger,
+        uniqueLogger,
+        throwDontExit,
+      ) // safety analysis
+  }
 
 private fun tracegenBackend(
-    xcfa: XCFA,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
-    throwDontExit: Boolean,
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  throwDontExit: Boolean,
 ): Result<*> {
-    val stopwatch = Stopwatch.createStarted()
-    val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger) as Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>>
-    val result =
-        exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-            checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())))
-        }
-    logger.write(
-        Logger.Level.INFO,
-        "Backend finished (in ${
+  val stopwatch = Stopwatch.createStarted()
+  val checker =
+    getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      as Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>>
+  val result =
+    exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+      checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())))
+    }
+  logger.write(
+    Logger.Level.INFO,
+    "Backend finished (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n",
-    )
+  )
 
-    return result
+  return result
 }
 
 private fun safetyBackend(
-    xcfa: XCFA,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
-    throwDontExit: Boolean,
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  throwDontExit: Boolean,
 ): SafetyResult<*, *> {
-    if (
-        xcfa.procedures.all {
-            it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
+  if (
+    xcfa.procedures.all {
+      it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
+    }
+  ) {
+    val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+    logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+
+    logger.write(RESULT, result.toString() + "\n")
+    return result
+  } else {
+    val stopwatch = Stopwatch.createStarted()
+
+    logger.write(
+      Logger.Level.INFO,
+      "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
+    )
+
+    val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+    val result =
+      exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+          checker.check()
         }
-    ) {
-        val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-        logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+        .let { result ->
+          when {
+            result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
+              // cannot report safe if force unroll was used
+              logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+              if (config.outputConfig.acceptUnreliableSafe) result // for comparison with BMC tools
+              else SafetyResult.unknown<EmptyProof, EmptyCex>()
+            }
 
-        logger.write(RESULT, result.toString() + "\n")
-        return result
-    } else {
-      val stopwatch = Stopwatch.createStarted()
-
-      logger.write(
-        Logger.Level.INFO,
-        "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
-      )
-
-      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-      val result =
-        exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-            checker.check()
+            else -> result
           }
-          .let { result ->
-            when {
-              result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
-                // cannot report safe if force unroll was used
-                logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                if (config.outputConfig.acceptUnreliableSafe)
-                  result // for comparison with BMC tools
-                else SafetyResult.unknown<EmptyProof, EmptyCex>()
-              }
+        }
 
-                        else -> result
-                    }
-                }
-
-        logger.write(
-            Logger.Level.INFO,
-            "Backend finished (in ${
+    logger.write(
+      Logger.Level.INFO,
+      "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
             } ms)\n",
-        )
+    )
 
-        logger.write(RESULT, result.toString() + "\n")
-        return result
-    }
+    logger.write(RESULT, result.toString() + "\n")
+    return result
+  }
 }
 
 private fun preAnalysisLogging(
-    xcfa: XCFA,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
 ) {
-    if (config.outputConfig.enableOutput) {
-        try {
-            val resultFolder = config.outputConfig.resultFolder
-            resultFolder.mkdirs()
+  if (config.outputConfig.enableOutput) {
+    try {
+      val resultFolder = config.outputConfig.resultFolder
+      resultFolder.mkdirs()
 
-            logger.write(
-                Logger.Level.INFO,
-                "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
-            )
+      logger.write(
+        Logger.Level.INFO,
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
+      )
 
-            if (!config.outputConfig.chcOutputConfig.disable) {
-                xcfa.procedures.forEach {
-                    try {
-                        val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-                        chcFile.writeText(it.toSMT2CHC())
-                    } catch (e: Exception) {
-                        logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
-                    }
-                }
-            }
-
-            if (!config.outputConfig.xcfaOutputConfig.disable) {
-                val xcfaDotFile = File(resultFolder, "xcfa.dot")
-                xcfaDotFile.writeText(xcfa.toDot())
-
-                val xcfaJsonFile = File(resultFolder, "xcfa.json")
-                val uglyJson = getGson(xcfa).toJson(xcfa)
-                val create = GsonBuilder().setPrettyPrinting().create()
-                xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
-            }
-
-            if (!config.outputConfig.cOutputConfig.disable) {
-                try {
-                    val xcfaCFile = File(resultFolder, "xcfa.c")
-                    xcfaCFile.writeText(
-                        xcfa.toC(
-                            parseContext,
-                            config.outputConfig.cOutputConfig.useArr,
-                            config.outputConfig.cOutputConfig.useExArr,
-                            config.outputConfig.cOutputConfig.useRange,
-                        )
-                    )
-                } catch (e: Throwable) {
-                    logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
-                }
-            }
-        } catch (e: Throwable) {
-            logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+      if (!config.outputConfig.chcOutputConfig.disable) {
+        xcfa.procedures.forEach {
+          try {
+            val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
+            chcFile.writeText(it.toSMT2CHC())
+          } catch (e: Exception) {
+            logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
+          }
         }
+      }
+
+      if (!config.outputConfig.xcfaOutputConfig.disable) {
+        val xcfaDotFile = File(resultFolder, "xcfa.dot")
+        xcfaDotFile.writeText(xcfa.toDot())
+
+        val xcfaJsonFile = File(resultFolder, "xcfa.json")
+        val uglyJson = getGson(xcfa).toJson(xcfa)
+        val create = GsonBuilder().setPrettyPrinting().create()
+        xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
+      }
+
+      if (!config.outputConfig.cOutputConfig.disable) {
+        try {
+          val xcfaCFile = File(resultFolder, "xcfa.c")
+          xcfaCFile.writeText(
+            xcfa.toC(
+              parseContext,
+              config.outputConfig.cOutputConfig.useArr,
+              config.outputConfig.cOutputConfig.useExArr,
+              config.outputConfig.cOutputConfig.useRange,
+            )
+          )
+        } catch (e: Throwable) {
+          logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+        }
+      }
+    } catch (e: Throwable) {
+      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
+  }
 }
 
 private fun postAnalysisLogging(
-    result: Result<*>,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
-) = when(config.backendConfig.backend) {
-    Backend.TRACEGEN -> postTraceGenerationLogging(result as TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>, mcm, parseContext, config, logger, uniqueLogger)
-    else -> postVerificationLogging(result as SafetyResult<*, *>, mcm, parseContext, config, logger, uniqueLogger) // safety analysis (or none)
-}
+  result: Result<*>,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+) =
+  when (config.backendConfig.backend) {
+    Backend.TRACEGEN ->
+      postTraceGenerationLogging(
+        result
+          as
+          TraceGenerationResult<
+            AbstractTraceSummary<XcfaState<*>, XcfaAction>,
+            XcfaState<*>,
+            XcfaAction,
+          >,
+        mcm,
+        parseContext,
+        config,
+        logger,
+        uniqueLogger,
+      )
+    else ->
+      postVerificationLogging(
+        result as SafetyResult<*, *>,
+        mcm,
+        parseContext,
+        config,
+        logger,
+        uniqueLogger,
+      ) // safety analysis (or none)
+  }
 
 private fun postVerificationLogging(
-    safetyResult: SafetyResult<*, *>,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
+  safetyResult: SafetyResult<*, *>,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
 ) {
-    if (config.outputConfig.enableOutput) {
-        try {
-            // we only want to log the files if the current configuration is not --in-process or portfolio
-            if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
-                return
-            }
+  if (config.outputConfig.enableOutput) {
+    try {
+      // we only want to log the files if the current configuration is not --in-process or portfolio
+      if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
+        return
+      }
 
-            val resultFolder = config.outputConfig.resultFolder
-            resultFolder.mkdirs()
+      val resultFolder = config.outputConfig.resultFolder
+      resultFolder.mkdirs()
 
-            logger.write(
-                Logger.Level.INFO,
-                "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
-            )
+      logger.write(
+        Logger.Level.INFO,
+        "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
+      )
 
       // TODO eliminate the need for the instanceof check
       if (
@@ -437,22 +467,22 @@ private fun postVerificationLogging(
               parseContext,
             )
 
-                    val traceFile = File(resultFolder, "trace.dot")
-                    val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
-                    traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+          val traceFile = File(resultFolder, "trace.dot")
+          val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
+          traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
 
-                    val sequenceFile = File(resultFolder, "trace.plantuml")
-                    writeSequenceTrace(
-                        sequenceFile,
-                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>,
-                    ) { (_, act) ->
-                        act.label.getFlatLabels().map(XcfaLabel::toString)
-                    }
+          val sequenceFile = File(resultFolder, "trace.plantuml")
+          writeSequenceTrace(
+            sequenceFile,
+            safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>,
+          ) { (_, act) ->
+            act.label.getFlatLabels().map(XcfaLabel::toString)
+          }
 
-                    val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
-                    writeSequenceTrace(optSequenceFile, concrTrace) { (_, act) ->
-                        act.label.getFlatLabels().map(XcfaLabel::toString)
-                    }
+          val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
+          writeSequenceTrace(optSequenceFile, concrTrace) { (_, act) ->
+            act.label.getFlatLabels().map(XcfaLabel::toString)
+          }
 
           val cSequenceFile = File(resultFolder, "trace-c.plantuml")
           writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
@@ -495,92 +525,101 @@ private fun postVerificationLogging(
 }
 
 private fun writeSequenceTrace(
-    sequenceFile: File,
-    trace: Trace<XcfaState<ExplState>, XcfaAction>,
-    printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>,
+  sequenceFile: File,
+  trace: Trace<XcfaState<ExplState>, XcfaAction>,
+  printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>,
 ) {
-    sequenceFile.writeText("@startuml\n")
-    var maxWidth = 0
-    trace.actions.forEachIndexed { i, it ->
-        val stateBefore = trace.states[i]
-        sequenceFile.appendText("hnote over ${it.pid}\n")
-        val labelStrings = printer(Pair(stateBefore, it))
-        if (maxWidth < (labelStrings.maxOfOrNull { it.length } ?: 0)) {
-            maxWidth = labelStrings.maxOfOrNull { it.length } ?: 0
-        }
-        sequenceFile.appendText("${labelStrings.joinToString("\n")}\n")
-        sequenceFile.appendText("endhnote\n")
+  sequenceFile.writeText("@startuml\n")
+  var maxWidth = 0
+  trace.actions.forEachIndexed { i, it ->
+    val stateBefore = trace.states[i]
+    sequenceFile.appendText("hnote over ${it.pid}\n")
+    val labelStrings = printer(Pair(stateBefore, it))
+    if (maxWidth < (labelStrings.maxOfOrNull { it.length } ?: 0)) {
+      maxWidth = labelStrings.maxOfOrNull { it.length } ?: 0
     }
-    trace.actions
-        .map { it.pid }
-        .distinct()
-        .reduce { acc, current ->
-            sequenceFile.appendText("$acc --> $current: \"${" ".repeat(maxWidth)}\"\n")
-            current
-        }
-    sequenceFile.appendText("@enduml\n")
+    sequenceFile.appendText("${labelStrings.joinToString("\n")}\n")
+    sequenceFile.appendText("endhnote\n")
+  }
+  trace.actions
+    .map { it.pid }
+    .distinct()
+    .reduce { acc, current ->
+      sequenceFile.appendText("$acc --> $current: \"${" ".repeat(maxWidth)}\"\n")
+      current
+    }
+  sequenceFile.appendText("@enduml\n")
 }
 
 private fun postTraceGenerationLogging(
-    result: TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>,
-    mcm: MCM,
-    parseContext: ParseContext,
-    config: XcfaConfig<*, *>,
-    logger: Logger,
-    uniqueLogger: Logger,
+  result:
+    TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
 ) {
-    val abstractSummary = result.summary
-    logger.write(Logger.Level.MAINSTEP, "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n")
+  val abstractSummary = result.summary
+  logger.write(
+    Logger.Level.MAINSTEP,
+    "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n",
+  )
 
-    val resultFolder = config.outputConfig.resultFolder
-    resultFolder.mkdirs()
+  val resultFolder = config.outputConfig.resultFolder
+  resultFolder.mkdirs()
 
-    if(config.outputConfig.enableOutput) {
-        logger.write(
-            Logger.Level.MAINSTEP,
-            "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
-        )
+  if (config.outputConfig.enableOutput) {
+    logger.write(
+      Logger.Level.MAINSTEP,
+      "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
+    )
 
-        val modelName = config.inputConfig.input!!.name
-        val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
-        val visFile = resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
-        GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+    val modelName = config.inputConfig.input!!.name
+    val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+    val visFile =
+      resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
+    GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+    logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
 
-        var concreteTraces = 0
-        for (abstractTrace in abstractSummary.sourceTraces) {
-            try {
-                // TODO no concrete summary yet, only traces
-                val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-                    XcfaTraceConcretizer.concretize(
-                        abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-                        getSolver(
-                            config.outputConfig.witnessConfig.concretizerSolver,
-                            config.outputConfig.witnessConfig.validateConcretizerSolver,
-                        ),
-                        parseContext,
-                    )
+    var concreteTraces = 0
+    for (abstractTrace in abstractSummary.sourceTraces) {
+      try {
+        // TODO no concrete summary yet, only traces
+        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+          XcfaTraceConcretizer.concretize(
+            abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+          )
 
-                val concreteTraceFile = resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.cex"
+        val concreteTraceFile =
+          resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.cex"
 
-                PrintWriter(File(concreteTraceFile)).use { printWriter ->
-                    printWriter.write(concrTrace.toString())
-                }
-
-                val concreteDotFile = File(resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.dot")
-                val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
-                concreteDotFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
-
-                logger.write(Logger.Level.MAINSTEP, "Concrete trace exported to ${concreteTraceFile} and ${concreteDotFile}")
-                concreteTraces++
-            } catch (e: IllegalArgumentException) {
-                logger.write(Logger.Level.SUBSTEP, e.toString())
-                logger.write(Logger.Level.SUBSTEP, "Continuing concretization with next trace...")
-            }
+        PrintWriter(File(concreteTraceFile)).use { printWriter ->
+          printWriter.write(concrTrace.toString())
         }
-        logger.write(Logger.Level.RESULT, "Successfully generated ${concreteTraces} concrete traces.\n")
 
+        val concreteDotFile =
+          File(resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.dot")
+        val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
+        concreteDotFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+
+        logger.write(
+          Logger.Level.MAINSTEP,
+          "Concrete trace exported to ${concreteTraceFile} and ${concreteDotFile}",
+        )
+        concreteTraces++
+      } catch (e: IllegalArgumentException) {
+        logger.write(Logger.Level.SUBSTEP, e.toString())
+        logger.write(Logger.Level.SUBSTEP, "Continuing concretization with next trace...")
+      }
     }
+    logger.write(Logger.Level.RESULT, "Successfully generated ${concreteTraces} concrete traces.\n")
+  }
 
-    // TODO print coverage (full or not)?
+  // TODO print coverage (full or not)?
 }

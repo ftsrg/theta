@@ -37,7 +37,9 @@ fun hornPortfolio(
   uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) as SafetyResult<*, *> }
+  val checker = { config: XcfaConfig<*, *> ->
+    runConfig(config, logger, uniqueLogger, true) as SafetyResult<*, *>
+  }
 
   var baseConfig =
     XcfaConfig(

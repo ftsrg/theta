@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import hu.bme.mit.theta.analysis.Action
@@ -22,13 +21,15 @@ import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.Statistics
 import java.util.*
 
-class TraceGenerationResult<Pr : AbstractTraceSummary<S, A>, S : State, A : Action>(val summary : Pr) : Result<Pr> {
+class TraceGenerationResult<Pr : AbstractTraceSummary<S, A>, S : State, A : Action>(
+  val summary: Pr
+) : Result<Pr> {
 
-    override fun getProof(): Pr {
-        return summary
-    }
+  override fun getProof(): Pr {
+    return summary
+  }
 
-    override fun getStats(): Optional<Statistics> {
-        return Optional.empty()
-    }
+  override fun getStats(): Optional<Statistics> {
+    return Optional.empty()
+  }
 }

@@ -1,16 +1,30 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
     private static final int HASH_SEED = 7453;
@@ -52,12 +66,14 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
 
     ////
 
-    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> to(final ArgNode<S, A> node) {
+    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> to(
+            final ArgNode<S, A> node) {
         checkNotNull(node);
         return new AdvancedArgTrace<>(node);
     }
 
-    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> fromTo(final ArgNode<S, A> fromNode, final ArgNode<S, A> toNode) {
+    public static <S extends State, A extends Action> AdvancedArgTrace<S, A> fromTo(
+            final ArgNode<S, A> fromNode, final ArgNode<S, A> toNode) {
         checkNotNull(fromNode);
         checkNotNull(toNode);
         AdvancedArgTrace<S, A> differenceTrace = new AdvancedArgTrace<>(fromNode);
@@ -66,15 +82,18 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
     }
 
     /**
-     * Substitutes the differenceTrace from the fullTrace, where the differenceTrace should be the beginning of
-     * the full trace
+     * Substitutes the differenceTrace from the fullTrace, where the differenceTrace should be the
+     * beginning of the full trace
      */
-    private static <A extends Action, S extends State> AdvancedArgTrace<S, A> substituteTrace(AdvancedArgTrace<S, A> fullTrace, AdvancedArgTrace<S, A> differenceTrace) {
+    private static <A extends Action, S extends State> AdvancedArgTrace<S, A> substituteTrace(
+            AdvancedArgTrace<S, A> fullTrace, AdvancedArgTrace<S, A> differenceTrace) {
         List<ArgNode<S, A>> differenceNodes = differenceTrace.nodes;
 
         List<ArgNode<S, A>> remainingNodes = new ArrayList<>(fullTrace.nodes);
-        remainingNodes.removeIf(saArgNode -> !(saArgNode.equals(differenceNodes.get(differenceNodes.size()-1)))
-                && differenceNodes.contains(saArgNode));
+        remainingNodes.removeIf(
+                saArgNode ->
+                        !(saArgNode.equals(differenceNodes.get(differenceNodes.size() - 1)))
+                                && differenceNodes.contains(saArgNode));
 
         List<ArgEdge<S, A>> remainingEdges = new ArrayList<>(fullTrace.edges);
         remainingEdges.removeIf(differenceTrace.edges::contains);
@@ -84,9 +103,7 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
 
     ////
 
-    /**
-     * Gets the length of the trace, i.e., the number of edges.
-     */
+    /** Gets the length of the trace, i.e., the number of edges. */
     public int length() {
         return edges.size();
     }
@@ -110,8 +127,8 @@ class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<Ar
     ////
 
     /**
-     * Converts the ArgTrace to a Trace by extracting states and actions from
-     * nodes and edges respectively.
+     * Converts the ArgTrace to a Trace by extracting states and actions from nodes and edges
+     * respectively.
      */
     public Trace<S, A> toTrace() {
         final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());

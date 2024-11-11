@@ -181,19 +181,19 @@ data class BackendConfig<T : SpecBackendConfig>(
   override var specConfig: T? = null,
 ) : SpecializableConfig<T> {
 
-    override fun createSpecConfig() {
-        specConfig =
-          when (backend) {
-            Backend.CEGAR -> CegarConfig() as T
-            Backend.BOUNDED -> BoundedConfig() as T
-            Backend.CHC -> HornConfig() as T
-            Backend.OC -> OcConfig() as T
-            Backend.LAZY -> null
-            Backend.PORTFOLIO -> PortfolioConfig() as T
-            Backend.TRACEGEN -> TracegenConfig() as T
-            Backend.NONE -> null
-        }
-    }
+  override fun createSpecConfig() {
+    specConfig =
+      when (backend) {
+        Backend.CEGAR -> CegarConfig() as T
+        Backend.BOUNDED -> BoundedConfig() as T
+        Backend.CHC -> HornConfig() as T
+        Backend.OC -> OcConfig() as T
+        Backend.LAZY -> null
+        Backend.PORTFOLIO -> PortfolioConfig() as T
+        Backend.TRACEGEN -> TracegenConfig() as T
+        Backend.NONE -> null
+      }
+  }
 }
 
 data class CegarConfig(
@@ -223,10 +223,9 @@ data class CegarConfig(
 }
 
 data class TracegenConfig(
-    @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
-    var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
-
-    val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
+  @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
+  var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
+  val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
 ) : SpecBackendConfig
 
 data class CegarAbstractorConfig(

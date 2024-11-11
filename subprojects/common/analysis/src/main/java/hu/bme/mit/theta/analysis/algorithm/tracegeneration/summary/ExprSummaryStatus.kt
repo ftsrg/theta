@@ -13,18 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-abstract class ExprSummaryStatus(val feasible : Boolean)
+abstract class ExprSummaryStatus(val feasible: Boolean)
 
-class FeasibleExprSummaryStatus<S : State, A : Action>(val summary : ConcreteSummary<S,A>)
-    : ExprSummaryStatus(true)
+class FeasibleExprSummaryStatus<S : State, A : Action>(val summary: ConcreteSummary<S, A>) :
+  ExprSummaryStatus(true)
 
-class InfeasibleExprSummaryStatus(val itp : Expr<BoolType>) : ExprSummaryStatus(false)
+class InfeasibleExprSummaryStatus(val itp: Expr<BoolType>) : ExprSummaryStatus(false)

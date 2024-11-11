@@ -14,10 +14,12 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.analysis.algorithm;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.common.Utils;
 import java.util.Optional;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements Result<Pr> {
     private final Pr proof;

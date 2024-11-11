@@ -63,14 +63,14 @@ enum class InputType {
 }
 
 enum class Backend {
-    CEGAR,
-    BOUNDED,
-    CHC,
-    OC,
-    LAZY,
-    PORTFOLIO,
-    TRACEGEN,
-    NONE,
+  CEGAR,
+  BOUNDED,
+  CHC,
+  OC,
+  LAZY,
+  PORTFOLIO,
+  TRACEGEN,
+  NONE,
 }
 
 enum class POR(
@@ -377,9 +377,9 @@ enum class Search {
   abstract fun getComp(cfa: XCFA): ArgNodeComparator
 }
 
-enum class TracegenAbstraction{
-    NONE,
-    // TODO add EXPL
+enum class TracegenAbstraction {
+  NONE
+  // TODO add EXPL
 }
 
 enum class InitPrec(
