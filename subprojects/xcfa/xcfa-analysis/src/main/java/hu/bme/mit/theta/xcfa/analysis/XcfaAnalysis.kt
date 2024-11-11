@@ -228,9 +228,17 @@ fun getXcfaErrorPredicate(
             val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
             val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
             val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globalVars1) for (v2 in globalVars2) if (v1.varDecl == v2.varDecl)
-              if (v1.access.isWritten || v2.access.isWritten)
-                if ((v1.mutexes intersect v2.mutexes).isEmpty()) return@Predicate true
+            for (v1 in globalVars1) {
+              for (v2 in globalVars2) {
+                if (
+                  v1.globalVar == v2.globalVar &&
+                    !v1.globalVar.atomic &&
+                    (v1.access.isWritten || v2.access.isWritten) &&
+                    (v1.mutexes intersect v2.mutexes).isEmpty()
+                )
+                  return@Predicate true
+              }
+            }
           }
         false
       }

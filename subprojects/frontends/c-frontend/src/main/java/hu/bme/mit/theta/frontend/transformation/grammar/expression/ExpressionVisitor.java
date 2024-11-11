@@ -71,6 +71,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     protected final List<CStatement> preStatements = new ArrayList<>();
     protected final List<CStatement> postStatements = new ArrayList<>();
     protected final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+    protected final Set<VarDecl<?>> atomicVars;
     protected final Map<VarDecl<?>, CDeclaration> functions;
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
@@ -80,6 +81,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private final Logger uniqueWarningLogger;
 
     public ExpressionVisitor(
+            Set<VarDecl<?>> atomicVars,
             ParseContext parseContext,
             FunctionVisitor functionVisitor,
             Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables,
@@ -87,6 +89,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             TypedefVisitor typedefVisitor,
             TypeVisitor typeVisitor,
             Logger uniqueWarningLogger) {
+        this.atomicVars = atomicVars;
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
         this.variables = variables;
@@ -739,7 +742,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
-        return getVar(ctx.Identifier().getText()).getRef();
+        final var variable = getVar(ctx.Identifier().getText());
+        return variable.getRef();
     }
 
     @Override

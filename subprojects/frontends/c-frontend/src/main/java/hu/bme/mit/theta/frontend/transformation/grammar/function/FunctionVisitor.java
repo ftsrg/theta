@@ -38,7 +38,6 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
@@ -77,11 +76,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     public void clear() {
         variables.clear();
+        atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+    private final Set<VarDecl<?>> atomicVariables;
     private int anonCnt = 0;
     private final List<VarDecl<?>> flatVariables;
     private final Map<VarDecl<?>, CDeclaration> functions;
@@ -104,8 +105,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     private void createVars(String name, CDeclaration declaration, CComplexType type) {
-        //        checkState(declaration.getArrayDimensions().size() <= 1, "Currently, higher
-        // dimension arrays not supported");
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
@@ -115,6 +114,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         }
         peek.get2().put(name, varDecl);
         flatVariables.add(varDecl);
+        if (declaration.getType().isAtomic()) {
+            atomicVariables.add(varDecl);
+        }
         parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
         parseContext.getMetadata().create(varDecl.getName(), "cName", name);
         declaration.addVarDecl(varDecl);
@@ -131,11 +133,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         functions = new LinkedHashMap<>();
         this.parseContext = parseContext;
         globalDeclUsageVisitor = new GlobalDeclUsageVisitor(declarationVisitor);
+        atomicVariables = new LinkedHashSet<>();
     }
 
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
+        atomicVariables.clear();
         variables.push(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
@@ -148,7 +152,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
         // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
         if (parseContext.getArithmetic()
-                == ArchitectureConfig.ArithmeticType
+                == ArithmeticType
                         .efficient) { // if it wasn't on efficient, the check returns manual
             Set<ArithmeticTrait> arithmeticTraits =
                     BitwiseChecker.gatherArithmeticTraits(parseContext, globalUsages);
@@ -267,14 +271,24 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             CStatement accept = blockItemListContext.accept(this);
             variables.pop();
             CFunction cFunction =
-                    new CFunction(funcDecl, accept, new ArrayList<>(flatVariables), parseContext);
+                    new CFunction(
+                            funcDecl,
+                            accept,
+                            new ArrayList<>(flatVariables),
+                            parseContext,
+                            atomicVariables);
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
         variables.pop();
         CCompound cCompound = new CCompound(parseContext);
         CFunction cFunction =
-                new CFunction(funcDecl, cCompound, new ArrayList<>(flatVariables), parseContext);
+                new CFunction(
+                        funcDecl,
+                        cCompound,
+                        new ArrayList<>(flatVariables),
+                        parseContext,
+                        atomicVariables);
         recordMetadata(ctx, cCompound);
         recordMetadata(ctx, cFunction);
         return cFunction;
@@ -315,6 +329,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         ctx.constantExpression()
                                 .accept(
                                         new ExpressionVisitor(
+                                                atomicVariables,
                                                 parseContext,
                                                 this,
                                                 variables,
@@ -612,6 +627,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
         ExpressionVisitor expressionVisitor =
                 new ExpressionVisitor(
+                        atomicVariables,
                         parseContext,
                         this,
                         variables,
@@ -737,6 +753,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
         ExpressionVisitor expressionVisitor =
                 new ExpressionVisitor(
+                        atomicVariables,
                         parseContext,
                         this,
                         variables,
