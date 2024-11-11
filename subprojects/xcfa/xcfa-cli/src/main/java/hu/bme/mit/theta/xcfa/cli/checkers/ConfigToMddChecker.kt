@@ -31,6 +31,7 @@ import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getMddChecker(
@@ -63,8 +64,10 @@ fun getMddChecker(
     }
   val safetyProperty = monolithicExpr.propExpr
   val stmts =
-    xcfa.procedures.flatMap { it.edges.map { xcfaEdge -> xcfaEdge.label.toStmt() } }.toSet()
-  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts)
+    xcfa.procedures
+      .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
+      .toSet()
+  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
