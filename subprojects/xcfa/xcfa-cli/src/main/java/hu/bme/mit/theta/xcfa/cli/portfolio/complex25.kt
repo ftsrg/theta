@@ -126,10 +126,7 @@ fun complexPortfolio25(
           solverHome = baseConfig.backendConfig.solverHome,
           timeoutMs = 400_000,
           inProcess = inProcess,
-          specConfig =
-            OcConfig(
-              autoConflict = AutoConflictFinderConfig.RF_WS_FR,
-            ),
+          specConfig = OcConfig(autoConflict = AutoConflictFinderConfig.RF_WS_FR),
         ),
       outputConfig = baseConfig.outputConfig,
       debugConfig = baseConfig.debugConfig,
