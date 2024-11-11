@@ -29,7 +29,30 @@ See [Build.md](Build.md).
 
 - Theta can be imported into [IntelliJ IDEA](https://www.jetbrains.com/idea/) as an existing Gradle project by selecting the _build.gradle.kts_ file in the root of the repository.
 - If you want to build the whole project (and not just run a single test for example), make sure to run the _build task of the whole project_. This can be done by opening the Gradle tab, and then selecting _theta / theta / Tasks / build / build_, right clicking and selecting _Run_.
-- Code styling and copyright noticing should be automatically set up for the ones accepted by the Github CI. It is not recommended to change them.
+- For code formatting and copyright header generation we use **spotless**.
+    - Locally, formatting can be done manually by `gradlew spotlessApply`
+    - Reformatting when saving a file can be set up by installing the `Spotless Applier` plugin (`Ctrl+Alt+s > Plugins`) and enabling it when saving (`Ctrl+Alt+s > Actions on Save`, enable `Run spotless`)
+    - On Linux, the following pre-commit hook can be used to disable commits without formatting:
+      ```
+      #!/bin/bash
+      
+      # Run Spotless Check without interfering with uncommitted files
+      ./gradlew spotlessCheck 2>/dev/null 1>&2
+      
+      # Capture the exit status of spotlessCheck
+      SPOTLESS_STATUS=$?
+      
+      # If spotlessCheck fails, prevent the commit
+      if [ $SPOTLESS_STATUS -ne 0 ]; then
+        echo "Code format check failed. Please run './gradlew spotlessApply' to fix formatting issues."
+        exit 1
+      fi
+      
+      # If spotlessCheck passes, proceed with the commit
+      echo "Spotless check passed."
+      exit 0
+      ```
+      *(write the above into `.git/hooks/pre-commit` and enable execution rights on the file)*
 
 ## Coding conventions
 
