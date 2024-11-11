@@ -155,6 +155,7 @@ constructor(
   val wrappedVar: VarDecl<*>,
   val initValue: LitExpr<*>,
   val threadLocal: Boolean = false,
+  val atomic: Boolean = false,
 )
 
 enum class ParamDirection {

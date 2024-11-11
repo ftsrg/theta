@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
+import kotlin.collections.LinkedHashSet
 
 @DslMarker annotation class XcfaDsl
 
@@ -75,6 +76,7 @@ constructor(
   val manager: ProcedurePassManager,
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
+  private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -107,6 +109,14 @@ constructor(
       this::optimized.isInitialized -> optimized.vars
       this::partlyOptimized.isInitialized -> partlyOptimized.vars
       else -> vars
+    }
+
+  fun VarDecl<*>.isAtomic() =
+    when {
+      this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
+      this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
+        partlyOptimized.vars.contains(this)
+      else -> atomicVars.contains(this)
     }
 
   fun getLocs(): Set<XcfaLocation> =
@@ -182,6 +192,13 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     vars.add(toAdd)
+  }
+
+  fun setAtomic(v: VarDecl<*>) {
+    check(!this::optimized.isInitialized) {
+      "Cannot add/remove/modify elements after optimization passes!"
+    }
+    atomicVars.add(v)
   }
 
   fun removeVar(toRemove: VarDecl<*>) {
