@@ -241,13 +241,17 @@ constructor(
     }
   }
 
-  fun copyMetaLocs(from: XcfaProcedureBuilder) {
+  fun copyMetaLocs(
+    initLoc: XcfaLocation,
+    finalLoc: Optional<XcfaLocation>,
+    errorLoc: Optional<XcfaLocation>,
+  ) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    initLoc = from.initLoc
-    finalLoc = from.finalLoc
-    errorLoc = from.errorLoc
+    this.initLoc = initLoc
+    this.finalLoc = finalLoc
+    this.errorLoc = errorLoc
   }
 
   fun addEdge(toAdd: XcfaEdge) {
