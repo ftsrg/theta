@@ -59,7 +59,7 @@ fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   }
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
-  vars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
+  globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
 
 fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> =
   procedures

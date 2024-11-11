@@ -19,48 +19,47 @@ import hu.bme.mit.theta.xcfa.collectHavocs
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 
-data class XcfaStatistics(
-    val globalVars: Int,
-    val procedures: Collection<XcfaProcedureStatistics>
-)
+data class XcfaStatistics(val globalVars: Int, val procedures: Collection<XcfaProcedureStatistics>)
 
 data class XcfaProcedureStatistics(
-    val localVariables: Int,
-    val locations: Int,
-    val edges: Int,
-    val havocs: Int,
-    val cyclComplexity: Int,
-    val hasFinalLoc: Boolean,
+  val localVariables: Int,
+  val locations: Int,
+  val edges: Int,
+  val havocs: Int,
+  val cyclComplexity: Int,
+  val hasFinalLoc: Boolean,
 )
 
 fun XCFA.getStatistics(): XcfaStatistics {
-    return XcfaStatistics(
-        globalVars = vars.size,
-        procedures = procedures.map {
-            XcfaProcedureStatistics(
-                localVariables = it.vars.size,
-                locations = it.locs.size,
-                edges = it.edges.size,
-                havocs = it.edges.map { it.label.collectHavocs().size }.reduce(Int::plus),
-                cyclComplexity = it.edges.size - it.locs.size + 2,
-                hasFinalLoc = it.finalLoc.isPresent
-            )
-        }
-    )
+  return XcfaStatistics(
+    globalVars = globalVars.size,
+    procedures =
+      procedures.map {
+        XcfaProcedureStatistics(
+          localVariables = it.vars.size,
+          locations = it.locs.size,
+          edges = it.edges.size,
+          havocs = it.edges.map { it.label.collectHavocs().size }.reduce(Int::plus),
+          cyclComplexity = it.edges.size - it.locs.size + 2,
+          hasFinalLoc = it.finalLoc.isPresent,
+        )
+      },
+  )
 }
 
 fun XcfaBuilder.getStatistics(): XcfaStatistics {
-    return XcfaStatistics(
-        globalVars = this.getVars().size,
-        procedures = getProcedures().map {
-            XcfaProcedureStatistics(
-                localVariables = it.getVars().size,
-                locations = it.getLocs().size,
-                edges = it.getEdges().size,
-                havocs = it.getEdges().map { it.label.collectHavocs().size }.reduce(Int::plus),
-                cyclComplexity = it.getEdges().size - it.getLocs().size + 2,
-                hasFinalLoc = it.finalLoc.isPresent
-            )
-        }
-    )
+  return XcfaStatistics(
+    globalVars = this.getVars().size,
+    procedures =
+      getProcedures().map {
+        XcfaProcedureStatistics(
+          localVariables = it.getVars().size,
+          locations = it.getLocs().size,
+          edges = it.getEdges().size,
+          havocs = it.getEdges().map { it.label.collectHavocs().size }.reduce(Int::plus),
+          cyclComplexity = it.getEdges().size - it.getLocs().size + 2,
+          hasFinalLoc = it.finalLoc.isPresent,
+        )
+      },
+  )
 }

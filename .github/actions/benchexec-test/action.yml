@@ -58,11 +58,14 @@ runs:
         folder=$(dirname $(find . -name "theta.jar" | head -n1))
         echo $folder
         pwd
-        for task in $(cat xml/theta.xml | grep 'tasks name=' | grep -oP '(?<=").*(?=")')
+        tasks=($(cat xml/theta.xml | awk '/rundefinition name="${{ inputs.rundef }}"/,/<\/rundefinition>/' | grep 'tasks name=' | grep -oP '(?<=").*(?=")'))
+        tasks_num=$(wc -w <<< ${tasks[@]})
+        timeout=$((900 / tasks_num))
+        for task in ${tasks[@]}
         do
           echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
-          echo "timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
-          timeout 60 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
+          echo "timeout $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
+          timeout $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
         done
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2

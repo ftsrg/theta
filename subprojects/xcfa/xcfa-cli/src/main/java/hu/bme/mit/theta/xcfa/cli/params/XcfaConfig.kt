@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -190,6 +191,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
+        Backend.MDD -> MddConfig() as T
         Backend.NONE -> null
       }
   }
@@ -282,6 +284,12 @@ data class HornConfig(
 data class BoundedConfig(
   @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
   var maxBound: Int = 0,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),
@@ -375,6 +383,28 @@ data class OcConfig(
 data class PortfolioConfig(
   @Parameter(names = ["--portfolio"], description = "Portfolio to run")
   var portfolio: String = "COMPLEX"
+) : SpecBackendConfig
+
+data class MddConfig(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--iteration-strategy"],
+    description = "Iteration strategy for the MDD checker",
+  )
+  var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
 data class OutputConfig(

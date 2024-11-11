@@ -22,11 +22,22 @@ import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs.*
+import hu.bme.mit.theta.core.type.fptype.FpType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import java.math.BigInteger
 import java.util.*
 
 fun CFA.toMonolithicExpr(): MonolithicExpr {
@@ -36,7 +47,11 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
   for ((i, x) in this.locs.withIndex()) {
     map[x] = i
   }
-  val locVar = Decls.Var("__loc__", Int())
+  val locVar =
+    Decls.Var(
+      "__loc__",
+      Int(),
+    ) // TODO: add edge var as well, to avoid parallel edges causing problems
   val tranList =
     this.edges
       .map { e ->
@@ -49,15 +64,40 @@ fun CFA.toMonolithicExpr(): MonolithicExpr {
         )
       }
       .toList()
+
+  val defaultValues =
+    this.vars
+      .map {
+        when (it.type) {
+          is IntType -> Eq(it.ref, Int(0))
+          is BoolType -> Eq(it.ref, Bool(false))
+          is BvType ->
+            Eq(
+              it.ref,
+              BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+            )
+          is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
+          else -> throw IllegalArgumentException("Unsupported type")
+        }
+      }
+      .toList()
+      .let { And(it) }
+
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
   val transExpr = And(transUnfold.exprs)
-  val initExpr = Eq(locVar.ref, Int(map[this.initLoc]!!))
+  val initExpr = And(Eq(locVar.ref, Int(map[this.initLoc]!!)), defaultValues)
   val propExpr = Neq(locVar.ref, Int(map[this.errorLoc.orElseThrow()]!!))
 
   val offsetIndex = transUnfold.indexing
 
-  return MonolithicExpr(initExpr, transExpr, propExpr, offsetIndex)
+  return MonolithicExpr(
+    initExpr,
+    transExpr,
+    propExpr,
+    offsetIndex,
+    vars = this.vars.toList() + listOf(locVar),
+  )
 }
 
 fun CFA.valToAction(val1: Valuation, val2: Valuation): CfaAction {
