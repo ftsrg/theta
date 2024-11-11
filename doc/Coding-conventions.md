@@ -2,6 +2,10 @@
 
 We mainly follow the standard Java coding conventions and most of the conventions from the books _Effective Java_ [1] and _Clean Code_ [4]. Some exceptions and additional rules are listed below. Each rule starts with _DO_, _CONSIDER_, _AVOID_ or _DO NOT_, according to [2].
 
+## Automatic Formatting and Copyright Headers
+
+See [Build.md](Build.md). For the formatting rules, check [java-common.gradle.kts](https://github.com/ftsrg/theta/blob/master/buildSrc/src/main/kotlin/java-common.gradle.kts)
+
 ## Source files
 * **DO** encode files in UTF-8. **DO NOT** use any other format.
 
