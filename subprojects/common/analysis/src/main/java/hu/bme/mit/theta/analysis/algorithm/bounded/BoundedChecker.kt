@@ -76,7 +76,7 @@ constructor(
   private val logger: Logger,
 ) : SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
 
-  private val vars = monolithicExpr.vars()
+  private val vars = monolithicExpr.vars
   private val unfoldedInitExpr =
     PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
   private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }

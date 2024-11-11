@@ -481,6 +481,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         ctx.declaration().declarationSpecifiers(),
                         ctx.declaration().initDeclaratorList());
         CCompound compound = new CCompound(parseContext);
+        final var preCompound = new CCompound(parseContext);
+        final var postCompound = new CCompound(parseContext);
+        compound.setPreStatements(preCompound);
+        compound.setPostStatements(postCompound);
         for (CDeclaration declaration : declarations) {
             if (declaration.getInitExpr() != null) {
                 createVars(declaration);
@@ -546,16 +550,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         recordMetadata(ctx, cAssignment);
                         compound.getcStatementList().add(cAssignment);
                         if (declaration.getInitExpr() instanceof CCompound compoundInitExpr) {
-                            final var preCompound = new CCompound(parseContext);
-                            final var postCompound = new CCompound(parseContext);
                             final var preStatements = collectPreStatements(compoundInitExpr);
                             preCompound.getcStatementList().addAll(preStatements);
                             final var postStatements = collectPostStatements(compoundInitExpr);
                             postCompound.getcStatementList().addAll(postStatements);
                             resetPreStatements(compoundInitExpr);
                             resetPostStatements(compoundInitExpr);
-                            compound.setPreStatements(preCompound);
-                            compound.setPostStatements(postCompound);
                         }
                     }
                 }

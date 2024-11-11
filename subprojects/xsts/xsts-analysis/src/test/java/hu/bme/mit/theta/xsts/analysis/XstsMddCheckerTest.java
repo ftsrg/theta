@@ -132,6 +132,11 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/count_up_down2.prop",
                         true
                     },
+                    {
+                        "src/test/resources/model/count_up_down.xsts",
+                        "src/test/resources/property/count_up_down2.prop",
+                        true
+                    },
 
                     //                {"src/test/resources/model/bhmr2007.xsts",
                     // "src/test/resources/property/bhmr2007.prop", true},
@@ -162,6 +167,12 @@ public class XstsMddCheckerTest {
                     //
                     //                { "src/test/resources/model/if2.xsts",
                     // "src/test/resources/property/if2.prop", false}
+
+                    {
+                        "src/test/resources/model/localvars3.xsts",
+                        "src/test/resources/property/localvars3.prop",
+                        false
+                    },
                 });
     }
 

@@ -23,7 +23,7 @@ import java.util.*
 
 class XCFA(
   val name: String,
-  val vars: Set<XcfaGlobalVar>, // global variables
+  val globalVars: Set<XcfaGlobalVar>, // global variables
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
   val unsafeUnrollUsed: Boolean = false,
@@ -70,7 +70,7 @@ class XCFA(
     other as XCFA
 
     if (name != other.name) return false
-    if (vars != other.vars) return false
+    if (globalVars != other.globalVars) return false
     if (procedures != other.procedures) return false
     if (initProcedures != other.initProcedures) return false
 
@@ -80,7 +80,7 @@ class XCFA(
   override fun hashCode(): Int {
     if (cachedHash != null) return cachedHash as Int
     var result = name.hashCode()
-    result = 31 * result + vars.hashCode()
+    result = 31 * result + globalVars.hashCode()
     result = 31 * result + procedures.hashCode()
     result = 31 * result + initProcedures.hashCode()
     cachedHash = result
@@ -88,7 +88,7 @@ class XCFA(
   }
 
   override fun toString(): String {
-    return "XCFA(name='$name', vars=$vars, procedures=$procedures, initProcedures=$initProcedures)"
+    return "XCFA(name='$name', vars=$globalVars, procedures=$procedures, initProcedures=$initProcedures)"
   }
 }
 

@@ -37,7 +37,7 @@ fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
       .also { it.copyMetaLocs(this) }
   }
 
-  val builder = XcfaBuilder(name, vars.toMutableSet())
+  val builder = XcfaBuilder(name, globalVars.toMutableSet())
   procedureBuilders.forEach { builder.addProcedure(it.copy()) }
   initProcedureBuilders.forEach { (proc, params) ->
     val initProc = builder.getProcedures().find { it.name == proc.name } ?: proc.copy()

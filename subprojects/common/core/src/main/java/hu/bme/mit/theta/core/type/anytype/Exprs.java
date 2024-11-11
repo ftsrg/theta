@@ -15,25 +15,23 @@
  */
 package hu.bme.mit.theta.core.type.anytype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public final class Exprs {
 
-    private Exprs() {
-    }
+    private Exprs() {}
 
     public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
         return RefExpr.of(decl);
     }
 
-    public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond,
-                                                                final Expr<ExprType> then,
-                                                                final Expr<ExprType> elze) {
+    public static <ExprType extends Type> IteExpr<ExprType> Ite(
+            final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
         return IteExpr.of(cond, then, elze);
     }
 
@@ -42,12 +40,13 @@ public final class Exprs {
     }
 
     public static <ArrType extends Type, OffsetType extends Type, ExprType extends Type>
-    Dereference<ArrType, OffsetType, ExprType> Dereference(final Expr<ArrType> arr, final Expr<OffsetType> offset, final ExprType type) {
+            Dereference<ArrType, OffsetType, ExprType> Dereference(
+                    final Expr<ArrType> arr, final Expr<OffsetType> offset, final ExprType type) {
         return Dereference.of(arr, offset, type);
     }
 
     public static <ArrType extends Type, ExprType extends Type>
-    Reference<ArrType, ExprType> Reference(final Expr<ExprType> expr, final ArrType type) {
+            Reference<ArrType, ExprType> Reference(final Expr<ExprType> expr, final ArrType type) {
         return Reference.of(expr, type);
     }
 
@@ -55,14 +54,15 @@ public final class Exprs {
      * Convenience methods
      */
 
-    public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op,
-                                                                    final int i) {
-        checkArgument(i > 0);
-        if (i == 1) {
+    public static <ExprType extends Type> Expr<ExprType> Prime(
+            final Expr<ExprType> op, final int i) {
+        checkArgument(i >= 0);
+        if (i == 0) {
+            return op;
+        } else if (i == 1) {
             return Prime(op);
         } else {
             return Prime(Prime(op, i - 1));
         }
     }
-
 }

@@ -520,7 +520,7 @@ class XcfaOcChecker(
 
   private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
     if (
-      this !== memoryDecl && xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }
+      this !== memoryDecl && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
     ) { // if not global var
       cast(
         localVars

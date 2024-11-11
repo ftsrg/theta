@@ -51,6 +51,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
+      EmptyEdgeRemovalPass(),
       RemoveDeadEnds(),
       EliminateSelfLoops(),
     ),

@@ -45,7 +45,7 @@ constructor(
   fun build(): XCFA {
     return XCFA(
       name = name,
-      vars = vars,
+      globalVars = vars,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
       unsafeUnrollUsed = unsafeUnrollUsed,
