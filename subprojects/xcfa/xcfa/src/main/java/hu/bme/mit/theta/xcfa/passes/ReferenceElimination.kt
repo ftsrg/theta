@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -147,7 +148,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val initEdges = builder.initLoc.outgoingEdges
     val newInitEdges =
       initEdges.map {
-        it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
+        val labels = it.label.getFlatLabels()
+        val sizeInit =
+          labels.find {
+            it is StmtLabel &&
+              it.stmt is AssignStmt<*> &&
+              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> }
+          }
+        val newLabelOrder = listOfNotNull(sizeInit) + initLabels + labels.filter { it != sizeInit }
+        it.withLabel(SequenceLabel(newLabelOrder, it.label.metadata))
       }
     initEdges.forEach(builder::removeEdge)
     newInitEdges.forEach(builder::addEdge)
