@@ -64,8 +64,8 @@ runs:
         for task in ${tasks[@]}
         do
           echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
-          echo "timeout $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
-          timeout $timeout --kill-after 15 benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
+          echo "timeout --kill-after 15 $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true"
+          timeout --kill-after 15 $timeout benchexec xml/theta.xml -n 2 --no-container --tool-directory $folder -r ${{ inputs.rundef }} -t "$task" || true
         done
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
