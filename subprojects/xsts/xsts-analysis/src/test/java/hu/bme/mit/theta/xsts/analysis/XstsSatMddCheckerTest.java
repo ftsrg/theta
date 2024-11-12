@@ -41,7 +41,7 @@ public class XstsSatMddCheckerTest {
 
     @Test
     public void test() throws Exception {
-        XstsMddCheckerTest.runTestWithIterationStrategy(filePath, propPath, safe, IterationStrategy.SAT);
+        XstsMddCheckerTest.runTestWithIterationStrategy(
+                filePath, propPath, safe, IterationStrategy.SAT);
     }
-
 }
