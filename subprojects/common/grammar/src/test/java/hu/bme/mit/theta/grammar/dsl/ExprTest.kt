@@ -65,6 +65,7 @@ class ExprTest {
     fun data(): Collection<Array<Any>> {
       val x = Var("x", Int())
       val p = Param("p", Int())
+      val casret = Var("thr1::casret*", Int())
 
       val bvLit1 = Bv(BooleanArray(4) { it % 2 == 0 })
       val bvLit2 = Bv(BooleanArray(4) { it % 2 == 1 })
@@ -286,6 +287,11 @@ class ExprTest {
           emptyMap<Symbol, Decl<*>>(),
         ),
         arrayOf(Dereference(Int(0), Int(1), Int()), "(deref 0 1 Int)", emptyMap<Symbol, Decl<*>>()),
+        arrayOf(
+          Dereference(casret.ref, Int(0), Int()),
+          "(deref thr1::casret* 0 Int)",
+          mapOf(Pair(NamedSymbol("thr1::casret*"), casret)),
+        ),
       )
     }
   }
