@@ -15,19 +15,38 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait.*
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
-import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
-import hu.bme.mit.theta.xcfa.analysis.oc.optimizeFurther
+import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.RF_WS_FR
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
+import hu.bme.mit.theta.xcfa.cli.params.Backend.OC
+import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
+import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.COI
+import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
+import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
+import hu.bme.mit.theta.xcfa.cli.params.Domain.PRED_CART
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
+import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
+import hu.bme.mit.theta.xcfa.cli.params.POR.*
+import hu.bme.mit.theta.xcfa.cli.params.Refinement.NWT_IT_WP
+import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
+import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
 import java.nio.file.Paths
 
@@ -56,35 +75,35 @@ fun complexPortfolio25(
           lbeLevel = LbePass.level,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
-          specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
+          specConfig = CFrontendConfig(arithmetic = efficient),
         ),
       backendConfig =
         BackendConfig(
-          backend = Backend.CEGAR,
+          backend = CEGAR,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
           specConfig =
             CegarConfig(
-              initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
+              initPrec = EMPTY,
+              porLevel = NOPOR,
               porRandomSeed = -1,
-              coi = ConeOfInfluenceMode.NO_COI,
-              cexMonitor = CexMonitorOptions.CHECK,
+              coi = NO_COI,
+              cexMonitor = CHECK,
               abstractorConfig =
                 CegarAbstractorConfig(
                   abstractionSolver = "Z3",
                   validateAbstractionSolver = false,
-                  domain = Domain.EXPL,
+                  domain = EXPL,
                   maxEnum = 1,
-                  search = Search.ERR,
+                  search = ERR,
                 ),
               refinerConfig =
                 CegarRefinerConfig(
                   refinementSolver = "Z3",
                   validateRefinementSolver = false,
-                  refinement = Refinement.SEQ_ITP,
-                  exprSplitter = ExprSplitterOptions.WHOLE,
-                  pruneStrategy = PruneStrategy.FULL,
+                  refinement = SEQ_ITP,
+                  exprSplitter = WHOLE,
+                  pruneStrategy = FULL,
                 ),
             ),
         ),
@@ -122,11 +141,11 @@ fun complexPortfolio25(
       frontendConfig = baseConfig.frontendConfig,
       backendConfig =
         BackendConfig(
-          backend = Backend.OC,
+          backend = OC,
           solverHome = baseConfig.backendConfig.solverHome,
           timeoutMs = 400_000,
           inProcess = inProcess,
-          specConfig = OcConfig(autoConflict = AutoConflictFinderConfig.RF_WS_FR),
+          specConfig = OcConfig(autoConflict = RF_WS_FR),
         ),
       outputConfig = baseConfig.outputConfig,
       debugConfig = baseConfig.debugConfig,
@@ -137,13 +156,9 @@ fun complexPortfolio25(
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
-        coi =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
-            ConeOfInfluenceMode.NO_COI
-          else ConeOfInfluenceMode.COI,
-        porLevel =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
-        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
+        coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
+        porLevel = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
       baseConfig.copy(
@@ -155,8 +170,8 @@ fun complexPortfolio25(
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val recursiveConfig =
       baseCegarConfig.copy(
-        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
-        refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY),
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = BFS),
+        refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = LAZY),
       )
     baseConfig =
       baseConfig.copy(backendConfig = baseConfig.backendConfig.copy(specConfig = recursiveConfig))
@@ -165,21 +180,17 @@ fun complexPortfolio25(
   val timeoutOrNotSolvableError =
     ExceptionTrigger(
       fallthroughExceptions =
-        setOf(
-          ErrorCodeException(ExitCodes.SOLVER_ERROR.code),
-          ErrorCodeException(ExitCodes.SERVER_ERROR.code),
-        ),
+        setOf(ErrorCodeException(SOLVER_ERROR.code), ErrorCodeException(SERVER_ERROR.code)),
       label = "TimeoutOrNotSolvableError",
     )
 
   val timeoutOrSolverError =
     ExceptionTrigger(
-      fallthroughExceptions = setOf(ErrorCodeException(ExitCodes.SERVER_ERROR.code)),
+      fallthroughExceptions = setOf(ErrorCodeException(SERVER_ERROR.code)),
       label = "TimeoutOrSolverError",
     )
 
-  val solverError =
-    ExceptionTrigger(ErrorCodeException(ExitCodes.SOLVER_ERROR.code), label = "SolverError")
+  val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label = "SolverError")
 
   val anyError = ExceptionTrigger(label = "Anything")
 
@@ -232,10 +243,10 @@ fun complexPortfolio25(
         "BITWISE_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -245,10 +256,10 @@ fun complexPortfolio25(
         "BITWISE_EXPL_NWT_IT_WP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -261,10 +272,10 @@ fun complexPortfolio25(
         "BITWISE_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -277,10 +288,10 @@ fun complexPortfolio25(
         "BITWISE_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -311,10 +322,10 @@ fun complexPortfolio25(
         "BITWISE_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -331,10 +342,10 @@ fun complexPortfolio25(
         "BITWISE_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -358,10 +369,10 @@ fun complexPortfolio25(
         "BITWISE_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -374,10 +385,10 @@ fun complexPortfolio25(
         "FLOAT_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 200000,
         ),
         checker,
@@ -387,10 +398,10 @@ fun complexPortfolio25(
         "FLOAT_EXPL_NWT_IT_WP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 200000,
         ),
         checker,
@@ -401,11 +412,11 @@ fun complexPortfolio25(
         "FLOAT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
           validateRefinementSolver = true,
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 200000,
         ),
         checker,
@@ -418,11 +429,11 @@ fun complexPortfolio25(
         "FLOAT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
           validateRefinementSolver = true,
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -453,10 +464,10 @@ fun complexPortfolio25(
         "FLOAT_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -469,11 +480,11 @@ fun complexPortfolio25(
         "FLOAT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
           validateRefinementSolver = true,
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -497,10 +508,10 @@ fun complexPortfolio25(
         "FLOAT_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -511,10 +522,10 @@ fun complexPortfolio25(
         "LIN_INT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -524,10 +535,10 @@ fun complexPortfolio25(
         "LIN_INT_EXPL_NWT_IT_WP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -540,10 +551,10 @@ fun complexPortfolio25(
         "LIN_INT_EXPL_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 300000,
         ),
         checker,
@@ -567,10 +578,10 @@ fun complexPortfolio25(
         "LIN_INT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 300000,
         ),
         checker,
@@ -583,10 +594,10 @@ fun complexPortfolio25(
         "LIN_INT_PRED_CART_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -610,10 +621,10 @@ fun complexPortfolio25(
         "LIN_INT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -630,10 +641,10 @@ fun complexPortfolio25(
         "LIN_INT_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "z3:4.12.2",
           refinementSolver = "z3:4.12.2",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -650,10 +661,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_NWT_IT_WP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -663,10 +674,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -683,10 +694,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 100000,
         ),
         checker,
@@ -710,10 +721,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_SEQ_ITP_z3:4.12.2-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "z3:4.12.2",
           refinementSolver = "z3:4.12.2",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 100000,
         ),
         checker,
@@ -726,10 +737,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 200000,
         ),
         checker,
@@ -753,10 +764,10 @@ fun complexPortfolio25(
         "NONLIN_INT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -773,10 +784,10 @@ fun complexPortfolio25(
         "NONLIN_INT_PRED_CART_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -793,10 +804,10 @@ fun complexPortfolio25(
         "NONLIN_INT_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 0,
         ),
         checker,
@@ -820,10 +831,10 @@ fun complexPortfolio25(
         "ARR_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -833,10 +844,10 @@ fun complexPortfolio25(
         "ARR_EXPL_NWT_IT_WP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 100000,
         ),
         checker,
@@ -847,10 +858,10 @@ fun complexPortfolio25(
         "ARR_PRED_CART_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 300000,
         ),
         checker,
@@ -874,10 +885,10 @@ fun complexPortfolio25(
         "ARR_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "z3:4.12.2",
           refinementSolver = "z3:4.12.2",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 300000,
         ),
         checker,
@@ -888,10 +899,10 @@ fun complexPortfolio25(
         "ARR_PRED_CART_SEQ_ITP_princess:2023-06-19-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "princess:2023-06-19",
           refinementSolver = "princess:2023-06-19",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 500000,
         ),
         checker,
@@ -915,10 +926,10 @@ fun complexPortfolio25(
         "ARR_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "cvc5:1.0.8",
           refinementSolver = "cvc5:1.0.8",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 500000,
         ),
         checker,
@@ -931,10 +942,10 @@ fun complexPortfolio25(
         "MULTITHREAD_EXPL_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 150000,
         ),
         checker,
@@ -944,10 +955,10 @@ fun complexPortfolio25(
         "MULTITHREAD_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 150000,
         ),
         checker,
@@ -960,10 +971,10 @@ fun complexPortfolio25(
         "MULTITHREAD_EXPL_NWT_IT_WP_z3:4.12.2-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "z3:4.12.2",
           refinementSolver = "z3:4.12.2",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 300000,
         ),
         checker,
@@ -987,10 +998,10 @@ fun complexPortfolio25(
         "MULTITHREAD_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.EXPL,
+          domain = EXPL,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.NWT_IT_WP,
+          refinement = NWT_IT_WP,
           timeoutMs = 300000,
         ),
         checker,
@@ -1007,10 +1018,10 @@ fun complexPortfolio25(
         "MULTITHREAD_PRED_CART_SEQ_ITP_Z3-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "Z3",
           refinementSolver = "Z3",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -1034,10 +1045,10 @@ fun complexPortfolio25(
         "MULTITHREAD_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "mathsat:5.6.10",
           refinementSolver = "mathsat:5.6.10",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -1054,10 +1065,10 @@ fun complexPortfolio25(
         "MULTITHREAD_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
         baseConfig.adaptConfig(
           inProcess = inProcess,
-          domain = Domain.PRED_CART,
+          domain = PRED_CART,
           abstractionSolver = "z3:4.12.2",
           refinementSolver = "z3:4.12.2",
-          refinement = Refinement.SEQ_ITP,
+          refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
         checker,
@@ -1069,27 +1080,27 @@ fun complexPortfolio25(
         solverError,
       )
     )
-    if (trait == ArithmeticTrait.BITWISE) {
+    if (trait == BITWISE) {
       return STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.FLOAT) {
+    if (trait == FLOAT) {
       return STM(config_FLOAT_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.LIN_INT) {
+    if (trait == LIN_INT) {
       return STM(config_LIN_INT_EXPL_NWT_IT_WP_mathsat, edges)
     }
 
-    if (trait == ArithmeticTrait.NONLIN_INT) {
+    if (trait == NONLIN_INT) {
       return STM(config_NONLIN_INT_EXPL_NWT_IT_WP_Z3, edges)
     }
 
-    if (trait == ArithmeticTrait.ARR) {
+    if (trait == ARR) {
       return STM(config_ARR_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.MULTITHREAD) {
+    if (trait == MULTITHREAD) {
       return STM(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, edges)
     }
 
@@ -1098,22 +1109,20 @@ fun complexPortfolio25(
 
   val mainTrait =
     when {
-      parseContext.multiThreading -> ArithmeticTrait.MULTITHREAD
-      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> ArithmeticTrait.FLOAT
-      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ArithmeticTrait.ARR
-      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> ArithmeticTrait.BITWISE
-      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> ArithmeticTrait.NONLIN_INT
-      else -> ArithmeticTrait.LIN_INT
+      parseContext.multiThreading -> MULTITHREAD
+      FLOAT in parseContext.arithmeticTraits -> FLOAT
+      ARR in parseContext.arithmeticTraits -> ARR
+      BITWISE in parseContext.arithmeticTraits -> BITWISE
+      NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
+      else -> LIN_INT
     }
 
-  logger.write(Logger.Level.RESULT, "Using portfolio $mainTrait\n")
+  logger.write(RESULT, "Using portfolio $mainTrait\n")
 
   var inProcessStm = getStm(mainTrait, true)
   var notInProcessStm = getStm(mainTrait, false)
 
-  if (
-    parseContext.multiThreading && baseConfig.inputConfig.property == ErrorDetection.ERROR_LOCATION
-  ) {
+  if (parseContext.multiThreading && baseConfig.inputConfig.property == ERROR_LOCATION) {
     val inProcOc = ConfigNode("OC", ocConfig(true), checker)
     val notInProcOc = ConfigNode("OC", ocConfig(false), checker)
     val inProcessCegar = HierarchicalNode("InProcessCegar", inProcessStm)

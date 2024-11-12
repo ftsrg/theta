@@ -56,7 +56,7 @@ private val Expr<*>.vars
   get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(
-  xcfa: XCFA,
+  private val xcfa: XCFA,
   decisionProcedure: OcDecisionProcedureType,
   private val logger: Logger,
   conflictInput: String?,
@@ -65,7 +65,6 @@ class XcfaOcChecker(
   private val autoConflictConfig: AutoConflictFinderConfig,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val xcfa: XCFA = xcfa
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
   private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
