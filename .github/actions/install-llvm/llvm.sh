@@ -20,7 +20,7 @@ usage() {
     exit 1;
 }
 
-CURRENT_LLVM_STABLE=16
+CURRENT_LLVM_STABLE=18
 BASE_URL="http://apt.llvm.org"
 
 # Check for required tools
@@ -125,7 +125,10 @@ LLVM_VERSION_PATTERNS[13]="-13"
 LLVM_VERSION_PATTERNS[14]="-14"
 LLVM_VERSION_PATTERNS[15]="-15"
 LLVM_VERSION_PATTERNS[16]="-16"
-LLVM_VERSION_PATTERNS[17]=""
+LLVM_VERSION_PATTERNS[17]="-17"
+LLVM_VERSION_PATTERNS[18]="-18"
+LLVM_VERSION_PATTERNS[19]="-19"
+LLVM_VERSION_PATTERNS[20]=""
 
 if [ ! ${LLVM_VERSION_PATTERNS[$LLVM_VERSION]+_} ]; then
     echo "This script does not support LLVM version $LLVM_VERSION"
@@ -161,9 +164,15 @@ if [[ -z "`apt-key list 2> /dev/null | grep -i llvm`" ]]; then
     # Delete the key in the old format
     apt-key del AF4F7421
 fi
-add-apt-repository "${REPO_NAME}"
+if [[ "${VERSION_CODENAME}" == "bookworm" ]]; then
+    # add it twice to workaround:
+    # https://github.com/llvm/llvm-project/issues/62475
+    add-apt-repository -y "${REPO_NAME}"
+fi
+
+add-apt-repository -y "${REPO_NAME}"
 apt-get update
-PKG="clang-$LLVM_VERSION" # lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION"
+PKG="clang-$LLVM_VERSION lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION"
 if [[ $ALL -eq 1 ]]; then
     # same as in test-install.sh
     # No worries if we have dups
