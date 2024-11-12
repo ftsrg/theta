@@ -56,10 +56,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
-import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
@@ -99,6 +96,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     val random = Random(cegarConfig.porRandomSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random
+  }
+  if (config.inputConfig.property == ErrorDetection.MEMSAFETY) {
+    MemsafetyPass.NEED_CHECK = true
   }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
@@ -249,6 +249,24 @@ private fun backend(
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
                 else SafetyResult.unknown<EmptyProof, EmptyCex>()
+              }
+
+              result.isUnsafe && config.inputConfig.property == ErrorDetection.MEMSAFETY -> {
+                // need to determine what kind
+                val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
+                val namedState =
+                  trace
+                    ?.states
+                    ?.asReversed()
+                    ?.getOrNull(1)
+                    ?.processes
+                    ?.values
+                    ?.firstOrNull()
+                    ?.locs
+                    ?.firstOrNull()
+                    ?.name
+                println(namedState)
+                result
               }
 
               else -> result

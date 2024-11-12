@@ -35,6 +35,14 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection 
         ErrorDetection.OVERFLOW
       }
 
+      propertyFile.name.endsWith("valid-memsafety.prp") -> {
+        ErrorDetection.MEMSAFETY
+      }
+
+      propertyFile.name.endsWith("valid-memcleanup.prp") -> {
+        ErrorDetection.MEMCLEANUP
+      }
+
       else -> {
         logger.write(
           Logger.Level.INFO,

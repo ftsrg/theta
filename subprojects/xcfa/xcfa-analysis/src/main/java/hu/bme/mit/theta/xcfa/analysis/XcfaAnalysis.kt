@@ -204,6 +204,8 @@ enum class ErrorDetection {
   ERROR_LOCATION,
   DATA_RACE,
   OVERFLOW,
+  MEMSAFETY,
+  MEMCLEANUP,
   NO_ERROR,
 }
 
@@ -211,6 +213,7 @@ fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
   when (errorDetection) {
+    ErrorDetection.MEMSAFETY,
     ErrorDetection.ERROR_LOCATION ->
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         s.processes.any { it.value.locs.peek().error }
@@ -246,6 +249,8 @@ fun getXcfaErrorPredicate(
 
     ErrorDetection.NO_ERROR,
     ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+
+    ErrorDetection.MEMCLEANUP -> TODO()
   }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =

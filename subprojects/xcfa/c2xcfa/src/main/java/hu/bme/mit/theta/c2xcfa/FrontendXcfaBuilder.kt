@@ -21,13 +21,16 @@ import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -40,6 +43,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -52,6 +56,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFa
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import java.math.BigInteger
 import java.util.stream.Collectors
 
@@ -122,6 +127,14 @@ class FrontendXcfaBuilder(
             )
           )
         )
+        if (MemsafetyPass.NEED_CHECK) {
+          val bounds = globalDeclaration.get1().arrayDimensions[0].expression
+          checkState(
+            bounds is IntLitExpr || bounds is BvLitExpr,
+            "Only IntLit and BvLit expression expected here.",
+          )
+          initStmtList.add(builder.allocate(parseContext, globalDeclaration.get2().ref, bounds))
+        }
       } else {
         if (
           globalDeclaration.get1().initExpr != null &&
@@ -321,6 +334,13 @@ class FrontendXcfaBuilder(
         }
 
         is RefExpr<*> -> {
+          if (
+            (CComplexType.getType(lValue, parseContext) is CPointer ||
+              CComplexType.getType(lValue, parseContext) is CArray ||
+              CComplexType.getType(lValue, parseContext) is CStruct) && rExpression.hasArithmetic()
+          ) {
+            throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
+          }
           AssignStmtLabel(
             lValue,
             cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
@@ -1058,3 +1078,11 @@ class FrontendXcfaBuilder(
     }
   }
 }
+
+private fun Expr<*>.hasArithmetic(): Boolean =
+  when (this) {
+    is ModExpr -> ops.any { it.hasArithmetic() }
+    is LitExpr -> false
+    is RefExpr -> false
+    else -> true
+  }

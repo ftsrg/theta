@@ -107,7 +107,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           builder.addVar(varDecl)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
-          Pair(varDecl, SequenceLabel(listOf(assign1, assign2)))
+          val labels =
+            if (MemsafetyPass.NEED_CHECK) {
+              val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+
+              listOf(assign1, assign2, assign3)
+            } else {
+              listOf(assign1, assign2)
+            }
+          Pair(varDecl, SequenceLabel(labels))
         }
 
     if (builder.parent.getInitProcedures().any { it.first == builder }) {
