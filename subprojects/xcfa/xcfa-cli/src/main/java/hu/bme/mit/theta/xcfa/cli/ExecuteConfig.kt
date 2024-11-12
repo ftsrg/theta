@@ -97,7 +97,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
-  if (config.inputConfig.property == ErrorDetection.MEMSAFETY) {
+  if (
+    config.inputConfig.property == ErrorDetection.MEMSAFETY ||
+      config.inputConfig.property == ErrorDetection.MEMCLEANUP
+  ) {
     MemsafetyPass.NEED_CHECK = true
   }
   if (config.debugConfig.argToFile) {
