@@ -34,6 +34,7 @@ constructor(
   private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
+  var unsafeUnrollUsed: Boolean = false,
 ) {
 
   fun getVars(): Set<XcfaGlobalVar> = vars
@@ -48,6 +49,7 @@ constructor(
       globalVars = vars,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
+      unsafeUnrollUsed = unsafeUnrollUsed,
     )
   }
 
@@ -239,13 +241,17 @@ constructor(
     }
   }
 
-  fun copyMetaLocs(from: XcfaProcedureBuilder) {
+  fun copyMetaLocs(
+    initLoc: XcfaLocation,
+    finalLoc: Optional<XcfaLocation>,
+    errorLoc: Optional<XcfaLocation>,
+  ) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    initLoc = from.initLoc
-    finalLoc = from.finalLoc
-    errorLoc = from.errorLoc
+    this.initLoc = initLoc
+    this.finalLoc = finalLoc
+    this.errorLoc = errorLoc
   }
 
   fun addEdge(toAdd: XcfaEdge) {
@@ -313,5 +319,9 @@ constructor(
     val savedParams = ArrayList(params)
     params.clear()
     savedParams.forEach { params.add(Pair(checkNotNull(varLut[it.first]), it.second)) }
+  }
+
+  fun setUnsafeUnroll() {
+    parent.unsafeUnrollUsed = true
   }
 }

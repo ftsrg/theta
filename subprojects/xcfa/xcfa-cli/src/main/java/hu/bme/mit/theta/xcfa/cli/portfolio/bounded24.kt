@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import java.nio.file.Paths
 
-fun boundedPortfolio(
+fun boundedPortfolio24(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,

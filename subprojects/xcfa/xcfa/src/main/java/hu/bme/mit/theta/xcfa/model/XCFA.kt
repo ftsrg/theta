@@ -26,6 +26,7 @@ class XCFA(
   val globalVars: Set<XcfaGlobalVar>, // global variables
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
+  val unsafeUnrollUsed: Boolean = false,
 ) {
 
   val pointsToGraph by this.lazyPointsToGraph

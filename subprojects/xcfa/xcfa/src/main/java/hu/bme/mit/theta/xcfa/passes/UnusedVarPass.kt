@@ -41,6 +41,11 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
       lastEdges = edges
 
       usedVars.clear()
+      usedVars.addAll(
+        builder.parent.getProcedures().flatMap {
+          it.getParams().filter { it.second != ParamDirection.IN }.map { it.first }
+        }
+      )
       edges.forEach { edge ->
         usedVars.addAll(
           edge.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key }

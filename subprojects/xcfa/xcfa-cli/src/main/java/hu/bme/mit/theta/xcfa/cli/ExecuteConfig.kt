@@ -243,7 +243,7 @@ private fun backend(
           }
           .let { result ->
             when {
-              result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
+              result.isSafe && xcfa.unsafeUnrollUsed -> {
                 // cannot report safe if force unroll was used
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                 if (config.outputConfig.acceptUnreliableSafe)

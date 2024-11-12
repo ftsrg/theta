@@ -50,16 +50,13 @@ import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
-import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
   get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(
-  xcfa: XCFA,
+  private val xcfa: XCFA,
   decisionProcedure: OcDecisionProcedureType,
   private val logger: Logger,
   conflictInput: String?,
@@ -68,10 +65,6 @@ class XcfaOcChecker(
   private val autoConflictConfig: AutoConflictFinderConfig,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val xcfa: XCFA =
-    xcfa.optimizeFurther(
-      listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
-    )
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
   private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())

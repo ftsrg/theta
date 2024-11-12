@@ -13,28 +13,42 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.oc
+package hu.bme.mit.theta.xcfa.model
 
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaBuilder
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
-internal fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
+fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
   if (passes.isEmpty()) return this
   val passManager = ProcedurePassManager(passes)
   val copy: XcfaProcedureBuilder.() -> XcfaProcedureBuilder = {
+    val newLocs = getLocs().associateWith { it.copy() }
     XcfaProcedureBuilder(
         name = name,
         manager = passManager,
         params = getParams().toMutableList(),
         vars = getVars().toMutableSet(),
-        locs = getLocs().toMutableSet(),
-        edges = getEdges().toMutableSet(),
+        locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
+        edges =
+          getEdges()
+            .map {
+              val source = newLocs[it.source]!!
+              val target = newLocs[it.target]!!
+              val edge = it.withSource(source).withTarget(target)
+              source.outgoingEdges.add(edge)
+              target.incomingEdges.add(edge)
+              edge
+            }
+            .toMutableSet(),
         metaData = metaData.toMutableMap(),
       )
-      .also { it.copyMetaLocs(this) }
+      .also {
+        it.copyMetaLocs(
+          newLocs[initLoc]!!,
+          finalLoc.map { newLocs[it] },
+          errorLoc.map { newLocs[it] },
+        )
+      }
   }
 
   val builder = XcfaBuilder(name, globalVars.toMutableSet())

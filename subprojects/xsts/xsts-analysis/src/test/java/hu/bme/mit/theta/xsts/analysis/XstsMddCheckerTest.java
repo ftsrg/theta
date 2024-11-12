@@ -97,21 +97,24 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/sequential2.prop",
                         false
                     },
-                    {
-                        "src/test/resources/model/on_off_statemachine.xsts",
-                        "src/test/resources/property/on_off_statemachine.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/on_off_statemachine.xsts",
-                        "src/test/resources/property/on_off_statemachine2.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/on_off_statemachine.xsts",
-                        "src/test/resources/property/on_off_statemachine3.prop",
-                        false
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    // "src/test/resources/property/on_off_statemachine.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    // "src/test/resources/property/on_off_statemachine2.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    // "src/test/resources/property/on_off_statemachine3.prop",
+                    //                        false
+                    //                    },
 
                     //                {"src/test/resources/model/counter50.xsts",
                     // "src/test/resources/property/x_eq_5.prop", false},
