@@ -7,8 +7,8 @@ runs:
     - name: Print file path
       shell: bash
       run: |
-        echo ${{ format('{0}/{1}', github.action_path, 'specification-transformation.bin') }}
-        ls -l ${{ format('{0}/{1}', github.action_path, 'specification-transformation.bin') }} && echo "file_exists=true" >> "$GITHUB_ENV" || echo "file_exists=false" >> "$GITHUB_ENV"
+        echo ${{ format('{0}/{1}', github.action_path, 'specification-transformation.zip') }}
+        ls -l ${{ format('{0}/{1}', github.action_path, 'specification-transformation.zip') }} && echo "file_exists=true" >> "$GITHUB_ENV" || echo "file_exists=false" >> "$GITHUB_ENV"
     - name: Setup java 17
       if: env.file_exists == 'false'
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
@@ -37,25 +37,19 @@ runs:
         mv lib/cpachecker/lib/java/runtime/*.jar cpachecker/runtime/
         mv lib/cpachecker/config cpachecker/
         mv lib/cpachecker/cpachecker.jar cpachecker/
-    - name: Install nuitka
+    - name: zip file
       if: env.file_exists == 'false'
       shell: bash
       run: |
-        sudo apt update && sudo apt -y --no-install-recommends install nuitka libfuse2
-    - name: Run nuitka
-      if: env.file_exists == 'false'
-      shell: bash
-      run: |
-        cd specification-transformation
-        bash -c "yes yes || true" | nuitka3 --onefile --standalone --include-data-dir="cpachecker=cpachecker" src/specification-transformation.py 
+        zip specification-transformation.zip specification-transformation/cpachecker specification-transformation/src -r
     - name: Move if exists
       if: env.file_exists == 'true'
       shell: bash
       run: |
         mkdir specification-transformation
-        mv $GITHUB_ACTION_PATH/specification-transformation.bin specification-transformation/
+        mv $GITHUB_ACTION_PATH/specification-transformation.zip ./
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2
       with:
         name: specification-transformation
-        path: specification-transformation/specification-transformation.bin
+        path: specification-transformation.zip
