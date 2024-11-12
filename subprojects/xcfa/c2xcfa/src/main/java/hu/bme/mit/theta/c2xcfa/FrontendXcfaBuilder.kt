@@ -28,9 +28,11 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -1081,8 +1083,9 @@ class FrontendXcfaBuilder(
 
 private fun Expr<*>.hasArithmetic(): Boolean =
   when (this) {
-    is ModExpr -> ops.any { it.hasArithmetic() }
-    is LitExpr -> false
-    is RefExpr -> false
-    else -> true
+    is AddExpr -> true
+    is SubExpr -> true
+    is DivExpr -> true
+    is MulExpr -> true
+    else -> ops.any { it.hasArithmetic() }
   }
