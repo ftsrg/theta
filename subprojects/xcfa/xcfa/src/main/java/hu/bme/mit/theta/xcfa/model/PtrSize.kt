@@ -15,35 +15,23 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
-import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 
-fun XcfaBuilder.getPtrSizeVar(type: CComplexType): VarDecl<ArrayType<*, *>> =
-  getPtrSizeVar(type.smtType, type.nullValue as Expr<in Type>)
-
-fun XcfaBuilder.getPtrSizeVar(intType: Type, nullValue: Expr<in Type>): VarDecl<ArrayType<*, *>> =
-  (getVars().find { it.wrappedVar.name == "__theta_ptr_size" }?.wrappedVar
-    ?: XcfaGlobalVar(
-        Var("__theta_ptr_size", ArrayType.of(intType, intType)),
-        ArrayLitExpr.of(listOf(), nullValue, ArrayType.of(intType, intType)),
-      )
-      .also { addVar(it) }
-      .wrappedVar)
+fun XcfaBuilder.getPtrSizeVar(): VarDecl<ArrayType<*, *>> =
+  getVars().find { it.wrappedVar.name == "__theta_ptr_size" }!!.wrappedVar
     as VarDecl<ArrayType<*, *>>
 
 fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel {
   val type = Fitsall(null, parseContext)
-  val arr = getPtrSizeVar(type)
+  val arr = getPtrSizeVar()
   val baseCast = if (type.smtType is IntType) base else type.castTo(base)
   val sizeCast = if (type.smtType is IntType) size else type.castTo(size)
   val write = ArrayWriteExpr.create<Type, Type>(arr.ref, baseCast, sizeCast)

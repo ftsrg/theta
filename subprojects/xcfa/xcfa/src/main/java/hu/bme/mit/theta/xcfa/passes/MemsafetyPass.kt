@@ -52,8 +52,6 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
     var NEED_CHECK = false
   }
 
-  val variableUsedAsPtr = LinkedHashSet<VarDecl<*>>()
-
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!NEED_CHECK) return builder
 
@@ -73,7 +71,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
     val errorLoc =
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
 
-    val invalidFree = XcfaLocation("__THETA_bad-free", metadata = EmptyMetaData)
+    val invalidFree = XcfaLocation("__THETA_bad_free", metadata = EmptyMetaData)
     builder.addLoc(invalidFree)
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::free)
@@ -85,7 +83,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
           if (free((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
             val argument = (invokeLabel.params[1] as RefExpr<*>).decl as VarDecl<*>
-            val sizeVar = builder.parent.getPtrSizeVar(fitsall)
+            val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
               Assume(
                 Or(
@@ -130,7 +128,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
   private fun annotateDeref(builder: XcfaProcedureBuilder) {
     val errorLoc =
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
-    val badDeref = XcfaLocation("__THETA_bad-deref", metadata = EmptyMetaData)
+    val badDeref = XcfaLocation("__THETA_bad_deref", metadata = EmptyMetaData)
     builder.addLoc(badDeref)
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::deref)
@@ -148,7 +146,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
                   ), // uninit ptr
                   Or(
                     it.label.labels[0].dereferences.map {
-                      val sizeVar = builder.parent.getPtrSizeVar(fitsall)
+                      val sizeVar = builder.parent.getPtrSizeVar()
                       Leq(
                         ArrayReadExpr.create<Type, Type>(sizeVar.ref, it.array),
                         it.offset,
@@ -190,7 +188,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
     val lostLoc = XcfaLocation("__THETA_lost", metadata = EmptyMetaData)
     builder.addLoc(lostLoc)
 
-    val sizeVar = builder.parent.getPtrSizeVar(fitsall)
+    val sizeVar = builder.parent.getPtrSizeVar()
     val anyBase =
       builder.parent.getVars().find { it.wrappedVar.name == "__ptr" }?.wrappedVar
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
