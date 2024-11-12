@@ -65,7 +65,7 @@ runs:
         pushd ${{ inputs.name }}/${{ inputs.name }}/
         unzip $zipfile
         popd
-        cp $GITHUB_ACTION_PATH/specification-transformation.bin.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
+        cp $GITHUB_ACTION_PATH/specification-transformation.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
         cp $GITHUB_ACTION_PATH/offset.sh ${{ inputs.name }}/${{ inputs.name }}/
     - name: ZIP archive
       shell: bash
