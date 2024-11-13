@@ -33,7 +33,8 @@ class EmptyEdgeRemovalPass : ProcedurePass {
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&
-            (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1)
+            ((it.source.outgoingEdges.size == 1 && !it.source.name.contains("__THETA_")) ||
+              (it.target.incomingEdges.size == 1) && !it.target.name.contains("__THETA_"))
         } ?: return builder
       val collapseBefore = edge.source.outgoingEdges.size == 1
       builder.removeEdge(edge)

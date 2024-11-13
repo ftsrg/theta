@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
@@ -294,9 +293,7 @@ class FrontendXcfaBuilder(
         builder.setAtomic(flatVariable)
       }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
-      if (
-        (type is CArray || type is CStruct) && builder.getParams().none { it.first == flatVariable }
-      ) {
+      if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
         initStmtList.add(
           StmtLabel(
             Stmts.Assign(
@@ -315,17 +312,6 @@ class FrontendXcfaBuilder(
       if (type is CArray && type.embeddedType is CArray) {
         // some day this is where initialization will occur. But this is not today.
         error("Not handling init expression of high dimsension array $flatVariable")
-      } else if (type is CArray) {
-        if (MemsafetyPass.NEED_CHECK) {
-          type.arrayDimension?.expression?.also {
-            if (it is LitExpr<*>) {
-              initStmtList.add(builder.parent.allocate(parseContext, flatVariable.ref, it))
-            } else
-              throw UnsupportedFrontendElementException(
-                "Arrays for memory safety must be literal-sized, or mallocd."
-              )
-          }
-        }
       }
     }
 
