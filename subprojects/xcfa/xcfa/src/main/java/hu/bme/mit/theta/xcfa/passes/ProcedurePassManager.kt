@@ -52,7 +52,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // trying to inline procedures
       InlineProceduresPass(parseContext),
       EmptyEdgeRemovalPass(),
-      RemoveDeadEnds(),
+      RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
@@ -87,7 +87,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
-      RemoveDeadEnds(),
+      RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
       // handling remaining function calls
       LbePass(parseContext),
