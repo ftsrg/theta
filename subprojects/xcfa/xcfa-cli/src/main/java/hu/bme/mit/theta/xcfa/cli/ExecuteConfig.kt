@@ -33,8 +33,7 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -268,7 +267,17 @@ private fun backend(
                     ?.locs
                     ?.firstOrNull()
                     ?.name
-                println(namedState)
+                val subproperty =
+                  when (namedState) {
+                    "__THETA_bad_free" -> "valid-free"
+                    "__THETA_bad_deref" -> "valid-deref"
+                    "__THETA_lost" -> "valid-memtrack"
+                    else ->
+                      throw RuntimeException(
+                        "Something went wrong; could not determine subproperty! Named location: $namedState"
+                      )
+                  }
+                logger.write(MAINSTEP, "(Subproperty %s)\n", subproperty)
                 result
               }
 
