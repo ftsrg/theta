@@ -26,7 +26,7 @@ class XCFA(
   val globalVars: Set<XcfaGlobalVar>, // global variables
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
-  var unsafeUnrollUsed: Boolean = false
+  var unsafeUnrollUsed: Boolean = false,
 ) {
 
   private var cachedHash: Int? = null
@@ -51,7 +51,8 @@ class XCFA(
 
     procedures = procedureBuilders.map { it.build(this) }.toSet()
     initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
-    unsafeUnrollUsed = (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
+    unsafeUnrollUsed =
+      (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
   }
 
   /** Recreate an existing XCFA by substituting the procedures and initProcedures fields. */
