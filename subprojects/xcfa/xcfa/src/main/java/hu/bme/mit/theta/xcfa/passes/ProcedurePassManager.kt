@@ -70,6 +70,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       UnusedLocRemovalPass(),
     ),
     listOf(FetchExecuteWriteback(parseContext)),
+    listOf(RemoveAtomics()),
   )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
