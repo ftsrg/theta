@@ -60,7 +60,7 @@ class XstsCliTracegen :
 
     for ((node, state) in summaryStateMap) {
       sb.add(
-        Utils.lispStringBuilder("${node.id}: ${XstsState::class.java.simpleName}")
+        Utils.lispStringBuilder("_${node.id}: ${XstsState::class.java.simpleName}")
           .add(if (state.isInitialized) "post_init" else "pre_init")
           .add(if (state.lastActionWasEnv()) "last_env" else "last_internal")
           .body()
