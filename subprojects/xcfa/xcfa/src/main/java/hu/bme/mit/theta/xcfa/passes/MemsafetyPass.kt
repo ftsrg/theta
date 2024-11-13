@@ -149,7 +149,9 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (deref((it.label as SequenceLabel).labels[0])) {
+          if (
+            deref((it.label as SequenceLabel).labels[0])
+          ) { // if dereference is in a short-circuiting path, add prior assumptions as well.
             val derefAssume =
               Assume(
                 Or(

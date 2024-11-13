@@ -243,7 +243,7 @@ private fun backend(
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check()
           }
-          .let { result ->
+          .let ResultMapper@{ result ->
             when {
               result.isSafe && xcfa.unsafeUnrollUsed -> {
                 // cannot report safe if force unroll was used
@@ -263,18 +263,27 @@ private fun backend(
                       trace
                         ?.states
                         ?.asReversed()
-                        ?.getOrNull(1)
+                        ?.firstOrNull {
+                          it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
+                        }
                         ?.processes
                         ?.values
-                        ?.firstOrNull()
+                        ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
                         ?.locs
-                        ?.firstOrNull()
+                        ?.firstOrNull { it.name.contains("__THETA_") }
                         ?.name
                         ?.let {
                           when (it) {
                             "__THETA_bad_free" -> "valid-free"
                             "__THETA_bad_deref" -> "valid-deref"
-                            "__THETA_lost" -> "valid-memtrack"
+                            "__THETA_lost" ->
+                              if (config.inputConfig.property == ErrorDetection.MEMCLEANUP)
+                                "valid-memcleanup"
+                              else
+                                "valid-memtrack"
+                                  .also { // this is not an exact check.
+                                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                                  }
                             else ->
                               throw RuntimeException(
                                 "Something went wrong; could not determine subproperty! Named location: $it"
