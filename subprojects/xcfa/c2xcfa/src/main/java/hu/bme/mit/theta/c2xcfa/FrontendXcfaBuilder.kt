@@ -768,7 +768,9 @@ class FrontendXcfaBuilder(
       xcfaEdge = XcfaEdge(elseEnd, endLoc, metadata = getMetadata(statement))
       builder.addEdge(xcfaEdge)
     } else {
-      xcfaEdge = XcfaEdge(elseBranch, endLoc, metadata = getMetadata(statement))
+      val elseAfterGuard =
+        buildPostStatement(guard, ParamPack(builder, elseBranch, breakLoc, continueLoc, returnLoc))
+      xcfaEdge = XcfaEdge(elseAfterGuard, endLoc, metadata = getMetadata(statement))
       builder.addEdge(xcfaEdge)
     }
     xcfaEdge = XcfaEdge(mainEnd, endLoc, metadata = getMetadata(statement))
