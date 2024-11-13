@@ -55,6 +55,8 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!NEED_CHECK) return builder
 
+    breakUpErrors(builder)
+
     annotateFree(builder)
 
     annotateDeref(builder)
@@ -66,6 +68,18 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
 
   private val pointerType = CPointer(null, null, parseContext)
   val fitsall = Fitsall(null, parseContext)
+
+  private fun breakUpErrors(builder: XcfaProcedureBuilder) {
+    val errorLoc =
+      builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
+    val finalLoc =
+      builder.finalLoc.orElseGet { builder.createFinalLoc().let { builder.finalLoc.get() } }
+
+    LinkedHashSet(errorLoc.incomingEdges).forEach {
+      builder.removeEdge(it)
+      builder.addEdge(it.withTarget(finalLoc))
+    }
+  }
 
   private fun annotateFree(builder: XcfaProcedureBuilder) {
     val errorLoc =
@@ -196,7 +210,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
           .wrappedVar
     val remained = Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, anyBase.ref), fitsall.nullValue)
 
-    for (incomingEdge in finalLoc.incomingEdges) {
+    for (incomingEdge in LinkedHashSet(finalLoc.incomingEdges)) {
       builder.removeEdge(incomingEdge)
       val newLoc = XcfaLocation("pre-final", metadata = EmptyMetaData)
       builder.addLoc(newLoc)
