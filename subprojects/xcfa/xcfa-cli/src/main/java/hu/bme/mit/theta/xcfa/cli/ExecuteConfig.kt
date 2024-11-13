@@ -260,33 +260,34 @@ private fun backend(
                     ErrorDetection.MEMSAFETY,
                     ErrorDetection.MEMCLEANUP -> {
                       val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
-                      val namedState =
-                        trace
-                          ?.states
-                          ?.asReversed()
-                          ?.getOrNull(1)
-                          ?.processes
-                          ?.values
-                          ?.firstOrNull()
-                          ?.locs
-                          ?.firstOrNull()
-                          ?.name
-                      when (namedState) {
-                        "__THETA_bad_free" -> "valid-free"
-                        "__THETA_bad_deref" -> "valid-deref"
-                        "__THETA_lost" -> "valid-memtrack"
-                        else ->
-                          throw RuntimeException(
-                            "Something went wrong; could not determine subproperty! Named location: $namedState"
-                          )
-                      }
+                      trace
+                        ?.states
+                        ?.asReversed()
+                        ?.getOrNull(1)
+                        ?.processes
+                        ?.values
+                        ?.firstOrNull()
+                        ?.locs
+                        ?.firstOrNull()
+                        ?.name
+                        ?.let {
+                          when (it) {
+                            "__THETA_bad_free" -> "valid-free"
+                            "__THETA_bad_deref" -> "valid-deref"
+                            "__THETA_lost" -> "valid-memtrack"
+                            else ->
+                              throw RuntimeException(
+                                "Something went wrong; could not determine subproperty! Named location: $it"
+                              )
+                          }
+                        }
                     }
                     ErrorDetection.DATA_RACE -> "no-data-race"
                     ErrorDetection.ERROR_LOCATION -> "unreach-call"
                     ErrorDetection.OVERFLOW -> "no-overflow"
                     ErrorDetection.NO_ERROR -> null
                   }
-                property?.also { logger.write(MAINSTEP, "(Property %s)\n", it) }
+                property?.also { logger.write(RESULT, "(Property %s)\n", it) }
                 result
               }
 

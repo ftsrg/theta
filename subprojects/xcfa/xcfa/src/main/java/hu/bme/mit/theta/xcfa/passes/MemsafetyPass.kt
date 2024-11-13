@@ -16,11 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext
@@ -96,15 +94,15 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
         edges.forEach {
           if (free((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
-            val argument = (invokeLabel.params[1] as RefExpr<*>).decl as VarDecl<*>
+            val argument = invokeLabel.params[1]
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
               Assume(
                 Or(
-                  Leq(argument.ref, pointerType.nullValue), // uninit ptr
+                  Leq(argument, pointerType.nullValue), // uninit ptr
                   // freed/not big enough ptr
                   Leq(
-                    ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument.ref),
+                    ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument),
                     pointerType.nullValue,
                   ), // freed/not big enough ptr
                 )
@@ -115,7 +113,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
                 it.source,
                 it.target,
                 SequenceLabel(
-                  listOf(builder.parent.allocate(parseContext, argument.ref, fitsall.nullValue))
+                  listOf(builder.parent.allocate(parseContext, argument, fitsall.nullValue))
                 ),
                 it.metadata,
               )
@@ -197,6 +195,8 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   fun annotateLost(builder: XcfaProcedureBuilder) {
+    val errorLoc =
+      builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
     val finalLoc =
       builder.finalLoc.orElseGet { builder.createFinalLoc().let { builder.finalLoc.get() } }
     val lostLoc = XcfaLocation("__THETA_lost", metadata = EmptyMetaData)
@@ -226,7 +226,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
       builder.addEdge(
         XcfaEdge(
           lostLoc,
-          finalLoc,
+          errorLoc,
           label = SequenceLabel(listOf(NopLabel)),
           metadata = EmptyMetaData,
         )
