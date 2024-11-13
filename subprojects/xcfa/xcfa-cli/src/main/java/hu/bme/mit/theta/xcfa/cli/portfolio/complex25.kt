@@ -121,6 +121,9 @@ fun complexPortfolio25(
             ),
           argConfig = ArgConfig(disable = true),
           enableOutput = portfolioConfig.outputConfig.enableOutput,
+          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
+          xcfaOutputConfig = XcfaOutputConfig(disable = true),
+          chcOutputConfig = ChcOutputConfig(disable = true),
         ),
       debugConfig = portfolioConfig.debugConfig,
     )
