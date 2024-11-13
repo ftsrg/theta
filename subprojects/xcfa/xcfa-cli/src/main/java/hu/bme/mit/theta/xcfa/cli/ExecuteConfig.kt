@@ -253,35 +253,46 @@ private fun backend(
                 else SafetyResult.unknown<EmptyProof, EmptyCex>()
               }
 
-              result.isUnsafe && config.inputConfig.property == ErrorDetection.MEMSAFETY -> {
+              result.isUnsafe -> {
                 // need to determine what kind
-                val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
-                val namedState =
-                  trace
-                    ?.states
-                    ?.asReversed()
-                    ?.getOrNull(1)
-                    ?.processes
-                    ?.values
-                    ?.firstOrNull()
-                    ?.locs
-                    ?.firstOrNull()
-                    ?.name
-                val subproperty =
-                  when (namedState) {
-                    "__THETA_bad_free" -> "valid-free"
-                    "__THETA_bad_deref" -> "valid-deref"
-                    "__THETA_lost" -> "valid-memtrack"
-                    else ->
-                      throw RuntimeException(
-                        "Something went wrong; could not determine subproperty! Named location: $namedState"
-                      )
+                val property =
+                  when (config.inputConfig.property) {
+                    ErrorDetection.MEMSAFETY,
+                    ErrorDetection.MEMCLEANUP -> {
+                      val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
+                      val namedState =
+                        trace
+                          ?.states
+                          ?.asReversed()
+                          ?.getOrNull(1)
+                          ?.processes
+                          ?.values
+                          ?.firstOrNull()
+                          ?.locs
+                          ?.firstOrNull()
+                          ?.name
+                      when (namedState) {
+                        "__THETA_bad_free" -> "valid-free"
+                        "__THETA_bad_deref" -> "valid-deref"
+                        "__THETA_lost" -> "valid-memtrack"
+                        else ->
+                          throw RuntimeException(
+                            "Something went wrong; could not determine subproperty! Named location: $namedState"
+                          )
+                      }
+                    }
+                    ErrorDetection.DATA_RACE -> "no-data-race"
+                    ErrorDetection.ERROR_LOCATION -> "unreach-call"
+                    ErrorDetection.OVERFLOW -> "no-overflow"
+                    ErrorDetection.NO_ERROR -> null
                   }
-                logger.write(MAINSTEP, "(Subproperty %s)\n", subproperty)
+                property?.also { logger.write(MAINSTEP, "(Property %s)\n", it) }
                 result
               }
 
-              else -> result
+              else -> {
+                result
+              }
             }
           }
 
