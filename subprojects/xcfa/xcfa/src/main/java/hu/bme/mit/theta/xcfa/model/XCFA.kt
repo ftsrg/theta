@@ -26,12 +26,12 @@ class XCFA(
   val globalVars: Set<XcfaGlobalVar>, // global variables
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
-  val unsafeUnrollUsed: Boolean = false,
+  var unsafeUnrollUsed: Boolean = false
 ) {
 
-  val pointsToGraph by this.lazyPointsToGraph
+  private var cachedHash: Int? = null
 
-  var cachedHash: Int? = null
+  val pointsToGraph by this.lazyPointsToGraph
 
   var procedures: Set<XcfaProcedure> // procedure definitions
     private set
@@ -51,6 +51,7 @@ class XCFA(
 
     procedures = procedureBuilders.map { it.build(this) }.toSet()
     initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+    unsafeUnrollUsed = (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
   }
 
   /** Recreate an existing XCFA by substituting the procedures and initProcedures fields. */

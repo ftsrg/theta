@@ -124,20 +124,9 @@ fun complexPortfolio25(
       debugConfig = portfolioConfig.debugConfig,
     )
 
-  val forceUnrolledXcfa =
-    xcfa.optimizeFurther(
-      listOf(
-        AssumeFalseRemovalPass(),
-        MutexToVarPass(),
-        AtomicReadsOneWritePass(),
-        LoopUnrollPass(2),
-      )
-    )
-
   val ocConfig = { inProcess: Boolean ->
     XcfaConfig(
-      inputConfig =
-        baseConfig.inputConfig.copy(xcfaWCtx = Triple(forceUnrolledXcfa, mcm, parseContext)),
+      inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(xcfa, mcm, parseContext)),
       frontendConfig = baseConfig.frontendConfig,
       backendConfig =
         BackendConfig(

@@ -34,7 +34,6 @@ constructor(
   private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
-  var unsafeUnrollUsed: Boolean = false,
 ) {
 
   fun getVars(): Set<XcfaGlobalVar> = vars
@@ -49,7 +48,6 @@ constructor(
       globalVars = vars,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
-      unsafeUnrollUsed = unsafeUnrollUsed,
     )
   }
 
@@ -80,6 +78,7 @@ constructor(
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
+  unsafeUnrollUsed: Boolean = false,
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -89,6 +88,9 @@ constructor(
     private set
 
   var errorLoc: Optional<XcfaLocation> = Optional.empty()
+    private set
+
+  var unsafeUnrollUsed: Boolean = unsafeUnrollUsed
     private set
 
   lateinit var parent: XcfaBuilder
@@ -322,6 +324,6 @@ constructor(
   }
 
   fun setUnsafeUnroll() {
-    parent.unsafeUnrollUsed = true
+    unsafeUnrollUsed = true
   }
 }
