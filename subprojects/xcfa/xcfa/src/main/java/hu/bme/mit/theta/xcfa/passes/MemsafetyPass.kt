@@ -208,7 +208,11 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val remained = Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, anyBase.ref), fitsall.nullValue)
+    val remained = // 3k+0: malloc
+      Gt(
+        ArrayReadExpr.create<Type, Type>(sizeVar.ref, Mul(anyBase.ref, pointerType.getValue("3"))),
+        fitsall.nullValue,
+      )
 
     for (incomingEdge in LinkedHashSet(finalLoc.incomingEdges)) {
       builder.removeEdge(incomingEdge)

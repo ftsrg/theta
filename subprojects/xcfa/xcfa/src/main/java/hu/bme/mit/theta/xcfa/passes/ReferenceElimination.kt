@@ -69,7 +69,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
-            Pair(varDecl, SequenceLabel(listOf(assign)))
+            val labels =
+              if (MemsafetyPass.NEED_CHECK) {
+                val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+
+                listOf(assign, assign2)
+              } else {
+                listOf(assign)
+              }
+            Pair(varDecl, SequenceLabel(labels))
           }
       }
     checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
