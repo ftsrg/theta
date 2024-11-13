@@ -40,7 +40,7 @@ class RemoveAtomics : ProcedurePass {
       val newLabels =
         labels.subList(0, beginIndex) +
           labels.subList(beginIndex + 1, endIndex).filter {
-            it !is FenceLabel || !it.labels.contains("ATOMIC_")
+            it !is FenceLabel || !it.labels.any { it.contains("ATOMIC_") }
           } +
           labels.subList(endIndex + 1, labels.size)
       builder.removeEdge(xcfaEdge)
