@@ -50,6 +50,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
@@ -72,13 +73,15 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private final TypedefVisitor typedefVisitor;
     private final Logger uniqueWarningLogger;
 
-    private ParserRuleContext currentStatementContext = null;
+    private final LinkedList<Tuple2<ParserRuleContext, Optional<CCompound>>>
+            currentStatementContext = new LinkedList<>();
 
     public void clear() {
         variables.clear();
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
+        currentStatementContext.clear();
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
@@ -184,8 +187,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     public void recordMetadata(ParserRuleContext ctx, CStatement statement) {
-        if (currentStatementContext != null) {
-            ctx = currentStatementContext; // this will overwrite the current ASt element's ctx
+        if (!currentStatementContext.isEmpty()) {
+            ctx =
+                    currentStatementContext
+                            .peek()
+                            .get1(); // this will overwrite the current ASt element's ctx
             // with the statement's ctx
         }
         Token start = ctx.getStart();
@@ -300,10 +306,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
             variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
         for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
-            final var save = currentStatementContext;
-            currentStatementContext = blockItemContext;
+            currentStatementContext.push(Tuple2.of(blockItemContext, Optional.of(compound)));
             compound.getcStatementList().add(blockItemContext.accept(this));
-            currentStatementContext = save;
+            currentStatementContext.pop();
         }
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
             variables.pop();
@@ -482,10 +487,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitStatement(CParser.StatementContext ctx) {
-        final var save = currentStatementContext;
-        currentStatementContext = ctx;
+        currentStatementContext.push(Tuple2.of(ctx, Optional.empty()));
         final var ret = ctx.children.get(0).accept(this);
-        currentStatementContext = save;
+        currentStatementContext.pop();
         return ret;
     }
 
@@ -501,8 +505,37 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         compound.setPreStatements(preCompound);
         compound.setPostStatements(postCompound);
         for (CDeclaration declaration : declarations) {
+            createVars(declaration);
+            if (declaration.getActualType()
+                    instanceof CArray cArray) { // we transform it into a malloc
+                final var malloc =
+                        new CCall("malloc", List.of(cArray.getArrayDimension()), parseContext);
+                preCompound.getcStatementList().add(malloc);
+                final var free =
+                        new CCall(
+                                "free",
+                                List.of(new CExpr(malloc.getRet().getRef(), parseContext)),
+                                parseContext);
+                preCompound.getcStatementList().add(malloc);
+                CAssignment cAssignment =
+                        new CAssignment(
+                                declaration.getVarDecls().get(0).getRef(),
+                                new CExpr(malloc.getRet().getRef(), parseContext),
+                                "=",
+                                parseContext);
+                recordMetadata(ctx, cAssignment);
+                compound.getcStatementList().add(cAssignment);
+                if (!currentStatementContext.isEmpty()) {
+                    final var scope = currentStatementContext.peek().get2();
+                    if (scope.isPresent() && scope.get().getPostStatements() instanceof CCompound) {
+                        if (scope.get().getPostStatements() == null) {
+                            scope.get().setPostStatements(new CCompound(parseContext));
+                        }
+                        ((CCompound) scope.get().getPostStatements()).getcStatementList().add(free);
+                    }
+                }
+            }
             if (declaration.getInitExpr() != null) {
-                createVars(declaration);
                 if (declaration.getType() instanceof Struct) {
                     checkState(
                             declaration.getInitExpr() instanceof CInitializerList,
@@ -575,7 +608,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 }
             } else {
-                createVars(declaration);
                 // if there is no initializer, then we'll add an assumption regarding min and max
                 // values
                 if (declaration.getType() instanceof Struct) {

@@ -58,6 +58,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(StaticCoiPass()),
     listOf(
       // handling remaining function calls
+      MemsafetyPass(parseContext),
       NoSideEffectPass(parseContext),
       NondetFunctionPass(),
       LbePass(parseContext),
@@ -69,7 +70,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
-    listOf(FetchExecuteWriteback(parseContext)),
+    //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :

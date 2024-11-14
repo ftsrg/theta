@@ -150,6 +150,9 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         if (stdoutRemainder.contains("SafetyResult Unsafe")) {
           safetyResult = SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
         }
+        if (stdoutRemainder.contains("SafetyResult Unknown")) {
+          safetyResult = SafetyResult.unknown<EmptyProof, EmptyCex>()
+        }
 
         val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""
         newLines.subList(0, newLines.size - 1).forEach {
