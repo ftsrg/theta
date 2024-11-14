@@ -9,7 +9,7 @@ index 86a7a74e..56f3336a 100644
 -                [
 -                    f"lib/cpachecker/bin/cpachecker",
 +                [   "java", "-cp",
-+                    f"{os.path.dirname(os.path.dirname(__file__))}/cpachecker/runtime/*:{os.path.dirname(os.path.dirname(__file__))}/cpachecker/cpachecker.jar",
++                    f"{os.path.dirname(os.path.dirname(os.path.dirname(__file__)))}/cpachecker/runtime/*:{os.path.dirname(os.path.dirname(os.path.dirname(__file__)))}/cpachecker/cpachecker.jar",
 +                    "org.sosy_lab.cpachecker.cmdline.CPAMain",
                      "--preprocess",
                      "--option",

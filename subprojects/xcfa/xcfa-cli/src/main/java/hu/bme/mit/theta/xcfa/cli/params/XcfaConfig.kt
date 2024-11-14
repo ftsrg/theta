@@ -179,6 +179,11 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
+  @Parameter(
+    names = ["--memlimit"],
+    description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
+  )
+  var memlimit: Long = 0L,
   override var specConfig: T? = null,
 ) : SpecializableConfig<T> {
 
