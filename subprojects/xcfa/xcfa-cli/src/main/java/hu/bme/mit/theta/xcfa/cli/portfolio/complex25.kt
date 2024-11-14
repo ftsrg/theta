@@ -45,6 +45,7 @@ import hu.bme.mit.theta.xcfa.cli.params.Refinement.NWT_IT_WP
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
+import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import java.nio.file.Paths
@@ -119,6 +120,9 @@ fun complexPortfolio25(
             ),
           argConfig = ArgConfig(disable = true),
           enableOutput = portfolioConfig.outputConfig.enableOutput,
+          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
+          xcfaOutputConfig = XcfaOutputConfig(disable = true),
+          chcOutputConfig = ChcOutputConfig(disable = true),
         ),
       debugConfig = portfolioConfig.debugConfig,
     )
@@ -222,6 +226,45 @@ fun complexPortfolio25(
             ),
         )
     )
+  }
+
+  if (xcfa.procedures.any { it.edges.any { it.label.dereferences.isNotEmpty() } }) {
+    val inProcEdges = LinkedHashSet<Edge>()
+    val notInProcEdges = LinkedHashSet<Edge>()
+    val edges = LinkedHashSet<Edge>()
+
+    val explTrue =
+      ConfigNode(
+        "PTR-expl-inproc",
+        baseConfig.adaptConfig(inProcess = true, domain = EXPL, timeoutMs = 100_000),
+        checker,
+      )
+    val predTrue =
+      ConfigNode(
+        "PTR-pred-inproc",
+        baseConfig.adaptConfig(inProcess = true, domain = PRED_CART),
+        checker,
+      )
+    inProcEdges.add(Edge(explTrue, predTrue, timeoutOrNotSolvableError))
+    val inproc = HierarchicalNode("inProc", STM(explTrue, inProcEdges))
+
+    val explFalse =
+      ConfigNode(
+        "PTR-expl-notinproc",
+        baseConfig.adaptConfig(inProcess = false, domain = EXPL, timeoutMs = 100_000),
+        checker,
+      )
+    val predFalse =
+      ConfigNode(
+        "PTR-pred-notinproc",
+        baseConfig.adaptConfig(inProcess = false, domain = PRED_CART),
+        checker,
+      )
+    notInProcEdges.add(Edge(explFalse, predFalse, anyError))
+    val notinproc = HierarchicalNode("notInProc", STM(explFalse, notInProcEdges))
+
+    edges.add(Edge(inproc, notinproc, anyError))
+    return if (portfolioConfig.debugConfig.debug) notinproc.innerSTM else STM(inproc, edges)
   }
 
   fun getStm(trait: ArithmeticTrait, inProcess: Boolean): STM {

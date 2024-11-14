@@ -33,8 +33,7 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -56,10 +55,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
-import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
@@ -99,6 +95,12 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     val random = Random(cegarConfig.porRandomSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random
+  }
+  if (
+    config.inputConfig.property == ErrorDetection.MEMSAFETY ||
+      config.inputConfig.property == ErrorDetection.MEMCLEANUP
+  ) {
+    MemsafetyPass.NEED_CHECK = true
   }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
@@ -241,7 +243,7 @@ private fun backend(
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check()
           }
-          .let { result ->
+          .let ResultMapper@{ result ->
             when {
               result.isSafe && xcfa.unsafeUnrollUsed -> {
                 // cannot report safe if force unroll was used
@@ -251,7 +253,56 @@ private fun backend(
                 else SafetyResult.unknown<EmptyProof, EmptyCex>()
               }
 
-              else -> result
+              result.isUnsafe -> {
+                // need to determine what kind
+                val property =
+                  when (config.inputConfig.property) {
+                    ErrorDetection.MEMSAFETY,
+                    ErrorDetection.MEMCLEANUP -> {
+                      val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
+                      trace
+                        ?.states
+                        ?.asReversed()
+                        ?.firstOrNull {
+                          it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
+                        }
+                        ?.processes
+                        ?.values
+                        ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
+                        ?.locs
+                        ?.firstOrNull { it.name.contains("__THETA_") }
+                        ?.name
+                        ?.let {
+                          when (it) {
+                            "__THETA_bad_free" -> "valid-free"
+                            "__THETA_bad_deref" -> "valid-deref"
+                            "__THETA_lost" ->
+                              if (config.inputConfig.property == ErrorDetection.MEMCLEANUP)
+                                "valid-memcleanup"
+                              else
+                                "valid-memtrack"
+                                  .also { // this is not an exact check.
+                                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                                  }
+                            else ->
+                              throw RuntimeException(
+                                "Something went wrong; could not determine subproperty! Named location: $it"
+                              )
+                          }
+                        }
+                    }
+                    ErrorDetection.DATA_RACE -> "no-data-race"
+                    ErrorDetection.ERROR_LOCATION -> "unreach-call"
+                    ErrorDetection.OVERFLOW -> "no-overflow"
+                    ErrorDetection.NO_ERROR -> null
+                  }
+                property?.also { logger.write(RESULT, "(Property %s)\n", it) }
+                result
+              }
+
+              else -> {
+                result
+              }
             }
           }
 

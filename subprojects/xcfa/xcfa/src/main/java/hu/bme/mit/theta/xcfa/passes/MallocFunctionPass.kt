@@ -54,10 +54,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           if (predicate((e.label as SequenceLabel).labels[0])) {
             val invokeLabel = e.label.labels[0] as InvokeLabel
             val ret = invokeLabel.params[0] as RefExpr<*>
+            val arg = invokeLabel.params[1]
             if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
               builder.parent.addVar(
                 XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
               )
+              if (MemsafetyPass.NEED_CHECK) {
+                builder.parent.addVar(
+                  XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
+                )
+              }
               val initProc = builder.parent.getInitProcedures().map { it.first }
               check(initProc.size == 1) { "Multiple start procedure are not handled well" }
               initProc.forEach { proc ->
@@ -89,9 +95,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 invokeLabel.metadata,
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
-            builder.addEdge(
-              XcfaEdge(e.source, e.target, SequenceLabel(listOf(assign1, assign2)), e.metadata)
-            )
+            val labels =
+              if (MemsafetyPass.NEED_CHECK) {
+                val assign3 = builder.parent.allocate(parseContext, ret, arg)
+                listOf(assign1, assign2, assign3)
+              } else {
+                listOf(assign1, assign2)
+              }
+            builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
           } else {
             builder.addEdge(e)
           }
