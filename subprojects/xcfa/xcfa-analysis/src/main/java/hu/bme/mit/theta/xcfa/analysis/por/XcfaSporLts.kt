@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -63,11 +64,15 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   /** Global variables used by an edge. */
   private val usedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
 
+  private val usedMemLocs: MutableMap<XcfaEdge, Set<Pair<LitExpr<*>, LitExpr<*>>>> = mutableMapOf()
+
   /**
    * Global variables that are used by the key edge or by edges reachable from the current state via
    * a given edge.
    */
   private val influencedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
+  private val influencedMemLocs: MutableMap<XcfaEdge, Set<Pair<LitExpr<*>, LitExpr<*>>>> =
+    mutableMapOf()
 
   /** Backward edges in the CFA (an edge of a loop). */
   private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
@@ -235,7 +240,18 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     val influencedVars = getInfluencedVars(getEdge(action))
     if ((influencedVars intersect sourceSetActionVars).isNotEmpty()) return true
 
-    return indirectlyDependent(state, sourceSetAction, sourceSetActionVars, influencedVars)
+    val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
+    val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
+    if ((influencedMemLocs intersect sourceSetMemLocs).isNotEmpty()) return true
+
+    return indirectlyDependent(
+      state,
+      sourceSetAction,
+      sourceSetActionVars,
+      influencedVars,
+      sourceSetMemLocs,
+      influencedMemLocs,
+    )
   }
 
   protected fun indirectlyDependent(
@@ -243,9 +259,12 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     sourceSetAction: XcfaAction,
     sourceSetActionVars: Set<VarDecl<*>>,
     influencedVars: Set<VarDecl<*>>,
+    sourceSetMemLocs: Set<Pair<LitExpr<*>, LitExpr<*>>>,
+    inflMemLocs: Set<Pair<LitExpr<*>, LitExpr<*>>>,
   ): Boolean {
-    val sourceSetActionMemLocs = sourceSetActionVars.pointsTo(xcfa)
-    val influencedMemLocs = influencedVars.pointsTo(xcfa)
+    val sourceSetActionMemLocs =
+      sourceSetActionVars.pointsTo(xcfa) + sourceSetMemLocs.map { it.first }
+    val influencedMemLocs = influencedVars.pointsTo(xcfa) + inflMemLocs.map { it.first }
     val intersection = sourceSetActionMemLocs intersect influencedMemLocs
     if (intersection.isEmpty())
       return false // they cannot point to the same memory location even based on static info
@@ -291,6 +310,21 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   }
 
   /**
+   * Returns the base-offset pairs that an edge uses (it is present in one of its labels).
+   *
+   * @param edge whose base-offset pairs are to be returned
+   * @return the set of used global variables
+   */
+  private fun getDirectlyUsedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    return edge
+      .getFlatLabels()
+      .flatMap { label -> label.dereferences.map { Pair(it.array, it.offset) } }
+      .filter { it.first is LitExpr<*> && it.second is LitExpr<*> }
+      .map { it as Pair<LitExpr<*>, LitExpr<*>> }
+      .toSet()
+  }
+
+  /**
    * Returns the global variables that an edge uses or if it is the start of an atomic block the
    * global variables that are used in the atomic block. The result is cached.
    *
@@ -313,6 +347,27 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   }
 
   /**
+   * Returns the base-offset pairs that an edge uses. The result is cached.
+   *
+   * @param edge whose base-offset pairs are collected
+   * @return the set of directly or indirectly used base-offset pairs
+   */
+  protected fun getCachedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    if (edge in usedMemLocs) return usedMemLocs[edge]!!
+    val flatLabels = edge.getFlatLabels()
+    val mutexes =
+      flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
+    val vars =
+      if (mutexes.isEmpty()) {
+        getDirectlyUsedMemLocs(edge)
+      } else {
+        getMemLocsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
+      }
+    usedMemLocs[edge] = vars
+    return vars
+  }
+
+  /**
    * Returns the global variables used by the given edge or by edges that are reachable via the
    * given edge ("influenced vars").
    *
@@ -323,6 +378,20 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     if (edge in influencedVars) return influencedVars[edge]!!
     val vars = getVarsWithBFS(edge) { true }
     influencedVars[edge] = vars
+    return vars
+  }
+
+  /**
+   * Returns the base-offset pairs used by the given edge or by edges that are reachable via the
+   * given edge ("influenced memlocs").
+   *
+   * @param edge whose successor edges' base-offset pairs are to be returned.
+   * @return the set of influenced global variables
+   */
+  protected fun getInfluencedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    if (edge in influencedMemLocs) return influencedMemLocs[edge]!!
+    val vars = getMemLocsWithBFS(edge) { true }
+    influencedMemLocs[edge] = vars
     return vars
   }
 
@@ -353,6 +422,38 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
       exploredEdges.add(exploring)
     }
     return vars
+  }
+
+  /**
+   * Returns base-offset pairs encountered in a search starting from a given edge.
+   *
+   * @param startEdge the start point of the search
+   * @param goFurther the predicate that tells whether more edges have to be explored through this
+   *   edge
+   * @return the set of encountered base-offset variables
+   */
+  private fun getMemLocsWithBFS(
+    startEdge: XcfaEdge,
+    goFurther: Predicate<XcfaEdge>,
+  ): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    val memLocs = mutableSetOf<Pair<LitExpr<*>, LitExpr<*>>>()
+    val exploredEdges = mutableListOf<XcfaEdge>()
+    val edgesToExplore = mutableListOf<XcfaEdge>()
+    edgesToExplore.add(startEdge)
+    while (edgesToExplore.isNotEmpty()) {
+      val exploring = edgesToExplore.removeFirst()
+      memLocs.addAll(getDirectlyUsedMemLocs(exploring))
+      if (goFurther.test(exploring)) {
+        val successiveEdges = getSuccessiveEdges(exploring)
+        for (newEdge in successiveEdges) {
+          if (newEdge !in exploredEdges) {
+            edgesToExplore.add(newEdge)
+          }
+        }
+      }
+      exploredEdges.add(exploring)
+    }
+    return memLocs
   }
 
   /**
