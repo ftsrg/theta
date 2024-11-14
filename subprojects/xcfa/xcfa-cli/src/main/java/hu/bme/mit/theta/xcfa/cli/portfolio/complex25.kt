@@ -46,7 +46,6 @@ import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
 import java.nio.file.Paths
 
@@ -124,20 +123,9 @@ fun complexPortfolio25(
       debugConfig = portfolioConfig.debugConfig,
     )
 
-  val forceUnrolledXcfa =
-    xcfa.optimizeFurther(
-      listOf(
-        AssumeFalseRemovalPass(),
-        MutexToVarPass(),
-        AtomicReadsOneWritePass(),
-        LoopUnrollPass(2),
-      )
-    )
-
   val ocConfig = { inProcess: Boolean ->
     XcfaConfig(
-      inputConfig =
-        baseConfig.inputConfig.copy(xcfaWCtx = Triple(forceUnrolledXcfa, mcm, parseContext)),
+      inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(xcfa, mcm, parseContext)),
       frontendConfig = baseConfig.frontendConfig,
       backendConfig =
         BackendConfig(
