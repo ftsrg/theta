@@ -15,22 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
-import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
-fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
-  if (passes.isEmpty()) return this
-  val passManager = ProcedurePassManager(passes)
-  val copy: XcfaProcedureBuilder.() -> XcfaProcedureBuilder = {
-    val newLocs = getLocs().associateWith { it.copy() }
+fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
+  if (passManager.passes.isEmpty()) return this
+  val deepCopy: XcfaProcedure.() -> XcfaProcedureBuilder = {
+    val newLocs = locs.associateWith { it.copy() }
     XcfaProcedureBuilder(
         name = name,
         manager = passManager,
-        params = getParams().toMutableList(),
-        vars = getVars().toMutableSet(),
-        locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
+        params = params.toMutableList(),
+        vars = vars.toMutableSet(),
+        locs = locs.map { newLocs[it]!! }.toMutableSet(),
         edges =
-          getEdges()
+          edges
             .map {
               val source = newLocs[it.source]!!
               val target = newLocs[it.target]!!
@@ -40,10 +38,11 @@ fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
               edge
             }
             .toMutableSet(),
-        metaData = metaData.toMutableMap(),
+        metaData = mutableMapOf(),
+        unsafeUnrollUsed = unsafeUnrollUsed,
       )
-      .also {
-        it.copyMetaLocs(
+      .also { proc ->
+        proc.copyMetaLocs(
           newLocs[initLoc]!!,
           finalLoc.map { newLocs[it] },
           errorLoc.map { newLocs[it] },
@@ -52,9 +51,9 @@ fun XCFA.optimizeFurther(passes: List<ProcedurePass>): XCFA {
   }
 
   val builder = XcfaBuilder(name, globalVars.toMutableSet())
-  procedureBuilders.forEach { builder.addProcedure(it.copy()) }
-  initProcedureBuilders.forEach { (proc, params) ->
-    val initProc = builder.getProcedures().find { it.name == proc.name } ?: proc.copy()
+  procedures.forEach { builder.addProcedure(it.deepCopy()) }
+  initProcedures.forEach { (proc, params) ->
+    val initProc = builder.getProcedures().find { it.name == proc.name } ?: proc.deepCopy()
     builder.addEntryPoint(initProc, params)
   }
   return builder.build()

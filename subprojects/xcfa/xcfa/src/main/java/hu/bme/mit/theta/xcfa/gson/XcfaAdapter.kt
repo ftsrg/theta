@@ -98,7 +98,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
     lateinit var vars: Set<XcfaGlobalVar>
     lateinit var xcfaProcedures: Map<String, XcfaProcedure>
     lateinit var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>
-    var unsafeUnrollUsed: Boolean = false
+    var unsafeUnrollUsed = false
 
     val varsType = object : TypeToken<Set<XcfaGlobalVar>>() {}.type
 

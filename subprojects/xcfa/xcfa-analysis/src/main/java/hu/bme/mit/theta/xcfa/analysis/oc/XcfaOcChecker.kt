@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
 import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
@@ -50,20 +51,24 @@ import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
   get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(
-  private val xcfa: XCFA,
+  xcfa: XCFA,
   decisionProcedure: OcDecisionProcedureType,
   private val logger: Logger,
   conflictInput: String?,
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
   private val autoConflictConfig: AutoConflictFinderConfig,
+  private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
+
+  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
 
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
@@ -147,7 +152,16 @@ class XcfaOcChecker(
           else -> SafetyResult.unknown()
         }
       }
-      .also { logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it") }
+      .also {
+        logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it")
+        if (xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
+          logger.writeln(
+            Logger.Level.MAINSTEP,
+            "Incomplete loop unroll used: safe result is unreliable.",
+          )
+          throw NotSolvableException()
+        }
+      }
 
   private inner class ThreadProcessor(private val thread: Thread) {
 
