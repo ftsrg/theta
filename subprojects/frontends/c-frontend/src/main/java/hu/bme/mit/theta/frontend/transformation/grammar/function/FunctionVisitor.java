@@ -525,19 +525,15 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                 parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.getcStatementList().add(cAssignment);
-                if (currentStatementContext.isEmpty()) {
-                    throw new RuntimeException(
-                            "Scope for variable " + declaration.getName() + " not found.");
+                if (!currentStatementContext.isEmpty()) {
+                    final var scope = currentStatementContext.peek().get2();
+                    if (scope.isPresent() && scope.get().getPostStatements() instanceof CCompound) {
+                        if (scope.get().getPostStatements() == null) {
+                            scope.get().setPostStatements(new CCompound(parseContext));
+                        }
+                        ((CCompound) scope.get().getPostStatements()).getcStatementList().add(free);
+                    }
                 }
-                final var scope = currentStatementContext.peek().get2();
-                if (scope.isEmpty() || scope.get().getPostStatements() instanceof CCompound) {
-                    throw new RuntimeException(
-                            "Scope for variable " + declaration.getName() + " not found.");
-                }
-                if (scope.get().getPostStatements() == null) {
-                    scope.get().setPostStatements(new CCompound(parseContext));
-                }
-                ((CCompound) scope.get().getPostStatements()).getcStatementList().add(free);
             }
             if (declaration.getInitExpr() != null) {
                 if (declaration.getType() instanceof Struct) {
