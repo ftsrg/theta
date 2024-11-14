@@ -127,11 +127,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           Pair(varDecl, SequenceLabel(labels))
         }
 
-    if (builder.parent.getInitProcedures().any { it.first == builder }) {
-      addRefInitializations(builder, globalReferredVars) // we only need this for main
-    }
-    addRefInitializations(builder, referredVars)
-
     val allReferredVars = referredVars + globalReferredVars
     if (allReferredVars.isNotEmpty()) {
       val edges = LinkedHashSet(builder.getEdges())
@@ -141,6 +136,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           edge.withLabel(edge.label.changeReferredVars(allReferredVars, parseContext))
         )
       }
+      if (builder.parent.getInitProcedures().any { it.first == builder }) {
+        addRefInitializations(builder, globalReferredVars) // we only need this for main
+      }
+      addRefInitializations(builder, referredVars)
+
       return DeterministicPass().run(NormalizePass().run(builder))
     }
 
@@ -163,7 +163,38 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               it.stmt is AssignStmt<*> &&
               it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> }
           }
-        val newLabelOrder = listOfNotNull(sizeInit) + initLabels + labels.filter { it != sizeInit }
+        val spInit =
+          labels.find {
+            it is StmtLabel &&
+              it.stmt is AssignStmt<*> &&
+              it.stmt.varDecl == builder.parent.ptrVar(parseContext)
+          }
+        val touchedParams =
+          builder.getParams().filter {
+            it.second != ParamDirection.OUT && referredVars.containsKey(it.first)
+          }
+        val paramMapping =
+          if (touchedParams.isNotEmpty()) {
+            touchedParams.map {
+              val type = referredVars[it.first]!!.first.type
+              StmtLabel(
+                MemoryAssignStmt.create(
+                  Dereference(
+                    cast(referredVars[it.first]!!.first.ref, type),
+                    cast(CComplexType.getSignedLong(parseContext).nullValue, type),
+                    it.first.type,
+                  ),
+                  it.first.ref,
+                )
+              )
+            }
+          } else listOf()
+        val newLabelOrder =
+          listOfNotNull(spInit) +
+            listOfNotNull(sizeInit) +
+            initLabels +
+            paramMapping +
+            labels.filter { it != sizeInit && it != spInit }
         it.withLabel(SequenceLabel(newLabelOrder, it.label.metadata))
       }
     initEdges.forEach(builder::removeEdge)
