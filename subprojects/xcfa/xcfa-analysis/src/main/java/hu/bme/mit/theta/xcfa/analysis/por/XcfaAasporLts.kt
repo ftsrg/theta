@@ -137,7 +137,10 @@ open class XcfaAasporLts(
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
     val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
 
-    if ((influencedMemLocs intersect sourceSetMemLocs).isNotEmpty())
+    if (
+      (influencedMemLocs.filter(MemLoc::isLit) intersect sourceSetMemLocs.filter(MemLoc::isLit))
+        .isNotEmpty()
+    )
       return true // memlocs aren't necessarily in the prec
 
     val precVars = prec.usedVars

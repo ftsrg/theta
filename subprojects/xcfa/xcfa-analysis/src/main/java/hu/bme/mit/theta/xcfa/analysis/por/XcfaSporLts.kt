@@ -40,6 +40,10 @@ import java.util.*
 import java.util.function.Predicate
 import kotlin.random.Random
 
+typealias MemLoc = Pair<Expr<*>, Expr<*>>
+
+internal fun MemLoc.isLit() = first is LitExpr<*> && second is LitExpr<*>
+
 /**
  * LTS with a POR (Partial Order Reduction) algorithm applied as a filter when returning enabled
  * actions. The algorithm is similar to the static source-set based POR algorithm described in the
@@ -64,15 +68,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   /** Global variables used by an edge. */
   private val usedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
 
-  private val usedMemLocs: MutableMap<XcfaEdge, Set<Pair<LitExpr<*>, LitExpr<*>>>> = mutableMapOf()
+  private val usedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
   /**
    * Global variables that are used by the key edge or by edges reachable from the current state via
    * a given edge.
    */
   private val influencedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
-  private val influencedMemLocs: MutableMap<XcfaEdge, Set<Pair<LitExpr<*>, LitExpr<*>>>> =
-    mutableMapOf()
+  private val influencedMemLocs: MutableMap<XcfaEdge, Set<MemLoc>> = mutableMapOf()
 
   /** Backward edges in the CFA (an edge of a loop). */
   private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
@@ -242,7 +245,12 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
 
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
     val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
-    if ((influencedMemLocs intersect sourceSetMemLocs).isNotEmpty()) return true
+    if (
+      (influencedMemLocs.filter(MemLoc::isLit) intersect
+          sourceSetMemLocs.filter(MemLoc::isLit).toSet())
+        .isNotEmpty()
+    )
+      return true
 
     return indirectlyDependent(
       state,
@@ -254,17 +262,24 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     )
   }
 
+  /**
+   * Currently, the check only tests the first argument of (deref arr off), and deems two actions
+   * dependent if the array values may overlap. This should probably be extended for offsets as
+   * well.
+   */
   protected fun indirectlyDependent(
     state: XcfaState<out PtrState<out ExprState>>,
     sourceSetAction: XcfaAction,
     sourceSetActionVars: Set<VarDecl<*>>,
     influencedVars: Set<VarDecl<*>>,
-    sourceSetMemLocs: Set<Pair<LitExpr<*>, LitExpr<*>>>,
-    inflMemLocs: Set<Pair<LitExpr<*>, LitExpr<*>>>,
+    sourceSetMemLocs: Set<MemLoc>,
+    inflMemLocs: Set<MemLoc>,
   ): Boolean {
     val sourceSetActionMemLocs =
-      sourceSetActionVars.pointsTo(xcfa) + sourceSetMemLocs.map { it.first }
-    val influencedMemLocs = influencedVars.pointsTo(xcfa) + inflMemLocs.map { it.first }
+      sourceSetActionVars.pointsTo(xcfa) +
+        sourceSetMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
+    val influencedMemLocs =
+      influencedVars.pointsTo(xcfa) + inflMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
     val intersection = sourceSetActionMemLocs intersect influencedMemLocs
     if (intersection.isEmpty())
       return false // they cannot point to the same memory location even based on static info
@@ -315,12 +330,10 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose base-offset pairs are to be returned
    * @return the set of used global variables
    */
-  private fun getDirectlyUsedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+  private fun getDirectlyUsedMemLocs(edge: XcfaEdge): Set<MemLoc> {
     return edge
       .getFlatLabels()
       .flatMap { label -> label.dereferences.map { Pair(it.array, it.offset) } }
-      .filter { it.first is LitExpr<*> && it.second is LitExpr<*> }
-      .map { it as Pair<LitExpr<*>, LitExpr<*>> }
       .toSet()
   }
 
@@ -352,7 +365,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose base-offset pairs are collected
    * @return the set of directly or indirectly used base-offset pairs
    */
-  protected fun getCachedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+  protected fun getCachedMemLocs(edge: XcfaEdge): Set<MemLoc> {
     if (edge in usedMemLocs) return usedMemLocs[edge]!!
     val flatLabels = edge.getFlatLabels()
     val mutexes =
@@ -388,7 +401,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    * @param edge whose successor edges' base-offset pairs are to be returned.
    * @return the set of influenced global variables
    */
-  protected fun getInfluencedMemLocs(edge: XcfaEdge): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+  protected fun getInfluencedMemLocs(edge: XcfaEdge): Set<MemLoc> {
     if (edge in influencedMemLocs) return influencedMemLocs[edge]!!
     val vars = getMemLocsWithBFS(edge) { true }
     influencedMemLocs[edge] = vars
@@ -432,11 +445,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    *   edge
    * @return the set of encountered base-offset variables
    */
-  private fun getMemLocsWithBFS(
-    startEdge: XcfaEdge,
-    goFurther: Predicate<XcfaEdge>,
-  ): Set<Pair<LitExpr<*>, LitExpr<*>>> {
-    val memLocs = mutableSetOf<Pair<LitExpr<*>, LitExpr<*>>>()
+  private fun getMemLocsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): Set<MemLoc> {
+    val memLocs = mutableSetOf<MemLoc>()
     val exploredEdges = mutableListOf<XcfaEdge>()
     val edgesToExplore = mutableListOf<XcfaEdge>()
     edgesToExplore.add(startEdge)
