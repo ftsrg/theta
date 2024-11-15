@@ -475,6 +475,7 @@ data class WitnessConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateConcretizerSolver: Boolean = false,
+  @Parameter(names = ["--input-file-for-witness"]) var inputFileForWitness: File? = null,
 ) : Config
 
 data class ArgConfig(

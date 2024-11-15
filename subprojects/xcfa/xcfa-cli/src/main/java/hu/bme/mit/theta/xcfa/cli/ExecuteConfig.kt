@@ -455,7 +455,7 @@ private fun postVerificationLogging(
         GraphmlWitnessWriter()
           .writeWitness(
             safetyResult,
-            config.inputConfig.input!!,
+            config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             getSolver(
               config.outputConfig.witnessConfig.concretizerSolver,
               config.outputConfig.witnessConfig.validateConcretizerSolver,
@@ -467,7 +467,7 @@ private fun postVerificationLogging(
         YmlWitnessWriter()
           .writeWitness(
             safetyResult,
-            config.inputConfig.input!!,
+            config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             config.inputConfig.property,
             (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
             getSolver(

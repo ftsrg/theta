@@ -117,6 +117,7 @@ fun complexPortfolio25(
               disable = false,
               concretizerSolver = "Z3",
               validateConcretizerSolver = false,
+              inputFileForWitness = portfolioConfig.inputConfig.input,
             ),
           argConfig = ArgConfig(disable = true),
           enableOutput = portfolioConfig.outputConfig.enableOutput,

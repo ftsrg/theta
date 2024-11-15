@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.toC
 import java.io.File
 import java.util.*
+import kotlinx.serialization.encodeToString
 
 class YmlWitnessWriter {
 
@@ -97,7 +98,7 @@ class YmlWitnessWriter {
             },
         )
 
-      witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
+      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     } else if (safetyResult.isSafe) {
 
       val witness =
@@ -107,7 +108,7 @@ class YmlWitnessWriter {
           content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
         )
 
-      witnessfile.writeText(WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness))
+      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     }
   }
 }
