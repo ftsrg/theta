@@ -159,6 +159,7 @@ class XcfaOcChecker(
             Logger.Level.MAINSTEP,
             "Incomplete loop unroll used: safe result is unreliable.",
           )
+          logger.writeln(Logger.Level.RESULT, SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }
