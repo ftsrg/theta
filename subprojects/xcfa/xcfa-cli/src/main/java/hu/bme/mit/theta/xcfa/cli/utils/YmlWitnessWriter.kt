@@ -62,7 +62,7 @@ class YmlWitnessWriter {
         task =
           Task(
             inputFiles = listOf(inputFile.name),
-            inputFileHashes = listOf(createTaskHash(inputFile.path)),
+            inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
             specification = property.name,
             dataModel =
               architecture?.let {
@@ -142,7 +142,7 @@ private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): C
         ?: getLocation(inputFile, witnessEdge?.edge?.metadata)
         ?: return null
     return ContentItem(
-      Segment(Waypoint(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW))
+      WaypointContent(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW)
     )
   } else {
     return null
@@ -180,7 +180,7 @@ private fun WitnessEdge.toSegment(inputFile: File): ContentItem? {
       Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
     } else return null
   return ContentItem(
-    Segment(Waypoint(type = type, constraint = constraint, location = loc, action = Action.FOLLOW))
+    WaypointContent(type = type, constraint = constraint, location = loc, action = Action.FOLLOW)
   )
 }
 
