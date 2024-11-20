@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xsts.analysis.config.combined;
+package hu.bme.mit.theta.xsts.analysis.timed;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyState;

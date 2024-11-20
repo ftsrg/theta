@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xsts.analysis.config.combined;
+package hu.bme.mit.theta.xsts.analysis.timed;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -21,7 +21,7 @@ public final class XstsCombinedPrecRefiner
 
     private final RefutationToPrec<DPrec, R> refToPrec;
 
-    XstsCombinedPrecRefiner(final RefutationToPrec<DPrec, R> refToPrec) {
+    public XstsCombinedPrecRefiner(final RefutationToPrec<DPrec, R> refToPrec) {
         this.refToPrec = refToPrec;
     }
 
