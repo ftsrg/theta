@@ -45,14 +45,18 @@ echo "Verifying input '$IN' with property '$property' using arguments '$modified
 if [ "$(basename "$property")" == "termination.prp" ]; then
     transformed_property=$(dirname "$property")/unreach-call.prp
     echo "Mapping property '$property' to '$transformed_property'"
-    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property termination --to-property reachability --algorithm InstrumentationOperator $IN
+    TMPFILE=$(mktemp -d $PWD)
+    sed 's/__VERIFIER_assert/__OLD_VERIFIER_assert/g;s/reach_error/old_reach_error/g' "$IN" > "$TMPFILE"
+    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property termination --to-property reachability --algorithm InstrumentationOperator "$TMPFILE"
     #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
     modified_args="$modified_args --input-file-for-witness $IN"
     IN="output/transformed_program.c"
 elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
     transformed_property=$(dirname "$property")/unreach-call.prp
     echo "Mapping property '$property' to '$transformed_property'"
-    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property no-overflow --to-property reachability --algorithm InstrumentationOperator $IN
+    TMPFILE=$(mktemp -d $PWD)
+    sed 's/__VERIFIER_assert/__OLD_VERIFIER_assert/g;s/reach_error/old_reach_error/g' "$IN" > "$TMPFILE"
+    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property no-overflow --to-property reachability --algorithm InstrumentationOperator "$TMPFILE"
     #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
     modified_args="$modified_args --input-file-for-witness $IN"
     IN="output/transformed_program.c"
