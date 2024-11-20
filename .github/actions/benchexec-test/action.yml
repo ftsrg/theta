@@ -7,6 +7,10 @@ inputs:
         required: true
     tool:
         required: true
+    timeout:
+        required: true
+    xml:
+        required: true
 runs:
   using: "composite"
   steps:
@@ -21,7 +25,7 @@ runs:
       shell: bash
       run: |
         mkdir -p xml
-        cp $GITHUB_ACTION_PATH/theta.xml xml/
+        cp $GITHUB_ACTION_PATH/${{ inputs.xml }} xml/theta.xml
     - name: Get sv-benchmarks (retry max. 3 times)
       uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
       with:
@@ -60,7 +64,7 @@ runs:
         pwd
         tasks=($(cat xml/theta.xml | awk '/rundefinition name="${{ inputs.rundef }}"/,/<\/rundefinition>/' | grep 'tasks name=' | grep -oP '(?<=").*(?=")'))
         tasks_num=$(wc -w <<< ${tasks[@]})
-        timeout=$((900 / tasks_num))
+        timeout=$((${{inputs.timeout}} / tasks_num))
         for task in ${tasks[@]}
         do
           echo "Starting benchmark on rundefinition '${{ inputs.rundef }}', task set '$task'"
