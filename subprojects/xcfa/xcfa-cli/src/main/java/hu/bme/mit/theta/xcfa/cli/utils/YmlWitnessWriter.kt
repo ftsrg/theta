@@ -81,7 +81,8 @@ class YmlWitnessWriter {
           parseContext,
         )
 
-      val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
+      val witnessTrace =
+        traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
 
       val witness =
         YamlWitness(

@@ -462,6 +462,7 @@ private fun postVerificationLogging(
             ),
             parseContext,
             witnessFile,
+            config.inputConfig.property,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
         YmlWitnessWriter()

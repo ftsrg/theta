@@ -24,15 +24,17 @@ import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.solver.ProofNode
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.HornConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa2chc.toCHC
 
 fun getHornChecker(
@@ -60,10 +62,44 @@ fun getHornChecker(
     if (result.isSafe) {
       SafetyResult.safe(EmptyProof.getInstance())
     } else if (result.isUnsafe) {
-      val proof = result.asUnsafe().cex
-      val state =
-        XcfaState<PtrState<PredState>>(xcfa, mapOf(), PtrState(PredState.of(proof.proofNode.expr)))
-      SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyProof.getInstance())
+      val getName = { s: String ->
+        val split = s.split("_")
+        val allButLast = split.subList(0, split.size - 1)
+        allButLast.joinToString("_")
+      }
+      val loc = { proofNode: ProofNode ->
+        if (proofNode.expr is FuncAppExpr<*, *>) {
+          var func: Expr<*> = proofNode.expr
+          while (func is FuncAppExpr<*, *>) {
+            func = func.func
+          }
+          func as RefExpr<*>
+          xcfa.procedures.flatMap { it.locs }.first { it.name == getName(func.decl.name) }
+        } else null
+      }
+      val states = mutableListOf<XcfaState<PtrState<*>>>()
+      val actions = mutableListOf<XcfaAction>()
+      var proofNode: ProofNode? = result.asUnsafe().cex.proofNode
+      var lastLoc: XcfaLocation? = null
+      while (proofNode != null) {
+        loc(proofNode)?.also { currentLoc ->
+          states.add(XcfaState(xcfa, currentLoc, PtrState(PredState.of())))
+          lastLoc?.also {
+            actions.add(
+              XcfaAction(
+                0,
+                xcfa.procedures
+                  .flatMap { it.edges }
+                  .first { it.source == currentLoc && it.target == lastLoc },
+              )
+            )
+          }
+          lastLoc = currentLoc
+        }
+        proofNode = proofNode.children.getOrNull(0)
+      }
+
+      SafetyResult.unsafe(Trace.of(states.reversed(), actions.reversed()), EmptyProof.getInstance())
     } else {
       SafetyResult.unknown()
     }
