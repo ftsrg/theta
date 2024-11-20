@@ -46,13 +46,15 @@ if [ "$(basename "$property")" == "termination.prp" ]; then
     transformed_property=$(dirname "$property")/unreach-call.prp
     echo "Mapping property '$property' to '$transformed_property'"
     python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property termination --to-property reachability --algorithm InstrumentationOperator $IN
-    "$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    modified_args="$modified_args --input-file-for-witness $IN"
     IN="output/transformed_program.c"
 elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
     transformed_property=$(dirname "$property")/unreach-call.prp
     echo "Mapping property '$property' to '$transformed_property'"
     python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property no-overflow --to-property reachability --algorithm InstrumentationOperator $IN
-    "$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    modified_args="$modified_args --input-file-for-witness $IN"
     IN="output/transformed_program.c"
 else
     transformed_property="$property"
