@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class ControlFlowSplitLazyAbstractor<SConcr extends ExprState, SAbstr extends ExprState, P extends Prec>
+public final class XstsLazyAbstractor<SConcr extends ExprState, SAbstr extends ExprState, P extends Prec>
         implements Abstractor<LazyState<XstsState<SConcr>, XstsState<SAbstr>>, XstsAction, P> {
 
     private final ControlFlowSplitXstsLts<SConcr> lts;
@@ -35,20 +35,20 @@ public final class ControlFlowSplitLazyAbstractor<SConcr extends ExprState, SAbs
     private final LazyStrategy<SConcr, SAbstr, LazyState<XstsState<SConcr>, XstsState<SAbstr>>, XstsAction> lazyStrategy;
     private final Analysis<LazyState<XstsState<SConcr>, XstsState<SAbstr>>, XstsAction, P> analysis;
     private final Predicate<XstsState<SConcr>> isTarget;
-    private final boolean filterInfeasibleCF;
+    private final boolean feasibleActionsOnly;
 
-    public ControlFlowSplitLazyAbstractor(final ControlFlowSplitXstsLts<SConcr> lts,
-                                          final SearchStrategy searchStrategy,
-                                          final LazyStrategy<SConcr, SAbstr, LazyState<XstsState<SConcr>, XstsState<SAbstr>>, XstsAction> lazyStrategy,
-                                          final LazyAnalysis<XstsState<SConcr>, XstsState<SAbstr>, XstsAction, P> analysis,
-                                          final Predicate<XstsState<SConcr>> isTarget,
-                                          final boolean filterInfeasibleCF) {
+    public XstsLazyAbstractor(final ControlFlowSplitXstsLts<SConcr> lts,
+                              final SearchStrategy searchStrategy,
+                              final LazyStrategy<SConcr, SAbstr, LazyState<XstsState<SConcr>, XstsState<SAbstr>>, XstsAction> lazyStrategy,
+                              final LazyAnalysis<XstsState<SConcr>, XstsState<SAbstr>, XstsAction, P> analysis,
+                              final Predicate<XstsState<SConcr>> isTarget,
+                              final boolean feasibleActionsOnly) {
         this.lts = checkNotNull(lts);
         this.searchStrategy = checkNotNull(searchStrategy);
         this.lazyStrategy = checkNotNull(lazyStrategy);
         this.analysis = checkNotNull(analysis);
         this.isTarget = isTarget;
-        this.filterInfeasibleCF = filterInfeasibleCF;
+        this.feasibleActionsOnly = feasibleActionsOnly;
     }
 
     @Override
@@ -158,9 +158,9 @@ public final class ControlFlowSplitLazyAbstractor<SConcr extends ExprState, SAbs
             final LazyState<XstsState<SConcr>, XstsState<SAbstr>> state = node.getState();
 
             lts.reset();
-            lts.splitCF(state.getConcrState());
-            if (filterInfeasibleCF) {
-                lts.filterCF(state.getAbstrState());
+            lts.splitControlFlows(state.getConcrState(), feasibleActionsOnly);
+            if (feasibleActionsOnly) {
+                lts.updateSourceAbstractState(state.getAbstrState());
             }
             Optional<XstsAction> nextAction = lts.getNextEnabledAction();
 
@@ -179,8 +179,8 @@ public final class ControlFlowSplitLazyAbstractor<SConcr extends ExprState, SAbs
                             lazyStrategy.disable(node, action, succState, uncoveredNodes);
                             waiting.addAll(uncoveredNodes);
 
-                            if (filterInfeasibleCF) {
-                                lts.filterCF(node.getState().getAbstrState());
+                            if (feasibleActionsOnly) {
+                                lts.updateSourceAbstractState(node.getState().getAbstrState());
                             }
                         } else {
                             final boolean target = isTarget.test(succState.getConcrState());

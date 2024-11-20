@@ -45,7 +45,6 @@ public class ControlFlowSplitXstsLts<S extends ExprState> implements LTS<XstsSta
 
     private ControlFlowSplitResult cfSplitResult;
     private ExprState lastState;
-    private boolean stmtInSolver;
 
     private ControlFlowSplitXstsLts(final XSTS xsts, final Solver solver, final ValuationExtractor<S> valExtractor) {
         this.solver = solver;
@@ -76,15 +75,14 @@ public class ControlFlowSplitXstsLts<S extends ExprState> implements LTS<XstsSta
     @Override
     public Collection<XstsAction> getEnabledActionsFor(XstsState<S> state) {
         reset();
-        splitCF(state);
-        return getEnabledActions();
-    }
-
-    public Collection<XstsAction> getEnabledActionsFor(XstsState<S> state, ExprState abstrState) {
-        reset();
-        splitCF(state);
-        filterCF(abstrState);
-        return getEnabledActions();
+        splitControlFlows(state, false);
+        final List<XstsAction> actions = new ArrayList<>();
+        Optional<XstsAction> action = getNextEnabledAction();
+        while (action.isPresent()) {
+            actions.add(action.get());
+            action = getNextEnabledAction();
+        }
+        return actions;
     }
 
     public void reset() {
@@ -92,32 +90,30 @@ public class ControlFlowSplitXstsLts<S extends ExprState> implements LTS<XstsSta
             solver.pop();
         }
         lastState = null;
-        stmtInSolver = false;
     }
 
-    public void splitCF(final XstsState<S> state) {
-        final Stmt xstsStep;
-        if (!state.isInitialized()) xstsStep = init;
-        else if (state.lastActionWasEnv()) xstsStep = tran;
-        else xstsStep = env;
+    public void splitControlFlows(final XstsState<S> state, final boolean feasibleOnly) {
+        final Stmt enabledSet;
+        if (!state.isInitialized()) enabledSet = init;
+        else if (state.lastActionWasEnv()) enabledSet = tran;
+        else enabledSet = env;
 
         final Valuation ctrlVal = valExtractor.extractValuationForVars(state.getState(), ctrlVars);
-        final Stmt simplifiedStmt = StmtSimplifier.simplifyStmt(ctrlVal, xstsStep);
-        cfSplitResult = cfSplitCache.computeIfAbsent(simplifiedStmt, ControlFlowSplitUtil::splitCF);
+        final Stmt simplifiedStmt = StmtSimplifier.simplifyStmt(ctrlVal, enabledSet);
+        cfSplitResult = cfSplitCache.computeIfAbsent(simplifiedStmt, ControlFlowSplitUtil::splitControlFlows);
 
         solver.push();
         solver.add(cfSplitResult.getIndexedFlagConstraintExpr());
-    }
-
-    public void filterCF(final ExprState state) {
-        if (state != lastState) {
-            solver.add(PathUtils.unfold(state.toExpr(), 0));
-        }
-        if (!stmtInSolver) {
+        if (feasibleOnly) {
             final Stmt stmtWithoutClocks = stmtClockTransformer.apply(cfSplitResult.getFlaggedStmt());
             StmtUtils.toExpr(stmtWithoutClocks, VarIndexingFactory.indexing(0)).getExprs()
                     .forEach(expr -> solver.add(PathUtils.unfold(expr, 0)));
-            stmtInSolver = true;
+        }
+    }
+
+    public void updateSourceAbstractState(final ExprState state) {
+        if (state != lastState) {
+            solver.add(PathUtils.unfold(state.toExpr(), 0));
         }
     }
 
@@ -151,15 +147,5 @@ public class ControlFlowSplitXstsLts<S extends ExprState> implements LTS<XstsSta
         } else {
             return Optional.empty();
         }
-    }
-
-    private Collection<XstsAction> getEnabledActions() {
-        final List<XstsAction> actions = new ArrayList<>();
-        Optional<XstsAction> action = getNextEnabledAction();
-        while (action.isPresent()) {
-            actions.add(action.get());
-            action = getNextEnabledAction();
-        }
-        return actions;
     }
 }

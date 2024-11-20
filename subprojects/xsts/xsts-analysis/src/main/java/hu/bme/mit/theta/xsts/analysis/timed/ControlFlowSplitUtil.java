@@ -29,42 +29,43 @@ public class ControlFlowSplitUtil {
     private ControlFlowSplitUtil() {
     }
 
-    public static ControlFlowSplitResult splitCF(final Stmt stmt) {
+    public static ControlFlowSplitResult splitControlFlows(final Stmt stmt) {
 
         final List<VarDecl<BoolType>> flags = new ArrayList<>();
-        final List<Expr<BoolType>> flagConstraints = new ArrayList<>();
+        final List<Expr<BoolType>> controlFlowConstraints = new ArrayList<>();
 
-        final ControlFlowFlagsHelper helper = new ControlFlowFlagsHelper(flags, flagConstraints);
-        final Stmt flaggedStmt = helper.flagStmt(stmt);
+        final ControlFlowEncodingHelper helper = new ControlFlowEncodingHelper(flags, controlFlowConstraints);
+        final Stmt flaggedStmt = helper.encodeControlFlows(stmt);
 
         for (final VarDecl<BoolType> flag : Lists.reverse(flags)) {
             VarPoolUtil.returnBool(flag);
         }
 
-        return ControlFlowSplitResult.of(flaggedStmt, flags, flagConstraints);
+        return ControlFlowSplitResult.of(flaggedStmt, flags, controlFlowConstraints);
     }
 
-    private static final class ControlFlowFlagsHelper implements StmtVisitor<VarDecl<BoolType>, Stmt> {
+    private static final class ControlFlowEncodingHelper implements StmtVisitor<VarDecl<BoolType>, Stmt> {
 
         private final List<VarDecl<BoolType>> flags;
-        private final List<Expr<BoolType>> flagConstraints;
+        private final List<Expr<BoolType>> controlFlowConstraints;
         private final AssumeTransformationHelper assumeHelper;
 
-        private ControlFlowFlagsHelper(final List<VarDecl<BoolType>> flags, final List<Expr<BoolType>> flagConstraints) {
+        private ControlFlowEncodingHelper(final List<VarDecl<BoolType>> flags,
+                                          final List<Expr<BoolType>> controlFlowConstraints) {
             this.flags = flags;
-            this.flagConstraints = flagConstraints;
+            this.controlFlowConstraints = controlFlowConstraints;
             assumeHelper = new AssumeTransformationHelper();
         }
 
-        public Stmt flagStmt(final Stmt stmt) {
+        public Stmt encodeControlFlows(final Stmt stmt) {
             final VarDecl<BoolType> root = VarPoolUtil.requestBool();
             flags.add(root);
-            flagConstraints.add(root.getRef());
+            controlFlowConstraints.add(root.getRef());
 
-            final Stmt flaggedStmt = stmt.accept(this, root);
-            final AssumeStmt flagConstraintsAssume = Stmts.Assume(And(flagConstraints));
+            final Stmt transformedStmt = stmt.accept(this, root);
+            final AssumeStmt controlFlowAssumptions = Stmts.Assume(And(controlFlowConstraints));
 
-            return Stmts.SequenceStmt(List.of(flaggedStmt, flagConstraintsAssume));
+            return Stmts.SequenceStmt(List.of(transformedStmt, controlFlowAssumptions));
         }
 
         @Override
@@ -105,10 +106,10 @@ public class ControlFlowSplitUtil {
 
         @Override
         public Stmt visit(SequenceStmt stmt, VarDecl<BoolType> parent) {
-            final List<Stmt> flaggedSubStmts = stmt.getStmts().stream()
+            final List<Stmt> transformedSubStmts = stmt.getStmts().stream()
                     .map(subStmt -> subStmt.accept(this, parent))
                     .toList();
-            return SequenceStmt(flaggedSubStmts);
+            return SequenceStmt(transformedSubStmts);
         }
 
         @Override
@@ -125,17 +126,17 @@ public class ControlFlowSplitUtil {
             }
 
             final List<VarDecl<BoolType>> localFlags = new ArrayList<>(branchCnt);
-            final List<Stmt> flaggedBranches = new ArrayList<>(branchCnt);
+            final List<Stmt> transformedBranches = new ArrayList<>(branchCnt);
 
             for (final Stmt branch : branches) {
                 final VarDecl<BoolType> flag = VarPoolUtil.requestBool();
                 localFlags.add(flag);
                 flags.add(flag);
-                flagConstraints.add(Imply(Not(parent.getRef()), Not(flag.getRef())));
+                controlFlowConstraints.add(Imply(Not(parent.getRef()), Not(flag.getRef())));
 
-                final Stmt flaggedBranchBody = branch.accept(this, flag);
-                final IfStmt flaggedBranch = IfStmt(flag.getRef(), flaggedBranchBody);
-                flaggedBranches.add(flaggedBranch);
+                final Stmt transformedBranchBody = branch.accept(this, flag);
+                final IfStmt transformedBranch = IfStmt(flag.getRef(), transformedBranchBody);
+                transformedBranches.add(transformedBranch);
             }
 
             final List<Expr<BoolType>> branchExprs = new ArrayList<>();
@@ -147,9 +148,9 @@ public class ControlFlowSplitUtil {
                 }
                 branchExprs.add(And(flagsForCurrentBranch));
             }
-            flagConstraints.add(Imply(parent.getRef(), Or(branchExprs)));
+            controlFlowConstraints.add(Imply(parent.getRef(), Or(branchExprs)));
 
-            return SequenceStmt(flaggedBranches);
+            return SequenceStmt(transformedBranches);
         }
 
         @Override
@@ -173,7 +174,7 @@ public class ControlFlowSplitUtil {
             condToBranch.put(Not(stmt.getCond()), stmt.getElze());
 
             final List<VarDecl<BoolType>> localFlags = new ArrayList<>(2);
-            final List<Stmt> flaggedBranches = new ArrayList<>(2);
+            final List<Stmt> transformedBranches = new ArrayList<>(2);
 
             for (final Map.Entry<Expr<BoolType>, Stmt> branch : condToBranch.entrySet()) {
                 final VarDecl<BoolType> flag = VarPoolUtil.requestBool();
@@ -183,20 +184,20 @@ public class ControlFlowSplitUtil {
                 final Expr<BoolType> cond = branch.getKey();
                 final Stmt branchBody = branch.getValue();
                 final Stmt newBranchBody = SequenceStmt(List.of(Assume(cond), branchBody));
-                final Stmt flaggedBranchBody = newBranchBody.accept(this, flag);
+                final Stmt transformedBranchBody = newBranchBody.accept(this, flag);
 
-                final IfStmt flaggedBranch = IfStmt(flag.getRef(), flaggedBranchBody);
-                flaggedBranches.add(flaggedBranch);
+                final IfStmt transformedBranch = IfStmt(flag.getRef(), transformedBranchBody);
+                transformedBranches.add(transformedBranch);
             }
 
             final Expr<BoolType> p = parent.getRef();
             final Expr<BoolType> b1 = localFlags.get(0).getRef();
             final Expr<BoolType> b2 = localFlags.get(1).getRef();
-            flagConstraints.add(Imply(p, Xor(b1, b2)));
-            flagConstraints.add(Imply(Not(p), Not(b1)));
-            flagConstraints.add(Imply(Not(p), Not(b2)));
+            controlFlowConstraints.add(Imply(p, Xor(b1, b2)));
+            controlFlowConstraints.add(Imply(Not(p), Not(b1)));
+            controlFlowConstraints.add(Imply(Not(p), Not(b2)));
 
-            return SequenceStmt(flaggedBranches);
+            return SequenceStmt(transformedBranches);
         }
 
         @Override
@@ -238,20 +239,20 @@ public class ControlFlowSplitUtil {
             private Stmt transformAnd(final AndExpr andExpr, final VarDecl<BoolType> parent) {
                 final List<Stmt> assumes = andExpr.getOps().stream().map(Stmts::Assume).collect(toList());
                 final Stmt transformed = SequenceStmt(assumes);
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformOr(final OrExpr orExpr, final VarDecl<BoolType> parent) {
                 final List<Stmt> assumes = orExpr.getOps().stream().map(Stmts::Assume).collect(toList());
                 final Stmt transformed = NonDetStmt(assumes);
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformImply(final ImplyExpr implyExpr, final VarDecl<BoolType> parent) {
                 final Expr<BoolType> a = implyExpr.getLeftOp();
                 final Expr<BoolType> b = implyExpr.getRightOp();
                 final Stmt transformed = Assume(Or(Not(a), b));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformIff(final IffExpr iffExpr, final VarDecl<BoolType> parent) {
@@ -260,7 +261,7 @@ public class ControlFlowSplitUtil {
                 final Expr<BoolType> imply1 = Or(Not(a), b);
                 final Expr<BoolType> imply2 = Or(Not(b), a);
                 final Stmt transformed = Assume(And(imply1, imply2));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformXor(final XorExpr xorExpr, final VarDecl<BoolType> parent) {
@@ -269,7 +270,7 @@ public class ControlFlowSplitUtil {
                 final Expr<BoolType> case1 = And(Not(a), b);
                 final Expr<BoolType> case2 = And(a, Not(b));
                 final Stmt transformed = Assume(Or(case1, case2));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNot(final NotExpr notExpr, final VarDecl<BoolType> parent) {
@@ -312,26 +313,26 @@ public class ControlFlowSplitUtil {
 
             private Stmt transformNegatedNot(final NotExpr negatedNotExpr, final VarDecl<BoolType> parent) {
                 final Stmt transformed = Assume(negatedNotExpr.getOp());
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedAnd(final AndExpr negatedAndExpr, final VarDecl<BoolType> parent) {
                 final List<NotExpr> negatedOps = negatedAndExpr.getOps().stream().map(BoolExprs::Not).toList();
                 final Stmt transformed = Assume(Or(negatedOps));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedOr(final OrExpr negatedOrExpr, final VarDecl<BoolType> parent) {
                 final List<NotExpr> negatedOps = negatedOrExpr.getOps().stream().map(BoolExprs::Not).toList();
                 final Stmt transformed = Assume(And(negatedOps));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedImply(final ImplyExpr negatedImplyExpr, final VarDecl<BoolType> parent) {
                 final Expr<BoolType> a = negatedImplyExpr.getLeftOp();
                 final Expr<BoolType> b = negatedImplyExpr.getRightOp();
                 final Stmt transformed = Assume(And(a, Not(b)));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedIff(final IffExpr negatedIffExpr, final VarDecl<BoolType> parent) {
@@ -340,7 +341,7 @@ public class ControlFlowSplitUtil {
                 final Expr<BoolType> notImply1 = And(a, Not(b));
                 final Expr<BoolType> notImply2 = And(b, Not(a));
                 final Stmt transformed = Assume(Or(notImply1, notImply2));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedXor(final XorExpr negatedXorExpr, final VarDecl<BoolType> parent) {
@@ -349,21 +350,21 @@ public class ControlFlowSplitUtil {
                 final Expr<BoolType> same1 = And(a, b);
                 final Expr<BoolType> same2 = And(Not(a), Not(b));
                 final Stmt transformed = Assume(Or(same1, same2));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedExists(final ExistsExpr negatedExistsExpr, final VarDecl<BoolType> parent) {
                 final List<ParamDecl<?>> params = negatedExistsExpr.getParamDecls();
                 final Expr<BoolType> op = negatedExistsExpr.getOp();
                 final Stmt transformed = Assume(Forall(params, Not(op)));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
 
             private Stmt transformNegatedForall(final ForallExpr negatedForallExpr, final VarDecl<BoolType> parent) {
                 final List<ParamDecl<?>> params = negatedForallExpr.getParamDecls();
                 final Expr<BoolType> op = negatedForallExpr.getOp();
                 final Stmt transformed = Assume(Exists(params, Not(op)));
-                return transformed.accept(ControlFlowSplitUtil.ControlFlowFlagsHelper.this, parent);
+                return transformed.accept(ControlFlowEncodingHelper.this, parent);
             }
         }
     }
