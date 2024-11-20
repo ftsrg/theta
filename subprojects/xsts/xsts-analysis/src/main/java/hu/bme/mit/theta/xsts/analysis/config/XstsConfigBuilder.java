@@ -162,8 +162,8 @@ public class XstsConfigBuilder {
 		ON, OFF
 	}
 
-	public enum ClockImpl {
-		CLOCK(XstsClockReplacers.None()),
+	public enum ClockReplacer {
+		NONE(XstsClockReplacers.None()),
 
 		INT(XstsClockReplacers.Int()),
 
@@ -171,21 +171,21 @@ public class XstsConfigBuilder {
 
 		public final XstsClockReplacers.XstsClockReplacer clockReplacer;
 
-		private ClockImpl(final XstsClockReplacers.XstsClockReplacer clockReplacer) { this.clockReplacer = clockReplacer; }
+		private ClockReplacer(final XstsClockReplacers.XstsClockReplacer clockReplacer) { this.clockReplacer = clockReplacer; }
 	}
 
-	private Logger logger = NullLogger.getInstance();
-	private final SolverFactory solverFactory;
-	private final Domain domain;
-	private final Refinement refinement;
-	private Search search = Search.BFS;
-	private PredSplit predSplit = PredSplit.WHOLE;
-	private int maxEnum = 0;
-	private InitPrec initPrec = InitPrec.EMPTY;
-	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
-	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
-	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
-	private ClockImpl clockImpl = ClockImpl.CLOCK;
+	Logger logger = NullLogger.getInstance();
+	final SolverFactory solverFactory;
+	final Domain domain;
+	final Refinement refinement;
+	Search search = Search.BFS;
+	PredSplit predSplit = PredSplit.WHOLE;
+	int maxEnum = 0;
+	InitPrec initPrec = InitPrec.EMPTY;
+	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+	OptimizeStmts optimizeStmts = OptimizeStmts.ON;
+	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	ClockReplacer clockReplacer = ClockReplacer.NONE;
 
 	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -233,15 +233,15 @@ public class XstsConfigBuilder {
 		return this;
 	}
 
-	public XstsConfigBuilder clockImpl(final ClockImpl clockImpl) {
-		this.clockImpl = clockImpl;
+	public XstsConfigBuilder clockReplacer(final ClockReplacer clockReplacer) {
+		this.clockReplacer = clockReplacer;
 		return this;
 	}
 
 	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(XSTS xsts) {
 		final Solver abstractionSolver = solverFactory.createSolver();
 
-		xsts = clockImpl.clockReplacer.apply(xsts);
+		xsts = clockReplacer.clockReplacer.apply(xsts);
 
 		final Expr<BoolType> negProp = Not(xsts.getProp());
 

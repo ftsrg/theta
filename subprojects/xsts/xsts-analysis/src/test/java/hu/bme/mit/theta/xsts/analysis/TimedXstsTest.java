@@ -101,7 +101,7 @@ public class TimedXstsTest {
 				.predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
 				.maxEnum(250)
 				.autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS)
-				.clockImpl(XstsConfigBuilder.ClockImpl.RAT)
+				.clockReplacer(XstsConfigBuilder.ClockReplacer.RAT)
 				.pruneStrategy(PruneStrategy.FULL)
 				.logger(logger)
 				.build(xsts);

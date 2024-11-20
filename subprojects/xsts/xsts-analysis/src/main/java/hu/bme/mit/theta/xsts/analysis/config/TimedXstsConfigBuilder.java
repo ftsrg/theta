@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xsts.analysis.config.combined;
+package hu.bme.mit.theta.xsts.analysis.config;
 
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -20,8 +20,6 @@ import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.utils.ValuationExtractor;
 import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.common.Tuple4;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -29,15 +27,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.*;
+import hu.bme.mit.theta.xsts.analysis.timed.XstsCombinedExprTraceChecker;
+import hu.bme.mit.theta.xsts.analysis.timed.XstsCombinedPrecRefiner;
 import hu.bme.mit.theta.xsts.analysis.timed.*;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -46,124 +42,59 @@ import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public final class XstsCombinedConfigBuilder {
-
-	public enum Search {
-		BFS(SearchStrategy.BFS),
-
-		DFS(SearchStrategy.DFS);
-
-		public final SearchStrategy strategy;
-
-		private Search(final SearchStrategy strategy) {
-			this.strategy = strategy;
-		}
-	}
+public final class TimedXstsConfigBuilder {
 
 	public enum ZoneRefinement {
 		BW_ITP, FW_ITP
 	}
-	
-	public enum ClockStrategy {
 
-		NONE(XstsClockReplacers.None(), false, false),
+	public enum ControlFlowSplitting {
 
-		INT(XstsClockReplacers.Int(), false, false),
+		OFF(false, false),
 
-		RAT(XstsClockReplacers.Rat(), false, false),
-		
-		CF_SPLIT_ALL(XstsClockReplacers.None(), true, false),
+		ALL_ACTIONS(true, false),
 
-		CF_SPLIT_FILTERCF(XstsClockReplacers.None(), true, true);
+		FEASIBLE_ACTIONS_ONLY(true, true);
 
-		public final XstsClockReplacers.XstsClockReplacer clockReplacer;
 		public final boolean controlFlowSplitting;
-		public final boolean filterInfeasibleCF;
+		public final boolean feasibleActionsOnly;
 
-		private ClockStrategy(final XstsClockReplacers.XstsClockReplacer clockReplacer, final boolean controlFlowSplitting, final boolean filterInfeasibleCF) {
-			this.clockReplacer = clockReplacer;
+		ControlFlowSplitting(final boolean controlFlowSplitting, final boolean feasibleActionsOnly) {
 			this.controlFlowSplitting = controlFlowSplitting;
-			this.filterInfeasibleCF = filterInfeasibleCF;
+			this.feasibleActionsOnly = feasibleActionsOnly;
 		}
 	}
 
-	private Logger logger = NullLogger.getInstance();
-	private final SolverFactory solverFactory;
-	private final XstsConfigBuilder.Domain domain;
-	private final XstsConfigBuilder.Refinement refinement;
-	private Search search = Search.BFS;
-	private XstsConfigBuilder.PredSplit predSplit = XstsConfigBuilder.PredSplit.WHOLE;
-	private int maxEnum = 0;
-	private XstsConfigBuilder.InitPrec initPrec = XstsConfigBuilder.InitPrec.EMPTY;
-	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
-	private XstsConfigBuilder.OptimizeStmts optimizeStmts = XstsConfigBuilder.OptimizeStmts.ON;
-	private XstsConfigBuilder.AutoExpl autoExpl = XstsConfigBuilder.AutoExpl.NEWOPERANDS;
+	private final XstsConfigBuilder xstsConfig;
+	private final SearchStrategy searchStrategy;
 	private ZoneRefinement zoneRefinement = ZoneRefinement.BW_ITP;
 	private TimedXstsActionProjections timedXstsActionProjections;
-	private ClockStrategy clockStrategy = ClockStrategy.NONE;
+	private ControlFlowSplitting controlFlowSplitting = ControlFlowSplitting.OFF;
 
-	public XstsCombinedConfigBuilder(final XstsConfigBuilder.Domain domain, final XstsConfigBuilder.Refinement refinement, final SolverFactory solverFactory) {
-		this.domain = domain;
-		this.refinement = refinement;
-		this.solverFactory = solverFactory;
+	public TimedXstsConfigBuilder(final XstsConfigBuilder xstsConfig) {
+		this.xstsConfig = xstsConfig;
+		this.searchStrategy = switch (xstsConfig.search) {
+			case BFS -> SearchStrategy.BFS;
+			case DFS -> SearchStrategy.DFS;
+		};
 	}
 
-	public XstsCombinedConfigBuilder logger(final Logger logger) {
-		this.logger = logger;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder search(final Search search) {
-		this.search = search;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder predSplit(final XstsConfigBuilder.PredSplit predSplit) {
-		this.predSplit = predSplit;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder maxEnum(final int maxEnum) {
-		this.maxEnum = maxEnum;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder initPrec(final XstsConfigBuilder.InitPrec initPrec) {
-		this.initPrec = initPrec;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
-		this.pruneStrategy = pruneStrategy;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder optimizeStmts(final XstsConfigBuilder.OptimizeStmts optimizeStmts) {
-		this.optimizeStmts = optimizeStmts;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder autoExpl(final XstsConfigBuilder.AutoExpl autoExpl) {
-		this.autoExpl = autoExpl;
-		return this;
-	}
-
-	public XstsCombinedConfigBuilder zoneRefinement(final ZoneRefinement zoneRefinement) {
+	public TimedXstsConfigBuilder zoneRefinement(final ZoneRefinement zoneRefinement) {
 		this.zoneRefinement = zoneRefinement;
 		return this;
 	}
 	
-	public XstsCombinedConfigBuilder clockStrategy(final ClockStrategy clockStrategy) {
-		this.clockStrategy = clockStrategy;
+	public TimedXstsConfigBuilder controlFlowSplitting(final ControlFlowSplitting controlFlowSplitting) {
+		this.controlFlowSplitting = controlFlowSplitting;
 		return this;
 	}
 
 	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(XSTS xsts) {
-		final Solver abstractionSolver = solverFactory.createSolver();
+		final Solver abstractionSolver = xstsConfig.solverFactory.createSolver();
 
 		timedXstsActionProjections = TimedXstsActionProjections.create();
 
-		xsts = clockStrategy.clockReplacer.apply(xsts);
+		xsts = xstsConfig.clockReplacer.clockReplacer.apply(xsts);
 
 		final Expr<BoolType> initFormula = xsts.getInitFormula();
 		final Expr<BoolType> negProp = Not(xsts.getProp());
@@ -181,13 +112,13 @@ public final class XstsCombinedConfigBuilder {
 		final XstsCombinedPrecRefiner precRefiner = createPrecRefiner(xsts);
 
 		final Refiner refiner;
-		if (refinement == XstsConfigBuilder.Refinement.MULTI_SEQ) {
-			refiner = MultiExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger);
+		if (xstsConfig.refinement == XstsConfigBuilder.Refinement.MULTI_SEQ) {
+			refiner = MultiExprTraceRefiner.create(traceChecker, precRefiner, xstsConfig.pruneStrategy, xstsConfig.logger);
 		} else {
-			refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, pruneStrategy, logger);
+			refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, xstsConfig.pruneStrategy, xstsConfig.logger);
 		}
 
-		if (domain == XstsConfigBuilder.Domain.EXPL) {
+		if (xstsConfig.domain == XstsConfigBuilder.Domain.EXPL) {
 
 			final LazyStrategy lazyDataStrategy = new BasicLazyStrategy<>(
 					XstsLazyLensUtils.createConcrDataLens(),
@@ -204,7 +135,7 @@ public final class XstsCombinedConfigBuilder {
 			final Prod2LazyStrategy lazyStrategy = new Prod2LazyStrategy<>(lazyToConcrProd2Lens, lazyDataStrategy, lazyClockStrategy, projection);
 
 			final TimedXstsProd2Analysis splitProd2Analysis = TimedXstsProd2Analysis.create(
-					ExplStmtAnalysis.create(abstractionSolver, initFormula, maxEnum),
+					ExplStmtAnalysis.create(abstractionSolver, initFormula, xstsConfig.maxEnum),
 					ZoneStmtAnalysis.getInstance(),
 					timedXstsActionProjections
 			);
@@ -224,7 +155,7 @@ public final class XstsCombinedConfigBuilder {
 			final Predicate<XstsState> target = new XstsStatePredicate(prod2Target);
 
 			final XstsStmtOptimizer<Prod2State<ExplState, ZoneState>> stmtOptimizer;
-			if (optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
+			if (xstsConfig.optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
 				stmtOptimizer =
 						XstsStmtOptimizer.create(Prod2StmtOptimizer.create(
 								ExplStmtOptimizer.getInstance(),
@@ -235,24 +166,24 @@ public final class XstsCombinedConfigBuilder {
 			}
 
 			final Abstractor abstractor;
-			if (clockStrategy.controlFlowSplitting) {
-				final Solver cfSplitSolver = solverFactory.createSolver();
+			if (controlFlowSplitting.controlFlowSplitting) {
+				final Solver cfSplitSolver = xstsConfig.solverFactory.createSolver();
 				final ValuationExtractor<Prod2State<ExplState, ZoneState>> valExtractor =
 						createDataValExtractor(ExplStateValuationExtractor.getInstance());
 				final ControlFlowSplitXstsLts<Prod2State<ExplState, ZoneState>> lts =
 						ControlFlowSplitXstsLts.create(xsts, cfSplitSolver, valExtractor);
-				abstractor = new ControlFlowSplitLazyAbstractor(lts, search.strategy, lazyStrategy, lazyAnalysis, target, clockStrategy.filterInfeasibleCF);
+				abstractor = new XstsLazyAbstractor(lts, searchStrategy, lazyStrategy, lazyAnalysis, target, controlFlowSplitting.feasibleActionsOnly);
 			} else {
 				final LTS<XstsState<Prod2State<ExplState, ZoneState>>, XstsAction> lts = XstsLts.create(xsts, stmtOptimizer);
-				abstractor = new LazyAbstractor(lts, search.strategy, lazyStrategy, lazyAnalysis, target);
+				abstractor = new LazyAbstractor(lts, searchStrategy, lazyStrategy, lazyAnalysis, target);
 			}
 
 			final SafetyChecker<XstsState<Prod2State<ExplState, ZoneState>>, XstsAction, Prod2Prec<ExplPrec, ZonePrec>>
-					checker = CegarChecker.create(abstractor, refiner, logger);
-			final Prod2Prec<ExplPrec, ZonePrec> prec = Prod2Prec.of(initPrec.builder.createExpl(xsts), zonePrec);
+					checker = CegarChecker.create(abstractor, refiner, xstsConfig.logger);
+			final Prod2Prec<ExplPrec, ZonePrec> prec = Prod2Prec.of(xstsConfig.initPrec.builder.createExpl(xsts), zonePrec);
 			return XstsConfig.create(checker, prec);
 
-		} else if (domain == XstsConfigBuilder.Domain.PRED_BOOL || domain == XstsConfigBuilder.Domain.PRED_CART || domain == XstsConfigBuilder.Domain.PRED_SPLIT) {
+		} else if (xstsConfig.domain == XstsConfigBuilder.Domain.PRED_BOOL || xstsConfig.domain == XstsConfigBuilder.Domain.PRED_CART || xstsConfig.domain == XstsConfigBuilder.Domain.PRED_SPLIT) {
 
 			final LazyStrategy lazyDataStrategy = new BasicLazyStrategy<>(
 					XstsLazyLensUtils.createConcrDataLens(),
@@ -268,11 +199,11 @@ public final class XstsCombinedConfigBuilder {
 
 			final Prod2LazyStrategy lazyStrategy = new Prod2LazyStrategy<>(lazyToConcrProd2Lens, lazyDataStrategy, lazyClockStrategy, projection);
 
-			PredAbstractors.PredAbstractor predAbstractor = switch (domain) {
+			PredAbstractors.PredAbstractor predAbstractor = switch (xstsConfig.domain) {
 				case PRED_BOOL -> PredAbstractors.booleanAbstractor(abstractionSolver);
 				case PRED_SPLIT -> PredAbstractors.booleanSplitAbstractor(abstractionSolver);
 				case PRED_CART -> PredAbstractors.cartesianAbstractor(abstractionSolver);
-				default -> throw new UnsupportedOperationException(domain + " domain is not supported.");
+				default -> throw new UnsupportedOperationException(xstsConfig.domain + " domain is not supported.");
 			};
 
 			final TimedXstsProd2Analysis splitProd2Analysis = TimedXstsProd2Analysis.create(
@@ -296,7 +227,7 @@ public final class XstsCombinedConfigBuilder {
 			final Predicate<XstsState<Prod2State<PredState, ZoneState>>> target = new XstsStatePredicate<>(prod2Target);
 
 			final XstsStmtOptimizer<Prod2State<PredState, ZoneState>> stmtOptimizer;
-			if (optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
+			if (xstsConfig.optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
 				stmtOptimizer = XstsStmtOptimizer.create(Prod2StmtOptimizer.create(
 						PredStmtOptimizer.getInstance(),
 						DefaultStmtOptimizer.create()));
@@ -305,24 +236,24 @@ public final class XstsCombinedConfigBuilder {
 			}
 
 			final Abstractor abstractor;
-			if (clockStrategy.controlFlowSplitting) {
-				final Solver cfSplitSolver = solverFactory.createSolver();
+			if (controlFlowSplitting != ControlFlowSplitting.OFF) {
+				final Solver cfSplitSolver = xstsConfig.solverFactory.createSolver();
 				final ValuationExtractor<Prod2State<PredState, ZoneState>> valExtractor =
 						createDataValExtractor(PredStateValuationExtractor.getInstance());
 				final ControlFlowSplitXstsLts<Prod2State<PredState, ZoneState>> lts =
 						ControlFlowSplitXstsLts.create(xsts, cfSplitSolver, valExtractor);
-				abstractor = new ControlFlowSplitLazyAbstractor(lts, search.strategy, lazyStrategy, lazyAnalysis, target, clockStrategy.filterInfeasibleCF);
+				abstractor = new XstsLazyAbstractor(lts, searchStrategy, lazyStrategy, lazyAnalysis, target, controlFlowSplitting.feasibleActionsOnly);
 			} else {
 				final LTS<XstsState<Prod2State<PredState, ZoneState>>, XstsAction> lts = XstsLts.create(xsts, stmtOptimizer);
-				abstractor = new LazyAbstractor<>(lts, search.strategy, lazyStrategy, lazyAnalysis, target);
+				abstractor = new LazyAbstractor<>(lts, searchStrategy, lazyStrategy, lazyAnalysis, target);
 			}
 
 			final SafetyChecker<XstsState<Prod2State<PredState, ZoneState>>, XstsAction, Prod2Prec<PredPrec, ZonePrec>>
-					checker = CegarChecker.create(abstractor, refiner, logger);
-			final Prod2Prec<PredPrec, ZonePrec> prec = Prod2Prec.of(initPrec.builder.createPred(xsts), zonePrec);
+					checker = CegarChecker.create(abstractor, refiner, xstsConfig.logger);
+			final Prod2Prec<PredPrec, ZonePrec> prec = Prod2Prec.of(xstsConfig.initPrec.builder.createPred(xsts), zonePrec);
 			return XstsConfig.create(checker, prec);
 
-		} else if (domain == XstsConfigBuilder.Domain.EXPL_PRED_BOOL || domain == XstsConfigBuilder.Domain.EXPL_PRED_CART || domain == XstsConfigBuilder.Domain.EXPL_PRED_COMBINED || domain == XstsConfigBuilder.Domain.EXPL_PRED_SPLIT) {
+		} else if (xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_BOOL || xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_CART || xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_COMBINED || xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_SPLIT) {
 
 			final LazyStrategy lazyDataStrategy = new BasicLazyStrategy<>(
 					XstsLazyLensUtils.createConcrDataLens(),
@@ -341,23 +272,23 @@ public final class XstsCombinedConfigBuilder {
 
 			final Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> dataAnalysis;
 
-			if (domain == XstsConfigBuilder.Domain.EXPL_PRED_BOOL || domain == XstsConfigBuilder.Domain.EXPL_PRED_CART || domain == XstsConfigBuilder.Domain.EXPL_PRED_SPLIT) {
-				final PredAbstractors.PredAbstractor predAbstractor = switch (domain) {
+			if (xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_BOOL || xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_CART || xstsConfig.domain == XstsConfigBuilder.Domain.EXPL_PRED_SPLIT) {
+				final PredAbstractors.PredAbstractor predAbstractor = switch (xstsConfig.domain) {
 					case EXPL_PRED_BOOL -> PredAbstractors.booleanAbstractor(abstractionSolver);
 					case EXPL_PRED_SPLIT -> PredAbstractors.booleanSplitAbstractor(abstractionSolver);
 					case EXPL_PRED_CART -> PredAbstractors.cartesianAbstractor(abstractionSolver);
-					default -> throw new UnsupportedOperationException(domain + " domain is not supported.");
+					default -> throw new UnsupportedOperationException(xstsConfig.domain + " domain is not supported.");
 				};
 				dataAnalysis = Prod2Analysis.create(
-						ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula(), maxEnum),
-						PredAnalysis.create(abstractionSolver, predAbstractor, xsts.getInitFormula()),
+						ExplStmtAnalysis.create(abstractionSolver, initFormula, xstsConfig.maxEnum),
+						PredAnalysis.create(abstractionSolver, predAbstractor, initFormula),
 						Prod2ExplPredPreStrengtheningOperator.create(),
 						Prod2ExplPredStrengtheningOperator.create(abstractionSolver));
 			} else {
 				final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor = Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
 				dataAnalysis = Prod2ExplPredAnalysis.create(
-						ExplAnalysis.create(abstractionSolver, xsts.getInitFormula()),
-						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), xsts.getInitFormula()),
+						ExplAnalysis.create(abstractionSolver, initFormula),
+						PredAnalysis.create(abstractionSolver, PredAbstractors.booleanAbstractor(abstractionSolver), initFormula),
 						Prod2ExplPredStrengtheningOperator.create(abstractionSolver),
 						prodAbstractor);
 			}
@@ -381,7 +312,7 @@ public final class XstsCombinedConfigBuilder {
 			final Predicate<XstsState<Prod2State<Prod2State<ExplState, PredState>, ZoneState>>> target = new XstsStatePredicate<>(prod2Target);
 
 			final XstsStmtOptimizer<Prod2State<Prod2State<ExplState, PredState>, ZoneState>> stmtOptimizer;
-			if (optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
+			if (xstsConfig.optimizeStmts == XstsConfigBuilder.OptimizeStmts.ON) {
 				stmtOptimizer = XstsStmtOptimizer.create(Prod2StmtOptimizer.create(
 						Prod2ExplPredStmtOptimizer.create(ExplStmtOptimizer.getInstance()),
 						DefaultStmtOptimizer.create()));
@@ -390,26 +321,26 @@ public final class XstsCombinedConfigBuilder {
 			}
 
 			final Abstractor abstractor;
-			if (clockStrategy.controlFlowSplitting) {
-				final Solver cfSplitSolver = solverFactory.createSolver();
+			if (controlFlowSplitting != ControlFlowSplitting.OFF) {
+				final Solver cfSplitSolver = xstsConfig.solverFactory.createSolver();
 				final ValuationExtractor<Prod2State<Prod2State<ExplState, PredState>, ZoneState>> valExtractor =
 						createDataValExtractor(Prod2ExplPredStateValuationExtractor.create(ExplStateValuationExtractor.getInstance()));
 				final ControlFlowSplitXstsLts<Prod2State<Prod2State<ExplState, PredState>, ZoneState>> lts =
 						ControlFlowSplitXstsLts.create(xsts, cfSplitSolver, valExtractor);
-				abstractor = new ControlFlowSplitLazyAbstractor(lts, search.strategy, lazyStrategy, lazyAnalysis, target, clockStrategy.filterInfeasibleCF);
+				abstractor = new XstsLazyAbstractor(lts, searchStrategy, lazyStrategy, lazyAnalysis, target, controlFlowSplitting.feasibleActionsOnly);
 			} else {
 				final LTS<XstsState<Prod2State<Prod2State<ExplState, PredState>, ZoneState>>, XstsAction> lts =
 						XstsLts.create(xsts, stmtOptimizer);
-				abstractor = new LazyAbstractor<>(lts, search.strategy, lazyStrategy, lazyAnalysis, target);
+				abstractor = new LazyAbstractor<>(lts, searchStrategy, lazyStrategy, lazyAnalysis, target);
 			}
 
 			final SafetyChecker<XstsState<Prod2State<Prod2State<ExplState, PredState>, ZoneState>>, XstsAction, Prod2Prec<Prod2Prec<ExplPrec, PredPrec>, ZonePrec>>
-					checker = CegarChecker.create(abstractor, refiner, logger);
-			final Prod2Prec<Prod2Prec<ExplPrec, PredPrec>, ZonePrec> prec = Prod2Prec.of(initPrec.builder.createProd2ExplPred(xsts), zonePrec);
+					checker = CegarChecker.create(abstractor, refiner, xstsConfig.logger);
+			final Prod2Prec<Prod2Prec<ExplPrec, PredPrec>, ZonePrec> prec = Prod2Prec.of(xstsConfig.initPrec.builder.createProd2ExplPred(xsts), zonePrec);
 			return XstsConfig.create(checker, prec);
 
 		} else {
-			throw new UnsupportedOperationException(domain + " domain is not supported.");
+			throw new UnsupportedOperationException(xstsConfig.domain + " domain is not supported.");
 		}
 	}
 
@@ -452,22 +383,22 @@ public final class XstsCombinedConfigBuilder {
 	private XstsCombinedExprTraceChecker createTraceChecker(final Expr<BoolType> initFormula, final Expr<BoolType> negProp,
 															final Lens lens) {
 		final XstsCombinedExprTraceChecker traceChecker = new XstsCombinedExprTraceChecker(
-				switch (refinement) {
-					case FW_BIN_ITP -> ExprTraceFwBinItpChecker.create(initFormula, negProp, solverFactory.createItpSolver());
-					case BW_BIN_ITP -> ExprTraceBwBinItpChecker.create(initFormula, negProp, solverFactory.createItpSolver());
-					case SEQ_ITP, MULTI_SEQ -> ExprTraceSeqItpChecker.create(initFormula, negProp, solverFactory.createItpSolver());
-					case UNSAT_CORE -> ExprTraceUnsatCoreChecker.create(initFormula, negProp, solverFactory.createUCSolver());
+				switch (xstsConfig.refinement) {
+					case FW_BIN_ITP -> ExprTraceFwBinItpChecker.create(initFormula, negProp, xstsConfig.solverFactory.createItpSolver());
+					case BW_BIN_ITP -> ExprTraceBwBinItpChecker.create(initFormula, negProp, xstsConfig.solverFactory.createItpSolver());
+					case SEQ_ITP, MULTI_SEQ -> ExprTraceSeqItpChecker.create(initFormula, negProp, xstsConfig.solverFactory.createItpSolver());
+					case UNSAT_CORE -> ExprTraceUnsatCoreChecker.create(initFormula, negProp, xstsConfig.solverFactory.createUCSolver());
 				}, lens, timedXstsActionProjections);
 		return traceChecker;
 	}
 
 	private XstsCombinedPrecRefiner createPrecRefiner(final XSTS xsts) {
 		final XstsCombinedPrecRefiner precRefiner = new XstsCombinedPrecRefiner(
-				switch (domain) {
+				switch (xstsConfig.domain) {
 					case EXPL -> new ItpRefToExplPrec();
-					case PRED_BOOL, PRED_CART, PRED_SPLIT -> new ItpRefToPredPrec(predSplit.splitter);
+					case PRED_BOOL, PRED_CART, PRED_SPLIT -> new ItpRefToPredPrec(xstsConfig.predSplit.splitter);
 					case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_COMBINED, EXPL_PRED_SPLIT ->
-							AutomaticItpRefToProd2ExplPredPrec.create(autoExpl.builder.create(xsts), predSplit.splitter);
+							AutomaticItpRefToProd2ExplPredPrec.create(xstsConfig.autoExpl.builder.create(xsts), xstsConfig.predSplit.splitter);
 				});
 		return precRefiner;
 	}

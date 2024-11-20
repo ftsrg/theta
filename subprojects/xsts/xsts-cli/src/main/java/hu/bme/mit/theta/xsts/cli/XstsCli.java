@@ -18,6 +18,7 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
@@ -27,7 +28,9 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
-import hu.bme.mit.theta.xsts.analysis.config.combined.XstsCombinedConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.config.TimedXstsConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.config.TimedXstsConfigBuilder.ControlFlowSplitting;
+import hu.bme.mit.theta.xsts.analysis.config.TimedXstsConfigBuilder.ZoneRefinement;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
@@ -104,19 +107,13 @@ public class XstsCli {
 	String dotfile = null;
 
 	@Parameter(names = {"--clockreplacement"}, description = "Clock replacement type")
-	ClockImpl clockImpl = ClockImpl.RAT;
+	ClockReplacer clockReplacer = ClockReplacer.RAT;
 
-	@Parameter(names = {"--combined"}, description = "Run combined abstraction")
-	boolean combinedAlgorithm = false;
-
-	@Parameter(names = {"--combinedsearch"}, description = "Search strategy for combined abstraction")
-	XstsCombinedConfigBuilder.Search combinedSearch = XstsCombinedConfigBuilder.Search.BFS;
-
-	@Parameter(names = {"--clockstrategy"}, description = "Clock strategy for combined abstraction")
-	XstsCombinedConfigBuilder.ClockStrategy clockStrategy = XstsCombinedConfigBuilder.ClockStrategy.NONE;
+	@Parameter(names = {"--controlflowsplitting"}, description = "Clock replacement type")
+	ControlFlowSplitting controlFlowSplitting = ControlFlowSplitting.OFF;
 
 	@Parameter(names = {"--zonerefinement"}, description = "Refinement strategy for zone states")
-	XstsCombinedConfigBuilder.ZoneRefinement zoneRefinement = XstsCombinedConfigBuilder.ZoneRefinement.BW_ITP;
+	ZoneRefinement zoneRefinement = ZoneRefinement.BW_ITP;
 
 	private Logger logger;
 
@@ -216,17 +213,18 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
-			if (combinedAlgorithm) {
-				return new XstsCombinedConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-						.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
-						.search(combinedSearch).predSplit(predSplit).optimizeStmts(optimizeStmts)
-						.clockStrategy(clockStrategy).zoneRefinement(zoneRefinement)
-						.logger(logger).build(xsts);
+			XstsConfigBuilder xstsConfigBuilder = new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+					.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
+					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).clockReplacer(clockReplacer)
+					.logger(logger);
+			final boolean timedXsts = clockReplacer == ClockReplacer.NONE &&
+					xsts.getVars().stream().anyMatch(varDecl -> varDecl.getType() instanceof ClockType);
+			if (timedXsts) {
+				return new TimedXstsConfigBuilder(xstsConfigBuilder)
+						.zoneRefinement(zoneRefinement).controlFlowSplitting(controlFlowSplitting)
+						.build(xsts);
 			} else {
-				return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-						.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
-						.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).clockImpl(clockImpl)
-						.logger(logger).build(xsts);
+				return xstsConfigBuilder.build(xsts);
 			}
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);

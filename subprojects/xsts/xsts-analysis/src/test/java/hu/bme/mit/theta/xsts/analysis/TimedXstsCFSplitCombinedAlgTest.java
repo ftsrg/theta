@@ -9,7 +9,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.combined.XstsCombinedConfigBuilder;
+import hu.bme.mit.theta.xsts.analysis.config.TimedXstsConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,15 +106,16 @@ public class TimedXstsCFSplitCombinedAlgTest {
         try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
             xsts = XstsDslManager.createXsts(inputStream);
         }
-
-        final XstsConfig<?, ?, ?> configuration = new XstsCombinedConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance())
+        final XstsConfigBuilder xstsConfigBuilder = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance())
                 .initPrec(XstsConfigBuilder.InitPrec.CTRL)
                 .optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON)
                 .predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
                 .maxEnum(250)
                 .pruneStrategy(PruneStrategy.FULL)
-                .clockStrategy(XstsCombinedConfigBuilder.ClockStrategy.CF_SPLIT_ALL)
-                .logger(logger)
+                .clockReplacer(XstsConfigBuilder.ClockReplacer.NONE)
+                .logger(logger);
+        final XstsConfig<?, ?, ?> configuration = new TimedXstsConfigBuilder(xstsConfigBuilder)
+                .controlFlowSplitting(TimedXstsConfigBuilder.ControlFlowSplitting.FEASIBLE_ACTIONS_ONLY)
                 .build(xsts);
         final SafetyResult<?, ?> status = configuration.check();
         if (safe) {
