@@ -585,7 +585,7 @@ private fun postTraceGenerationLogging(
     var concreteTraces = 0
     for (abstractTrace in abstractSummary.sourceTraces) {
       try {
-        // TODO no concrete summary yet, only traces
+        // TODO no concrete summary implemented for XCFA yet, only traces
         val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
           XcfaTraceConcretizer.concretize(
             abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
