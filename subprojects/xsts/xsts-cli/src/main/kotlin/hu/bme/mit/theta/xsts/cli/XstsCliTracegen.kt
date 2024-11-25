@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
 import com.google.common.io.Files
@@ -58,12 +58,10 @@ class XstsCliTracegen :
       .file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
   val summary: Boolean by
     option(help = "If this flag is present, a concretized summary is generated.")
-      .boolean()
-      .default(false)
+      .flag(default = false)
   val traces: Boolean by
     option(help = "If this flag is present, concretized traces are generated.")
-      .boolean()
-      .default(false)
+      .flag(default = false)
 
   private fun toCexs(
     summaryStateMap:
@@ -121,7 +119,9 @@ class XstsCliTracegen :
 
       val concretizationResultTuple =
         XstsTraceGenerationConcretizerUtil.concretizeTraceList(
-          traces as List<Trace<XstsState<ExplState>, XstsAction>>,
+          abstractSummary.sourceTraces.map {
+            it.toTrace() as Trace<XstsState<ExplState>, XstsAction>
+          },
           Z3LegacySolverFactory.getInstance(),
           xsts,
         )
