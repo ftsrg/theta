@@ -59,6 +59,7 @@ fun boundedPortfolio25(
       backendConfig =
         BackendConfig(
           backend = Backend.BOUNDED,
+          memlimit = portfolioConfig.backendConfig.memlimit,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
           specConfig =
@@ -79,6 +80,9 @@ fun boundedPortfolio25(
               disable = false,
               concretizerSolver = "Z3",
               validateConcretizerSolver = false,
+              inputFileForWitness =
+                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
+                  ?: portfolioConfig.inputConfig.input,
             ),
           argConfig = ArgConfig(disable = true),
           enableOutput = portfolioConfig.outputConfig.enableOutput,
@@ -93,6 +97,7 @@ fun boundedPortfolio25(
       backendConfig =
         BackendConfig(
           backend = Backend.MDD,
+          memlimit = portfolioConfig.backendConfig.memlimit / 5 * 4,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
           specConfig =
@@ -375,7 +380,8 @@ fun boundedPortfolio25(
     edges.add(Edge(bmcConfig, indConfig, if (inProcess) timeoutOrNotSolvableError else anyError))
     edges.add(Edge(indConfig, imcConfig, if (inProcess) timeoutOrNotSolvableError else anyError))
 
-    return STM(mddConfig, edges)
+    return if (inProcess) STM(mddConfig, edges)
+    else STM(bmcConfig, edges) // mdd should not be run not-in-proc
   }
 
   logger.write(Logger.Level.RESULT, "Using bounded portfolio\n")

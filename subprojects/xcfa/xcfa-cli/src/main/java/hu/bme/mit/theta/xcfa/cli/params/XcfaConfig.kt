@@ -179,6 +179,11 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
+  @Parameter(
+    names = ["--memlimit"],
+    description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
+  )
+  var memlimit: Long = 0L,
   override var specConfig: T? = null,
 ) : SpecializableConfig<T> {
 
@@ -470,6 +475,7 @@ data class WitnessConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateConcretizerSolver: Boolean = false,
+  @Parameter(names = ["--input-file-for-witness"]) var inputFileForWitness: File? = null,
 ) : Config
 
 data class ArgConfig(

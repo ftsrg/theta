@@ -75,6 +75,8 @@ jobs:
           rundef: ${{ matrix.rundef }}
           portfolio: ${{ matrix.portfolio }}
           tool: ${{ matrix.tool }}
+          xml: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 'theta.xml' || 'theta-short.xml' }}
+          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 3600 || 900 }}
   
   collect-results:
     needs: test-benchexec

@@ -117,6 +117,9 @@ fun complexPortfolio25(
               disable = false,
               concretizerSolver = "Z3",
               validateConcretizerSolver = false,
+              inputFileForWitness =
+                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
+                  ?: portfolioConfig.inputConfig.input,
             ),
           argConfig = ArgConfig(disable = true),
           enableOutput = portfolioConfig.outputConfig.enableOutput,
@@ -135,7 +138,7 @@ fun complexPortfolio25(
         BackendConfig(
           backend = OC,
           solverHome = baseConfig.backendConfig.solverHome,
-          timeoutMs = 400_000,
+          timeoutMs = 500_000,
           inProcess = inProcess,
           specConfig = OcConfig(autoConflict = RF_WS_FR),
         ),

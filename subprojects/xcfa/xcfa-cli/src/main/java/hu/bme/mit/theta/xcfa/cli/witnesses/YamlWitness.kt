@@ -107,7 +107,7 @@ data class Producer(
 @Serializable
 data class Task(
   @SerialName("input_files") val inputFiles: List<String>,
-  @SerialName("input_file_hashes") val inputFileHashes: List<String>,
+  @SerialName("input_file_hashes") val inputFileHashes: Map<String, String>,
   val specification: String,
   @SerialName("data_model") val dataModel: DataModel,
   val language: Language,
@@ -156,9 +156,13 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null)
+data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null) {
+  constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
+}
 
-@Serializable data class Segment(val waypoint: Waypoint)
+typealias Segment = List<Waypoint>
+
+@Serializable data class Waypoint(val waypoint: WaypointContent)
 
 /**
  * The `waypoint` elements are the basic building block of violation witnesses. They have the form
@@ -223,7 +227,7 @@ data class ContentItem(val segment: Segment? = null, val invariant: Invariant? =
  *   means that the waypoint should be avoided.
  */
 @Serializable
-data class Waypoint(
+data class WaypointContent(
   val type: WaypointType,
   val constraint: Constraint? = null,
   val location: Location,

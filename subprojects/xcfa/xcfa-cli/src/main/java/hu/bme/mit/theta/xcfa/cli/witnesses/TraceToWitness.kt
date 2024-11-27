@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.witnesses
 import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -25,8 +26,10 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
 
@@ -41,9 +44,12 @@ fun traceToWitness(
   verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
   trace: Trace<XcfaState<ExplState>, XcfaAction>,
   parseContext: ParseContext,
+  property: ErrorDetection,
 ): Trace<WitnessNode, WitnessEdge> {
   val newStates = ArrayList<WitnessNode>()
   val newActions = ArrayList<WitnessEdge>()
+
+  val isError = getXcfaErrorPredicate(property)
 
   var lastNode =
     WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
@@ -59,7 +65,17 @@ fun traceToWitness(
         id = "N${newStates.size}",
         entry = false,
         sink = false,
-        violation = state.processes.any { it.value.locs.any(XcfaLocation::error) },
+        violation =
+          isError.test( // this is a hack so that a simple explstate can become a ptrstate
+            XcfaState(
+              state.xcfa,
+              state.processes,
+              PtrState(state.sGlobal),
+              state.mutexes,
+              state.threadLookup,
+              state.bottom,
+            )
+          ),
         xcfaLocations = state.processes.map { Pair(it.key, it.value.locs) }.toMap(),
         cSources =
           state.processes
@@ -113,7 +129,17 @@ fun traceToWitness(
       id = "N${newStates.size}",
       entry = false,
       sink = false,
-      violation = lastState.processes.any { it.value.locs.any(XcfaLocation::error) },
+      violation =
+        isError.test( // this is a hack so that a simple explstate can become a ptrstate
+          XcfaState(
+            lastState.xcfa,
+            lastState.processes,
+            PtrState(lastState.sGlobal),
+            lastState.mutexes,
+            lastState.threadLookup,
+            lastState.bottom,
+          )
+        ),
       xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
       cSources =
         lastState.processes
