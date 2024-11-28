@@ -365,6 +365,20 @@ class PassTests {
           input = { ("L1" to "L1") { assume("1 == 1") } },
           output = null,
         ),
+        PassTestData(
+          global = {},
+          passes = listOf(NormalizePass(), DeterministicPass(), SBEPass()),
+          input = {
+            ("L1" to "L2") {
+              assume("1 == 1")
+              assume("2 == 2")
+            }
+          },
+          output = {
+            ("L1" to "loc3") { assume("1 == 1") }
+            ("loc3" to "L2") { assume("2 == 2") }
+          },
+        ),
       )
   }
 
