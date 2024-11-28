@@ -24,7 +24,14 @@ import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
@@ -36,17 +43,26 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
 
   infix fun String.type(type: Type): Pair<String, Type> = Pair(this, type)
 
-  infix fun Pair<String, Type>.init(initValue: String): VarDecl<Type> {
+  infix fun Pair<String, Type>.init(initValue: String): VarDecl<Type> =
+    init(ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(Env()) as LitExpr<*>)
+
+  infix fun Pair<String, Type>.init(initValue: LitExpr<*>): VarDecl<Type> {
     val varDecl = Var(first, second)
     builder.addVar(
       XcfaGlobalVar(
         varDecl,
-        ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(Env()) as LitExpr<*>,
+        initValue,
         local,
       )
     )
     return varDecl
   }
+
+  fun bool(name: String, initValue: BoolLitExpr) =
+    (name type Bool() init initValue) as VarDecl<BoolType>
+
+  fun int(name: String, initValue: IntLitExpr) =
+    (name type Int() init initValue) as VarDecl<IntType>
 }
 
 fun XcfaProcedureBuilder.lookup(name: String): VarDecl<out Type> =
@@ -104,6 +120,12 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     builder.addVar(v)
     return v
   }
+
+  fun bool(name: String) =
+    (name type Bool()) as VarDecl<BoolType>
+
+  fun int(name: String) =
+    (name type Int()) as VarDecl<IntType>
 
   infix fun VarDecl<Type>.direction(direction: ParamDirection): VarDecl<Type> {
     builder.addParam(this, direction)
@@ -292,8 +314,10 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
   }
 
   infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> XcfaEdge {
-    val loc1 = locationLut.getOrElse(this) { XcfaLocation(this, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(this, loc1)
+    val startName = this@XcfaProcedureBuilderContext.builder.name + this
+    val to = this@XcfaProcedureBuilderContext.builder.name + to
+    val loc1 = locationLut.getOrElse(startName) { XcfaLocation(this, metadata = EmptyMetaData) }
+    locationLut.putIfAbsent(startName, loc1)
     builder.addLoc(loc1)
     val loc2 = locationLut.getOrElse(to) { XcfaLocation(to, metadata = EmptyMetaData) }
     locationLut.putIfAbsent(to, loc2)

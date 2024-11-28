@@ -220,7 +220,7 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   }
 
   override fun toString(): String {
-    val sj = StringJoiner(",", "[", "]")
+    val sj = StringJoiner(",\\n", "[", "]")
     labels.forEach { sj.add(it.toString()) }
     return sj.toString()
   }
