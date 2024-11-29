@@ -242,12 +242,12 @@ constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyM
 
 data class SyncSendLabel
 @JvmOverloads
-constructor(val key: String, override val metadata: MetaData = EmptyMetaData) :
+constructor(val key: VarDecl<*>, override val metadata: MetaData = EmptyMetaData) :
   XcfaLabel(metadata = metadata)
 
 data class SyncRecvLabel
 @JvmOverloads
-constructor(val key: String, override val metadata: MetaData = EmptyMetaData) :
+constructor(val key: VarDecl<*>, override val metadata: MetaData = EmptyMetaData) :
   XcfaLabel(metadata = metadata)
 
 object NopLabel : XcfaLabel(metadata = EmptyMetaData) {

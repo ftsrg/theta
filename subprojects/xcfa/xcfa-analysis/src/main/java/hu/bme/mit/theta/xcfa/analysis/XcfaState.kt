@@ -41,7 +41,7 @@ constructor(
   val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
-  val syncingOn: String? = null,
+  val syncingOn: VarDecl<*>? = null,
 ) : ExprState {
 
   constructor(
