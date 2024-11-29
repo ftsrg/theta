@@ -41,6 +41,7 @@ constructor(
   val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
+  val syncingOn: String? = null,
 ) : ExprState {
 
   constructor(
@@ -172,6 +173,8 @@ constructor(
           is StartLabel -> changes.add { state -> state.start(it) }.let { true }
           is StmtLabel -> true
           is WriteLabel -> error("Read/Write labels not yet supported")
+          is SyncSendLabel -> changes.add { state -> state.enterSync(it) }.let { true }
+          is SyncRecvLabel -> changes.add { state -> state.exitSync(it) }.let { true }
         }
       }
 
@@ -183,6 +186,18 @@ constructor(
       changes.fold(this) { current, change -> change(current) },
       a.withLabel(SequenceLabel(newLabels)),
     )
+  }
+
+  private fun enterSync(syncSendLabel: SyncSendLabel): XcfaState<S> {
+    syncingOn?.also {
+      return copy(bottom = true)
+    }
+    return copy(syncingOn = syncSendLabel.key)
+  }
+
+  private fun exitSync(syncRecvLabel: SyncRecvLabel): XcfaState<S> {
+    syncingOn?.takeIf { it == syncRecvLabel.key } ?: return copy(bottom = true)
+    return copy(syncingOn = null)
   }
 
   private fun start(startLabel: StartLabel): XcfaState<S> {
