@@ -112,6 +112,8 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
     is ReadLabel -> setOf(global, local)
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
     is WriteLabel -> setOf(global, local)
+    is SyncRecvLabel -> setOf(key)
+    is SyncSendLabel -> setOf(key)
     else -> emptySet()
   }
 
@@ -241,6 +243,8 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
     is WriteLabel -> mapOf(global to WRITE, local to WRITE)
+    is SyncRecvLabel -> mapOf(key to READ)
+    is SyncSendLabel -> mapOf(key to WRITE)
     else -> emptyMap()
   }
 
