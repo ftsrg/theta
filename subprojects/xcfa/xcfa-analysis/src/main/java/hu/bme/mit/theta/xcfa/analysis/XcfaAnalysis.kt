@@ -191,6 +191,11 @@ fun getCoreXcfaLts() =
       }
       .flatten()
       .toSet()
+      .filter { action ->
+        s.syncingOn?.let { key ->
+          action.label.getFlatLabels().first().let { it is SyncRecvLabel && it.key == key }
+        } ?: true
+      }
   }
 
 fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
