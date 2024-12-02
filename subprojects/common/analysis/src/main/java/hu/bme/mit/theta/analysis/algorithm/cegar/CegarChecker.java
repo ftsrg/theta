@@ -91,7 +91,6 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;
-
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
