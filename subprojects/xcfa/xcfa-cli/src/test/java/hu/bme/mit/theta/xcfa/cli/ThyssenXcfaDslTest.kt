@@ -15,347 +15,319 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
-import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis
-import hu.bme.mit.theta.xcfa.analysis.getCoreXcfaLts
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
-import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
-import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.DISABLE
-import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
+import hu.bme.mit.theta.xcfa.cli.params.Backend.TRACEGEN
 import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
-import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
-import hu.bme.mit.theta.xcfa.cli.params.InitPrec.ALLVARS
-import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
-import hu.bme.mit.theta.xcfa.cli.params.POR.NOPOR
-import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
-import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.ParamDirection.*
 import hu.bme.mit.theta.xcfa.model.global
-import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
-import org.junit.Test
 import java.io.File
+import org.junit.Test
 
 class ThyssenXcfaDslTest {
 
-    fun sendChan(chan: VarDecl<*>, chanAck: VarDecl<*>, syncEdgeContent: List<XcfaLabel>) = SequenceLabel(
-        listOf(
-            AssignStmtLabel(chan, True(), EmptyMetaData),
-            FenceLabel(setOf("ATOMIC_BEGIN")),
-            StmtLabel(Stmts.Assume(chanAck.ref as Expr<BoolType>)),
-            AssignStmtLabel(chanAck, False(), EmptyMetaData),
-            *syncEdgeContent.toTypedArray(),
-            FenceLabel(setOf("ATOMIC_END"))
-        ),
-        EmptyMetaData
+  fun sendChan(chan: VarDecl<*>, chanAck: VarDecl<*>, syncEdgeContent: List<XcfaLabel>) =
+    SequenceLabel(
+      listOf(
+        AssignStmtLabel(chan, True(), EmptyMetaData),
+        FenceLabel(setOf("ATOMIC_BEGIN")),
+        StmtLabel(Stmts.Assume(chanAck.ref as Expr<BoolType>)),
+        AssignStmtLabel(chanAck, False(), EmptyMetaData),
+        *syncEdgeContent.toTypedArray(),
+        FenceLabel(setOf("ATOMIC_END")),
+      ),
+      EmptyMetaData,
     )
-    fun receiveChan(chan: VarDecl<*>, chanAck: VarDecl<*>, syncEdgeContent: List<XcfaLabel>): SequenceLabel {
-        val labels = listOf(
-            FenceLabel(setOf("ATOMIC_BEGIN")),
-            StmtLabel(Stmts.Assume(chan.ref as Expr<BoolType>)),
-            AssignStmtLabel(chanAck, True(), EmptyMetaData),
-            AssignStmtLabel(chan, False(), EmptyMetaData),
-            *syncEdgeContent.toTypedArray(),
-            FenceLabel(setOf("ATOMIC_END")),
-            StmtLabel(Stmts.Assume(Not(chanAck.ref as Expr<BoolType>))),
-        )
-        return SequenceLabel(
-            labels,
-            EmptyMetaData
-        )
+
+  fun receiveChan(
+    chan: VarDecl<*>,
+    chanAck: VarDecl<*>,
+    syncEdgeContent: List<XcfaLabel>,
+  ): SequenceLabel {
+    val labels =
+      listOf(
+        FenceLabel(setOf("ATOMIC_BEGIN")),
+        StmtLabel(Stmts.Assume(chan.ref as Expr<BoolType>)),
+        AssignStmtLabel(chanAck, True(), EmptyMetaData),
+        AssignStmtLabel(chan, False(), EmptyMetaData),
+        *syncEdgeContent.toTypedArray(),
+        FenceLabel(setOf("ATOMIC_END")),
+        StmtLabel(Stmts.Assume(Not(chanAck.ref as Expr<BoolType>))),
+      )
+    return SequenceLabel(labels, EmptyMetaData)
+  }
+
+  private fun getXcfa() =
+    xcfa("example") {
+      val transientCommFailureEnabled = true
+      val permanentCommFailureEnabled = true
+
+      lateinit var okA: VarDecl<BoolType>
+      lateinit var okB: VarDecl<BoolType>
+      lateinit var okAforB: VarDecl<BoolType>
+      lateinit var okBforA: VarDecl<BoolType>
+      lateinit var AtoBCommOk: VarDecl<BoolType>
+      lateinit var BtoACommOk: VarDecl<BoolType>
+      lateinit var AtoBCommPermFailed: VarDecl<BoolType>
+      lateinit var BtoACommPermFailed: VarDecl<BoolType>
+
+      // Chans
+      lateinit var runDiag: VarDecl<BoolType>
+      lateinit var runA: VarDecl<BoolType>
+      lateinit var runB: VarDecl<BoolType>
+      lateinit var runDiagAck: VarDecl<BoolType>
+      lateinit var runAAck: VarDecl<BoolType>
+      lateinit var runBAck: VarDecl<BoolType>
+
+      global {
+        okA = bool("okA", True())
+        okB = bool("okB", True())
+        okAforB = bool("okAforB", True())
+        okBforA = bool("okBforA", True())
+        AtoBCommOk = bool("AtoBCommOk", True())
+        BtoACommOk = bool("BtoACommOk", True())
+        AtoBCommPermFailed = bool("AtoBCommPermFailed", False())
+        BtoACommPermFailed = bool("BtoACommPermFailed", False())
+        runDiag = bool("runDiag", False())
+        runA = bool("runA", False())
+        runB = bool("runB", False())
+        runDiagAck = bool("runDiagAck", False())
+        runAAck = bool("runAAck", False())
+        runBAck = bool("runBAck", False())
+      }
+      threadlocal {
+        // y = "y" type Int() init "2"
+      }
+
+      val schedulerProc =
+        procedure("GlobalScheduler") {
+          (init to "Stable") { nop() }
+
+          ("Stable" to "L1") { syncSend(runDiag) }
+
+          ("L1" to "L2a") { syncSend(runA) }
+          ("L1" to "L2b") { syncSend(runB) }
+
+          ("L2a" to "L3a") { syncSend(runB) }
+          ("L2b" to "L3b") { syncSend(runA) }
+
+          ("L3a" to "Stable") { nop() }
+          ("L3b" to "Stable") { nop() }
+          ("Stable" to err) { assume(False()) }
+        }
+      val diagnosticsProc =
+        procedure("Diagnostics") {
+          val newFailureA = bool("newFailureA")
+          val newFailureB = bool("newFailureB")
+          val newTransientCommA = bool("newTransientCommA")
+          val newTransientCommB = bool("newTransientCommB")
+          val newPermanentCommA = bool("newPermanentCommA")
+          val newPermanentCommB = bool("newPermanentCommB")
+
+          (init to "L0") { nop() }
+
+          val commFailureAssumptions =
+            "(and (=> (or newTransientCommA newTransientCommB) ${transientCommFailureEnabled}) " +
+              "(=> (or newPermanentCommA newPermanentCommB) ${permanentCommFailureEnabled}) " +
+              "(or (not newPermanentCommA) (not newPermanentCommB)))"
+
+          ("L0" to "L0") {
+            syncRecv(runDiag)
+            havoc(newFailureA)
+            havoc(newFailureB)
+            assume(Not(And(newFailureA.ref, newFailureB.ref)))
+            okA assign And(okA.ref, Not(newFailureA.ref))
+            okB assign And(okB.ref, Not(newFailureB.ref))
+
+            havoc(newTransientCommA)
+            havoc(newTransientCommB)
+            havoc(newPermanentCommA)
+            havoc(newPermanentCommB)
+            assume(commFailureAssumptions)
+            AtoBCommPermFailed assign newPermanentCommA.ref
+            BtoACommPermFailed assign newPermanentCommB.ref
+            AtoBCommOk assign And(Not(AtoBCommPermFailed.ref), Not(newTransientCommA.ref))
+            BtoACommOk assign And(Not(BtoACommPermFailed.ref), Not(newTransientCommB.ref))
+
+            okAforB assign Ite<BoolType>(AtoBCommOk.ref, okA.ref, okAforB.ref)
+            okBforA assign Ite<BoolType>(BtoACommOk.ref, okB.ref, okBforA.ref)
+          }
+        }
+      val RWA_A =
+        procedure("RWA_A") {
+          (init to "Master") { nop() }
+          ("Master" to "Master") {
+            syncRecv(runA)
+            assume("okA and okBforA")
+          }
+          ("Master" to "Standalone") {
+            syncRecv(runA)
+            assume("okA and not okBforA")
+          }
+          ("Standalone" to "Standalone") {
+            syncRecv(runA)
+            assume("okA")
+          }
+          ("Standalone" to "Error") {
+            syncRecv(runA)
+            assume("(not okA)")
+          }
+          ("Error" to "Error") {
+            syncRecv(runA)
+            nop()
+          }
+          ("Master" to "Passive") {
+            syncRecv(runA)
+            assume("(and (not okA) okBforA)")
+          }
+          ("Master" to "Error") {
+            syncRecv(runA)
+            assume("(and (not okA) (not okBforA))")
+          }
+          ("Passive" to "Error") {
+            syncRecv(runA)
+            assume("(not okBforA)")
+          }
+          ("Passive" to "Passive") {
+            syncRecv(runA)
+            assume("okBforA")
+          }
+        }
+      val RWA_B =
+        procedure("RWA_B") {
+          (init to "Silent") { nop() }
+          ("Silent" to "Silent") {
+            syncRecv(runB)
+            assume("(and okB okAforB)")
+          }
+          ("Silent" to "Standalone") {
+            syncRecv(runB)
+            assume("(and okB (not okAforB))")
+          }
+          ("Standalone" to "Standalone") {
+            syncRecv(runB)
+            assume("okB")
+          }
+          ("Standalone" to "Error") {
+            syncRecv(runB)
+            assume("(not okB)")
+          }
+          ("Error" to "Error") {
+            syncRecv(runB)
+            nop()
+          }
+          ("Silent" to "Passive") {
+            syncRecv(runB)
+            assume("(and (not okB) okAforB)")
+          }
+          ("Silent" to "Error") {
+            syncRecv(runB)
+            assume("(and (not okB) (not okAforB))")
+          }
+          ("Passive" to "Error") {
+            syncRecv(runB)
+            assume("(not okAforB)")
+          }
+          ("Passive" to "Passive") {
+            syncRecv(runB)
+            assume("okAforB")
+          }
+        }
+
+      val main =
+        procedure("main") {
+          val scheduler = "scheduler" type Int()
+          val diagnostics = "diagnostics" type Int()
+          val rwaA = "rwaA" type Int()
+          val rwaB = "rwaB" type Int()
+          (init to "L0") {
+            scheduler.start(schedulerProc)
+            diagnostics.start(diagnosticsProc)
+            rwaA.start(RWA_A)
+            rwaB.start(RWA_B)
+          }
+          ("L0" to final) {
+            scheduler.join()
+            diagnostics.join()
+            rwaA.join()
+            rwaB.join()
+          }
+        }
+
+      main.start()
     }
 
-    private fun getXcfa() = xcfa("example") {
-        val transientCommFailureEnabled = true
-        val permanentCommFailureEnabled = true
-
-        lateinit var okA: VarDecl<BoolType>
-        lateinit var okB: VarDecl<BoolType>
-        lateinit var okAforB: VarDecl<BoolType>
-        lateinit var okBforA: VarDecl<BoolType>
-        lateinit var AtoBCommOk: VarDecl<BoolType>
-        lateinit var BtoACommOk: VarDecl<BoolType>
-        lateinit var AtoBCommPermFailed: VarDecl<BoolType>
-        lateinit var BtoACommPermFailed: VarDecl<BoolType>
-
-        // Chans
-        lateinit var runDiag: VarDecl<BoolType>
-        lateinit var runA: VarDecl<BoolType>
-        lateinit var runB: VarDecl<BoolType>
-        lateinit var runDiagAck: VarDecl<BoolType>
-        lateinit var runAAck: VarDecl<BoolType>
-        lateinit var runBAck: VarDecl<BoolType>
-
-        global {
-            okA = bool("okA", True())
-            okB = bool("okB", True())
-            okAforB = bool("okAforB", True()) 
-            okBforA = bool("okBforA", True()) 
-            AtoBCommOk = bool("AtoBCommOk", True()) 
-            BtoACommOk = bool("BtoACommOk", True()) 
-            AtoBCommPermFailed = bool("AtoBCommPermFailed", False()) 
-            BtoACommPermFailed = bool("BtoACommPermFailed", False()) 
-            runDiag = bool("runDiag", False()) 
-            runA = bool("runA", False()) 
-            runB = bool("runB", False()) 
-            runDiagAck = bool("runDiagAck", False()) 
-            runAAck = bool("runAAck", False()) 
-            runBAck = bool("runBAck", False()) 
-        }
-        threadlocal {
-            //y = "y" type Int() init "2"
-        }
-
-        val schedulerProc = procedure("GlobalScheduler") {
-            (init to "Stable") { nop() }
-
-            ("Stable" to "L1") { syncSend(runDiag) }
-
-            ("L1" to "L2a") { syncSend(runA) }
-            ("L1" to "L2b") { syncSend(runB) }
-
-            ("L2a" to "L3a") { syncSend(runB) }
-            ("L2b" to "L3b") { syncSend(runA) }
-
-            ("L3a" to "Stable") { nop() }
-            ("L3b" to "Stable") { nop() }
-            ("Stable" to err) { assume(False()) }
-        }
-        val diagnosticsProc = procedure("Diagnostics") {
-            val newFailureA = bool("newFailureA") 
-            val newFailureB = bool("newFailureB") 
-            val newTransientCommA = bool("newTransientCommA") 
-            val newTransientCommB = bool("newTransientCommB") 
-            val newPermanentCommA = bool("newPermanentCommA") 
-            val newPermanentCommB = bool("newPermanentCommB") 
-
-            (init to "L0") {nop()}
-
-            val commFailureAssumptions =
-                "(and (=> (or newTransientCommA newTransientCommB) ${transientCommFailureEnabled}) " +
-                    "(=> (or newPermanentCommA newPermanentCommB) ${permanentCommFailureEnabled}) " +
-                    "(or (not newPermanentCommA) (not newPermanentCommB)))"
-
-            ("L0" to "L0") {
-                syncRecv(runDiag)
-                havoc(newFailureA)
-                havoc(newFailureB)
-                assume(Not(And(newFailureA.ref, newFailureB.ref)))
-                okA assign And(okA.ref, Not(newFailureA.ref))
-                okB assign And(okB.ref, Not(newFailureB.ref))
-
-                havoc(newTransientCommA)
-                havoc(newTransientCommB)
-                havoc(newPermanentCommA)
-                havoc(newPermanentCommB)
-                assume(commFailureAssumptions)
-                AtoBCommPermFailed assign newPermanentCommA.ref
-                BtoACommPermFailed assign newPermanentCommB.ref
-                AtoBCommOk assign And(Not(AtoBCommPermFailed.ref), Not(newTransientCommA.ref))
-                BtoACommOk assign And(Not(BtoACommPermFailed.ref), Not(newTransientCommB.ref))
-
-                okAforB assign Ite<BoolType>(AtoBCommOk.ref, okA.ref, okAforB.ref)
-                okBforA assign Ite<BoolType>(BtoACommOk.ref, okB.ref, okBforA.ref)
-            }
-        }
-        val RWA_A = procedure("RWA_A") {
-            (init to "Master") { nop() }
-            ("Master" to "Master") {
-                syncRecv(runA)
-                assume("okA and okBforA")
-            }
-            ("Master" to "Standalone") {
-                syncRecv(runA)
-                assume("okA and not okBforA")
-            }
-            ("Standalone" to "Standalone") {
-                syncRecv(runA)
-                assume("okA")
-            }
-            ("Standalone" to "Error") {
-                syncRecv(runA)
-                assume("(not okA)")
-            }
-            ("Error" to "Error") {
-                syncRecv(runA)
-                nop()
-            }
-            ("Master" to "Passive") {
-                syncRecv(runA)
-                assume("(and (not okA) okBforA)")
-            }
-            ("Master" to "Error") {
-                syncRecv(runA)
-                assume("(and (not okA) (not okBforA))")
-            }
-            ("Passive" to "Error") {
-                syncRecv(runA)
-                assume("(not okBforA)")
-            }
-            ("Passive" to "Passive") {
-                syncRecv(runA)
-                assume("okBforA")
-            }
-        }
-        val RWA_B = procedure("RWA_B") {
-            (init to "Silent") { nop() }
-            ("Silent" to "Silent") {
-                syncRecv(runB)
-                assume("(and okB okAforB)")
-            }
-            ("Silent" to "Standalone") {
-                syncRecv(runB)
-                assume("(and okB (not okAforB))")
-            }
-            ("Standalone" to "Standalone") {
-                syncRecv(runB)
-                assume("okB")
-            }
-            ("Standalone" to "Error") {
-                syncRecv(runB)
-                assume("(not okB)")
-            }
-            ("Error" to "Error") {
-                syncRecv(runB)
-                nop()
-            }
-            ("Silent" to "Passive") {
-                syncRecv(runB)
-                assume("(and (not okB) okAforB)")
-            }
-            ("Silent" to "Error") {
-                syncRecv(runB)
-                assume("(and (not okB) (not okAforB))")
-            }
-            ("Passive" to "Error") {
-                syncRecv(runB)
-                assume("(not okAforB)")
-            }
-            ("Passive" to "Passive") {
-                syncRecv(runB)
-                assume("okAforB")
-            }
-        }
-
-        val main = procedure("main") {
-            val scheduler = "scheduler" type Int()
-            val diagnostics = "diagnostics" type Int()
-            val rwaA = "rwaA" type Int()
-            val rwaB = "rwaB" type Int()
-            (init to "L0") {
-                scheduler.start(schedulerProc)
-                diagnostics.start(diagnosticsProc)
-                rwaA.start(RWA_A)
-                rwaB.start(RWA_B)
-            }
-            ("L0" to final) {
-                scheduler.join()
-                diagnostics.join()
-                rwaA.join()
-                rwaB.join()
-            }
-        }
-
-        main.start()
-    }
-
-    @Test
-    fun defineXcfa() {
-        LbePass.level = LbePass.LbeLevel.LBE_LOCAL
-        val origXcfa = getXcfa()
-        val passedXcfa = origXcfa.optimizeFurther(
-            ProcedurePassManager(
-                listOf(
-                    NormalizePass(),
-                    DeterministicPass(),
-                    EliminateSelfLoops(),
-                    SBEPass(),
-                    LbePass(ParseContext())
-                )
-            )
+  @Test
+  fun defineXcfa() {
+    LbePass.level = LbePass.LbeLevel.LBE_LOCAL
+    val origXcfa = getXcfa()
+    val passedXcfa =
+      origXcfa.optimizeFurther(
+        ProcedurePassManager(
+          listOf(
+            NormalizePass(),
+            DeterministicPass(),
+            EliminateSelfLoops(),
+            SBEPass(),
+            LbePass(ParseContext()),
+          )
         )
-        println(origXcfa.toDot())
+      )
+    println(origXcfa.toDot())
 
-        val inputConfig = InputConfig(
-            xcfaWCtx = Triple(origXcfa, listOf(), ParseContext()),
-            property = ErrorDetection.NO_ERROR
-        )
-        val frontendConfig = FrontendConfig(
-            lbeLevel = LbePass.level,
-            loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
-            inputType = InputType.C,
-            specConfig = CFrontendConfig(arithmetic = efficient),
-        )
-        val backendConfig = BackendConfig(
-            backend = CEGAR,
-            timeoutMs = 0,
-            specConfig =
-            CegarConfig(
-                initPrec = ALLVARS,
-                porLevel = NOPOR,
-                porRandomSeed = -1,
-                coi = NO_COI,
-                cexMonitor = DISABLE,
-                abstractorConfig =
-                CegarAbstractorConfig(
-                    abstractionSolver = "Z3",
-                    validateAbstractionSolver = false,
-                    domain = EXPL,
-                    maxEnum = 1,
-                    search = DFS,
-                ),
-                refinerConfig = CegarRefinerConfig(
-                    refinementSolver = "Z3",
-                    validateRefinementSolver = false,
-                    refinement = SEQ_ITP,
-                    exprSplitter = WHOLE,
-                    pruneStrategy = FULL,
-                ),
-            ),
-        )
-        val outputConfig = OutputConfig(
-            enableOutput = true,
-            resultFolder = File("F:\\egyetem\\thesta\\theta\\subprojects\\xcfa\\xcfa\\src\\test\\temp")
-        )
-        runConfig(
-            XcfaConfig(
-                inputConfig,
-                frontendConfig,
-                backendConfig,
-                outputConfig,
-                DebugConfig()
-            ),
-            ConsoleLogger(Logger.Level.SUBSTEP),
-            ConsoleLogger(Logger.Level.SUBSTEP),
-            true
-        )
-    }
-
+    val inputConfig =
+      InputConfig(
+        xcfaWCtx = Triple(origXcfa, listOf(), ParseContext()),
+        property = ErrorDetection.NO_ERROR,
+      )
+    val frontendConfig =
+      FrontendConfig(
+        lbeLevel = LbePass.level,
+        loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+        inputType = InputType.C,
+        specConfig = CFrontendConfig(arithmetic = efficient),
+      )
+    val backendConfig =
+      BackendConfig(
+        backend = TRACEGEN,
+        timeoutMs = 0,
+        specConfig =
+          TracegenConfig(
+            abstractorConfig =
+              CegarAbstractorConfig(
+                abstractionSolver = "Z3",
+                validateAbstractionSolver = false,
+                domain = EXPL,
+                maxEnum = 1,
+                search = DFS,
+              )
+          ),
+      )
+    val outputConfig =
+      OutputConfig(
+        enableOutput = true,
+        resultFolder = File("F:\\egyetem\\thesta\\theta\\subprojects\\xcfa\\xcfa\\src\\test\\temp"),
+      )
+    runConfig(
+      XcfaConfig(inputConfig, frontendConfig, backendConfig, outputConfig, DebugConfig()),
+      ConsoleLogger(Logger.Level.SUBSTEP),
+      ConsoleLogger(Logger.Level.SUBSTEP),
+      true,
+    )
+  }
 }
