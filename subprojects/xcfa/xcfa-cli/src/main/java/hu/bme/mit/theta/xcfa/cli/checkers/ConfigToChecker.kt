@@ -38,17 +38,18 @@ fun getSafetyChecker(
   parseContext: ParseContext,
   logger: Logger,
   uniqueLogger: Logger,
-): SafetyChecker<*, *, XcfaPrec<*>> =
+): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
-      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
+      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      Backend.MDD -> getMddChecker(xcfa, mcm, parseContext, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
@@ -90,7 +91,10 @@ fun getChecker(
         throw RuntimeException(
           "Use getSafetyChecker method for safety analysis instead of getChecker"
         )
-      Backend.LAZY -> TODO()
+      Backend.LAZY ->
+        throw RuntimeException(
+          "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
+        )
       Backend.PORTFOLIO ->
         throw RuntimeException(
           "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
@@ -106,6 +110,11 @@ fun getChecker(
       Backend.CHC ->
         throw RuntimeException(
           "Use getSafetyChecker method for safety analysis instead of getChecker"
+        )
+
+      Backend.MDD ->
+        throw RuntimeException(
+          "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
         )
     }
   }

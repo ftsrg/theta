@@ -22,6 +22,7 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -110,6 +112,16 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+      )
+    }
+
+    @JvmStatic
+    fun finiteStateSpaceC(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
+        Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/15addition.c", null),
+        Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
       )
     }
 
@@ -305,6 +317,24 @@ class XcfaCliVerifyTest {
   }
 
   @ParameterizedTest
+  @MethodSource("finiteStateSpaceC")
+  @Timeout(value = 10, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  fun testCVerifyMDD(filePath: String, extraArgs: String?) {
+    val params =
+      arrayOf(
+        "--backend",
+        "MDD",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    main(params)
+  }
+
+  @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyIMC(filePath: String, extraArgs: String?) {
     val params =
@@ -341,6 +371,7 @@ class XcfaCliVerifyTest {
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
+    Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
     val params =
       arrayOf(
         "--backend",

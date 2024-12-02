@@ -21,25 +21,35 @@ import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -48,10 +58,12 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import java.math.BigInteger
 import java.util.stream.Collectors
 
@@ -95,6 +107,30 @@ class FrontendXcfaBuilder(
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
+    if (MemsafetyPass.NEED_CHECK) {
+      val fitsall = Fitsall.getFitsall(parseContext)
+      val ptrType = CPointer(null, null, parseContext)
+      val ptrSize =
+        XcfaGlobalVar(
+          Var("__theta_ptr_size", ArrayType.of(ptrType.smtType, fitsall.smtType)),
+          ArrayLitExpr.of(
+            listOf(),
+            fitsall.nullValue as Expr<Type>,
+            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
+          ),
+        )
+      builder.addVar(ptrSize)
+      initStmtList.add(
+        AssignStmtLabel(
+          ptrSize.wrappedVar,
+          ArrayLitExpr.of(
+            listOf(),
+            fitsall.nullValue as Expr<Type>,
+            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
+          ),
+        )
+      )
+    }
     for (globalDeclaration in cProgram.globalDeclarations) {
       val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
       if (type is CVoid) {
@@ -106,7 +142,13 @@ class FrontendXcfaBuilder(
           "Not handling init expression of struct array ${globalDeclaration.get1()}",
         )
       }
-      builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
+      builder.addVar(
+        XcfaGlobalVar(
+          globalDeclaration.get2(),
+          type.nullValue,
+          atomic = globalDeclaration.get1().type.isAtomic,
+        )
+      )
       if (type is CArray) {
         initStmtList.add(
           StmtLabel(
@@ -116,6 +158,14 @@ class FrontendXcfaBuilder(
             )
           )
         )
+        if (MemsafetyPass.NEED_CHECK) {
+          val bounds = globalDeclaration.get1().arrayDimensions[0].expression
+          checkState(
+            bounds is IntLitExpr || bounds is BvLitExpr,
+            "Only IntLit and BvLit expression expected here.",
+          )
+          initStmtList.add(builder.allocate(parseContext, globalDeclaration.get2().ref, bounds))
+        }
       } else {
         if (
           globalDeclaration.get1().initExpr != null &&
@@ -203,6 +253,7 @@ class FrontendXcfaBuilder(
   ): XcfaProcedureBuilder {
     locationLut.clear()
     val flatVariables = function.flatVariables
+    val isAtomic = function.atomicVariables::contains
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
@@ -238,10 +289,11 @@ class FrontendXcfaBuilder(
 
     for (flatVariable in flatVariables) {
       builder.addVar(flatVariable)
+      if (isAtomic(flatVariable)) {
+        builder.setAtomic(flatVariable)
+      }
       val type = CComplexType.getType(flatVariable.ref, parseContext)
-      if (
-        (type is CArray || type is CStruct) && builder.getParams().none { it.first == flatVariable }
-      ) {
+      if ((type is CStruct) && builder.getParams().none { it.first == flatVariable }) {
         initStmtList.add(
           StmtLabel(
             Stmts.Assign(
@@ -311,6 +363,13 @@ class FrontendXcfaBuilder(
         }
 
         is RefExpr<*> -> {
+          if (
+            (CComplexType.getType(lValue, parseContext) is CPointer ||
+              CComplexType.getType(lValue, parseContext) is CArray ||
+              CComplexType.getType(lValue, parseContext) is CStruct) && rExpression.hasArithmetic()
+          ) {
+            throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
+          }
           AssignStmtLabel(
             lValue,
             cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
@@ -758,7 +817,9 @@ class FrontendXcfaBuilder(
       xcfaEdge = XcfaEdge(elseEnd, endLoc, metadata = getMetadata(statement))
       builder.addEdge(xcfaEdge)
     } else {
-      xcfaEdge = XcfaEdge(elseBranch, endLoc, metadata = getMetadata(statement))
+      val elseAfterGuard =
+        buildPostStatement(guard, ParamPack(builder, elseBranch, breakLoc, continueLoc, returnLoc))
+      xcfaEdge = XcfaEdge(elseAfterGuard, endLoc, metadata = getMetadata(statement))
       builder.addEdge(xcfaEdge)
     }
     xcfaEdge = XcfaEdge(mainEnd, endLoc, metadata = getMetadata(statement))
@@ -1048,3 +1109,12 @@ class FrontendXcfaBuilder(
     }
   }
 }
+
+private fun Expr<*>.hasArithmetic(): Boolean =
+  when (this) {
+    is AddExpr -> true
+    is SubExpr -> true
+    is DivExpr -> true
+    is MulExpr -> true
+    else -> ops.any { it.hasArithmetic() }
+  }

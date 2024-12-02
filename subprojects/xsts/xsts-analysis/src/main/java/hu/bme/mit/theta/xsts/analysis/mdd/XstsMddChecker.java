@@ -52,6 +52,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.XstsVarOrderingKt;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,8 +112,11 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
         final var initToExprResult =
                 StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 
-        for (var v : xsts.getVars()) {
-            final var domainSize = /*v.getType() instanceof BoolType ? 2 :*/ 0;
+        final var orderedVars = XstsVarOrderingKt.orderVars(xsts);
+        for (var v : xsts.getStateVars()) {
+            final var
+                    domainSize = /*Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0)*/
+                            0;
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 

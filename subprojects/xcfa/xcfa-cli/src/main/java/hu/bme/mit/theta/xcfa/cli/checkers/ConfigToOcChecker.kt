@@ -42,6 +42,7 @@ fun getOcChecker(
       ocConfig.outputConflictClauses,
       ocConfig.nonPermissiveValidation,
       ocConfig.autoConflict,
+      config.outputConfig.acceptUnreliableSafe,
     )
   return SafetyChecker { ocChecker.check() }
 }

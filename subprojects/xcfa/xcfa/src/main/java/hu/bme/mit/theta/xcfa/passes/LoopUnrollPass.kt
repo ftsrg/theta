@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
+import kotlin.math.max
 
 /**
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
@@ -38,16 +39,17 @@ import java.util.*
  * not unrolled. Loops with unknown number of iterations are unrolled to FORCE_UNROLL_LIMIT
  * iterations (this way a safe result might not be valid).
  */
-class LoopUnrollPass : ProcedurePass {
+class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
 
   companion object {
 
     var UNROLL_LIMIT = 1000
     var FORCE_UNROLL_LIMIT = -1
-    var FORCE_UNROLL_USED = false
 
     private val solver: Solver = Z3SolverFactory.getInstance().createSolver()
   }
+
+  private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, alwaysForceUnroll)
 
   private val testedLoops = mutableSetOf<Loop>()
 
@@ -61,6 +63,7 @@ class LoopUnrollPass : ProcedurePass {
     val loopStartEdges: List<XcfaEdge>,
     val exitEdges: Map<XcfaLocation, List<XcfaEdge>>,
     val properlyUnrollable: Boolean,
+    val forceUnrollLimit: Int,
   ) {
 
     private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
@@ -75,8 +78,8 @@ class LoopUnrollPass : ProcedurePass {
       val count = count(transFunc)
       if (count != null) {
         unroll(builder, count, true)
-      } else if (FORCE_UNROLL_LIMIT != -1) {
-        FORCE_UNROLL_USED = true
+      } else if (forceUnrollLimit != -1) {
+        builder.setUnsafeUnroll()
         unroll(builder, FORCE_UNROLL_LIMIT, false)
       }
     }
@@ -296,6 +299,7 @@ class LoopUnrollPass : ProcedurePass {
         loopStartEdges = loopCondEdges,
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
+        forceUnrollLimit = forceUnrollLimit,
       )
       .also { if (it in testedLoops) return null }
   }

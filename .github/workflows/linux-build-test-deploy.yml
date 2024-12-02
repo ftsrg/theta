@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -64,7 +64,7 @@ jobs:
             portfolio: BOUNDED
           - tool: Thorn_SV-COMP
             portfolio: HORN
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: create-archives
     steps:
       - name: Checkout repository
@@ -75,10 +75,12 @@ jobs:
           rundef: ${{ matrix.rundef }}
           portfolio: ${{ matrix.portfolio }}
           tool: ${{ matrix.tool }}
+          xml: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 'theta.xml' || 'theta-short.xml' }}
+          timeout: ${{ contains(github.event.pull_request.labels.*.name, 'svcomp') && 3600 || 900 }}
   
   collect-results:
     needs: test-benchexec
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -86,7 +88,7 @@ jobs:
         uses: ./.github/actions/benchexec-report
 
   create-spec-transformation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -94,7 +96,7 @@ jobs:
         uses: ./.github/actions/build-spec-transformation
 
   create-archives:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build, create-spec-transformation]
     strategy:
       matrix:
@@ -118,7 +120,7 @@ jobs:
 
   javadoc:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -129,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04]
+        os: [ubuntu-24.04]
     needs: build
     runs-on: ${{ matrix.os }}
     steps:
@@ -142,7 +144,7 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/test-action
       - name: Positive outcome badge
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         uses: ./.github/actions/badge-creation
         with:
           label: "${{ runner.os }} test"
@@ -150,7 +152,7 @@ jobs:
           color: "green"
           path: "badges/test-${{ runner.os }}"
       - name: Negative outcome badge
-        if: ${{ failure() && matrix.os == 'ubuntu-latest' }}
+        if: ${{ failure() && matrix.os == 'ubuntu-24.04' }}
         uses: ./.github/actions/badge-creation
         with:
           label: "${{ runner.os }} test"
@@ -162,7 +164,7 @@ jobs:
   deploy-release:
     needs: [test-linux, create-archives]
     if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 17
         run: |
@@ -177,7 +179,7 @@ jobs:
   deploy-maven:
     # needs: test-linux
     if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -194,7 +196,7 @@ jobs:
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 17
         run: |
@@ -231,7 +233,7 @@ jobs:
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Set java home to java 17
         run: |
@@ -269,7 +271,7 @@ jobs:
           repository: ftsrg/${{ matrix.dockerprojects }}
 
   deploy-docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3

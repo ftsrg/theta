@@ -16,47 +16,60 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+
+private data class GlobalEdge(
+  val pid: Int,
+  val source: XcfaLocation?,
+  val target: XcfaLocation,
+  val label: XcfaLabel?,
+) {
+
+  constructor(pid: Int, edge: XcfaEdge) : this(pid, edge.source, edge.target, edge.label)
+
+  constructor(event: E) : this(event.pid, event.edge)
+}
+
+private data class LocalEdge(
+  val source: XcfaLocation?,
+  val target: XcfaLocation,
+  val label: XcfaLabel?,
+) {
+  constructor(edge: XcfaEdge) : this(edge.source, edge.target, edge.label)
+
+  constructor(edge: GlobalEdge) : this(edge.source, edge.target, edge.label)
+}
 
 internal class XcfaExactPo(private val threads: Set<Thread>) {
 
   private val reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
 
-  private data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {
-
-    val edge: Pair<XcfaLocation?, XcfaLocation>
-      get() = source to target
-
-    constructor(event: E) : this(event.edge.source, event.edge.target, event.pid)
-  }
-
   fun isPo(from: E?, to: E): Boolean {
     from ?: return true
     if (from.clkId == to.clkId) return true
-    val possiblePathPoints = mutableListOf(Edge(from))
-    val visited = mutableSetOf<Edge>()
+    val possiblePathPoints = mutableListOf(GlobalEdge(from))
+    val visited = mutableSetOf<GlobalEdge>()
     while (possiblePathPoints.isNotEmpty()) {
       val current = possiblePathPoints.removeFirst()
       if (!visited.add(current)) continue
-      if (current.pid == to.pid && reachableEdges[current.pid]!!.reachable(current.edge, to.edge))
+      if (current.pid == to.pid && reachableEdges[current.pid]!!.reachable(current, to.edge))
         return true
 
       threads
         .filter {
           it.startEvent?.pid == current.pid &&
-            reachableEdges[current.pid]!!.reachable(current.edge, it.startEvent.edge)
+            reachableEdges[current.pid]!!.reachable(current, it.startEvent.edge)
         }
         .forEach { thread ->
-          possiblePathPoints.add(Edge(null, thread.procedure.initLoc, thread.pid))
+          possiblePathPoints.add(GlobalEdge(thread.pid, null, thread.procedure.initLoc, null))
         }
 
       threads
         .find { it.pid == current.pid }
         ?.let { thread ->
-          thread.joinEvents.forEach {
-            possiblePathPoints.add(Edge(it.edge.source, it.edge.target, it.pid))
-          }
+          thread.joinEvents.forEach { possiblePathPoints.add(GlobalEdge(it.pid, it.edge)) }
         }
     }
 
@@ -66,45 +79,41 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
 
 private class ReachableEdges(procedure: XcfaProcedure) {
 
-  private data class Edge(val source: XcfaLocation?, val target: XcfaLocation) {
-    constructor(edge: XcfaEdge) : this(edge.source, edge.target)
-  }
+  private infix fun XcfaLocation?.to(other: XcfaLocation) = LocalEdge(this, other, null)
 
-  private infix fun XcfaLocation?.to(other: XcfaLocation) = Edge(this, other)
-
-  private val ids = mutableMapOf<Edge, Int>()
+  private val ids = mutableMapOf<LocalEdge, Int>()
   private var reachable: Array<Array<Boolean>>
 
   init {
     val toVisit = mutableListOf(null to procedure.initLoc)
     val initials = mutableListOf<Pair<Int, Int>>()
     while (toVisit.isNotEmpty()) { // assumes xcfa contains no cycles (an OC checker requirement)
-      val (source, target) = toVisit.removeFirst()
+      val edge = toVisit.removeFirst()
       val id = ids.size
-      ids[source to target] = id
+      ids[edge] = id
 
-      if (source == procedure.initLoc) {
+      if (edge.source == procedure.initLoc) {
         initials.add(ids[null to procedure.initLoc]!! to id)
       } else {
-        source
+        edge.source
           ?.incomingEdges
-          ?.filter { Edge(it) in ids }
-          ?.forEach { initials.add(ids[Edge(it)]!! to id) }
+          ?.filter { LocalEdge(it) in ids }
+          ?.forEach { initials.add(ids[LocalEdge(it)]!! to id) }
       }
-      target.outgoingEdges
-        .filter { Edge(it) in ids }
-        .forEach { initials.add(id to ids[Edge(it)]!!) }
+      edge.target.outgoingEdges
+        .filter { LocalEdge(it) in ids }
+        .forEach { initials.add(id to ids[LocalEdge(it)]!!) }
 
       val toAdd =
-        target.outgoingEdges.map { it.source to it.target }.filter { it !in ids && it !in toVisit }
+        edge.target.outgoingEdges.map { LocalEdge(it) }.filter { it !in ids && it !in toVisit }
       toVisit.addAll(toAdd)
     }
     reachable = Array(ids.size) { Array(ids.size) { false } }
     close(initials) // close reachable transitively
   }
 
-  fun reachable(from: Pair<XcfaLocation?, XcfaLocation>, to: XcfaEdge): Boolean =
-    reachable[ids[from.first to from.second]!!][ids[Edge(to)]!!]
+  fun reachable(from: GlobalEdge, to: XcfaEdge): Boolean =
+    reachable[ids[LocalEdge(from)]!!][ids[LocalEdge(to)]!!]
 
   private fun close(initials: List<Pair<Int, Int>>) {
     val toClose = initials.toMutableList()

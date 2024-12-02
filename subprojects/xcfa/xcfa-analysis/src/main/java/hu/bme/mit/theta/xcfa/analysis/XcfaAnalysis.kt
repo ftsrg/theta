@@ -204,6 +204,8 @@ enum class ErrorDetection {
   ERROR_LOCATION,
   DATA_RACE,
   OVERFLOW,
+  MEMSAFETY,
+  MEMCLEANUP,
   NO_ERROR,
 }
 
@@ -211,6 +213,8 @@ fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
   when (errorDetection) {
+    ErrorDetection.MEMSAFETY,
+    ErrorDetection.MEMCLEANUP,
     ErrorDetection.ERROR_LOCATION ->
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         s.processes.any { it.value.locs.peek().error }
@@ -228,9 +232,17 @@ fun getXcfaErrorPredicate(
             val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
             val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
             val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globalVars1) for (v2 in globalVars2) if (v1.varDecl == v2.varDecl)
-              if (v1.access.isWritten || v2.access.isWritten)
-                if ((v1.mutexes intersect v2.mutexes).isEmpty()) return@Predicate true
+            for (v1 in globalVars1) {
+              for (v2 in globalVars2) {
+                if (
+                  v1.globalVar == v2.globalVar &&
+                    !v1.globalVar.atomic &&
+                    (v1.access.isWritten || v2.access.isWritten) &&
+                    (v1.mutexes intersect v2.mutexes).isEmpty()
+                )
+                  return@Predicate true
+              }
+            }
           }
         false
       }

@@ -7,6 +7,11 @@ IN=$1
 export VERIFIER_NAME=TOOL_NAME
 export VERIFIER_VERSION=TOOL_VERSION
 
+if [ "$1" == "--version" ]; then
+    LD_LIBRARY_PATH=$scriptdir/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version || echo $VERIFIER_VERSION
+    exit
+fi
+
 JAVA_VERSION=17
 JAVA_FALLBACK_PATH="/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64/bin/:/usr/lib/jvm/java-$JAVA_VERSION-openjdk/bin/:/usr/lib/jvm/java-$JAVA_VERSION/bin/"
 grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || export PATH="$JAVA_FALLBACK_PATH":$PATH
@@ -33,35 +38,39 @@ remove_property() {
     echo "${args[@]}"
 }
 
-if [ "$1" == "--version" ]; then
-    LD_LIBRARY_PATH=$scriptdir/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version
+modified_args=$(remove_property "${@:2}")
+property=$(cat .property && rm .property)
+echo "Verifying input '$IN' with property '$property' using arguments '$modified_args'"
+
+if [ "$(basename "$property")" == "termination.prp" ]; then
+    transformed_property=$(dirname "$property")/unreach-call.prp
+    echo "Mapping property '$property' to '$transformed_property'"
+    TMPFILE=$(mktemp -p $PWD)
+    sed 's/__VERIFIER_assert/__OLD_VERIFIER_assert/g;s/reach_error/old_reach_error/g' "$IN" > "$TMPFILE"
+    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property termination --to-property reachability --algorithm InstrumentationOperator "$TMPFILE"
+    #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    modified_args="$modified_args --input-file-for-witness $IN"
+    IN="output/transformed_program.c"
+    rm "$TMPFILE"
+elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
+    transformed_property=$(dirname "$property")/unreach-call.prp
+    echo "Mapping property '$property' to '$transformed_property'"
+    TMPFILE=$(mktemp -p $PWD)
+    sed 's/__VERIFIER_assert/__OLD_VERIFIER_assert/g;s/reach_error/old_reach_error/g' "$IN" > "$TMPFILE"
+    python3 "$scriptdir"/specification-transformation/src/specification-transformation.py --from-property no-overflow --to-property reachability --algorithm InstrumentationOperator "$TMPFILE"
+    #"$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
+    modified_args="$modified_args --input-file-for-witness $IN"
+    IN="output/transformed_program.c"
+    rm "$TMPFILE"
 else
-    modified_args=$(remove_property "${@:2}")
-    property=$(cat .property && rm .property)
-    echo "Verifying input '$IN' with property '$property' using arguments '$modified_args'"
+    transformed_property="$property"
+fi
 
-    if [ "$(basename "$property")" == "termination.prp" ]; then
-        transformed_property=$(dirname "$property")/unreach-call.prp
-        echo "Mapping property '$property' to '$transformed_property'"
-        "$scriptdir"/specification-transformation.bin --from-property termination --to-property reachability --algorithm InstrumentationOperator $IN
-        "$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
-        IN="output/transformed_program.c"
-    elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
-        transformed_property=$(dirname "$property")/unreach-call.prp
-        echo "Mapping property '$property' to '$transformed_property'"
-        "$scriptdir"/specification-transformation.bin --from-property no-overflow --to-property reachability --algorithm InstrumentationOperator $IN
-        "$scriptdir"/offset.sh "$IN" "output/transformed_program.c" > witness-mapping.yml
-        IN="output/transformed_program.c"
-    else
-        transformed_property="$property"
-    fi
+echo LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
+LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
 
-    echo LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
-    LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $modified_args --input "$IN" --property "$transformed_property" --smt-home "$scriptdir"/solvers
-
-    if [ "$(basename "$property")" == "termination.prp" ]; then
-        echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
-    elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
-        echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
-    fi
+if [ "$(basename "$property")" == "termination.prp" ]; then
+    echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
+elif [ "$(basename "$property")" == "no-overflow.prp" ]; then
+    echo "Not yet mapping witnesses from '$transformed_property' to '$property', hoping for the best"
 fi

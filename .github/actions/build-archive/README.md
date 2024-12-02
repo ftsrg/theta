@@ -24,8 +24,8 @@ Minimal necessary packages for Ubuntu 22.04 LTS:
 ├── lib - contains the native library dependencies
 ├── offset.sh - creates a mapping between statements of two C files
 ├── solvers - contains further dependencies (SMT-solvers), each having their respective licenses 
-├── specification-transformation.bin - binary for transforming various specifications to reachability
-├── specification-transformation.bin.LICENSE - license for `specification-transformation.bin`
+├── specification-transformation - binaries for transforming various specifications to reachability (this includes cpachecker, but we do not use it for verification.)
+├── specification-transformation.LICENSE - license for `specification-transformation`
 ├── theta-smtlib.jar - the jarfile for installing and managing smt solvers (not necessary unless different solver versions are required)
 ├── theta-start.sh - the starting script of TOOL_NAME
 └── theta.jar - the main jarfile of TOOL_NAME

@@ -26,21 +26,52 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign
+import hu.bme.mit.theta.core.type.fptype.FpType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.*
+import java.math.BigInteger
 import java.util.*
+import org.kframework.mpfr.BigFloat
 
-fun XCFA.toMonolithicExpr(): MonolithicExpr {
+private val LitExpr<*>.value: Int
+  get() =
+    when (this) {
+      is IntLitExpr -> value.toInt()
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toInt()
+      else -> error("Unknown integer type: $type")
+    }
+
+fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = false): MonolithicExpr {
+  val intType = CInt.getUnsignedInt(parseContext).smtType
+
+  fun int(value: Int): Expr<*> =
+    when (intType) {
+      is IntType -> Int(value)
+      is BvType ->
+        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), intType.size)
+
+      else -> error("Unknown integer type: $intType")
+    }
+
   Preconditions.checkArgument(this.initProcedures.size == 1)
   val proc = this.initProcedures.stream().findFirst().orElse(null).first
   Preconditions.checkArgument(
@@ -48,19 +79,26 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   )
   Preconditions.checkArgument(proc.errorLoc.isPresent)
 
-  val map = mutableMapOf<XcfaLocation, Int>()
+  val locMap = mutableMapOf<XcfaLocation, Int>()
   for ((i, x) in proc.locs.withIndex()) {
-    map[x] = i
+    locMap[x] = i
   }
-  val locVar = Decls.Var("__loc_", IntExprs.Int())
+  val edgeMap = mutableMapOf<XcfaEdge, Int>()
+  for ((i, x) in proc.edges.withIndex()) {
+    edgeMap[x] = i
+  }
+  val locVar = Decls.Var("__loc_", intType)
+  val edgeVar = Decls.Var("__edge_", intType)
   val tranList =
     proc.edges
-      .map { (source, target, label): XcfaEdge ->
+      .map { edge: XcfaEdge ->
+        val (source, target, label) = edge
         SequenceStmt.of(
           listOf(
-            AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
+            AssumeStmt.of(Eq(locVar.ref, int(locMap[source]!!))),
             label.toStmt(),
-            AssignStmt.of(locVar, IntExprs.Int(map[target]!!)),
+            AssignStmt.of(locVar, cast(int(locMap[target]!!), locVar.type)),
+            AssignStmt.of(edgeVar, cast(int(edgeMap[edge]!!), edgeVar.type)),
           )
         )
       }
@@ -68,21 +106,60 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
+  val defaultValues =
+    if (initValues)
+      StmtUtils.getVars(trans)
+        .filter { !it.equals(locVar) and !it.equals(edgeVar) }
+        .map {
+          when (it.type) {
+            is IntType -> Eq(it.ref, int(0))
+            is BoolType -> Eq(it.ref, Bool(false))
+            is BvType ->
+              Eq(
+                it.ref,
+                BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+              )
+            is FpType ->
+              FpAssign(
+                it.ref as Expr<FpType>,
+                FpUtils.bigFloatToFpLitExpr(
+                  BigFloat.zero((it.type as FpType).significand),
+                  it.type as FpType,
+                ),
+              )
+            else -> throw IllegalArgumentException("Unsupported type")
+          }
+        }
+        .toList()
+        .let { And(it) }
+    else True()
+
   return MonolithicExpr(
-    initExpr = Eq(locVar.ref, IntExprs.Int(map[proc.initLoc]!!)),
+    initExpr =
+      And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
     transExpr = And(transUnfold.exprs),
-    propExpr = Neq(locVar.ref, IntExprs.Int(map[proc.errorLoc.get()]!!)),
+    propExpr = Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)),
     transOffsetIndex = transUnfold.indexing,
+    vars =
+      StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
+        edgeVar +
+        locVar,
+    valToState = { valToState(it) },
+    biValToAction = { val1, val2 -> valToAction(val1, val2) },
+    ctrlVars = listOf(locVar, edgeVar),
   )
 }
 
 fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
-  val val1Map = val1.toMap()
   val val2Map = val2.toMap()
-  var i = 0
-  val map: MutableMap<XcfaLocation, Int> = HashMap()
-  for (x in this.procedures.first { it.name == "main" }.locs) {
-    map[x] = i++
+  val proc = this.procedures.first { it.name == "main" }
+  val locMap = mutableMapOf<XcfaLocation, Int>()
+  for ((i, x) in proc.locs.withIndex()) {
+    locMap[x] = i
+  }
+  val edgeMap = mutableMapOf<XcfaEdge, Int>()
+  for ((i, x) in proc.edges.withIndex()) {
+    edgeMap[x] = i
   }
   return XcfaAction(
     pid = 0,
@@ -91,39 +168,21 @@ fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
         .first { it.name == "main" }
         .edges
         .first { edge ->
-          map[edge.source] ==
-            (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
-            map[edge.target] ==
-              (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
+          edgeMap[edge] == (val2Map[val2Map.keys.first { it.name == "__edge_" }]?.value ?: -1)
         },
   )
 }
 
 fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
   val valMap = val1.toMap()
-  var i = 0
-  val map: MutableMap<Int, XcfaLocation> = HashMap()
-  for (x in this.procedures.first { it.name == "main" }.locs) {
-    map[i++] = x
+  val proc = this.procedures.first { it.name == "main" }
+  val locMap = mutableMapOf<Int, XcfaLocation>()
+  for ((i, x) in proc.locs.withIndex()) {
+    locMap[i] = x
   }
   return XcfaState(
-    xcfa = this,
-    processes =
-      mapOf(
-        Pair(
-          0,
-          XcfaProcessState(
-            locs =
-              LinkedList(
-                listOf(
-                  map[
-                    (valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()]
-                )
-              ),
-            varLookup = LinkedList(),
-          ),
-        )
-      ),
+    this,
+    locMap[(valMap[valMap.keys.first { it.name == "__loc_" }])?.value ?: -1]!!,
     PtrState(
       ExplState.of(
         ImmutableValuation.from(
@@ -135,8 +194,5 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
         )
       )
     ),
-    mutexes = emptyMap(),
-    threadLookup = emptyMap(),
-    bottom = false,
   )
 }

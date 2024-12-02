@@ -15,6 +15,16 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -35,29 +45,15 @@ import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 final class StmtToExprTransformer {
 
-    private StmtToExprTransformer() {
-    }
+    private StmtToExprTransformer() {}
 
     static StmtUnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
         return stmt.accept(StmtToExprVisitor.INSTANCE, indexing);
@@ -82,8 +78,7 @@ final class StmtToExprTransformer {
 
         private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
-        private StmtToExprVisitor() {
-        }
+        private StmtToExprVisitor() {}
 
         @Override
         public StmtUnfoldResult visit(final SkipStmt stmt, final VarIndexing indexing) {
@@ -98,16 +93,16 @@ final class StmtToExprTransformer {
         }
 
         @Override
-        public <DeclType extends Type> StmtUnfoldResult visit(final HavocStmt<DeclType> stmt,
-                                                              final VarIndexing indexing) {
+        public <DeclType extends Type> StmtUnfoldResult visit(
+                final HavocStmt<DeclType> stmt, final VarIndexing indexing) {
             final VarDecl<?> varDecl = stmt.getVarDecl();
             final VarIndexing newIndexing = indexing.inc(varDecl);
             return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
         }
 
         @Override
-        public <DeclType extends Type> StmtUnfoldResult visit(final AssignStmt<DeclType> stmt,
-                                                              final VarIndexing indexing) {
+        public <DeclType extends Type> StmtUnfoldResult visit(
+                final AssignStmt<DeclType> stmt, final VarIndexing indexing) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final VarIndexing newIndexing = indexing.inc(varDecl);
             final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
@@ -115,8 +110,10 @@ final class StmtToExprTransformer {
 
             final Expr<BoolType> expr;
             if (varDecl.getType() instanceof FpType) {
-                expr = FpAssign(TypeUtils.cast(lhs, (FpType) varDecl.getType()),
-                        TypeUtils.cast(rhs, (FpType) varDecl.getType()));
+                expr =
+                        FpAssign(
+                                TypeUtils.cast(lhs, (FpType) varDecl.getType()),
+                                TypeUtils.cast(rhs, (FpType) varDecl.getType()));
             } else {
                 expr = Eq(lhs, rhs);
             }
@@ -124,9 +121,14 @@ final class StmtToExprTransformer {
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, VarIndexing indexing) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                StmtUnfoldResult visit(
+                        MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                        VarIndexing indexing) {
             final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
-            final Dereference<PtrType, OffsetType, DeclType> lhs = (Dereference<PtrType, OffsetType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), indexing);
+            final Dereference<PtrType, OffsetType, DeclType> lhs =
+                    (Dereference<PtrType, OffsetType, DeclType>)
+                            ExprUtils.applyPrimes(stmt.getDeref(), indexing);
 
             final var retExpr = Eq(lhs, rhs);
             return StmtUnfoldResult.of(ImmutableList.of(retExpr), indexing);
@@ -135,8 +137,8 @@ final class StmtToExprTransformer {
         @Override
         public StmtUnfoldResult visit(SequenceStmt sequenceStmt, VarIndexing indexing) {
             final StmtUnfoldResult result = toExpr(sequenceStmt.getStmts(), indexing);
-            return StmtUnfoldResult.of(ImmutableList.of(And(result.getExprs())),
-                    result.getIndexing());
+            return StmtUnfoldResult.of(
+                    ImmutableList.of(And(result.getExprs())), result.getIndexing());
         }
 
         @Override
@@ -146,12 +148,13 @@ final class StmtToExprTransformer {
             final List<VarIndexing> indexings = new ArrayList<>();
             VarIndexing jointIndexing = indexing;
             int count = 0;
-            VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
+            //            VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
             for (Stmt stmt : nonDetStmt.getStmts()) {
-                final Expr<BoolType> tempExpr = Eq(
-                        ExprUtils.applyPrimes(tempVar.getRef(), indexing), Int(count++));
-                final StmtUnfoldResult result = toExpr(stmt, indexing.inc(tempVar));
-                choices.add(And(tempExpr, And(result.exprs)));
+                //                final Expr<BoolType> tempExpr = Eq(
+                //                        ExprUtils.applyPrimes(tempVar.getRef(), indexing),
+                // Int(count++));
+                final StmtUnfoldResult result = toExpr(stmt, indexing /*.inc(tempVar)*/);
+                choices.add(/*And(tempExpr, */ And(result.exprs) /*)*/);
                 indexings.add(result.indexing);
                 jointIndexing = jointIndexing.join(result.indexing);
             }
@@ -165,8 +168,10 @@ final class StmtToExprTransformer {
                     int jointIndex = jointIndexing.get(decl);
                     if (currentBranchIndex < jointIndex) {
                         if (currentBranchIndex > 0) {
-                            exprs.add(Eq(Prime(decl.getRef(), currentBranchIndex),
-                                    Prime(decl.getRef(), jointIndex)));
+                            exprs.add(
+                                    Eq(
+                                            Prime(decl.getRef(), currentBranchIndex),
+                                            Prime(decl.getRef(), jointIndex)));
                         } else {
                             exprs.add(Eq(decl.getRef(), Prime(decl.getRef(), jointIndex)));
                         }
@@ -175,7 +180,7 @@ final class StmtToExprTransformer {
                 branchExprs.add(And(exprs));
             }
             final Expr<BoolType> expr = Or(branchExprs);
-            VarPoolUtil.returnInt(tempVar);
+            //            VarPoolUtil.returnInt(tempVar);
             return StmtUnfoldResult.of(ImmutableList.of(expr), jointIndexing);
         }
 
@@ -184,10 +189,10 @@ final class StmtToExprTransformer {
             final Expr<BoolType> cond = ifStmt.getCond();
             final Expr<BoolType> condExpr = ExprUtils.applyPrimes(cond, indexing);
 
-            final StmtUnfoldResult thenResult = toExpr(ifStmt.getThen(),
-                    indexing.transform().build());
-            final StmtUnfoldResult elzeResult = toExpr(ifStmt.getElze(),
-                    indexing.transform().build());
+            final StmtUnfoldResult thenResult =
+                    toExpr(ifStmt.getThen(), indexing.transform().build());
+            final StmtUnfoldResult elzeResult =
+                    toExpr(ifStmt.getElze(), indexing.transform().build());
 
             final VarIndexing thenIndexing = thenResult.indexing;
             final VarIndexing elzeIndexing = elzeResult.indexing;
@@ -205,14 +210,18 @@ final class StmtToExprTransformer {
                 if (thenIndex < elzeIndex) {
                     if (thenIndex > 0) {
                         thenAdditions.add(
-                                Eq(Prime(decl.getRef(), thenIndex), Prime(decl.getRef(), elzeIndex)));
+                                Eq(
+                                        Prime(decl.getRef(), thenIndex),
+                                        Prime(decl.getRef(), elzeIndex)));
                     } else {
                         thenAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), elzeIndex)));
                     }
                 } else if (elzeIndex < thenIndex) {
                     if (elzeIndex > 0) {
                         elzeAdditions.add(
-                                Eq(Prime(decl.getRef(), elzeIndex), Prime(decl.getRef(), thenIndex)));
+                                Eq(
+                                        Prime(decl.getRef(), elzeIndex),
+                                        Prime(decl.getRef(), thenIndex)));
                     } else {
                         elzeAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), thenIndex)));
                     }
@@ -220,14 +229,16 @@ final class StmtToExprTransformer {
             }
 
             final Expr<BoolType> thenExprExtended =
-                    thenAdditions.size() > 0 ? SmartBoolExprs.And(thenExpr, And(thenAdditions))
+                    thenAdditions.size() > 0
+                            ? SmartBoolExprs.And(thenExpr, And(thenAdditions))
                             : thenExpr;
             final Expr<BoolType> elzeExprExtended =
-                    elzeAdditions.size() > 0 ? SmartBoolExprs.And(elzeExpr, And(elzeAdditions))
+                    elzeAdditions.size() > 0
+                            ? SmartBoolExprs.And(elzeExpr, And(elzeAdditions))
                             : elzeExpr;
 
-            final Expr<BoolType> ite = cast(Ite(condExpr, thenExprExtended, elzeExprExtended),
-                    Bool());
+            final Expr<BoolType> ite =
+                    cast(Ite(condExpr, thenExprExtended, elzeExprExtended), Bool());
             return StmtUnfoldResult.of(ImmutableList.of(ite), jointIndexing);
         }
 

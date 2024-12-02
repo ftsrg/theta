@@ -59,7 +59,7 @@ fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   }
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
-  vars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
+  globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
 
 fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> =
   procedures
@@ -120,6 +120,8 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
 typealias AccessType = Pair<Boolean, Boolean>
 
 typealias VarAccessMap = Map<VarDecl<*>, AccessType>
+
+typealias GlobalVarAccessMap = Map<XcfaGlobalVar, AccessType>
 
 val AccessType?.isRead
   get() = this?.first == true
@@ -245,8 +247,12 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 /**
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
-private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>): VarAccessMap =
-  collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
+private fun XcfaLabel.collectGlobalVars(globalVars: Set<XcfaGlobalVar>): GlobalVarAccessMap =
+  collectVarsWithAccessType()
+    .mapNotNull { labelVar ->
+      globalVars.firstOrNull { it.wrappedVar == labelVar.key }?.let { Pair(it, labelVar.value) }
+    }
+    .toMap()
 
 /**
  * Returns the global variables (potentially indirectly) accessed by the edge. If the edge starts an
@@ -254,8 +260,8 @@ private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>): VarAccessM
  * with a pair of boolean values: the first is true if the variable is read and false otherwise. The
  * second is similar for write access.
  */
-fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): VarAccessMap {
-  val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
+fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): GlobalVarAccessMap {
+  val globalVars = xcfa.globalVars
   val flatLabels = getFlatLabels()
   val mutexes =
     flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
@@ -271,7 +277,7 @@ fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): VarAccessMap {
  * (read/write) and the set of mutexes that are needed to perform the variable access.
  */
 class GlobalVarAccessWithMutexes(
-  val varDecl: VarDecl<*>,
+  val globalVar: XcfaGlobalVar,
   val access: AccessType,
   val mutexes: Set<String>,
 )
@@ -287,7 +293,7 @@ fun XcfaEdge.getGlobalVarsWithNeededMutexes(
   xcfa: XCFA,
   currentMutexes: Set<String>,
 ): List<GlobalVarAccessWithMutexes> {
-  val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
+  val globalVars = xcfa.globalVars
   val neededMutexes = currentMutexes.toMutableSet()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
   getFlatLabels().forEach { label ->
@@ -299,7 +305,7 @@ fun XcfaEdge.getGlobalVarsWithNeededMutexes(
         vars.mapNotNull { (varDecl, accessType) ->
           if (
             accesses.any {
-              it.varDecl == varDecl && (it.access == accessType && it.access == WRITE)
+              it.globalVar == varDecl && (it.access == accessType && it.access == WRITE)
             }
           ) {
             null
@@ -320,10 +326,10 @@ fun XcfaEdge.getGlobalVarsWithNeededMutexes(
  * @return the set of encountered shared objects
  */
 private fun XcfaEdge.collectGlobalVarsWithTraversal(
-  globalVars: Set<VarDecl<*>>,
+  globalVars: Set<XcfaGlobalVar>,
   goFurther: Predicate<XcfaEdge>,
-): VarAccessMap {
-  val vars = mutableMapOf<VarDecl<*>, AccessType>()
+): GlobalVarAccessMap {
+  val vars = mutableMapOf<XcfaGlobalVar, AccessType>()
   val exploredEdges = mutableListOf<XcfaEdge>()
   val edgesToExplore = mutableListOf<XcfaEdge>()
   edgesToExplore.add(this)

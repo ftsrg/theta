@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesses.GraphmlWitness
@@ -42,6 +43,7 @@ class GraphmlWitnessWriter {
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
+    property: ErrorDetection,
   ) {
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
@@ -52,7 +54,8 @@ class GraphmlWitnessWriter {
           parseContext,
         )
 
-      val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
+      val witnessTrace =
+        traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
       val graphmlWitness = GraphmlWitness(witnessTrace, inputFile)
       val xml = graphmlWitness.toPrettyXml()
       witnessfile.writeText(xml)

@@ -34,9 +34,12 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
     initGson()
     writer.beginObject()
     writer.name("name").value(value.name)
+    // unsafeUnroll. IMPORTANT: this has to be _before_ procedures!
+    writer.name("unsafeUnrollUsed").value(value.unsafeUnrollUsed)
+
     // vars
     writer.name("vars")
-    gson.toJson(gson.toJsonTree(value.vars), writer)
+    gson.toJson(gson.toJsonTree(value.globalVars), writer)
 
     // procedures
     writer.name("procedures").beginArray()
@@ -95,6 +98,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
     lateinit var vars: Set<XcfaGlobalVar>
     lateinit var xcfaProcedures: Map<String, XcfaProcedure>
     lateinit var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>
+    var unsafeUnrollUsed = false
 
     val varsType = object : TypeToken<Set<XcfaGlobalVar>>() {}.type
 
@@ -105,9 +109,10 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
         "name" -> name = reader.nextString()
         "vars" -> vars = gson.fromJson(reader, varsType)
         "procedures" -> {
-          xcfa = XCFA(name, vars)
+          xcfa = XCFA(name, vars, unsafeUnrollUsed = unsafeUnrollUsed)
           xcfaProcedures = parseProcedures(reader, xcfa)
         }
+        "unsafeUnrollUsed" -> unsafeUnrollUsed = reader.nextBoolean()
 
         "initProcedures" -> initProcedures = parseInitProcedures(reader, xcfaProcedures)
       }

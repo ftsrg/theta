@@ -13,19 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.declaration;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CDeclaration {
 
@@ -87,13 +85,20 @@ public class CDeclaration {
         for (CStatement arrayDimension : arrayDimensions) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
-            actualType = new CArray(simpleType, actualType, actualType.getParseContext()); // some day change this back to arrays, when simple & complex types are better synchronized...
+            actualType =
+                    new CArray(
+                            simpleType,
+                            actualType,
+                            actualType.getParseContext(),
+                            arrayDimension); // some day change this back to arrays, when simple &
+            // complex types are better synchronized...
         }
-//        for (int i = 0; i < derefCounter; i++) {
-//            CSimpleType simpleType = type.copyOf();
-//            simpleType.incrementPointer();
-//            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
-//        }
+        //        for (int i = 0; i < derefCounter; i++) {
+        //            CSimpleType simpleType = type.copyOf();
+        //            simpleType.incrementPointer();
+        //            actualType = new CPointer(simpleType, actualType,
+        // actualType.getParseContext());
+        //        }
 
         return actualType;
     }

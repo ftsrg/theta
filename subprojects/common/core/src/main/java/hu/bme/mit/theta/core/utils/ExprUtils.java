@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
@@ -36,7 +39,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,26 +51,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-/**
- * Utility functions related to expressions.
- */
+/** Utility functions related to expressions. */
 public final class ExprUtils {
 
     private static final ExprSimplifier exprSimplifier = ExprSimplifier.create();
 
-    private ExprUtils() {
-    }
+    private ExprUtils() {}
 
     /**
      * Collect atoms from a Boolean expression into a given collection.
      *
-     * @param expr      Expression
+     * @param expr Expression
      * @param collectTo Collection where the atoms should be put
      */
-    public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
+    public static void collectAtoms(
+            final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
         ExprAtomCollector.collectAtoms(expr, collectTo);
     }
 
@@ -114,7 +112,9 @@ public final class ExprUtils {
 
         if (expr instanceof AndExpr) {
             final AndExpr andExpr = (AndExpr) expr;
-            return andExpr.getOps().stream().map(ExprUtils::getConjuncts).flatMap(Collection::stream)
+            return andExpr.getOps().stream()
+                    .map(ExprUtils::getConjuncts)
+                    .flatMap(Collection::stream)
                     .collect(Collectors.toSet());
         } else {
             return Collections.singleton(expr);
@@ -124,7 +124,7 @@ public final class ExprUtils {
     /**
      * Collect params of an expression into a given collection.
      *
-     * @param expr      Expression
+     * @param expr Expression
      * @param collectTo Collection where the params should be put
      */
     public static void collectParams(final Expr<?> expr, final Collection<ParamDecl<?>> collectTo) {
@@ -152,10 +152,11 @@ public final class ExprUtils {
     /**
      * Collect params from expressions into a given collection.
      *
-     * @param exprs     Expressions
+     * @param exprs Expressions
      * @param collectTo Collection where the variables should be put
      */
-    public static void collectParams(final Iterable<? extends Expr<?>> exprs, final Collection<ParamDecl<?>> collectTo) {
+    public static void collectParams(
+            final Iterable<? extends Expr<?>> exprs, final Collection<ParamDecl<?>> collectTo) {
         exprs.forEach(e -> collectParams(e, collectTo));
     }
 
@@ -183,11 +184,10 @@ public final class ExprUtils {
         return vars;
     }
 
-
     /**
      * Collect variables of an expression into a given collection.
      *
-     * @param expr      Expression
+     * @param expr Expression
      * @param collectTo Collection where the variables should be put
      */
     public static void collectVars(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
@@ -206,10 +206,11 @@ public final class ExprUtils {
     /**
      * Collect variables from expressions into a given collection.
      *
-     * @param exprs     Expressions
+     * @param exprs Expressions
      * @param collectTo Collection where the variables should be put
      */
-    public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
+    public static void collectVars(
+            final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
         exprs.forEach(e -> collectVars(e, collectTo));
     }
 
@@ -240,10 +241,11 @@ public final class ExprUtils {
     /**
      * Collect indexed constants of an expression into a given collection.
      *
-     * @param expr      Expression
+     * @param expr Expression
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectIndexedConstants(final Expr<?> expr, final Collection<IndexedConstDecl<?>> collectTo) {
+    public static void collectIndexedConstants(
+            final Expr<?> expr, final Collection<IndexedConstDecl<?>> collectTo) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> refExpr = (RefExpr<?>) expr;
             final Decl<?> decl = refExpr.getDecl();
@@ -259,10 +261,12 @@ public final class ExprUtils {
     /**
      * Collect indexed constants from expressions into a given collection.
      *
-     * @param exprs     Expressions
+     * @param exprs Expressions
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectIndexedConstants(final Iterable<? extends Expr<?>> exprs, final Collection<IndexedConstDecl<?>> collectTo) {
+    public static void collectIndexedConstants(
+            final Iterable<? extends Expr<?>> exprs,
+            final Collection<IndexedConstDecl<?>> collectTo) {
         exprs.forEach(e -> collectIndexedConstants(e, collectTo));
     }
 
@@ -284,7 +288,8 @@ public final class ExprUtils {
      * @param exprs Expressions
      * @return Set of constants appearing in the expressions
      */
-    public static Set<IndexedConstDecl<?>> getIndexedConstants(final Iterable<? extends Expr<?>> exprs) {
+    public static Set<IndexedConstDecl<?>> getIndexedConstants(
+            final Iterable<? extends Expr<?>> exprs) {
         final Set<IndexedConstDecl<?>> consts = new HashSet<>();
         collectIndexedConstants(exprs, consts);
         return consts;
@@ -293,10 +298,11 @@ public final class ExprUtils {
     /**
      * Collect constants of an expression into a given collection.
      *
-     * @param expr      Expression
+     * @param expr Expression
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectConstants(final Expr<?> expr, final Collection<ConstDecl<?>> collectTo) {
+    public static void collectConstants(
+            final Expr<?> expr, final Collection<ConstDecl<?>> collectTo) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> refExpr = (RefExpr<?>) expr;
             final Decl<?> decl = refExpr.getDecl();
@@ -312,10 +318,11 @@ public final class ExprUtils {
     /**
      * Collect constants from expressions into a given collection.
      *
-     * @param exprs     Expressions
+     * @param exprs Expressions
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectConstants(final Iterable<? extends Expr<?>> exprs, final Collection<ConstDecl<?>> collectTo) {
+    public static void collectConstants(
+            final Iterable<? extends Expr<?>> exprs, final Collection<ConstDecl<?>> collectTo) {
         exprs.forEach(e -> collectConstants(e, collectTo));
     }
 
@@ -368,8 +375,7 @@ public final class ExprUtils {
     }
 
     /**
-     * Transform expression into an equivalent new expression without
-     * if-then-else constructs.
+     * Transform expression into an equivalent new expression without if-then-else constructs.
      *
      * @param expr Original expression
      * @return Transformed expression
@@ -382,10 +388,11 @@ public final class ExprUtils {
      * Simplify expression and substitute the valuation.
      *
      * @param expr Original expression
-     * @param val  Valuation
+     * @param val Valuation
      * @return Simplified expression
      */
-    public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr, final Valuation val) {
+    public static <ExprType extends Type> Expr<ExprType> simplify(
+            final Expr<ExprType> expr, final Valuation val) {
         return exprSimplifier.simplify(expr, val);
     }
 
@@ -440,6 +447,29 @@ public final class ExprUtils {
     }
 
     /**
+     * Reverses the given expression (swaps primed variables with unprimed variables and
+     * vice-versa). Also works if variables can have multiple primes.
+     *
+     * @param expr Original expression
+     * @return Reversed form
+     */
+    public static <ExprType extends Type> Expr<ExprType> reverse(
+            final Expr<ExprType> expr, final VarIndexing indexing) {
+        return new ExprReverser(indexing).reverse(expr);
+    }
+
+    /**
+     * Reverses the given expression (swaps primed variables with unprimed variables and
+     * vice-versa).
+     *
+     * @param expr Original expression
+     * @return Reversed form
+     */
+    public static <ExprType extends Type> Expr<ExprType> reverse(final Expr<ExprType> expr) {
+        return new ExprReverser(VarIndexingFactory.indexing(1)).reverse(expr);
+    }
+
+    /**
      * Transform an expression into a ponated one.
      *
      * @param expr Original expression
@@ -457,29 +487,29 @@ public final class ExprUtils {
     /**
      * Transform an expression by universally quantifying certain variables.
      *
-     * @param expr    Original expression
+     * @param expr Original expression
      * @param mapping Quantifying
      * @return Transformed expression
      */
-    public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+    public static <T extends Type> Expr<T> close(
+            final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
         return ExprCloser.close(expr, mapping);
     }
 
     /**
-     * Transform an expression by applying primes to an expression based on an
-     * indexing.
+     * Transform an expression by applying primes to an expression based on an indexing.
      *
-     * @param expr     Original expression
+     * @param expr Original expression
      * @param indexing Indexing
      * @return Transformed expression
      */
-    public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
+    public static <T extends Type> Expr<T> applyPrimes(
+            final Expr<T> expr, final VarIndexing indexing) {
         return ExprPrimeApplier.applyPrimes(expr, indexing);
     }
 
     /**
-     * Get the size of an expression by counting the nodes in its tree
-     * representation.
+     * Get the size of an expression by counting the nodes in its tree representation.
      *
      * @param expr Expression
      * @return Node count
@@ -491,11 +521,12 @@ public final class ExprUtils {
     /**
      * Change fixed subexpressions using a lookup
      *
-     * @param expr   the expr to change subexpressions in
+     * @param expr the expr to change subexpressions in
      * @param lookup the lookup mapping subexpression to replacements
      * @return the changed expression
      */
-    public static <T extends Type> Expr<T> changeSubexpr(Expr<T> expr, Map<Expr<?>, Expr<?>> lookup) {
+    public static <T extends Type> Expr<T> changeSubexpr(
+            Expr<T> expr, Map<Expr<?>, Expr<?>> lookup) {
         if (lookup.containsKey(expr)) {
             return cast(lookup.get(expr), expr.getType());
         } else {
@@ -503,13 +534,16 @@ public final class ExprUtils {
         }
     }
 
-    public static <T extends Type> Expr<T> changeDecls(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> lookup) {
-        return changeSubexpr(expr, lookup.entrySet().stream().map(entry -> Map.entry(entry.getKey().getRef(), entry.getValue().getRef())).collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
+    public static <T extends Type> Expr<T> changeDecls(
+            Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> lookup) {
+        return changeSubexpr(
+                expr,
+                lookup.entrySet().stream()
+                        .map(entry -> Map.entry(entry.getKey().getRef(), entry.getValue().getRef()))
+                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
     }
 
-    /**
-     * Extracts function and its arguments from a nested expression
-     */
+    /** Extracts function and its arguments from a nested expression */
     public static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
         final Expr<?> func = expr.getFunc();
         final Expr<?> arg = expr.getParam();
@@ -518,8 +552,8 @@ public final class ExprUtils {
             final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
             final Expr<?> resFunc = funcAndArgs.get1();
             final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
+            final List<Expr<?>> resArgs =
+                    ImmutableList.<Expr<?>>builder().addAll(args).add(arg).build();
             return Tuple2.of(resFunc, resArgs);
         } else {
             return Tuple2.of(func, ImmutableList.of(arg));

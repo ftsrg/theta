@@ -19,7 +19,6 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.EmptyNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.IdentityNextStateDescriptor;
-
 import java.io.Closeable;
 import java.util.Optional;
 
@@ -34,15 +33,18 @@ public interface AbstractNextStateDescriptor {
         }
 
         @Override
-        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(
+                StateSpaceInfo localStateSpace) {
             return getValuations(localStateSpace);
         }
 
         @Override
-        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+                StateSpaceInfo localStateSpace) {
             // keep lambda to avoid confusion with overloads
             //noinspection Convert2MethodRef
-            return new IntObjMapViews.Transforming<>(getValuations(localStateSpace), v -> IntObjMapView.empty(v));
+            return new IntObjMapViews.Transforming<>(
+                    getValuations(localStateSpace), v -> IntObjMapView.empty(v));
         }
     }
 
@@ -55,32 +57,39 @@ public interface AbstractNextStateDescriptor {
         }
 
         @Override
-        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(
+                StateSpaceInfo localStateSpace) {
             return getValuations(localStateSpace);
         }
 
         @Override
-        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+                StateSpaceInfo localStateSpace) {
             return IntObjMapView.empty(getValuations(localStateSpace));
         }
 
+        final class TerminalEmpty implements AbstractNextStateDescriptor.Postcondition {
+            @Override
+            public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+                    StateSpaceInfo localStateSpace) {
+                return IntObjMapView.empty(terminalEmpty());
+            }
+
+            @Override
+            public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+                return Optional.empty();
+            }
+
+            @Override
+            public boolean evaluate() {
+                return false;
+            }
+        }
+
+        TerminalEmpty TERMINAL_EMPTY = new TerminalEmpty();
+
         static AbstractNextStateDescriptor.Postcondition terminalEmpty() {
-            return new AbstractNextStateDescriptor.Postcondition() {
-                @Override
-                public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
-                    return IntObjMapView.empty(terminalEmpty());
-                }
-
-                @Override
-                public Optional<Iterable<AbstractNextStateDescriptor>> split() {
-                    return Optional.empty();
-                }
-
-                @Override
-                public boolean evaluate() {
-                    return false;
-                }
-            };
+            return TERMINAL_EMPTY;
         }
     }
 
@@ -100,17 +109,17 @@ public interface AbstractNextStateDescriptor {
         return true;
     }
 
-
     IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace);
 
-
-    IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace);
+    IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+            StateSpaceInfo localStateSpace);
 
     default Optional<Iterable<AbstractNextStateDescriptor>> split() {
         return Optional.empty();
     }
 
-    // Should return true only if there is a valuation that is accepted by the relation and false if there is not.
+    // Should return true only if there is a valuation that is accepted by the relation and false if
+    // there is not.
     // Must throw an exception if undecidable.
     default boolean evaluate() {
         throw new IllegalStateException("Evaluated before reaching a terminal descriptor.");
@@ -118,8 +127,11 @@ public interface AbstractNextStateDescriptor {
 
     default boolean isLocallyIdentity(final StateSpaceInfo stateSpaceInfo) {
         final IntObjMapView<AbstractNextStateDescriptor> diagonal = getDiagonal(stateSpaceInfo);
-        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = getOffDiagonal(stateSpaceInfo);
-        return offDiagonal.isEmpty() && isNullOrEmpty(offDiagonal.defaultValue()) && diagonal.isEmpty();
+        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal =
+                getOffDiagonal(stateSpaceInfo);
+        return offDiagonal.isEmpty()
+                && isNullOrEmpty(offDiagonal.defaultValue())
+                && diagonal.isEmpty();
     }
 
     static boolean isNullOrEmpty(AbstractNextStateDescriptor ns) {
@@ -186,11 +198,8 @@ public interface AbstractNextStateDescriptor {
             }
 
             @Override
-            public void close() {
-
-            }
+            public void close() {}
         }
-
     }
 
     default Cursor cursor(int from, StateSpaceInfo localStateSpace) {

@@ -36,7 +36,7 @@ class YamlParseTest {
             task =
               Task(
                 inputFiles = listOf("example.c"),
-                inputFileHashes = listOf("hash"),
+                inputFileHashes = mapOf(Pair("example.c", "hash")),
                 specification = "unreach_call",
                 dataModel = DataModel.LP64,
                 language = Language.C,
@@ -45,13 +45,11 @@ class YamlParseTest {
         content =
           listOf(
             ContentItem(
-              Segment(
-                Waypoint(
-                  type = WaypointType.ASSUMPTION,
-                  constraint = Constraint(value = "1 < x", format = Format.C_EXPRESSION),
-                  location = Location(fileName = "example.c", line = 15),
-                  action = Action.FOLLOW,
-                )
+              WaypointContent(
+                type = WaypointType.ASSUMPTION,
+                constraint = Constraint(value = "1 < x", format = Format.C_EXPRESSION),
+                location = Location(fileName = "example.c", line = 15),
+                action = Action.FOLLOW,
               )
             )
           ),

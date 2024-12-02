@@ -58,16 +58,14 @@ runs:
       with:
         name: specification-transformation
         path: ./
-    - name: Move file to overwrite specification-transformation.bin
-      shell: bash
-      run: |
-        mv specification-transformation.bin $GITHUB_ACTION_PATH/specification-transformation.bin
     - name: Copy specification transformation binary and license
       shell: bash
       run: |
-        cp $GITHUB_ACTION_PATH/specification-transformation.bin ${{ inputs.name }}/${{ inputs.name }}/
-        chmod +x ${{ inputs.name }}/${{ inputs.name }}/specification-transformation.bin
-        cp $GITHUB_ACTION_PATH/specification-transformation.bin.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
+        zipfile=$(realpath ./specification-transformation.zip)
+        pushd ${{ inputs.name }}/${{ inputs.name }}/
+        unzip $zipfile
+        popd
+        cp $GITHUB_ACTION_PATH/specification-transformation.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
         cp $GITHUB_ACTION_PATH/offset.sh ${{ inputs.name }}/${{ inputs.name }}/
     - name: ZIP archive
       shell: bash

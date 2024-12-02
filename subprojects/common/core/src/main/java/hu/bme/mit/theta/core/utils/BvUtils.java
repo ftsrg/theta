@@ -13,20 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
-
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-
-import java.math.BigInteger;
 
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import java.math.BigInteger;
+
 public final class BvUtils {
 
-    private BvUtils() {
-
-    }
+    private BvUtils() {}
 
     public static BigInteger neutralBvLitExprToBigInteger(final BvLitExpr expr) {
         return unsignedBvLitExprToBigInteger(expr);
@@ -84,6 +80,7 @@ public final class BvUtils {
         return fitBigIntegerIntoUnsignedDomain(integer, size);
     }
 
+    // TODO: is this correct? See modifications below in unsigned
     public static BigInteger fitBigIntegerIntoSignedDomain(BigInteger integer, final int size) {
         while (integer.compareTo(BigInteger.TWO.pow(size - 1).negate()) < 0) {
             integer = integer.add(BigInteger.TWO.pow(size));
@@ -98,11 +95,11 @@ public final class BvUtils {
 
     public static BigInteger fitBigIntegerIntoUnsignedDomain(BigInteger integer, final int size) {
         while (integer.compareTo(BigInteger.ZERO) < 0) {
-            integer = integer.add(BigInteger.TWO.pow(size));
+            integer = integer.mod(BigInteger.TWO.pow(size));
         }
 
         while (integer.compareTo(BigInteger.TWO.pow(size)) >= 0) {
-            integer = integer.subtract(BigInteger.TWO.pow(size));
+            integer = integer.mod(BigInteger.TWO.pow(size));
         }
 
         return integer;

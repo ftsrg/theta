@@ -70,6 +70,7 @@ enum class Backend {
   LAZY,
   PORTFOLIO,
   TRACEGEN,
+  MDD,
   NONE,
 }
 
@@ -397,7 +398,7 @@ enum class InitPrec(
   ),
   ALLGLOBALS(
     explPrec = { xcfa ->
-      XcfaPrec(PtrPrec(ExplPrec.of(xcfa.vars.map { it.wrappedVar }), emptySet()))
+      XcfaPrec(PtrPrec(ExplPrec.of(xcfa.globalVars.map { it.wrappedVar }), emptySet()))
     },
     predPrec = { error("ALLGLOBALS is not interpreted for the predicate domain.") },
   ),

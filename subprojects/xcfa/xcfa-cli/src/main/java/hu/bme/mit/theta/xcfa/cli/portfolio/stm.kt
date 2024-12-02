@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.Result
+import hu.bme.mit.theta.xcfa.cli.params.Backend
+import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 abstract class Node(val name: String) {
@@ -28,7 +30,7 @@ abstract class Node(val name: String) {
   abstract fun visualize(): String
 }
 
-class HierarchicalNode(name: String, private val innerSTM: STM) : Node(name) {
+class HierarchicalNode(name: String, val innerSTM: STM) : Node(name) {
 
   override fun execute(): Pair<Any, Any> = innerSTM.execute()
 
@@ -38,6 +40,24 @@ ${innerSTM.visualize()}
 }"""
       .trimIndent()
 }
+
+fun XcfaConfig<*, *>.visualize(): String =
+  if (backendConfig.backend == Backend.BOUNDED) {
+    val specConfig = backendConfig.specConfig as BoundedConfig
+    """
+      reversed: ${specConfig.reversed}
+      abstract: ${specConfig.cegar}
+      bmc: ${!specConfig.bmcConfig.disable}
+      bmcSolver: ${specConfig.bmcConfig.bmcSolver}
+      kind: ${!specConfig.indConfig.disable}
+      kindSolver: ${specConfig.indConfig.indSolver}
+      imc: ${!specConfig.itpConfig.disable}
+      imcSolver: ${specConfig.itpConfig.itpSolver}
+    """
+      .trimIndent()
+  } else {
+    ""
+  }
 
 class ConfigNode(
   name: String,
@@ -52,7 +72,7 @@ class ConfigNode(
 
   override fun visualize(): String =
     config
-      .toString()
+      .visualize()
       .lines() // TODO: reintroduce visualize()
       .map { "state ${name.replace(Regex("[:\\.-]+"), "_")}: $it" }
       .reduce { a, b -> "$a\n$b" }
@@ -108,13 +128,15 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
     }
   }
 
-  private fun visualizeNodes(): String =
-    edges
-      .map { listOf(it.source, it.target) }
-      .flatten()
-      .toSet()
-      .map { it.visualize() }
-      .reduce { a, b -> "$a\n$b" }
+  private fun visualizeNodes(): String {
+    val lastNodes = mutableSetOf<Node>()
+    val nodes = mutableSetOf(initNode)
+    while (!lastNodes.containsAll(nodes)) {
+      lastNodes.addAll(nodes)
+      nodes.addAll(nodes.flatMap { it.outEdges.map { it.target } })
+    }
+    return nodes.map { it.visualize() }.reduce { a, b -> "$a\n$b" }
+  }
 
   fun visualize(): String =
     """

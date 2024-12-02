@@ -91,7 +91,7 @@ public class XcfaTraceConcretizer {
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(
                     new XcfaState<>(
-                            null,
+                            sbeTrace.getState(i).getXcfa(),
                             sbeTrace.getState(i).getProcesses(),
                             ExplState.of(
                                     ImmutableValuation.from(

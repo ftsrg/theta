@@ -18,9 +18,9 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 
-open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
+open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
 
-  val passes: List<List<ProcedurePass>> = passes.toList()
+  constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
 }
 
 class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
@@ -51,12 +51,14 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
-      RemoveDeadEnds(),
+      EmptyEdgeRemovalPass(),
+      RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
     listOf(
       // handling remaining function calls
+      MemsafetyPass(parseContext),
       NoSideEffectPass(parseContext),
       NondetFunctionPass(),
       LbePass(parseContext),
@@ -68,7 +70,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
-    listOf(FetchExecuteWriteback(parseContext)),
+    //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
@@ -86,7 +88,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
-      RemoveDeadEnds(),
+      RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
       // handling remaining function calls
       LbePass(parseContext),
@@ -98,3 +100,13 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   )
 
 class LitmusPasses : ProcedurePassManager()
+
+class OcExtraPasses :
+  ProcedurePassManager(
+    listOf(
+      AssumeFalseRemovalPass(),
+      MutexToVarPass(),
+      AtomicReadsOneWritePass(),
+      LoopUnrollPass(2), // force loop unroll for BMC
+    )
+  )

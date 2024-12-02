@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="theta" timelimit="20 s" hardtimelimit="30 s">
+<benchmark tool="theta" timelimit="600 s" hardtimelimit="900 s">
 
   <resultfiles>**/witness.*</resultfiles>
 

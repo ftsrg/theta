@@ -34,7 +34,9 @@ fun <K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.
 fun Valuation.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Valuation {
   val builder = ImmutableValuation.builder()
   for (decl in this.decls) {
-    builder.put(decl.changeVars(varLut), this.eval(decl).get())
+    if (decl in varLut) {
+      builder.put(decl.changeVars(varLut), this.eval(decl).get())
+    }
   }
   return builder.build()
 }

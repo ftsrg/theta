@@ -287,7 +287,12 @@ class PassTests {
         PassTestData(
           global = { "x" type Int() init "0" },
           passes =
-            listOf(NormalizePass(), DeterministicPass(), RemoveDeadEnds(), UnusedLocRemovalPass()),
+            listOf(
+              NormalizePass(),
+              DeterministicPass(),
+              RemoveDeadEnds(parseContext),
+              UnusedLocRemovalPass(),
+            ),
           input = {
             (init to "L1") { assume("1 == 1") }
             (init to "L2") { assume("1 == 1") }

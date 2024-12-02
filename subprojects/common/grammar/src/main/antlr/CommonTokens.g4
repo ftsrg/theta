@@ -101,9 +101,6 @@ MINUS
 	:	'-'
 	;
 
-MUL	:	'*'
-	;
-
 DIV	:	'div'
 	;
 
@@ -406,7 +403,10 @@ SIGN:	PLUS | MINUS
 DOT	:	'.'
 	;
 
-ID	:	(LETTER | UNDERSCORE) (LETTER | UNDERSCORE | '$' | DIGIT | COLON)*
+ID	:	(LETTER | UNDERSCORE) (LETTER | UNDERSCORE | '$' | '*' | DIGIT | COLON)*
+	;
+
+MUL	:	'*'
 	;
 
 UNDERSCORE

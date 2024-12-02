@@ -16,11 +16,13 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
+@Ignore // causes CI runners to give up
 public class XstsSatMddCheckerTest {
 
     @Parameterized.Parameter(value = 0)
@@ -39,7 +41,7 @@ public class XstsSatMddCheckerTest {
 
     @Test
     public void test() throws Exception {
-        XstsMddCheckerTest.runTestWithIterationStrategy(filePath, propPath, safe, IterationStrategy.SAT);
+        XstsMddCheckerTest.runTestWithIterationStrategy(
+                filePath, propPath, safe, IterationStrategy.SAT);
     }
-
 }

@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
 import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
@@ -50,9 +51,7 @@ import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
-import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
+import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
@@ -66,12 +65,11 @@ class XcfaOcChecker(
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
   private val autoConflictConfig: AutoConflictFinderConfig,
+  private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val xcfa: XCFA =
-    xcfa.optimizeFurther(
-      listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
-    )
+  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
   private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
@@ -154,7 +152,17 @@ class XcfaOcChecker(
           else -> SafetyResult.unknown()
         }
       }
-      .also { logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it") }
+      .also {
+        logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it")
+        if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
+          logger.writeln(
+            Logger.Level.MAINSTEP,
+            "Incomplete loop unroll used: safe result is unreliable.",
+          )
+          logger.writeln(Logger.Level.RESULT, SafetyResult.unknown<EmptyProof, Cex>().toString())
+          throw NotSolvableException()
+        }
+      }
 
   private inner class ThreadProcessor(private val thread: Thread) {
 
@@ -526,7 +534,7 @@ class XcfaOcChecker(
 
   private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
     if (
-      this !== memoryDecl && xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }
+      this !== memoryDecl && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
     ) { // if not global var
       cast(
         localVars

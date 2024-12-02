@@ -77,12 +77,16 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         getGson(xcfa).toJson(processConfig)
       }
 
+    val heapSize =
+      "-Xmx${if(config.backendConfig.memlimit == 0L) 1420L else config.backendConfig.memlimit/1024/1024 }m"
+    logger.write(Logger.Level.INFO, "Starting process with $heapSize of heap\n")
+
     val pb =
       NuProcessBuilder(
         listOf(
             ProcessHandle.current().info().command().orElse("java"),
             "-Xss120m",
-            "-Xmx14210m",
+            heapSize,
             "-cp",
             File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
             XcfaCli::class.qualifiedName,
@@ -149,6 +153,9 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         }
         if (stdoutRemainder.contains("SafetyResult Unsafe")) {
           safetyResult = SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+        }
+        if (stdoutRemainder.contains("SafetyResult Unknown")) {
+          safetyResult = SafetyResult.unknown<EmptyProof, EmptyCex>()
         }
 
         val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""

@@ -23,6 +23,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import java.util.Objects;
 
 public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondition {
 
@@ -33,11 +34,13 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     private MddNodeInitializer(final MddNode node, final MddVariableHandle variableHandle) {
         this.node = Preconditions.checkNotNull(node);
         this.variableHandle = Preconditions.checkNotNull(variableHandle);
-        Preconditions.checkArgument((variableHandle.isTerminal() && node.isTerminal()) || node.isOn(variableHandle.getVariable().orElseThrow()));
-
+        Preconditions.checkArgument(
+                (variableHandle.isTerminal() && node.isTerminal())
+                        || node.isOn(variableHandle.getVariable().orElseThrow()));
     }
 
-    private static AbstractNextStateDescriptor.Postcondition of(final MddNode node, final MddVariableHandle variableHandle) {
+    private static AbstractNextStateDescriptor.Postcondition of(
+            final MddNode node, final MddVariableHandle variableHandle) {
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         } else {
@@ -55,7 +58,23 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<>(node, n -> of(n, variableHandle.getLower().orElseThrow()));
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+            StateSpaceInfo localStateSpace) {
+        return new IntObjMapViews.Transforming<>(
+                node, n -> of(n, variableHandle.getLower().orElseThrow()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MddNodeInitializer that = (MddNodeInitializer) o;
+        return Objects.equals(node, that.node)
+                && Objects.equals(variableHandle, that.variableHandle);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node, variableHandle);
     }
 }

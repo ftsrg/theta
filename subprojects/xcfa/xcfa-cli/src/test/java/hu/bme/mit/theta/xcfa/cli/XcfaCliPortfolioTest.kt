@@ -18,14 +18,11 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.portfolio.STM
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
+import hu.bme.mit.theta.xcfa.cli.portfolio.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions
@@ -57,6 +54,42 @@ class XcfaCliPortfolioTest {
           uniqueLogger: Logger ->
           complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complexPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          hornPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
       )
     }
   }
@@ -74,20 +107,18 @@ class XcfaCliPortfolioTest {
         uniqueLogger: Logger,
       ) -> STM
   ) {
+    val stm =
+      portfolio(
+        XCFA("name", setOf()),
+        emptySet(),
+        ParseContext(),
+        XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
+        NullLogger.getInstance(),
+        NullLogger.getInstance(),
+      )
 
-    for (value in ArithmeticTrait.values()) {
-
-      val stm =
-        portfolio(
-          XCFA("name", setOf()),
-          emptySet(),
-          ParseContext(),
-          XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
-          NullLogger.getInstance(),
-          NullLogger.getInstance(),
-        )
-
-      Assertions.assertTrue(stm.visualize().isNotEmpty())
-    }
+    val vis = stm.visualize()
+    System.err.println(vis)
+    Assertions.assertTrue(vis.isNotEmpty())
   }
 }

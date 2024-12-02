@@ -13,10 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
@@ -25,10 +25,22 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 public class CArray extends CInteger {
 
     private final CComplexType embeddedType;
+    private final CStatement arrayDimension; // if null, infinite
+
+    public CArray(
+            CSimpleType origin,
+            CComplexType embeddedType,
+            ParseContext parseContext,
+            CStatement arrayDimension) {
+        super(origin, parseContext);
+        this.embeddedType = embeddedType;
+        this.arrayDimension = arrayDimension;
+    }
 
     public CArray(CSimpleType origin, CComplexType embeddedType, ParseContext parseContext) {
         super(origin, parseContext);
         this.embeddedType = embeddedType;
+        this.arrayDimension = null;
     }
 
     public CComplexType getEmbeddedType() {
@@ -38,7 +50,6 @@ public class CArray extends CInteger {
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
         return visitor.visit(this, param);
     }
-
 
     @Override
     public CInteger getSignedVersion() {
@@ -50,10 +61,12 @@ public class CArray extends CInteger {
         return this;
     }
 
-
     @Override
     public String getTypeName() {
         return new CUnsignedLong(null, parseContext).getTypeName();
     }
 
+    public CStatement getArrayDimension() {
+        return arrayDimension;
+    }
 }

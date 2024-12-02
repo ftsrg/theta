@@ -43,6 +43,18 @@ constructor(
   val bottom: Boolean = false,
 ) : ExprState {
 
+  constructor(
+    xcfa: XCFA,
+    loc: XcfaLocation,
+    state: S,
+  ) : this(
+    xcfa = xcfa,
+    processes =
+      mapOf(Pair(0, XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList()))),
+    state,
+    mutexes = emptyMap(),
+  )
+
   override fun isBottom(): Boolean {
     return bottom || sGlobal.isBottom
   }

@@ -40,11 +40,11 @@ runs:
               all=0
               for txt in *.txt
               do
-                new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ')
+                new_correct=$(tail -n9 $txt | grep '  correct:' | awk ' { print $2 } ' || echo 0)
                 correct=$((correct + new_correct))
-                new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ')
+                new_incorrect=$(tail -n9 $txt | grep '  incorrect:' | awk ' { print $2 } ' || echo 0)
                 incorrect=$((incorrect + new_incorrect))
-                new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ')
+                new_all=$(tail -n9 $txt | grep 'Statistics:' | awk ' { print $2 } ' || echo 0)
                 all=$((all + new_all))
                 echo "Found $new_correct correct and $new_incorrect incorrect results out of $new_all tasks in $txt"
               done

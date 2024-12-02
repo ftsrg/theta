@@ -37,8 +37,7 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -63,10 +62,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
-import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
@@ -107,6 +103,12 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     val random = Random(cegarConfig.porRandomSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random
+  }
+  if (
+    config.inputConfig.property == ErrorDetection.MEMSAFETY ||
+      config.inputConfig.property == ErrorDetection.MEMCLEANUP
+  ) {
+    MemsafetyPass.NEED_CHECK = true
   }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
@@ -223,20 +225,108 @@ private fun backend(
   uniqueLogger: Logger,
   throwDontExit: Boolean,
 ): Result<*> =
-  when (config.backendConfig.backend) {
-    Backend.TRACEGEN ->
-      tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
-    Backend.NONE -> SafetyResult.unknown<EmptyProof, EmptyCex>()
-    else ->
-      safetyBackend(
-        xcfa,
-        mcm,
-        parseContext,
-        config,
-        logger,
-        uniqueLogger,
-        throwDontExit,
-      ) // safety analysis
+  if (config.backendConfig.backend == Backend.TRACEGEN) {
+    tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
+  } else if (config.backendConfig.backend == Backend.NONE) {
+    SafetyResult.unknown<EmptyProof, EmptyCex>()
+  } else {
+    if (
+      xcfa.procedures.all {
+        it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
+      }
+    ) {
+      val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+      logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+
+      logger.write(RESULT, result.toString() + "\n")
+      result
+    } else {
+      val stopwatch = Stopwatch.createStarted()
+
+      logger.write(
+        Logger.Level.INFO,
+        "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
+      )
+
+      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      val result =
+        exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+            checker.check()
+          }
+          .let ResultMapper@{ result ->
+            result as SafetyResult<*, *>
+            when {
+              result.isSafe && xcfa.unsafeUnrollUsed -> {
+                // cannot report safe if force unroll was used
+                logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+                if (config.outputConfig.acceptUnreliableSafe)
+                  result // for comparison with BMC tools
+                else SafetyResult.unknown<EmptyProof, EmptyCex>()
+              }
+
+              result.isUnsafe -> {
+                // need to determine what kind
+                val property =
+                  when (config.inputConfig.property) {
+                    ErrorDetection.MEMSAFETY,
+                    ErrorDetection.MEMCLEANUP -> {
+                      val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
+                      trace
+                        ?.states
+                        ?.asReversed()
+                        ?.firstOrNull {
+                          it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
+                        }
+                        ?.processes
+                        ?.values
+                        ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
+                        ?.locs
+                        ?.firstOrNull { it.name.contains("__THETA_") }
+                        ?.name
+                        ?.let {
+                          when (it) {
+                            "__THETA_bad_free" -> "valid-free"
+                            "__THETA_bad_deref" -> "valid-deref"
+                            "__THETA_lost" ->
+                              if (config.inputConfig.property == ErrorDetection.MEMCLEANUP)
+                                "valid-memcleanup"
+                              else
+                                "valid-memtrack"
+                                  .also { // this is not an exact check.
+                                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                                  }
+                            else ->
+                              throw RuntimeException(
+                                "Something went wrong; could not determine subproperty! Named location: $it"
+                              )
+                          }
+                        }
+                    }
+                    ErrorDetection.DATA_RACE -> "no-data-race"
+                    ErrorDetection.ERROR_LOCATION -> "unreach-call"
+                    ErrorDetection.OVERFLOW -> "no-overflow"
+                    ErrorDetection.NO_ERROR -> null
+                  }
+                property?.also { logger.write(RESULT, "(Property %s)\n", it) }
+                result
+              }
+
+              else -> {
+                result
+              }
+            }
+          }
+
+      logger.write(
+        Logger.Level.INFO,
+        "Backend finished (in ${
+                stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            } ms)\n",
+      )
+
+      logger.write(RESULT, result.toString() + "\n")
+      result
+    }
   }
 
 private fun tracegenBackend(
@@ -264,63 +354,6 @@ private fun tracegenBackend(
   )
 
   return result
-}
-
-private fun safetyBackend(
-  xcfa: XCFA,
-  mcm: MCM,
-  parseContext: ParseContext,
-  config: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
-  throwDontExit: Boolean,
-): SafetyResult<*, *> {
-  if (
-    xcfa.procedures.all {
-      it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
-    }
-  ) {
-    val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-    logger.write(Logger.Level.INFO, "Input is trivially safe\n")
-
-    logger.write(RESULT, result.toString() + "\n")
-    return result
-  } else {
-    val stopwatch = Stopwatch.createStarted()
-
-    logger.write(
-      Logger.Level.INFO,
-      "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
-    )
-
-    val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-    val result =
-      exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-          checker.check()
-        }
-        .let { result ->
-          when {
-            result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> {
-              // cannot report safe if force unroll was used
-              logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-              if (config.outputConfig.acceptUnreliableSafe) result // for comparison with BMC tools
-              else SafetyResult.unknown<EmptyProof, EmptyCex>()
-            }
-
-            else -> result
-          }
-        }
-
-    logger.write(
-      Logger.Level.INFO,
-      "Backend finished (in ${
-                stopwatch.elapsed(TimeUnit.MILLISECONDS)
-            } ms)\n",
-    )
-
-    logger.write(RESULT, result.toString() + "\n")
-    return result
-  }
 }
 
 private fun preAnalysisLogging(
@@ -495,19 +528,20 @@ private fun postVerificationLogging(
         GraphmlWitnessWriter()
           .writeWitness(
             safetyResult,
-            config.inputConfig.input!!,
+            config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             getSolver(
               config.outputConfig.witnessConfig.concretizerSolver,
               config.outputConfig.witnessConfig.validateConcretizerSolver,
             ),
             parseContext,
             witnessFile,
+            config.inputConfig.property,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
         YmlWitnessWriter()
           .writeWitness(
             safetyResult,
-            config.inputConfig.input!!,
+            config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             config.inputConfig.property,
             (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
             getSolver(

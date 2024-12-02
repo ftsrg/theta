@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -24,22 +26,22 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-
+import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
-/**
- * Util class for converting between integers and {@link LitExpr}
- */
+/** Util class for converting between integers and {@link LitExpr} */
 public class LitExprConverter {
 
     private static int cnt = 0;
-    private final static BiMap<Object, Integer> objToInt = HashBiMap.create();
+    private static final BiMap<Object, Integer> objToInt = HashBiMap.create();
 
     public static int toInt(LitExpr<?> litExpr) {
         if (litExpr instanceof IntLitExpr) {
@@ -48,7 +50,11 @@ public class LitExprConverter {
         if (litExpr instanceof BoolLitExpr) {
             return ((BoolLitExpr) litExpr).getValue() ? 1 : 0;
         }
-        if (litExpr instanceof ArrayLitExpr<?, ?>) {
+        if (litExpr instanceof BvLitExpr bvLitExpr) {
+            var ret = BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue();
+            return ret;
+        }
+        if (litExpr instanceof ArrayLitExpr<?, ?> || litExpr instanceof FpLitExpr) {
             if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
@@ -72,7 +78,11 @@ public class LitExprConverter {
             }
             return BoolLitExpr.of(integer != 0);
         }
-        if (type instanceof ArrayType<?, ?>) {
+        if (type instanceof BvType) {
+            return BvUtils.bigIntegerToNeutralBvLitExpr(
+                    BigInteger.valueOf(integer), ((BvType) type).getSize());
+        }
+        if (type instanceof ArrayType<?, ?> || type instanceof FpType) {
             return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         if (type instanceof EnumType) {
@@ -80,5 +90,4 @@ public class LitExprConverter {
         }
         throw new UnsupportedOperationException("Unsupported type");
     }
-
 }
