@@ -609,7 +609,7 @@ private fun postTraceGenerationLogging(
       "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
     )
 
-    val modelName = config.inputConfig.input!!.name
+    val modelName = config.inputConfig.input?.name ?: "anonymous"
     val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
     val visFile =
       resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
