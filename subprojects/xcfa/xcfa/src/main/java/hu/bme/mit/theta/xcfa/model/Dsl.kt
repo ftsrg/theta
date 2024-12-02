@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -182,6 +183,18 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
       return SequenceLabel(labelList)
     }
 
+    fun syncSend(channel: VarDecl<*>): SequenceLabel {
+      val label = SyncSendLabel(channel)
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun syncRecv(channel: VarDecl<*>): SequenceLabel {
+      val label = SyncRecvLabel(channel)
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
     fun havoc(value: String): SequenceLabel {
       val varDecl = this@XcfaProcedureBuilderContext.builder.lookup(value)
       val label = StmtLabel(Havoc(varDecl))
@@ -314,13 +327,10 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
   }
 
   infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> XcfaEdge {
-    val startName = this@XcfaProcedureBuilderContext.builder.name + this
-    val to = this@XcfaProcedureBuilderContext.builder.name + to
-    val loc1 = locationLut.getOrElse(startName) { XcfaLocation(this, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(startName, loc1)
+    val startName = this
+    val loc1 = locationLut.getOrPut(startName) { XcfaLocation( this@XcfaProcedureBuilderContext.builder.name+"_"+this, metadata = EmptyMetaData) }
     builder.addLoc(loc1)
-    val loc2 = locationLut.getOrElse(to) { XcfaLocation(to, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(to, loc2)
+    val loc2 = locationLut.getOrPut(to) { XcfaLocation(this@XcfaProcedureBuilderContext.builder.name+"_"+to, metadata = EmptyMetaData) }
     builder.addLoc(loc2)
     return { lambda ->
       val edge = XcfaEdge(loc1, loc2, lambda(SequenceLabelContext()), EmptyMetaData)

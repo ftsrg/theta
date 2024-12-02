@@ -193,7 +193,7 @@ fun getCoreXcfaLts() =
       .toSet()
       .filter { action ->
         s.syncingOn?.let { key ->
-          action.label.getFlatLabels().first().let { it is SyncRecvLabel && it.key == key }
+          action.label.getFlatLabels().firstOrNull()?.let { it is SyncRecvLabel && it.key == key } ?: false
         } ?: true
       }
   }
@@ -262,7 +262,8 @@ fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
     s1.processes == s2.processes &&
       s1.bottom == s2.bottom &&
       s1.mutexes == s2.mutexes &&
-      partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
+      partialOrd.isLeq(s1.sGlobal, s2.sGlobal) &&
+      s1.syncingOn == s2.syncingOn
   }
 
 private fun <S : ExprState> stackIsLeq(s1: XcfaState<PtrState<S>>, s2: XcfaState<PtrState<S>>) =

@@ -320,6 +320,8 @@ constructor(
   }
 
   override fun toString(): String {
+    // TODO: change back
+    return "${processes.toString().replace(",", ",\\n")} \\n{$sGlobal, ${if (bottom) ", bottom" else ""}}\\n $syncingOn"
     return "$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
   }
 }

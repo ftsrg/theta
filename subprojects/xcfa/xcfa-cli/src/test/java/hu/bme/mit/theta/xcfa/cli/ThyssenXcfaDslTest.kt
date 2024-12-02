@@ -15,6 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts
@@ -30,13 +36,32 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.XcfaAnalysis
+import hu.bme.mit.theta.xcfa.analysis.getCoreXcfaLts
+import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
+import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
+import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.DISABLE
+import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
+import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
+import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec.ALLVARS
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
+import hu.bme.mit.theta.xcfa.cli.params.POR.NOPOR
+import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
+import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
+import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.ParamDirection.*
 import hu.bme.mit.theta.xcfa.model.global
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.UnusedLocRemovalPass
+import hu.bme.mit.theta.xcfa.passes.*
 import org.junit.Test
+import java.io.File
 
 class ThyssenXcfaDslTest {
 
@@ -111,13 +136,13 @@ class ThyssenXcfaDslTest {
         val schedulerProc = procedure("GlobalScheduler") {
             (init to "Stable") { nop() }
 
-            ("Stable" to "L1") { sendChan(runDiag, runDiagAck, listOf()) }
+            ("Stable" to "L1") { syncSend(runDiag) }
 
-            ("L1" to "L2a") { sendChan(runA, runAAck, listOf()) }
-            ("L1" to "L2b") { sendChan(runB, runBAck, listOf()) }
+            ("L1" to "L2a") { syncSend(runA) }
+            ("L1" to "L2b") { syncSend(runB) }
 
-            ("L2a" to "L3a") { sendChan(runB, runBAck, listOf()) }
-            ("L2b" to "L3b") { sendChan(runA, runAAck, listOf()) }
+            ("L2a" to "L3a") { syncSend(runB) }
+            ("L2b" to "L3b") { syncSend(runA) }
 
             ("L3a" to "Stable") { nop() }
             ("L3b" to "Stable") { nop() }
@@ -139,88 +164,104 @@ class ThyssenXcfaDslTest {
                     "(or (not newPermanentCommA) (not newPermanentCommB)))"
 
             ("L0" to "L0") {
-                receiveChan(runDiag, runDiagAck, listOf(
-                        havoc(newFailureA),
-                        havoc(newFailureB),
-                        assume(Not(And(newFailureA.ref, newFailureB.ref))),
-                        okA assign And(okA.ref, Not(newFailureA.ref)),
-                        okB assign And(okB.ref, Not(newFailureB.ref)),
+                syncRecv(runDiag)
+                havoc(newFailureA)
+                havoc(newFailureB)
+                assume(Not(And(newFailureA.ref, newFailureB.ref)))
+                okA assign And(okA.ref, Not(newFailureA.ref))
+                okB assign And(okB.ref, Not(newFailureB.ref))
 
-                        havoc(newTransientCommA),
-                        havoc(newTransientCommB),
-                        havoc(newPermanentCommA),
-                        havoc(newPermanentCommB),
-                        assume(commFailureAssumptions),
-                        AtoBCommPermFailed assign newPermanentCommA.ref,
-                        BtoACommPermFailed assign newPermanentCommB.ref,
-                        AtoBCommOk assign And(Not(AtoBCommPermFailed.ref), Not(newTransientCommA.ref)),
-                        BtoACommOk assign And(Not(BtoACommPermFailed.ref), Not(newTransientCommB.ref)),
+                havoc(newTransientCommA)
+                havoc(newTransientCommB)
+                havoc(newPermanentCommA)
+                havoc(newPermanentCommB)
+                assume(commFailureAssumptions)
+                AtoBCommPermFailed assign newPermanentCommA.ref
+                BtoACommPermFailed assign newPermanentCommB.ref
+                AtoBCommOk assign And(Not(AtoBCommPermFailed.ref), Not(newTransientCommA.ref))
+                BtoACommOk assign And(Not(BtoACommPermFailed.ref), Not(newTransientCommB.ref))
 
-                        okAforB assign Ite<BoolType>(AtoBCommOk.ref, okA.ref, okAforB.ref),
-                        okBforA assign Ite<BoolType>(BtoACommOk.ref, okB.ref, okBforA.ref)
-                    )
-                )
+                okAforB assign Ite<BoolType>(AtoBCommOk.ref, okA.ref, okAforB.ref)
+                okBforA assign Ite<BoolType>(BtoACommOk.ref, okB.ref, okBforA.ref)
             }
         }
         val RWA_A = procedure("RWA_A") {
             (init to "Master") { nop() }
-            ("Master" to "Master") { receiveChan(runA, runAAck, listOf(
+            ("Master" to "Master") {
+                syncRecv(runA)
                 assume("okA and okBforA")
-            )) }
-            ("Master" to "Standalone") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Master" to "Standalone") {
+                syncRecv(runA)
                 assume("okA and not okBforA")
-            )) }
-            ("Standalone" to "Standalone") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Standalone" to "Standalone") {
+                syncRecv(runA)
                 assume("okA")
-            )) }
-            ("Standalone" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Standalone" to "Error") {
+                syncRecv(runA)
                 assume("(not okA)")
-            )) }
-            ("Error" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Error" to "Error") {
+                syncRecv(runA)
                 nop()
-            )) }
-            ("Master" to "Passive") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Master" to "Passive") {
+                syncRecv(runA)
                 assume("(and (not okA) okBforA)")
-            )) }
-            ("Master" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Master" to "Error") {
+                syncRecv(runA)
                 assume("(and (not okA) (not okBforA))")
-            )) }
-            ("Passive" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Passive" to "Error") {
+                syncRecv(runA)
                 assume("(not okBforA)")
-            )) }
-            ("Passive" to "Passive") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Passive" to "Passive") {
+                syncRecv(runA)
                 assume("okBforA")
-            )) }
+            }
         }
-        val RWA_B = procedure("RWA_A") {
+        val RWA_B = procedure("RWA_B") {
             (init to "Silent") { nop() }
-            ("Silent" to "Silent") { receiveChan(runA, runAAck, listOf(
+            ("Silent" to "Silent") {
+                syncRecv(runB)
                 assume("(and okB okAforB)")
-            )) }
-            ("Silent" to "Standalone") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Silent" to "Standalone") {
+                syncRecv(runB)
                 assume("(and okB (not okAforB))")
-            )) }
-            ("Standalone" to "Standalone") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Standalone" to "Standalone") {
+                syncRecv(runB)
                 assume("okB")
-            )) }
-            ("Standalone" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Standalone" to "Error") {
+                syncRecv(runB)
                 assume("(not okB)")
-            )) }
-            ("Error" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Error" to "Error") {
+                syncRecv(runB)
                 nop()
-            )) }
-            ("Silent" to "Passive") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Silent" to "Passive") {
+                syncRecv(runB)
                 assume("(and (not okB) okAforB)")
-            )) }
-            ("Silent" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Silent" to "Error") {
+                syncRecv(runB)
                 assume("(and (not okB) (not okAforB))")
-            )) }
-            ("Passive" to "Error") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Passive" to "Error") {
+                syncRecv(runB)
                 assume("(not okAforB)")
-            )) }
-            ("Passive" to "Passive") { receiveChan(runA, runAAck, listOf(
+            }
+            ("Passive" to "Passive") {
+                syncRecv(runB)
                 assume("okAforB")
-            )) }
+            }
         }
 
         val main = procedure("main") {
@@ -247,8 +288,74 @@ class ThyssenXcfaDslTest {
 
     @Test
     fun defineXcfa() {
-        val xcfa = getXcfa()
-        println(xcfa.toDot())
+        LbePass.level = LbePass.LbeLevel.LBE_LOCAL
+        val origXcfa = getXcfa()
+        val passedXcfa = origXcfa.optimizeFurther(
+            ProcedurePassManager(
+                listOf(
+                    NormalizePass(),
+                    DeterministicPass(),
+                    EliminateSelfLoops(),
+                    SBEPass(),
+                    LbePass(ParseContext())
+                )
+            )
+        )
+        println(origXcfa.toDot())
+
+        val inputConfig = InputConfig(
+            xcfaWCtx = Triple(origXcfa, listOf(), ParseContext()),
+            property = ErrorDetection.NO_ERROR
+        )
+        val frontendConfig = FrontendConfig(
+            lbeLevel = LbePass.level,
+            loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+            inputType = InputType.C,
+            specConfig = CFrontendConfig(arithmetic = efficient),
+        )
+        val backendConfig = BackendConfig(
+            backend = CEGAR,
+            timeoutMs = 0,
+            specConfig =
+            CegarConfig(
+                initPrec = ALLVARS,
+                porLevel = NOPOR,
+                porRandomSeed = -1,
+                coi = NO_COI,
+                cexMonitor = DISABLE,
+                abstractorConfig =
+                CegarAbstractorConfig(
+                    abstractionSolver = "Z3",
+                    validateAbstractionSolver = false,
+                    domain = EXPL,
+                    maxEnum = 1,
+                    search = DFS,
+                ),
+                refinerConfig = CegarRefinerConfig(
+                    refinementSolver = "Z3",
+                    validateRefinementSolver = false,
+                    refinement = SEQ_ITP,
+                    exprSplitter = WHOLE,
+                    pruneStrategy = FULL,
+                ),
+            ),
+        )
+        val outputConfig = OutputConfig(
+            enableOutput = true,
+            resultFolder = File("F:\\egyetem\\thesta\\theta\\subprojects\\xcfa\\xcfa\\src\\test\\temp")
+        )
+        runConfig(
+            XcfaConfig(
+                inputConfig,
+                frontendConfig,
+                backendConfig,
+                outputConfig,
+                DebugConfig()
+            ),
+            ConsoleLogger(Logger.Level.SUBSTEP),
+            ConsoleLogger(Logger.Level.SUBSTEP),
+            true
+        )
     }
 
 }

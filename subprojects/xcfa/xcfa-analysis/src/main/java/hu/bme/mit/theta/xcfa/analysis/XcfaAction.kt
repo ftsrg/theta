@@ -49,6 +49,8 @@ constructor(
     get() = stmts
 
   override fun toString(): String {
+    // TODO: change back
+    return "$pid: $source -> $target"
     return "$pid: $source -> $target [${getStmts()}]"
   }
 
