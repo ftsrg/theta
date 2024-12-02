@@ -1,0 +1,68 @@
+tool		Theta 6.8.5	Theta 6.8.5	Theta 6.8.5	Theta 6.8.5
+run set		SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+list-ext-properties/simple-ext.yml	false	ERROR (frontend failed)	2.213268	1.0035903869999743	225.370112
+memsafety/global-atexit-1.yml	false	Parsing OK	7.224616	4.003955698000027	406.847488
+memsafety/global-atexit-2.yml	false	Parsing OK	9.259134	4.140377636000039	425.484288
+memsafety/global-atexit-3.yml	false	Parsing OK	9.095949	4.020403067000018	431.685632
+memsafety/global-atexit.yml	true	Parsing OK	9.356895	4.178675833	431.775744
+memsafety-bftpd/bftpd_1.yml	true	ERROR (frontend failed)	4.521513	1.5992199600000276	291.901440
+memsafety-bftpd/bftpd_2.yml	false	ERROR (frontend failed)	4.466164	1.597178563	287.567872
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_45_bad.yml	false	ERROR (frontend failed)	1.845734	0.7403721640000072	161.968128
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_68_bad.yml	false	ERROR (frontend failed)	1.781782	0.7233720840000046	145.616896
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_45_bad.yml	false	ERROR (frontend failed)	1.854984	0.7412607200000139	158.220288
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_68_bad.yml	false	ERROR (frontend failed)	2.014606	0.8086811160000025	170.913792
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_45_bad.yml	false	ERROR (frontend failed)	1.807885	0.7304752410000219	145.784832
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_68_bad.yml	false	ERROR (frontend failed)	1.86509	0.7501842639999836	159.518720
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_45_bad.yml	false	ERROR (frontend failed)	1.846386	0.7423692980000283	158.101504
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_68_bad.yml	false	ERROR (frontend failed)	1.873855	0.7515862729999867	157.605888
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_45_bad.yml	false	ERROR (frontend failed)	1.869086	0.7730256799999893	154.841088
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_68_bad.yml	false	ERROR (frontend failed)	1.836645	0.7417927750000217	155.615232
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_45_bad.yml	false	ERROR (frontend failed)	1.849666	0.7485989599999812	155.234304
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_68_bad.yml	false	ERROR (frontend failed)	2.014886	0.8215827969999623	175.763456
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_45_bad.yml	false	ERROR (frontend failed)	1.813393	0.7413578370000096	153.690112
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_68_bad.yml	false	ERROR (frontend failed)	1.810748	0.7269385239999906	146.599936
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_45_bad.yml	false	ERROR (frontend failed)	1.518322	0.7138138219999632	130.793472
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_68_bad.yml	false	ERROR (frontend failed)	1.529511	0.7023948429999791	139.984896
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_45_bad.yml	false	ERROR (frontend failed)	1.463246	0.6716906619999463	140.152832
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_68_bad.yml	false	ERROR (frontend failed)	1.853255	0.7369824419999986	159.686656
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_45_bad.yml	false	ERROR (frontend failed)	1.792316	0.7185099689999674	146.550784
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_68_bad.yml	false	ERROR (frontend failed)	1.863857	0.7485622560000138	154.869760
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_45_bad.yml	false	ERROR (frontend failed)	1.864358	0.7603109940000081	154.697728
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_68_bad.yml	false	ERROR (frontend failed)	1.37579	0.6137860080000337	138.964992
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_45_bad.yml	false	ERROR (frontend failed)	1.858197	0.7606432289999816	154.038272
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_68_bad.yml	false	ERROR (frontend failed)	1.76807	0.7185478709999984	145.915904
+heap-manipulation/bubble_sort_linux-2.yml	false	ERROR (frontend failed)	4.756645	1.6693803310000135	330.121216
+heap-manipulation/dll_of_dll-2.yml	false	ERROR (frontend failed)	3.789861	1.3525072489999843	272.670720
+heap-manipulation/merge_sort-1.yml	false	ERROR (frontend failed)	5.156841	1.8324407479999536	287.215616
+heap-manipulation/sll_to_dll_rev-1.yml	false	ERROR (frontend failed)	2.943466	1.3518858820000332	249.724928
+heap-manipulation/tree-4.yml	false	ERROR (frontend failed)	2.5893	1.1946597009999778	252.805120
+forester-heap/dll-01-1.yml	false	ERROR (frontend failed)	3.432494	1.2296071860000097	265.019392
+forester-heap/dll-circular-1.yml	false	ERROR (frontend failed)	3.595631	1.3124110969999947	254.857216
+forester-heap/dll-optional-2.yml	false	ERROR (frontend failed)	2.195598	0.9979228270000249	228.249600
+forester-heap/dll-queue-2.yml	false	ERROR (frontend failed)	2.173605	0.9778372159999549	220.704768
+forester-heap/dll-simple-white-blue-1.yml	false	ERROR (frontend failed)	2.092296	0.9485611559999825	222.060544
+forester-heap/dll-sorted-1.yml	false	ERROR (frontend failed)	2.213187	0.9908635569999547	223.297536
+forester-heap/dll-token-2.yml	false	ERROR (frontend failed)	2.306382	1.0511093009999968	217.956352
+forester-heap/sll-buckets-2.yml	false	ERROR (frontend failed)	2.335514	1.0567370389999837	232.312832
+forester-heap/sll-circular-2.yml	false	ERROR (frontend failed)	3.596028	1.291112972999997	256.761856
+forester-heap/sll-optional-2.yml	false	ERROR (frontend failed)	3.134998	1.1425849409999955	239.329280
+forester-heap/sll-queue-2.yml	false	ERROR (frontend failed)	2.974588	1.0819356729999754	242.835456
+forester-heap/sll-rb-sentinel-2.yml	false	ERROR (frontend failed)	3.670238	1.3316092879999815	265.437184
+forester-heap/sll-simple-white-blue-2.yml	false	ERROR (frontend failed)	2.297364	1.0087669020000476	228.728832
+forester-heap/sll-sorted-1.yml	false	ERROR (frontend failed)	3.734015	1.3542023960000051	256.299008
+forester-heap/sll-token-1.yml	false	ERROR (frontend failed)	2.079816	0.9186097640000526	229.027840
+list-properties/alternating_list-2.yml	false	ERROR (frontend failed)	3.444957	1.2502211409999973	253.321216
+list-properties/list-2.yml	false	ERROR (frontend failed)	2.088051	0.9289581300000123	227.160064
+list-properties/list_flag-1.yml	false	ERROR (frontend failed)	3.568594	1.2817320300000006	255.664128
+list-properties/list_search-1.yml	false	ERROR (frontend failed)	2.209867	0.9898930730000188	230.977536
+list-properties/list_search-2.yml	false	ERROR (frontend failed)	2.899657	1.3514353830000232	244.879360
+list-properties/simple-1.yml	false	ERROR (frontend failed)	2.196794	1.0058507339999778	218.800128
+list-properties/splice-1.yml	false	ERROR (frontend failed)	3.609951	1.3004282160000002	252.358656
+list-ext3-properties/dll_nullified-1.yml	false	ERROR (frontend failed)	3.492359	1.2634249079999904	257.523712
+list-ext3-properties/sll_length_check-1.yml	false	ERROR (frontend failed)	2.352936	1.0834460949999993	223.469568
+list-ext3-properties/sll_nondet_insert-1.yml	false	ERROR (frontend failed)	3.650739	1.3124395309999954	265.895936
+list-ext3-properties/sll_of_sll_nondet_append-2.yml	false	ERROR (frontend failed)	3.639624	1.306456580000031	266.063872
+verifythis/tree_del_iter.yml	false	ERROR (frontend failed)	2.004557	0.7877487869999982	168.738816
+verifythis/tree_del_rec.yml	false	ERROR (frontend failed)	1.462148	0.6463814059999891	138.608640
+verifythis/tree_max.yml	false	ERROR (frontend failed)	1.396301	0.6289904379999598	131.821568

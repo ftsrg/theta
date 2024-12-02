@@ -1,0 +1,73 @@
+Theta/theta-start.sh sv-benchmarks/c/bitvector/soft_float_1-3a.c.cil.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio HORN --input sv-benchmarks/c/bitvector/soft_float_1-3a.c.cil.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/bitvector/soft_float_1-3a.c.cil.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: [BITWISE, NONLIN_INT]
+Frontend finished:   (in 535 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using CHC portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false)), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CHC
+server: Registered Legacy-Z3 SolverManager
+server: Registered Z3 SolverManager
+server: Registered JavaSMT SolverManager
+server: Registered SMT-LIB SolverManager
+server: Starting verification of UnnamedXcfa using CHC
+server: Starting encoding
+server: Added constraints to solver
+server: Process failed! (hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver.parseResponse(SmtLibSolver.java:325), hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException: Could not parse solver output: WARNING: creating large table of size 4294967296 for relation __loc_107_1331_38)
+ErrorCodeException(code=221)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=221)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=500000, inProcess=true, specConfig=HornConfig(solver=eldarica:2.1, validateSolver=false)), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CHC
+server: Registered Legacy-Z3 SolverManager
+server: Registered Z3 SolverManager
+server: Registered JavaSMT SolverManager
+server: Registered SMT-LIB SolverManager
+server: Starting verification of UnnamedXcfa using CHC
+server: Starting encoding
+server: Added constraints to solver

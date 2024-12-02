@@ -1,0 +1,644 @@
+@incollection{safecomp2014,
+    author    = {T{\'o}th, Tam{\'a}s and V{\"o}r{\"o}s, Andr{\'a}s and Majzik, Istv{\'a}n},
+    title     = {Verification of a Real-Time Safety-Critical Protocol Using a Modelling Language with Formal Data and Behaviour Semantics},
+    year      = {2014},
+    booktitle = {Computer Safety, Reliability, and Security},
+    series    = {Lecture Notes in Computer Science},
+    volume    = {8696},
+    editor    = {Bondavalli, Andrea and Ceccarelli, Andrea and Ortmeier, Frank},
+    publisher = {Springer},
+    pages     = {207--218},
+    isbn      = {978-3-319-10557-4},
+    doi       = {10.1007/978-3-319-10557-4_24},
+
+    type      = {Workshop},
+    url_pdf   = {safecomp2014.pdf},
+    url_link  = {http://link.springer.com/chapter/10.1007%2F978-3-319-10557-4_24},
+    url_mtmt  = {https://vm.mtmt.hu/www/index.php?mode=html&st_on=1&url_on=1&com_on=1&la_on=1&type_on=1&cite_type=3&DocumentID=2735720},
+    abstract  = {Formal methods have an important role in ensuring the correctness of safety critical systems. However, their application in industry is always cumbersome: the lack of experts and the complexity of formal languages prevents the efficient application of formal verification techniques. In this paper we take a step in the direction of making formal modelling simpler by introducing a framework which helps designers to construct formal models efficiently. Our formal modelling framework supports the development of traditional transition systems enriched with complex data types with type checking and type inference services, time dependent behaviour and timing parameters with relations. In addition, we introduce a toolchain to provide formal verification. Finally, we demonstrate the usefulness of our approach in an industrial case study.},
+}
+
+@misc{hajduaMsc2015,
+    author   = {Hajdu, {\'A}kos},
+    title    = {A Survey on {CEGAR}-based Model Checking},
+    note     = {Master's Thesis, Budapest University of Technology and Economics},
+    year     = {2015},
+    type     = {Thesis},
+
+    url_pdf  = {hajduaMsc2015.pdf},
+    url_link = {http://diplomaterv.vik.bme.hu/en/Theses/CEGARalapu-modellellenorzes-vizsgalata},
+    abstract = {Formal verification is becoming more prevalent, especially in the development of safety-critical systems, where mathematically precise proofs are required to ensure suitability and faultlessness. However, a major drawback of formal methods is their high computational complexity. This also holds for model checking, one of the most prevalent formal verification techniques. Model checking aims to automatically verify a system by exhaustively (explicitly or symbolically) analyzing its possible behaviors. However, relatively small systems can have an unmanageably large or even infinite number of behaviors. There are several existing approaches to handle this problem, but as the complexity of the models increases, new and more efficient algorithms are required. A widely used technique to overcome the former problem is Counterexample-Guided Abstraction Refinement (CEGAR). CEGAR-based approaches work on an abstraction of the model, which is computationally easier to handle. A common abstraction scheme is to over-approximate the set of behaviors by systematically relaxing constraints in the model. However, the result of the algorithm may be imprecise due to the coarseness of the abstraction. In such cases, the abstraction has to be refined. CEGAR-based approaches usually start with a coarse abstraction to minimize computational cost and apply refinement until a precise result is obtained. In my work I examine the literature and the theoretical background of model checking of transition systems using CEGAR-based approaches. I present first order and temporal logic for formalizing systems and requirements, and I analyze two CEGAR algorithms based on different subtypes of over-approximation. I also examine a handful of related techniques that can make CEGAR more efficient, including SAT/SMT solving, interpolation and lazy abstraction. I also propose a new algorithm that combines the advantages of these approaches and techniques. I have implemented these algorithms in order to evaluate and compare their performance. Analysis of the measurement results highlights the advantages and shortcomings of the algorithms for several types of models.},
+}
+
+@inproceedings{minisy2016tt,
+    author    = {T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    title     = {Formal Modeling of Real-Time Systems with Data Processing},
+    year      = {2016},
+    booktitle = {Proceedings of the 23rd PhD Mini-Symposium},
+    editor    = {Pataki, B\'{e}la},
+    pages     = {46--49},
+    isbn      = {978-963-313-220-3},
+    publisher = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+
+    type      = {Local event},
+    url_pdf   = {minisy2016tt.pdf},
+    url_link  = {https://www.mit.bme.hu/eng/system/files/oktatas/9860/23Minisymp_proceedings.pdf},
+    abstract  = {The behavior of practical safety critical systems usually combines real-time behavior with structured data flow. To ensure correctness of such systems, both aspects have to be modeled and formally verified. Time related behavior can be efficiently modeled and analyzed in terms of timed automata. At the same time, program verification techniques like abstract interpretation and software model checking can efficiently handle data flow. In this paper, we describe a simple formalism that is able to model both aspects of such systems and enables the combination of formal verification techniques for real-time systems and software. We also outline a straightforward method for building efficient verifiers for the formalism based on the combination of analyses for the respective aspects.},
+}
+
+@incollection{forte2016,
+    author     = {Hajdu, {\'A}kos and T{\'o}th, Tam{\'a}s and V{\"o}r{\"o}s, Andr{\'a}s and Majzik, Istv{\'a}n},
+    title      = {A Configurable {CEGAR} Framework with Interpolation-based Refinements},
+    year       = {2016},
+    booktitle  = {Formal Techniques for Distributed Objects, Components and Systems},
+    series     = {Lecture Notes in Computer Science},
+    volume     = {9688},
+    pages      = {158--174},
+    publisher  = {Springer},
+    isbn       = {978-3-319-39570-8},
+    doi        = {10.1007/978-3-319-39570-8_11},
+    editor     = {Albert, Elvira and Lanese, Ivan},
+
+    type       = {Conference},
+    url_pdf    = {forte2016.pdf},
+    url_link   = {http://link.springer.com/chapter/10.1007/978-3-319-39570-8_11},
+    url_slides = {http://www.slideshare.net/AkosHajdu/a-configurable-cegar-framework-with-interpolationbased-refinements},
+    url_mtmt   = {https://vm.mtmt.hu/www/index.php?mode=html&st_on=1&url_on=1&com_on=1&la_on=1&type_on=1&cite_type=3&DocumentID=3069540},
+    abstract   = {Correctness of software components in a distributed system is a key issue to ensure overall reliability. Formal verification techniques such as model checking can show design flaws at early stages of development. Abstraction is a key technique for reducing complexity by hiding information, which is not relevant for verification. Counterexample-Guided Abstraction Refinement (CEGAR) is a verification algorithm that starts from a coarse abstraction and refines it iteratively until the proper precision is obtained. Many abstraction types and refinement strategies exist for systems with different characteristics. In this paper we show how these algorithms can be combined into a configurable CEGAR framework. In our framework we also present a new CEGAR configuration based on a combination of abstractions, being able to perform better for certain models. We demonstrate the use of the framework by comparing several configurations of the algorithms on various problems, identifying their advantages and shortcomings.},
+}
+
+@misc{sallaigyBsc2016,
+    author = {Sallai, Gyula},
+    title = {Development of a Verification Compiler for {C} Programs},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2016},
+    type = {Thesis},
+    url_pdf = {sallaigyBsc2016.pdf},
+    url_link = {http://diplomaterv.vik.bme.hu/en/Theses/Verifikacios-fordito-fejlesztese-C-programokhoz},
+    
+    abstract = {As embedded systems are becoming more and more common in our lives, the importance of their safe and fault-free operation is becoming even more critical. Unlike testing, formal verification can not only prove the presence of errors, but their absence as well, making it suitable for verifying safety-critical systems. Formal verification may be done by transforming the already implemented source code to a formal model and querying the resulting model's properties on the reachability of an erroneous state. Sadly, source code to formal model transformations often yield unmanageably large and complex models, resulting in an extremely high computational time for the verifier. In this work I propose a complex workflow which provides a source code to formal model transformation, with program size reduction optimizations. These optimizations include constant propagation, dead branch elimination, loop unrolling, function inlining, extended with a program slicing algorithm which splits a single large problem into multiple smaller ones. At the end of the workflow, a bounded model checker and a k-induction algorithm verifies these smaller slices. Furthermore, I provide benchmarks to demonstrate the usability and efficiency of this workflow and the effect of the optimization algorithms on the formal model.},
+}
+
+@misc{czipobBsc2016,
+    author = {Czip{\'o}, Bence},
+    title = {Hierarchical Abstraction for the Verification of State-based Systems},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2016},
+    type = {Thesis},
+    url_pdf = {czipobBsc2016.pdf},
+    url_link = {http://diplomaterv.vik.bme.hu/en/Theses/Hierarchikus-allapotterkepek-absztrakcioalapu},
+    
+    abstract = {Nowadays, as embedded systems take an increasingly important part in every aspect of our life, checking their correct behavior becomes more and more essential, especially in safety-critical cases, where a future of an enterprise or human lives rely on them. Formal verification is an important method, providing strong mathematical basis to check the correctness of the models in the design phase of the system’s lifecycle. Hierarchical statecharts, as a frequently used behavioral model, are one of the foundations of system design, so their verification has an increased relevance. However in many cases, even the verification of a simple statechart can be challenging, since the large state space can prevent the verification as it grows exponentially with the number of variables in the system. There are several algorithms in the literature to efficiently handle and explore the state space. One of the most common amongst them is the bounded state reachability analysis, which is often realized with logical solvers, such as SAT and SMT solvers. In order to perform the analysis, the transition relation of the statechart is transformed to logical formulas, and these formulas are fed to the solver. However, even these algorithms may not handle the complex behavior caused by the various data types and constructions used in the component models. To reduce the complexity caused by the huge state space, a possible solution is to use abstraction, even though it can fade details that are inevitable for successful verification. In these cases, the abstraction needs to be refined and the represented details should be enriched. This concept is the so-called Counterexample-Guided Abstraction Refinement (CEGAR) approach. Most of the verification techniques used in practice do not exploit the information underlying in the hierarchical structure of the statecharts. The aim of my work is to develop algorithms that can handle hierarchical statecharts efficiently, and furthermore, that can benefit from the underlying information encoded in the state hierarchy during verification. I present a novel approach that can be used to effectively transform complex statecharts into logical formulas, taking benefits from the hierarchy. Improving that, I introduce an algorithm based on abstraction refinement (CEGAR), that takes hierarchy information into consideration during the refinement, and makes it possible to verify complex statecharts using logical solvers. The efficiency of the previously presented algorithms is demonstrated and compared on an industrial case study.},
+}
+
+@misc{farkasrMsc2016,
+    author = {Farkas, Rebeka},
+    title = {Verification of Timed Automata by CEGAR-Based Algorithms},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2016},
+    type = {Thesis},
+    url_pdf = {farkasrMsc2016.pdf},
+    url_link = {http://diplomaterv.vik.bme.hu/en/Theses/Idozitett-rendszerek-CEGAR-alapu-analizise},
+    
+    abstract = {Nowadays safety-critical systems are becoming increasingly prevalent, however, faults in their behaviour can lead to serious damage. Therefore, it is extremely important to use mathematically precise verification techniques during their development. One of them is formal verification, that is able to find design problems from early phases of the development. However, the complexity of safety-critical systems often prevents successful verification. This is particularly true for real-time systems: the set of possible states and transitions can be large or infinite, even for small timed systems. Thus, selecting appropriate modelling formalisms and efficient verification algorithms is very important. One of the most common formalisms for describing timed systems is the timed automaton that extends finite automata with clock variables to represent the elapse of time. When applying formal verification, reachability becomes an important aspect – that is, examining whether the system can reach a given erroneous state during its execution. The complexity of the problem is exponential even for simple timed automata (without discrete variables), thus it can rarely be solved for large models. A possible solution to overcome this deficiency is to use abstraction, which simplifies the problem to be solved by focusing on the relevant information. However, the main difficulty when applying abstraction-based techniques is finding the appropriate precision, which is coarse enough to reduce complexity but fine enough to be able to solve the problem. Counterexample-guided abstraction refinement (CEGAR) is an iterative method starting from a coarse abstraction and refining it until a sufficient precision is reached. The goal of my work is to develop efficient algorithms for the verification of timed automata. In my work I examine and develop CEGAR-based reachability algorithms applied to timed automata and I integrate them to a common framework where components of different algorithms are combined to form new and efficient verification methods. The framework offers two realizations of the CEGAR approach: one of them applies abstraction to the automaton in order to gain an overapproximation of the set of reachable states (the state space), and the other applies abstraction directly to the state space. I demonstrate the efficiency of the developed algorithms by measurements on examples that are commonly used to benchmark model checking algorithms for timed automata.},
+}
+
+@inproceedings{minisy2017ha,
+    author     = {Hajdu, {\'A}kos and Micskei, Zolt{\'a}n},
+    title      = {Exploratory Analysis of the Performance of a Configurable {CEGAR} Framework},
+    year       = {2017},
+    booktitle  = {Proceedings of the 24th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {34--37},
+    doi        = {10.5281/zenodo.291895},
+    isbn       = {978-963-313-243-2},
+
+    type       = {Local event},
+    url_pdf    = {minisy2017ha.pdf},
+    url_link   = {https://doi.org/10.5281/zenodo.291895},
+    url_slides = {http://www.slideshare.net/AkosHajdu/exploratory-analysis-of-the-performance-of-a-configurable-cegar-framework},
+    url_mtmt   = {https://vm.mtmt.hu/www/index.php?mode=html&st_on=1&url_on=1&com_on=1&la_on=1&type_on=1&cite_type=3&DocumentID=3203886},
+    abstract   = {Formal verification techniques can check the correctness of systems in a mathematically precise way. However, their computational complexity often prevents their successful application. The counterexample-guided abstraction refinement (CEGAR) algorithm aims to overcome this problem by automatically building abstractions for the system to reduce its complexity. Previously, we developed a generic CEGAR framework, which incorporates many configurations of the algorithm. In this paper we focus on an exploratory analysis of our framework. We identify parameters of the systems and algorithm configurations, overview some possible analysis methods and present preliminary results. We show that different variants are more efficient for certain tasks and we also describe how the properties of the system and parameters of the algorithm affect the success of verification.},
+}
+
+@inproceedings{minisy2017fr,
+    author     = {Farkas, Rebeka and Hajdu, {\'A}kos},
+    title      = {Activity-Based Abstraction Refinement for Timed Systems},
+    year       = {2017},
+    booktitle  = {Proceedings of the 24th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {18--21},
+    doi        = {10.5281/zenodo.291891},
+    isbn       = {978-963-313-243-2},
+
+    type       = {Local event},
+    url_pdf    = {minisy2017fr.pdf},
+    url_link   = {https://doi.org/10.5281/zenodo.291891},
+    url_mtmt   = {https://vm.mtmt.hu/www/index.php?mode=html&st_on=1&url_on=1&com_on=1&la_on=1&type_on=1&cite_type=3&DocumentID=3203890},
+    abstract   = {Formal analysis of real time systems is important as they are widely used in safety critical domains. Such systems combine discrete behaviours represented by control states and timed behaviours represented by clock variables. The counterexample-guided abstraction refinement (CEGAR) algorithm utilizes the fundamental technique of abstraction to system verification. We propose a CEGAR-based algorithm for reachability analysis of timed systems. The algorithm is specialized to handle the time related behaviours efficiently by introducing a refinement technique tailored specially to clock variables. The performance of the presented algorithm is demonstrated by runtime measurements on models commonly used for benchmarking such algorithms.},
+}
+
+@inproceedings{minisy2017sgy,
+    author     = {Sallai, Gyula and T{\'o}th, Tam{\'a}s},
+    title      = {Boosting Software Verification with Compiler Optimizations},
+    year       = {2017},
+    booktitle  = {Proceedings of the 24th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {66--69},
+    doi        = {10.5281/zenodo.291903},
+    isbn       = {978-963-313-243-2},
+
+    type       = {Local event},
+    url_pdf    = {minisy2017sgy.pdf},
+    url_link   = {https://doi.org/10.5281/zenodo.291903},
+    abstract   = {Unlike testing, formal verification can not only prove the presence of errors, but their absence as well, thus making it suitable for verifying safety-critical systems. Formal verification may be performed by transforming the already implemented source code to a formal model and querying the resulting model on reachability of an erroneous state. Sadly, transformations from source code to a formal model often yield large and complex models, which may result in extremely high computational effort for a verifier algorithm. This paper describes a workflow that provides formal verification for C programs, aided by optimization techniques usually used in compiler design in order to reduce the size and complexity of a program and thus improve the performance of the verifier.},
+}
+
+@inproceedings{minisy2017tt,
+    author     = {T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    title      = {Timed Automata Verification using Interpolants},
+    year       = {2017},
+    booktitle  = {Proceedings of the 24th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {82--85},
+    doi        = {10.5281/zenodo.291907},
+    isbn       = {978-963-313-243-2},
+
+    type       = {Local event},
+    url_pdf    = {minisy2017tt.pdf},
+    url_link   = {https://doi.org/10.5281/zenodo.291907},
+    abstract   = {The behavior of safety critical systems is often constrained by real time requirements. To model time dependent behavior and enable formal verification, timed automata are widely used as a formal model of such systems. However, due to real-valued clock variables, the state space of these systems is not finite, thus model checkers for timed automata are usually based on zone abstraction. The coarseness of the abstraction profoundly impacts performance of the analysis. In this paper, we propose a lazy abstraction algorithm based on interpolation for zones to enable efficient reachability checking for timed automata. In order to efficiently handle zone abstraction, we define interpolation in terms of difference bound matrices. We extend the notion of zone interpolants to sequences of transitions of a timed automaton, thus enabling the use of zone interpolants for abstraction refinement.},
+}
+
+@incollection{fesca2017,
+    author     = {Czip{\'o}, Bence and Hajdu, {\'A}kos and T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    year       = {2017},
+    title      = {Exploiting Hierarchy in the Abstraction-Based Verification of Statecharts Using SMT Solvers},
+    editor     = {Kofro\v{n}, Jan and Tumova, Jana},
+    booktitle  = {Proceedings of the 14th International Workshop on Formal Engineering Approaches to Software Components and Architectures},
+    series     = {Electronic Proceedings in Theoretical Computer Science},
+    volume     = {245},
+    publisher  = {Open Publishing Association},
+    pages      = {31--45},
+    doi        = {10.4204/EPTCS.245.3},
+
+    type       = {Workshop},
+    url_pdf    = {fesca2017.pdf},
+    url_link   = {http://eptcs.web.cse.unsw.edu.au/paper.cgi?FESCA2017.3},
+    url_slides = {http://www.slideshare.net/AkosHajdu/exploiting-hierarchy-in-the-abstractionbased-verification-of-statecharts-using-smt-solvers},
+    url_mtmt   = {https://vm.mtmt.hu/www/index.php?mode=html&st_on=1&url_on=1&com_on=1&la_on=1&type_on=1&cite_type=3&DocumentID=3203861},
+    abstract   = {Statecharts are frequently used as a modeling formalism in the design of state-based systems. Formal verification techniques are also often applied to prove certain properties about the behavior of the system. One of the most efficient techniques for formal verification is Counterexample-Guided Abstraction Refinement (CEGAR), which reduces the complexity of systems by automatically building and refining abstractions. In our paper we present a novel adaptation of the CEGAR approach to hierarchical statechart models. First we introduce an encoding of the statechart to logical formulas that preserves information about the state hierarchy. Based on this encoding we propose abstraction and refinement techniques that utilize the hierarchical structure of statecharts and also handle variables in the model. The encoding allows us to use SMT solvers for the systematic exploration and verification of the abstract model, including also bounded model checking. We demonstrate the applicability and efficiency of our abstraction techniques with measurements on an industry-motivated example.},
+}
+
+@incollection{vpt2017,
+    author     = {Sallai, Gyula and Hajdu, {\'A}kos and T{\'o}th, Tam{\'a}s and Micskei, Zolt{\'a}n},
+    year       = {2017},
+    title      = {Towards Evaluating Size Reduction Techniques for Software Model Checking},
+    editor     = {Lisitsa, Alexei and Nemytykh, Andrei P. and Proietti, Maurizio},
+    booktitle  = {Proceedings of the Fifth International Workshop on Verification and Program Transformation},
+    series     = {Electronic Proceedings in Theoretical Computer Science},
+    volume     = {253},
+    publisher  = {Open Publishing Association},
+    pages      = {75--91},
+    doi        = {10.4204/EPTCS.253.7},
+
+    type       = {Workshop},
+    url_pdf    = {vpt2017.pdf},
+    url_link   = {http://eptcs.web.cse.unsw.edu.au/paper.cgi?VPT2017.7},
+    url_slides = {http://www.slideshare.net/AkosHajdu/towards-evaluating-size-reduction-techniques-for-software-model-checking},
+    abstract   = {Formal verification techniques are widely used for detecting design flaws in software systems. Formal verification can be done by transforming an already implemented source code to a formal model and attempting to prove certain properties of the model (e.g. that no erroneous state can occur during execution). Unfortunately, transformations from source code to a formal model often yield large and complex models, making the verification process inefficient and costly. In order to reduce the size of the resulting model, optimization transformations can be used. Such optimizations include common algorithms known from compiler design and different program slicing techniques. Our paper describes a framework for transforming C programs to a formal model, enhanced by various optimizations for size reduction. We evaluate and compare several optimization algorithms regarding their effect on the size of the model and the efficiency of the verification. Results show that different optimizations are more suitable for certain models, justifying the need for a framework that includes several algorithms.}
+}
+
+@incollection{formats2017,
+    author     = {T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    title      = {Lazy Reachability Checking for Timed Automata using Interpolants},
+    year       = {2017},
+    booktitle  = {Formal Modelling and Analysis of Timed Systems},
+    editor     = {Abate, Alessandro and Geeraerts, Gilles},
+    series     = {Lecture Notes in Computer Science},
+    volume     = {10419},
+    pages      = {264--280},
+    publisher  = {Springer},
+    doi        = {10.1007/978-3-319-65765-3_15},
+
+    type       = {Conference},
+    url_pdf    = {formats2017.pdf},
+    url_link   = {http://link.springer.com/chapter/10.1007%2F978-3-319-65765-3_15},
+    abstract   = {To solve the reachability problem for timed automata, model checkers usually apply forward search and zone abstraction. To ensure efficiency and termination, the computed zones are generalized using maximal constants obtained from guards either by static analysis or lazily for a given path. In this paper, we propose a lazy method based on zone abstraction that, instead of the constants in guards, considers the constraints themselves. The method is a combination of forward search, backward search and interpolation over zones: if the zone abstraction is too coarse, we propagate a zone representing bad states backwards using backward search, and use interpolation to extract a relevant zone to strengthen the current abstraction. We propose two refinement strategies in this framework, and evaluate our method on the usual benchmark models for timed automata. Our experiments show that the proposed method compares favorably to known methods based on efficient lazy non-convex abstractions.},
+}
+
+@inproceedings{fmcad2017,
+    author     = {T{\'o}th, Tam{\'a}s and Hajdu, {\'A}kos and V{\"o}r{\"o}s, Andr{\'a}s and Micskei, Zolt{\'a}n and Majzik, Istv{\'a}n},
+    year       = {2017},
+    title      = {Theta: a Framework for Abstraction Refinement-Based Model Checking},
+    booktitle  = {Proceedings of the 17th Conference on Formal Methods in Computer-Aided Design},
+    isbn       = {978-0-9835678-7-5},
+    editor     = {Stewart, Daryl and Weissenbacher, Georg},
+    pages      = {176--179},
+    doi        = {10.23919/FMCAD.2017.8102257},
+
+
+    type       = {Conference},
+    url_pdf    = {fmcad2017.pdf},
+    url_link   = {http://www.cs.utexas.edu/users/hunt/FMCAD/FMCAD17/proceedings/},
+    url_slides = {https://www.slideshare.net/AkosHajdu/theta-a-framework-for-abstraction-refinementbased-model-checking},
+    abstract   = {In this paper, we present Theta, a configurable model checking framework. The goal of the framework is to support the design, execution and evaluation of abstraction refinement-based reachability analysis algorithms for models of different formalisms. It enables the definition of input formalisms, abstract domains, model interpreters, and strategies for abstraction and refinement. Currently it contains front-end support for transition systems, control flow automata and timed automata. The built-in abstract domains include predicates, explicit values, zones and their combinations, along with various refinement strategies implemented for each. The configurability of the framework allows the integration of several abstraction and refinement methods, this way supporting the evaluation of their advantages and shortcomings. We demonstrate the applicability of the framework by use cases for the safety checking of PLC, hardware, C programs and timed automata models.},
+}
+
+@inproceedings{minisy2018ha,
+    author     = {Hajdu, {\'A}kos and Micskei, Zolt{\'a}n},
+    title      = {A Preliminary Analysis on the Effect of Randomness in a {CEGAR} Framework},
+    year       = {2018},
+    booktitle  = {Proceedings of the 25th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {32--35},
+
+    type       = {Local event},
+    url_pdf    = {minisy2018.pdf},
+    url_slides = {https://www.slideshare.net/AkosHajdu/a-preliminary-analysis-on-the-effect-of-randomness-in-a-cegar-framework},
+    abstract   = {Formal verification techniques can check the correctness of systems in a mathematically precise way. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic algorithm that reduces the complexity of systems by constructing and refining abstractions. CEGAR is a generic approach, having many variants and strategies developed over the years. However, as the variants become more and more advanced, one may not be sure whether the performance of a strategy can be attributed to the strategy itself or to other, unintentional factors. In this paper we perform an experiment by evaluating the performance of different strategies while randomizing certain external factors such as the search strategy and variable naming. We show that randomization introduces a great variation in the output metrics, and that in several cases this might even influence whether the algorithm successfully terminates.},
+}
+
+@inproceedings{minisy2018fr,
+    author     = {Farkas, Rebeka and Bergmann, G{\'a}bor},
+    title      = {Towards Reliable Benchmarks of Timed Automata},
+    year       = {2018},
+    booktitle  = {Proceedings of the 25th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {20--23},
+
+    type       = {Local event},
+    url_pdf    = {minisy2018fr.pdf},
+    abstract   = {The verification of the time-dependent behavior of safety-critical systems is important, as design problems often arise from complex timing conditions. One of the most common formalisms for modeling timed systems is the timed automaton, which introduces clock variables to represent the elapse of time. Various tools and algorithms have been developed for the verification of timed automata. However, it is hard to decide which one to use for a given problem as no exhaustive benchmark of their effectiveness and efficiency can be found in the literature. Moreover, there does not exist a public set of models that can be used as an appropriate benchmark suite. In our work we have collected publicly available timed automaton models and industrial case studies and we used them to compare the efficiency of the algorithms implemented in the Theta model checker. In this paper, we present our preliminary benchmark suite, and demonstrate the results of the performed measurements.},
+
+}
+
+@inproceedings{avocs2018,
+    author     = {Farkas, Rebeka and T\'oth, Tam\'as and Hajdu, \'{A}kos and V\"or\"os, Andr\'as},
+    title      = {Backward reachability analysis for timed automata with data variables},
+    year       = {2018},
+    booktitle  = {Proceedings of the 18th International Workshop on Automated Verification of Critical Systems},
+    
+    editor     = {Pichardie, David and Sighireanu, Mihaela},
+    series     = {Electronic Communications of the EASST},
+    issn       = {1863-2122},
+    volume     = {76},
+    publisher  = {EASST},
+    pages      = {1--20},
+    doi        = {10.14279/tuj.eceasst.76.1076},
+
+    type       = {Workshop},
+    url_pdf    = {avocs2018.pdf},
+    url_slides = {https://easychair.org/smart-slide/slide/ZB18},
+    abstract   = {Efficient techniques for reachability analysis of timed automata are zone-based methods that explore the reachable state space from the initial state, and SMT-based methods that perform backward search from the target states. It is also possible to perform backward exploration based on zones, but calculating predecessor states for systems with data variables is computationally expensive, prohibiting the successful application of this approach so far. In this paper we overcome this limitation by combining zone-based backward exploration with the weakest precondition operation for data variables. This combination allows us to handle diagonal constraints efficiently as opposed to zone-based forward search where most approaches require additional operations to ensure correctness. We demonstrate the applicability and compare the efficiency of the algorithm to existing forward exploration approaches by measurements performed on industrial case studies. Although the large number of states often prevents successful verification, we show that data variables can be efficienlty handled by the weakest precondition operation. This way our new approach complements existing techniques.},
+}
+
+@incollection{spin2018,
+    author     = {T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    title      = {Lazy Reachability Checking for Timed Automata with Discrete Variables},
+    year       = {2018},
+    booktitle  = {Model Checking Software. SPIN 2018},
+    location   = {Málaga, Spain},
+    publisher  = {Springer},
+    editor     = {del Mar Gallardo, Maria and Merino, Pedro},
+    series     = {Lecture Notes in Computer Science},
+    volume     = {10869},
+    pages      = {235-254},
+    doi        = {10.1007/978-3-319-94111-0_14},
+
+    type       = {Conference},
+    url_pdf    = {spin2018.pdf},
+    abstract   = {Systems and software with time dependent behavior are often formally specified using timed automata. For practical real-time systems, these specifications typically contain discrete data variables with nontrivial data flow besides real-valued clock variables. In this paper, we propose a lazy abstraction method for the location reachability problem of timed automata that can be used to efficiently control the visibility of discrete variables occurring in such specifications, this way alleviating state space explosion. The proposed abstraction refinement strategy is based on interpolation for variable assignments and symbolic backward search. We combine in a single algorithm our abstraction method with known efficient lazy abstraction algorithms for the handling of clock variables. Our experiments show that the proposed method performs favorably when compared to other lazy methods, and is suitable to significantly reduce the number of states generated during state space exploration.}
+}
+
+@misc{bajkaidBsc2018,
+    author = {Bajkai, Vikt{\'o}ria Dorina},
+    title = {Combining Abstract Domains for Software Model Checking},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2018},
+    type = {Thesis},
+    url_pdf = {bajkaidBsc2018.pdf},
+    
+    abstract = {Software systems are controlling devices that surround us in our everyday life. Many of these systems are safety-critical (e.g., autonomous vehicles, power plants), thus ensuring their correct operation is gaining increasing importance. Formal verification techniques can both reveal errors and give guarantees on correctness with a sound mathematical basis. One of the most widely used formal verification approaches is model checking, which systematically examines all possible states and transitions (i.e., the state space) of the software. However, a major drawback of model checking is its high computational complexity, often preventing its application on real-life software. Counterexample-guided abstraction refinement (CEGAR) is a supplementary technique, making model checking more efficient in practice. CEGAR works by iteratively constructing and refining abstractions in a given abstract domain. There are several existing domains, such as explicit-values, which only track a relevant subset of program variables and predicates, which use logical formulas instead of concrete values. Observations show that different abstract domains are more suitable for different kinds of software systems. Therefore, so-called product domains have also emerged that combine different domains into a single algorithm. In this work, we develop and examine various strategies to combine the explicit-value domain with predicates. Our approaches use different information from the already explored abstract state space to guide further exploration more efficiently. We implement our new strategies on top of Theta, an open source verification framework. This allows us to perform an experiment with a wide range of software systems including industrial PLC codes. We evaluate the strengths and weaknesses of the different approaches and we also compare them to existing methods. Our experiments show that the new strategies can form efficient combinations of the existing algorithms.},
+}
+
+@misc{tegzestBsc2018,
+    author = {Tegzes, Tam{\'a}s},
+    title = {Applying Incremental, Inductive Model Checking to Software},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2018},
+    type = {Thesis},
+    url_pdf = {tegzestBsc2018.pdf},
+    
+    abstract = {Software plays an ever increasing role in our lives. Nowadays, software is used even in safety critical fields where a potential failure can lead to significant consequences: software failures can cause fortunes to go to waste, airplanes to crash, or nuclear power plants to stop. Thus ensuring the correctness of such critical software is a crucial task. Verification is the process of checking that the software operates as expected. Formal methods are often used to verify critical systems, which - as opposed to traditional verification methods (such as testing) - is not only able to show the presence of errors, but also to prove their absence. One of the most widely applied formal method is model checking, which constitutes traversing the state space of the software to prove or disprove formal requirements against the system. IC3 is a state-of-the-art model checking algorithm, originally developed for checking hardware models. The unique property of IC3 is that it proves the correctness of the system in incremental steps by proving several simple lemmas about the system. If the system is correct, the proven lemmas collectively form a proof of that fact (they specify a safe overapproximation of the state space). If the system is not correct, the lemmas direct the search towards a counterexample, thereby making the traversal more efficient. The original algorithm is designed to check finite state systems, and is not effective for infinite state systems. Therefore the algorithm is still the subject of active research and has several extensions. In my thesis I examine an extension to IC3 that uses (implicit) predicate abstraction to handle infinite state spaces efficiently. This method divides the state space into a finite number of partitions with respect to a set of predicates over the system variables. The partitions form a finite abstract state space, where each state is defined by which of the predicates hold and which do not. During its run, the algorithm learns new predicates to refine its abstract image of the system, while still maintaining the coarseness of the abstraction. In order to check control flow automata which describe programs, I present a transformation that creates a symbolic transition system for a control flow automaton that behaves equivalently to the automaton. The correctness of the automaton can be checked by running the algorithm on this symbolic transition system. I implement the algorithm and the transformation as part of the open source model checking framework Theta, which allows for additional ways of extending it. Finally, I evaluate the efficiency of the various configurations of the implemented algorithm.},
+}
+
+@inproceedings{minisy2019,
+    author     = {Bajkai, Vikt{\'o}ria Dorina and Hajdu, \'{A}kos},
+    title      = {Software Model Checking with a Combination of Explicit Values and Predicates},
+    year       = {2019},
+    booktitle  = {Proceedings of the 26th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Pataki, B\'{e}la},
+    pages      = {4--7},
+    isbn       = {978-963-313-314-9},
+    doi        = {10.5281/zenodo.2597969},
+    
+    type       = {Local event},
+    url_pdf    = {minisy2019.pdf},
+    abstract   = {Formal verification techniques can both reveal bugs or prove their absence in programs with a sound mathematical basis. However, their high computational complexity often prevents their application on real-world software. Counterexample-guided abstraction refinement (CEGAR) aims to improve efficiency by automatically constructing and refining abstractions for the program. There are several existing abstract domains, such as explicit-values and predicates, but different abstract domains are suitable for different kinds of software. Therefore, product domains have also emerged, which combine different kinds of abstractions in a single algorithm. In this paper, we present a new variant of the CEGAR algorithm, which is a combination of explicit-value analysis and predicate abstraction. We perform an experiment with a wide range of software systems and we compare the results to the existing methods. Measurements show that our new algorithm can efficiently combine the advantages of the different domains.},
+}
+
+@article{jar2019,
+    author   = {{\'A}kos Hajdu and Zolt\'an Micskei},
+    title    = {Efficient Strategies for {CEGAR}-based Model Checking},
+    journal  = {Journal of Automated Reasoning},
+    volume   = {64},
+    number   = {6},
+    pages    = {1051--1091},
+    year     = {2020},
+    doi      = {10.1007/s10817-019-09535-x},
+
+    type     = {Journal},
+    url_pdf  = {https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf},
+    url_link = {https://link.springer.com/article/10.1007/s10817-019-09535-x},
+    abstract = {Automated formal verification is often based on the Counterexample-Guided Abstraction Refinement (CEGAR) approach. Many variants of CEGAR have been developed over the years as different problem domains usually require different strategies for efficient verification. This has lead to generic and configurable CEGAR frameworks, which can incorporate various algorithms. In our paper we propose six novel improvements to different aspects of the CEGAR approach, including both abstraction and refinement. We implement our new contributions in the Theta framework allowing us to compare them with state-of-the-art algorithms. We conduct an experiment on a diverse set of models to address research questions related to the effectiveness and efficiency of our new strategies. Results show that our new contributions perform well in general. Moreover, we highlight certain cases where performance could not be increased or where a remarkable improvement is achieved.},
+}
+
+@misc{sallaigyMsc2019,
+    author = {Sallai, Gyula},
+    title = {LLVM IR-based Transformations for Software Model Checking},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2019},
+
+    type = {Thesis},
+    url_pdf = {sallaigyMsc2019.pdf},    
+    abstract = {As embedded systems are becoming more and more common in our lives, the importance of their safe and fault-free operation is becoming even more critical. Model checking can prove both the presence and absence of certain errors in software systems, making it suitable for verifying safety-critical systems. The field of model checking has made a tremendous progress in the last decades, providing a great set of fast and effective algorithms. However, despite all this, model checking is still not widely adopted in a standard development workflow due to its poor accessibility. In this work, we propose a user-friendly and efficient model checking workflow, that is able to translate C programs into the language of multiple model checking engines. The workflow uses a check instrumentation workflow to represent certain software properties as reachability problems and automatically map verification results back to the level of the original source code. In order to avoid translating from a possibly diverse set of input language dialects, we make use of the LLVM compiler infrastructure framework and its intermediate program representation. Furthermore, we shall use LLVM to extend the transformation workflow with a set of built-in and custom optimization transformations. To handle the ambiguity of memory-related language constructs, we propose a generic memory model interface that may be used to implement memory models of different strengths and trade-offs. At the end of the workflow, the resulting models may verified by our own implementation of the bounded model checking algorithm, or by using the CEGAR-based Theta model checking framework. We provide a traceability component, which is able to represent verification verdicts in a user-friendly format and also able to generate an executable mock environment that demonstrates found errors in an executable program. In addition, we provide benchmarks to demonstrate the usability of this workflow.},
+}
+
+@misc{doboskovacsmBsc2019,
+    author = {Dobos-Kov\'acs, Mih\'aly},
+    title = {Combining testing and formal verification in automotive software development},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2019},
+
+    type = {Thesis},
+    url_pdf = {doboskovacsmBsc2019.pdf},    
+    abstract = {Nowadays, different kinds of software are responsible for features in safety-critical systems, like cars, airplanes, or nuclear powerplants. Often parts of the systems that used to be mechanical or hydraulical are replaced by software-driven solutions, for example, in the steering of vehicles. These embedded software components are critical in terms of proper functioning of the system, on the one hand, however, they are quite complex on the other. It follows that certain measures have to be taken to identify and correct the faults of these systems and to prove their correctness. Testing is an efficient way of finding faults, and it is part of every major standard regulating the development of safety critical systems. However, testing alone cannot prove the absence of errors in a program. Another approach is formal verification that takes the mathematical model of a given software and gives a mathematical proof of correctness. It is a computationally intensive task, as it needs to take all the possible states of a software into account, and even the simplest of programs can have an infinite state space. During the past two decades, researchers have achieved numerous breakthroughs in the field of formal verification; however, due to the complexity of the underlying mathematical field, it is still too early for using formal verification in the industry on a daily basis. The goal of this paper is to combine these two different approaches in the AUTOSAR environment used heavily in automotive software development. In this paper, an algorithm is presented that uses the results of a verification process to generate tests while taking into account the uniqueness of AUTOSAR components. If the verification succeeds, either there is a mathematical proof of correctness about the software, or there is a counterexample that makes the error reproducible. However, when formal verification fails, tests will be generated using information extracted from the visited part of the state space of the program. In connection with this, multiple strategies are presented for test generation, that are efficient in finding different kinds of program errors. The algorithms proposed are validated with a custom implementation that is able to verify computer programs written in C, using examples from the automotive industry. },
+}
+
+@inproceedings{minisy2020mm,
+    author     = {Mondok, Mil\'an and V\"or\"os, Andr\'as},
+    title      = {Abstraction-Based Model Checking of Linear Temporal Properties},
+    year       = {2020},
+    booktitle  = {Proceedings of the 27th PhD Mini-Symposium},
+    location   = {Budapest, Hungary},
+    publisher  = {Budapest University of Technology and Economics, Department of Measurement and Information Systems},
+    editor     = {Renczes, Bal\'azs},
+    pages      = {29--32},
+
+    type       = {Local event},
+    url_pdf    = {minisy2020mm.pdf},
+    abstract   = {Even though the expressiveness of linear temporal logic (LTL) supports engineering application, model checking of such properties is a computationally complex task and state space explosion often hinders successful verification. LTL model checking consists of constructing automata from the property and the system, generating the synchronous product of the two automata and checking its language emptiness. We propose a novel LTL model checking algorithm that uses abstraction to tackle the challenge of state space explosion. This algorithm combines the advantages of two commonly used model checking approaches, counterexample-guided abstraction refinement and automata theoretic LTL model checking. The main challenge in combining these is the refinement of "lasso"-shaped counterexamples, for which task we propose a novel refinement strategy based on interpolation.},
+}
+
+@inproceedings{openmbee2020,
+    author     = {Benedek Horv{\'a}th and Bence Graics and {\'A}kos Hajdu and Zolt{\'a}n Micskei and Vince Moln{\'a}r and Istv{\'a}n R{\'a}th and Luigi Andolfato and Ivan Gomes and Robert Karban},
+    title      = {Model Checking as a Service: Towards Pragmatic Hidden Formal Methods},
+    booktitle  = {Proceedings of the 23rd ACM/IEEE International Conference on Model Driven Engineering Languages and Systems: Companion Proceedings},
+    articleno  = {37},
+    numpages   = {5},
+    year       = {2020},
+    doi        = {10.1145/3417990.3421407},
+
+    type       = {Workshop},
+
+    url_pdf    = {openmbee2020.pdf},
+    url_link   = {https://doi.org/10.1145/3417990.3421407},
+    abstract   = {Executable models can be used to support all engineering activities in Model-Based Systems Engineering. Testing and simulation of such models can provide early feedback about design choices. However, in today's complex systems, failures could arise due to subtle errors that are hard to find without checking all possible execution paths. Formal methods, and especially model checking can uncover such subtle errors, yet their usage in practice is limited due to the specialized expertise and high computing power required. Therefore we created an automated, cloud-based environment that can verify complex reachability properties on SysML State Machines using hidden model checkers. The approach and the prototype is illustrated using an example from the aerospace domain.},
+}
+
+@phdthesis{hajdua2020phd,
+    author = {\'Akos Hajdu},
+    title  = {Effective Domain-Specific Formal Verification Techniques},
+    school = {Budapest University of Technology and Economics},
+    year   = {2020},
+    doi    = {10.5281/zenodo.3892347},
+    
+    type   = {Thesis},
+    
+    url_pdf = {https://repozitorium.omikk.bme.hu/bitstream/handle/10890/13523/ertekezes.pdf},
+    url_link = {https://repozitorium.omikk.bme.hu/handle/10890/13523},
+    abstract = {
+Formal verification techniques allow rigorous reasoning about the operation of computer systems and programs. With a sound and complete mathematical basis, it is both possible to show the presence of certain kinds of errors and to prove their absence. Formal methods are often applied in critical domains (e.g. industrial controllers) to increase quality and trust in their correct operation. However, most of the interesting questions to be analyzed are computationally complex or undecidable in general. Therefore, verification approaches in different problem domains usually put more emphasis on different properties of the analysis to achieve a reasonable trade-off. Such properties include (1) expressive power (2) efficiency, and (3) the amount of conclusive answers. This work addresses challenges related to the properties mentioned above in three different problem domains using different approaches to make verification effective.
+Thesis 1 targets concurrent and asynchronous systems by modeling them with Petri nets and checking the reachability of a given state. We study an existing algorithm that uses an efficient structural over-approximation. However, the expressive power is limited to simple reachability properties and the algorithm can easily give inconclusive answers due to its iteration strategy. We lift the expressive power of the algorithm by handling a generalized version of reachability and supporting Petri nets extended with inhibitor arcs. We increase the number of conclusive answers by the algorithm via a new iteration approach on invariants and a hybrid search strategy.
+Thesis 2 targets embedded software code by modeling them with control-flow automata and checking the reachability of a distinguished error location. We study abstraction-refinement-based model checking where efficiency is still a significant limitation due to the complexity of the programs and the rich domains of their variables. We propose various efficient strategies for both abstraction and refinement. For abstraction, we extend the explicit-value analysis with limited successor enumeration, and we adapt structural information from the program to guide the search more efficiently. For refinement, we develop a backward-search based interpolation strategy and an approach that uses multiple counterexamples for a faster convergence to the appropriate level of abstraction.
+Thesis 3 targets decentralized, blockchain-based systems by translating contracts (programs running on such systems) to an intermediate verification language. We adapt existing modular specification constructs to this context and also propose domain-specific properties. This provides a flexible and expressive approach to specify high-level, functional properties of contracts. We define a translation from contracts to the Boogie intermediate verification language, and leverage existing modular verification approaches. Furthermore, we develop a modular encoding of arithmetic that can capture operations precisely and efficiently over large bit-widths that are common in this domain.
+All contributions have been implemented in practical tools and are available publicly. We also evaluate our contributions on various synthetic and real-world examples to prove their applicability. Results show that our contributions successfully address the targeted challenges and provide effective verification approaches in general.
+    },
+}
+
+@article{acin2020,
+    author   = {T{\'o}th, Tam{\'a}s and Majzik, Istv{\'a}n},
+    title    = {Configurable verification of timed automata with discrete variables},
+    journal  = {Acta Informatica},
+    volume   = {},
+    number   = {},
+    pages    = {},
+    year     = {2020},
+    doi      = {10.1007/s00236-020-00393-4},
+    type     = {Journal},
+    url_pdf  = {https://link.springer.com/content/pdf/10.1007/s00236-020-00393-4.pdf},
+    url_link = {https://link.springer.com/article/10.1007/s00236-020-00393-4},
+    abstract = {Algorithms and protocols with time dependent behavior are often specified formally using timed automata. For practical real-time systems, besides real-valued clock variables, these specifications typically contain discrete data variables with nontrivial data flow. In this paper, we propose a configurable lazy abstraction framework for the location reachability problem of timed automata that potentially contain discrete variables. Moreover, based on our previous work, we uniformly formalize in our framework several abstraction refinement strategies for both clock and discrete variables that can be freely combined, resulting in many distinct algorithm configurations. Besides the proposed refinement strategies, the configurability of the framework allows the integration of existing efficient lazy abstraction algorithms for clock variables based on LU-bounds. We demonstrate the applicability of the framework and the proposed refinement strategies by an empirical evaluation on a wide range of timed automata models, including ones that contain discrete variables or diagonal constraints.},
+}
+
+@misc{mondokmBsc2020,
+    author = {Mondok, Mil\'an},
+    title = {Formal verification of engineering models via extended symbolic transition systems},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2020},
+    type = {Thesis},
+    url_pdf = {mondokmBsc2020.pdf},
+    url_link = {https://diplomaterv.vik.bme.hu/hu/Theses/Mernoki-modellek-formalis-verifikacioja},
+    abstract = {In a model-driven development workflow, formal verification can give early feedback on the correctness of the system under development. However, formal methods face various challenges in practice. First, engineering models are typically developed in higher-level modeling languages, whereas formal methods usually operate on low-level mathematical formalisms. Second, verification algorithms are resource-intensive, especially on complex engineering models. Theta is a generic and configurable verification framework that aims to tackle these challenges by providing different low-level formalisms and efficient, abstraction-based algorithms. However, existing formalisms are either too low-level or domain-specific for model-driven development in general. In this work I propose a novel intermediate representation, the eXtended Symbolic Transition System (XSTS) formalism. The XSTS formalism offers higher-level constructs and a textual domain-specific language for easier translation from engineering models. In the meantime, it also has clear and well-defined semantics under different abstract domains, and adapts a standard interpreter interface towards existing verification algorithms. Furthermore, I developed XSTS-specific extensions and strategies that can improve the performance. My work was integrated into the Gamma Statechart Composition Framework, allowing me to perform an experimental evaluation on use cases provided by industrial partners. I evaluated the strengths and weaknesses of the different algorithm configurations and the results confirmed that the XSTS formalism is both effective and efficient.},
+}
+
+@misc{tegzestMsc2020,
+    author = {Tegzes, Tam{\'a}s},
+    title = {Learning and Synthesis Supported Software Verification},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2020},
+
+    type = {Thesis},
+    url_pdf = {tegzestMsc2020.pdf},
+    abstract = {An increasing part of our lives is being automated. We solve more and more problems with software systems. We even trust software systems with tasks where their potential improper operation can have catastrophic consequences. While bugs in software that control financial systems or critical infrastructure can lead to economic damage, bugs in the software of an aeroplane or a medical device may endanger life. Ensuring that there are no bugs in the software that runs on such systems deserves special attention. Verification methods integrated into the development process support the detection of bugs and improve the quality of the software. Using traditional verification methods (such as testing), one can usually only reduce the probability of bugs being present, but they can never be completely sure that the software under test works correctly in the cases they did not try. Using Formal methods, on the other hand, one can prove some formally stated properties mathematically. One of the branches of formal methods is model checking. Model checking systems work with a formal model of the system. They traverse the state space of the model and check if the property they are trying to prove is satisfied. The family of algorithms we examine in the thesis can check software models by trying to synthesize loop invariants. These are logical formulae that form lemmas about the program. The lemmas are proven by induction, and together they prove that the model is correct. We can view the task of synthesizing invariants as a special case of solving Horn clauses. The Horn-ICE verification toolkit solves Horn clauses through the collaboration of a teacher and a learner module. The learner synthesizes invariant candidates, and the teacher checks them. If the candidates are not invariants, the teacher gives samples to the learner, which the learner can use to improve the candidates—for example with algorithms known from machine learning. In this thesis, we adapt some previously published Horn clause solver algorithms to invariant synthesis, combine them and measure the efficiency of the completed prototype. A special feature of the presented solution is that the samples that the teacher gives to the learner can represent infinitely many states of the program, as opposed to the Horn-ICE toolkit, where the samples only represent a single program state.},
+}
+
+@incollection{tacas2021,
+    author     = {\'Adam, Zs\'ofia and Sallai, Gyula and Hajdu, \'Akos},
+    title      = {{G}azer-{T}heta: {LLVM}-based Verifier Portfolio with {BMC}/{CEGAR} (Competition Contribution)},
+    year       = {2021},
+    booktitle  = {Tools and Algorithms for the Construction and Analysis of Systems},
+    editor     = {Jan Friso Groote and Kim G. Larsen},
+    series     = {Lecture Notes in Computer Science},
+    volume     = {12652},
+    publisher  = {Springer},
+    pages      = {435--439},
+    doi        = {10.1007/978-3-030-72013-1_27},
+
+    type       = {Conference},
+
+	url_pdf    = {tacas2021.pdf},
+	url_video  = {https://youtu.be/8DEtrRJixpA},
+    abstract   = {Gazer-Theta is a software model checking toolchain including various analyses for state reachability. The frontend, namely Gazer, supports C programs through an LLVM-based transformation and optimization pipeline. Gazer includes an integrated bounded model checker (BMC) and can also employ the Theta backend, a generic verification framework based on abstraction-refinement (CEGAR). On SV-COMP 2021, a portfolio of BMC, explicit-value analysis, and predicate abstraction is applied sequentially in this order.},
+}
+
+@misc{bajkaidMsc2020,
+    author = {Bajkai, Vikt{\'o}ria Dorina},
+    title = {Efficient combinations of predicate abstraction and explicit-value analysis for software model checking},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2020},
+    type = {Thesis},
+    url_pdf = {bajkaidMsc2020.pdf},
+    
+    abstract = {Software systems are controlling devices that surround us in our everyday life. Many of these systems are safety-critical (e.g., autonomous vehicles, power plants), thus ensuring their correct operation is gaining increasing importance. Formal verification techniques can both reveal errors and give guarantees on correctness with a sound mathematical basis. One of the most widely used formal verification approaches is model checking, which systematically examines all possible states and transitions (i.e., the state space) of the program. However, a major drawback of model checking is its high computational complexity, often preventing its application on real-life software. Counterexample-guided abstraction refinement (CEGAR) is a supplementary technique, making model checking more efficient in practice. CEGAR works by iteratively constructing and refining abstractions in a given abstract domain. There are several existing domains, such as explicit-values, which only track a relevant subset of program variables and predicates, which use logical formulas instead of concrete values. Observations show that different abstract domains are more suitable for different kinds of software systems. Therefore, so-called product domains have also emerged that combine different domains into a single algorithm. In this work, we develop and examine various strategies to combine the explicitvalue domain with predicates. Our approaches use different information from the already explored abstract state space to guide further exploration more efficiently. We also formalize the proposed algorithms in a unified framework and implement our new strategies in Theta, an open source verification framework. This allows us to perform experiments with a wide range of software systems including industrial PLC codes. We evaluate the strengths and weaknesses of the different approaches and we also compare them to existing methods. Our experiments shows that the new strategies can form efficient combinations of the existing algorithms.},
+}
+
+@misc{adamzsBsc2021,
+    author  = {\'Ad\'am, Zs\'ofia},
+    title   = {Efficient techniques for formal verification of C programs},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year    = {2021},
+    school  = {Budapest University of Technology and Economics},
+    type    = {Thesis},
+    url_pdf = {adamzsBsc2021.pdf},
+    abstract = {
+Formal verification is an approach of using mathematically precise representations and algorithms to check properties of a given program or model. Formal verification is gaining increasing importance, especially in safety-critical domains. However, formal methods are computationally complex, which has resulted in various efficient algorithms tailored for different application domains.
+In most cases, choosing the right algorithm and configuration for a given problem requires expert knowledge (e.g. which abstraction method to use during the verification). Even an expert might need to execute several configurations before finding one that performs well on the given verification task. But time and resources are limited in most cases.
+My goal in this work is to propose techniques that help utilize the available time more efficiently. Assuming a configurable verifier tool, an input task, a time constraint and sequential execution, the proposed methods select and dynamically change verification configurations forming a complex portfolio. The novelty of the method is that it does not only rely on information from the input task, but also tracks runtime progress information from the verifier and intervenes in the current execution by switching configurations.
+To show how these techniques can be tailored to a tool in practice, I realized them in the tool Theta, focusing on C program verification. Improvements include adding a runtime enhancement to the abstraction-refinement loop of the algorithm, which is capable of detecting when the algorithm is stuck. A portfolio offering a diverse set of configurations with algorithm selection is also added, such that it complements the runtime approach to increase the chance of success.
+For evaluation, a subset of the benchmarking tasks of the International Competition on Software Verification (SV-COMP) is used. SV-COMP is widely regarded as a de-facto standard benchmark set of C program verification tasks. The recommended improvements were compared to several generally well-performing configurations, executed one at a time and in a naive sequential portfolio as well. The tool with the improvements proposed in this thesis proved capable of solving more tasks significantly faster than those in the baseline configurations.
+To summarize, I designed approaches for efficient verification by automating some of the configuration and algorithm selection tasks requiring expert knowledge. The approaches are general and applicable in any verification framework. To evaluate them, I realized these techniques in a specific verifier framework, showing how it can improve the tool's performance.},
+}
+
+@misc{adamzsMsc2023,
+    author  = {\'Ad\'am, Zs\'ofia},
+    title   = {Extending the Capabilities of the CEGAR Model Checking Algorithm},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year    = {2023},
+    school  = {Budapest University of Technology and Economics},
+    type    = {Thesis},
+    url_pdf = {adamzsMsc2023.pdf},
+    abstract = {Safety-critical systems are becoming increasingly complex, including both software and engineering models (e.g. state machines). Formal verifiers automatically prove properties or find errors in these models, but their usage hides various challenges. Counterexample-guided Abstraction Refinement (CEGAR) is a highly configurable formal verification method. Adding new techniques to it for better performance is an active research area.My goal in this work is extending CEGAR in ways to improve usability and applicability of formal verifiers. I focused on two specific challenges: I) correctness of the tools, mainlyconcentrating on validation of the model transformation, II) runtime monitoring of the formal verification, detecting the lack of refinement progress to improve performance. Part I In the first part I focused on engineering models and how they are formalized in model checkers. Formal verification necessitates the precise definition of execution semantics of the engineering modeling language to be able to transform the engineering model to a formal representation. This is a complex task, as these semantics are usually underspecified. To validate these model transformations, the current state of practice recommends creating test models, defining valid execution traces for them (mostly manually), and comparing these traces to the ones returned by verifiers to check conformance. This is an inefficient and error-prone method as valid traces can be easily missed. For abstraction-based model checkers I propose utilizing these abstraction-based techniques for automatic trace generation. I designed a trace generation algorithm, which is able to handle several cases with infinite state space. It utilizes abstraction in a configurable way and generates traces that do not unnecessarily repeat already covered states. I evaluate the algorithm through a case study on tools for reactive state machines. I also show the possibility of other use cases, such as the mitigation of modeling mistakes. Part II Returning to verification, a typical challenge for formal verification and model checking is performance. Large input programs, such as real-world software components, are not easy to verify, as there is no configuration that performs well for any given input. However, termination typically can not be guaranteed. In my earlier work I noticed an issue of refinement progress halting, stopping the convergence of the verification algorithm to success. I proposed runtime monitoring to solve this issue and used it in a complex portfolio. In this work, I was able to assess the issue and my runtime monitoring techniques better, resolving the causes and effects of the issue in more detail and updating, correcting and making runtime monitoring configurable. This time I evaluate runtime monitoring in detail by executing different CEGAR and monitor configurations on the de-facto standard software verification benchmarks of SV- COMP and analyzing the results.},
+}
+
+@misc{cziborovadBsc2021,
+    author  = {Cziborov{\'a}, D{\'o}ra},
+    title   = {Generalizing lazy abstraction refinement algorithms with partial orders},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year    = {2021},
+    school  = {Budapest University of Technology and Economics},
+    type    = {Thesis},
+    url_pdf = {cziborovadBsc2021.pdf},
+    abstract = {Safety verification of software systems is a key challenge in the development of critical real-time embedded systems. In automated software model checking, a formal description of the system is checked against the desired safety properties by an automated tool. However, model checking systems of even a moderate size can be difficult. For systems with a finite number of possible behavior, the number of states that has to be traversed during model checking often grows exponentially in the size of the system. Moreover, taking timing into account requires reasoning with an uncountably infinite set of states. To provide a compact representation of the state space, various abstraction-based techniques were introduced in the literature. Among these techniques, lazy abstraction and its variants provide an efficient solution for the analysis of timed models with data. The various characteristics of the programs being analyzed necessitate different kinds of lazy abstractions. There is no single best algorithm; therefore, there is a need for a configurable lazy abstraction framework as a generalization of the available approaches. Our work aims to provide a configurable lazy abstraction framework by adapting the theory of partial orders and Galois connections to lazy abstractions. In particular, we (i) define a general (theoretical) framework of lazy abstraction refinement; (ii) integrate the existing lazy abstraction techniques into the framework; (iii) provide new combinations and configurations of the lazy abstraction techniques; and (iv) implement a lazy abstraction based model checker in the open source Theta tool. We evaluate the applicability of the algorithms on benchmark models.},
+}
+
+@misc{bajczilMsc2022,
+    author = {Bajczi, Levente},
+    title = {Handling axiomatic memory models in abstraction-based model checking of concurrent and distributed systems},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2022},
+    type = {Thesis},
+    url_pdf = {bajczilMsc2022.pdf},    
+    abstract = {Formal verification of hardware-software critical systems is a necessity for an increasing number of applications. We trust the lives of people on the safety of computer software, and we have to be absolutely certain they will never fail. One of the problems state-of-the-art verification tools struggle with is weakly ordered models of communication, both in the case of shared memory concurrency and distributed systems. The seemingly arbitrary reordering of accesses makes the state space unmanageably large for conventional approaches. In this thesis, I survey the landscape of verification tools capable of performantly handling parallelism, both in the case of sequential consistency as well as weak memory ordering (1). I implement one of the best approaches in the verification framework Theta, a tool maintained by the Critical Systems Research Group (2). Furthermore, I propose a novel approach for handling practically infinite-state inputs for the weakly ordered memory models, and I create a proof-of-concept implementation of the main parts of the algorithm (3). Finally, I apply the memory modeling principles to message-based communication protocols, thereby widening the applicability of the algorithms and approaches shown before (4).},
+}
+
+@incollection{tacas2022,
+	title        = {Theta: portfolio of CEGAR-based analyses with dynamic algorithm selection (Competition Contribution)},
+	author       = {{\'A}d{\'a}m, Zs{\'o}fia and Bajczi, Levente and Dobos-Kov{\'a}cs, Mih{\'a}ly and Hajdu, {\'A}kos and Moln{\'a}r, Vince},
+	year         = 2022,
+	booktitle    = {Tools and Algorithms for the Construction and Analysis of Systems},
+	publisher    = {Springer International Publishing},
+	address      = {Cham},
+	series       = {Lecture Notes in Computer Science},
+	volume       = 13244,
+	pages        = {474--478},
+	doi          = {10.1007/978-3-030-99527-0_34},
+	isbn         = {978-3-030-99527-0},
+	editor       = {Fisman, Dana and Rosu, Grigore},
+	abstract     = {Theta is a model checking framework based on abstraction refinement algorithms. In SV-COMP 2022, we introduce: 1) reasoning at the source-level via a direct translation from C programs; 2) support for concurrent programs with interleaving semantics; 3) mitigation for non-progressing refinement loops; 4) support for SMT-LIB-compliant solvers. We combine all of the aforementioned techniques into a portfolio with dynamic algorithm selection.},
+	url_pdf      = {tacas2022.pdf},
+	type         = {Conference}
+}
+
+
+@inproceedings{formalise22,
+    title        = {C for Yourself: Comparison of Front-End Techniques for Formal Verification},
+    author       = {Bajczi, Levente and {\'A}d{\'a}m, Zs{\'o}fia and Moln{\'a}r, Vince},
+    year         = 2022,
+    booktitle    = {2022 IEEE/ACM 10th International Conference on Formal Methods in Software Engineering},
+    location     = {Pittsburgh, PA, USA},
+    publisher    = {IEEE},
+    doi          = {10.1145/3524482.3527646},
+    type         = {Conference},
+    url_pdf      = {formalise22.pdf},
+    abstract     = {With the improvement of hardware and algorithms, the main challenge of software model checking has shifted from pure algorithmic performance toward supporting a wider set of input programs. Successful toolchains tackle the problem of parsing a wide range of inputs in an efficient way by reusing solutions from existing compiler technologies such as Eclipse CDT or LLVM. Our experience suggests that well-established techniques in compiler technology are not necessarily beneficial to model checkers and sometimes can even hurt their performance. In this paper, we review the tools mature enough to participate in the Software Verification Competition in terms of the employed analysis and frontend techniques. We find that successful tools do exhibit a bias toward certain combinations. We explore the theoretical reasons and suggest an adaptable approach for model checking frameworks. We validate our recommendations by implementing a new frontend for a model checking framework and show that it indeed benefits some of the algorithms.}
+}
+
+@misc{mondokmMsc2022,
+    author = {Mondok, Mil\'an},
+    title = {Efficient formal verification of component-based engineering models},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year = {2022},
+    type = {Thesis},
+    url_pdf = {mondokmMsc2022.pdf},
+    url_link = {https://diplomaterv.vik.bme.hu/hu/Theses/Komponensalapu-mernoki-modellek-hatekony},
+    abstract = {Ensuring the correct functioning of safety critical systems is essential, as even the smallest mistakes can lead to significant material damage or - in extreme cases - cost human lives. Formal verification is capable of proving the correctness of the system and uncovering hidden faults. As opposed to testing, formal verification can give a mathematically sound proof of correctness, but its resource intensiveness hinders widespread application. Embedded developers and hardware design engineers can already make use of an extensive set of formal verification tools, but the same cannot be said about systems engineers sadly. Systems engineers typically use high-level, complex, heterogeneous models. Verifying such systems poses a different challenge than the verification of software or hardware - the representations and algorithms used for these two have been developed to solve problems of a different nature. A system model typically contains multiple heterogeneous components, which means that in order to verify the complete system, a common language is required that is a good compromise between the different paradigms. When designing such a language, there is a trade-off between generality and efficiency. How can we take advantage of as much domain specific information as possible without losing generality - and thus the ability to describe the different heterogeneous components with the same language? During my previous research I developed the Extended Symbolic Transition System (XSTS) formalism, which was the first step towards creating such a language. In this work, I present extensions and optimizations, which enabled the XSTS language and infrastructure to efficiently verify large-scale industrial models. Increasing the expressive power of the language widened the scope of verifiable high-level engineering models. By improving the product abstraction domain, I created a dedicated combined abstract domain, which is capable of efficiently tracking control and general information together. I also developed algorithmic optimizations that help make the most efficient use of the information available at a given level of abstraction, resulting in a significant simplification of the logical formulas passed to the constraint solver underlying the algorithm. In addition, I propose modeling and transformation best practices that lead to better performance in certain source models. The extensions presented in this work constitute a significant and definite step towards finding the most suitable level of abstraction for the verification of heterogeneous system models. To prove the practical applicability of my approach, I present an industrial case study created in the SysML modeling language, which became verifiable thanks to the additions made to the XSTS formalism and model checker. I evaluated my approach in an extensive benchmarking campaign, which further underlined the efficiency and necessity of the extensions presented in this work.},
+}
+
+@misc{telbiszcsBsc2022,
+    author = {Telbisz, Csan\'ad},
+    title = {Partial Order Reduction for Abstraction-Based Verification of Concurrent Software in the Theta Framework},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2022},
+    type = {Thesis},
+    url_pdf = {telbiszcsBsc2022.pdf},
+    url_link = {https://diplomaterv.vik.bme.hu/hu/Theses/Reszleges-rendezes-redukcio-tobbszalu},
+    abstract = {As multi-core processors gain popularity in safety-critical systems, multi-threaded programs are increasingly used in these systems to exploit their full potential. Concurrency introduces a new level of complexity into software verification due to the great number of possible thread interleavings. Achieving satisfying test coverage is even more challenging, and naive verification techniques become practically infeasible as a result of this complexity. Partial order reduction (POR) is an effective approach to handle concurrency in model checking. Counterexample-Guided Abstraction Refinement (CEGAR) is an efficient abstraction-based technique for checking reachability in a state space. Partial order reduction has been an active field of study in recent decades. Several algorithms have been published with the aim of achieving better performance by greater reduction. Some state-of-the-art partial order reduction algorithms are presented in this report. Mostly though, these algorithms only assume a simple state space exploration which limit the possibilities for further optimization. In this work, I present novel ways to integrate a dynamic partial order reduction algorithm into an abstraction-based verification process. Information is exploited about the applied abstraction when building a dependency relation on operations of a program. If the source of dependency between certain operations is abstracted away, they need not be considered dependent. By decreasing the dependency in the model, the reducing effect of partial order reduction is increased. Counterexample-Guided Abstraction Refinement (CEGAR) has several optimizations including lazy computation. I show how the proposed abstraction-aware partial order reduction algorithm can be combined with the lazy computation of the state space. As an application of the presented algorithms, I introduce how partial order reduction can be used for data race detection. Finally, I evaluate the performance of the proposed algorithms.},
+}
+
+@misc{somorjaimBsc2022,
+    author = {Somorjai, M\'ark},
+    title = {Abstraction Based Techniques for Constrained Horn Clause Solving},
+    note = {Bachelor's Thesis, Budapest University of Technology and Economics},
+    year = {2022},
+    type = {Thesis},
+    url_pdf = {somorjaimBsc2022.pdf},
+    url_link = {https://diplomaterv.vik.bme.hu/hu/Theses/Absztrakcio-alapu-technikak-CHC-problemak},
+    abstract = {Software components of safety-critical systems are becoming more and more complex. Failure in a safety-critical system can lead to enormous financial loss, environmental dam- age, or even loss of life; thereby, the correctness of such systems needs to be ensured. Conventional testing can not be exhaustive in reasonable time, leaving the need to prove the safety of programs in other ways. Formal verification takes on this task by provid- ing a mathematically precise proof of correctness or refutation to the safety properties of programs, such as the reachability of an erroneous state. Formal verification works on formal models of programs, one such formalism being the Control Flow Automaton (CFA). It is a graph-like notation to represent programs, in which erroneous locations map to specific nodes that should be unreachable. Another formalism that is widely used as an intermediate language in the verification process is Constrained Horn Clauses (CHCs). They can describe programs and their desired properties in a well-defined subset of first-order logic formulae on variables and uninterpreted functions. Therefore the question of correctness in this representation is embodied in the satisfiability of a query, which can be decided by SMT solvers designed to determine the satisfiability of mathematical formulae. Conventionally, one approach to deciding reachability in CFAs has been to transform the model into CHCs and utilize an SMT solver to find a satisfying model. However, this task tends to be difficult for SMT solvers due to the exponential number of possible assignments with respect to the number of variables and predicates. In contrast, in this work, I propose an approach to solving CHCs by transforming them into a CFA, which provides access to powerful abstraction-refinement-based model checking algorithms. Such algorithms employ abstraction to reduce the space of possible assignments, which could potentially lead to significant improvements in efficiency compared to traditional CHC solving techniques. I evaluate my approach both on synthetic and industrial examples.},
+}
+
+@misc{cziborovadMsc2023,
+    author  = {Cziborov{\'a}, D{\'o}ra},
+    title   = {Abstraction-based timed model checking for software-intensive system models},
+    note = {Master's Thesis, Budapest University of Technology and Economics},
+    year    = {2023},
+    school  = {Budapest University of Technology and Economics},
+    type    = {Thesis},
+    url_pdf = {cziborovadMsc2023.pdf},
+    abstract = {Ensuring the safe operation of real-time software-intensive systems is crucial in many critical applications, such as automatic driver assist systems, monitors for railway systems, and smart cities. Automated model checking provides a mathematically precise way to maintain safety and prevent damage to property by formally verifying correctness. Real-time scheduling requirements and complex timed behavior make the verification of real-time software-intensive systems difficult. These systems also contain computations with external data, \eg sensor data, and heavily data-dependent computations. These properties pose a twofold challenge: (1) development of the software often requires complex toolchains, such as statechart-based modeling to adequately express behaviors, and (2) formal verification is adversely affected by state space explosion caused by the possible scheduling and data inputs. To counteract the latter problem, abstraction-based model checking tools have been developed in the literature. In our previous work, we developed a combination of abstraction-based algorithms to simultaneously handle timed behaviors and complex data acquisition. However, existing low-level formalisms for timed model checking lack the expressive power to represent system models from high-level modeling toolchains. While discrete approximations of timed behaviors are a common solution to enable the use of more expressive verification algorithms that do not natively support timed behaviors, this may introduce unsoundness due to discretization error. This work aims to propose an intermediate formalism to represent real-time software-intensive system models, and adapt existing abstraction-based model checking algorithms. In particular, we (i) propose an extension to the Extended Symbolic Transition System (XSTS) formalism used as an intermediate model in the Gamma statchart-based modeling toolchain to represent timed systems, leveraging the existing capabilities of Gamma and XSTS to represent complex data-driven behaviors and communication between system components. We also (ii) adapt abstraction-based model checking approaches to handle the verification of timed XSTS, including (iii) handling complex control flow caused by component communication and hierarchical modeling in our combined verification algorithm. We (iv) implement the timed XSTS formalism and the verification algorithms in the open-source Theta verification framework and (v) evaluate the proposed approaches on case studies from industrial projects, as well as synthetic benchmarks. As a result, verification of complex real-time software-intensive systems is enabled without limitations to expressive power or unsoundness introduced by discretization.},
+}

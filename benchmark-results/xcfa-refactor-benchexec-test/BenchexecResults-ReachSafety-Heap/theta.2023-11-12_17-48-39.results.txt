@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Heap, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:48:39 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az768-743
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3217.992 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Heap
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                 status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------
+test09.yml                ERROR (generic error)            1.98        0.84        None
+test15.yml                ERROR (generic error)            2.00        0.86        None
+just_assert.yml           true                             1.96        0.82        None
+volatile_alias.yml        ERROR (generic error)            1.99        0.85        None
+mutex_lock_int.c_1.yml    ERROR (generic error)            2.03        0.86        None
+oomInt.yml                true                             2.35        0.95        None
+test16.yml                ERROR (generic error)            1.97        0.85        None
+mutex_lock_int.yml        ERROR (generic error)            2.05        0.89        None
+test18.yml                ERROR (generic error)            2.07        0.89        None
+volatile_alias.c_1.yml    ERROR (generic error)            2.02        0.86        None
+---------------------------------------------------------------------------------------
+Run set 1                 done                            20.41        9.70           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               2
+    correct true:        2
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               8
+  Score:                 4 (max: 19)
