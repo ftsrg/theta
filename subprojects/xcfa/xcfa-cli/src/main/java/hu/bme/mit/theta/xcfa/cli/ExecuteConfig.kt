@@ -22,12 +22,16 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyProof
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
+import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
@@ -41,6 +45,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
@@ -48,9 +53,11 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -59,6 +66,7 @@ import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
+import java.io.PrintWriter
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -67,7 +75,7 @@ fun runConfig(
   logger: Logger,
   uniqueLogger: Logger,
   throwDontExit: Boolean,
-): SafetyResult<*, *> {
+): Result<*> {
   propagateInputOptions(config, logger, uniqueLogger)
 
   registerAllSolverManagers(config.backendConfig.solverHome, logger)
@@ -76,11 +84,11 @@ fun runConfig(
 
   val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-  preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+  preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-  postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postAnalysisLogging(result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
 }
@@ -195,8 +203,8 @@ fun frontend(
   logger.write(
     Logger.Level.INFO,
     "Frontend finished: ${xcfa.name}  (in ${
-        stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n",
+            stopwatch.elapsed(TimeUnit.MILLISECONDS)
+        } ms)\n",
   )
 
   logger.write(RESULT, "ParsingResult Success\n")
@@ -216,8 +224,10 @@ private fun backend(
   logger: Logger,
   uniqueLogger: Logger,
   throwDontExit: Boolean,
-): SafetyResult<*, *> =
-  if (config.backendConfig.backend == Backend.NONE) {
+): Result<*> =
+  if (config.backendConfig.backend == Backend.TRACEGEN) {
+    tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
+  } else if (config.backendConfig.backend == Backend.NONE) {
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
     if (
@@ -238,12 +248,13 @@ private fun backend(
         "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
       )
 
-      val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
       val result =
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check()
           }
           .let ResultMapper@{ result ->
+            result as SafetyResult<*, *>
             when {
               result.isSafe && xcfa.unsafeUnrollUsed -> {
                 // cannot report safe if force unroll was used
@@ -319,7 +330,34 @@ private fun backend(
     }
   }
 
-private fun preVerificationLogging(
+private fun tracegenBackend(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+  throwDontExit: Boolean,
+): Result<*> {
+  val stopwatch = Stopwatch.createStarted()
+  val checker =
+    getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+      as Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>>
+  val result =
+    exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+      checker.check(XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())))
+    }
+  logger.write(
+    Logger.Level.INFO,
+    "Backend finished (in ${
+            stopwatch.elapsed(TimeUnit.MILLISECONDS)
+        } ms)\n",
+  )
+
+  return result
+}
+
+private fun preAnalysisLogging(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -378,6 +416,41 @@ private fun preVerificationLogging(
     }
   }
 }
+
+private fun postAnalysisLogging(
+  result: Result<*>,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+) =
+  when (config.backendConfig.backend) {
+    Backend.TRACEGEN ->
+      postTraceGenerationLogging(
+        result
+          as
+          TraceGenerationResult<
+            AbstractTraceSummary<XcfaState<*>, XcfaAction>,
+            XcfaState<*>,
+            XcfaAction,
+          >,
+        mcm,
+        parseContext,
+        config,
+        logger,
+        uniqueLogger,
+      )
+    else ->
+      postVerificationLogging(
+        result as SafetyResult<*, *>,
+        mcm,
+        parseContext,
+        config,
+        logger,
+        uniqueLogger,
+      ) // safety analysis (or none)
+  }
 
 private fun postVerificationLogging(
   safetyResult: SafetyResult<*, *>,
@@ -511,4 +584,77 @@ private fun writeSequenceTrace(
       current
     }
   sequenceFile.appendText("@enduml\n")
+}
+
+private fun postTraceGenerationLogging(
+  result:
+    TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>,
+  mcm: MCM,
+  parseContext: ParseContext,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+) {
+  val abstractSummary = result.summary
+  logger.write(
+    Logger.Level.MAINSTEP,
+    "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n",
+  )
+
+  val resultFolder = config.outputConfig.resultFolder
+  resultFolder.mkdirs()
+
+  if (config.outputConfig.enableOutput) {
+    logger.write(
+      Logger.Level.MAINSTEP,
+      "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
+    )
+
+    val modelName = config.inputConfig.input?.name ?: "anonymous"
+    val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+    val visFile =
+      resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
+    GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+    logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+
+    var concreteTraces = 0
+    for (abstractTrace in abstractSummary.sourceTraces) {
+      try {
+        // TODO no concrete summary implemented for XCFA yet, only traces
+        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+          XcfaTraceConcretizer.concretize(
+            abstractTrace.toTrace() as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+          )
+
+        val concreteTraceFile =
+          resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.cex"
+
+        PrintWriter(File(concreteTraceFile)).use { printWriter ->
+          printWriter.write(concrTrace.toString())
+        }
+
+        val concreteDotFile =
+          File(resultFolder.absolutePath + File.separator + modelName + "_${concreteTraces}.dot")
+        val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
+        concreteDotFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+
+        logger.write(
+          Logger.Level.MAINSTEP,
+          "Concrete trace exported to ${concreteTraceFile} and ${concreteDotFile}",
+        )
+        concreteTraces++
+      } catch (e: IllegalArgumentException) {
+        logger.write(Logger.Level.SUBSTEP, e.toString())
+        logger.write(Logger.Level.SUBSTEP, "Continuing concretization with next trace...")
+      }
+    }
+    logger.write(Logger.Level.RESULT, "Successfully generated ${concreteTraces} concrete traces.\n")
+  }
+
+  // TODO print coverage (full or not)?
 }

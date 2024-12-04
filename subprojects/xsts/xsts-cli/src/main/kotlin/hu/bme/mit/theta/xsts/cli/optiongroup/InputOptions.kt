@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli.optiongroup
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
@@ -30,34 +29,38 @@ import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 
-class InputOptions : OptionGroup(
-    name = "Input options",
-    help = "Options related to model and property input"
-) {
+class InputOptions :
+  OptionGroup(name = "Input options", help = "Options related to model and property input") {
+  val model: File by
+    option(
+        help =
+          "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
+      )
+      .file(mustExist = true, canBeDir = false)
+      .required()
+  private val property: InputStream? by
+    option(help = "Path of the property file. Has priority over --inlineProperty").inputStream()
+  private val inlineProperty: String? by
+    option(help = "Input property as a string. Ignored if --property is defined")
+  private val initialmarking: String by
+    option(help = "Initial marking of the pnml model").default("")
 
-    val model: File by option(
-        help = "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
-    ).file(mustExist = true, canBeDir = false).required()
-    private val property: InputStream? by option(
-        help = "Path of the property file. Has priority over --inlineProperty"
-    ).inputStream()
-    private val inlineProperty: String? by option(help = "Input property as a string. Ignored if --property is defined")
-    private val initialmarking: String by option(help = "Initial marking of the pnml model").default("")
+  fun isPnml() = model.path.endsWith("pnml")
 
-    fun isPnml() = model.path.endsWith("pnml")
-
-    fun loadXsts(): XSTS {
-        val propertyStream = if (property != null) property else (if (inlineProperty != null) ByteArrayInputStream(
-            "prop { $inlineProperty }".toByteArray()
-        ) else null)
-        if (isPnml()) {
-            val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
-            return PetriNetToXSTS.createXSTS(petriNet, propertyStream)
-        }
-        return XstsDslManager.createXsts(
-            SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
-        )
+  fun loadXsts(): XSTS {
+    val propertyStream =
+      if (property != null) property
+      else
+        (if (inlineProperty != null) ByteArrayInputStream("prop { $inlineProperty }".toByteArray())
+        else null)
+    if (isPnml()) {
+      val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
+      return PetriNetToXSTS.createXSTS(petriNet, propertyStream)
     }
+    return XstsDslManager.createXsts(
+      SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
+    )
+  }
 
-    fun loadPetriNet(): MutableList<PetriNet> = PetriNetParser.loadPnml(model).parsePTNet()
+  fun loadPetriNet(): MutableList<PetriNet> = PetriNetParser.loadPnml(model).parsePTNet()
 }

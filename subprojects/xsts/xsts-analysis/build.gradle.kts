@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 /*
  *  Copyright 2024 Budapest University of Technology and Economics
  *
@@ -26,6 +28,18 @@ dependencies {
     implementation(project(":theta-xsts"))
     testImplementation(project(":theta-solver-z3"))
     testImplementation(project(":theta-solver-z3-legacy"))
+    implementation(kotlin("stdlib-jdk8"))
     testImplementation(project(":theta-solver-smtlib"))
     testImplementation(project(":theta-solver-javasmt"))
+}
+repositories {
+    mavenCentral()
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "17"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "17"
 }
