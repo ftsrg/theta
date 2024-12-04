@@ -183,6 +183,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
       return SequenceLabel(labelList)
     }
 
+    fun assume(varDecl: VarDecl<BoolType>) = assume(varDecl.ref)
+
     fun syncSend(channel: VarDecl<*>): SequenceLabel {
       val label = SyncSendLabel(channel)
       labelList.add(label)
@@ -368,3 +370,29 @@ fun XcfaBuilder.procedure(
 ): XcfaProcedureBuilderContext {
   return procedure(name, ProcedurePassManager(), lambda)
 }
+
+infix fun Expr<BoolType>.and(that: Expr<BoolType>) = SmartBoolExprs.And(this, that)
+infix fun VarDecl<BoolType>.and(that: Expr<BoolType>) = this.ref and that
+infix fun Expr<BoolType>.and(that: VarDecl<BoolType>) = this and that.ref
+infix fun VarDecl<BoolType>.and(that: VarDecl<BoolType>) = this.ref and that.ref
+
+infix fun Expr<BoolType>.or(that: Expr<BoolType>) = SmartBoolExprs.Or(this, that)
+infix fun VarDecl<BoolType>.or(that: Expr<BoolType>) = this.ref or that
+infix fun Expr<BoolType>.or(that: VarDecl<BoolType>) = this or that.ref
+infix fun VarDecl<BoolType>.or(that: VarDecl<BoolType>) = this.ref or that.ref
+
+operator fun Expr<BoolType>.not() = SmartBoolExprs.Not(this)
+operator fun VarDecl<BoolType>.not() = !(this.ref)
+
+operator fun Expr<IntType>.plus(that: Expr<IntType>) = IntExprs.Add(this, that)
+operator fun Expr<IntType>.plus(that: VarDecl<IntType>) = this + that.ref
+operator fun VarDecl<IntType>.plus(that: Expr<IntType>) = this.ref + that
+operator fun VarDecl<IntType>.plus(that: VarDecl<IntType>) = this.ref + that.ref
+
+operator fun Expr<IntType>.minus(that: Expr<IntType>) = IntExprs.Sub(this, that)
+operator fun Expr<IntType>.minus(that: VarDecl<IntType>) = this - that.ref
+operator fun VarDecl<IntType>.minus(that: Expr<IntType>) = this.ref - that
+operator fun VarDecl<IntType>.minus(that: VarDecl<IntType>) = this.ref - that.ref
+
+operator fun Expr<IntType>.unaryMinus() = IntExprs.Neg(this)
+operator fun VarDecl<IntType>.unaryMinus() = -this.ref

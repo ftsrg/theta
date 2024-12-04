@@ -39,7 +39,9 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -192,9 +194,12 @@ fun getCoreXcfaLts() =
       .flatten()
       .toSet()
       .filter { action ->
-        s.syncingOn?.let { key ->
+        if(s.syncingOn != null)
+        s.syncingOn.let { key ->
           action.label.getFlatLabels().firstOrNull()?.let { it is SyncRecvLabel && it.key == key } ?: false
-        } ?: true
+        } else {
+          ! (action.label.getFlatLabels().firstOrNull()?.let { it is SyncRecvLabel } ?: false)
+        }
       }
   }
 
@@ -205,19 +210,24 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   }
 }
 
-enum class ErrorDetection {
-  ERROR_LOCATION,
-  DATA_RACE,
-  OVERFLOW,
-  MEMSAFETY,
-  MEMCLEANUP,
-  NO_ERROR,
+sealed class ErrorDetection(val name: String) {
+  object ERROR_LOCATION : ErrorDetection("ERROR_LOCATION")
+  object DATA_RACE : ErrorDetection("DATA_RACE")
+  object OVERFLOW : ErrorDetection("OVERFLOW")
+  object MEMSAFETY : ErrorDetection("MEMSAFETY")
+  object MEMCLEANUP : ErrorDetection("MEMCLEANUP")
+  object NO_ERROR : ErrorDetection("NO_ERROR")
+  data class CustomError(
+    val predicate: Predicate<XcfaState<out PtrState<out ExprState>>>
+  ): ErrorDetection("CustomError")
 }
 
 fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
   when (errorDetection) {
+    is ErrorDetection.CustomError -> errorDetection.predicate
+
     ErrorDetection.MEMSAFETY,
     ErrorDetection.MEMCLEANUP,
     ErrorDetection.ERROR_LOCATION ->
@@ -329,7 +339,10 @@ private fun getExplXcfaInitFunc(
       }
       .toMap()
   return { p ->
-    ExplInitFunc.create(solver, True()).getPtrInitFunc().getInitStates(p.p).map {
+    val initExpr = SmartBoolExprs.And(xcfa.globalVars.map {
+      AbstractExprs.Eq(it.wrappedVar.ref, it.initValue)
+    })
+    ExplInitFunc.create(solver, initExpr).getPtrInitFunc().getInitStates(p.p).map {
       XcfaState(xcfa, processInitState, it)
     }
   }
@@ -395,7 +408,10 @@ private fun getPredXcfaInitFunc(
       }
       .toMap()
   return { p ->
-    PredInitFunc.create(predAbstractor, True()).getPtrInitFunc().getInitStates(p.p).map {
+    val initExpr = SmartBoolExprs.And(xcfa.globalVars.map {
+      AbstractExprs.Eq(it.wrappedVar.ref, it.initValue)
+    })
+    PredInitFunc.create(predAbstractor, initExpr).getPtrInitFunc().getInitStates(p.p).map {
       XcfaState(xcfa, processInitState, it)
     }
   }

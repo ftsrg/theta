@@ -295,6 +295,7 @@ private fun backend(
                     ErrorDetection.ERROR_LOCATION -> "unreach-call"
                     ErrorDetection.OVERFLOW -> "no-overflow"
                     ErrorDetection.NO_ERROR -> null
+                    is ErrorDetection.CustomError -> null
                   }
                 property?.also { logger.write(RESULT, "(Property %s)\n", it) }
                 result

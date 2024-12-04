@@ -65,33 +65,6 @@ import java.io.File
 
 class ThyssenXcfaDslTest {
 
-    fun sendChan(chan: VarDecl<*>, chanAck: VarDecl<*>, syncEdgeContent: List<XcfaLabel>) = SequenceLabel(
-        listOf(
-            AssignStmtLabel(chan, True(), EmptyMetaData),
-            FenceLabel(setOf("ATOMIC_BEGIN")),
-            StmtLabel(Stmts.Assume(chanAck.ref as Expr<BoolType>)),
-            AssignStmtLabel(chanAck, False(), EmptyMetaData),
-            *syncEdgeContent.toTypedArray(),
-            FenceLabel(setOf("ATOMIC_END"))
-        ),
-        EmptyMetaData
-    )
-    fun receiveChan(chan: VarDecl<*>, chanAck: VarDecl<*>, syncEdgeContent: List<XcfaLabel>): SequenceLabel {
-        val labels = listOf(
-            FenceLabel(setOf("ATOMIC_BEGIN")),
-            StmtLabel(Stmts.Assume(chan.ref as Expr<BoolType>)),
-            AssignStmtLabel(chanAck, True(), EmptyMetaData),
-            AssignStmtLabel(chan, False(), EmptyMetaData),
-            *syncEdgeContent.toTypedArray(),
-            FenceLabel(setOf("ATOMIC_END")),
-            StmtLabel(Stmts.Assume(Not(chanAck.ref as Expr<BoolType>))),
-        )
-        return SequenceLabel(
-            labels,
-            EmptyMetaData
-        )
-    }
-
     private fun getXcfa() = xcfa("example") {
         val transientCommFailureEnabled = true
         val permanentCommFailureEnabled = true
@@ -109,9 +82,6 @@ class ThyssenXcfaDslTest {
         lateinit var runDiag: VarDecl<BoolType>
         lateinit var runA: VarDecl<BoolType>
         lateinit var runB: VarDecl<BoolType>
-        lateinit var runDiagAck: VarDecl<BoolType>
-        lateinit var runAAck: VarDecl<BoolType>
-        lateinit var runBAck: VarDecl<BoolType>
 
         global {
             okA = bool("okA", True())
@@ -124,10 +94,7 @@ class ThyssenXcfaDslTest {
             BtoACommPermFailed = bool("BtoACommPermFailed", False()) 
             runDiag = bool("runDiag", False()) 
             runA = bool("runA", False()) 
-            runB = bool("runB", False()) 
-            runDiagAck = bool("runDiagAck", False()) 
-            runAAck = bool("runAAck", False()) 
-            runBAck = bool("runBAck", False()) 
+            runB = bool("runB", False())
         }
         threadlocal {
             //y = "y" type Int() init "2"
@@ -189,11 +156,11 @@ class ThyssenXcfaDslTest {
             (init to "Master") { nop() }
             ("Master" to "Master") {
                 syncRecv(runA)
-                assume("okA and okBforA")
+                assume(okA and okBforA)
             }
             ("Master" to "Standalone") {
                 syncRecv(runA)
-                assume("okA and not okBforA")
+                assume(okA and !okBforA)
             }
             ("Standalone" to "Standalone") {
                 syncRecv(runA)
@@ -201,7 +168,7 @@ class ThyssenXcfaDslTest {
             }
             ("Standalone" to "Error") {
                 syncRecv(runA)
-                assume("(not okA)")
+                assume(!okA)
             }
             ("Error" to "Error") {
                 syncRecv(runA)
@@ -209,38 +176,38 @@ class ThyssenXcfaDslTest {
             }
             ("Master" to "Passive") {
                 syncRecv(runA)
-                assume("(and (not okA) okBforA)")
+                assume(!okA and okBforA)
             }
             ("Master" to "Error") {
                 syncRecv(runA)
-                assume("(and (not okA) (not okBforA))")
+                assume(!okA and !okBforA)
             }
             ("Passive" to "Error") {
                 syncRecv(runA)
-                assume("(not okBforA)")
+                assume(!okBforA)
             }
             ("Passive" to "Passive") {
                 syncRecv(runA)
-                assume("okBforA")
+                assume(okBforA)
             }
         }
         val RWA_B = procedure("RWA_B") {
             (init to "Silent") { nop() }
             ("Silent" to "Silent") {
                 syncRecv(runB)
-                assume("(and okB okAforB)")
+                assume(okB and okAforB)
             }
             ("Silent" to "Standalone") {
                 syncRecv(runB)
-                assume("(and okB (not okAforB))")
+                //assume(okB and !okAforB)
             }
             ("Standalone" to "Standalone") {
                 syncRecv(runB)
-                assume("okB")
+                assume(okB)
             }
             ("Standalone" to "Error") {
                 syncRecv(runB)
-                assume("(not okB)")
+                assume(!okB)
             }
             ("Error" to "Error") {
                 syncRecv(runB)
@@ -248,19 +215,19 @@ class ThyssenXcfaDslTest {
             }
             ("Silent" to "Passive") {
                 syncRecv(runB)
-                assume("(and (not okB) okAforB)")
+                assume(!okB and okAforB)
             }
             ("Silent" to "Error") {
                 syncRecv(runB)
-                assume("(and (not okB) (not okAforB))")
+                assume(!okB and !okAforB)
             }
             ("Passive" to "Error") {
                 syncRecv(runB)
-                assume("(not okAforB)")
+                assume(!okAforB)
             }
             ("Passive" to "Passive") {
                 syncRecv(runB)
-                assume("okAforB")
+                assume(okAforB)
             }
         }
 
@@ -290,22 +257,15 @@ class ThyssenXcfaDslTest {
     fun defineXcfa() {
         LbePass.level = LbePass.LbeLevel.LBE_LOCAL
         val origXcfa = getXcfa()
-        val passedXcfa = origXcfa.optimizeFurther(
-            ProcedurePassManager(
-                listOf(
-                    NormalizePass(),
-                    DeterministicPass(),
-                    EliminateSelfLoops(),
-                    SBEPass(),
-                    LbePass(ParseContext())
-                )
-            )
-        )
         println(origXcfa.toDot())
 
         val inputConfig = InputConfig(
             xcfaWCtx = Triple(origXcfa, listOf(), ParseContext()),
-            property = ErrorDetection.NO_ERROR
+            property = ErrorDetection.CustomError {
+                it.processes.values.any { it.locs.peek().name == "GlobalScheduler_Stable" } &&
+                it.processes.values.any { it.locs.peek().name == "RWA_B_Standalone" }
+                     && it.processes.values.any { it.locs.peek().name in setOf("RWA_A_Master", "RWA_A_Standalone") }
+            }
         )
         val frontendConfig = FrontendConfig(
             lbeLevel = LbePass.level,
@@ -328,7 +288,7 @@ class ThyssenXcfaDslTest {
                     abstractionSolver = "Z3",
                     validateAbstractionSolver = false,
                     domain = EXPL,
-                    maxEnum = 1,
+                    maxEnum = 0,
                     search = DFS,
                 ),
                 refinerConfig = CegarRefinerConfig(
@@ -344,7 +304,7 @@ class ThyssenXcfaDslTest {
             enableOutput = true,
             resultFolder = File("F:\\egyetem\\thesta\\theta\\subprojects\\xcfa\\xcfa\\src\\test\\temp")
         )
-        runConfig(
+        val result = runConfig(
             XcfaConfig(
                 inputConfig,
                 frontendConfig,
