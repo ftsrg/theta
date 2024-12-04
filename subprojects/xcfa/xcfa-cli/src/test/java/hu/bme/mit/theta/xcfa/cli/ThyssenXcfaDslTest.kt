@@ -254,7 +254,7 @@ class ThyssenXcfaDslTest {
     }
 
     @Test
-    fun defineXcfa() {
+    fun checkXcfa() {
         LbePass.level = LbePass.LbeLevel.LBE_LOCAL
         val origXcfa = getXcfa()
         println(origXcfa.toDot())
@@ -318,4 +318,48 @@ class ThyssenXcfaDslTest {
         )
     }
 
+    @Test
+    fun tracegen() {
+        LbePass.level = LbePass.LbeLevel.LBE_LOCAL
+        val origXcfa = getXcfa()
+        val inputConfig =
+            InputConfig(
+                xcfaWCtx = Triple(origXcfa, listOf(), ParseContext()),
+                property = ErrorDetection.NO_ERROR,
+            )
+        val frontendConfig =
+            FrontendConfig(
+                lbeLevel = LbePass.level,
+                loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+                inputType = InputType.C,
+                specConfig = CFrontendConfig(arithmetic = efficient),
+            )
+        val backendConfig =
+            BackendConfig(
+                backend = Backend.TRACEGEN,
+                timeoutMs = 0,
+                specConfig =
+                TracegenConfig(
+                    abstractorConfig =
+                    CegarAbstractorConfig(
+                        abstractionSolver = "Z3",
+                        validateAbstractionSolver = false,
+                        domain = EXPL,
+                        maxEnum = 1,
+                        search = DFS,
+                    )
+                ),
+            )
+        val outputConfig =
+            OutputConfig(
+                enableOutput = true,
+                resultFolder = File("F:\\egyetem\\thesta\\theta\\subprojects\\xcfa\\xcfa\\src\\test\\temp"),
+            )
+        runConfig(
+            XcfaConfig(inputConfig, frontendConfig, backendConfig, outputConfig, DebugConfig()),
+            ConsoleLogger(Logger.Level.SUBSTEP),
+            ConsoleLogger(Logger.Level.SUBSTEP),
+            true,
+        )
+    }
 }
