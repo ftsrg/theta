@@ -1,0 +1,16 @@
+type Abc : { A, B, C, D}
+type Colors : { Red, Green, Blue}
+var letter : Abc = A
+var color : Colors = Red
+
+trans {
+    havoc letter;
+}
+
+init{}
+
+env {
+    havoc color;
+}
+
+prop{true}

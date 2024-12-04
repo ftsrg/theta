@@ -1,0 +1,20 @@
+HOA: v1
+tool: "owl ltl2ngba" "21.0"
+name: "Automaton for F(((ap0) & (ap1) & (ap2) & (ap3) & (X(ap4)) & (X(X(!ap5)))))"
+owlArgs: "ltl2ngba" "-f" "!(G ((ap0 & ap1 & ap2 & ap3 & (X ap4)) -> X (X ap5)))" "-o" "%21%28G+%28%28ap0+%26+ap1+%26+ap2+%26+ap3+%26+%28X+ap4%29%29+-%3E+X+%28X+ap5%29%29%29.hoa" 
+Start: 0
+acc-name: Buchi
+Acceptance: 1 Inf(0)
+properties: trans-acc no-univ-branch 
+AP: 6 "ap0" "ap1" "ap2" "ap3" "ap4" "ap5"
+--BODY--
+State: 0
+[t] 0
+[0 & 1 & 2 & 3] 1
+State: 1
+[4] 2
+State: 2
+[!5] 3
+State: 3
+[t] 3 {0}
+--END--

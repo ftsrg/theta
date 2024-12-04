@@ -1,0 +1,18 @@
+main process cfa {
+	var x : bool
+	var y : bool
+
+	init loc I0
+	loc I1
+	loc L0
+	loc L1
+	loc L2
+	loc L3
+
+    I0 -> I1 { x := false }
+    I1 -> L0 { y := false }
+    L0 -> L1 { y := true }
+    L1 -> L2 { y := false x := true }
+    L2 -> L3 { y := true }
+    L3 -> L0 { y := false x := false }
+}

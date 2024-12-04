@@ -1,0 +1,169 @@
+type Main_region : { __Inactive__, Interrupted, Normal}
+type Normal : { __Inactive__, Green, Red, Yellow}
+type Interrupted : { __Inactive__, Black, BlinkingYellow}
+var PoliceInterrupt_police : boolean = false
+var LightCommands_displayRed : boolean = false
+var Control_toggle : boolean = false
+var LightCommands_displayYellow : boolean = false
+var LightCommands_displayNone : boolean = false
+var LightCommands_displayGreen : boolean = false
+ctrl var main_region : Main_region = __Inactive__
+ctrl var normal : Normal = __Inactive__
+ctrl var interrupted : Interrupted = __Inactive__
+ctrl var BlackTimeout3 : integer = 500
+ctrl var BlinkingYellowTimeout4 : integer = 500
+var c : boolean = true
+var b : integer = 0
+var asd : integer = 0
+var a : boolean = false
+
+trans {
+	choice {
+		assume ((!(((main_region == Interrupted) && (PoliceInterrupt_police == true)))) && (((main_region == Interrupted) && (interrupted == BlinkingYellow)) && (500 <= BlinkingYellowTimeout4)));
+		assume (interrupted == BlinkingYellow);
+		interrupted := Black;
+		assume (interrupted == Black);
+		BlackTimeout3 := 0;
+		LightCommands_displayNone := true;
+	} or {
+		assume ((!(((main_region == Interrupted) && (PoliceInterrupt_police == true)))) && (((main_region == Interrupted) && (interrupted == Black)) && (500 <= BlackTimeout3)));
+		assume (interrupted == Black);
+		interrupted := BlinkingYellow;
+		assume (interrupted == BlinkingYellow);
+		BlinkingYellowTimeout4 := 0;
+		LightCommands_displayYellow := true;
+	} or {
+		assume ((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Green)) && (Control_toggle == true)));
+		assume (normal == Green);
+		b := 4;
+		normal := Yellow;
+		assume (normal == Yellow);
+		LightCommands_displayYellow := true;
+	} or {
+		assume ((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Red)) && (Control_toggle == true)));
+		assume (normal == Red);
+		a := true;
+		normal := Green;
+		assume (normal == Green);
+		LightCommands_displayGreen := true;
+	} or {
+		assume ((!(((main_region == Normal) && (PoliceInterrupt_police == true)))) && (((main_region == Normal) && (normal == Yellow)) && (Control_toggle == true)));
+		assume (normal == Yellow);
+		normal := Red;
+		assume (normal == Red);
+		LightCommands_displayRed := true;
+	} or {
+		assume (((main_region == Interrupted) && (PoliceInterrupt_police == true)));
+		assume (main_region == Interrupted);
+		interrupted := __Inactive__;
+		main_region := Normal;
+		choice {
+			assume (normal == __Inactive__);
+			normal := Red;
+		} or {
+			assume !((normal == __Inactive__));
+		}
+		assume (main_region == Normal);
+		choice {
+			assume (normal == Green);
+			LightCommands_displayGreen := true;
+		} or {
+			assume (normal == Red);
+			LightCommands_displayRed := true;
+		} or {
+			assume (normal == Yellow);
+			LightCommands_displayYellow := true;
+		}
+	} or {
+		assume (((main_region == Normal) && (PoliceInterrupt_police == true)));
+		assume (main_region == Normal);
+		choice {
+			assume (normal == Green);
+		} or {
+			assume (normal == Red);
+			a := true;
+		} or {
+			assume (normal == Yellow);
+		}
+		asd := 321;
+		main_region := Interrupted;
+		interrupted := BlinkingYellow;
+		assume (main_region == Interrupted);
+		choice {
+			assume (interrupted == Black);
+			BlackTimeout3 := 0;
+			LightCommands_displayNone := true;
+		} or {
+			assume (interrupted == BlinkingYellow);
+			BlinkingYellowTimeout4 := 0;
+			LightCommands_displayYellow := true;
+		}
+	}
+}
+
+init {
+	c := true;
+	b := 0;
+	a := false;
+	asd := 0;
+	BlackTimeout3 := 500;
+	BlinkingYellowTimeout4 := 500;
+	normal := __Inactive__;
+	interrupted := __Inactive__;
+	PoliceInterrupt_police := false;
+	Control_toggle := false;
+	LightCommands_displayRed := false;
+	LightCommands_displayYellow := false;
+	LightCommands_displayNone := false;
+	LightCommands_displayGreen := false;
+	main_region := Normal;
+	choice {
+		assume (normal == __Inactive__);
+		normal := Red;
+	} or {
+		assume !((normal == __Inactive__));
+	}
+	choice {
+		assume (main_region == Interrupted);
+		choice {
+			assume (interrupted == Black);
+			BlackTimeout3 := 0;
+			LightCommands_displayNone := true;
+		} or {
+			assume (interrupted == BlinkingYellow);
+			BlinkingYellowTimeout4 := 0;
+			LightCommands_displayYellow := true;
+		}
+	} or {
+		assume (main_region == Normal);
+		choice {
+			assume (normal == Green);
+			LightCommands_displayGreen := true;
+		} or {
+			assume (normal == Red);
+			LightCommands_displayRed := true;
+		} or {
+			assume (normal == Yellow);
+			LightCommands_displayYellow := true;
+		}
+	}
+}
+
+env {
+	choice {
+		PoliceInterrupt_police := true;
+	} or {
+		PoliceInterrupt_police := false;
+	}
+	choice {
+		Control_toggle := true;
+	} or {
+		Control_toggle := false;
+	}
+	LightCommands_displayYellow := false;
+	LightCommands_displayRed := false;
+	LightCommands_displayNone := false;
+	LightCommands_displayGreen := false;
+}
+
+prop{true}

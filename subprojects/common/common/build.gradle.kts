@@ -15,4 +15,9 @@
  */
 plugins {
     id("java-common")
+    id("kotlin-common")
+}
+
+dependencies {
+    implementation(Deps.nuprocess)
 }

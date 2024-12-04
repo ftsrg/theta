@@ -1,0 +1,35 @@
+type Color : { Red , Green , Blue }
+type Mood : { Happy, Angry, Depressed }
+var currentColor : Color = Red
+var currentMood : Mood = Happy
+
+trans {
+    assume currentColor == Red;
+    choice {
+        assume currentMood == Happy;
+        currentColor := Green;
+        } or {
+        assume currentMood == Angry;
+        } or {
+        assume currentMood == Depressed;
+        currentColor := Blue;
+    }
+} or {
+    assume currentColor == Green;
+    choice {
+        assume (currentMood == Happy || currentMood == Depressed);
+        currentColor := Blue;
+        } or {
+        assume currentMood == Angry;
+        currentColor := Red;
+    }
+} or {
+    assume currentColor == Blue;
+    if (currentMood == Angry) currentColor := Red;
+}
+
+init{}
+
+env {
+    havoc currentMood;
+}

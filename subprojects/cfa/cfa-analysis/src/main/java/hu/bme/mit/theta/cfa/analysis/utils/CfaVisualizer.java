@@ -15,15 +15,6 @@
  */
 package hu.bme.mit.theta.cfa.analysis.utils;
 
-import java.awt.Color;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
@@ -31,16 +22,18 @@ import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.visualization.Alignment;
-import hu.bme.mit.theta.common.visualization.EdgeAttributes;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.LineStyle;
-import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.common.visualization.*;
 import hu.bme.mit.theta.common.visualization.Shape;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
+import java.awt.*;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public final class CfaVisualizer {
 
@@ -51,10 +44,10 @@ public final class CfaVisualizer {
     private static final Color LINE_COLOR = Color.BLACK;
     private static final LineStyle LOC_LINE_STYLE = LineStyle.NORMAL;
     private static final LineStyle EDGE_LINE_STYLE = LineStyle.NORMAL;
+    private static final LineStyle ACC_EDGE_LINE_STYLE = LineStyle.DASHED;
     private static final String EDGE_FONT = "courier";
 
-    private CfaVisualizer() {
-    }
+    private CfaVisualizer() {}
 
     public static Graph visualize(final CFA cfa) {
         final Graph graph = new Graph(CFA_ID, CFA_LABEL);
@@ -64,7 +57,7 @@ public final class CfaVisualizer {
             addLocation(graph, cfa, loc, ids);
         }
         for (final Edge edge : cfa.getEdges()) {
-            addEdge(graph, edge, ids);
+            addEdge(graph, edge, cfa.getAcceptingEdges().contains(edge), ids);
         }
         return graph;
     }
@@ -74,16 +67,20 @@ public final class CfaVisualizer {
         for (final VarDecl<?> var : cfa.getVars()) {
             sb.append('\n').append(var.getName()).append(": ").append(var.getType());
         }
-        final NodeAttributes attrs = NodeAttributes.builder().label(sb.toString())
-                .shape(Shape.RECTANGLE)
-                .fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(LineStyle.DASHED)
-                .alignment(Alignment.LEFT)
-                .build();
+        final NodeAttributes attrs =
+                NodeAttributes.builder()
+                        .label(sb.toString())
+                        .shape(Shape.RECTANGLE)
+                        .fillColor(FILL_COLOR)
+                        .lineColor(LINE_COLOR)
+                        .lineStyle(LineStyle.DASHED)
+                        .alignment(Alignment.LEFT)
+                        .build();
         graph.addNode(CFA_ID + "_vars", attrs);
     }
 
-    private static void addLocation(final Graph graph, final CFA cfa, final Loc loc,
-                                    final Map<Loc, String> ids) {
+    private static void addLocation(
+            final Graph graph, final CFA cfa, final Loc loc, final Map<Loc, String> ids) {
         final String id = LOC_ID_PREFIX + ids.size();
         ids.put(loc, id);
         String label = loc.getName();
@@ -96,21 +93,34 @@ public final class CfaVisualizer {
             label += " (error)";
         }
         final int peripheries = isError ? 2 : 1;
-        final NodeAttributes nAttrs = NodeAttributes.builder().label(label).fillColor(FILL_COLOR)
-                .lineColor(LINE_COLOR)
-                .lineStyle(LOC_LINE_STYLE).peripheries(peripheries).build();
+        final NodeAttributes nAttrs =
+                NodeAttributes.builder()
+                        .label(label)
+                        .fillColor(FILL_COLOR)
+                        .lineColor(LINE_COLOR)
+                        .lineStyle(LOC_LINE_STYLE)
+                        .peripheries(peripheries)
+                        .build();
         graph.addNode(id, nAttrs);
     }
 
-    private static void addEdge(final Graph graph, final Edge edge, final Map<Loc, String> ids) {
-        final EdgeAttributes eAttrs = EdgeAttributes.builder()
-                .label(new CoreDslManager().writeStmt(edge.getStmt()))
-                .color(LINE_COLOR).lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
+    private static void addEdge(
+            final Graph graph,
+            final Edge edge,
+            final boolean accepting,
+            final Map<Loc, String> ids) {
+        final EdgeAttributes eAttrs =
+                EdgeAttributes.builder()
+                        .label(new CoreDslManager().writeStmt(edge.getStmt()))
+                        .color(LINE_COLOR)
+                        .lineStyle(accepting ? ACC_EDGE_LINE_STYLE : EDGE_LINE_STYLE)
+                        .font(EDGE_FONT)
+                        .build();
         graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttrs);
     }
 
-    public static void printTraceTable(final Trace<CfaState<ExplState>, CfaAction> trace,
-                                       final TableWriter writer) {
+    public static void printTraceTable(
+            final Trace<CfaState<ExplState>, CfaAction> trace, final TableWriter writer) {
         final Set<Decl<?>> allVars = new LinkedHashSet<>();
         for (final CfaState<ExplState> state : trace.getStates()) {
             allVars.addAll(state.getState().getDecls());
@@ -132,7 +142,8 @@ public final class CfaVisualizer {
             writer.newRow();
             if (i < trace.getActions().size()) {
                 final StringBuilder sb = new StringBuilder();
-                trace.getAction(i).getStmts()
+                trace.getAction(i)
+                        .getStmts()
                         .forEach(s -> sb.append(s.toString()).append(System.lineSeparator()));
                 writer.cell(sb.toString(), nCols);
                 writer.newRow();

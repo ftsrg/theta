@@ -1,0 +1,14 @@
+ctrl var x: integer = 0
+var y: integer = 0
+
+trans {
+    havoc y;
+}
+
+init {
+    x:=7;
+}
+
+env {
+    havoc y;
+}
