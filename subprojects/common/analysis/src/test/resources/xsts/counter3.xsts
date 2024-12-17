@@ -1,0 +1,10 @@
+var x: integer = 0
+
+trans {
+    assume x<3;
+    x:=x+1;
+}
+
+init {}
+
+env {}

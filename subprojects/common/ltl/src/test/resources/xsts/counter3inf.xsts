@@ -1,0 +1,12 @@
+var x: integer = 0
+
+trans {
+    assume x<3;
+    x:=x+1;
+} or {
+    assume x>=3;
+}
+
+init {}
+env {}
+prop{true}

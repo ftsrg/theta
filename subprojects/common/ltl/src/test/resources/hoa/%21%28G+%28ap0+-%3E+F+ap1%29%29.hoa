@@ -1,0 +1,16 @@
+HOA: v1
+tool: "owl ltl2nba" "21.0"
+name: "Automaton for F(((ap0) & (G(!ap1))))"
+owlArgs: "ltl2nba" "-f" "!(G (ap0 -> F ap1))" "-o" "src/test/resources/hoa/%21%28G+%28ap0+-%3E+F+ap1%29%29.hoa" 
+Start: 0
+acc-name: Buchi
+Acceptance: 1 Inf(0)
+properties: trans-acc no-univ-branch 
+AP: 2 "ap0" "ap1"
+--BODY--
+State: 0
+[t] 0
+[0 & !1] 1
+State: 1
+[!1] 1 {0}
+--END--

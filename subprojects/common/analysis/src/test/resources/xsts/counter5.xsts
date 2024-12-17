@@ -1,0 +1,12 @@
+ctrl var x: integer = 0
+
+trans {
+    assume x<5;
+    x:=x+1;
+} or {
+    x:=x;
+}
+
+init {}
+
+env {}
