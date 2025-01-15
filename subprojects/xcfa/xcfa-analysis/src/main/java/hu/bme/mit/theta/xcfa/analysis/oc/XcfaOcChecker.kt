@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ class XcfaOcChecker(
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
   private val autoConflictConfig: AutoConflictFinderConfig,
+  private val memoryModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
@@ -100,6 +101,14 @@ class XcfaOcChecker(
         logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
+        memoryModel.filter(pos, rfs, wss).let { (filteredPos, filteredRfs, filteredWss) ->
+          pos.clear()
+          pos.addAll(filteredPos)
+          rfs.clear()
+          filteredRfs.forEach { (k, v) -> rfs[k] = v.toMutableSet() }
+          wss.clear()
+          filteredWss.forEach { (k, v) -> wss[k] = v.toMutableSet() }
+        }
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
 
         // "Manually" add some conflicts
@@ -552,12 +561,5 @@ class XcfaOcChecker(
 
   private fun exit(msg: String): Nothing {
     error("Feature not supported by OC checker: $msg.")
-  }
-
-  fun printXcfa() = xcfa.toDot { edge ->
-    "(${
-      events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-        .joinToString(",") { it.const.name }
-    })"
   }
 }

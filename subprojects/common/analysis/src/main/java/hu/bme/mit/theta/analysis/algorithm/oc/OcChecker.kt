@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -176,9 +176,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
       }
     }
 
-    pairs.forEach { (ws1, ws2) ->
-      addWsCond(solver, ws1, ws2)
-    }
+    pairs.forEach { (ws1, ws2) -> addWsCond(solver, ws1, ws2) }
 
     return unassignedWss
   }

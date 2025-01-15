@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,18 +45,19 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
   private lateinit var events: List<E>
 
   private fun addLt(cond: Expr<BoolType>?, e1: E, e2: E) {
-    val lt = if(e1.clkId == e2.clkId) {
-      Lt(e1.clkAtomicVar.ref, e2.clkAtomicVar.ref)
-    } else {
-      Lt(e1.clkId.clkGlobalVar.ref, e2.clkId.clkGlobalVar.ref)
-    }
+    val lt =
+      if (e1.clkId == e2.clkId) {
+        Lt(e1.clkAtomicVar.ref, e2.clkAtomicVar.ref)
+      } else {
+        Lt(e1.clkId.clkGlobalVar.ref, e2.clkId.clkGlobalVar.ref)
+      }
     cond?.let { solver.add(Imply(it, lt)) } ?: solver.add(lt)
   }
 
   private fun addNeq(clkVars: Collection<ConstDecl<IntType>>) {
     clkVars.forEach { v1 ->
       clkVars.forEach { v2 ->
-        if(v1 != v2) {
+        if (v1 != v2) {
           solver.add(Neq(v1.ref, v2.ref))
         }
       }
@@ -75,16 +76,14 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
     pos.forEach { addLt(null, it.from, it.to) }
 
     // RF
-    rfs.forEach { (_, vRfs) ->
-      vRfs.forEach { addLt(it.declRef, it.from, it.to) }
-    }
+    rfs.forEach { (_, vRfs) -> vRfs.forEach { addLt(it.declRef, it.from, it.to) } }
 
     // WS
     wss.forEach { (_, vWss) ->
       vWss.forEach { ws1 ->
         addLt(ws1.declRef, ws1.from, ws1.to)
         vWss.forEach { ws2 ->
-          if(ws1.from == ws2.to && ws1.to == ws2.from) {
+          if (ws1.from == ws2.to && ws1.to == ws2.from) {
             addWsCond(solver, ws1, ws2)
           }
         }
@@ -93,18 +92,18 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
 
     // FR
     rfs.forEach { (v, vRfs) ->
-      events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }?.let { writes ->
-        writes.forEach { w1 ->
-          writes.forEach { w2 ->
-            vRfs.forEach { rf ->
-              if(w1 == rf.from) {
-                val wsExpr = if(w1.clkId == w2.clkId) {
+      val writes = events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }
+      writes?.forEach { w1 ->
+        writes.forEach { w2 ->
+          vRfs.forEach { rf ->
+            if (w1 == rf.from) {
+              val wsExpr =
+                if (w1.clkId == w2.clkId) {
                   Lt(w1.clkAtomicVar.ref, w2.clkAtomicVar.ref)
                 } else {
                   Lt(w1.clkId.clkGlobalVar.ref, w2.clkId.clkGlobalVar.ref)
                 }
-                addLt(And(wsExpr, rf.declRef), rf.to, w2)
-              }
+              addLt(And(wsExpr, rf.declRef), rf.to, w2)
             }
           }
         }
