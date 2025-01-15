@@ -21,28 +21,36 @@ import hu.bme.mit.theta.core.decl.VarDecl
 
 internal fun interface MemoryConsistencyModelFilter {
   operator fun invoke(
-    pos: List<R>,
-    rfs: Map<VarDecl<*>, Set<R>>,
-    wss: Map<VarDecl<*>, Set<R>>,
-  ): Triple<List<R>, Map<VarDecl<*>, Set<R>>, Map<VarDecl<*>, Set<R>>>
+    pos: MutableList<R>,
+    rfs: MutableMap<VarDecl<*>, MutableSet<R>>,
+    wss: MutableMap<VarDecl<*>, MutableSet<R>>,
+  ): Triple<
+    MutableList<R>,
+    MutableMap<VarDecl<*>, MutableSet<R>>,
+    MutableMap<VarDecl<*>, MutableSet<R>>,
+  >
 }
 
 @Suppress("unused")
 enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyModelFilter) {
   SC({ pos, rfs, wss -> Triple(pos, rfs, wss) }),
-  WSC({ pos, rfs, _ -> Triple(pos, rfs, mapOf()) }),
+  WSC({ pos, rfs, _ -> Triple(pos, rfs, mutableMapOf()) }),
   TSO({ pos, rfs, wss ->
     val newPos =
-      pos.filter {
-        !(it.from.const.varDecl != it.to.const.varDecl &&
-          it.from.type == WRITE &&
-          it.to.type == READ)
-      }
+      pos
+        .filter {
+          !(it.from.const.varDecl != it.to.const.varDecl &&
+            it.from.type == WRITE &&
+            it.to.type == READ)
+        }
+        .toMutableList()
     Triple(newPos, rfs, wss)
   }),
   PSO({ pos, rfs, wss ->
     val newPos =
-      pos.filter { !(it.from.const.varDecl != it.to.const.varDecl && it.from.type == WRITE) }
+      pos
+        .filter { !(it.from.const.varDecl != it.to.const.varDecl && it.from.type == WRITE) }
+        .toMutableList()
     Triple(newPos, rfs, wss)
   }),
 }

@@ -79,9 +79,9 @@ class XcfaOcChecker(
   private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
   private val violations = mutableListOf<Violation>() // OR!
   private val branchingConditions = mutableListOf<Expr<BoolType>>()
-  private val pos = mutableListOf<R>()
-  private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
-  private val wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
+  private var pos = mutableListOf<R>()
+  private var rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
+  private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
   private val ocChecker: OcChecker<E> =
     if (conflictInput == null) decisionProcedure.checker()
@@ -102,12 +102,9 @@ class XcfaOcChecker(
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
         memoryModel.filter(pos, rfs, wss).let { (filteredPos, filteredRfs, filteredWss) ->
-          pos.clear()
-          pos.addAll(filteredPos)
-          rfs.clear()
-          filteredRfs.forEach { (k, v) -> rfs[k] = v.toMutableSet() }
-          wss.clear()
-          filteredWss.forEach { (k, v) -> wss[k] = v.toMutableSet() }
+          pos = filteredPos
+          rfs = filteredRfs
+          wss = filteredWss
         }
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
 
