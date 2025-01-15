@@ -177,6 +177,8 @@ internal class XcfaOcCorrectnessValidator(
         this as FromReadReason<E>
         if (!derivable(rf, w)) false else checkPath(wAfterRf, rf.from, w)
       }
+
+      else -> error("Unsupported reason type.")
     }
 
   private val Reason.from: E

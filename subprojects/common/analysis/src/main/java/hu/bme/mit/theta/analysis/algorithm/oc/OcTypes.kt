@@ -178,3 +178,5 @@ class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, val wBeforeRf: 
 
 class FromReadReason<E : Event>(rf: Relation<E>, w: E, val wAfterRf: Reason) :
   DerivedReason<E>(rf, w, wAfterRf, "FR")
+
+object UndetailedReason : Reason()

@@ -23,6 +23,14 @@ import hu.bme.mit.theta.solver.SolverStatus
 internal inline fun <reified T> Array<Array<T?>>.copy(): Array<Array<T?>> =
   Array(size) { i -> Array(size) { j -> this[i][j] } }
 
+internal fun <E : Event> addWsCond(solver: Solver, ws1: Relation<E>, ws2: Relation<E>) {
+  val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
+  val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
+  solver.add(wsCond(ws1))
+  solver.add(wsCond(ws2))
+  solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
+}
+
 /**
  * This is an interface of an ordering consistency checker for concurrent systems (e.g., concurrent
  * programs).
@@ -169,11 +177,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     }
 
     pairs.forEach { (ws1, ws2) ->
-      val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
-      val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
-      solver.add(wsCond(ws1))
-      solver.add(wsCond(ws2))
-      solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
+      addWsCond(solver, ws1, ws2)
     }
 
     return unassignedWss
