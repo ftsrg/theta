@@ -86,7 +86,7 @@ internal class XcfaOcCorrectnessValidator(
 
     val validConflicts: List<Reason>
     clauseValidationTime +=
-      measureTime { validConflicts = propagatedClauses.filter { clause -> checkPath(clause) } }
+      measureTime { validConflicts = propagatedClauses.filter { clause -> checkPath(clause).also { if(!it) System.err.println(clause) } } }
         .inWholeMilliseconds
     logger.writeln(Logger.Level.INFO, "Conflict clause parse failures: $parseFailure")
     logger.writeln(Logger.Level.INFO, "Parsed conflict clauses: ${propagatedClauses.size}")
@@ -180,22 +180,4 @@ internal class XcfaOcCorrectnessValidator(
 
       else -> error("Unsupported reason type.")
     }
-
-  private val Reason.from: E
-    get() =
-      when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.from
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
-        is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
-        else -> error("Unsupported reason type.")
-      }
-
-  private val Reason.to: E
-    get() =
-      when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.to
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
-        is FromReadReason<*> -> (this as FromReadReason<E>).w
-        else -> error("Unsupported reason type.")
-      }
 }

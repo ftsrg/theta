@@ -46,6 +46,10 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
 
   private val reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
 
+  /**
+   * Global PO check. If from and to belong to the same atomic block, true is returned; this case has to be handled
+   * on the caller side.
+   */
   fun isPo(from: E?, to: E): Boolean {
     from ?: return true
     if (from.clkId == to.clkId) return true

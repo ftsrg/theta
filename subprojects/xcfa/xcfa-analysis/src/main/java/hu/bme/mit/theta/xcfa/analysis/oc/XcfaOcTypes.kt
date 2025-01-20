@@ -154,6 +154,26 @@ internal class XcfaEvent(
   }
 }
 
+@Suppress("UNCHECKED_CAST")
+internal val Reason.from: E
+  get() =
+    when (this) {
+      is RelationReason<*> -> (this as RelationReason<E>).relation.from
+      is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
+      is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
+      else -> error("Unsupported reason type.")
+    }
+
+@Suppress("UNCHECKED_CAST")
+internal val Reason.to: E
+  get() =
+    when (this) {
+      is RelationReason<*> -> (this as RelationReason<E>).relation.to
+      is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
+      is FromReadReason<*> -> (this as FromReadReason<E>).w
+      else -> error("Unsupported reason type.")
+    }
+
 internal data class Violation(
   val errorLoc: XcfaLocation,
   val pid: Int,

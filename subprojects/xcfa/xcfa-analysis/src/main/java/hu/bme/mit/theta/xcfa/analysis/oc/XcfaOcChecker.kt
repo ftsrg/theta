@@ -64,12 +64,14 @@ class XcfaOcChecker(
   conflictInput: String?,
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
-  private val autoConflictConfig: AutoConflictFinderConfig,
+  autoConflictConfig: AutoConflictFinderConfig,
+  autoConflictBound: Int,
   private val memoryModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+  private val autoConflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
@@ -113,7 +115,7 @@ class XcfaOcChecker(
           Logger.Level.INFO,
           "Auto conflict time (ms): " +
             measureTime {
-                val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig, logger)
+                val conflicts = autoConflictFinder.findConflicts(threads, events, rfs, logger)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
                 logger.writeln(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}")
               }

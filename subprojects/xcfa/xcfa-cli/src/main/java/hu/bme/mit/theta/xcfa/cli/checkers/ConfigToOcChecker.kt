@@ -42,6 +42,7 @@ fun getOcChecker(
       outputConflictClauses = ocConfig.outputConflictClauses,
       nonPermissiveValidation = ocConfig.nonPermissiveValidation,
       autoConflictConfig = ocConfig.autoConflict,
+      autoConflictBound = ocConfig.autoConflictBound,
       memoryModel = ocConfig.memoryConsistencyModel,
       acceptUnreliableSafe = config.outputConfig.acceptUnreliableSafe,
     )

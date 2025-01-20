@@ -384,6 +384,11 @@ data class OcConfig(
     description = "Level of manual conflict detection before verification",
   )
   var autoConflict: AutoConflictFinderConfig = AutoConflictFinderConfig.NONE,
+  @Parameter(
+    names = ["--auto-conflict-bound"],
+    description = "Number of non-trivial happens-before edges for auto conflict detection",
+  )
+  var autoConflictBound: Int = -1,
   @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
 ) : SpecBackendConfig
