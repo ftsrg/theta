@@ -65,8 +65,7 @@ internal class XcfaOcCorrectnessValidator(
     val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
     var parseFailure = 0
     val propagatedClauses: List<Reason>
-    logger.writeln(
-      Logger.Level.INFO,
+    logger.info(
       "Parse time (ms): " +
         measureTime {
             propagatedClauses =
@@ -79,19 +78,24 @@ internal class XcfaOcCorrectnessValidator(
                 }
               }
           }
-          .inWholeMilliseconds,
+          .inWholeMilliseconds
     )
 
     clauseValidationTime += measureTime { exactPo = XcfaExactPo(threads) }.inWholeMilliseconds
 
     val validConflicts: List<Reason>
     clauseValidationTime +=
-      measureTime { validConflicts = propagatedClauses.filter { clause -> checkPath(clause).also { if(!it) System.err.println(clause) } } }
+      measureTime {
+          validConflicts =
+            propagatedClauses.filter { clause ->
+              checkPath(clause).also { if (!it) System.err.println(clause) }
+            }
+        }
         .inWholeMilliseconds
-    logger.writeln(Logger.Level.INFO, "Conflict clause parse failures: $parseFailure")
-    logger.writeln(Logger.Level.INFO, "Parsed conflict clauses: ${propagatedClauses.size}")
-    logger.writeln(Logger.Level.INFO, "Validated conflict clauses: ${validConflicts.size}")
-    logger.writeln(Logger.Level.INFO, "Clause validation time (ms): $clauseValidationTime")
+    logger.info("Conflict clause parse failures: $parseFailure")
+    logger.info("Parsed conflict clauses: ${propagatedClauses.size}")
+    logger.info("Validated conflict clauses: ${validConflicts.size}")
+    logger.info("Clause validation time (ms): $clauseValidationTime")
 
     if (permissive) {
       ocChecker.solver.add(validConflicts.map { Not(it.expr) })
@@ -99,8 +103,7 @@ internal class XcfaOcCorrectnessValidator(
       nonOcSolver.add(validConflicts.map { Not(it.expr) })
     }
     val result: SolverStatus?
-    logger.writeln(
-      Logger.Level.INFO,
+    logger.info(
       "Solver time (ms): " +
         measureTime {
             result =
@@ -110,7 +113,7 @@ internal class XcfaOcCorrectnessValidator(
                 nonOcSolver.check()
               }
           }
-          .inWholeMilliseconds,
+          .inWholeMilliseconds
     )
     return result
   }

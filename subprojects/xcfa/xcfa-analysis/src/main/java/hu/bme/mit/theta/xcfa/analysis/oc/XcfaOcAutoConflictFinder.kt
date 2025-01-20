@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 
 @Suppress("unused")
 enum class AutoConflictFinderConfig(
-  internal val conflictFinder: (Int) -> XcfaOcAutoConflictFinder,
+  internal val conflictFinder: (Int) -> XcfaOcAutoConflictFinder
 ) {
 
   NONE({ NoConflictFinder }),
@@ -69,7 +69,7 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { threads, events, 
   }
 
   val rfCnt = conflicts.size
-  logger.writeln(Logger.Level.INFO, "RF conflicts: $rfCnt")
+  logger.info("RF conflicts: $rfCnt")
 
   // Find WS and FR conflicts
   rfs.forEach { (v, vRfs) ->
@@ -88,7 +88,7 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { threads, events, 
     }
   }
 
-  logger.writeln(Logger.Level.INFO, "WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
+  logger.info("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
   conflicts
 }
 
@@ -105,16 +105,16 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
     val po = { from: E, to: E -> exactPo.isPo(from, to) }
 
     fun MutableSet<out Reason>.filterOutDirectConflicts() = removeIf {
-      po(it.to, it.from).also { isPo ->
-        if (isPo) conflicts.add(it)
-      }
+      po(it.to, it.from).also { isPo -> if (isPo) conflicts.add(it) }
     }
 
-    val initialNonTrivialEdges = rfs.values.flatMap { it.map { rf -> RelationReason(rf) } }.toMutableSet()
+    val initialNonTrivialEdges =
+      rfs.values.flatMap { it.map { rf -> RelationReason(rf) } }.toMutableSet()
     initialNonTrivialEdges.filterOutDirectConflicts()
 
     val nonTrivialEdges: MutableList<Set<Reason>> = mutableListOf(initialNonTrivialEdges)
-    val paths: MutableList<List<List<Reason>>> = mutableListOf(initialNonTrivialEdges.map { listOf(it) })
+    val paths: MutableList<List<List<Reason>>> =
+      mutableListOf(initialNonTrivialEdges.map { listOf(it) })
     val enabledWss = mutableSetOf<Pair<R, E>>()
     val enabledFrs = mutableSetOf<Pair<R, E>>()
 
@@ -124,7 +124,10 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
         return null
       }
       if (po(from, to)) return PoReason
-      return paths.last().find { po(from, it.first().from) && po(it.last().to, to) }?.let { CombinedReason(it) }
+      return paths
+        .last()
+        .find { po(from, it.first().from) && po(it.last().to, to) }
+        ?.let { CombinedReason(it) }
     }
 
     for (i in 2..bound) {
@@ -134,7 +137,8 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
 
       // Derive new WS and FR edges
       rfs.forEach { (v, vRfs) ->
-        val writes = events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
+        val writes =
+          events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
         vRfs.forEach { rf ->
           writes
             .filter { rf.from != it && rf.from.potentialSameMemory(it) }
@@ -157,7 +161,8 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
       newNonTrivialEdges.filterOutDirectConflicts()
 
       // Find cycles or extend paths
-      // (non-trivial edges found in the indexth iteration are used to extend paths from the size-index-1th iteration)
+      // (non-trivial edges found in the indexth iteration are used to extend paths from the
+      // size-index-1th iteration)
       nonTrivialEdges.forEachIndexed { index, edges ->
         edges.forEach { edge ->
           paths[paths.size - index - 1].forEach { path ->
@@ -180,7 +185,7 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
         conflict.reasons.all { it.from.clkId == clkId && it.to.clkId == clkId }
       }
 
-      logger.writeln(Logger.Level.INFO, "Conflicts with $i non-trivial edges: ${conflicts.size - conflictSize}")
+      logger.info("Conflicts with $i non-trivial edges: ${conflicts.size - conflictSize}")
     }
 
     return conflicts

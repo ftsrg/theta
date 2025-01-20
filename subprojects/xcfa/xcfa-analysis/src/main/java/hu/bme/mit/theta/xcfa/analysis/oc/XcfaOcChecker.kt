@@ -100,7 +100,7 @@ class XcfaOcChecker(
     let {
         if (xcfa.initProcedures.size > 1) exit("multiple entry points")
 
-        logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
+        logger.mainStep("Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
         memoryModel.filter(pos, rfs, wss).let { (filteredPos, filteredRfs, filteredWss) ->
@@ -111,30 +111,26 @@ class XcfaOcChecker(
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
 
         // "Manually" add some conflicts
-        logger.writeln(
-          Logger.Level.INFO,
+        logger.info(
           "Auto conflict time (ms): " +
             measureTime {
                 val conflicts = autoConflictFinder.findConflicts(threads, events, rfs, logger)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
-                logger.writeln(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}")
+                logger.info("Auto conflicts: ${conflicts.size}")
               }
-              .inWholeMilliseconds,
+              .inWholeMilliseconds
         )
 
-        logger.writeln(Logger.Level.MAINSTEP, "Start checking...")
+        logger.mainStep("Start checking...")
         val status: SolverStatus?
         val checkerTime = measureTime { status = ocChecker.check(events, pos, rfs, wss) }
         if (ocChecker !is XcfaOcCorrectnessValidator)
-          logger.writeln(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}")
-        logger.writeln(
-          Logger.Level.INFO,
-          "Propagated clauses: ${ocChecker.getPropagatedClauses().size}",
-        )
+          logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
         ocChecker.solver.statistics.let {
-          logger.writeln(Logger.Level.INFO, "Solver statistics:")
-          it.forEach { (k, v) -> logger.writeln(Logger.Level.INFO, "$k: $v") }
+          logger.info("Solver statistics:")
+          it.forEach { (k, v) -> logger.info("$k: $v") }
         }
         when {
           status?.isUnsat == true -> {
@@ -161,13 +157,10 @@ class XcfaOcChecker(
         }
       }
       .also {
-        logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it")
+        logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
-          logger.writeln(
-            Logger.Level.MAINSTEP,
-            "Incomplete loop unroll used: safe result is unreliable.",
-          )
-          logger.writeln(Logger.Level.RESULT, SafetyResult.unknown<EmptyProof, Cex>().toString())
+          logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+          logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }

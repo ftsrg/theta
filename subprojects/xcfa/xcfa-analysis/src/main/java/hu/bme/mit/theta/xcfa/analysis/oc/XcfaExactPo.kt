@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
   private val reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
 
   /**
-   * Global PO check. If from and to belong to the same atomic block, true is returned; this case has to be handled
-   * on the caller side.
+   * Global PO check. If from and to belong to the same atomic block, true is returned; this case
+   * has to be handled on the caller side.
    */
   fun isPo(from: E?, to: E): Boolean {
     from ?: return true
