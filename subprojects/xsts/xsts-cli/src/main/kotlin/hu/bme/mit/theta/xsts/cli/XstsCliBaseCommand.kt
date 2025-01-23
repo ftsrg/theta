@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -98,7 +98,10 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     val trace = status.asUnsafe().cex as Trace<XstsState<*>, XstsAction>
     val concreteTrace =
       XstsTraceConcretizerUtil.concretize(trace, SolverManager.resolveSolverFactory(solver), xsts)
-    val file: File = outputOptions.cexfile!!
-    PrintWriter(file).use { printWriter -> printWriter.write(concreteTrace.toString()) }
+    val outputFile: File = outputOptions.cexfile!!
+    if (!outputFile.parentFile.exists()) {
+      outputFile.parentFile.mkdir()
+    }
+    PrintWriter(outputFile).use { printWriter -> printWriter.write(concreteTrace.toString()) }
   }
 }

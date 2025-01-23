@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2024-2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package hu.bme.mit.theta.xsts.cli
 
-import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
 import com.google.common.io.Files
-import com.google.common.io.MoreFiles
-import com.google.common.io.RecursiveDeleteOption
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -55,11 +52,11 @@ class XstsCliTracegen :
         help =
           "Directory the traces should be written into. If not specified, output is written into model-directory/traces."
       )
-      .file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
-  val summary: Boolean by
+      .file(mustExist = false, canBeFile = false) // use the non-null value in traceDirPath!
+  val generateSummary: Boolean by
     option(help = "If this flag is present, a concretized summary is generated.")
       .flag(default = false)
-  val traces: Boolean by
+  val generateTraces: Boolean by
     option(help = "If this flag is present, concretized traces are generated.")
       .flag(default = false)
 
@@ -91,8 +88,6 @@ class XstsCliTracegen :
   }
 
   private fun printResult(
-    concretizationResult:
-      Map<AbstractSummaryNode<out XstsState<*>, out XstsAction>, XstsState<ExplState>>,
     abstractSummary: AbstractTraceSummary<out State, out Action>,
     totalTimeMs: Long,
     traceDirPath: File,
@@ -114,7 +109,7 @@ class XstsCliTracegen :
     logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
 
     // trace concretization
-    if (traces) {
+    if (generateTraces) {
       var traceCount = 0
 
       val concretizationResultTuple =
@@ -151,7 +146,14 @@ class XstsCliTracegen :
     }
 
     // summary concretization
-    if (summary) {
+    if (generateSummary) {
+      val concretizationResult =
+        XstsTraceGenerationConcretizerUtil.concretizeSummary(
+          abstractSummary as AbstractTraceSummary<XstsState<*>, XstsAction>,
+          Z3LegacySolverFactory.getInstance(),
+          xsts,
+        )
+
       val concreteSummaryFile =
         traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
       val cexsString = toCexs(concretizationResult)
@@ -185,9 +187,15 @@ class XstsCliTracegen :
 
     val modelFile = inputOptions.model
     if (traceDirPath.exists()) {
-      MoreFiles.deleteRecursively(traceDirPath.toPath(), RecursiveDeleteOption.ALLOW_INSECURE)
+      val filesToDelete =
+        traceDirPath.listFiles { file ->
+          file.extension in listOf("cex", "cexs", "dot", "png") || file.name == "report.txt"
+        }
+
+      filesToDelete?.forEach { file -> file.delete() }
+    } else {
+      traceDirPath.mkdir()
     }
-    traceDirPath.mkdir()
 
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())
     val xsts =
@@ -201,20 +209,7 @@ class XstsCliTracegen :
     val result = checker.check()
     val summary = result.summary as AbstractTraceSummary<XstsState<*>, XstsAction>
 
-    val concretizationResult =
-      XstsTraceGenerationConcretizerUtil.concretizeSummary(
-        summary,
-        Z3LegacySolverFactory.getInstance(),
-        xsts,
-      )
-
     sw.stop()
-    printResult(
-      concretizationResult,
-      result.summary,
-      sw.elapsed(TimeUnit.MILLISECONDS),
-      traceDirPath,
-      xsts,
-    )
+    printResult(summary, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath, xsts)
   }
 }
