@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
@@ -25,8 +27,6 @@ import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
 
     private static final int HASH_SEED = 6696;
@@ -36,8 +36,11 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     private final FpType fpType;
     private final boolean signed;
 
-    private FpFromBvExpr(final FpRoundingMode roundingMode, final Expr<BvType> op,
-                         final FpType fpType, final boolean signed) {
+    private FpFromBvExpr(
+            final FpRoundingMode roundingMode,
+            final Expr<BvType> op,
+            final FpType fpType,
+            final boolean signed) {
         super(op);
         this.fpType = fpType;
         this.signed = signed;
@@ -45,13 +48,19 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
         this.roundingMode = roundingMode;
     }
 
-    public static FpFromBvExpr of(final FpRoundingMode roundingMode, final Expr<BvType> op,
-                                  final FpType fpType, final boolean signed) {
+    public static FpFromBvExpr of(
+            final FpRoundingMode roundingMode,
+            final Expr<BvType> op,
+            final FpType fpType,
+            final boolean signed) {
         return new FpFromBvExpr(roundingMode, op, fpType, signed);
     }
 
-    public static FpFromBvExpr create(final FpRoundingMode roundingMode, final Expr<BvType> op,
-                                      final FpType fpType, final boolean signed) {
+    public static FpFromBvExpr create(
+            final FpRoundingMode roundingMode,
+            final Expr<BvType> op,
+            final FpType fpType,
+            final boolean signed) {
         return FpFromBvExpr.of(roundingMode, op, fpType, signed);
     }
 
@@ -76,9 +85,13 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     public FpLitExpr eval(Valuation val) {
         BinaryMathContext mathContext = FpUtils.getMathContext(fpType, roundingMode);
         BvLitExpr eval = (BvLitExpr) getOp().eval(val);
-        return FpUtils.bigFloatToFpLitExpr(new BigFloat(
-                signed ? BvUtils.signedBvLitExprToBigInteger(eval)
-                        : BvUtils.unsignedBvLitExprToBigInteger(eval), mathContext), fpType);
+        return FpUtils.bigFloatToFpLitExpr(
+                new BigFloat(
+                        signed
+                                ? BvUtils.signedBvLitExprToBigInteger(eval)
+                                : BvUtils.unsignedBvLitExprToBigInteger(eval),
+                        mathContext),
+                fpType);
     }
 
     @Override
@@ -87,13 +100,13 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
             return true;
         } else if (obj != null && obj.getClass() == this.getClass()) {
             final FpFromBvExpr that = (FpFromBvExpr) obj;
-            return this.getOp().equals(that.getOp()) && fpType.equals(that.fpType)
+            return this.getOp().equals(that.getOp())
+                    && fpType.equals(that.fpType)
                     && roundingMode.equals(that.roundingMode);
         } else {
             return false;
         }
     }
-
 
     @Override
     public FpFromBvExpr with(Expr<BvType> op) {
@@ -105,7 +118,13 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     }
 
     public String getOperatorLabel() {
-        return OPERATOR_LABEL + "[" + fpType.getExponent() + "," + fpType.getSignificand() + "][" + (isSigned() ? "s" : "u") + "]";
+        return OPERATOR_LABEL
+                + "["
+                + fpType.getExponent()
+                + ","
+                + fpType.getSignificand()
+                + "]["
+                + (isSigned() ? "s" : "u")
+                + "]";
     }
 }
- 

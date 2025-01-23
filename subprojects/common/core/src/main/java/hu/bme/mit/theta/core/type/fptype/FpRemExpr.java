@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
 
@@ -56,14 +56,13 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
         final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
         BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(null, leftOpVal);
         BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(null, rightOpVal);
-        BigFloat remainder = leftFloat.remainder(rightFloat,
-                FpUtils.getMathContext(this.getType(), null));
+        BigFloat remainder =
+                leftFloat.remainder(rightFloat, FpUtils.getMathContext(this.getType(), null));
 
         return FpUtils.bigFloatToFpLitExpr(remainder, this.getType());
     }
 
     @Override
-
     public FpRemExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
@@ -88,8 +87,8 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpRemExpr that = (FpRemExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }
@@ -104,6 +103,4 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }
- 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,25 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xta.dsl;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
@@ -31,8 +50,8 @@ import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -40,32 +59,12 @@ import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.LabelExpr;
-
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static java.util.stream.Collectors.toList;
 
 final class XtaExpression {
 
@@ -78,8 +77,8 @@ final class XtaExpression {
     }
 
     public Expr<?> instantiate(final Env env) {
-        final ExpressionInstantiationVisitor visitor = new ExpressionInstantiationVisitor(scope,
-                env);
+        final ExpressionInstantiationVisitor visitor =
+                new ExpressionInstantiationVisitor(scope, env);
         final Expr<?> expr = context.accept(visitor);
         final Expr<?> simplifiedExpr = ExprUtils.simplify(expr);
         return simplifiedExpr;
@@ -145,8 +144,9 @@ final class XtaExpression {
                 // A constant, whose value is not yet defined, as this is its first occurrence
                 final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
                 assert variableSymbol.isConstant();
-                final Object value = env.compute(variableSymbol,
-                        v -> v.instantiate("", env).asConstant().getExpr());
+                final Object value =
+                        env.compute(
+                                variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
                 final LitExpr<?> expr = (LitExpr<?>) value;
                 return expr;
             }
@@ -167,9 +167,10 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createAdditiveExpr(final Expr<?> opsHead,
-                                           final List<? extends Expr<?>> opsTail,
-                                           final List<AdditiveOpContext> opers) {
+        private Expr<?> createAdditiveExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<AdditiveOpContext> opers) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -187,8 +188,8 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                              final AdditiveOpContext oper) {
+        private Expr<?> createAdditiveSubExpr(
+                final Expr<?> leftOp, final Expr<?> rightOp, final AdditiveOpContext oper) {
             if (oper.fAddOp != null) {
                 return createAddExpr(leftOp, rightOp);
             } else if (oper.fSubOp != null) {
@@ -201,9 +202,11 @@ final class XtaExpression {
         private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof AddExpr) {
                 final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Add(ops);
             } else {
                 return Add(leftOp, rightOp);
@@ -231,9 +234,10 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-                                                 final List<? extends Expr<?>> opsTail,
-                                                 final List<MultiplicativeOpContext> opers) {
+        private Expr<?> createMutliplicativeExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<MultiplicativeOpContext> opers) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -251,8 +255,8 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                    final MultiplicativeOpContext oper) {
+        private Expr<?> createMultiplicativeSubExpr(
+                final Expr<?> leftOp, final Expr<?> rightOp, final MultiplicativeOpContext oper) {
             if (oper.fMulOp != null) {
                 return createMulExpr(leftOp, rightOp);
             } else if (oper.fDivOp != null) {
@@ -267,9 +271,11 @@ final class XtaExpression {
         private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof MulExpr) {
                 final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Mul(ops);
             } else {
                 return Mul(leftOp, rightOp);
@@ -358,7 +364,6 @@ final class XtaExpression {
                     // TODO Auto-generated method stub
                     throw new UnsupportedOperationException("TODO: auto-generated method stub");
                 }
-
             }
         }
 
@@ -385,8 +390,8 @@ final class XtaExpression {
             if (ctx.fOps.size() == 1) {
                 return checkNotNull(visitChildren(ctx));
             } else {
-                final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
-                        .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.fOps.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return And(ops);
             }
@@ -397,8 +402,8 @@ final class XtaExpression {
             if (ctx.fOps.size() == 1) {
                 return checkNotNull(visitChildren(ctx));
             } else {
-                final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
-                        .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.fOps.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return Or(ops);
             }
@@ -507,5 +512,4 @@ final class XtaExpression {
             }
         }
     }
-
 }

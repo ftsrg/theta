@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -67,5 +67,4 @@ public abstract class Decl<DeclType extends Type> {
     public final boolean equals(final Object obj) {
         return this == obj;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.sts.STS;
 
-/**
- * An implementation for initial precision that returns empty initial precisions.
- */
+/** An implementation for initial precision that returns empty initial precisions. */
 public class StsEmptyInitPrec implements StsInitPrec {
 
     @Override
@@ -33,5 +31,4 @@ public class StsEmptyInitPrec implements StsInitPrec {
     public PredPrec createPred(final STS sts) {
         return PredPrec.of();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.arg.debug;
 
 import com.corundumstudio.socketio.Configuration;
@@ -22,16 +21,13 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-
 import java.util.LinkedList;
 import java.util.List;
-
 
 /**
  * Use http://leventebajczi.com/theta-debugger/ to connect to Theta and see the ARG being built.
  * Modify the *debug* field below to true in order to enable the debugger.
  */
-
 public final class ARGWebDebugger {
     public static boolean on = false;
     private static final Integer PORT = 8080;
@@ -41,12 +37,9 @@ public final class ARGWebDebugger {
     private static volatile boolean received;
     private static volatile boolean waiting;
 
-
     private static final List<String> replayLog = new LinkedList<>();
 
-
-    private ARGWebDebugger() {
-    }
+    private ARGWebDebugger() {}
 
     private static void startServer() {
         if (!on) return;
@@ -54,19 +47,23 @@ public final class ARGWebDebugger {
         config.setPort(PORT);
 
         server = new SocketIOServer(config);
-        server.addEventListener("continue", String.class, (client, data, ackSender) -> {
-            received = true;
-            synchronized (lock) {
-                lock.notifyAll();
-            }
-        });
-        server.addConnectListener(client -> {
-            for (String s : replayLog) {
-                System.err.println("Replaying " + s);
-                client.sendEvent("message", s);
-            }
-            if (waiting) client.sendEvent("message", "{\"method\": \"wait\"}");
-        });
+        server.addEventListener(
+                "continue",
+                String.class,
+                (client, data, ackSender) -> {
+                    received = true;
+                    synchronized (lock) {
+                        lock.notifyAll();
+                    }
+                });
+        server.addConnectListener(
+                client -> {
+                    for (String s : replayLog) {
+                        System.err.println("Replaying " + s);
+                        client.sendEvent("message", s);
+                    }
+                    if (waiting) client.sendEvent("message", "{\"method\": \"wait\"}");
+                });
         server.start();
         waitUntil();
     }
@@ -94,16 +91,38 @@ public final class ARGWebDebugger {
         }
     }
 
-    private static <A extends Action> String nodeToString(ArgNode<? extends State, ? extends Action> node, A action) {
-        return "{\"name\": \"Node " + node.getId() + "\"," +
-                " \"attributes\": {" +
-                (action == null ? "" : "\"action\": \"" + action.toString().replaceAll("[\\n\\r\\t\"]", " ") + "\",") +
-                "\"state\": \"" + node.getState().toString().replaceAll("[\\n\\r\\t\"]", " ") + "\"" + "," +
-                "\"target\": \"" + node.isTarget() + "\"" + "}," +
-                " \"tooltip\": {" +
-                (action == null ? "" : "\"action\": \"" + action.toString().replaceAll("[\\n\\r\\t\"]", " ") + "\",") +
-                "\"state\": \"" + node.getState().toString().replaceAll("[\\n\\r\\t\"]", " ") + "\"" + "}," +
-                " \"id\": " + node.getId() + "}";
+    private static <A extends Action> String nodeToString(
+            ArgNode<? extends State, ? extends Action> node, A action) {
+        return "{\"name\": \"Node "
+                + node.getId()
+                + "\","
+                + " \"attributes\": {"
+                + (action == null
+                        ? ""
+                        : "\"action\": \""
+                                + action.toString().replaceAll("[\\n\\r\\t\"]", " ")
+                                + "\",")
+                + "\"state\": \""
+                + node.getState().toString().replaceAll("[\\n\\r\\t\"]", " ")
+                + "\""
+                + ","
+                + "\"target\": \""
+                + node.isTarget()
+                + "\""
+                + "},"
+                + " \"tooltip\": {"
+                + (action == null
+                        ? ""
+                        : "\"action\": \""
+                                + action.toString().replaceAll("[\\n\\r\\t\"]", " ")
+                                + "\",")
+                + "\"state\": \""
+                + node.getState().toString().replaceAll("[\\n\\r\\t\"]", " ")
+                + "\""
+                + "},"
+                + " \"id\": "
+                + node.getId()
+                + "}";
     }
 
     public static void create(ArgNode<? extends State, ? extends Action> initNode) {
@@ -115,13 +134,20 @@ public final class ARGWebDebugger {
         waitUntil();
     }
 
-    public static <A extends Action> void add(ArgNode<? extends State, ? extends Action> parent,
-                                              A action,
-                                              ArgNode<? extends State, ? extends Action> child) {
+    public static <A extends Action> void add(
+            ArgNode<? extends State, ? extends Action> parent,
+            A action,
+            ArgNode<? extends State, ? extends Action> child) {
         if (!on) {
             return;
         }
-        send("{\"method\": \"add\", \"parent\": " + parent.getId() + ", \"child\": " + nodeToString(child, action) + "}", true);
+        send(
+                "{\"method\": \"add\", \"parent\": "
+                        + parent.getId()
+                        + ", \"child\": "
+                        + nodeToString(child, action)
+                        + "}",
+                true);
         waitUntil();
     }
 
@@ -129,7 +155,13 @@ public final class ARGWebDebugger {
         if (!on) {
             return;
         }
-        send("{\"method\": \"delete\", \"parent\": " + edge.getSource().getId() + ", \"child\": " + edge.getTarget().getId() + "}", true);
+        send(
+                "{\"method\": \"delete\", \"parent\": "
+                        + edge.getSource().getId()
+                        + ", \"child\": "
+                        + edge.getTarget().getId()
+                        + "}",
+                true);
         waitUntil();
     }
 }

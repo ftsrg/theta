@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
+import static com.google.common.base.Preconditions.*;
+import static java.util.stream.Collectors.toList;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
-
-import static com.google.common.base.Preconditions.*;
-import static java.util.stream.Collectors.toList;
 
 public final class Env {
 
@@ -71,8 +70,8 @@ public final class Env {
         return sj.toString();
     }
 
-    public <S extends Symbol, V extends Object> Object compute(final S symbol,
-                                                               final Function<? super S, ? extends Object> mapping) {
+    public <S extends Symbol, V extends Object> Object compute(
+            final S symbol, final Function<? super S, ? extends Object> mapping) {
         checkNotNull(symbol);
         checkNotNull(mapping);
         Object value = currentFrame.eval(symbol);
@@ -94,7 +93,8 @@ public final class Env {
         }
 
         public void define(final Symbol symbol, final Object value) {
-            checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
+            checkArgument(
+                    eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
             symbolToValue.put(symbol, value);
         }
 
@@ -111,9 +111,12 @@ public final class Env {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
-                    .map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList())).toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .addAll(
+                            symbolToValue.entrySet().stream()
+                                    .map(e -> e.getKey().getName() + " <- " + e.getValue())
+                                    .collect(toList()))
+                    .toString();
         }
     }
-
 }

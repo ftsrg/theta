@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.arg;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArgNode<S extends State, A extends Action> {
 
@@ -47,7 +46,12 @@ public final class ArgNode<S extends State, A extends Action> {
 
     public boolean expanded; // Set by ArgBuilder
 
-    ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth, final boolean target) {
+    ArgNode(
+            final ARG<S, A> arg,
+            final S state,
+            final int id,
+            final int depth,
+            final boolean target) {
         this.arg = arg;
         this.state = state;
         this.id = id;
@@ -67,8 +71,8 @@ public final class ArgNode<S extends State, A extends Action> {
     }
 
     /**
-     * Gets the depth of the node, which is 0 if the node has no parent, and
-     * depth(parent) + 1 otherwise.
+     * Gets the depth of the node, which is 0 if the node has no parent, and depth(parent) + 1
+     * otherwise.
      */
     public int getDepth() {
         return depth;
@@ -162,69 +166,49 @@ public final class ArgNode<S extends State, A extends Action> {
 
     ////
 
-    /**
-     * Checks if the node is covered, i.e., there is a covering edge for the
-     * node.
-     */
+    /** Checks if the node is covered, i.e., there is a covering edge for the node. */
     public boolean isCovered() {
         return coveringNode.isPresent();
     }
 
-    /**
-     * Checks if the node is not a bottom state.
-     */
+    /** Checks if the node is not a bottom state. */
     public boolean isFeasible() {
         return !state.isBottom();
     }
 
-    /**
-     * Checks if the node is subsumed, i.e., the node is covered or not
-     * feasible.
-     */
+    /** Checks if the node is subsumed, i.e., the node is covered or not feasible. */
     public boolean isSubsumed() {
         return isCovered() || !isFeasible();
     }
 
-    /**
-     * Checks if the node is excluded, i.e., the node is subsumed or has an
-     * excluded parent.
-     */
+    /** Checks if the node is excluded, i.e., the node is subsumed or has an excluded parent. */
     public boolean isExcluded() {
         return ancestors().anyMatch(ArgNode::isSubsumed);
     }
 
     /**
-     * Checks if the node is target, i.e., the target predicate holds (e.g., it
-     * is an error state).
+     * Checks if the node is target, i.e., the target predicate holds (e.g., it is an error state).
      */
     public boolean isTarget() {
         return target;
     }
 
-    /**
-     * Checks if the node is expanded, i.e., all of its successors are present.
-     */
+    /** Checks if the node is expanded, i.e., all of its successors are present. */
     public boolean isExpanded() {
         return expanded;
     }
 
-    /**
-     * Checks if the node is leaf, i.e., it has no successors.
-     */
+    /** Checks if the node is leaf, i.e., it has no successors. */
     public boolean isLeaf() {
         return outEdges.isEmpty();
     }
 
-    /**
-     * Checks if the node is safe, i.e., not target or excluded.
-     */
+    /** Checks if the node is safe, i.e., not target or excluded. */
     public boolean isSafe() {
         return !isTarget() || isExcluded();
     }
 
-    /**
-     * Checks if the node is complete, i.e., expanded or excluded.
-     */
+    /** Checks if the node is complete, i.e., expanded or excluded. */
     public boolean isComplete() {
         return isExpanded() || isExcluded();
     }
@@ -232,7 +216,9 @@ public final class ArgNode<S extends State, A extends Action> {
     ////
 
     public Stream<ArgNode<S, A>> properAncestors() {
-        return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors())).orElse(Stream.empty());
+        return getParent()
+                .map(p -> Stream.concat(Stream.of(p), p.properAncestors()))
+                .orElse(Stream.empty());
     }
 
     public Stream<ArgNode<S, A>> ancestors() {
@@ -263,7 +249,8 @@ public final class ArgNode<S extends State, A extends Action> {
         if (this.isSubsumed()) {
             return Stream.empty();
         } else {
-            return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
+            return Stream.concat(
+                    Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
         }
     }
 

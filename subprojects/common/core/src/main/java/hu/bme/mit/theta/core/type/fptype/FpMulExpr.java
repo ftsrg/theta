@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class FpMulExpr extends MulExpr<FpType> {
 
@@ -33,24 +32,24 @@ public class FpMulExpr extends MulExpr<FpType> {
 
     private final FpRoundingMode roundingMode;
 
-    private FpMulExpr(final FpRoundingMode roundingMode,
-                      final Iterable<? extends Expr<FpType>> ops) {
+    private FpMulExpr(
+            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
         super(ops);
         checkAllTypesEqual(ops);
         checkNotNull(roundingMode);
         this.roundingMode = roundingMode;
     }
 
-    public static FpMulExpr of(final FpRoundingMode roundingMode,
-                               final Iterable<? extends Expr<FpType>> ops) {
+    public static FpMulExpr of(
+            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
         return new FpMulExpr(roundingMode, ops);
     }
 
-    public static FpMulExpr create(final FpRoundingMode roundingMode,
-                                   final List<? extends Expr<?>> ops) {
+    public static FpMulExpr create(
+            final FpRoundingMode roundingMode, final List<? extends Expr<?>> ops) {
         checkNotNull(ops);
-        return FpMulExpr.of(roundingMode,
-                ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
+        return FpMulExpr.of(
+                roundingMode, ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
     }
 
     public FpRoundingMode getRoundingMode() {
@@ -64,11 +63,12 @@ public class FpMulExpr extends MulExpr<FpType> {
 
     @Override
     public FpLitExpr eval(final Valuation val) {
-        return getOps().stream().skip(1).reduce(
-                (FpLitExpr) getOps().get(0).eval(val),
-                (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
-                (op1, op2) -> (op1.mul(roundingMode, op2))
-        );
+        return getOps().stream()
+                .skip(1)
+                .reduce(
+                        (FpLitExpr) getOps().get(0).eval(val),
+                        (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
+                        (op1, op2) -> (op1.mul(roundingMode, op2)));
     }
 
     @Override
@@ -102,4 +102,3 @@ public class FpMulExpr extends MulExpr<FpType> {
         return OPERATOR_LABEL;
     }
 }
- 

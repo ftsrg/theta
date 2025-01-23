@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,24 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
-
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.BOTTOM;
 import static hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult.FAILURE;
@@ -47,6 +29,23 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static org.junit.Assert.assertEquals;
+
+import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class StmtApplierTest {
@@ -85,63 +84,36 @@ public final class StmtApplierTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {HAVOC_X, of(X_IS_1), false, SUCCESS, of()},
-
-                {HAVOC_X, of(Y_IS_2), false, SUCCESS, of(Y_IS_2)},
-
-                {HAVOC_X, of(X_IS_1, Y_IS_2), false, SUCCESS, of(Y_IS_2)},
-
-                {HAVOC_X, of(), false, SUCCESS, of()},
-
-                {ASSUME_GT_X_0, of(X_IS_1), false, SUCCESS, of(X_IS_1)},
-
-                {ASSUME_GT_X_0, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
-
-                {ASSUME_GT_X_0, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
-
-                {ASSUME_GT_X_0, of(), false, FAILURE, of()},
-
-                {ASSUME_LEQ_X_0, of(X_IS_1), false, BOTTOM, of(X_IS_1)},
-
-                {ASSUME_LEQ_X_0, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
-
-                {ASSUME_LEQ_X_0, of(X_IS_1, Y_IS_2), false, BOTTOM, of(X_IS_1, Y_IS_2)},
-
-                {ASSUME_LEQ_X_Y, of(X_IS_1), false, FAILURE, of(X_IS_1)},
-
-                {ASSUME_LEQ_X_Y, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
-
-                {ASSUME_LEQ_X_Y, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
-
-                {ASSUME_LEQ_X_Y, of(), false, FAILURE, of()},
-
-                {ASSIGN_X_1, of(), false, SUCCESS, of(X_IS_1)},
-
-                {ASSIGN_X_1, of(Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
-
-                {ASSIGN_X_1, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
-
-                {ASSIGN_X_2, of(), false, SUCCESS, of(X_IS_2)},
-
-                {ASSIGN_X_2, of(X_IS_1), false, SUCCESS, of(X_IS_2)},
-
-                {ASSIGN_X_Y, of(), false, FAILURE, of()},
-
-                {ASSIGN_X_Y, of(X_IS_1), false, FAILURE, of(X_IS_1)},
-
-                {ASSIGN_X_Y, of(X_IS_1), true, SUCCESS, of()},
-
-                {ASSIGN_X_Y, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2)},
-
-                {ASSIGN_X_Y, of(Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2)},
-
-                {SKIP, of(X_IS_1), false, SUCCESS, of(X_IS_1)},
-
-                {ASSUME_EQ_X_1, of(), false, SUCCESS, of(X_IS_1)},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {HAVOC_X, of(X_IS_1), false, SUCCESS, of()},
+                    {HAVOC_X, of(Y_IS_2), false, SUCCESS, of(Y_IS_2)},
+                    {HAVOC_X, of(X_IS_1, Y_IS_2), false, SUCCESS, of(Y_IS_2)},
+                    {HAVOC_X, of(), false, SUCCESS, of()},
+                    {ASSUME_GT_X_0, of(X_IS_1), false, SUCCESS, of(X_IS_1)},
+                    {ASSUME_GT_X_0, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
+                    {ASSUME_GT_X_0, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
+                    {ASSUME_GT_X_0, of(), false, FAILURE, of()},
+                    {ASSUME_LEQ_X_0, of(X_IS_1), false, BOTTOM, of(X_IS_1)},
+                    {ASSUME_LEQ_X_0, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
+                    {ASSUME_LEQ_X_0, of(X_IS_1, Y_IS_2), false, BOTTOM, of(X_IS_1, Y_IS_2)},
+                    {ASSUME_LEQ_X_Y, of(X_IS_1), false, FAILURE, of(X_IS_1)},
+                    {ASSUME_LEQ_X_Y, of(Y_IS_2), false, FAILURE, of(Y_IS_2)},
+                    {ASSUME_LEQ_X_Y, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
+                    {ASSUME_LEQ_X_Y, of(), false, FAILURE, of()},
+                    {ASSIGN_X_1, of(), false, SUCCESS, of(X_IS_1)},
+                    {ASSIGN_X_1, of(Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
+                    {ASSIGN_X_1, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_1, Y_IS_2)},
+                    {ASSIGN_X_2, of(), false, SUCCESS, of(X_IS_2)},
+                    {ASSIGN_X_2, of(X_IS_1), false, SUCCESS, of(X_IS_2)},
+                    {ASSIGN_X_Y, of(), false, FAILURE, of()},
+                    {ASSIGN_X_Y, of(X_IS_1), false, FAILURE, of(X_IS_1)},
+                    {ASSIGN_X_Y, of(X_IS_1), true, SUCCESS, of()},
+                    {ASSIGN_X_Y, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2)},
+                    {ASSIGN_X_Y, of(Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2)},
+                    {SKIP, of(X_IS_1), false, SUCCESS, of(X_IS_1)},
+                    {ASSUME_EQ_X_1, of(), false, SUCCESS, of(X_IS_1)},
+                });
     }
 
     @Test
@@ -163,5 +135,4 @@ public final class StmtApplierTest {
             assertEquals(lit, entry.get2());
         }
     }
-
 }

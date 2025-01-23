@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.cfa.analysis.lts;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.common.Utils;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Large block encoding (LBE) implementation for CFA LTS. It maps each path (with no branching) into
@@ -53,7 +52,8 @@ public final class CfaLbeLts implements CfaLts {
             final List<Edge> edges = new LinkedList<>();
             edges.add(edge);
             Loc running = edge.getTarget();
-            while (running.getInEdges().size() == 1 && running.getOutEdges().size() == 1
+            while (running.getInEdges().size() == 1
+                    && running.getOutEdges().size() == 1
                     && !running.equals(targetLoc)) {
                 final Edge next = Utils.singleElementOf(running.getOutEdges());
                 edges.add(next);
@@ -64,5 +64,4 @@ public final class CfaLbeLts implements CfaLts {
 
         return actions;
     }
-
 }

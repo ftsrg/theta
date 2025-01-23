@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.Iterables;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
@@ -26,18 +33,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static java.util.stream.Collectors.toList;
 
 public final class ZoneState implements ExprState {
 
@@ -61,11 +60,11 @@ public final class ZoneState implements ExprState {
 
     ////
 
-    public static ZoneState region(final Valuation valuation,
-                                   final Collection<VarDecl<RatType>> vars) {
+    public static ZoneState region(
+            final Valuation valuation, final Collection<VarDecl<RatType>> vars) {
         checkNotNull(valuation);
-        final Iterable<VarDecl<RatType>> constrainedVars = Iterables.filter(vars,
-                v -> valuation.eval(v).isPresent());
+        final Iterable<VarDecl<RatType>> constrainedVars =
+                Iterables.filter(vars, v -> valuation.eval(v).isPresent());
 
         final DBM dbm = DBM.top(constrainedVars);
 
@@ -167,8 +166,8 @@ public final class ZoneState implements ExprState {
         return this.dbm.isLeq(that.dbm);
     }
 
-    public boolean isLeq(final ZoneState that,
-                         final Collection<? extends VarDecl<RatType>> activeVars) {
+    public boolean isLeq(
+            final ZoneState that, final Collection<? extends VarDecl<RatType>> activeVars) {
         return this.dbm.isLeq(that.dbm, activeVars);
     }
 
@@ -186,9 +185,8 @@ public final class ZoneState implements ExprState {
     public Expr<BoolType> toExpr() {
         Expr<BoolType> result = expr;
         if (result == null) {
-            final Collection<Expr<BoolType>> exprs = dbm.getConstrs().stream()
-                    .map(ClockConstr::toExpr)
-                    .collect(toList());
+            final Collection<Expr<BoolType>> exprs =
+                    dbm.getConstrs().stream().map(ClockConstr::toExpr).collect(toList());
             result = And(exprs);
             expr = result;
         }
@@ -223,7 +221,9 @@ public final class ZoneState implements ExprState {
     @Override
     public String toString() {
         final Collection<ClockConstr> constrs = dbm.getConstrs();
-        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(constrs)
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .aligned()
+                .addAll(constrs)
                 .toString();
     }
 
@@ -243,8 +243,8 @@ public final class ZoneState implements ExprState {
             return new Builder(DBM.copyOf(state.dbm));
         }
 
-        private static Builder project(final ZoneState state,
-                                       final Collection<? extends VarDecl<RatType>> clocks) {
+        private static Builder project(
+                final ZoneState state, final Collection<? extends VarDecl<RatType>> clocks) {
             return new Builder(DBM.project(state.dbm, clocks));
         }
 
@@ -306,5 +306,4 @@ public final class ZoneState implements ExprState {
             return this;
         }
     }
-
 }

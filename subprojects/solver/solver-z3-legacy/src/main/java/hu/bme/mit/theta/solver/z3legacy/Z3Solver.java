@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.z3legacy;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3legacy.FuncDecl;
@@ -32,14 +35,10 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 final class Z3Solver implements UCSolver, Solver {
 
@@ -60,10 +59,12 @@ final class Z3Solver implements UCSolver, Solver {
     private Collection<Expr<BoolType>> unsatCore;
     private SolverStatus status;
 
-    public Z3Solver(final Z3SymbolTable symbolTable,
-                    final Z3TransformationManager transformationManager,
-                    final Z3TermTransformer termTransformer, final com.microsoft.z3legacy.Context z3Context,
-                    final com.microsoft.z3legacy.Solver z3Solver) {
+    public Z3Solver(
+            final Z3SymbolTable symbolTable,
+            final Z3TransformationManager transformationManager,
+            final Z3TermTransformer termTransformer,
+            final com.microsoft.z3legacy.Context z3Context,
+            final com.microsoft.z3legacy.Solver z3Solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -79,8 +80,8 @@ final class Z3Solver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
-                assertion);
+        final com.microsoft.z3legacy.BoolExpr term =
+                (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(assertion);
         add(assertion, term);
     }
 
@@ -95,8 +96,8 @@ final class Z3Solver implements UCSolver, Solver {
         checkNotNull(assertion);
 
         assertions.add(assertion);
-        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
-                assertion);
+        final com.microsoft.z3legacy.BoolExpr term =
+                (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(assertion);
         final String label = String.format(ASSUMPTION_LABEL, labelNum++);
         final com.microsoft.z3legacy.BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
@@ -268,7 +269,8 @@ final class Z3Solver implements UCSolver, Solver {
                 }
             }
 
-            @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+            @SuppressWarnings("unchecked")
+            final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
             return Optional.ofNullable(tVal);
         }
 
@@ -289,14 +291,14 @@ final class Z3Solver implements UCSolver, Solver {
         }
 
         private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
-            final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model,
-                    new ArrayList<>());
+            final Expr<?> expr =
+                    termTransformer.toFuncLitExpr(funcDecl, z3Model, new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 
         private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
-            final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model,
-                    new ArrayList<>());
+            final Expr<?> expr =
+                    termTransformer.toArrayLitExpr(funcDecl, z3Model, new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 
@@ -309,7 +311,8 @@ final class Z3Solver implements UCSolver, Solver {
             }
         }
 
-        private LitExpr<?> extractEnumLiteral(final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
+        private LitExpr<?> extractEnumLiteral(
+                final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
             final com.microsoft.z3legacy.Expr term = z3Model.getConstInterp(funcDecl);
             if (term == null) {
                 return null;
@@ -351,5 +354,4 @@ final class Z3Solver implements UCSolver, Solver {
             return builder.build();
         }
     }
-
 }

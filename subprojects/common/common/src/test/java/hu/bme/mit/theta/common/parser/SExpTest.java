@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -47,24 +46,20 @@ public final class SExpTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {A, atom(A), A},
-
-                {of(), list(), "()"},
-
-                {of(A), list(atom(A)), "(A)"},
-
-                {of(A, B), list(atom(A), atom(B)), "(A B)"},
-
-                {of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
-
-                {of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
-
-                {of(A, B, of(C, of(A))), list(atom(A), atom(B), list(atom(C), list(atom(A)))),
-                        "(A B (C (A)))"}
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {A, atom(A), A},
+                    {of(), list(), "()"},
+                    {of(A), list(atom(A)), "(A)"},
+                    {of(A, B), list(atom(A), atom(B)), "(A B)"},
+                    {of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
+                    {of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
+                    {
+                        of(A, B, of(C, of(A))),
+                        list(atom(A), atom(B), list(atom(C), list(atom(A)))),
+                        "(A B (C (A)))"
+                    }
+                });
     }
 
     @Test
@@ -84,5 +79,4 @@ public final class SExpTest {
         final String actString = sexpr.toString();
         assertEquals(string, actString);
     }
-
 }

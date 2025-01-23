@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -29,6 +26,8 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
+import java.util.Collection;
+import java.util.function.Function;
 
 final class ExplStrategy<S extends State> implements AlgorithmStrategy<S, ExplState> {
 
@@ -54,21 +53,26 @@ final class ExplStrategy<S extends State> implements AlgorithmStrategy<S, ExplSt
     }
 
     @Override
-    public boolean mightCover(final ArgNode<S, XtaAction> coveree,
-                              final ArgNode<S, XtaAction> coverer) {
+    public boolean mightCover(
+            final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
         assert lens.get(coveree.getState()).equals(lens.get(coverer.getState()));
         return true;
     }
 
     @Override
-    public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-    }
+    public void cover(
+            final ArgNode<S, XtaAction> coveree,
+            final ArgNode<S, XtaAction> coverer,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {}
 
     @Override
-    public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public void block(
+            final ArgNode<S, XtaAction> node,
+            final XtaAction action,
+            final S succState,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         assert lens.get(succState).isBottom();
     }
-
 }

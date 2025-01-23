@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.analysis;
 
-/**
- * Common interface for partial orders.
- */
+/** Common interface for partial orders. */
 @FunctionalInterface
 public interface PartialOrd<S extends State> {
 
@@ -29,5 +27,4 @@ public interface PartialOrd<S extends State> {
      * @return
      */
     boolean isLeq(S state1, S state2);
-
 }

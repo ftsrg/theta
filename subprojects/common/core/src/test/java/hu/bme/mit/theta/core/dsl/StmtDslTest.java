@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 package hu.bme.mit.theta.core.dsl;
 
+import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static hu.bme.mit.theta.core.stmt.Stmts.*;
 
 @RunWith(Parameterized.class)
 public class StmtDslTest {
@@ -49,15 +48,12 @@ public class StmtDslTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"assume true", Assume(True()), null},
-
-                {"x := x + 1", Assign(x, Add(x.getRef(), Int(1))), Collections.singleton(x)},
-
-                {"havoc x", Havoc(x), Collections.singleton(x)}
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"assume true", Assume(True()), null},
+                    {"x := x + 1", Assign(x, Add(x.getRef(), Int(1))), Collections.singleton(x)},
+                    {"havoc x", Havoc(x), Collections.singleton(x)}
+                });
     }
 
     @Test

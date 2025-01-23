@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ public final class BasicScopedSymbol implements ScopedSymbol {
     private final String name;
     private final BasicScope scope;
 
-    public BasicScopedSymbol(final String name, final Scope eclosingScope,
-                             final Collection<? extends Symbol> symbols) {
+    public BasicScopedSymbol(
+            final String name,
+            final Scope eclosingScope,
+            final Collection<? extends Symbol> symbols) {
         checkNotNull(name);
         checkArgument(name.length() > 0);
         this.name = name;
@@ -60,5 +62,4 @@ public final class BasicScopedSymbol implements ScopedSymbol {
     public Optional<? extends Scope> enclosingScope() {
         return scope.enclosingScope();
     }
-
 }

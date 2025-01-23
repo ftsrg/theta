@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -29,21 +34,15 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.InterpolatingProverEnvironment;
-import org.sosy_lab.java_smt.api.SolverContext;
-import org.sosy_lab.java_smt.api.SolverException;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import org.sosy_lab.java_smt.api.BooleanFormula;
+import org.sosy_lab.java_smt.api.InterpolatingProverEnvironment;
+import org.sosy_lab.java_smt.api.SolverContext;
+import org.sosy_lab.java_smt.api.SolverException;
 
 final class JavaSMTItpSolver implements ItpSolver, Solver {
 
@@ -59,16 +58,23 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
     private final JavaSMTTermTransformer termTransformer;
     private final SolverContext context;
 
-    public JavaSMTItpSolver(final JavaSMTSymbolTable symbolTable,
-                            final JavaSMTTransformationManager transformationManager,
-                            final JavaSMTTermTransformer termTransformer,
-                            final SolverContext context,
-                            final InterpolatingProverEnvironment interpolatingProverEnvironment) {
+    public JavaSMTItpSolver(
+            final JavaSMTSymbolTable symbolTable,
+            final JavaSMTTransformationManager transformationManager,
+            final JavaSMTTermTransformer termTransformer,
+            final SolverContext context,
+            final InterpolatingProverEnvironment interpolatingProverEnvironment) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.context = context;
 
-        this.solver = new JavaSMTSolver(symbolTable, transformationManager, termTransformer, context, interpolatingProverEnvironment);
+        this.solver =
+                new JavaSMTSolver(
+                        symbolTable,
+                        transformationManager,
+                        termTransformer,
+                        context,
+                        interpolatingProverEnvironment);
         this.interpolatingProverEnvironment = interpolatingProverEnvironment;
 
         markers = new StackImpl<>();
@@ -99,7 +105,9 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             Object c = solver.add(assertion, term);
             jsmtMarker.add(c);
             termMap.add(Tuple2.of(assertion, c));
-            combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
+            combinedTermMap =
+                    termMap.toCollection().stream()
+                            .collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
         } else {
             jsmtMarker.add(combinedTermMap.get(assertion));
         }
@@ -107,7 +115,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(solver.getStatus() == SolverStatus.UNSAT,
+        checkState(
+                solver.getStatus() == SolverStatus.UNSAT,
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof JavaSMTItpPattern);
 
@@ -125,7 +134,9 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             if (indexList.stream().allMatch(i -> i == 0)) {
                 interpolants = interpolatingProverEnvironment.getSeqInterpolants(termList);
             } else {
-                interpolants = interpolatingProverEnvironment.getTreeInterpolants(termList, indexList.stream().mapToInt(i -> i).toArray());
+                interpolants =
+                        interpolatingProverEnvironment.getTreeInterpolants(
+                                termList, indexList.stream().mapToInt(i -> i).toArray());
             }
 
             Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
@@ -141,7 +152,11 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         }
     }
 
-    private int getInterpolantParams(final ItpMarkerTree<JavaSMTItpMarker> root, List<JavaSMTItpMarker> markerList, final List<Collection<?>> terms, final List<Integer> indices) {
+    private int getInterpolantParams(
+            final ItpMarkerTree<JavaSMTItpMarker> root,
+            List<JavaSMTItpMarker> markerList,
+            final List<Collection<?>> terms,
+            final List<Integer> indices) {
         int leftmostIndex = -1;
         for (ItpMarkerTree<JavaSMTItpMarker> child : root.getChildren()) {
             final int index = getInterpolantParams(child, markerList, terms, indices);
@@ -157,7 +172,6 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         indices.add(leftmostIndex);
         return leftmostIndex;
     }
-
 
     @Override
     public Collection<? extends ItpMarker> getMarkers() {
@@ -185,7 +199,9 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             marker.push();
         }
         solver.push();
-        combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
+        combinedTermMap =
+                termMap.toCollection().stream()
+                        .collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
     }
 
     @Override
@@ -196,7 +212,9 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             marker.pop(n);
         }
         solver.pop(n);
-        combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
+        combinedTermMap =
+                termMap.toCollection().stream()
+                        .collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
     }
 
     @Override

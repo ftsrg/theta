@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,7 @@ final class DiffBounds {
 
     private static final String INF_STRING = "inf";
 
-    private DiffBounds() {
-    }
+    private DiffBounds() {}
 
     public static int Inf() {
         return INF;
@@ -50,8 +49,8 @@ final class DiffBounds {
 
     ////
 
-    public static ClockConstr toConstr(final VarDecl<RatType> leftVar,
-                                       final VarDecl<RatType> rightVar, final int b) {
+    public static ClockConstr toConstr(
+            final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int b) {
         checkNotNull(leftVar);
         checkNotNull(rightVar);
 
@@ -95,7 +94,6 @@ final class DiffBounds {
                 }
             }
         }
-
     }
 
     ////
@@ -142,5 +140,4 @@ final class DiffBounds {
         sb.append(')');
         return sb.toString();
     }
-
 }

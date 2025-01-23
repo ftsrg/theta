@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import org.junit.Test;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import org.junit.Test;
 
 public class XstsEnumSemanticsTest {
 
     @Test(expected = ClassCastException.class)
     public void test() throws IOException {
 
-        try (InputStream inputStream = new SequenceInputStream(new FileInputStream("src/test/resources/model/literals_bad.xsts"),
-                new FileInputStream("src/test/resources/property/literals.prop"))) {
+        try (InputStream inputStream =
+                new SequenceInputStream(
+                        new FileInputStream("src/test/resources/model/literals_bad.xsts"),
+                        new FileInputStream("src/test/resources/property/literals.prop"))) {
             XstsDslManager.createXsts(inputStream);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,9 +30,15 @@ public final class NodeAttributes {
     private final Shape shape;
     private final Alignment alignment;
 
-    private NodeAttributes(final String label, final Color lineColor, final Color fillColor,
-                           final LineStyle lineStyle,
-                           final String font, final int peripheries, final Shape shape, final Alignment alignment) {
+    private NodeAttributes(
+            final String label,
+            final Color lineColor,
+            final Color fillColor,
+            final LineStyle lineStyle,
+            final String font,
+            final int peripheries,
+            final Shape shape,
+            final Alignment alignment) {
         this.label = checkNotNull(label);
         this.lineColor = checkNotNull(lineColor);
         this.fillColor = checkNotNull(fillColor);
@@ -131,8 +137,8 @@ public final class NodeAttributes {
         }
 
         public NodeAttributes build() {
-            return new NodeAttributes(label, lineColor, fillColor, lineStyle, font, peripheries,
-                    shape, alignment);
+            return new NodeAttributes(
+                    label, lineColor, fillColor, lineStyle, font, peripheries, shape, alignment);
         }
     }
 }

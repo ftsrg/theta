@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.model.Transition;
-
 import java.util.NoSuchElementException;
-
 
 public final class PtNetTransitionNextStateDescriptor implements AbstractNextStateDescriptor {
     private Transition representedTransition;
@@ -40,8 +38,7 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
             final int takes,
             final int inhibits,
             final int puts,
-            final AbstractNextStateDescriptor continuation
-    ) {
+            final AbstractNextStateDescriptor continuation) {
         this.representedTransition = representedTransition;
         this.affectedPlace = affectedPlace;
         this.takes = takes;
@@ -51,7 +48,8 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(
+            final StateSpaceInfo localStateSpace) {
         if (localStateSpace.getTraceInfo() == affectedPlace) {
             return new IntObjMapView<AbstractNextStateDescriptor>() {
                 @Override
@@ -123,7 +121,8 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
     }
 
     @Override
-    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+            final StateSpaceInfo localStateSpace) {
         if (localStateSpace.getTraceInfo() == affectedPlace) {
             return new IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>>() {
                 @Override
@@ -252,7 +251,8 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
                 }
             };
         } else {
-            return IntObjMapView.empty(IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
+            return IntObjMapView.empty(
+                    IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
         }
     }
 
@@ -266,9 +266,12 @@ public final class PtNetTransitionNextStateDescriptor implements AbstractNextSta
         if (takes != that.takes) return false;
         if (inhibits != that.inhibits) return false;
         if (puts != that.puts) return false;
-        if (affectedPlace != null ? !affectedPlace.equals(that.affectedPlace) : that.affectedPlace != null)
-            return false;
-        return continuation != null ? continuation.equals(that.continuation) : that.continuation == null;
+        if (affectedPlace != null
+                ? !affectedPlace.equals(that.affectedPlace)
+                : that.affectedPlace != null) return false;
+        return continuation != null
+                ? continuation.equals(that.continuation)
+                : that.continuation == null;
     }
 
     @Override

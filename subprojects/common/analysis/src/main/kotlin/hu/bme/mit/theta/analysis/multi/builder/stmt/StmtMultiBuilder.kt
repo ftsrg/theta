@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.multi.builder.stmt
 
 import hu.bme.mit.theta.analysis.LTS
@@ -22,13 +21,26 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.multi.MultiAnalysisSide
 
-class StmtMultiBuilder<LState : ExprState, LControl : ExprState, LAction : StmtAction, DataState : ExprState, LPrec : Prec, LControlPrec : Prec>(
-    private val side: MultiAnalysisSide<LState, DataState, LControl, LAction, LPrec, LControlPrec>,
-    private val lts: LTS<in LState, LAction>
+class StmtMultiBuilder<
+  LState : ExprState,
+  LControl : ExprState,
+  LAction : StmtAction,
+  DataState : ExprState,
+  LPrec : Prec,
+  LControlPrec : Prec,
+>(
+  private val side: MultiAnalysisSide<LState, DataState, LControl, LAction, LPrec, LControlPrec>,
+  private val lts: LTS<in LState, LAction>,
 ) {
 
-    fun <RState : ExprState, RControl : ExprState, RAction : StmtAction, RPrec : Prec, RControlPrec : Prec> addRightSide(
-        side: MultiAnalysisSide<RState, DataState, RControl, RAction, RPrec, RControlPrec>,
-        lts: LTS<in RState, RAction>
-    ) = StmtMultiBuilderPair(this.side, this.lts, side, lts)
+  fun <
+    RState : ExprState,
+    RControl : ExprState,
+    RAction : StmtAction,
+    RPrec : Prec,
+    RControlPrec : Prec,
+  > addRightSide(
+    side: MultiAnalysisSide<RState, DataState, RControl, RAction, RPrec, RControlPrec>,
+    lts: LTS<in RState, RAction>,
+  ) = StmtMultiBuilderPair(this.side, this.lts, side, lts)
 }

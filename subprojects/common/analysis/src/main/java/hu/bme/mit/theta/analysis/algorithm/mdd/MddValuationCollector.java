@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
-
 import java.util.Set;
 import java.util.Stack;
 
 /**
- * A utility class for collecting all vectors from a subtree represented by a symbolic node.
- * Only works with finite diagrams, but can handle default edges.
+ * A utility class for collecting all vectors from a subtree represented by a symbolic node. Only
+ * works with finite diagrams, but can handle default edges.
  */
 public class MddValuationCollector {
 
@@ -61,7 +60,11 @@ public class MddValuationCollector {
         return valuations;
     }
 
-    private static void collect(MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations) {
+    private static void collect(
+            MddNode node,
+            RecursiveIntObjCursor<? extends MddNode> cursor,
+            Stack<Assignment> assignments,
+            Set<Valuation> valuations) {
         if (node.isTerminal()) {
             valuations.add(toValuation(assignments));
         } else {
@@ -77,8 +80,13 @@ public class MddValuationCollector {
                     assert cursor.value() != null;
 
                     if (node.getRepresentation() instanceof MddExpressionRepresentation) {
-                        final MddExpressionRepresentation representation = (MddExpressionRepresentation) node.getRepresentation();
-                        assignments.push(new Assignment(representation.getDecl(), LitExprConverter.toLitExpr(cursor.key(), representation.getDecl().getType())));
+                        final MddExpressionRepresentation representation =
+                                (MddExpressionRepresentation) node.getRepresentation();
+                        assignments.push(
+                                new Assignment(
+                                        representation.getDecl(),
+                                        LitExprConverter.toLitExpr(
+                                                cursor.key(), representation.getDecl().getType())));
                     }
 
                     try (var valueCursor = cursor.valueCursor()) {
@@ -87,7 +95,6 @@ public class MddValuationCollector {
 
                     if (node.getRepresentation() instanceof MddExpressionRepresentation)
                         assignments.pop();
-
                 }
             }
         }
@@ -98,6 +105,4 @@ public class MddValuationCollector {
         assignments.stream().forEach(ass -> builder.put(ass.decl, ass.value));
         return builder.build();
     }
-
-
 }

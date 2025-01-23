@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.*;
-
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkArgument;
+public class FpType
+        implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>, Ordered<FpType> {
 
-public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>,
-        Ordered<FpType> {
-
-    private final static int HASH_SEED = 5424;
-    private final static String TYPE_LABEL = "Fp";
+    private static final int HASH_SEED = 5424;
+    private static final String TYPE_LABEL = "Fp";
 
     private final int exponent;
     private final int significand;
@@ -146,6 +145,7 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
 
     @Override
     public DomainSize getDomainSize() {
-        return DomainSize.of(BigInteger.TWO.pow(significand).multiply(BigInteger.TWO.pow(exponent)));
+        return DomainSize.of(
+                BigInteger.TWO.pow(significand).multiply(BigInteger.TWO.pow(exponent)));
     }
 }

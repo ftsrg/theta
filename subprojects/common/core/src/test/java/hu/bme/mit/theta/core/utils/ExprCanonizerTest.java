@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatExprs;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
@@ -41,6 +24,22 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprCanonizer.canonize;
 import static org.junit.Assert.assertEquals;
+
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Enclosed.class)
 public class ExprCanonizerTest {
@@ -81,21 +80,13 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {x, y,
-                                y, x},
-
-                        {x, y,
-                                x, y},
-
-                        {x, True(),
-                                x, True()},
-
-                        {x, True(),
-                                True(), x},
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {x, y, y, x},
+                            {x, y, x, y},
+                            {x, True(), x, True()},
+                            {x, True(), True(), x},
+                        });
             }
 
             @Test
@@ -107,7 +98,6 @@ public class ExprCanonizerTest {
             public void testXor() {
                 assertEquals(canonize(Xor(a1, b1)), canonize(Xor(a2, b2)));
             }
-
         }
 
         @RunWith(Parameterized.class)
@@ -127,21 +117,13 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {a, b,
-                                b, a},
-
-                        {a, b,
-                                a, b},
-
-                        {a, Int(1),
-                                a, Int(1)},
-
-                        {a, Int(1),
-                                Int(1), a},
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {a, b, b, a},
+                            {a, b, a, b},
+                            {a, Int(1), a, Int(1)},
+                            {a, Int(1), Int(1), a},
+                        });
             }
 
             @Test
@@ -153,7 +135,6 @@ public class ExprCanonizerTest {
             public void testIntNeq() {
                 assertEquals(canonize(IntExprs.Neq(a1, b1)), canonize(IntExprs.Neq(a2, b2)));
             }
-
         }
 
         @RunWith(Parameterized.class)
@@ -173,16 +154,11 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {d, d,
-                                d, d},
-
-                        {d, Rat(1, 2),
-                                Rat(1, 2), d},
-
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {d, d, d, d},
+                            {d, Rat(1, 2), Rat(1, 2), d},
+                        });
             }
 
             @Test
@@ -194,10 +170,7 @@ public class ExprCanonizerTest {
             public void testRatNeq() {
                 assertEquals(canonize(RatExprs.Neq(a1, b1)), canonize(RatExprs.Neq(a2, b2)));
             }
-
-
         }
-
     }
 
     @RunWith(Enclosed.class)
@@ -226,22 +199,13 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {x, y, z,
-                                y, x, z},
-
-                        {x, y, z,
-                                x, y, z},
-
-                        {x, True(), x,
-                                x, x, True()},
-
-                        {x, True(), True(),
-                                True(), x, True()},
-
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {x, y, z, y, x, z},
+                            {x, y, z, x, y, z},
+                            {x, True(), x, x, x, True()},
+                            {x, True(), True(), True(), x, True()},
+                        });
             }
 
             @Test
@@ -253,7 +217,6 @@ public class ExprCanonizerTest {
             public void testOr() {
                 assertEquals(canonize(Or(a1, b1, c1)), canonize(Or(a2, b2, c2)));
             }
-
         }
 
         @RunWith(Parameterized.class)
@@ -279,35 +242,26 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {a, b, b,
-                                b, a, b},
-
-                        {a, b, a,
-                                a, b, a},
-
-                        {a, Int(1), Int(2),
-                                Int(2), a, Int(1)},
-
-                        {a, Int(1), b,
-                                b, Int(1), a},
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {a, b, b, b, a, b},
+                            {a, b, a, a, b, a},
+                            {a, Int(1), Int(2), Int(2), a, Int(1)},
+                            {a, Int(1), b, b, Int(1), a},
+                        });
             }
 
             @Test
             public void testIntAdd() {
-                assertEquals(canonize(IntExprs.Add(a1, b1, c1)),
-                        canonize(IntExprs.Add(a2, b2, c2)));
+                assertEquals(
+                        canonize(IntExprs.Add(a1, b1, c1)), canonize(IntExprs.Add(a2, b2, c2)));
             }
 
             @Test
             public void testIntMul() {
-                assertEquals(canonize(IntExprs.Mul(a1, b1, c1)),
-                        canonize(IntExprs.Mul(a2, b2, c2)));
+                assertEquals(
+                        canonize(IntExprs.Mul(a1, b1, c1)), canonize(IntExprs.Mul(a2, b2, c2)));
             }
-
         }
 
         @RunWith(Parameterized.class)
@@ -333,32 +287,25 @@ public class ExprCanonizerTest {
 
             @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
-                return Arrays.asList(new Object[][]{
-
-                        {d, d, d,
-                                d, d, d},
-
-                        {d, Rat(1, 2), Rat(1, 2),
-                                Rat(1, 2), Rat(1, 2), d},
-
-
-                });
+                return Arrays.asList(
+                        new Object[][] {
+                            {d, d, d, d, d, d},
+                            {d, Rat(1, 2), Rat(1, 2), Rat(1, 2), Rat(1, 2), d},
+                        });
             }
 
             @Test
             public void testRatAdd() {
-                assertEquals(canonize(RatExprs.Add(a1, b1, c1)),
-                        canonize(RatExprs.Add(a2, b2, c2)));
+                assertEquals(
+                        canonize(RatExprs.Add(a1, b1, c1)), canonize(RatExprs.Add(a2, b2, c2)));
             }
 
             @Test
             public void testRatMul() {
-                assertEquals(canonize(RatExprs.Mul(a1, b1, c1)),
-                        canonize(RatExprs.Mul(a2, b2, c2)));
+                assertEquals(
+                        canonize(RatExprs.Mul(a1, b1, c1)), canonize(RatExprs.Mul(a2, b2, c2)));
             }
-
         }
-
     }
 
     public static class NonCommutativeTest {
@@ -399,21 +346,25 @@ public class ExprCanonizerTest {
 
         @Test
         public void testRatGeq() {
-            assertEquals(canonize(RatExprs.Geq(Rat(8, 3), Rat(2, 1))),
+            assertEquals(
+                    canonize(RatExprs.Geq(Rat(8, 3), Rat(2, 1))),
                     canonize(RatExprs.Geq(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Leq(Rat(2, 1), Rat(8, 3))),
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(2, 1), Rat(8, 3))),
                     canonize(RatExprs.Geq(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Geq(Rat(8, 4), d)),
-                    canonize(RatExprs.Geq(Rat(8, 4), d)));
-            assertEquals(canonize(RatExprs.Leq(Rat(2, 1), d)),
-                    canonize(RatExprs.Geq(d, Rat(2, 1))));
+            assertEquals(
+                    canonize(RatExprs.Geq(Rat(8, 4), d)), canonize(RatExprs.Geq(Rat(8, 4), d)));
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(2, 1), d)), canonize(RatExprs.Geq(d, Rat(2, 1))));
         }
 
         @Test
         public void testRatGt() {
-            assertEquals(canonize(RatExprs.Gt(Rat(8, 3), Rat(2, 1))),
+            assertEquals(
+                    canonize(RatExprs.Gt(Rat(8, 3), Rat(2, 1))),
                     canonize(RatExprs.Gt(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Lt(Rat(2, 1), Rat(8, 3))),
+            assertEquals(
+                    canonize(RatExprs.Lt(Rat(2, 1), Rat(8, 3))),
                     canonize(RatExprs.Gt(Rat(8, 3), Rat(2, 1))));
             assertEquals(canonize(RatExprs.Gt(Rat(8, 4), d)), canonize(RatExprs.Gt(Rat(8, 4), d)));
             assertEquals(canonize(RatExprs.Lt(Rat(2, 1), d)), canonize(RatExprs.Gt(d, Rat(2, 1))));
@@ -421,21 +372,25 @@ public class ExprCanonizerTest {
 
         @Test
         public void testRatLeq() {
-            assertEquals(canonize(RatExprs.Leq(Rat(8, 3), Rat(2, 1))),
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(8, 3), Rat(2, 1))),
                     canonize(RatExprs.Leq(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Leq(Rat(2, 1), Rat(8, 3))),
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(2, 1), Rat(8, 3))),
                     canonize(RatExprs.Geq(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Leq(Rat(8, 4), d)),
-                    canonize(RatExprs.Leq(Rat(8, 4), d)));
-            assertEquals(canonize(RatExprs.Leq(Rat(2, 1), d)),
-                    canonize(RatExprs.Geq(d, Rat(2, 1))));
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(8, 4), d)), canonize(RatExprs.Leq(Rat(8, 4), d)));
+            assertEquals(
+                    canonize(RatExprs.Leq(Rat(2, 1), d)), canonize(RatExprs.Geq(d, Rat(2, 1))));
         }
 
         @Test
         public void testRatLt() {
-            assertEquals(canonize(RatExprs.Lt(Rat(8, 3), Rat(2, 1))),
+            assertEquals(
+                    canonize(RatExprs.Lt(Rat(8, 3), Rat(2, 1))),
                     canonize(RatExprs.Lt(Rat(8, 3), Rat(2, 1))));
-            assertEquals(canonize(RatExprs.Lt(Rat(2, 1), Rat(8, 3))),
+            assertEquals(
+                    canonize(RatExprs.Lt(Rat(2, 1), Rat(8, 3))),
                     canonize(RatExprs.Gt(Rat(8, 3), Rat(2, 1))));
             assertEquals(canonize(RatExprs.Lt(Rat(8, 4), d)), canonize(RatExprs.Lt(Rat(8, 4), d)));
             assertEquals(canonize(RatExprs.Lt(Rat(2, 1), d)), canonize(RatExprs.Gt(d, Rat(2, 1))));
@@ -512,7 +467,8 @@ public class ExprCanonizerTest {
         public void testIte() {
             assertEquals(Ite(True(), a, b), canonize(Ite(True(), a, b)));
             assertEquals(Ite(False(), a, b), canonize(Ite(False(), a, b)));
-            assertEquals(Ite(True(), Ite(True(), Ite(True(), a, b), b), b),
+            assertEquals(
+                    Ite(True(), Ite(True(), Ite(True(), a, b), b), b),
                     canonize(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
         }
 
@@ -538,10 +494,9 @@ public class ExprCanonizerTest {
 
         @Test
         public void testComplex() {
-            assertEquals(canonize(Iff(Or(False(), x), And(True(), x))),
+            assertEquals(
+                    canonize(Iff(Or(False(), x), And(True(), x))),
                     canonize(Iff(And(x, True()), Or(x, False()))));
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,20 +17,17 @@ package hu.bme.mit.theta.analysis.algorithm.arg;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.RandomWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public enum SearchStrategy {
-
     BFS {
         @Override
         public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
             return FifoWaitlist.create();
         }
-
     },
 
     DFS {
@@ -38,7 +35,6 @@ public enum SearchStrategy {
         public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
             return LifoWaitlist.create();
         }
-
     },
 
     RANDOM {
@@ -46,9 +42,7 @@ public enum SearchStrategy {
         public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
             return RandomWaitlist.create();
         }
-
     };
 
     public abstract <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist();
-
 }

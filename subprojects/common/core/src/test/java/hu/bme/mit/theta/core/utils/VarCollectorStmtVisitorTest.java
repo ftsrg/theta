@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,20 +28,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {
@@ -58,23 +56,16 @@ public class VarCollectorStmtVisitorTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {Skip(), of()},
-
-                {Havoc(VA), of(VA)},
-
-                {Havoc(VB), of(VB)},
-
-                {Assign(VB, Int(0)), of(VB)},
-
-                {Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB)},
-
-                {Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC)},
-
-                {Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC)},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {Skip(), of()},
+                    {Havoc(VA), of(VA)},
+                    {Havoc(VB), of(VB)},
+                    {Assign(VB, Int(0)), of(VB)},
+                    {Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB)},
+                    {Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC)},
+                    {Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC)},
+                });
     }
 
     @Test
@@ -82,5 +73,4 @@ public class VarCollectorStmtVisitorTest {
         final Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
         assertEquals(expectedVars, vars);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class CfaState<S extends ExprState> implements ExprState {
 
@@ -101,8 +101,10 @@ public final class CfaState<S extends ExprState> implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(loc.getName()).body()
-                .add(state).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(loc.getName())
+                .body()
+                .add(state)
+                .toString();
     }
-
 }

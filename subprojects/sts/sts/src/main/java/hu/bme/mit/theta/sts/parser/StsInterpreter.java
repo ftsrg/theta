@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,12 +23,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 import com.google.common.primitives.Ints;
-
 import hu.bme.mit.theta.common.parser.SExpr;
 import hu.bme.mit.theta.common.parser.SExpr.SAtom;
 import hu.bme.mit.theta.common.parser.SExpr.SList;
@@ -41,6 +36,9 @@ import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 final class StsInterpreter {
 
@@ -97,7 +95,8 @@ final class StsInterpreter {
         if (head.isAtom()) {
             final String symbol = head.asAtom().getAtom();
             final Object object = env.eval(symbol);
-            @SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+            @SuppressWarnings("unchecked")
+            final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
             final Object value = interpretation.apply(tail);
             return value;
         } else if (head.isList()) {
@@ -184,5 +183,4 @@ final class StsInterpreter {
             consumer.accept(builder, expr);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,23 +17,20 @@ package hu.bme.mit.theta.cfa.analysis.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
+import hu.bme.mit.theta.common.container.Containers;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
-public final class ImpactReachedSet<S extends State, A extends Action, K> implements
-        ReachedSet<S, A> {
+public final class ImpactReachedSet<S extends State, A extends Action, K>
+        implements ReachedSet<S, A> {
 
     private final Function<? super S, ? extends K> partitioning;
 
@@ -54,8 +51,8 @@ public final class ImpactReachedSet<S extends State, A extends Action, K> implem
         checkNotNull(node);
         final S state = node.getState();
         final K key = partitioning.apply(state);
-        final Collection<ArgNode<S, A>> partition = partitions.computeIfAbsent(key,
-                k -> new ArrayList<>());
+        final Collection<ArgNode<S, A>> partition =
+                partitions.computeIfAbsent(key, k -> new ArrayList<>());
         partition.add(node);
     }
 
@@ -64,8 +61,8 @@ public final class ImpactReachedSet<S extends State, A extends Action, K> implem
         checkNotNull(node);
         final S state = node.getState();
         final K key = partitioning.apply(state);
-        final Collection<ArgNode<S, A>> partition = partitions.getOrDefault(key,
-                Collections.emptyList());
+        final Collection<ArgNode<S, A>> partition =
+                partitions.getOrDefault(key, Collections.emptyList());
         for (final ArgNode<S, A> nodeToCoverWith : partition) {
             if (nodeToCoverWith.getId() < node.getId()) {
                 if (nodeToCoverWith.mayCover(node)) {
@@ -77,5 +74,4 @@ public final class ImpactReachedSet<S extends State, A extends Action, K> implem
             }
         }
     }
-
 }

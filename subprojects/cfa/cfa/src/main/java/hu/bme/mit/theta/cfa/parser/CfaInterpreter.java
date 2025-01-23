@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,11 +21,7 @@ import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
-import java.util.List;
-import java.util.function.Function;
-
 import com.google.common.primitives.Ints;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
@@ -37,6 +33,8 @@ import hu.bme.mit.theta.core.parser.CoreInterpreter;
 import hu.bme.mit.theta.core.parser.Env;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.List;
+import java.util.function.Function;
 
 final class CfaInterpreter {
 
@@ -98,7 +96,8 @@ final class CfaInterpreter {
         if (head.isAtom()) {
             final String symbol = head.asAtom().getAtom();
             final Object object = env.eval(symbol);
-            @SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+            @SuppressWarnings("unchecked")
+            final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
             final Object value = interpretation.apply(tail);
             return value;
         } else if (head.isList()) {
@@ -154,7 +153,6 @@ final class CfaInterpreter {
     private Edge createEdge(final CFA.Builder builder, final EdgeContext context) {
         final Edge edge = builder.createEdge(context.source, context.target, context.stmt);
         return edge;
-
     }
 
     private Function<List<SExpr>, VarDecl<?>> varCreator() {
@@ -199,7 +197,10 @@ final class CfaInterpreter {
     }
 
     private enum LocKind {
-        LOC, INIT, FINAL, ERROR
+        LOC,
+        INIT,
+        FINAL,
+        ERROR
     }
 
     private static final class EdgeContext {

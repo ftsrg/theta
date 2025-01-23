@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,14 +57,12 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
     }
 
     protected SmtLibDeclTransformer instantiateDeclTransformer(
-            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
-    ) {
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         return new GenericSmtLibDeclTransformer(transformer, symbolTable);
     }
 
     protected SmtLibExprTransformer instantiateExprTransformer(
-            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
-    ) {
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         return new GenericSmtLibExprTransformer(transformer, symbolTable);
     }
 }

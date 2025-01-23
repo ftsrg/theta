@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Test;
-
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
 
 public class VarIndexingTest {
 
@@ -46,8 +46,8 @@ public class VarIndexingTest {
 
     @Test
     public void testInc() {
-        final VarIndexing indexes = VarIndexingFactory.indexingBuilder(0).inc(x).inc(z).inc(x)
-                .build();
+        final VarIndexing indexes =
+                VarIndexingFactory.indexingBuilder(0).inc(x).inc(z).inc(x).build();
 
         assertEquals(2, indexes.get(x));
         assertEquals(0, indexes.get(y));
@@ -56,8 +56,8 @@ public class VarIndexingTest {
 
     @Test
     public void testIncNeg() {
-        final VarIndexing indexes = VarIndexingFactory.basicIndexingBuilder(2).inc(x, -1).inc(z, -1)
-                .inc(x, -1).build();
+        final VarIndexing indexes =
+                VarIndexingFactory.basicIndexingBuilder(2).inc(x, -1).inc(z, -1).inc(x, -1).build();
 
         assertEquals(0, indexes.get(x));
         assertEquals(2, indexes.get(y));
@@ -91,8 +91,8 @@ public class VarIndexingTest {
 
     @Test
     public void testSub() {
-        final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).inc(y).inc(y)
-                .build();
+        final VarIndexing indexes1 =
+                VarIndexingFactory.indexingBuilder(1).inc(x).inc(y).inc(y).build();
         final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(0).inc(x).inc(z).build();
         final VarIndexing sub = indexes1.sub(indexes2);
         assertEquals(1, sub.get(x));
@@ -113,8 +113,8 @@ public class VarIndexingTest {
     @Test(expected = IllegalArgumentException.class)
     public void testSubException() {
         final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).build();
-        final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x)
-                .build();
+        final VarIndexing indexes2 =
+                VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x).build();
         indexes1.sub(indexes2);
     }
 
@@ -124,5 +124,4 @@ public class VarIndexingTest {
         final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(2).build();
         indexes1.sub(indexes2);
     }
-
 }

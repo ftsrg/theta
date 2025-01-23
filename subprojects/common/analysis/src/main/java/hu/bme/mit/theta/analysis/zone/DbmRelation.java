@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package hu.bme.mit.theta.analysis.zone;
 
 enum DbmRelation {
-    LESS(true, false), GREATER(false, true), EQUAL(true, true), INCOMPARABLE(false, false);
+    LESS(true, false),
+    GREATER(false, true),
+    EQUAL(true, true),
+    INCOMPARABLE(false, false);
 
     private final boolean leq;
     private final boolean geq;

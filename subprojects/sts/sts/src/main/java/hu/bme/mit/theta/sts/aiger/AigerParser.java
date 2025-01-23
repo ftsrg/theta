@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@ package hu.bme.mit.theta.sts.aiger;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
@@ -33,14 +26,17 @@ import hu.bme.mit.theta.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.sts.aiger.elements.Latch;
 import hu.bme.mit.theta.sts.aiger.elements.OutputVar;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Parser for textual (.aag) AIGER files.
- */
+/** Parser for textual (.aag) AIGER files. */
 public final class AigerParser {
 
-    private AigerParser() {
-    }
+    private AigerParser() {}
 
     /**
      * Parse a textual AIGER file (*.aag) to our internal representation.
@@ -50,8 +46,8 @@ public final class AigerParser {
      * @throws IOException
      */
     public static AigerSystem parse(final String fileName) throws IOException {
-        final BufferedReader br = new BufferedReader(
-                new InputStreamReader(new FileInputStream(fileName)));
+        final BufferedReader br =
+                new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
         try {
             int nNodes;
@@ -138,10 +134,10 @@ public final class AigerParser {
                 final AndGate andGate = andGates.get(i);
                 final AigerNode source1 = nodes[andGateInputs1.get(i) / 2];
                 final AigerNode source2 = nodes[andGateInputs2.get(i) / 2];
-                final AigerWire wire1 = new AigerWire(source1, andGate,
-                        andGateInputs1.get(i) % 2 == 0);
-                final AigerWire wire2 = new AigerWire(source2, andGate,
-                        andGateInputs2.get(i) % 2 == 0);
+                final AigerWire wire1 =
+                        new AigerWire(source1, andGate, andGateInputs1.get(i) % 2 == 0);
+                final AigerWire wire2 =
+                        new AigerWire(source2, andGate, andGateInputs2.get(i) % 2 == 0);
                 andGate.setInWire1(wire1);
                 andGate.setInWire2(wire2);
                 source1.addOutWire(wire1);

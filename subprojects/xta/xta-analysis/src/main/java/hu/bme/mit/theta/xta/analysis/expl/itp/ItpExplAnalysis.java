@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
-public final class ItpExplAnalysis<A extends Action> implements
-        Analysis<ItpExplState, A, UnitPrec> {
+public final class ItpExplAnalysis<A extends Action>
+        implements Analysis<ItpExplState, A, UnitPrec> {
 
     private final InitFunc<ItpExplState, UnitPrec> initFunc;
     private final TransFunc<ItpExplState, A, UnitPrec> transFunc;
@@ -56,5 +56,4 @@ public final class ItpExplAnalysis<A extends Action> implements
     public TransFunc<ItpExplState, A, UnitPrec> getTransFunc() {
         return transFunc;
     }
-
 }

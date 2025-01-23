@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,29 +18,25 @@ package hu.bme.mit.theta.core.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.google.common.collect.ImmutableList;
-
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public final class ParamBinding implements Substitution {
 
     private final List<ParamDecl<?>> params;
     private final Map<Decl<?>, Expr<?>> paramToArg;
 
-    public ParamBinding(final List<? extends ParamDecl<?>> params,
-                        final List<? extends Expr<?>> args) {
+    public ParamBinding(
+            final List<? extends ParamDecl<?>> params, final List<? extends Expr<?>> args) {
         checkNotNull(params);
         checkNotNull(args);
         checkArgument(params.size() == args.size());
@@ -56,8 +52,8 @@ public final class ParamBinding implements Substitution {
         }
     }
 
-    public static ParamBinding create(final List<? extends ParamDecl<?>> params,
-                                      final List<? extends Expr<?>> args) {
+    public static ParamBinding create(
+            final List<? extends ParamDecl<?>> params, final List<? extends Expr<?>> args) {
         return new ParamBinding(params, args);
     }
 
@@ -71,8 +67,8 @@ public final class ParamBinding implements Substitution {
     @Override
     public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(
             final Decl<DeclType> decl) {
-        @SuppressWarnings("unchecked") final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(
-                decl);
+        @SuppressWarnings("unchecked")
+        final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(decl);
         return Optional.ofNullable(value);
     }
 }

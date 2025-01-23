@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,31 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-
-import java.util.Arrays;
-import java.util.Collection;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import java.util.Arrays;
+import java.util.Collection;
+
 public class FuncTestUtils {
 
-    private FuncTestUtils() {
-    }
+    private FuncTestUtils() {}
 
     public static Collection<?> BasicOperations() {
         final var sortFuncType = FuncType.of(Int(), FuncType.of(Int(), Bool()));
         final var sortFunc = Const("sort", sortFuncType);
 
-        return Arrays.asList(new Object[][]{
-
-                {FuncAppExpr.class,
+        return Arrays.asList(
+                new Object[][] {
+                    {
+                        FuncAppExpr.class,
                         App(App(sortFunc.getRef(), Int(0)), Int(1)),
-                        App(App(sortFunc.getRef(), Int(0)), Int(1))},
-
-        });
+                        App(App(sortFunc.getRef(), Int(0)), Int(1))
+                    },
+                });
     }
-
 }

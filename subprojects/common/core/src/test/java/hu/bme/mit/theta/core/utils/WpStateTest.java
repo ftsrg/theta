@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,20 +22,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class WpStateTest {
@@ -66,29 +64,19 @@ public final class WpStateTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {TRUE, ASSIGN_X_1, TRUE},
-
-                {GEQ_X_1, ASSIGN_X_1, TRUE},
-
-                {GEQ_1_X, ASSIGN_X_1, TRUE},
-
-                {GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y},
-
-                {GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y},
-
-                {TRUE, ASSIGN_Y_X, TRUE},
-
-                {GEQ_X_1, ASSIGN_Y_X, GEQ_X_1},
-
-                {GEQ_1_X, ASSIGN_Y_X, GEQ_1_X},
-
-                {GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X},
-
-                {GEQ_X_Y, ASSIGN_Y_X, TRUE},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {TRUE, ASSIGN_X_1, TRUE},
+                    {GEQ_X_1, ASSIGN_X_1, TRUE},
+                    {GEQ_1_X, ASSIGN_X_1, TRUE},
+                    {GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y},
+                    {GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y},
+                    {TRUE, ASSIGN_Y_X, TRUE},
+                    {GEQ_X_1, ASSIGN_Y_X, GEQ_X_1},
+                    {GEQ_1_X, ASSIGN_Y_X, GEQ_1_X},
+                    {GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X},
+                    {GEQ_X_Y, ASSIGN_Y_X, TRUE},
+                });
     }
 
     @Test
@@ -103,5 +91,4 @@ public final class WpStateTest {
         // Assert
         assertEquals(expectedWp, actualWp);
     }
-
 }

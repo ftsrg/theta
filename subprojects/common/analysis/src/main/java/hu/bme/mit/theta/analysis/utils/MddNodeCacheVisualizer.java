@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.utils;
 
+import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
+import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
+
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
@@ -23,15 +26,11 @@ import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
-
 import java.awt.*;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-
-import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
-import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 public class MddNodeCacheVisualizer {
 
@@ -51,13 +50,13 @@ public class MddNodeCacheVisualizer {
 
     public static long idFor(MddNode n) {
         Long l = registry.get(n);
-        if (l == null)
-            registry.put(n, l = nextId++);
+        if (l == null) registry.put(n, l = nextId++);
         return l;
     }
 
     private static class LazyHolderDefault {
-        static final MddNodeCacheVisualizer INSTANCE = new MddNodeCacheVisualizer(n -> n.toString());
+        static final MddNodeCacheVisualizer INSTANCE =
+                new MddNodeCacheVisualizer(n -> n.toString());
     }
 
     private static class LazyHolderStructureOnly {
@@ -68,8 +67,7 @@ public class MddNodeCacheVisualizer {
         this.nodeToString = nodeToString;
     }
 
-    public static MddNodeCacheVisualizer create(
-            final Function<MddNode, String> nodeToString) {
+    public static MddNodeCacheVisualizer create(final Function<MddNode, String> nodeToString) {
         return new MddNodeCacheVisualizer(nodeToString);
     }
 
@@ -91,8 +89,7 @@ public class MddNodeCacheVisualizer {
         return graph;
     }
 
-    private void traverse(final Graph graph, final MddNode node,
-                          final Set<MddNode> traversed) {
+    private void traverse(final Graph graph, final MddNode node, final Set<MddNode> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -102,11 +99,19 @@ public class MddNodeCacheVisualizer {
         final LineStyle lineStyle = CHILD_EDGE_STYLE;
 
         final int peripheries = 1;
-//        final int peripheries = node.isComplete()?2:1;
+        //        final int peripheries = node.isComplete()?2:1;
 
-        final NodeAttributes nAttributes = NodeAttributes.builder().label(nodeToString.apply(node))
-                .alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
-                .peripheries(peripheries).lineStyle(lineStyle).build();
+        final NodeAttributes nAttributes =
+                NodeAttributes.builder()
+                        .label(nodeToString.apply(node))
+                        .alignment(LEFT)
+                        .shape(RECTANGLE)
+                        .font(FONT)
+                        .fillColor(FILL_COLOR)
+                        .lineColor(LINE_COLOR)
+                        .peripheries(peripheries)
+                        .lineStyle(lineStyle)
+                        .build();
 
         graph.addNode(nodeId, nAttributes);
 
@@ -116,29 +121,42 @@ public class MddNodeCacheVisualizer {
 
             final String sourceId = NODE_ID_PREFIX + idFor(node);
             final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
-            final EdgeAttributes eAttributes = EdgeAttributes.builder()
-                    .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(DEFAULT_EDGE_STYLE).build();
+            final EdgeAttributes eAttributes =
+                    EdgeAttributes.builder()
+                            .alignment(LEFT)
+                            .font(FONT)
+                            .color(LINE_COLOR)
+                            .lineStyle(DEFAULT_EDGE_STYLE)
+                            .build();
             graph.addEdge(sourceId, targetId, eAttributes);
         } else {
             if (!(node.isTerminal())) {
                 var representation = node.getRepresentation();
                 Preconditions.checkState(representation instanceof MddExpressionRepresentation);
                 var expressionRepresentation = (MddExpressionRepresentation) representation;
-                for (var cursor = expressionRepresentation.getExplicitRepresentation().getCacheView().cursor(); cursor.moveNext(); ) {
+                for (var cursor =
+                                expressionRepresentation
+                                        .getExplicitRepresentation()
+                                        .getCacheView()
+                                        .cursor();
+                        cursor.moveNext(); ) {
                     if (cursor.value() != null) {
                         traverse(graph, cursor.value(), traversed);
 
                         final String sourceId = NODE_ID_PREFIX + idFor(node);
                         final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
-                        final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cursor.key() + "")
-                                .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(CHILD_EDGE_STYLE).build();
+                        final EdgeAttributes eAttributes =
+                                EdgeAttributes.builder()
+                                        .label(cursor.key() + "")
+                                        .alignment(LEFT)
+                                        .font(FONT)
+                                        .color(LINE_COLOR)
+                                        .lineStyle(CHILD_EDGE_STYLE)
+                                        .build();
                         graph.addEdge(sourceId, targetId, eAttributes);
                     }
-
                 }
             }
         }
-
     }
-
 }

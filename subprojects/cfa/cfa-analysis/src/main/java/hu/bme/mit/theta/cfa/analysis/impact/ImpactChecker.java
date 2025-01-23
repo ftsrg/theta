@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,39 +17,41 @@ package hu.bme.mit.theta.cfa.analysis.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Optional;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
+import java.util.Optional;
+import java.util.function.Function;
 
-public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements
-        SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
+public final class ImpactChecker<S extends State, A extends Action, P extends Prec>
+        implements SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
 
     private final ArgBuilder<S, A, P> argBuilder;
     private final ImpactRefiner<S, A> refiner;
     private final Function<? super S, ?> partitioning;
 
-    private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-                          final Function<? super S, ?> partitioning) {
+    private ImpactChecker(
+            final ArgBuilder<S, A, P> argBuilder,
+            final ImpactRefiner<S, A> refiner,
+            final Function<? super S, ?> partitioning) {
         this.argBuilder = checkNotNull(argBuilder);
         this.refiner = checkNotNull(refiner);
         this.partitioning = checkNotNull(partitioning);
     }
 
     public static <S extends State, A extends Action, P extends Prec> ImpactChecker<S, A, P> create(
-            final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+            final ArgBuilder<S, A, P> argBuilder,
+            final ImpactRefiner<S, A> refiner,
             final Function<? super S, ?> partitioning) {
         return new ImpactChecker<>(argBuilder, refiner, partitioning);
     }
@@ -119,8 +121,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
             reachedSet.addAll(arg.getInitNodes());
 
             while (true) {
-                final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes()
-                        .findAny();
+                final Optional<ArgNode<S, A>> anyIncompleteNode =
+                        arg.getIncompleteNodes().findAny();
 
                 if (anyIncompleteNode.isPresent()) {
                     final ArgNode<S, A> v = anyIncompleteNode.get();
@@ -168,6 +170,5 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
                 }
             }
         }
-
     }
 }

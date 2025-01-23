@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,4 +31,8 @@ dependencies {
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver-z3"))
     implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
+    testImplementation(project(mapOf("path" to ":theta-xsts-analysis")))
+    testImplementation(project(mapOf("path" to ":theta-xsts")))
+    testImplementation(project(mapOf("path" to ":theta-cfa-analysis")))
+    testImplementation(project(mapOf("path" to ":theta-cfa")))
 }

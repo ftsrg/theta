@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
@@ -22,14 +24,9 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
-
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Sign and significand is presumed to be unsigned Exponent is presumed to be signed
- */
+/** Sign and significand is presumed to be unsigned Exponent is presumed to be signed */
 public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 
     private static final int HASH_SEED = 6796;
@@ -41,8 +38,11 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 
     private final FpRoundingMode roundingMode;
 
-    private FpToBvExpr(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size,
-                       final boolean sgn) {
+    private FpToBvExpr(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int size,
+            final boolean sgn) {
         super(op);
         checkNotNull(op);
         this.op = op;
@@ -54,13 +54,19 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
         this.roundingMode = roundingMode;
     }
 
-    public static FpToBvExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                final int size, final boolean sgn) {
+    public static FpToBvExpr of(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int size,
+            final boolean sgn) {
         return new FpToBvExpr(roundingMode, op, size, sgn);
     }
 
-    public static FpToBvExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                    final int size, final boolean sgn) {
+    public static FpToBvExpr create(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int size,
+            final boolean sgn) {
         return FpToBvExpr.of(roundingMode, op, size, sgn);
     }
 
@@ -104,7 +110,9 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpToBvExpr that = (FpToBvExpr) obj;
-            return this.getOp().equals(that.getOp()) && size == that.size && sgn == that.sgn
+            return this.getOp().equals(that.getOp())
+                    && size == that.size
+                    && sgn == that.sgn
                     && roundingMode.equals(that.roundingMode);
         } else {
             return false;
@@ -120,7 +128,13 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
     }
 
     public String getOperatorLabel() {
-        return OPERATOR_LABEL + "[" + size + "'" + (sgn ? "s" : "u") + "][" + roundingMode.name() + "]";
+        return OPERATOR_LABEL
+                + "["
+                + size
+                + "'"
+                + (sgn ? "s" : "u")
+                + "]["
+                + roundingMode.name()
+                + "]";
     }
 }
- 

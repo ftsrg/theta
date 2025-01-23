@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone;
 
-import java.util.List;
-
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -28,11 +26,11 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
+import java.util.List;
 
 public final class XtaLuZoneUtils {
 
-    private XtaLuZoneUtils() {
-    }
+    private XtaLuZoneUtils() {}
 
     public static BoundFunc pre(final BoundFunc boundFunction, final XtaAction action) {
         if (action.isBasic()) {
@@ -46,8 +44,8 @@ public final class XtaLuZoneUtils {
 
     ////
 
-    private static BoundFunc preForBasicAction(final BoundFunc boundFunction,
-                                               final BasicXtaAction action) {
+    private static BoundFunc preForBasicAction(
+            final BoundFunc boundFunction, final BasicXtaAction action) {
         final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -61,8 +59,8 @@ public final class XtaLuZoneUtils {
         return succStateBuilder.build();
     }
 
-    private static BoundFunc preForBinaryAction(final BoundFunc boundFunction,
-                                                final BinaryXtaAction action) {
+    private static BoundFunc preForBinaryAction(
+            final BoundFunc boundFunction, final BinaryXtaAction action) {
         final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -81,8 +79,8 @@ public final class XtaLuZoneUtils {
 
     ////
 
-    private static void applyInverseUpdates(final BoundFunc.Builder succStateBuilder,
-                                            final Edge edge) {
+    private static void applyInverseUpdates(
+            final BoundFunc.Builder succStateBuilder, final Edge edge) {
         for (final Update update : edge.getUpdates()) {
             if (update.isClockUpdate()) {
                 final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
@@ -100,8 +98,8 @@ public final class XtaLuZoneUtils {
         }
     }
 
-    private static void applyInvariants(final BoundFunc.Builder succStateBuilder,
-                                        final List<Loc> targetLocs) {
+    private static void applyInvariants(
+            final BoundFunc.Builder succStateBuilder, final List<Loc> targetLocs) {
         for (final Loc loc : targetLocs) {
             for (final Guard invar : loc.getInvars()) {
                 if (invar.isClockGuard()) {
@@ -110,5 +108,4 @@ public final class XtaLuZoneUtils {
             }
         }
     }
-
 }

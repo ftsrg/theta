@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,11 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli
 
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.option
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.chc.CexTree
@@ -29,42 +26,34 @@ import hu.bme.mit.theta.xsts.analysis.toRelations
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
+class XstsCliChc :
+  XstsCliBaseCommand(name = "CHC", help = "Model checking using the Horn solving backend") {
 
-class XstsCliChc : XstsCliBaseCommand(
-    name = "CHC",
-    help = "Model checking using the Horn solving backend"
-) {
+  override val defaultSolver: String = "z3:4.13.0"
 
-    override val defaultSolver: String = "z3:4.13.0"
+  private fun printResult(status: SafetyResult<Invariant, CexTree>, xsts: XSTS, totalTimeMs: Long) {
+    if (!outputOptions.benchmarkMode) return
+    printCommonResult(status, xsts, totalTimeMs)
+    writer.newRow()
+  }
 
-    private fun printResult(status: SafetyResult<Invariant, CexTree>, xsts: XSTS, totalTimeMs: Long) {
-        if (!outputOptions.benchmarkMode) return
-        printCommonResult(status, xsts, totalTimeMs)
-        writer.newRow()
+  override fun run() {
+    try {
+      doRun()
+    } catch (e: Exception) {
+      printError(e)
+      exitProcess(1)
     }
+  }
 
-    override fun run() {
-        try {
-            doRun()
-        } catch (e: Exception) {
-            printError(e)
-            exitProcess(1)
-        }
-    }
-
-    private fun doRun() {
-        registerSolverManagers()
-        val solverFactory = SolverManager.resolveSolverFactory(solver)
-        val xsts = inputOptions.loadXsts()
-        val sw = Stopwatch.createStarted()
-        val checker = HornChecker(
-            xsts.toRelations(),
-            solverFactory,
-            logger
-        )
-        val result = checker.check()
-        sw.stop()
-        printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
-    }
-
+  private fun doRun() {
+    registerSolverManagers()
+    val solverFactory = SolverManager.resolveSolverFactory(solver)
+    val xsts = inputOptions.loadXsts()
+    val sw = Stopwatch.createStarted()
+    val checker = HornChecker(xsts.toRelations(), solverFactory, logger)
+    val result = checker.check()
+    sw.stop()
+    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+  }
 }

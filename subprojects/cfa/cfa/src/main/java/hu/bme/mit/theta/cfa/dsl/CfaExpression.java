@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,63 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.cfa.dsl;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.dsl.ParseException;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpExprs;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.functype.FuncExprs;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import org.antlr.v4.runtime.Token;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -131,6 +74,62 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.ParseException;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.antlr.v4.runtime.Token;
+
 final class CfaExpression {
 
     private final Scope scope;
@@ -175,8 +174,8 @@ final class CfaExpression {
         }
 
         private void pop() {
-            checkState(currentScope.enclosingScope().isPresent(),
-                    "Enclosing scope is not present.");
+            checkState(
+                    currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
             currentScope = currentScope.enclosingScope().get();
             env.pop();
         }
@@ -189,13 +188,13 @@ final class CfaExpression {
                 final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
                 checkArgument(params.size() == 1);
-                @SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(
-                        params);
+                @SuppressWarnings("unchecked")
+                final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
                 push(params);
 
-                @SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(
-                        this);
+                @SuppressWarnings("unchecked")
+                final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
                 pop();
 
@@ -210,9 +209,14 @@ final class CfaExpression {
             if (ctx.decls == null) {
                 return Collections.emptyList();
             } else {
-                final List<ParamDecl<?>> paramDecls = ctx.decls.stream()
-                        .map(d -> Param(d.name.getText(), new CfaType(d.ttype).instantiate()))
-                        .collect(toList());
+                final List<ParamDecl<?>> paramDecls =
+                        ctx.decls.stream()
+                                .map(
+                                        d ->
+                                                Param(
+                                                        d.name.getText(),
+                                                        new CfaType(d.ttype).instantiate()))
+                                .collect(toList());
                 return paramDecls;
             }
         }
@@ -286,8 +290,8 @@ final class CfaExpression {
         @Override
         public Expr<?> visitOrExpr(final OrExprContext ctx) {
             if (ctx.ops.size() > 1) {
-                final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                        .map(op -> cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.ops.stream().map(op -> cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return Or(ops);
             } else {
@@ -309,8 +313,8 @@ final class CfaExpression {
         @Override
         public Expr<?> visitAndExpr(final AndExprContext ctx) {
             if (ctx.ops.size() > 1) {
-                final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                        .map(op -> cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.ops.stream().map(op -> cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return And(ops);
             } else {
@@ -508,9 +512,11 @@ final class CfaExpression {
             }
         }
 
-        private Expr<?> createAdditiveExpr(final Expr<?> opsHead,
-                                           final List<? extends Expr<?>> opsTail,
-                                           final List<? extends Token> opers, final AdditiveExprContext ctx) {
+        private Expr<?> createAdditiveExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<? extends Token> opers,
+                final AdditiveExprContext ctx) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -528,11 +534,12 @@ final class CfaExpression {
             }
         }
 
-        private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                              final Token oper,
-                                              final AdditiveExprContext ctx) {
+        private Expr<?> createAdditiveSubExpr(
+                final Expr<?> leftOp,
+                final Expr<?> rightOp,
+                final Token oper,
+                final AdditiveExprContext ctx) {
             switch (oper.getType()) {
-
                 case PLUS:
                     return createAddExpr(leftOp, rightOp);
 
@@ -546,12 +553,13 @@ final class CfaExpression {
                     return createBvSubExpr(castBv(leftOp), castBv(rightOp));
 
                 case FPADD:
-                    return FpExprs.Add(getRoundingMode(oper.getText()),
+                    return FpExprs.Add(
+                            getRoundingMode(oper.getText()),
                             List.of(castFp(leftOp), castFp(rightOp)));
 
                 case FPSUB:
-                    return FpExprs.Sub(getRoundingMode(oper.getText()), castFp(leftOp),
-                            castFp(rightOp));
+                    return FpExprs.Sub(
+                            getRoundingMode(oper.getText()), castFp(leftOp), castFp(rightOp));
 
                 default:
                     throw new ParseException(ctx, "Unknown operator '" + oper.getText() + "'");
@@ -561,9 +569,11 @@ final class CfaExpression {
         private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof AddExpr) {
                 final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Add(ops);
             } else {
                 return Add(leftOp, rightOp);
@@ -577,9 +587,11 @@ final class CfaExpression {
         private BvAddExpr createBvAddExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
             if (leftOp instanceof BvAddExpr) {
                 final BvAddExpr addLeftOp = (BvAddExpr) leftOp;
-                final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<BvType>> ops =
+                        ImmutableList.<Expr<BvType>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return BvExprs.Add(ops);
             } else {
                 return BvExprs.Add(Arrays.asList(leftOp, rightOp));
@@ -605,12 +617,13 @@ final class CfaExpression {
             } else {
                 return visitChildren(ctx);
             }
-
         }
 
-        private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-                                                 final List<? extends Expr<?>> opsTail,
-                                                 final List<? extends Token> opers, final MultiplicativeExprContext ctx) {
+        private Expr<?> createMutliplicativeExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<? extends Token> opers,
+                final MultiplicativeExprContext ctx) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -622,19 +635,20 @@ final class CfaExpression {
                 final Token operHead = opers.get(0);
                 final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-                final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead,
-                        ctx);
+                final Expr<?> subExpr =
+                        createMultiplicativeSubExpr(opsHead, newOpsHead, operHead, ctx);
 
                 return createMutliplicativeExpr(subExpr, newOpsTail, opersTail, ctx);
             }
         }
 
         @SuppressWarnings("unchecked")
-        private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                    final Token oper,
-                                                    final MultiplicativeExprContext ctx) {
+        private Expr<?> createMultiplicativeSubExpr(
+                final Expr<?> leftOp,
+                final Expr<?> rightOp,
+                final Token oper,
+                final MultiplicativeExprContext ctx) {
             switch (oper.getType()) {
-
                 case MUL:
                     return createMulExpr(leftOp, rightOp);
 
@@ -669,11 +683,14 @@ final class CfaExpression {
                     return FpExprs.Rem((Expr<FpType>) leftOp, (Expr<FpType>) rightOp);
 
                 case FPMUL:
-                    return FpExprs.Mul(getRoundingMode(oper.getText()),
+                    return FpExprs.Mul(
+                            getRoundingMode(oper.getText()),
                             List.of((Expr<FpType>) leftOp, (Expr<FpType>) rightOp));
 
                 case FPDIV:
-                    return FpExprs.Div(getRoundingMode(oper.getText()), (Expr<FpType>) leftOp,
+                    return FpExprs.Div(
+                            getRoundingMode(oper.getText()),
+                            (Expr<FpType>) leftOp,
                             (Expr<FpType>) rightOp);
 
                 default:
@@ -684,9 +701,11 @@ final class CfaExpression {
         private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof MulExpr) {
                 final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Mul(ops);
             } else {
                 return Mul(leftOp, rightOp);
@@ -696,9 +715,11 @@ final class CfaExpression {
         private BvMulExpr createBvMulExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
             if (leftOp instanceof BvMulExpr) {
                 final BvMulExpr addLeftOp = (BvMulExpr) leftOp;
-                final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<BvType>> ops =
+                        ImmutableList.<Expr<BvType>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return BvExprs.Mul(ops);
             } else {
                 return BvExprs.Mul(Arrays.asList(leftOp, rightOp));
@@ -754,9 +775,10 @@ final class CfaExpression {
             }
         }
 
-        private Expr<?> createConcatExpr(final Expr<?> opsHead,
-                                         final List<? extends Expr<?>> opsTail,
-                                         final List<? extends Token> opers) {
+        private Expr<?> createConcatExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<? extends Token> opers) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -774,8 +796,8 @@ final class CfaExpression {
             }
         }
 
-        private Expr<?> createConcatSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                            final Token oper) {
+        private Expr<?> createConcatSubExpr(
+                final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
             switch (oper.getType()) {
                 case BV_CONCAT:
                     return createBvConcatExpr(castBv(leftOp), castBv(rightOp));
@@ -785,13 +807,15 @@ final class CfaExpression {
             }
         }
 
-        private BvConcatExpr createBvConcatExpr(final Expr<BvType> leftOp,
-                                                final Expr<BvType> rightOp) {
+        private BvConcatExpr createBvConcatExpr(
+                final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
             if (leftOp instanceof BvConcatExpr) {
                 final BvConcatExpr addLeftOp = (BvConcatExpr) leftOp;
-                final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<BvType>> ops =
+                        ImmutableList.<Expr<BvType>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return BvExprs.Concat(ops);
             } else {
                 return BvExprs.Concat(Arrays.asList(leftOp, rightOp));
@@ -801,8 +825,8 @@ final class CfaExpression {
         @Override
         public Expr<?> visitBvExtendExpr(final BvExtendExprContext ctx) {
             if (ctx.rightOp != null) {
-                final BvType extendType = BvExprs.BvType(
-                        Integer.parseInt(ctx.rightOp.size.getText()));
+                final BvType extendType =
+                        BvExprs.BvType(Integer.parseInt(ctx.rightOp.size.getText()));
 
                 switch (ctx.oper.getType()) {
                     case BV_ZERO_EXTEND:
@@ -840,23 +864,32 @@ final class CfaExpression {
                         return IsNan((Expr<FpType>) op);
 
                     case FPROUNDTOINT:
-                        return RoundToIntegral(getRoundingMode(ctx.oper.getText()),
-                                (Expr<FpType>) op);
+                        return RoundToIntegral(
+                                getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op);
 
                     case FPSQRT:
                         return Sqrt(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op);
 
                     case FPTOFP:
-                        return ToFp(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op,
-                                getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText()));
+                        return ToFp(
+                                getRoundingMode(ctx.oper.getText()),
+                                (Expr<FpType>) op,
+                                getExp(ctx.oper.getText()),
+                                getSignificand(ctx.oper.getText()));
 
                     case FPTOBV:
-                        return ToBv(getRoundingMode(ctx.oper.getText()), (Expr<FpType>) op,
-                                getBvSize(ctx.oper.getText()), isSignedBv(ctx.oper.getText()));
+                        return ToBv(
+                                getRoundingMode(ctx.oper.getText()),
+                                (Expr<FpType>) op,
+                                getBvSize(ctx.oper.getText()),
+                                isSignedBv(ctx.oper.getText()));
 
                     case FP_FROM_BV:
-                        return FromBv(getRoundingMode(ctx.oper.getText()), (Expr<BvType>) op,
-                                FpType.of(getExp(ctx.oper.getText()),
+                        return FromBv(
+                                getRoundingMode(ctx.oper.getText()),
+                                (Expr<BvType>) op,
+                                FpType.of(
+                                        getExp(ctx.oper.getText()),
                                         getSignificand(ctx.oper.getText())),
                                 isSignedFp(ctx.oper.getText()));
 
@@ -882,7 +915,6 @@ final class CfaExpression {
             } else {
                 return false;
             }
-
         }
 
         private boolean isSignedBv(String text) {
@@ -934,7 +966,6 @@ final class CfaExpression {
             } else {
                 return FpRoundingMode.getDefaultRoundingMode();
             }
-
         }
 
         @Override
@@ -990,18 +1021,20 @@ final class CfaExpression {
             throw new UnsupportedOperationException("TODO: auto-generated method stub");
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(final Expr<?> op,
-                                                                               final ArrayReadAccessContext ctx) {
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(
+                final Expr<?> op, final ArrayReadAccessContext ctx) {
             checkArgument(op.getType() instanceof ArrayType);
-            @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+            @SuppressWarnings("unchecked")
+            final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
             final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
             return Read(array, index);
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(final Expr<?> op,
-                                                                                final ArrayWriteAccessContext ctx) {
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(
+                final Expr<?> op, final ArrayWriteAccessContext ctx) {
             checkArgument(op.getType() instanceof ArrayType);
-            @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+            @SuppressWarnings("unchecked")
+            final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
             final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
             final Expr<T2> elem = cast(ctx.elem.accept(this), array.getType().getElemType());
             return Write(array, index, elem);
@@ -1072,13 +1105,18 @@ final class CfaExpression {
             }
             valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-            final List<Tuple2<Expr<T1>, Expr<T2>>> elems = IntStream
-                    .range(0, ctx.indexExpr.size())
-                    .mapToObj(i -> Tuple2.of(
-                            cast(ctx.indexExpr.get(i).accept(this), indexType),
-                            cast(ctx.valueExpr.get(i).accept(this), valueType)
-                    ))
-                    .collect(Collectors.toUnmodifiableList());
+            final List<Tuple2<Expr<T1>, Expr<T2>>> elems =
+                    IntStream.range(0, ctx.indexExpr.size())
+                            .mapToObj(
+                                    i ->
+                                            Tuple2.of(
+                                                    cast(
+                                                            ctx.indexExpr.get(i).accept(this),
+                                                            indexType),
+                                                    cast(
+                                                            ctx.valueExpr.get(i).accept(this),
+                                                            valueType)))
+                            .collect(Collectors.toUnmodifiableList());
 
             final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
             return simplify(ArrayInit(elems, elseExpr, ArrayType.of(indexType, valueType)));
@@ -1102,7 +1140,8 @@ final class CfaExpression {
                 throw new ParseException(ctx, "Invalid bitvector literal");
             }
 
-            checkArgument(value.length <= size,
+            checkArgument(
+                    value.length <= size,
                     "The value of the literal cannot be represented on the given amount of bits");
 
             final boolean[] bvValue = new boolean[size];
@@ -1134,11 +1173,10 @@ final class CfaExpression {
         private boolean[] decodeDecimalBvContent(String lit, int size) {
             BigInteger value = new BigInteger(lit);
             checkArgument(
-                    value.compareTo(BigInteger.TWO.pow(size - 1).multiply(BigInteger.valueOf(-1))) >= 0
-                            &&
-                            value.compareTo(BigInteger.TWO.pow(size)) < 0,
-                    "Decimal literal is not in range"
-            );
+                    value.compareTo(BigInteger.TWO.pow(size - 1).multiply(BigInteger.valueOf(-1)))
+                                    >= 0
+                            && value.compareTo(BigInteger.TWO.pow(size)) < 0,
+                    "Decimal literal is not in range");
 
             if (value.compareTo(BigInteger.ZERO) < 0) {
                 value = value.add(BigInteger.TWO.pow(size));
@@ -1210,8 +1248,8 @@ final class CfaExpression {
         public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
             Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
             if (optSymbol.isEmpty()) {
-                throw new ParseException(ctx,
-                        "Identifier '" + ctx.id.getText() + "' cannot be resolved");
+                throw new ParseException(
+                        ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
             }
             final Symbol symbol = optSymbol.get();
             final Decl<?> decl = (Decl<?>) env.eval(symbol);
@@ -1222,8 +1260,5 @@ final class CfaExpression {
         public Expr<?> visitParenExpr(final ParenExprContext ctx) {
             return ctx.op.accept(this);
         }
-
     }
-
 }
- 

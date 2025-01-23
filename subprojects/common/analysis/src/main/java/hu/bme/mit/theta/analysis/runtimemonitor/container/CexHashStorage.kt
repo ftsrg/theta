@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgStructuralEquality
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 
-class CexHashStorage<S : State?, A : Action?> :
-    RuntimeDataCollection<ArgTrace<S, A>?> {
+class CexHashStorage<S : State?, A : Action?> : RuntimeDataCollection<ArgTrace<S, A>?> {
 
-    private val counterexamples: MutableSet<Int> = LinkedHashSet()
-    override fun addData(newData: ArgTrace<S, A>?) {
-        counterexamples.add(ArgStructuralEquality.hashCode(newData))
-    }
+  private val counterexamples: MutableSet<Int> = LinkedHashSet()
 
-    override operator fun contains(data: ArgTrace<S, A>?): Boolean {
-        return counterexamples.contains(ArgStructuralEquality.hashCode(data))
-    }
+  override fun addData(newData: ArgTrace<S, A>?) {
+    counterexamples.add(ArgStructuralEquality.hashCode(newData))
+  }
+
+  override operator fun contains(data: ArgTrace<S, A>?): Boolean {
+    return counterexamples.contains(ArgStructuralEquality.hashCode(data))
+  }
 }

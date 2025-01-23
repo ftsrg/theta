@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -30,7 +33,6 @@ import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,22 +41,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-
-
-/**
- * This solver expects the Horn solver-style proofs for counterexamples
- */
+/** This solver expects the Horn solver-style proofs for counterexamples */
 public class GenericHornSolver extends SmtLibSolver implements HornSolver {
-    private static final Pattern CEX_PATTERN = Pattern.compile("([0-9]+):\s*(.*)(?=->)->(\s*([0-9]+)(,?\s+[0-9]+)*)?");
+    private static final Pattern CEX_PATTERN =
+            Pattern.compile("([0-9]+):\s*(.*)(?=->)->(\s*([0-9]+)(,?\s+[0-9]+)*)?");
     private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+):\s*(.*)");
 
     private ProofNode proof = null;
 
-    public GenericHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary, false, SmtLibEnumStrategy.getDefaultStrategy(), "HORN");
+    public GenericHornSolver(
+            SmtLibSymbolTable symbolTable,
+            SmtLibTransformationManager transformationManager,
+            SmtLibTermTransformer termTransformer,
+            SmtLibSolverBinary solverBinary) {
+        super(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                false,
+                SmtLibEnumStrategy.getDefaultStrategy(),
+                "HORN");
     }
 
     @Override
@@ -66,7 +73,10 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
     public SolverStatus check() {
         solverBinary.issueCommand("(check-sat)");
         final var response = solverBinary.readResponse().lines().toList();
-        status = response.get(0).equals("sat") ? SolverStatus.SAT : response.get(0).equals("unsat") ? SolverStatus.UNSAT : null;
+        status =
+                response.get(0).equals("sat")
+                        ? SolverStatus.SAT
+                        : response.get(0).equals("unsat") ? SolverStatus.UNSAT : null;
         if (status == SolverStatus.SAT) {
             // we have a model
             final var sb = new StringBuilder();
@@ -77,8 +87,12 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
             sb.append(")");
             final var generalResponse = parseResponse(sb.toString());
             if (generalResponse.isSpecific() && generalResponse.asSpecific().isGetModelResponse()) {
-                model = new SmtLibValuation(symbolTable, transformationManager, termTransformer,
-                        generalResponse.asSpecific().asGetModelResponse().getModel());
+                model =
+                        new SmtLibValuation(
+                                symbolTable,
+                                transformationManager,
+                                termTransformer,
+                                generalResponse.asSpecific().asGetModelResponse().getModel());
             }
         } else if (status == SolverStatus.UNSAT) {
             // we have a cex (beginning with an empty line)
@@ -94,7 +108,11 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
                     idx = Integer.parseInt(matcher.group(1));
                     term = matcher.group(2);
                     if (matcher.group(3) != null) {
-                        dependencies = Arrays.stream(matcher.group(3).split(",?\s+")).filter(it -> !it.isEmpty()).map(it -> Integer.parseInt(it.trim())).toList();
+                        dependencies =
+                                Arrays.stream(matcher.group(3).split(",?\s+"))
+                                        .filter(it -> !it.isEmpty())
+                                        .map(it -> Integer.parseInt(it.trim()))
+                                        .toList();
                     } else {
                         dependencies = List.of();
                     }
@@ -107,7 +125,9 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
                     }
                 }
                 if (idx != -1) {
-                    final var expr = termTransformer.toExpr(term, Bool(), new SmtLibModel(Collections.emptyMap()));
+                    final var expr =
+                            termTransformer.toExpr(
+                                    term, Bool(), new SmtLibModel(Collections.emptyMap()));
                     final var builder = new ProofNode.Builder(expr);
                     if (root == null && expr.equals(False())) {
                         root = builder;
@@ -116,11 +136,10 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
                     dependencyMap.put(builder, dependencies);
                 }
             }
-            dependencyMap.forEach((builder, integers) ->
-                    integers.forEach(integer -> builder.addChild(builderMap.get(integer)))
-            );
+            dependencyMap.forEach(
+                    (builder, integers) ->
+                            integers.forEach(integer -> builder.addChild(builderMap.get(integer))));
             proof = root.build();
-
         }
         return status;
     }

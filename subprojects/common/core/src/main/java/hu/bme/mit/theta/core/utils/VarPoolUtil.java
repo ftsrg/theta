@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-
 import java.util.ArrayDeque;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class VarPoolUtil {
 
-    private VarPoolUtil() {
-    }
+    private VarPoolUtil() {}
 
-    private final static ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
+    private static final ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
     private static int counter = 0;
 
     public static VarDecl<IntType> requestInt() {
@@ -44,5 +42,4 @@ public class VarPoolUtil {
             intPool.addFirst(var);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -24,13 +25,10 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Struct extends NamedType {
 
@@ -63,12 +61,14 @@ public class Struct extends NamedType {
     @Override
     public CComplexType getActualType() {
         if (currentlyBeingBuilt) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
+            uniqueWarningLogger.write(
+                    Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
             return CComplexType.getSignedInt(parseContext);
         }
         currentlyBeingBuilt = true;
         List<Tuple2<String, CComplexType>> actualFields = new ArrayList<>();
-        fields.forEach((s, cDeclaration) -> actualFields.add(Tuple2.of(s, cDeclaration.getActualType())));
+        fields.forEach(
+                (s, cDeclaration) -> actualFields.add(Tuple2.of(s, cDeclaration.getActualType())));
         currentlyBeingBuilt = false;
 
         CComplexType type = new CStruct(this, actualFields, parseContext);
@@ -97,6 +97,4 @@ public class Struct extends NamedType {
         setUpCopy(struct);
         return struct;
     }
-
 }
-

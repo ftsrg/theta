@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Extern extends CSimpleType {
 
-    public final static Extern instance = new Extern();
+    public static final Extern instance = new Extern();
 
-    private Extern() {
-    }
+    private Extern() {}
 
     @Override
     public CSimpleType copyOf() {
@@ -29,7 +27,6 @@ public class Extern extends CSimpleType {
         setUpCopy(declaredNameRet);
         return declaredNameRet;
     }
-
 
     @Override
     protected void patch(CSimpleType cSimpleType) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,24 +41,14 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createParamList;
 import static java.util.stream.Collectors.toList;
 
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import hu.bme.mit.theta.core.dsl.ParseException;
-import org.antlr.v4.runtime.Token;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.dsl.BasicScope;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -70,9 +60,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslBaseVisitor;
@@ -102,6 +92,12 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RatLitExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RelationExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TrueExprContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.XorExprContext;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.antlr.v4.runtime.Token;
 
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
@@ -134,13 +130,13 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
             final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
             checkArgument(params.size() == 1);
-            @SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(
-                    params);
+            @SuppressWarnings("unchecked")
+            final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
             push(params);
 
-            @SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(
-                    this);
+            @SuppressWarnings("unchecked")
+            final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
             pop();
 
@@ -219,8 +215,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitOrExpr(final OrExprContext ctx) {
         if (ctx.ops.size() > 1) {
-            final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+            final Stream<Expr<BoolType>> opStream =
+                    ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return Or(ops);
         } else {
@@ -242,8 +238,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitAndExpr(final AndExprContext ctx) {
         if (ctx.ops.size() > 1) {
-            final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+            final Stream<Expr<BoolType>> opStream =
+                    ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return And(ops);
         } else {
@@ -322,8 +318,11 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-                                       final List<? extends Token> opers, final AdditiveExprContext ctx) {
+    private Expr<?> createAdditiveExpr(
+            final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<? extends Token> opers,
+            final AdditiveExprContext ctx) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -341,11 +340,12 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                          final Token oper,
-                                          final AdditiveExprContext ctx) {
+    private Expr<?> createAdditiveSubExpr(
+            final Expr<?> leftOp,
+            final Expr<?> rightOp,
+            final Token oper,
+            final AdditiveExprContext ctx) {
         switch (oper.getType()) {
-
             case StsDslParser.PLUS:
                 return createAddExpr(leftOp, rightOp);
 
@@ -360,8 +360,11 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
     private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
         if (leftOp instanceof AddExpr) {
             final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-            final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                    .add(rightOp).build();
+            final List<Expr<?>> ops =
+                    ImmutableList.<Expr<?>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return Add(ops);
         } else {
             return Add(leftOp, rightOp);
@@ -387,12 +390,13 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         } else {
             return visitChildren(ctx);
         }
-
     }
 
-    private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-                                             final List<? extends Expr<?>> opsTail,
-                                             final List<? extends Token> opers, final MultiplicativeExprContext ctx) {
+    private Expr<?> createMutliplicativeExpr(
+            final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<? extends Token> opers,
+            final MultiplicativeExprContext ctx) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -410,11 +414,12 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                final Token oper,
-                                                final MultiplicativeExprContext ctx) {
+    private Expr<?> createMultiplicativeSubExpr(
+            final Expr<?> leftOp,
+            final Expr<?> rightOp,
+            final Token oper,
+            final MultiplicativeExprContext ctx) {
         switch (oper.getType()) {
-
             case StsDslParser.MUL:
                 return createMulExpr(leftOp, rightOp);
 
@@ -435,8 +440,11 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
     private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
         if (leftOp instanceof MulExpr) {
             final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-            final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                    .add(rightOp).build();
+            final List<Expr<?>> ops =
+                    ImmutableList.<Expr<?>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return Mul(ops);
         } else {
             return Mul(leftOp, rightOp);
@@ -547,8 +555,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         final Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 
         if (optSymbol.isEmpty()) {
-            throw new ParseException(ctx,
-                    "Identifier '" + ctx.id.getText() + "' cannot be resolved");
+            throw new ParseException(
+                    ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
         }
         final Symbol symbol = optSymbol.get();
 
@@ -562,12 +570,10 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
         } else {
             return decl.getRef();
         }
-
     }
 
     @Override
     public Expr<?> visitParenExpr(final ParenExprContext ctx) {
         return ctx.op.accept(this);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package hu.bme.mit.theta.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -31,11 +28,12 @@ import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.solver.SolverFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class CfaTraceConcretizer {
 
-    private CfaTraceConcretizer() {
-    }
+    private CfaTraceConcretizer() {}
 
     public static Trace<CfaState<ExplState>, CfaAction> concretize(
             final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
@@ -53,9 +51,9 @@ public final class CfaTraceConcretizer {
             sbeStates.add(trace.getState(i + 1));
         }
         Trace<CfaState<?>, CfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
-        final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
-                BoolExprs.True(),
-                BoolExprs.True(), solverFactory.createItpSolver());
+        final ExprTraceChecker<ItpRefutation> checker =
+                ExprTraceFwBinItpChecker.create(
+                        BoolExprs.True(), BoolExprs.True(), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
@@ -65,7 +63,8 @@ public final class CfaTraceConcretizer {
         final List<CfaState<ExplState>> cfaStates = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(
-                    CfaState.of(sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
+                    CfaState.of(
+                            sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
         }
 
         return Trace.of(cfaStates, sbeTrace.getActions());

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.base.Stopwatch;
-
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.common.table.TableWriter;
 
 public final class LazyXtaStatistics extends Statistics {
@@ -182,7 +181,16 @@ public final class LazyXtaStatistics extends Statistics {
     public static final class Builder {
 
         private enum State {
-            CREATED, RUNNING, EXPANDING, CLOSING, EXPAND_EXPL_REFINING, EXPAND_ZONE_REFINING, CLOSE_EXPL_REFINING, CLOSE_ZONE_REFINING, STOPPED, BUILT
+            CREATED,
+            RUNNING,
+            EXPANDING,
+            CLOSING,
+            EXPAND_EXPL_REFINING,
+            EXPAND_ZONE_REFINING,
+            CLOSE_EXPL_REFINING,
+            CLOSE_ZONE_REFINING,
+            STOPPED,
+            BUILT
         }
 
         private State state;
@@ -332,6 +340,5 @@ public final class LazyXtaStatistics extends Statistics {
             state = State.BUILT;
             return new LazyXtaStatistics(this);
         }
-
     }
 }

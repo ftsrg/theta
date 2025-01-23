@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.utils.FpTestUtils;
-import hu.bme.mit.theta.core.utils.FpUtils;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.kframework.mpfr.BigFloat;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
@@ -41,6 +24,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.runners.Parameterized.Parameters;
+
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.utils.FpTestUtils;
+import hu.bme.mit.theta.core.utils.FpUtils;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverStatus;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.kframework.mpfr.BigFloat;
 
 @RunWith(Parameterized.class)
 public class Z3SolverFPTest {
@@ -68,16 +67,19 @@ public class Z3SolverFPTest {
 
         // Type checks
         assertTrue(
-                "The type of actual is " + actual.getClass().getName() + " instead of "
+                "The type of actual is "
+                        + actual.getClass().getName()
+                        + " instead of "
                         + exprType.getName(),
-                exprType.isInstance(actual)
-        );
+                exprType.isInstance(actual));
         assertEquals(
-                "The type of expected (" + expected.getType() + ") must match the type of actual ("
-                        + actual.getType() + ")",
+                "The type of expected ("
+                        + expected.getType()
+                        + ") must match the type of actual ("
+                        + actual.getType()
+                        + ")",
                 expected.getType(),
-                actual.getType()
-        );
+                actual.getType());
 
         // Equality check
         final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
@@ -93,10 +95,15 @@ public class Z3SolverFPTest {
                 solver.add(EqExpr.create2(expected, actual));
             } else {
                 //noinspection unchecked
-                FpLeqExpr leq = Leq(Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual)),
-                        FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2",
-                                        FpUtils.getMathContext((FpType) actual.getType(), RNE)),
-                                (FpType) actual.getType()));
+                FpLeqExpr leq =
+                        Leq(
+                                Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual)),
+                                FpUtils.bigFloatToFpLitExpr(
+                                        new BigFloat(
+                                                "1e-2",
+                                                FpUtils.getMathContext(
+                                                        (FpType) actual.getType(), RNE)),
+                                        (FpType) actual.getType()));
                 solver.add(leq);
             }
         } else {

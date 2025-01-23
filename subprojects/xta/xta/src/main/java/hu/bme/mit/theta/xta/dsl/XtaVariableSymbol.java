@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,13 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xta.dsl;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -34,15 +41,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
 import hu.bme.mit.theta.xta.utils.RangeType;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 final class XtaVariableSymbol implements Symbol {
 
@@ -53,17 +52,20 @@ final class XtaVariableSymbol implements Symbol {
     private final XtaType type;
     private final XtaInitialiser initialiser;
 
-    public XtaVariableSymbol(final Scope scope, final TypeContext typeContext,
-                             final VariableIdContext variableIdcontext) {
+    public XtaVariableSymbol(
+            final Scope scope,
+            final TypeContext typeContext,
+            final VariableIdContext variableIdcontext) {
         checkNotNull(typeContext);
         checkNotNull(variableIdcontext);
         name = variableIdcontext.fArrayId.fId.getText();
         constant = (typeContext.fTypePrefix.fConst != null);
         broadcast = (typeContext.fTypePrefix.fBroadcast != null);
         type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
-        initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope,
-                variableIdcontext.fInitialiser)
-                : null;
+        initialiser =
+                variableIdcontext.fInitialiser != null
+                        ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
+                        : null;
     }
 
     @Override
@@ -184,19 +186,20 @@ final class XtaVariableSymbol implements Symbol {
 
             final Type newIndexType = (indexType instanceof RangeType) ? Int() : indexType;
 
-            final List<Type> result = ImmutableList.<Type>builder().add(newIndexType)
-                    .addAll(extractArgs(elemType))
-                    .build();
+            final List<Type> result =
+                    ImmutableList.<Type>builder()
+                            .add(newIndexType)
+                            .addAll(extractArgs(elemType))
+                            .build();
             return result;
         } else {
             throw new AssertionError();
         }
     }
 
-    public static abstract class InstantiateResult {
+    public abstract static class InstantiateResult {
 
-        private InstantiateResult() {
-        }
+        private InstantiateResult() {}
 
         public static InstantiateResult constant(final LitExpr<?> expr) {
             return new Constant(expr);
@@ -206,8 +209,8 @@ final class XtaVariableSymbol implements Symbol {
             return new ClockVariable(varDecl);
         }
 
-        public static InstantiateResult dataVariable(final VarDecl<?> varDecl,
-                                                     final LitExpr<?> initValue) {
+        public static InstantiateResult dataVariable(
+                final VarDecl<?> varDecl, final LitExpr<?> initValue) {
             return new DataVariable(varDecl, initValue);
         }
 
@@ -247,7 +250,6 @@ final class XtaVariableSymbol implements Symbol {
             throw new ClassCastException();
         }
     }
-
 
     public static final class DataVariable extends InstantiateResult {
 
@@ -347,5 +349,4 @@ final class XtaVariableSymbol implements Symbol {
             return label;
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.states;
+
+import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class BuiltState {
     private XCFA xcfa;

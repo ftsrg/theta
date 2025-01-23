@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
 public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
 
@@ -59,8 +59,9 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
     @Override
     public LitExpr<FpType> eval(Valuation val) {
         final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-        BigFloat sqrt = FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
-                .sqrt(FpUtils.getMathContext(getType(), roundingMode));
+        BigFloat sqrt =
+                FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
+                        .sqrt(FpUtils.getMathContext(getType(), roundingMode));
         return FpUtils.bigFloatToFpLitExpr(sqrt, getType());
     }
 
@@ -95,4 +96,3 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
         return OPERATOR_LABEL;
     }
 }
- 

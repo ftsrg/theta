@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ public final class ChanType implements Type {
 
     private static final ChanType INSTANCE = new ChanType();
 
-    private ChanType() {
-    }
+    private ChanType() {}
 
     public static ChanType getInstance() {
         return INSTANCE;

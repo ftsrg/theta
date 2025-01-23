@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ final class XtaOrd<S extends State> implements PartialOrd<XtaState<S>> {
     public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
         checkNotNull(state1);
         checkNotNull(state2);
-        return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(),
-                state2.getState());
+        return state1.getLocs().equals(state2.getLocs())
+                && partialOrd.isLeq(state1.getState(), state2.getState());
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.Collection;
 
 public interface ClockConstr {
 
@@ -29,5 +28,4 @@ public interface ClockConstr {
     Expr<BoolType> toExpr();
 
     <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
-
 }

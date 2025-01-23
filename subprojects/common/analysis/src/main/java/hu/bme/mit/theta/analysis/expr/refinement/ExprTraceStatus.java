@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 
 public abstract class ExprTraceStatus<R extends Refutation> {
 
-    private ExprTraceStatus() {
-    }
+    private ExprTraceStatus() {}
 
     public static <R extends Refutation> Infeasible<R> infeasible(final R refutation) {
         return new Infeasible<>(refutation);
@@ -44,7 +43,7 @@ public abstract class ExprTraceStatus<R extends Refutation> {
 
     public abstract Feasible<R> asFeasible();
 
-    public final static class Infeasible<R extends Refutation> extends ExprTraceStatus<R> {
+    public static final class Infeasible<R extends Refutation> extends ExprTraceStatus<R> {
 
         private final R refutation;
 
@@ -74,7 +73,9 @@ public abstract class ExprTraceStatus<R extends Refutation> {
         @Override
         public Feasible<R> asFeasible() {
             throw new ClassCastException(
-                    "Cannot cast " + Infeasible.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Infeasible.class.getSimpleName()
+                            + " to "
                             + Feasible.class.getSimpleName());
         }
 
@@ -84,10 +85,9 @@ public abstract class ExprTraceStatus<R extends Refutation> {
                     .add(getClass().getSimpleName())
                     .toString();
         }
-
     }
 
-    public final static class Feasible<R extends Refutation> extends ExprTraceStatus<R> {
+    public static final class Feasible<R extends Refutation> extends ExprTraceStatus<R> {
 
         private final Trace<Valuation, ? extends Action> valuations;
 
@@ -112,7 +112,9 @@ public abstract class ExprTraceStatus<R extends Refutation> {
         @Override
         public Infeasible<R> asInfeasible() {
             throw new ClassCastException(
-                    "Cannot cast " + Feasible.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Feasible.class.getSimpleName()
+                            + " to "
                             + Infeasible.class.getSimpleName());
         }
 
@@ -127,6 +129,5 @@ public abstract class ExprTraceStatus<R extends Refutation> {
                     .add(getClass().getSimpleName())
                     .toString();
         }
-
     }
 }

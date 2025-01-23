@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -23,23 +22,32 @@ import com.github.ajalt.clikt.parameters.options.option
 
 class XstsCliMainCommand : CliktCommand() {
 
-    val algorithm by option(eager = true).deprecated(
-        "--algorithm switch is now deprecated, use the respective subcommands", error = true
-    )
-    val metrics by option(eager = true).deprecated(
-        "--metrics switch is now deprecated, use the `metrics` subcommand", error = true
-    )
-    val header by option(eager = true).deprecated(
-        "--header switch is now deprecated, use the `header` subcommand", error = true
-    )
+  val algorithm by
+    option(eager = true)
+      .deprecated(
+        "--algorithm switch is now deprecated, use the respective subcommands",
+        error = true,
+      )
+  val metrics by
+    option(eager = true)
+      .deprecated("--metrics switch is now deprecated, use the `metrics` subcommand", error = true)
+  val header by
+    option(eager = true)
+      .deprecated("--header switch is now deprecated, use the `header` subcommand", error = true)
 
-    override fun run() = Unit
-
+  override fun run() = Unit
 }
 
 fun main(args: Array<String>) =
-    XstsCliMainCommand().subcommands(
-        XstsCliCegar(), XstsCliBounded(), XstsCliMdd(), XstsCliPetrinetMdd(), XstsCliChc(), XstsCliHeader(),
-        XstsCliMetrics()
+  XstsCliMainCommand()
+    .subcommands(
+      XstsCliCegar(),
+      XstsCliLtlCegar(),
+      XstsCliBounded(),
+      XstsCliMdd(),
+      XstsCliPetrinetMdd(),
+      XstsCliChc(),
+      XstsCliHeader(),
+      XstsCliMetrics(),
     )
-        .main(args)
+    .main(args)

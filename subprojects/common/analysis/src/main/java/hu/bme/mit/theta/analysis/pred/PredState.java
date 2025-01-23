@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
-import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import java.util.Set;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
+import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.Set;
 
 public final class PredState implements ExprState {
 
@@ -66,20 +65,25 @@ public final class PredState implements ExprState {
         return new PredState(ImmutableSet.of(pred1, pred2));
     }
 
-    public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-                               final Expr<BoolType> pred3) {
+    public static PredState of(
+            final Expr<BoolType> pred1, final Expr<BoolType> pred2, final Expr<BoolType> pred3) {
         return new PredState(ImmutableSet.of(pred1, pred2, pred3));
     }
 
-    public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-                               final Expr<BoolType> pred3,
-                               final Expr<BoolType> pred4) {
+    public static PredState of(
+            final Expr<BoolType> pred1,
+            final Expr<BoolType> pred2,
+            final Expr<BoolType> pred3,
+            final Expr<BoolType> pred4) {
         return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4));
     }
 
-    public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-                               final Expr<BoolType> pred3,
-                               final Expr<BoolType> pred4, final Expr<BoolType> pred5) {
+    public static PredState of(
+            final Expr<BoolType> pred1,
+            final Expr<BoolType> pred2,
+            final Expr<BoolType> pred3,
+            final Expr<BoolType> pred4,
+            final Expr<BoolType> pred5) {
         return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4, pred5));
     }
 
@@ -135,8 +139,9 @@ public final class PredState implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(preds)
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .aligned()
+                .addAll(preds)
                 .toString();
     }
-
 }

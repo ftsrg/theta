@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
 
 import hu.bme.mit.theta.llvm2xcfa.handlers.BaseInstructionHandler;
@@ -24,7 +23,11 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
 public class VectorInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "extractelement":
                 extractelement(instruction, globalState, functionState, blockState);
@@ -38,15 +41,22 @@ public class VectorInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void insertelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void insertelement(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
 
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void extractelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void extractelement(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 }

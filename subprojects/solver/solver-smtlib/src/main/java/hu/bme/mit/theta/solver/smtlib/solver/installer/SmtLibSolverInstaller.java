@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.installer;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,9 +28,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public interface SmtLibSolverInstaller {
 
@@ -71,8 +70,9 @@ public interface SmtLibSolverInstaller {
         }
 
         @Override
-        public final void install(final Path home, final String version, final String name,
-                                  final Path solverPath) throws SmtLibSolverInstallerException {
+        public final void install(
+                final Path home, final String version, final String name, final Path solverPath)
+                throws SmtLibSolverInstallerException {
             checkNotNull(home);
             checkArgument(Files.exists(home));
             checkVersion(version);
@@ -82,8 +82,9 @@ public interface SmtLibSolverInstaller {
             doInstall(home, version, name, solverPath);
         }
 
-        private void doInstall(final Path home, final String version, final String name,
-                               final Path solverPath) throws SmtLibSolverInstallerException {
+        private void doInstall(
+                final Path home, final String version, final String name, final Path solverPath)
+                throws SmtLibSolverInstallerException {
             final var installDir = getInstallDir(home, name);
             if (Files.exists(installDir)) {
                 throw new SmtLibSolverInstallerException(
@@ -97,24 +98,30 @@ public interface SmtLibSolverInstaller {
 
                 if (solverPath != null) {
                     final var solverFilePath = solverFile(installDir);
-                    Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(),
+                    Files.writeString(
+                            solverFilePath,
+                            solverPath.toAbsolutePath().toString(),
                             StandardCharsets.UTF_8);
                 }
 
                 final var solverArgsPath = argsFile(installDir);
-                Files.writeString(solverArgsPath, String.join("\n", getDefaultSolverArgs(version)),
+                Files.writeString(
+                        solverArgsPath,
+                        String.join("\n", getDefaultSolverArgs(version)),
                         StandardCharsets.UTF_8);
 
                 final var solverInfoPath = infoFile(installDir);
                 Files.writeString(
                         solverInfoPath,
-                        String.format("solver=%s\n", getSolverName()) +
-                                String.format("version=%s\n", version) +
-                                String.format("name=%s\n", name) +
-                                (solverPath != null ? String.format("binary=%s\n",
-                                        solverPath.toAbsolutePath().toString()) : ""),
-                        StandardCharsets.UTF_8
-                );
+                        String.format("solver=%s\n", getSolverName())
+                                + String.format("version=%s\n", version)
+                                + String.format("name=%s\n", name)
+                                + (solverPath != null
+                                        ? String.format(
+                                                "binary=%s\n",
+                                                solverPath.toAbsolutePath().toString())
+                                        : ""),
+                        StandardCharsets.UTF_8);
 
                 if (solverPath == null) {
                     installSolver(installDir, version);
@@ -125,8 +132,8 @@ public interface SmtLibSolverInstaller {
                 uninstall(home, version);
                 throw e;
             } catch (IOException e) {
-                throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()),
-                        e);
+                throw new SmtLibSolverInstallerException(
+                        String.format("Error: %s", e.getMessage()), e);
             }
         }
 
@@ -151,8 +158,8 @@ public interface SmtLibSolverInstaller {
 
                 logger.write(Logger.Level.MAINSTEP, "Uninstallation finished\n");
             } catch (IOException e) {
-                throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()),
-                        e);
+                throw new SmtLibSolverInstallerException(
+                        String.format("Error: %s", e.getMessage()), e);
             }
         }
 
@@ -191,28 +198,31 @@ public interface SmtLibSolverInstaller {
 
             final var installDir = home.resolve(version);
             if (!Files.exists(installDir)) {
-                throw new SmtLibSolverInstallerException("The version <" + version
-                        + "> is not installed in <" + home + ">");
+                throw new SmtLibSolverInstallerException(
+                        "The version <" + version + "> is not installed in <" + home + ">");
             }
 
             try {
                 final Path solverPath;
                 final var solverFilePath = solverFile(installDir);
                 if (Files.exists(solverFilePath)) {
-                    solverPath = Path.of(
-                            Files.readAllLines(solverFilePath, StandardCharsets.UTF_8).get(0));
+                    solverPath =
+                            Path.of(
+                                    Files.readAllLines(solverFilePath, StandardCharsets.UTF_8)
+                                            .get(0));
                 } else {
                     solverPath = null;
                 }
 
                 final var solverArgsPath = argsFile(installDir);
-                final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8)
-                        .toArray(String[]::new);
+                final var solverArgs =
+                        Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8)
+                                .toArray(String[]::new);
 
                 return getSolverFactory(installDir, version, solverPath, solverArgs);
             } catch (IOException e) {
-                throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()),
-                        e);
+                throw new SmtLibSolverInstallerException(
+                        String.format("Error: %s", e.getMessage()), e);
             }
         }
 
@@ -232,13 +242,14 @@ public interface SmtLibSolverInstaller {
                 final var solverInfoPath = infoFile(installDir);
                 final var solverInfoStr = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
                 final var solverArgsPath = argsFile(installDir);
-                final var solverArgs = Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8)
-                        .toArray(String[]::new);
+                final var solverArgs =
+                        Files.readAllLines(solverArgsPath, StandardCharsets.UTF_8)
+                                .toArray(String[]::new);
 
                 return solverInfoStr + String.format("args=%s\n", String.join(" ", solverArgs));
             } catch (IOException e) {
-                throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()),
-                        e);
+                throw new SmtLibSolverInstallerException(
+                        String.format("Error: %s", e.getMessage()), e);
             }
         }
 
@@ -262,8 +273,9 @@ public interface SmtLibSolverInstaller {
             checkNotNull(home);
 
             if (Files.exists(home)) {
-                final var installedDirs = home.toFile()
-                        .list((current, name) -> new File(current, name).isDirectory());
+                final var installedDirs =
+                        home.toFile()
+                                .list((current, name) -> new File(current, name).isDirectory());
 
                 assert installedDirs != null;
                 return Arrays.asList(installedDirs);
@@ -280,8 +292,11 @@ public interface SmtLibSolverInstaller {
         protected abstract void uninstallSolver(final Path installDir, final String version)
                 throws SmtLibSolverInstallerException;
 
-        protected abstract SolverFactory getSolverFactory(final Path installDir,
-                                                          final String version, final Path solverPath, final String[] args)
+        protected abstract SolverFactory getSolverFactory(
+                final Path installDir,
+                final String version,
+                final Path solverPath,
+                final String[] args)
                 throws SmtLibSolverInstallerException;
 
         protected abstract String[] getDefaultSolverArgs(final String version)

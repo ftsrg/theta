@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ import java.util.Collection;
 
 public final class ExprTraceStatusMergers {
 
-    private ExprTraceStatusMergers() {
-    }
+    private ExprTraceStatusMergers() {}
 
     public static <R extends Refutation> ExprTraceStatusMerger<R> minPruneIndex() {
         return new MinPruneIndex<>();
@@ -44,9 +43,14 @@ public final class ExprTraceStatusMergers {
                 return firstStatus;
             } else {
                 assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
-                return statuses.stream().map(ExprTraceStatus::asInfeasible).min((s1, s2) -> Integer
-                        .compare(s1.getRefutation().getPruneIndex(),
-                                s2.getRefutation().getPruneIndex())).get();
+                return statuses.stream()
+                        .map(ExprTraceStatus::asInfeasible)
+                        .min(
+                                (s1, s2) ->
+                                        Integer.compare(
+                                                s1.getRefutation().getPruneIndex(),
+                                                s2.getRefutation().getPruneIndex()))
+                        .get();
             }
         }
     }
@@ -63,9 +67,14 @@ public final class ExprTraceStatusMergers {
                 return firstStatus;
             } else {
                 assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
-                return statuses.stream().map(ExprTraceStatus::asInfeasible).max((s1, s2) -> Integer
-                        .compare(s1.getRefutation().getPruneIndex(),
-                                s2.getRefutation().getPruneIndex())).get();
+                return statuses.stream()
+                        .map(ExprTraceStatus::asInfeasible)
+                        .max(
+                                (s1, s2) ->
+                                        Integer.compare(
+                                                s1.getRefutation().getPruneIndex(),
+                                                s2.getRefutation().getPruneIndex()))
+                        .get();
             }
         }
     }

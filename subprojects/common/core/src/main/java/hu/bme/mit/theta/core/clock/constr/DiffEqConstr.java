@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 public final class DiffEqConstr extends DiffConstr {
 
@@ -49,8 +49,8 @@ public final class DiffEqConstr extends DiffConstr {
     }
 
     @Override
-    public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-                           final P param) {
+    public <P, R> R accept(
+            final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
         return visitor.visit(this, param);
     }
 
@@ -60,7 +60,8 @@ public final class DiffEqConstr extends DiffConstr {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final DiffEqConstr that = (DiffEqConstr) obj;
-            return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
+            return this.getBound() == that.getBound()
+                    && this.getLeftVar().equals(that.getLeftVar())
                     && this.getRightVar().equals(that.getRightVar());
         } else {
             return false;
@@ -76,5 +77,4 @@ public final class DiffEqConstr extends DiffConstr {
     protected String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

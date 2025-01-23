@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-
 import java.util.Arrays;
 
 public final class FpExprs {
 
-    private FpExprs() {
-    }
+    private FpExprs() {}
 
     public static FpType FpType(final int exponent, final int significand) {
         return FpType.of(exponent, significand);
@@ -80,13 +77,15 @@ public final class FpExprs {
         return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
     }
 
-    public static FpAddExpr Add(final FpRoundingMode roundingMode,
-                                final Iterable<? extends Expr<FpType>> ops) {
+    public static FpAddExpr Add(
+            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
         return FpAddExpr.of(roundingMode, ops);
     }
 
-    public static FpSubExpr Sub(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-                                final Expr<FpType> rightOp) {
+    public static FpSubExpr Sub(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> leftOp,
+            final Expr<FpType> rightOp) {
         return FpSubExpr.of(roundingMode, leftOp, rightOp);
     }
 
@@ -98,13 +97,15 @@ public final class FpExprs {
         return FpNegExpr.of(op);
     }
 
-    public static FpMulExpr Mul(final FpRoundingMode roundingMode,
-                                final Iterable<? extends Expr<FpType>> ops) {
+    public static FpMulExpr Mul(
+            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
         return FpMulExpr.of(roundingMode, ops);
     }
 
-    public static FpDivExpr Div(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-                                final Expr<FpType> rightOp) {
+    public static FpDivExpr Div(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> leftOp,
+            final Expr<FpType> rightOp) {
         return FpDivExpr.of(roundingMode, leftOp, rightOp);
     }
 
@@ -116,8 +117,11 @@ public final class FpExprs {
         return FpAbsExpr.of(op);
     }
 
-    public static FpFromBvExpr FromBv(final FpRoundingMode roundingMode, final Expr<BvType> op,
-                                      final FpType fpType, final boolean signed) {
+    public static FpFromBvExpr FromBv(
+            final FpRoundingMode roundingMode,
+            final Expr<BvType> op,
+            final FpType fpType,
+            final boolean signed) {
         return FpFromBvExpr.of(roundingMode, op, fpType, signed);
     }
 
@@ -157,8 +161,8 @@ public final class FpExprs {
         return FpIsInfiniteExpr.of(op);
     }
 
-    public static FpRoundToIntegralExpr RoundToIntegral(final FpRoundingMode roundingMode,
-                                                        final Expr<FpType> op) {
+    public static FpRoundToIntegralExpr RoundToIntegral(
+            final FpRoundingMode roundingMode, final Expr<FpType> op) {
         return FpRoundToIntegralExpr.of(roundingMode, op);
     }
 
@@ -174,13 +178,19 @@ public final class FpExprs {
         return FpMinExpr.of(leftOp, rightOp);
     }
 
-    public static FpToBvExpr ToBv(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                  final int size, final boolean sgn) {
+    public static FpToBvExpr ToBv(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int size,
+            final boolean sgn) {
         return FpToBvExpr.of(roundingMode, op, size, sgn);
     }
 
-    public static FpToFpExpr ToFp(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                  final int exp, final int sig) {
+    public static FpToFpExpr ToFp(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int exp,
+            final int sig) {
         return FpToFpExpr.of(roundingMode, op, exp, sig);
     }
 }

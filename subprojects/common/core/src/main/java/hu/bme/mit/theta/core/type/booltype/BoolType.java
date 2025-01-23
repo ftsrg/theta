@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ public final class BoolType implements Equational<BoolType> {
     private static final int HASH_SEED = 754364;
     private static final String TYPE_LABEL = "Bool";
 
-    private BoolType() {
-    }
+    private BoolType() {}
 
     public static BoolType getInstance() {
         return INSTANCE;
@@ -64,5 +63,4 @@ public final class BoolType implements Equational<BoolType> {
     public DomainSize getDomainSize() {
         return DomainSize.TWO;
     }
-
 }

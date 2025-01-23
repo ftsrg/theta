@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Objects;
 
 public final class XstsState<S extends ExprState> implements ExprState {
@@ -34,8 +33,8 @@ public final class XstsState<S extends ExprState> implements ExprState {
         this.initialized = initialized;
     }
 
-    public static <S extends ExprState> XstsState<S> of(final S state,
-                                                        final boolean lastActionWasEnv, final boolean initialized) {
+    public static <S extends ExprState> XstsState<S> of(
+            final S state, final boolean lastActionWasEnv, final boolean initialized) {
         return new XstsState<>(state, lastActionWasEnv, initialized);
     }
 
@@ -63,9 +62,13 @@ public final class XstsState<S extends ExprState> implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned()
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .aligned()
                 .add(initialized ? "post_init" : "pre_init")
-                .add(lastActionWasEnv ? "last_env" : "last_internal").body().add(state).toString();
+                .add(lastActionWasEnv ? "last_env" : "last_internal")
+                .body()
+                .add(state)
+                .toString();
     }
 
     @Override
@@ -78,7 +81,8 @@ public final class XstsState<S extends ExprState> implements ExprState {
         }
         XstsState<?> xstsState = (XstsState<?>) o;
         return lastActionWasEnv == xstsState.lastActionWasEnv
-                && initialized == xstsState.initialized && state.equals(xstsState.state);
+                && initialized == xstsState.initialized
+                && state.equals(xstsState.state);
     }
 
     @Override

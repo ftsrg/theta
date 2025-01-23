@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -40,9 +39,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 
-/**
- * This type either represents a built-in type like int or float, or a typedef'd named type.
- */
+/** This type either represents a built-in type like int or float, or a typedef'd named type. */
 public class NamedType extends CSimpleType {
     protected final ParseContext parseContext;
 
@@ -108,11 +105,13 @@ public class NamedType extends CSimpleType {
             case "void":
                 type = new CVoid(this, parseContext);
                 break;
-            default: {
-                uniqueWarningLogger.write(Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
-                type = new CVoid(this, parseContext);
-                break;
-            }
+            default:
+                {
+                    uniqueWarningLogger.write(
+                            Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
+                    type = new CVoid(this, parseContext);
+                    break;
+                }
         }
         if (isThreadLocal()) {
             type.setThreadLocal();
@@ -124,23 +123,23 @@ public class NamedType extends CSimpleType {
         return type;
     }
 
-//    public static NamedType getIntType() {
-//        NamedType namedType = new NamedType(parseContext, "int");
-//        namedType.setSigned(true);
-//        return namedType;
-//    }
-//
-//    public static NamedType getUnsignedIntType() {
-//        NamedType namedType = new NamedType(parseContext, "int");
-//        namedType.setSigned(false);
-//        return namedType;
-//    }
-//
-//    public static NamedType getBoolType() {
-//        NamedType namedType = new NamedType(parseContext, "_Bool");
-//        namedType.setSigned(false);
-//        return namedType;
-//    }
+    //    public static NamedType getIntType() {
+    //        NamedType namedType = new NamedType(parseContext, "int");
+    //        namedType.setSigned(true);
+    //        return namedType;
+    //    }
+    //
+    //    public static NamedType getUnsignedIntType() {
+    //        NamedType namedType = new NamedType(parseContext, "int");
+    //        namedType.setSigned(false);
+    //        return namedType;
+    //    }
+    //
+    //    public static NamedType getBoolType() {
+    //        NamedType namedType = new NamedType(parseContext, "_Bool");
+    //        namedType.setSigned(false);
+    //        return namedType;
+    //    }
 
     public String getNamedType() {
         return namedType;
@@ -247,4 +246,3 @@ public class NamedType extends CSimpleType {
         return namedType;
     }
 }
-

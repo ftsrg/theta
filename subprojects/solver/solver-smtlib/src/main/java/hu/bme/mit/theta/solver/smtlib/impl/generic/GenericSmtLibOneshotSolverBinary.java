@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
 import com.zaxxer.nuprocess.NuProcessBuilder;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -32,8 +30,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Instead of an interactive solver, these binaries can only work with an input file.
- * Therefore, we keep track of commands, and only execute them when readResponse() is called.
+ * Instead of an interactive solver, these binaries can only work with an input file. Therefore, we
+ * keep track of commands, and only execute them when readResponse() is called.
  */
 public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
 

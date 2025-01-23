@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package hu.bme.mit.theta.analysis;
 
 import java.util.Collection;
 
-/**
- * Common interface for initial functions.
- */
+/** Common interface for initial functions. */
 @FunctionalInterface
 public interface InitFunc<S extends State, P extends Prec> {
 
@@ -30,5 +28,4 @@ public interface InitFunc<S extends State, P extends Prec> {
      * @return Collection of initial states
      */
     Collection<? extends S> getInitStates(P prec);
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package hu.bme.mit.theta.core.type.abstracttype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Try;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
@@ -29,18 +26,18 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.List;
 
 public final class AbstractExprs {
 
-    private AbstractExprs() {
-    }
+    private AbstractExprs() {}
 
     /*
      * General
      */
 
-    public static <T extends Type> IteExpr<?> Ite(final Expr<BoolType> cond, final Expr<?> then,
-                                                  final Expr<?> elze) {
+    public static <T extends Type> IteExpr<?> Ite(
+            final Expr<BoolType> cond, final Expr<?> then, final Expr<?> elze) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(then, elze);
         final Expr<T> newThen = newOps.get1();
         final Expr<T> newElse = newOps.get2();
@@ -59,8 +56,8 @@ public final class AbstractExprs {
         return combineAdd(head, tail);
     }
 
-    private static <T extends Additive<T>> AddExpr<?> combineAdd(final Expr<?> head,
-                                                                 final List<Expr<?>> tail) {
+    private static <T extends Additive<T>> AddExpr<?> combineAdd(
+            final Expr<?> head, final List<Expr<?>> tail) {
         if (tail.isEmpty()) {
             final Expr<T> newOp = bind(head);
             final List<Expr<T>> newOps = getAddOps(newOp);
@@ -77,8 +74,8 @@ public final class AbstractExprs {
             final T type = newLeftOp.getType();
 
             final List<Expr<T>> newLeftOps = getAddOps(newLeftOp);
-            final List<Expr<T>> newOps = ImmutableList.<Expr<T>>builder().addAll(newLeftOps)
-                    .add(newRightOp).build();
+            final List<Expr<T>> newOps =
+                    ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
             final AddExpr<T> newAddExpr = type.Add(newOps);
             return combineAdd(newAddExpr, newTail);
         }
@@ -93,8 +90,8 @@ public final class AbstractExprs {
         }
     }
 
-    public static <T extends Additive<T>> SubExpr<?> Sub(final Expr<?> leftOp,
-                                                         final Expr<?> rightOp) {
+    public static <T extends Additive<T>> SubExpr<?> Sub(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -127,8 +124,8 @@ public final class AbstractExprs {
         return combineMul(head, tail);
     }
 
-    private static <T extends Multiplicative<T>> MulExpr<?> combineMul(final Expr<?> head,
-                                                                       final List<Expr<?>> tail) {
+    private static <T extends Multiplicative<T>> MulExpr<?> combineMul(
+            final Expr<?> head, final List<Expr<?>> tail) {
         if (tail.isEmpty()) {
             final Expr<T> newOp = bind(head);
             final List<Expr<T>> newOps = getMulOps(newOp);
@@ -145,8 +142,8 @@ public final class AbstractExprs {
             final T type = newLeftOp.getType();
 
             final List<Expr<T>> newLeftOps = getMulOps(newLeftOp);
-            final List<Expr<T>> newOps = ImmutableList.<Expr<T>>builder().addAll(newLeftOps)
-                    .add(newRightOp).build();
+            final List<Expr<T>> newOps =
+                    ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
             final MulExpr<T> newMulExpr = type.Mul(newOps);
             return combineMul(newMulExpr, newTail);
         }
@@ -161,8 +158,8 @@ public final class AbstractExprs {
         }
     }
 
-    public static <T extends Multiplicative<T>> DivExpr<?> Div(final Expr<?> leftOp,
-                                                               final Expr<?> rightOp) {
+    public static <T extends Multiplicative<T>> DivExpr<?> Div(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -174,8 +171,8 @@ public final class AbstractExprs {
      * Divisible
      */
 
-    public static <T extends Divisible<T>> ModExpr<?> Mod(final Expr<?> leftOp,
-                                                          final Expr<?> rightOp) {
+    public static <T extends Divisible<T>> ModExpr<?> Mod(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -183,8 +180,8 @@ public final class AbstractExprs {
         return type.Mod(newLeftOp, newRightOp);
     }
 
-    public static <T extends Divisible<T>> RemExpr<?> Rem(final Expr<?> leftOp,
-                                                          final Expr<?> rightOp) {
+    public static <T extends Divisible<T>> RemExpr<?> Rem(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -196,8 +193,8 @@ public final class AbstractExprs {
      * Equational
      */
 
-    public static <T extends Equational<T>> EqExpr<?> Eq(final Expr<?> leftOp,
-                                                         final Expr<?> rightOp) {
+    public static <T extends Equational<T>> EqExpr<?> Eq(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -205,8 +202,8 @@ public final class AbstractExprs {
         return type.Eq(newLeftOp, newRightOp);
     }
 
-    public static <T extends Equational<T>> NeqExpr<?> Neq(final Expr<?> leftOp,
-                                                           final Expr<?> rightOp) {
+    public static <T extends Equational<T>> NeqExpr<?> Neq(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -226,8 +223,8 @@ public final class AbstractExprs {
         return type.Lt(newLeftOp, newRightOp);
     }
 
-    public static <T extends Ordered<T>> LeqExpr<?> Leq(final Expr<?> leftOp,
-                                                        final Expr<?> rightOp) {
+    public static <T extends Ordered<T>> LeqExpr<?> Leq(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -243,8 +240,8 @@ public final class AbstractExprs {
         return type.Gt(newLeftOp, newRightOp);
     }
 
-    public static <T extends Ordered<T>> GeqExpr<?> Geq(final Expr<?> leftOp,
-                                                        final Expr<?> rightOp) {
+    public static <T extends Ordered<T>> GeqExpr<?> Geq(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
         final Expr<T> newLeftOp = newOps.get1();
         final Expr<T> newRightOp = newOps.get2();
@@ -256,13 +253,13 @@ public final class AbstractExprs {
      * Convenience methods
      */
 
-    public static <T extends Additive<T>> AddExpr<?> Add(final Expr<?> leftOp,
-                                                         final Expr<?> rightOp) {
+    public static <T extends Additive<T>> AddExpr<?> Add(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         return Add(ImmutableList.of(leftOp, rightOp));
     }
 
-    public static <T extends Multiplicative<T>> MulExpr<?> Mul(final Expr<?> leftOp,
-                                                               final Expr<?> rightOp) {
+    public static <T extends Multiplicative<T>> MulExpr<?> Mul(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         return Mul(ImmutableList.of(leftOp, rightOp));
     }
 
@@ -270,19 +267,22 @@ public final class AbstractExprs {
      * Helper methods
      */
 
-    private static <T extends Type, T1 extends Type, T2 extends Type, C extends Castable<C>> Tuple2<Expr<T>, Expr<T>> unify(
-            final Expr<T1> expr1, final Expr<T2> expr2) {
+    private static <T extends Type, T1 extends Type, T2 extends Type, C extends Castable<C>>
+            Tuple2<Expr<T>, Expr<T>> unify(final Expr<T1> expr1, final Expr<T2> expr2) {
         final T1 type1 = expr1.getType();
         final T2 type2 = expr2.getType();
 
         if (expr1.getType().equals(expr2.getType())) {
-            @SuppressWarnings("unchecked") final Expr<T1> t1Expr2 = (Expr<T1>) expr2;
+            @SuppressWarnings("unchecked")
+            final Expr<T1> t1Expr2 = (Expr<T1>) expr2;
             return bind(expr1, t1Expr2);
         }
 
         if (type1 instanceof Castable) {
-            @SuppressWarnings("unchecked") final C cType1 = (C) type1;
-            @SuppressWarnings("unchecked") final Expr<C> cExpr1 = (Expr<C>) expr1;
+            @SuppressWarnings("unchecked")
+            final C cType1 = (C) type1;
+            @SuppressWarnings("unchecked")
+            final Expr<C> cExpr1 = (Expr<C>) expr1;
             final Try<Expr<T2>> tryToCast = Try.attempt(() -> cType1.Cast(cExpr1, type2));
             if (tryToCast.isSuccess()) {
                 final Expr<T2> t2Expr1 = tryToCast.asSuccess().getValue();
@@ -291,8 +291,10 @@ public final class AbstractExprs {
         }
 
         if (type2 instanceof Castable) {
-            @SuppressWarnings("unchecked") final C cType2 = (C) type2;
-            @SuppressWarnings("unchecked") final Expr<C> cExpr2 = (Expr<C>) expr2;
+            @SuppressWarnings("unchecked")
+            final C cType2 = (C) type2;
+            @SuppressWarnings("unchecked")
+            final Expr<C> cExpr2 = (Expr<C>) expr2;
             final Try<Expr<T1>> tryToCast = Try.attempt(() -> cType2.Cast(cExpr2, type1));
             if (tryToCast.isSuccess()) {
                 final Expr<T1> t1Expr2 = tryToCast.asSuccess().getValue();
@@ -305,16 +307,17 @@ public final class AbstractExprs {
     }
 
     private static <TR extends Type, TP extends Type> Expr<TR> bind(final Expr<TP> expr) {
-        @SuppressWarnings("unchecked") final Expr<TR> trExpr = (Expr<TR>) expr;
+        @SuppressWarnings("unchecked")
+        final Expr<TR> trExpr = (Expr<TR>) expr;
         return trExpr;
     }
 
     private static <TR extends Type, TP extends Type> Tuple2<Expr<TR>, Expr<TR>> bind(
-            final Expr<TP> expr1,
-            final Expr<TP> expr2) {
-        @SuppressWarnings("unchecked") final Expr<TR> trExpr1 = (Expr<TR>) expr1;
-        @SuppressWarnings("unchecked") final Expr<TR> trExpr2 = (Expr<TR>) expr2;
+            final Expr<TP> expr1, final Expr<TP> expr2) {
+        @SuppressWarnings("unchecked")
+        final Expr<TR> trExpr1 = (Expr<TR>) expr1;
+        @SuppressWarnings("unchecked")
+        final Expr<TR> trExpr2 = (Expr<TR>) expr2;
         return Tuple2.of(trExpr1, trExpr2);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.IndexedVarDecl
@@ -29,105 +28,120 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.model.*
 
-/**
- * Transform the procedure to Static Single Assignment (SSA) form.
- */
+/** Transform the procedure to Static Single Assignment (SSA) form. */
 class SSAPass : ProcedurePass {
 
-    private val ssaUtils = SSAUtils()
+  private val ssaUtils = SSAUtils()
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        builder.getEdges().toSet().forEach { edge ->
-            builder.removeEdge(edge)
-            builder.addEdge(edge.withLabel(ssaUtils.toSSA(edge)))
-        }
-        return builder
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    builder.getEdges().toSet().forEach { edge ->
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(ssaUtils.toSSA(edge)))
     }
+    return builder
+  }
 }
 
 internal class SSAUtils {
 
-    private var indexing: VarIndexing = VarIndexingFactory.indexing(0)
+  private var indexing: VarIndexing = VarIndexingFactory.indexing(0)
 
-    private val indexedVars = mutableSetOf<VarDecl<*>>()
+  private val indexedVars = mutableSetOf<VarDecl<*>>()
 
-    fun toSSA(edge: XcfaEdge) = edge.label.toSSA()
-    fun removeSSA(edge: XcfaEdge) = edge.withLabel(edge.label.removeSSA())
+  fun toSSA(edge: XcfaEdge) = edge.label.toSSA()
 
-    // Convert to SSA
+  fun removeSSA(edge: XcfaEdge) = edge.withLabel(edge.label.removeSSA())
 
-    private fun XcfaLabel.toSSA(): XcfaLabel {
-        return when (this) {
-            is StmtLabel -> {
-                when (val stmt = this.stmt) {
-                    is AssignStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
-                    is AssumeStmt -> StmtLabel(stmt.toSSA(), choiceType, metadata)
-                    is HavocStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
-                    else -> error("Unsupported statement at SSA conversion: $stmt")
-                }
-            }
+  // Convert to SSA
 
-            is StartLabel -> StartLabel(name, params.map { it.toSSA() }, pidVar.getIndexed(), metadata, tempLookup)
-            is JoinLabel -> JoinLabel(pidVar.getIndexed(), metadata)
-            is SequenceLabel -> SequenceLabel(labels.map { it.toSSA() }, metadata)
-            is NopLabel, is FenceLabel -> this
-            else -> error("Unsupported label at SSA conversion: $this")
+  private fun XcfaLabel.toSSA(): XcfaLabel {
+    return when (this) {
+      is StmtLabel -> {
+        when (val stmt = this.stmt) {
+          is AssignStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
+          is AssumeStmt -> StmtLabel(stmt.toSSA(), choiceType, metadata)
+          is HavocStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
+          else -> error("Unsupported statement at SSA conversion: $stmt")
         }
-    }
+      }
 
-    private fun <T : Type> Expr<T>.toSSA(): Expr<T> {
-        val unfolded = toSSAAtomic()
-        ExprUtils.getVars(this).forEach { indexing = indexing.inc(it) }
-        return unfolded
+      is StartLabel ->
+        StartLabel(name, params.map { it.toSSA() }, pidVar.getIndexed(), metadata, tempLookup)
+      is JoinLabel -> JoinLabel(pidVar.getIndexed(), metadata)
+      is SequenceLabel -> SequenceLabel(labels.map { it.toSSA() }, metadata)
+      is NopLabel,
+      is FenceLabel -> this
+      else -> error("Unsupported label at SSA conversion: $this")
     }
+  }
 
-    private fun <T : Type> Expr<T>.toSSAAtomic(): Expr<T> = if (this is RefExpr<T>) {
-        (decl as? VarDecl<T>)?.getIndexed(false)?.ref ?: this
+  private fun <T : Type> Expr<T>.toSSA(): Expr<T> {
+    val unfolded = toSSAAtomic()
+    ExprUtils.getVars(this).forEach { indexing = indexing.inc(it) }
+    return unfolded
+  }
+
+  private fun <T : Type> Expr<T>.toSSAAtomic(): Expr<T> =
+    if (this is RefExpr<T>) {
+      (decl as? VarDecl<T>)?.getIndexed(false)?.ref ?: this
     } else {
-        map { it.toSSAAtomic() }
+      map { it.toSSAAtomic() }
     }
 
-    private fun <T : Type> VarDecl<T>.getIndexed(increment: Boolean = true): VarDecl<T> {
-        val newName = this.name + "#" + indexing[this]
-        indexedVars.find { it.name == newName }?.let { return it as VarDecl<T> }
-        val newVar = IndexedVarDecl.of(newName, this)
-        indexedVars.add(newVar)
-        if (increment) indexing = indexing.inc(this)
-        return newVar
-    }
+  private fun <T : Type> VarDecl<T>.getIndexed(increment: Boolean = true): VarDecl<T> {
+    val newName = this.name + "#" + indexing[this]
+    indexedVars
+      .find { it.name == newName }
+      ?.let {
+        return it as VarDecl<T>
+      }
+    val newVar = IndexedVarDecl.of(newName, this)
+    indexedVars.add(newVar)
+    if (increment) indexing = indexing.inc(this)
+    return newVar
+  }
 
-    private fun <T : Type> AssignStmt<T>.toSSA() = AssignStmt.of(varDecl.getIndexed(), expr.toSSA())
-    private fun AssumeStmt.toSSA() = AssumeStmt.of(cond.toSSA())
-    private fun <T : Type> HavocStmt<T>.toSSA() = HavocStmt.of(varDecl.getIndexed())
+  private fun <T : Type> AssignStmt<T>.toSSA() = AssignStmt.of(varDecl.getIndexed(), expr.toSSA())
 
-    // Remove SSA
+  private fun AssumeStmt.toSSA() = AssumeStmt.of(cond.toSSA())
 
-    private fun XcfaLabel.removeSSA(): XcfaLabel {
-        return when (this) {
-            is StmtLabel -> {
-                when (val stmt = this.stmt) {
-                    is AssignStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
-                    is AssumeStmt -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
-                    is HavocStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
-                    else -> this
-                }
-            }
+  private fun <T : Type> HavocStmt<T>.toSSA() = HavocStmt.of(varDecl.getIndexed())
 
-            is StartLabel -> StartLabel(name, params.map { it.removeSSA() }, pidVar.noindex, metadata, tempLookup)
-            is JoinLabel -> JoinLabel(pidVar.noindex, metadata)
-            is SequenceLabel -> SequenceLabel(labels.map { it.removeSSA() }, metadata)
-            else -> this
+  // Remove SSA
+
+  private fun XcfaLabel.removeSSA(): XcfaLabel {
+    return when (this) {
+      is StmtLabel -> {
+        when (val stmt = this.stmt) {
+          is AssignStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
+          is AssumeStmt -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
+          is HavocStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
+          else -> this
         }
-    }
+      }
 
-    private fun <T : Type> Expr<T>.removeSSA(): Expr<T> = if (this is RefExpr<T>) {
-        ((decl as? IndexedVarDecl)?.original ?: decl).ref
+      is StartLabel ->
+        StartLabel(name, params.map { it.removeSSA() }, pidVar.noindex, metadata, tempLookup)
+      is JoinLabel -> JoinLabel(pidVar.noindex, metadata)
+      is SequenceLabel -> SequenceLabel(labels.map { it.removeSSA() }, metadata)
+      else -> this
+    }
+  }
+
+  private fun <T : Type> Expr<T>.removeSSA(): Expr<T> =
+    if (this is RefExpr<T>) {
+      ((decl as? IndexedVarDecl)?.original ?: decl).ref
     } else {
-        map { it.removeSSA() }
+      map { it.removeSSA() }
     }
 
-    private val <T : Type> VarDecl<T>.noindex get() = (this as? IndexedVarDecl)?.original ?: this
-    private fun <T : Type> AssignStmt<T>.removeSSA() = AssignStmt.of(varDecl.noindex, expr.removeSSA())
-    private fun AssumeStmt.removeSSA() = AssumeStmt.of(cond.removeSSA())
-    private fun <T : Type> HavocStmt<T>.removeSSA() = HavocStmt.of(varDecl.noindex)
+  private val <T : Type> VarDecl<T>.noindex
+    get() = (this as? IndexedVarDecl)?.original ?: this
+
+  private fun <T : Type> AssignStmt<T>.removeSSA() =
+    AssignStmt.of(varDecl.noindex, expr.removeSSA())
+
+  private fun AssumeStmt.removeSSA() = AssumeStmt.of(cond.removeSSA())
+
+  private fun <T : Type> HavocStmt<T>.removeSSA() = HavocStmt.of(varDecl.noindex)
 }

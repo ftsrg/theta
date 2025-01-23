@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.type.enumtype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import com.google.common.base.Objects;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class EnumLitExpr extends NullaryExpr<EnumType> implements LitExpr<EnumType> {
 
@@ -36,7 +36,11 @@ public final class EnumLitExpr extends NullaryExpr<EnumType> implements LitExpr<
 
     public static EnumLitExpr of(EnumType type, String literalName) {
         String value = EnumType.getShortName(literalName);
-        checkArgument(type.getValues().contains(value), "Invalid value %s for type %s", value, type.getName());
+        checkArgument(
+                type.getValues().contains(value),
+                "Invalid value %s for type %s",
+                value,
+                type.getName());
         return new EnumLitExpr(type, value);
     }
 

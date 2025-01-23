@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.smtlib.impl.smtinterpol;
+
+import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -33,16 +36,12 @@ import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpolSmtLibItpMarker> {
 
@@ -53,9 +52,9 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
     public SMTInterpolSmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
-            final SmtLibEnumStrategy enumStrategy
-    ) {
+            final SmtLibTermTransformer termTransformer,
+            final SmtLibSolverBinary solverBinary,
+            final SmtLibEnumStrategy enumStrategy) {
         super(symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
     }
 
@@ -73,21 +72,33 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
     }
 
     @Override
-    protected void add(final SMTInterpolSmtLibItpMarker marker, final Expr<BoolType> assertion,
-                       final Set<ConstDecl<?>> consts, final String term) {
+    protected void add(
+            final SMTInterpolSmtLibItpMarker marker,
+            final Expr<BoolType> assertion,
+            final Set<ConstDecl<?>> consts,
+            final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
 
         final var name = String.format(assertionNamePattern, assertionCount++);
         assertionNames.put(assertion, name);
-        issueGeneralCommand(String.format("(assert (! %s :named %s))", enumStrategy.wrapAssertionExpression(term, consts.stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))), name));
+        issueGeneralCommand(
+                String.format(
+                        "(assert (! %s :named %s))",
+                        enumStrategy.wrapAssertionExpression(
+                                term,
+                                consts.stream()
+                                        .collect(Collectors.toMap(c -> c, symbolTable::getSymbol))),
+                        name));
     }
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(getStatus() == SolverStatus.UNSAT,
+        checkState(
+                getStatus() == SolverStatus.UNSAT,
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
-        @SuppressWarnings("unchecked") final var smtInterpolItpPattern = (SmtLibItpPattern<SMTInterpolSmtLibItpMarker>) pattern;
+        @SuppressWarnings("unchecked")
+        final var smtInterpolItpPattern = (SmtLibItpPattern<SMTInterpolSmtLibItpMarker>) pattern;
 
         final var term = patternToTerm(smtInterpolItpPattern.getRoot());
 
@@ -95,8 +106,9 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
 
         solverBinary.issueCommand(String.format("(get-interpolants %s)", term));
         for (final var itp : parseItpResponse(solverBinary.readResponse())) {
-            itpList.add(termTransformer.toExpr(itp, BoolExprs.Bool(),
-                    new SmtLibModel(Collections.emptyMap())));
+            itpList.add(
+                    termTransformer.toExpr(
+                            itp, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
         }
         itpList.add(False());
 
@@ -114,8 +126,12 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
         if (terms.size() == 1) {
             term = assertionNames.get(terms.iterator().next().get1());
         } else {
-            term = String.format("(and %s)", terms.stream().map(t -> assertionNames.get(t.get1()))
-                    .collect(Collectors.joining(" ")));
+            term =
+                    String.format(
+                            "(and %s)",
+                            terms.stream()
+                                    .map(t -> assertionNames.get(t.get1()))
+                                    .collect(Collectors.joining(" ")));
         }
 
         final var children = markerTree.getChildren();
@@ -130,8 +146,10 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
         return term;
     }
 
-    private void buildItpMapFormList(final ItpMarkerTree<SMTInterpolSmtLibItpMarker> pattern,
-                                     final List<Expr<BoolType>> itpList, final Map<ItpMarker, Expr<BoolType>> itpMap) {
+    private void buildItpMapFormList(
+            final ItpMarkerTree<SMTInterpolSmtLibItpMarker> pattern,
+            final List<Expr<BoolType>> itpList,
+            final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<SMTInterpolSmtLibItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }
@@ -176,7 +194,8 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
     }
 
     private static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream()
+        return ctx.start
+                .getInputStream()
                 .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

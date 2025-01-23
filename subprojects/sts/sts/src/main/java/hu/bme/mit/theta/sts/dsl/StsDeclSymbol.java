@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package hu.bme.mit.theta.sts.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -31,6 +28,8 @@ import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsDeclContext;
+import java.util.List;
+import java.util.Optional;
 
 final class StsDeclSymbol implements ScopedSymbol {
 
@@ -52,8 +51,8 @@ final class StsDeclSymbol implements ScopedSymbol {
         declareParams();
     }
 
-    public static StsDeclSymbol create(final StsSpecSymbol enclosingScope,
-                                       final StsDeclContext tcfaDeclCtx) {
+    public static StsDeclSymbol create(
+            final StsSpecSymbol enclosingScope, final StsDeclContext tcfaDeclCtx) {
         return new StsDeclSymbol(enclosingScope, tcfaDeclCtx);
     }
 
@@ -81,13 +80,13 @@ final class StsDeclSymbol implements ScopedSymbol {
 
     ////
 
-    public StsDefScope instantiate(final Substitution assignment,
-                                   final List<? extends Expr<?>> args) {
+    public StsDefScope instantiate(
+            final Substitution assignment, final List<? extends Expr<?>> args) {
         final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
         final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
         final Substitution newAssignment = NestedSubstitution.create(assignment, binding);
-        final StsDefScope stsDefScope = StsCreator.createSts(this, newAssignment,
-                stsDeclContext.def);
+        final StsDefScope stsDefScope =
+                StsCreator.createSts(this, newAssignment, stsDeclContext.def);
         return stsDefScope;
     }
 

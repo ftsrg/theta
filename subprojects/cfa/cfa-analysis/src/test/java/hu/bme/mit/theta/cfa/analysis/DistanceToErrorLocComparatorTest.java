@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
-import java.util.Map;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Builder;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DistanceToErrorLocComparatorTest {
 
@@ -49,8 +47,8 @@ public class DistanceToErrorLocComparatorTest {
         builder.createEdge(loc2, locFinal, stmt);
 
         final CFA cfa = builder.build();
-        final Map<Loc, Integer> distancesToError = DistToErrComparator.calculateDistancesToError(
-                cfa, cfa.getErrorLoc().get());
+        final Map<Loc, Integer> distancesToError =
+                DistToErrComparator.calculateDistancesToError(cfa, cfa.getErrorLoc().get());
 
         Assert.assertEquals(0, (int) distancesToError.get(locErr));
         Assert.assertEquals(2, (int) distancesToError.get(loc0));

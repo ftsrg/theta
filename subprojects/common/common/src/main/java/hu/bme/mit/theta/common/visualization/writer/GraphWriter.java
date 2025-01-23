@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,10 @@
  */
 package hu.bme.mit.theta.common.visualization.writer;
 
+import hu.bme.mit.theta.common.visualization.Graph;
 import java.io.FileNotFoundException;
 
-import hu.bme.mit.theta.common.visualization.Graph;
-
-/**
- * Inteface for writing graphs to strings and files.
- */
+/** Inteface for writing graphs to strings and files. */
 public interface GraphWriter {
 
     String writeString(Graph graph);

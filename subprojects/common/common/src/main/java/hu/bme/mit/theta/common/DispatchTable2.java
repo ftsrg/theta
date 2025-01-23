@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package hu.bme.mit.theta.common;
 
-import hu.bme.mit.theta.common.container.Containers;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -35,8 +34,9 @@ public final class DispatchTable2<P, R> {
 
     public <T> R dispatch(final T type, final P param) {
         final Class<?> clazz = type.getClass();
-        @SuppressWarnings("unchecked") final BiFunction<? super T, ? super P, ? extends R> function = (BiFunction<? super T, ? super P, ? extends R>) cases
-                .get(clazz);
+        @SuppressWarnings("unchecked")
+        final BiFunction<? super T, ? super P, ? extends R> function =
+                (BiFunction<? super T, ? super P, ? extends R>) cases.get(clazz);
         if (function == null) {
             return defaultCase.apply(type, param);
         } else {
@@ -61,8 +61,9 @@ public final class DispatchTable2<P, R> {
             built = false;
         }
 
-        public <T> Builder<P, R> addCase(final Class<T> clazz,
-                                         final BiFunction<? super T, ? super P, ? extends R> function) {
+        public <T> Builder<P, R> addCase(
+                final Class<T> clazz,
+                final BiFunction<? super T, ? super P, ? extends R> function) {
             checkState(!built, "Already built.");
             checkNotNull(clazz);
             checkNotNull(function);
@@ -83,9 +84,10 @@ public final class DispatchTable2<P, R> {
             checkState(!built, "Already built.");
             built = true;
             if (defaultCase == null) {
-                defaultCase = (o, p) -> {
-                    throw new AssertionError("Undefined default case executed");
-                };
+                defaultCase =
+                        (o, p) -> {
+                            throw new AssertionError("Undefined default case executed");
+                        };
             }
             return new DispatchTable2<>(this);
         }

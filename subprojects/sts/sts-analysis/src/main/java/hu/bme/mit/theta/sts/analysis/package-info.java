@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 /**
  * This package contains the STS specific analysis modules that can be plugged into the analysis
- * algorithms. There are also different implementations for obtaining an initial precision (see {@link hu.bme.mit.theta.sts.analysis.initprec.StsInitPrec}).
+ * algorithms. There are also different implementations for obtaining an initial precision (see
+ * {@link hu.bme.mit.theta.sts.analysis.initprec.StsInitPrec}).
  */
-
 package hu.bme.mit.theta.sts.analysis;

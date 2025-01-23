@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.common.OsHelper
@@ -26,25 +25,26 @@ import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
 import java.nio.file.Path
 
-fun getSolver(name: String, validate: Boolean): SolverFactory = if (validate) {
+fun getSolver(name: String, validate: Boolean): SolverFactory =
+  if (validate) {
     SolverValidatorWrapperFactory.create(name)
-} else {
+  } else {
     SolverManager.resolveSolverFactory(name)
-}
+  }
 
 fun registerAllSolverManagers(home: String, logger: Logger) {
-    SolverManager.closeAll()
-    // register solver managers
-    SolverManager.registerSolverManager(Z3SolverManager.create())
-    logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
-    SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
-    logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
-    SolverManager.registerSolverManager(JavaSMTSolverManager.create())
-    logger.write(Logger.Level.INFO, "Registered JavaSMT SolverManager\n")
-    if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
-        val homePath = Path.of(home)
-        val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
-        SolverManager.registerSolverManager(smtLibSolverManager)
-        logger.write(Logger.Level.INFO, "Registered SMT-LIB SolverManager\n")
-    }
+  SolverManager.closeAll()
+  // register solver managers
+  SolverManager.registerSolverManager(Z3SolverManager.create())
+  logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
+  SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
+  logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
+  SolverManager.registerSolverManager(JavaSMTSolverManager.create())
+  logger.write(Logger.Level.INFO, "Registered JavaSMT SolverManager\n")
+  if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+    val homePath = Path.of(home)
+    val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
+    SolverManager.registerSolverManager(smtLibSolverManager)
+    logger.write(Logger.Level.INFO, "Registered SMT-LIB SolverManager\n")
+  }
 }

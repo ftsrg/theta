@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.expr.refinement;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -29,11 +31,8 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An ExprTraceChecker that generates a binary interpolant by incrementally checking the
@@ -45,16 +44,15 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
-    private ExprTraceBwBinItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-                                     final ItpSolver solver) {
+    private ExprTraceBwBinItpChecker(
+            final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
     }
 
-    public static ExprTraceBwBinItpChecker create(final Expr<BoolType> init,
-                                                  final Expr<BoolType> target,
-                                                  final ItpSolver solver) {
+    public static ExprTraceBwBinItpChecker create(
+            final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
         return new ExprTraceBwBinItpChecker(init, target, solver);
     }
 
@@ -103,10 +101,16 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
             solver.add(B, PathUtils.unfold(init, indexings.get(stateCount - 1)));
             concretizable = solver.check().isSat();
         } else {
-            solver.add(B, PathUtils.unfold(traceRev.getState(satPostfix + 1).toExpr(),
-                    indexings.get(satPostfix + 1)));
-            solver.add(B, PathUtils.unfold(traceRev.getAction(satPostfix).toExpr(),
-                    indexings.get(satPostfix + 1)));
+            solver.add(
+                    B,
+                    PathUtils.unfold(
+                            traceRev.getState(satPostfix + 1).toExpr(),
+                            indexings.get(satPostfix + 1)));
+            solver.add(
+                    B,
+                    PathUtils.unfold(
+                            traceRev.getAction(satPostfix).toExpr(),
+                            indexings.get(satPostfix + 1)));
             solver.check();
             assert solver.getStatus().isUnsat() : "Trying to interpolate a feasible formula";
             concretizable = false;
@@ -119,15 +123,17 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
             for (final VarIndexing indexing : indexings) {
                 builder.add(PathUtils.extractValuation(model, indexing));
             }
-            status = ExprTraceStatus.feasible(
-                    Trace.of(builder.build().reverse(), trace.getActions()));
+            status =
+                    ExprTraceStatus.feasible(
+                            Trace.of(builder.build().reverse(), trace.getActions()));
         } else {
             final Interpolant interpolant = solver.getInterpolant(pattern);
-            final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A),
-                    indexings.get(satPostfix));
-            status = ExprTraceStatus
-                    .infeasible(
-                            ItpRefutation.binary(itpFolded, stateCount - 1 - satPostfix, stateCount));
+            final Expr<BoolType> itpFolded =
+                    PathUtils.foldin(interpolant.eval(A), indexings.get(satPostfix));
+            status =
+                    ExprTraceStatus.infeasible(
+                            ItpRefutation.binary(
+                                    itpFolded, stateCount - 1 - satPostfix, stateCount));
         }
         assert status != null;
         solver.pop(nPush);

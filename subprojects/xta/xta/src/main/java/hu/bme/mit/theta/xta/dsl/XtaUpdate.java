@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,11 +68,11 @@ final class XtaUpdate {
             if (ctx.fOper == null) {
                 return visitChildren(ctx);
             } else {
-                @SuppressWarnings("unchecked") final RefExpr<Type> leftOp = (RefExpr<Type>) ctx.fLeftOp.accept(
-                        visitor);
+                @SuppressWarnings("unchecked")
+                final RefExpr<Type> leftOp = (RefExpr<Type>) ctx.fLeftOp.accept(visitor);
                 final VarDecl<Type> varDecl = (VarDecl<Type>) leftOp.getDecl();
-                @SuppressWarnings("unchecked") final Expr<Type> rightOp = (Expr<Type>) ctx.fRightOp.accept(
-                        visitor);
+                @SuppressWarnings("unchecked")
+                final Expr<Type> rightOp = (Expr<Type>) ctx.fRightOp.accept(visitor);
 
                 final AssignmentOpContext op = ctx.fOper;
                 if (op.fAssignOp != null) {
@@ -105,5 +105,4 @@ final class XtaUpdate {
             }
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,15 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xta.analysis.expl;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.Streams.zip;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
@@ -39,30 +48,19 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BroadcastXtaAction;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.Streams.zip;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
-import static java.util.stream.Collectors.toList;
-
-
 public final class XtaExplUtils {
 
-    private XtaExplUtils() {
-    }
+    private XtaExplUtils() {}
 
     public static Valuation interpolate(final Valuation valA, final Expr<BoolType> exprB) {
-        final Collection<VarDecl<?>> vars = ExprUtils.getVars(exprB).stream()
-                .filter(valA.getDecls()::contains)
-                .collect(toList());
+        final Collection<VarDecl<?>> vars =
+                ExprUtils.getVars(exprB).stream()
+                        .filter(valA.getDecls()::contains)
+                        .collect(toList());
         final MutableValuation valI = new MutableValuation();
         for (final VarDecl<?> var : vars) {
             final LitExpr<?> val = valA.eval(var).get();
@@ -120,8 +118,8 @@ public final class XtaExplUtils {
         return ExplState.of(succVal);
     }
 
-    private static ExplState postForBinaryAction(final Valuation val,
-                                                 final BinaryXtaAction action) {
+    private static ExplState postForBinaryAction(
+            final Valuation val, final BinaryXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final Edge recvEdge = action.getRecvEdge();
         final List<Loc> targetLocs = action.getTargetLocs();
@@ -149,15 +147,14 @@ public final class XtaExplUtils {
         return ExplState.of(succVal);
     }
 
-    private static ExplState postForBroadcastAction(final Valuation val,
-                                                    final BroadcastXtaAction action) {
+    private static ExplState postForBroadcastAction(
+            final Valuation val, final BroadcastXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final List<Edge> recvEdges = action.getRecvEdges();
         final List<Collection<Edge>> nonRecvEdges = action.getNonRecvEdges();
         final List<Loc> targetLocs = action.getTargetLocs();
 
-        if (recvEdges.stream().anyMatch(recvEdge ->
-                !checkSync(emitEdge, recvEdge, val))) {
+        if (recvEdges.stream().anyMatch(recvEdge -> !checkSync(emitEdge, recvEdge, val))) {
             return ExplState.bottom();
         }
 
@@ -165,13 +162,18 @@ public final class XtaExplUtils {
             return ExplState.bottom();
         }
 
-        if (recvEdges.stream().anyMatch(recvEdge ->
-                !checkGuards(recvEdge, val))) {
+        if (recvEdges.stream().anyMatch(recvEdge -> !checkGuards(recvEdge, val))) {
             return ExplState.bottom();
         }
 
-        if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(nonRecvEdge ->
-                nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, val)))) {
+        if (nonRecvEdges.stream()
+                .anyMatch(
+                        c ->
+                                c.stream()
+                                        .anyMatch(
+                                                nonRecvEdge ->
+                                                        nonRecvEdgeDefinitelyEnabled(
+                                                                emitEdge, nonRecvEdge, val)))) {
             return ExplState.bottom();
         }
 
@@ -187,8 +189,8 @@ public final class XtaExplUtils {
         return ExplState.of(succVal);
     }
 
-    private static boolean nonRecvEdgeDefinitelyEnabled(final Edge emitEdge, final Edge nonRecvEdge,
-                                                        final Valuation val) {
+    private static boolean nonRecvEdgeDefinitelyEnabled(
+            final Edge emitEdge, final Edge nonRecvEdge, final Valuation val) {
         for (final Guard guard : nonRecvEdge.getGuards()) {
             if (guard.isDataGuard()) {
                 final DataGuard dataGuard = guard.asDataGuard();
@@ -201,20 +203,20 @@ public final class XtaExplUtils {
 
         final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
         final List<Expr<?>> recvArgs = nonRecvEdge.getSync().get().getArgs();
-        if (zip(emitArgs.stream(), recvArgs.stream(),
-                (e, r) -> !e.eval(val).equals(r.eval(val))).anyMatch(x -> x)) {
+        if (zip(emitArgs.stream(), recvArgs.stream(), (e, r) -> !e.eval(val).equals(r.eval(val)))
+                .anyMatch(x -> x)) {
             return false;
         }
 
         return true;
     }
 
-    private static boolean checkSync(final Edge emitEdge, final Edge recvEdge,
-                                     final Valuation val) {
+    private static boolean checkSync(
+            final Edge emitEdge, final Edge recvEdge, final Valuation val) {
         final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
         final List<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs();
-        return zip(emitArgs.stream(), recvArgs.stream(),
-                (e, r) -> e.eval(val).equals(r.eval(val))).allMatch(x -> x);
+        return zip(emitArgs.stream(), recvArgs.stream(), (e, r) -> e.eval(val).equals(r.eval(val)))
+                .allMatch(x -> x);
     }
 
     private static boolean checkGuards(final Edge edge, final Valuation val) {
@@ -239,8 +241,8 @@ public final class XtaExplUtils {
             final Collection<Guard> invars = loc.getInvars();
             for (final Guard invar : invars) {
                 if (invar.isDataGuard()) {
-                    final Expr<BoolType> expr = ExprUtils.simplify(invar.asDataGuard().toExpr(),
-                            val);
+                    final Expr<BoolType> expr =
+                            ExprUtils.simplify(invar.asDataGuard().toExpr(), val);
                     if (expr instanceof FalseExpr) {
                         return false;
                     }
@@ -284,8 +286,8 @@ public final class XtaExplUtils {
         }
     }
 
-    private static Expr<BoolType> preForBasicAction(final Expr<BoolType> expr,
-                                                    final BasicXtaAction action) {
+    private static Expr<BoolType> preForBasicAction(
+            final Expr<BoolType> expr, final BasicXtaAction action) {
         final Edge edge = action.getEdge();
         final WpState wp0 = WpState.of(expr);
         final WpState wp1 = applyInverseUpdates(wp0, edge);
@@ -293,8 +295,8 @@ public final class XtaExplUtils {
         return wp2.getExpr();
     }
 
-    private static Expr<BoolType> preForBinaryAction(final Expr<BoolType> expr,
-                                                     final BinaryXtaAction action) {
+    private static Expr<BoolType> preForBinaryAction(
+            final Expr<BoolType> expr, final BinaryXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final Edge recvEdge = action.getRecvEdge();
         final WpState wp0 = WpState.of(expr);
@@ -306,8 +308,8 @@ public final class XtaExplUtils {
         return wp5.getExpr();
     }
 
-    private static Expr<BoolType> preForBroadcastAction(final Expr<BoolType> expr,
-                                                        final BroadcastXtaAction action) {
+    private static Expr<BoolType> preForBroadcastAction(
+            final Expr<BoolType> expr, final BroadcastXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final List<Edge> recvEdges = action.getRecvEdges();
         final List<Edge> reverseRecvEdges = Lists.reverse(recvEdges);
@@ -362,29 +364,30 @@ public final class XtaExplUtils {
         return res;
     }
 
-    private static WpState applySync(final WpState state, final Edge emitEdge,
-                                     final Edge recvEdge) {
+    private static WpState applySync(
+            final WpState state, final Edge emitEdge, final Edge recvEdge) {
         final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
         final Stream<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs().stream();
-        final List<Expr<BoolType>> exprs = zip(emitArgs, recvArgs,
-                (e, r) -> (Expr<BoolType>) Eq(e, r))
-                .collect(toImmutableList());
+        final List<Expr<BoolType>> exprs =
+                zip(emitArgs, recvArgs, (e, r) -> (Expr<BoolType>) Eq(e, r))
+                        .collect(toImmutableList());
         final Expr<BoolType> andExpr = And(exprs);
         return state.wep(Assume(andExpr));
     }
 
-    private static WpState applyNonRecvEdge(final WpState state, final Edge emitEdge,
-                                            final Edge nonRecvEdge) {
+    private static WpState applyNonRecvEdge(
+            final WpState state, final Edge emitEdge, final Edge nonRecvEdge) {
         final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
         final Stream<Expr<?>> nonRecvArgs = nonRecvEdge.getSync().get().getArgs().stream();
-        final Stream<Expr<BoolType>> notEqExprs = zip(emitArgs, nonRecvArgs,
-                (e, r) -> Not(Eq(e, r)));
-        final Stream<Expr<BoolType>> notGuards = nonRecvEdge.getGuards().stream()
-                .filter(Guard::isDataGuard)
-                .map(Guard::toExpr)
-                .map(SmartBoolExprs::Not);
-        final List<Expr<BoolType>> exprs = Streams.concat(notEqExprs, notGuards)
-                .collect(toImmutableList());
+        final Stream<Expr<BoolType>> notEqExprs =
+                zip(emitArgs, nonRecvArgs, (e, r) -> Not(Eq(e, r)));
+        final Stream<Expr<BoolType>> notGuards =
+                nonRecvEdge.getGuards().stream()
+                        .filter(Guard::isDataGuard)
+                        .map(Guard::toExpr)
+                        .map(SmartBoolExprs::Not);
+        final List<Expr<BoolType>> exprs =
+                Streams.concat(notEqExprs, notGuards).collect(toImmutableList());
         return state.wep(Assume(Or(exprs)));
     }
 }

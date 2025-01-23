@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,15 +20,14 @@ import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.function.Function;
 
 public class MddExpressionTemplate implements MddNode.Template {
@@ -49,32 +48,36 @@ public class MddExpressionTemplate implements MddNode.Template {
         return res;
     }
 
-    private MddExpressionTemplate(Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
+    private MddExpressionTemplate(
+            Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
     }
 
-    public static MddExpressionTemplate of(Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
+    public static MddExpressionTemplate of(
+            Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
         return new MddExpressionTemplate(expr, extractDecl, solverPool);
     }
 
     @Override
-    public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
+    public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(
+            MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
-//        // TODO: we might not need this
-//        // Check if terminal 1
-//        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
-//            if (canonizedExpr instanceof FalseExpr) {
-//                return mddVariable.getMddGraph().getTerminalZeroNode();
-//            } /*else {
-//                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-//                return mddGraph.getNodeFor(canonizedExpr);
-//            }*/
-//        }
+        //        // TODO: we might not need this
+        //        // Check if terminal 1
+        //        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
+        //            if (canonizedExpr instanceof FalseExpr) {
+        //                return mddVariable.getMddGraph().getTerminalZeroNode();
+        //            } /*else {
+        //                final MddGraph<Expr> mddGraph = (MddGraph<Expr>)
+        // mddVariable.getMddGraph();
+        //                return mddGraph.getNodeFor(canonizedExpr);
+        //            }*/
+        //        }
 
         // Check if terminal 0
         if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
@@ -82,18 +85,25 @@ public class MddExpressionTemplate implements MddNode.Template {
         }
 
         // Check if default
-        if (mddVariable.getDomainSize() == 0 && !ExprUtils.getConstants(canonizedExpr).contains(decl)) {
+        if (mddVariable.getDomainSize() == 0
+                && !ExprUtils.getConstants(canonizedExpr).contains(decl)) {
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
-                childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverPool));
+                childNode =
+                        mddVariable
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        new MddExpressionTemplate(
+                                                canonizedExpr, o -> (Decl) o, solverPool));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
             }
-            return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverPool, childNode);
+            return MddExpressionRepresentation.ofDefault(
+                    canonizedExpr, decl, mddVariable, solverPool, childNode);
         }
 
         return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
-
     }
 }

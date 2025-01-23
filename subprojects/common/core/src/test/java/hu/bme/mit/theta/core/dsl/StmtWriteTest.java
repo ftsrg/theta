@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,6 @@
  */
 package hu.bme.mit.theta.core.dsl;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -32,6 +22,14 @@ import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class StmtWriteTest {
@@ -46,17 +44,13 @@ public class StmtWriteTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {Stmts.Havoc(VX), "havoc x"},
-
-                {Stmts.Assume(BoolExprs.False()), "assume false"},
-
-                {Stmts.Assign(VX, IntExprs.Int(1)), "x := 1"},
-
-                {Stmts.Skip(), "skip"},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {Stmts.Havoc(VX), "havoc x"},
+                    {Stmts.Assume(BoolExprs.False()), "assume false"},
+                    {Stmts.Assign(VX, IntExprs.Int(1)), "x := 1"},
+                    {Stmts.Skip(), "skip"},
+                });
     }
 
     @Test

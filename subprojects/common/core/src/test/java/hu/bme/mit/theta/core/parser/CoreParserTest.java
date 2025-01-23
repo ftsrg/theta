@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,23 +43,21 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static org.junit.Assert.assertEquals;
 
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public final class CoreParserTest {
@@ -90,57 +88,33 @@ public final class CoreParserTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"true", True()},
-
-                {"false", False()},
-
-                {"(not x)", Not(X)},
-
-                {"(and x y z)", And(X, Y, Z)},
-
-                {"(or x y z)", Or(X, Y, Z)},
-
-                {"(=> x y)", Imply(X, Y)},
-
-                {"(iff x y)", Iff(X, Y)},
-
-                {"(xor x y)", Xor(X, Y)},
-
-                {"1", Int(1)},
-
-                {"(+ a b c)", Add(A, B, C)},
-
-                {"(* a b c)", Mul(A, B, C)},
-
-                {"(- a b)", Sub(A, B)},
-
-                {"(/ a b)", Div(A, B)},
-
-                {"(mod a b)", Mod(A, B)},
-
-                {"(rem a b)", Rem(A, B)},
-
-                {"(< a b)", Lt(A, B)},
-
-                {"(<= a b)", Leq(A, B)},
-
-                {"(> a b)", Gt(A, B)},
-
-                {"(>= a b)", Geq(A, B)},
-
-                {"(= a b)", Eq(A, B)},
-
-                {"(/= a b)", Neq(A, B)},
-
-                {"a", A},
-
-                {"(ite x a b)", Ite(X, A, B)},
-
-                {"(f a)", App(F, A)}
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"true", True()},
+                    {"false", False()},
+                    {"(not x)", Not(X)},
+                    {"(and x y z)", And(X, Y, Z)},
+                    {"(or x y z)", Or(X, Y, Z)},
+                    {"(=> x y)", Imply(X, Y)},
+                    {"(iff x y)", Iff(X, Y)},
+                    {"(xor x y)", Xor(X, Y)},
+                    {"1", Int(1)},
+                    {"(+ a b c)", Add(A, B, C)},
+                    {"(* a b c)", Mul(A, B, C)},
+                    {"(- a b)", Sub(A, B)},
+                    {"(/ a b)", Div(A, B)},
+                    {"(mod a b)", Mod(A, B)},
+                    {"(rem a b)", Rem(A, B)},
+                    {"(< a b)", Lt(A, B)},
+                    {"(<= a b)", Leq(A, B)},
+                    {"(> a b)", Gt(A, B)},
+                    {"(>= a b)", Geq(A, B)},
+                    {"(= a b)", Eq(A, B)},
+                    {"(/= a b)", Neq(A, B)},
+                    {"a", A},
+                    {"(ite x a b)", Ite(X, A, B)},
+                    {"(f a)", App(F, A)}
+                });
     }
 
     @Before
@@ -164,5 +138,4 @@ public final class CoreParserTest {
         // Assert
         assertEquals(expectedExpr, actualExpr);
     }
-
 }

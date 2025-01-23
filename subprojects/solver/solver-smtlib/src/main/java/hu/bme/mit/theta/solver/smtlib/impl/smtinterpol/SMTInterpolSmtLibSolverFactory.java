@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
-
 import java.nio.file.Path;
 
 public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
@@ -35,13 +34,15 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
     private final Path solverPath;
     private final String[] args;
 
-    private SMTInterpolSmtLibSolverFactory(Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
+    private SMTInterpolSmtLibSolverFactory(
+            Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
         this.solverPath = solverPath;
         this.args = args;
         this.enumStrategy = enumStrategy;
     }
 
-    public static SMTInterpolSmtLibSolverFactory create(Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
+    public static SMTInterpolSmtLibSolverFactory create(
+            Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
         return new SMTInterpolSmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 
@@ -52,8 +53,13 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                false, enumStrategy);
+        return new SmtLibSolver(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                false,
+                enumStrategy);
     }
 
     @Override
@@ -63,8 +69,13 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                true, enumStrategy);
+        return new SmtLibSolver(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                true,
+                enumStrategy);
     }
 
     @Override
@@ -74,8 +85,8 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SMTInterpolSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                solverBinary, enumStrategy);
+        return new SMTInterpolSmtLibItpSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
     }
 
     private Path getJavaBinary() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.Collection;
-
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
@@ -37,14 +24,27 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Test;
+
 public class ExplTransFuncTest {
 
     private final VarDecl<IntType> x = Var("x", Int());
     private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
-    private final ExplState state = ExplState.of(
-            ImmutableValuation.builder().put(x, Int(1)).build());
+    private final ExplState state =
+            ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 
-    ExplTransFunc transFunc = ExplTransFunc.create(Z3LegacySolverFactory.getInstance().createSolver());
+    ExplTransFunc transFunc =
+            ExplTransFunc.create(Z3LegacySolverFactory.getInstance().createSolver());
 
     @Test
     public void testNormal() {
@@ -52,10 +52,11 @@ public class ExplTransFuncTest {
         doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
         when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
-                prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(state, action, prec);
         Assert.assertEquals(1, succStates.size());
-        Assert.assertEquals(ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
+        Assert.assertEquals(
+                ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
                 succStates.iterator().next());
     }
 
@@ -65,8 +66,8 @@ public class ExplTransFuncTest {
         doReturn(Eq(x.getRef(), Int(2))).when(action).toExpr();
         when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
-                prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(state, action, prec);
         Assert.assertEquals(1, succStates.size());
         Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
     }

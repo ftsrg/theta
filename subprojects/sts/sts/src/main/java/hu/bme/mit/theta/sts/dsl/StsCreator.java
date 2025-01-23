@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createExprList;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.resolveSts;
 
-import java.util.List;
-
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,14 +26,14 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.DefStsContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RefStsContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsContext;
+import java.util.List;
 
 final class StsCreator {
 
-    private StsCreator() {
-    }
+    private StsCreator() {}
 
-    public static StsDefScope createSts(final Scope scope, final Substitution assignment,
-                                        final StsContext stsContext) {
+    public static StsDefScope createSts(
+            final Scope scope, final Substitution assignment, final StsContext stsContext) {
         return stsContext.accept(new StsCreatorVisitor(scope, assignment));
     }
 
@@ -62,5 +60,4 @@ final class StsCreator {
             return symbol.instantiate(assignment, args);
         }
     }
-
 }

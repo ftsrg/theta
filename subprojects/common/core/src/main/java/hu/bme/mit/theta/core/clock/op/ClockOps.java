@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.clock.op;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
@@ -41,8 +43,6 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
 public final class ClockOps {
 
     private static final StmtToClockOpVisitor VISITOR;
@@ -51,8 +51,7 @@ public final class ClockOps {
         VISITOR = new StmtToClockOpVisitor();
     }
 
-    private ClockOps() {
-    }
+    private ClockOps() {}
 
     ////
 
@@ -86,8 +85,7 @@ public final class ClockOps {
 
     private static final class StmtToClockOpVisitor implements StmtVisitor<Void, ClockOp> {
 
-        private StmtToClockOpVisitor() {
-        }
+        private StmtToClockOpVisitor() {}
 
         @Override
         public ClockOp visit(final SkipStmt stmt, final Void param) {
@@ -95,8 +93,8 @@ public final class ClockOps {
         }
 
         @Override
-        public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt,
-                                                     final Void param) {
+        public <DeclType extends Type> ClockOp visit(
+                final HavocStmt<DeclType> stmt, final Void param) {
             final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
             return Free(varDecl);
         }
@@ -127,8 +125,8 @@ public final class ClockOps {
         }
 
         @Override
-        public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt,
-                                                     final Void param) {
+        public <DeclType extends Type> ClockOp visit(
+                final AssignStmt<DeclType> stmt, final Void param) {
 
             final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
             final Expr<?> expr = stmt.getExpr();
@@ -176,7 +174,8 @@ public final class ClockOps {
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> ClockOp visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> ClockOp visit(
+                MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
@@ -191,7 +190,5 @@ public final class ClockOps {
                 throw new IllegalArgumentException();
             }
         }
-
     }
-
 }

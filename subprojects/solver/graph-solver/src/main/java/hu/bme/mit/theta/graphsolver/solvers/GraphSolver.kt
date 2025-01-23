@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.graphsolver.solvers
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -21,12 +20,11 @@ import hu.bme.mit.theta.solver.SolverStatus
 
 interface GraphSolver<T> {
 
-    fun add(t: T)
+  fun add(t: T)
 
-    fun getAll(): Collection<T>
+  fun getAll(): Collection<T>
 
-    fun check(): SolverStatus
+  fun check(): SolverStatus
 
-    fun getModel(): Valuation
-
+  fun getModel(): Valuation
 }

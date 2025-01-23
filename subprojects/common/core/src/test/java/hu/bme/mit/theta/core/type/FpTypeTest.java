@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,6 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.utils.FpTestUtils;
-import hu.bme.mit.theta.core.utils.FpUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.kframework.mpfr.BigFloat;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
@@ -38,6 +23,20 @@ import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.utils.FpTestUtils;
+import hu.bme.mit.theta.core.utils.FpUtils;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.kframework.mpfr.BigFloat;
 
 @RunWith(Parameterized.class)
 public class FpTypeTest {
@@ -65,16 +64,19 @@ public class FpTypeTest {
 
         // Type checks
         assertTrue(
-                "The type of actual is " + actual.getClass().getName() + " instead of "
+                "The type of actual is "
+                        + actual.getClass().getName()
+                        + " instead of "
                         + exprType.getName(),
-                exprType.isInstance(actual)
-        );
+                exprType.isInstance(actual));
         assertEquals(
-                "The type of expected (" + expected.getType() + ") must match the type of actual ("
-                        + actual.getType() + ")",
+                "The type of expected ("
+                        + expected.getType()
+                        + ") must match the type of actual ("
+                        + actual.getType()
+                        + ")",
                 expected.getType(),
-                actual.getType()
-        );
+                actual.getType());
 
         // Equality check
         Valuation val = ImmutableValuation.builder().build();
@@ -87,11 +89,19 @@ public class FpTypeTest {
                 assertTrue(((FpLitExpr) actual.eval(val)).isPositiveInfinity());
             } else {
                 //noinspection unchecked
-                FpLeqExpr leq = Leq(
-                        Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual.eval(val))),
-                        FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2",
-                                        FpUtils.getMathContext((FpType) actual.getType(), RNE)),
-                                (FpType) actual.getType()));
+                FpLeqExpr leq =
+                        Leq(
+                                Abs(
+                                        Sub(
+                                                RNE,
+                                                (FpLitExpr) expected,
+                                                (Expr<FpType>) actual.eval(val))),
+                                FpUtils.bigFloatToFpLitExpr(
+                                        new BigFloat(
+                                                "1e-2",
+                                                FpUtils.getMathContext(
+                                                        (FpType) actual.getType(), RNE)),
+                                        (FpType) actual.getType()));
                 assertEquals(Bool(true), leq.eval(val));
             }
         } else {

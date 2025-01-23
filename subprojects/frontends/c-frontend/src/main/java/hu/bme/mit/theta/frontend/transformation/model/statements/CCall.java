@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
+
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
-
 import java.util.List;
 import java.util.Optional;
-
-import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 public class CCall extends CStatement {
 
@@ -36,8 +34,10 @@ public class CCall extends CStatement {
         super(parseContext);
         this.functionId = functionId;
         this.params = params;
-        Optional<Object> cTypeOpt = parseContext.getMetadata().getMetadataValue(functionId, "cType");
-        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CSignedInt(null, parseContext));
+        Optional<Object> cTypeOpt =
+                parseContext.getMetadata().getMetadataValue(functionId, "cType");
+        CComplexType type =
+                (CComplexType) cTypeOpt.orElseGet(() -> new CSignedInt(null, parseContext));
         ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
         parseContext.getMetadata().create(ret.getRef(), "cType", type);
     }

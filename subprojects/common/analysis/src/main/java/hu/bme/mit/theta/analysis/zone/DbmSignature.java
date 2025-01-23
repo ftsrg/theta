@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,20 +19,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
-
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
 
 final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
@@ -43,7 +40,8 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
         checkNotNull(varDecls);
 
         final ImmutableList.Builder<VarDecl<RatType>> indexToVarBuilder = ImmutableList.builder();
-        final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder = ImmutableMap.builder();
+        final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder =
+                ImmutableMap.builder();
 
         final Set<VarDecl<RatType>> addedVars = Containers.createSet();
 
@@ -76,12 +74,12 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
         return new DbmSignature(vars);
     }
 
-    public static DbmSignature intersection(final DbmSignature signature1,
-                                            final DbmSignature signature2) {
+    public static DbmSignature intersection(
+            final DbmSignature signature1, final DbmSignature signature2) {
         checkNotNull(signature1);
         checkNotNull(signature2);
-        final Set<VarDecl<RatType>> vars = Sets.intersection(signature1.toSet(),
-                signature2.toSet());
+        final Set<VarDecl<RatType>> vars =
+                Sets.intersection(signature1.toSet(), signature2.toSet());
         return new DbmSignature(vars);
     }
 

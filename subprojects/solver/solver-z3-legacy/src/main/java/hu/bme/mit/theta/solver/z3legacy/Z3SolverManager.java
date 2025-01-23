@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
-import hu.bme.mit.theta.solver.*;
-
-import java.util.HashSet;
-import java.util.Set;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+
+import hu.bme.mit.theta.solver.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class Z3SolverManager extends SolverManager {
 
@@ -30,8 +29,7 @@ public final class Z3SolverManager extends SolverManager {
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
 
-    private Z3SolverManager() {
-    }
+    private Z3SolverManager() {}
 
     public static Z3SolverManager create() {
         return new Z3SolverManager();

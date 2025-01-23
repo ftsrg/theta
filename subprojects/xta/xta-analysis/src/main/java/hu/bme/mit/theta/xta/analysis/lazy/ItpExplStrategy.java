@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,17 +21,12 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -44,6 +39,8 @@ import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
+import java.util.Collection;
+import java.util.function.Function;
 
 abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, ItpExplState> {
 
@@ -68,17 +65,19 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
     }
 
     @Override
-    public final boolean mightCover(final ArgNode<S, XtaAction> coveree,
-                                    final ArgNode<S, XtaAction> coverer) {
+    public final boolean mightCover(
+            final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
         final ExplState covereeExpl = lens.get(coveree.getState()).getConcrState();
         final ExplState covererExpl = lens.get(coverer.getState()).getAbstrState();
         return covereeExpl.isLeq(covererExpl);
     }
 
     @Override
-    public final void cover(final ArgNode<S, XtaAction> coveree,
-                            final ArgNode<S, XtaAction> coverer,
-                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public final void cover(
+            final ArgNode<S, XtaAction> coveree,
+            final ArgNode<S, XtaAction> coverer,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         stats.startCloseExplRefinement();
         final ItpExplState covererState = lens.get(coverer.getState());
         blockExpl(coveree, Not(covererState.toExpr()), uncoveredNodes, stats);
@@ -86,9 +85,12 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
     }
 
     @Override
-    public final void block(final ArgNode<S, XtaAction> node, final XtaAction action,
-                            final S succState,
-                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public final void block(
+            final ArgNode<S, XtaAction> node,
+            final XtaAction action,
+            final S succState,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         assert lens.get(succState).isBottom();
         stats.startExpandExplRefinement();
         final Expr<BoolType> preImage = XtaExplUtils.pre(True(), action);
@@ -98,9 +100,11 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 
     ////
 
-    protected abstract Valuation blockExpl(final ArgNode<S, XtaAction> node,
-                                           final Expr<BoolType> expr,
-                                           final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
+    protected abstract Valuation blockExpl(
+            final ArgNode<S, XtaAction> node,
+            final Expr<BoolType> expr,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats);
 
     protected final Lens<S, ItpExplState> getLens() {
         return lens;
@@ -127,19 +131,21 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
         node.setState(newState);
     }
 
-    protected final void maintainCoverage(final ArgNode<S, XtaAction> node,
-                                          final Valuation interpolant,
-                                          final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
-        final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
-                .filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
+    protected final void maintainCoverage(
+            final ArgNode<S, XtaAction> node,
+            final Valuation interpolant,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+        final Collection<ArgNode<S, XtaAction>> uncovered =
+                node.getCoveredNodes()
+                        .filter(covered -> shouldUncover(covered, interpolant))
+                        .collect(toList());
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, XtaAction> covered,
-                                  final Valuation interpolant) {
+    private boolean shouldUncover(
+            final ArgNode<S, XtaAction> covered, final Valuation interpolant) {
         final ItpExplState coveredExpl = lens.get(covered.getState());
         return !coveredExpl.getAbstrState().isLeq(interpolant);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public final class CfaInitFunc<S extends ExprState, P extends Prec> implements
-        InitFunc<CfaState<S>, CfaPrec<P>> {
+public final class CfaInitFunc<S extends ExprState, P extends Prec>
+        implements InitFunc<CfaState<S>, CfaPrec<P>> {
 
     private final Loc initLoc;
     private final InitFunc<S, ? super P> initFunc;
@@ -36,8 +35,8 @@ public final class CfaInitFunc<S extends ExprState, P extends Prec> implements
         this.initFunc = checkNotNull(initFunc);
     }
 
-    public static <S extends ExprState, P extends Prec> CfaInitFunc<S, P> create(final Loc initLoc,
-                                                                                 final InitFunc<S, ? super P> initFunc) {
+    public static <S extends ExprState, P extends Prec> CfaInitFunc<S, P> create(
+            final Loc initLoc, final InitFunc<S, ? super P> initFunc) {
         return new CfaInitFunc<>(initLoc, initFunc);
     }
 
@@ -54,5 +53,4 @@ public final class CfaInitFunc<S extends ExprState, P extends Prec> implements
         }
         return initStates;
     }
-
 }

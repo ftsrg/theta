@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,19 +19,17 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.stream.Stream;
-
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
+import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SolverUtilsTest {
 
@@ -50,5 +48,4 @@ public class SolverUtilsTest {
         // Act
         models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
     }
-
 }

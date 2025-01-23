@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -35,12 +40,6 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class SpState {
 
@@ -109,15 +108,15 @@ public class SpState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr)
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(expr)
                 .add(Integer.valueOf(constCount))
                 .toString();
     }
 
     private static final class SpVisitor implements StmtVisitor<SpState, SpState> {
 
-        private SpVisitor() {
-        }
+        private SpVisitor() {}
 
         private static class LazyHolder {
 
@@ -134,8 +133,8 @@ public class SpState {
         }
 
         @Override
-        public <DeclType extends Type> SpState visit(final AssignStmt<DeclType> stmt,
-                                                     final SpState state) {
+        public <DeclType extends Type> SpState visit(
+                final AssignStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_sp_%d", constCount);
@@ -149,13 +148,14 @@ public class SpState {
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> SpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, SpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> SpState visit(
+                MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, SpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
         @Override
-        public <DeclType extends Type> SpState visit(final HavocStmt<DeclType> stmt,
-                                                     final SpState state) {
+        public <DeclType extends Type> SpState visit(
+                final HavocStmt<DeclType> stmt, final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_sp_%d", constCount);
@@ -191,7 +191,6 @@ public class SpState {
         public SpState visit(LoopStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
-
 
         public SpState visit(IfStmt stmt, SpState param) {
             throw new UnsupportedOperationException();

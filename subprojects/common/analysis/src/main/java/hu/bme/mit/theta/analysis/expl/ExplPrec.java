@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
@@ -22,21 +24,16 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Represents an immutable, simple explicit precision that is a set of variables.
- */
+/** Represents an immutable, simple explicit precision that is a set of variables. */
 public final class ExplPrec implements Prec {
 
     private final Set<VarDecl<?>> vars;
-    private final static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
+    private static final ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
     private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
         this.vars = ImmutableSet.copyOf(vars);
@@ -61,9 +58,8 @@ public final class ExplPrec implements Prec {
 
     public ExplPrec join(final ExplPrec other) {
         checkNotNull(other);
-        final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars)
-                .addAll(other.vars)
-                .build();
+        final Collection<VarDecl<?>> newVars =
+                ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars).build();
         // If no new variable was added, return same instance (immutable)
         if (newVars.size() == this.vars.size()) {
             return this;

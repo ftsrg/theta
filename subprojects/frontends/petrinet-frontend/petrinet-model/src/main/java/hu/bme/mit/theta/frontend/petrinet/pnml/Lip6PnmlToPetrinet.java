@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import hu.bme.mit.theta.frontend.petrinet.model.*;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.model.Transition;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,11 +51,11 @@ final class Lip6PnmlToPetrinet {
                     if (object instanceof fr.lip6.move.pnml.ptnet.Place) {
                         places.add((fr.lip6.move.pnml.ptnet.Place) object);
                     } else if (object instanceof RefPlace) {
-                        //refPlaces.add((RefPlace) object);
+                        // refPlaces.add((RefPlace) object);
                     } else if (object instanceof fr.lip6.move.pnml.ptnet.Transition) {
                         transitions.add((fr.lip6.move.pnml.ptnet.Transition) object);
                     } else if (object instanceof RefTransition) {
-                        //refTransitions.add((RefTransition) object);
+                        // refTransitions.add((RefTransition) object);
                     } else if (object instanceof Arc) {
                         arcs.add((Arc) object);
                     } else {
@@ -93,10 +92,14 @@ final class Lip6PnmlToPetrinet {
 
                     PTArc arc = new PTArc(arcDOM.getId());
                     // TODO inhibitor??
-                    String sourceId = arcDOM.getSource() instanceof RefPlace ?
-                            ((RefPlace) arcDOM.getSource()).getRef().getId() : arcDOM.getSource().getId();
-                    String targetId = arcDOM.getTarget() instanceof RefTransition ?
-                            ((RefTransition) arcDOM.getTarget()).getRef().getId() : arcDOM.getTarget().getId();
+                    String sourceId =
+                            arcDOM.getSource() instanceof RefPlace
+                                    ? ((RefPlace) arcDOM.getSource()).getRef().getId()
+                                    : arcDOM.getSource().getId();
+                    String targetId =
+                            arcDOM.getTarget() instanceof RefTransition
+                                    ? ((RefTransition) arcDOM.getTarget()).getRef().getId()
+                                    : arcDOM.getTarget().getId();
                     Place sourcePlace = placeMap.get(sourceId);
                     Transition targetTransition = transitionMap.get(targetId);
                     arc.setSource(sourcePlace);
@@ -113,10 +116,14 @@ final class Lip6PnmlToPetrinet {
 
                     TPArc arc = new TPArc(arcDOM.getId());
                     // TODO inhibitor??
-                    String sourceId = arcDOM.getSource() instanceof RefTransition ?
-                            ((RefTransition) arcDOM.getSource()).getRef().getId() : arcDOM.getSource().getId();
-                    String targetId = arcDOM.getTarget() instanceof RefPlace ?
-                            ((RefPlace) arcDOM.getTarget()).getRef().getId() : arcDOM.getTarget().getId();
+                    String sourceId =
+                            arcDOM.getSource() instanceof RefTransition
+                                    ? ((RefTransition) arcDOM.getSource()).getRef().getId()
+                                    : arcDOM.getSource().getId();
+                    String targetId =
+                            arcDOM.getTarget() instanceof RefPlace
+                                    ? ((RefPlace) arcDOM.getTarget()).getRef().getId()
+                                    : arcDOM.getTarget().getId();
                     Transition sourceTransition = transitionMap.get(sourceId);
                     Place targetPlace = placeMap.get(targetId);
                     arc.setSource(sourceTransition);

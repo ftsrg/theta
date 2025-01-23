@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.prod2.prod2explpred;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -35,7 +40,6 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -45,25 +49,19 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
 public class Prod2ExplPredAbstractors {
 
-    private Prod2ExplPredAbstractors() {
-    }
+    private Prod2ExplPredAbstractors() {}
 
     public interface Prod2ExplPredAbstractor {
 
-        Collection<Prod2State<ExplState, PredState>> createStatesForExpr(final Expr<BoolType> expr,
-                                                                         final VarIndexing exprIndexing,
-                                                                         final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing precIndexing,
-                                                                         final Function<? super Valuation, ? extends ExplState> valuationToState,
-                                                                         final int limit);
-
+        Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final Prod2Prec<ExplPrec, PredPrec> prec,
+                final VarIndexing precIndexing,
+                final Function<? super Valuation, ? extends ExplState> valuationToState,
+                final int limit);
     }
 
     public static BooleanAbstractor booleanAbstractor(final Solver solver) {
@@ -89,8 +87,10 @@ public class Prod2ExplPredAbstractors {
 
         @Override
         public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
-                final Expr<BoolType> expr, final VarIndexing exprIndexing,
-                final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing stateIndexing,
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final Prod2Prec<ExplPrec, PredPrec> prec,
+                final VarIndexing stateIndexing,
                 final Function<? super Valuation, ? extends ExplState> valuationToState,
                 final int limit) {
             checkNotNull(expr);
@@ -107,8 +107,10 @@ public class Prod2ExplPredAbstractors {
             try (WithPushPop wp = new WithPushPop(solver)) {
                 solver.add(PathUtils.unfold(expr, exprIndexing));
                 for (int i = 0; i < preds.size(); ++i) {
-                    solver.add(Iff(actLits.get(i).getRef(),
-                            PathUtils.unfold(preds.get(i), stateIndexing)));
+                    solver.add(
+                            Iff(
+                                    actLits.get(i).getRef(),
+                                    PathUtils.unfold(preds.get(i), stateIndexing)));
                 }
                 while (solver.check().isSat() && (limit == 0 || states.size() < limit)) {
                     final Valuation model = solver.getModel();
@@ -133,18 +135,21 @@ public class Prod2ExplPredAbstractors {
                             }
                         }
                     }
-                    final Set<Expr<BoolType>> simplfiedNewStatePreds = newStatePreds.stream()
-                            .map(pred -> ExprUtils.simplify(pred, explState))
-                            .collect(Collectors.toSet());
+                    final Set<Expr<BoolType>> simplfiedNewStatePreds =
+                            newStatePreds.stream()
+                                    .map(pred -> ExprUtils.simplify(pred, explState))
+                                    .collect(Collectors.toSet());
                     final PredState predState = PredState.of(simplfiedNewStatePreds);
 
-                    final Prod2State<ExplState, PredState> prod2ExplPredState = Prod2State.of(
-                            explState, predState);
+                    final Prod2State<ExplState, PredState> prod2ExplPredState =
+                            Prod2State.of(explState, predState);
                     states.add(prod2ExplPredState);
-                    solver.add(Not(And(PathUtils.unfold(explState.toExpr(), stateIndexing),
-                            And(feedback))));
+                    solver.add(
+                            Not(
+                                    And(
+                                            PathUtils.unfold(explState.toExpr(), stateIndexing),
+                                            And(feedback))));
                 }
-
             }
             return states;
         }
@@ -155,5 +160,4 @@ public class Prod2ExplPredAbstractors {
             }
         }
     }
-
 }

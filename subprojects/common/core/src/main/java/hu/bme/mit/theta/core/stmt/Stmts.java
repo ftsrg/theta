@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.List;
 
 /**
@@ -30,8 +29,7 @@ import java.util.List;
  */
 public final class Stmts {
 
-    private Stmts() {
-    }
+    private Stmts() {}
 
     public static SkipStmt Skip() {
         return SkipStmt.getInstance();
@@ -45,7 +43,9 @@ public final class Stmts {
         return AssignStmt.of(lhs, rhs);
     }
 
-    public static <P extends Type, O extends Type, T extends Type> MemoryAssignStmt<P, O, T> MemoryAssign(final Dereference<P, O, T> deref, final Expr<T> expr) {
+    public static <P extends Type, O extends Type, T extends Type>
+            MemoryAssignStmt<P, O, T> MemoryAssign(
+                    final Dereference<P, O, T> deref, final Expr<T> expr) {
         return MemoryAssignStmt.of(deref, expr);
     }
 
@@ -60,5 +60,4 @@ public final class Stmts {
     public static NonDetStmt NonDetStmt(final List<Stmt> stmts) {
         return NonDetStmt.of(stmts);
     }
-
 }

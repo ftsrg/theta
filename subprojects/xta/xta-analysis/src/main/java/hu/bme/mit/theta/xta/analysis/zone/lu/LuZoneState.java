@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,15 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone.lu;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
@@ -26,21 +35,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class LuZoneState implements ExprState {
 
@@ -95,10 +94,11 @@ public final class LuZoneState implements ExprState {
             final Collection<VarDecl<?>> vars = mapping.keySet();
 
             for (final VarDecl<?> vx : vars) {
-                @SuppressWarnings("unchecked") final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
+                @SuppressWarnings("unchecked")
+                final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
 
-                @SuppressWarnings("unchecked") final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(
-                        dx);
+                @SuppressWarnings("unchecked")
+                final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(dx);
 
                 final Expr<RatType> x = dx.getRef();
                 final Expr<RatType> xp = dxp.getRef();
@@ -163,15 +163,16 @@ public final class LuZoneState implements ExprState {
         sj.add(zone.toString());
         if (!boundFunc.getLowerVars().isEmpty()) {
             sj.add("L:");
-            boundFunc.getLowerVars()
+            boundFunc
+                    .getLowerVars()
                     .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getLower(c).get()));
         }
         if (!boundFunc.getUpperVars().isEmpty()) {
             sj.add("U:");
-            boundFunc.getUpperVars()
+            boundFunc
+                    .getUpperVars()
                     .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getUpper(c).get()));
         }
         return sj.toString();
     }
-
 }

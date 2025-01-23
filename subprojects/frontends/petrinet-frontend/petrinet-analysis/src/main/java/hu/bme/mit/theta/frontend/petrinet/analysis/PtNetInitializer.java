@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,15 +26,17 @@ public final class PtNetInitializer implements AbstractNextStateDescriptor.Postc
     private AbstractNextStateDescriptor continuation;
 
     public PtNetInitializer(
-            final Place assignedPlace, final int initialMarking, final AbstractNextStateDescriptor continuation
-    ) {
+            final Place assignedPlace,
+            final int initialMarking,
+            final AbstractNextStateDescriptor continuation) {
         this.assignedPlace = assignedPlace;
         this.initialMarking = initialMarking;
         this.continuation = continuation;
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getValuations(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getValuations(
+            final StateSpaceInfo localStateSpace) {
         if (assignedPlace == localStateSpace.getTraceInfo()) {
             return IntObjMapView.singleton(initialMarking, continuation);
         } else {

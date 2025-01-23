@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -25,13 +28,13 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
-
 public class UnaryInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "fneg":
                 fneg(instruction, globalState, functionState, blockState);
@@ -40,15 +43,23 @@ public class UnaryInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void fneg(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fneg(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
 
         checkState(op1.getType() == RatType.getInstance(), "Fneg only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, RatExprs.Neg(cast(op1.getExpr(functionState.getValues()), RatType.getInstance())), 0);
-
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                RatExprs.Neg(cast(op1.getExpr(functionState.getValues()), RatType.getInstance())),
+                0);
     }
 }

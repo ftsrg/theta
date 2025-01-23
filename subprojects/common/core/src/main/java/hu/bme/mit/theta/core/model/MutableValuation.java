@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,22 +20,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * Mutable implementation of a valuation.
- */
+/** Mutable implementation of a valuation. */
 public final class MutableValuation extends Valuation {
 
     private final Map<Decl<?>, LitExpr<?>> declToExpr;
@@ -84,15 +81,16 @@ public final class MutableValuation extends Valuation {
     @Override
     public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
         checkNotNull(decl);
-        @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(
-                decl);
+        @SuppressWarnings("unchecked")
+        final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
         return Optional.ofNullable(val);
     }
 
     @Override
     public Expr<BoolType> toExpr() {
         return SmartBoolExprs.And(
-                declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
+                declToExpr.entrySet().stream()
+                        .map(e -> Eq(e.getKey().getRef(), e.getValue()))
                         .collect(toImmutableList()));
     }
 
@@ -100,5 +98,4 @@ public final class MutableValuation extends Valuation {
     public Map<Decl<?>, LitExpr<?>> toMap() {
         return Collections.unmodifiableMap(declToExpr);
     }
-
 }

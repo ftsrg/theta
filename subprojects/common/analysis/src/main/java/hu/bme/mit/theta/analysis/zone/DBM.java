@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,24 +15,23 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.clock.constr.*;
 import hu.bme.mit.theta.core.clock.op.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.*;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 final class DBM {
 
@@ -57,11 +56,15 @@ final class DBM {
     }
 
     // TODO replace BiFunction by IntBiFunction
-    private DBM(final DbmSignature signature,
-                final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
-        this(signature, (final int x, final int y) -> {
-            return values.apply(signature.getVar(x), signature.getVar(y));
-        });
+    private DBM(
+            final DbmSignature signature,
+            final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer>
+                    values) {
+        this(
+                signature,
+                (final int x, final int y) -> {
+                    return values.apply(signature.getVar(x), signature.getVar(y));
+                });
     }
 
     private DBM(final DBM dbm) {
@@ -82,8 +85,8 @@ final class DBM {
                     if (bound != defaultBound(x, y)) {
                         final int newBound = negate(bound);
                         final DbmSignature newSignature = DbmSignature.over(Arrays.asList(x, y));
-                        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> newValues = (c1,
-                                                                                                   c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
+                        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> newValues =
+                                (c1, c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
                         final DBM newDBM = new DBM(newSignature, newValues);
                         result.add(newDBM);
                     }
@@ -127,11 +130,12 @@ final class DBM {
         checkNotNull(dbm2);
 
         final DbmSignature signature = DbmSignature.union(dbm1.signature, dbm2.signature);
-        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
-            final int bound1 = dbm1.getOrDefault(x, y);
-            final int bound2 = dbm2.getOrDefault(x, y);
-            return min(bound1, bound2);
-        };
+        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values =
+                (x, y) -> {
+                    final int bound1 = dbm1.getOrDefault(x, y);
+                    final int bound2 = dbm2.getOrDefault(x, y);
+                    return min(bound1, bound2);
+                };
 
         final DBM result = new DBM(signature, values);
         result.close();
@@ -144,11 +148,12 @@ final class DBM {
         checkNotNull(dbm2);
 
         final DbmSignature signature = DbmSignature.union(dbm1.signature, dbm2.signature);
-        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
-            final int bound1 = dbm1.getOrDefault(x, y);
-            final int bound2 = dbm2.getOrDefault(x, y);
-            return max(bound1, bound2);
-        };
+        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values =
+                (x, y) -> {
+                    final int bound1 = dbm1.getOrDefault(x, y);
+                    final int bound2 = dbm2.getOrDefault(x, y);
+                    return max(bound1, bound2);
+                };
 
         final DBM result = new DBM(signature, values);
         return result;
@@ -174,11 +179,12 @@ final class DBM {
         assert dbmB.isClosed();
 
         final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
-        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
-            final int bound1 = dbmA.get(x, y);
-            final int bound2 = dbmB.get(x, y);
-            return min(bound1, bound2);
-        };
+        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values =
+                (x, y) -> {
+                    final int bound1 = dbmA.get(x, y);
+                    final int bound2 = dbmB.get(x, y);
+                    return min(bound1, bound2);
+                };
 
         final DBM interpolant = new DBM(interpolantSignature, values);
         final int[] cycle = interpolant.dbm.closeItp();
@@ -243,11 +249,12 @@ final class DBM {
         assert dbmB.isClosed();
 
         final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
-        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
-            final int bound1 = dbmA.get(x, y);
-            final int bound2 = dbmB.get(x, y);
-            return min(bound1, bound2);
-        };
+        final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values =
+                (x, y) -> {
+                    final int bound1 = dbmA.get(x, y);
+                    final int bound2 = dbmB.get(x, y);
+                    return min(bound1, bound2);
+                };
 
         final DBM interpolant = new DBM(interpolantSignature, values);
         final int[] cycle = interpolant.dbm.closeItp();
@@ -275,7 +282,8 @@ final class DBM {
         return result;
     }
 
-    private static DbmSignature signatureFrom(final DbmSignature interpolantSignature, final int[] cycle) {
+    private static DbmSignature signatureFrom(
+            final DbmSignature interpolantSignature, final int[] cycle) {
         final Collection<VarDecl<RatType>> vars = new ArrayList<>();
         for (int i = 0; i + 1 < cycle.length; i++) {
             final VarDecl<RatType> varDecl = interpolantSignature.getVar(cycle[i]);
@@ -285,9 +293,10 @@ final class DBM {
     }
 
     private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
-        final Set<VarDecl<RatType>> varsConstrainedByBothDBMS = Sets
-                .intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
-                .filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
+        final Set<VarDecl<RatType>> varsConstrainedByBothDBMS =
+                Sets.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
+                        .filter(c -> dbmA.constrains(c) && dbmB.constrains(c))
+                        .collect(Collectors.toSet());
         return DbmSignature.over(varsConstrainedByBothDBMS);
     }
 
@@ -346,7 +355,8 @@ final class DBM {
     }
 
     public DbmRelation getRelation(final DBM that) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
+        final Set<VarDecl<RatType>> vars =
+                Sets.union(this.signature.toSet(), that.signature.toSet());
 
         boolean leq = true;
         boolean geq = true;
@@ -361,21 +371,22 @@ final class DBM {
     }
 
     public boolean isLeq(final DBM that) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
+        final Set<VarDecl<RatType>> vars =
+                Sets.union(this.signature.toSet(), that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             for (final VarDecl<RatType> y : vars) {
                 if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
                     return false;
                 }
-
             }
         }
         return true;
     }
 
     public boolean isLeq(final DBM that, final Collection<? extends VarDecl<RatType>> activeVars) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
+        final Set<VarDecl<RatType>> vars =
+                Sets.union(this.signature.toSet(), that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             if (!activeVars.contains(x)) {
@@ -390,14 +401,14 @@ final class DBM {
                 if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
                     return false;
                 }
-
             }
         }
         return true;
     }
 
     public boolean isLeq(final DBM that, final BoundFunc bound) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
+        final Set<VarDecl<RatType>> vars =
+                Sets.union(this.signature.toSet(), that.signature.toSet());
 
         if (!this.isConsistent()) {
             return true;
@@ -575,7 +586,8 @@ final class DBM {
         }
     }
 
-    private void ifTracksElse(final VarDecl<RatType> varDecl, final IntConsumer consumer, final Procedure procedure) {
+    private void ifTracksElse(
+            final VarDecl<RatType> varDecl, final IntConsumer consumer, final Procedure procedure) {
         if (tracks(varDecl)) {
             final int x = signature.indexOf(varDecl);
             consumer.accept(x);
@@ -599,8 +611,7 @@ final class DBM {
 
         private static final ExecuteVisitor INSTANCE = new ExecuteVisitor();
 
-        private ExecuteVisitor() {
-        }
+        private ExecuteVisitor() {}
 
         @Override
         public Void visit(final CopyOp op, final DBM dbm) {
@@ -631,7 +642,6 @@ final class DBM {
             dbm.shift(op.getVar(), op.getOffset());
             return null;
         }
-
     }
 
     ////
@@ -640,8 +650,7 @@ final class DBM {
 
         private static final AndOperationVisitor INSTANCE = new AndOperationVisitor();
 
-        private AndOperationVisitor() {
-        }
+        private AndOperationVisitor() {}
 
         @Override
         public Void visit(final TrueConstr constr, final DBM dbm) {
@@ -792,5 +801,4 @@ final class DBM {
     private interface Procedure {
         void execute();
     }
-
 }
