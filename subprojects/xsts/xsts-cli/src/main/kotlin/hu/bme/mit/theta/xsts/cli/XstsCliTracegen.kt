@@ -155,7 +155,7 @@ class XstsCliTracegen :
         )
 
       val concreteSummaryFile =
-        traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".cexs"
+        traceDirPath.absolutePath + File.separator + inputOptions.model.nameWithoutExtension + ".cexs"
       val cexsString = toCexs(concretizationResult)
       PrintWriter(File(concreteSummaryFile)).use { printWriter -> printWriter.write(cexsString) }
       logger.write(
