@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package hu.bme.mit.theta.cfa.analysis.lts;
 
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-
 /**
- * Single block encoding (SBE) implementation for CFA LTS. It returns a single CFA edges as
- * actions.
+ * Single block encoding (SBE) implementation for CFA LTS. It returns a single CFA edges as actions.
  */
 public final class CfaSbeLts implements CfaLts {
 
@@ -32,8 +30,7 @@ public final class CfaSbeLts implements CfaLts {
         private static final CfaSbeLts INSTANCE = new CfaSbeLts();
     }
 
-    private CfaSbeLts() {
-    }
+    private CfaSbeLts() {}
 
     public static CfaSbeLts getInstance() {
         return LazyHolder.INSTANCE;
@@ -41,7 +38,8 @@ public final class CfaSbeLts implements CfaLts {
 
     @Override
     public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-        return state.getLoc().getOutEdges().stream().map(CfaAction::create)
+        return state.getLoc().getOutEdges().stream()
+                .map(CfaAction::create)
                 .collect(Collectors.toList());
     }
 }

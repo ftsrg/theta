@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,21 @@
  */
 package hu.bme.mit.theta.common.parser;
 
-import com.google.common.collect.ImmutableList;
-
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.Iterator;
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.collect.ImmutableList;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.Iterator;
+import java.util.List;
+
 public abstract class SExpr {
 
-    private SExpr() {
-    }
+    private SExpr() {}
 
     public static SAtom atom(final String atom) {
         return new SAtom(atom);
@@ -52,13 +50,13 @@ public abstract class SExpr {
             return atom(string);
         } else if (object instanceof Iterable) {
             final Iterable<?> iterable = (Iterable<?>) object;
-            final List<SExpr> sexprs = stream(iterable).map(SExpr::build)
-                    .collect(toImmutableList());
+            final List<SExpr> sexprs =
+                    stream(iterable).map(SExpr::build).collect(toImmutableList());
             return list(sexprs);
         } else {
             throw new IllegalArgumentException(
-                    "Only String and Iterable types are supported, found: " + object.getClass()
-                            .getSimpleName());
+                    "Only String and Iterable types are supported, found: "
+                            + object.getClass().getSimpleName());
         }
     }
 
@@ -205,5 +203,4 @@ public abstract class SExpr {
             return list.stream().map(Object::toString).collect(joining(SPACE, LPAREN, RPAREN));
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,31 +22,49 @@ import hu.bme.mit.theta.analysis.unit.UnitState;
 public final class NextSideFunctions {
 
     @FunctionalInterface
-    public interface NextSideFunction<L extends State, R extends State, D extends State, MState extends MultiState<L, R, D>> {
+    public interface NextSideFunction<
+            L extends State, R extends State, D extends State, MState extends MultiState<L, R, D>> {
         MultiSide defineNextSide(MState state);
     }
 
-    public static class Alternating<L extends State, R extends State, D extends State, MState extends MultiState<L, R, D>> implements NextSideFunction<L, R, D, MState> {
+    public static class Alternating<
+                    L extends State,
+                    R extends State,
+                    D extends State,
+                    MState extends MultiState<L, R, D>>
+            implements NextSideFunction<L, R, D, MState> {
         @Override
         public MultiSide defineNextSide(MState state) {
             return state.getSourceSide() == MultiSide.LEFT ? MultiSide.RIGHT : MultiSide.LEFT;
         }
     }
 
-    public static class Alternating3<L extends State, RL extends State, RR extends State, D extends State, MState extends MultiState<RL, RR, UnitState>, MMState extends MultiState<L, MState, D>> implements NextSideFunction<L, MState, D, MMState> {
+    public static class Alternating3<
+                    L extends State,
+                    RL extends State,
+                    RR extends State,
+                    D extends State,
+                    MState extends MultiState<RL, RR, UnitState>,
+                    MMState extends MultiState<L, MState, D>>
+            implements NextSideFunction<L, MState, D, MMState> {
         @Override
         public MultiSide defineNextSide(MMState state) {
-            return state.getSourceSide() == MultiSide.RIGHT && state.getRightState().getSourceSide() == MultiSide.RIGHT
+            return state.getSourceSide() == MultiSide.RIGHT
+                            && state.getRightState().getSourceSide() == MultiSide.RIGHT
                     ? MultiSide.LEFT
                     : MultiSide.RIGHT;
         }
     }
 
-    public static class Nondet<L extends State, R extends State, D extends State, MState extends MultiState<L, R, D>> implements NextSideFunction<L, R, D, MState> {
+    public static class Nondet<
+                    L extends State,
+                    R extends State,
+                    D extends State,
+                    MState extends MultiState<L, R, D>>
+            implements NextSideFunction<L, R, D, MState> {
         @Override
         public MultiSide defineNextSide(MState state) {
             return MultiSide.BOTH;
         }
     }
-
 }

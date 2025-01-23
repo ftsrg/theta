@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.llvm2xcfa.handlers.BaseInstructionHandler;
@@ -24,16 +30,13 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
-
 public class BitwiseInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "shl":
                 shl(instruction, globalState, functionState, blockState);
@@ -57,51 +60,95 @@ public class BitwiseInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void shl(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void shl(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void lshr(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void lshr(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void ashr(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void ashr(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void and(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void and(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == BoolType.getInstance(), "And only supports boolean types!");
         checkState(op2.getType() == BoolType.getInstance(), "And only supports boolean types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, And(cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()), cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                And(
+                        cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())),
+                0);
     }
 
-    private void or(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void or(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == BoolType.getInstance(), "Or only supports boolean types!");
         checkState(op2.getType() == BoolType.getInstance(), "Or only supports boolean types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Or(cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()), cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())), 0);
-
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Or(
+                        cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())),
+                0);
     }
 
-    private void xor(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void xor(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == BoolType.getInstance(), "Xor only supports boolean types!");
         checkState(op2.getType() == BoolType.getInstance(), "Xor only supports boolean types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Xor(cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()), cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())), 0);
-
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Xor(
+                        cast(op1.getExpr(functionState.getValues()), BoolType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), BoolType.getInstance())),
+                0);
     }
-
 }

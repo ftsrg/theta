@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.delta.java.mdd.GraphvizSerializer;
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -27,12 +29,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProduc
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public final class BfsTest {
     public static String reverseString(String str) {
@@ -48,9 +47,13 @@ public final class BfsTest {
 
         assertEquals(1, petriNets.size());
 
-        final List<Place> ordering = VariableOrderingFactory.fromPathString(getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(), petriNets.get(0));
+        final List<Place> ordering =
+                VariableOrderingFactory.fromPathString(
+                        getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(),
+                        petriNets.get(0));
         // 	ordering = new ArrayList<>(petriNets.get(0).getPlaces());
-        // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
+        // ordering.sort((p1, p2) ->
+        // String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
         // 	reverseString(p2.getId())));
 
         PtNetSystem system = new PtNetSystem(petriNets.get(0), ordering);
@@ -63,12 +66,14 @@ public final class BfsTest {
             variableOrder.createOnTop(MddVariableDescriptor.create(p));
         }
 
-        BfsProvider bfs = new BfsProvider(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+        BfsProvider bfs =
+                new BfsProvider(variableOrder, new LegacyRelationalProductProvider(variableOrder));
 
-        final MddHandle stateSpace = bfs.compute(system.getInitializer(),
-                system.getTransitions(),
-                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-        );
+        final MddHandle stateSpace =
+                bfs.compute(
+                        system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle());
 
         System.out.println(GraphvizSerializer.serialize(stateSpace));
 

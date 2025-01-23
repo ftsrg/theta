@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,13 +16,20 @@
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
 import hu.bme.mit.theta.common.table.TableWriter;
-
 import java.util.Arrays;
 
 public final class ModelProperties {
-    private static final String[] headers = new String[]{"id", "Name", "Type", "#Place", "#Transition", "#Arc",
-            "HasReadOnlyEffect",
-            "HasReadOnlyEffectOnTop"};
+    private static final String[] headers =
+            new String[] {
+                "id",
+                "Name",
+                "Type",
+                "#Place",
+                "#Transition",
+                "#Arc",
+                "HasReadOnlyEffect",
+                "HasReadOnlyEffectOnTop"
+            };
 
     private final PtNetSystem model;
     private final String id;

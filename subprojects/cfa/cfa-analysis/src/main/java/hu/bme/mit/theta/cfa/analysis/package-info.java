@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,5 +17,4 @@
  * This package contains the CFA specific analysis modules that can be plugged into the analysis
  * algorithms. Most of the modules work by extending existing modules with a location component.
  */
-
 package hu.bme.mit.theta.cfa.analysis;

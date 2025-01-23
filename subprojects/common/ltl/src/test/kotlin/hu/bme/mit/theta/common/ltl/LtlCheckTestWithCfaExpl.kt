@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.common.ltl
 
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopcheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -98,7 +98,7 @@ class LtlCheckTestWithCfaExpl(
         ltlExpr,
         itpSolverFactory,
         logger,
-        LoopcheckerSearchStrategy.GDFS,
+        LoopCheckerSearchStrategy.GDFS,
         ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
         Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
         variables,

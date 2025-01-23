@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
@@ -22,14 +27,8 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
         implements Expr<ArrayType<IndexType, ElemType>> {
@@ -44,24 +43,28 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
     private final Expr<IndexType> index;
     private final Expr<ElemType> elem;
 
-    private ArrayWriteExpr(final Expr<ArrayType<IndexType, ElemType>> array,
-                           final Expr<IndexType> index,
-                           final Expr<ElemType> elem) {
+    private ArrayWriteExpr(
+            final Expr<ArrayType<IndexType, ElemType>> array,
+            final Expr<IndexType> index,
+            final Expr<ElemType> elem) {
         this.array = checkNotNull(array);
         this.index = checkNotNull(index);
         this.elem = checkNotNull(elem);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<IndexType, ElemType> of(
-            final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
-            final Expr<ElemType> elem) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayWriteExpr<IndexType, ElemType> of(
+                    final Expr<ArrayType<IndexType, ElemType>> array,
+                    final Expr<IndexType> index,
+                    final Expr<ElemType> elem) {
         return new ArrayWriteExpr<>(array, index, elem);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<?, ?> create(
-            final Expr<?> array,
-            final Expr<?> index, final Expr<?> elem) {
-        @SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
+            final Expr<?> array, final Expr<?> index, final Expr<?> elem) {
+        @SuppressWarnings("unchecked")
+        final ArrayType<IndexType, ElemType> arrayType =
+                (ArrayType<IndexType, ElemType>) array.getType();
         final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
         final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
         final Expr<ElemType> newElem = cast(elem, arrayType.getElemType());
@@ -87,12 +90,13 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public LitExpr<ArrayType<IndexType, ElemType>> eval(final Valuation val) {
-        ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>) array.eval(
-                val);
+        ArrayLitExpr<IndexType, ElemType> arrayVal =
+                (ArrayLitExpr<IndexType, ElemType>) array.eval(val);
         LitExpr<IndexType> indexVal = index.eval(val);
         LitExpr<ElemType> elemVal = elem.eval(val);
 
-        List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elemList = new ArrayList<>();
+        List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elemList =
+                new ArrayList<>();
         for (Tuple2<LitExpr<IndexType>, LitExpr<ElemType>> elem : arrayVal.getElements()) {
             if (!elem.get1().equals(indexVal)) {
                 elemList.add(elem);
@@ -125,7 +129,8 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
     public ArrayWriteExpr<IndexType, ElemType> with(
             final Expr<ArrayType<IndexType, ElemType>> array,
-            final Expr<IndexType> index, final Expr<ElemType> elem) {
+            final Expr<IndexType> index,
+            final Expr<ElemType> elem) {
         if (this.array == array && this.index == index && elem == this.elem) {
             return this;
         } else {
@@ -160,8 +165,8 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayWriteExpr<?, ?> that = (ArrayWriteExpr<?, ?>) obj;
-            return this.getArray().equals(that.getArray()) && this.getIndex()
-                    .equals(that.getIndex())
+            return this.getArray().equals(that.getArray())
+                    && this.getIndex().equals(that.getIndex())
                     && this.getElem().equals(that.getElem());
         } else {
             return false;
@@ -170,7 +175,11 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(index).add(elem).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL)
+                .body()
+                .add(array)
+                .add(index)
+                .add(elem)
+                .toString();
     }
-
 }

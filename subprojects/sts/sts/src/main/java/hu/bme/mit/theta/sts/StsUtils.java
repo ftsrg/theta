@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,13 +19,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
-/**
- * Utilities related to the STS formalism.
- */
+/** Utilities related to the STS formalism. */
 public final class StsUtils {
 
-    private StsUtils() {
-    }
+    private StsUtils() {}
 
     /**
      * Transform STS into an equivalent new STS, without if-then-else constructs.

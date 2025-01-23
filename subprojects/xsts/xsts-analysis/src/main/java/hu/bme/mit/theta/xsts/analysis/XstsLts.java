@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.xsts.XSTS;
-
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -39,8 +38,8 @@ public final class XstsLts<S extends ExprState> implements LTS<XstsState<S>, Xst
         this.stmtOptimizer = stmtOptimizer;
     }
 
-    public static <S extends ExprState> LTS<XstsState<S>, XstsAction> create(final XSTS xsts,
-                                                                             final XstsStmtOptimizer<S> stmtOptimizer) {
+    public static <S extends ExprState> LTS<XstsState<S>, XstsAction> create(
+            final XSTS xsts, final XstsStmtOptimizer<S> stmtOptimizer) {
         return new XstsLts<>(xsts, stmtOptimizer);
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class FalseExpr extends BoolLitExpr {
 
@@ -26,8 +26,7 @@ public final class FalseExpr extends BoolLitExpr {
     private static final int HASH_SEED = 712514;
     private static final String OPERATOR_LABEL = "false";
 
-    private FalseExpr() {
-    }
+    private FalseExpr() {}
 
     public static FalseExpr getInstance() {
         return INSTANCE;
@@ -62,5 +61,4 @@ public final class FalseExpr extends BoolLitExpr {
     public String toString() {
         return OPERATOR_LABEL;
     }
-
 }

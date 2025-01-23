@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,25 +18,23 @@ package hu.bme.mit.theta.solver.utils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
-
 public final class SolverUtils {
 
-    private SolverUtils() {
-    }
+    private SolverUtils() {}
 
-    public static boolean entails(final Solver solver, final Expr<BoolType> antecedent,
-                                  final Expr<BoolType> consequent) {
+    public static boolean entails(
+            final Solver solver, final Expr<BoolType> antecedent, final Expr<BoolType> consequent) {
         checkNotNull(solver);
         checkNotNull(antecedent);
         checkNotNull(consequent);
@@ -47,9 +45,10 @@ public final class SolverUtils {
         }
     }
 
-    public static boolean entails(final Solver solver,
-                                  final Iterable<? extends Expr<BoolType>> antecedents,
-                                  final Iterable<? extends Expr<BoolType>> consequents) {
+    public static boolean entails(
+            final Solver solver,
+            final Iterable<? extends Expr<BoolType>> antecedents,
+            final Iterable<? extends Expr<BoolType>> consequents) {
         checkNotNull(solver);
         checkNotNull(antecedents);
         checkNotNull(consequents);
@@ -64,8 +63,10 @@ public final class SolverUtils {
         return models(factory, expr, m -> Not(m.toExpr()));
     }
 
-    public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr,
-                                           final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+    public static Stream<Valuation> models(
+            final SolverFactory factory,
+            final Expr<BoolType> expr,
+            final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
         final Iterable<Valuation> iterable = () -> new ModelIterator(factory, expr, feedback);
         return StreamSupport.stream(iterable.spliterator(), false);
     }
@@ -75,8 +76,10 @@ public final class SolverUtils {
         private final Solver solver;
         private final Function<? super Valuation, ? extends Expr<BoolType>> feedback;
 
-        private ModelIterator(final SolverFactory factory, final Expr<BoolType> expr,
-                              final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+        private ModelIterator(
+                final SolverFactory factory,
+                final Expr<BoolType> expr,
+                final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
             checkNotNull(expr);
             checkNotNull(factory);
             this.feedback = checkNotNull(feedback);
@@ -100,5 +103,4 @@ public final class SolverUtils {
             return model;
         }
     }
-
 }

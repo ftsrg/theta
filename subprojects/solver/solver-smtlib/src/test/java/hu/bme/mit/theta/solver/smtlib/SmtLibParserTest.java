@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,12 +23,11 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
+import java.util.Map;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 public class SmtLibParserTest {
 
@@ -56,11 +55,12 @@ public class SmtLibParserTest {
 
     @Test
     public void letTest() {
-        final var response = "" +
-                "(let ((a!1 (* (mod 15 4294967296)\n" +
-                "              (mod (+ 1 (mod 15 4294967296)) 4294967296))))\n" +
-                "(let ((a!2 (* (- 1) (mod (div (mod a!1 4294967296) 2) 4294967296))))\n" +
-                "  (= (+ 16 a!2) 0)))";
+        final var response =
+                ""
+                        + "(let ((a!1 (* (mod 15 4294967296)\n"
+                        + "              (mod (+ 1 (mod 15 4294967296)) 4294967296))))\n"
+                        + "(let ((a!2 (* (- 1) (mod (div (mod a!1 4294967296) 2) 4294967296))))\n"
+                        + "  (= (+ 16 a!2) 0)))";
 
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
         final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
@@ -71,8 +71,8 @@ public class SmtLibParserTest {
 
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var expr = termTransformer.toExpr(response, BoolExprs.Bool(),
-                new SmtLibModel(Map.of()));
+        final var expr =
+                termTransformer.toExpr(response, BoolExprs.Bool(), new SmtLibModel(Map.of()));
 
         Assert.assertNotNull(expr);
     }

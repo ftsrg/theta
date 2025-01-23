@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -22,13 +27,7 @@ import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XstsType {
 
@@ -50,8 +49,7 @@ final class XstsType {
         }
     }
 
-    private static class TypeCreatorVisitor extends
-            XstsDslBaseVisitor<Type> {
+    private static class TypeCreatorVisitor extends XstsDslBaseVisitor<Type> {
 
         private final SymbolTable typeTable;
         private final Env env;
@@ -65,8 +63,8 @@ final class XstsType {
         public Type visitCustomType(final CustomTypeContext ctx) {
             Optional<? extends Symbol> optSymbol = typeTable.get(ctx.name.getText());
             if (optSymbol.isEmpty()) {
-                throw new ParseException(ctx,
-                        "Type '" + ctx.name.getText() + "' cannot be resolved");
+                throw new ParseException(
+                        ctx, "Type '" + ctx.name.getText() + "' cannot be resolved");
             }
             final Symbol symbol = optSymbol.get();
             return (Type) env.eval(symbol);
@@ -88,7 +86,5 @@ final class XstsType {
             final Type elemType = ctx.elemType.accept(this);
             return Array(indexType, elemType);
         }
-
     }
-
 }

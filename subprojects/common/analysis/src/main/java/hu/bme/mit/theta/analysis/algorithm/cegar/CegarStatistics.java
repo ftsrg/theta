@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 
-/**
- * Represents statistics collected by the CegarChecker algorithm.
- */
+/** Represents statistics collected by the CegarChecker algorithm. */
 public final class CegarStatistics extends Statistics {
 
     private final long algorithmTimeMs;
@@ -27,9 +25,11 @@ public final class CegarStatistics extends Statistics {
     private final long refinerTimeMs;
     private final int iterations;
 
-    public CegarStatistics(final long algorithmTimeMs, final long abstractorTimeMs,
-                           final long refinerTimeMs,
-                           final int iterations) {
+    public CegarStatistics(
+            final long algorithmTimeMs,
+            final long abstractorTimeMs,
+            final long refinerTimeMs,
+            final int iterations) {
         this.algorithmTimeMs = algorithmTimeMs;
         this.abstractorTimeMs = abstractorTimeMs;
         this.refinerTimeMs = refinerTimeMs;
@@ -54,5 +54,4 @@ public final class CegarStatistics extends Statistics {
     public int getIterations() {
         return iterations;
     }
-
 }

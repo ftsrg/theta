@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,16 +17,13 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Optional;
-import java.util.Set;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Class representing a nested substitution. If a declaration is not present in the actual
@@ -42,8 +39,8 @@ public final class NestedSubstitution implements Substitution {
         this.subst = checkNotNull(subst);
     }
 
-    public static NestedSubstitution create(final Substitution enclosingSubst,
-                                            final Substitution subst) {
+    public static NestedSubstitution create(
+            final Substitution enclosingSubst, final Substitution subst) {
         return new NestedSubstitution(enclosingSubst, subst);
     }
 

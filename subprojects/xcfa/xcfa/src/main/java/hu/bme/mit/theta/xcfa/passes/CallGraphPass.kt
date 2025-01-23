@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -22,23 +21,28 @@ import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 /**
- * Mark procedure builders with reachability info.
- * Marks the called ProcedureBuilders `reachable-from-<X>`.
+ * Mark procedure builders with reachability info. Marks the called ProcedureBuilders
+ * `reachable-from-<X>`.
  */
 class CallGraphPass : ProcedurePass {
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val calledProcedures = LinkedHashSet<String>()
-        builder.getEdges().map { it.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }.flatten()
-            .forEach {
-                when (it) {
-                    is InvokeLabel -> calledProcedures.add(it.name)
-                    is StartLabel -> calledProcedures.add(it.name)
-                    else -> error("Will never be here (due to filter above)")
-                }
-            }
-        builder.parent.getProcedures().filter { calledProcedures.contains(it.name) }
-            .forEach { it.metaData["reachable-from-${builder.name}"] = Unit }
-        return builder
-    }
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val calledProcedures = LinkedHashSet<String>()
+    builder
+      .getEdges()
+      .map { it.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }
+      .flatten()
+      .forEach {
+        when (it) {
+          is InvokeLabel -> calledProcedures.add(it.name)
+          is StartLabel -> calledProcedures.add(it.name)
+          else -> error("Will never be here (due to filter above)")
+        }
+      }
+    builder.parent
+      .getProcedures()
+      .filter { calledProcedures.contains(it.name) }
+      .forEach { it.metaData["reachable-from-${builder.name}"] = Unit }
+    return builder
+  }
 }

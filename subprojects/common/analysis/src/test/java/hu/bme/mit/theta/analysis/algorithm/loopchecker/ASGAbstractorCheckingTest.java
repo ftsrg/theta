@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.asg.ASG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopcheckerSearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStatePredicate;
@@ -119,7 +119,7 @@ public class ASGAbstractorCheckingTest {
                         analysis,
                         lts,
                         target,
-                        LoopcheckerSearchStrategy.Companion.getDefault(),
+                        LoopCheckerSearchStrategy.Companion.getDefault(),
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<XstsState<ExplState>, XstsAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);
@@ -146,7 +146,7 @@ public class ASGAbstractorCheckingTest {
                         analysis,
                         lts,
                         target,
-                        LoopcheckerSearchStrategy.Companion.getDefault(),
+                        LoopCheckerSearchStrategy.Companion.getDefault(),
                         new ConsoleLogger(Logger.Level.DETAIL));
         ASG<CfaState<ExplState>, CfaAction> ASG = new ASG<>(target);
         AbstractorResult result = abstractor.check(ASG, precision);

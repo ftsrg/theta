@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
-
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 final class JavaSMTInterpolant implements Interpolant {
 
@@ -39,5 +38,4 @@ final class JavaSMTInterpolant implements Interpolant {
         checkNotNull(itpExpr);
         return itpExpr;
     }
-
 }

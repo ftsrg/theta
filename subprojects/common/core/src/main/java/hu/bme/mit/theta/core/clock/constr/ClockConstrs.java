@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,8 @@ package hu.bme.mit.theta.core.clock.constr;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -44,6 +40,8 @@ import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import java.util.Collection;
+import java.util.List;
 
 public final class ClockConstrs {
 
@@ -55,8 +53,7 @@ public final class ClockConstrs {
         FALSE_CONSTR = new FalseConstr();
     }
 
-    private ClockConstrs() {
-    }
+    private ClockConstrs() {}
 
     ////
 
@@ -99,41 +96,36 @@ public final class ClockConstrs {
         return new UnitEqConstr(clock, bound);
     }
 
-    public static DiffLtConstr Lt(final VarDecl<RatType> leftClock,
-                                  final VarDecl<RatType> rightClock,
-                                  final int bound) {
+    public static DiffLtConstr Lt(
+            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffLtConstr(leftClock, rightClock, bound);
     }
 
-    public static DiffLeqConstr Leq(final VarDecl<RatType> leftClock,
-                                    final VarDecl<RatType> rightClock,
-                                    final int bound) {
+    public static DiffLeqConstr Leq(
+            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffLeqConstr(leftClock, rightClock, bound);
     }
 
-    public static DiffGtConstr Gt(final VarDecl<RatType> leftClock,
-                                  final VarDecl<RatType> rightClock,
-                                  final int bound) {
+    public static DiffGtConstr Gt(
+            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffGtConstr(leftClock, rightClock, bound);
     }
 
-    public static DiffGeqConstr Geq(final VarDecl<RatType> leftClock,
-                                    final VarDecl<RatType> rightClock,
-                                    final int bound) {
+    public static DiffGeqConstr Geq(
+            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffGeqConstr(leftClock, rightClock, bound);
     }
 
-    public static DiffEqConstr Eq(final VarDecl<RatType> leftClock,
-                                  final VarDecl<RatType> rightClock,
-                                  final int bound) {
+    public static DiffEqConstr Eq(
+            final VarDecl<RatType> leftClock, final VarDecl<RatType> rightClock, final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffEqConstr(leftClock, rightClock, bound);
@@ -160,29 +152,21 @@ public final class ClockConstrs {
         private final DispatchTable<ClockConstr> table;
 
         private FromExprHelper() {
-            table = DispatchTable.<ClockConstr>builder()
-
-                    .addCase(TrueExpr.class, this::transformTrue)
-
-                    .addCase(FalseExpr.class, this::transformFalse)
-
-                    .addCase(RatLtExpr.class, this::transformLt)
-
-                    .addCase(RatLeqExpr.class, this::transformLeq)
-
-                    .addCase(RatGtExpr.class, this::transformGt)
-
-                    .addCase(RatGeqExpr.class, this::transformGeq)
-
-                    .addCase(RatEqExpr.class, this::transformEq)
-
-                    .addCase(AndExpr.class, this::transformAnd)
-
-                    .addDefault(o -> {
-                        throw new IllegalArgumentException();
-                    })
-
-                    .build();
+            table =
+                    DispatchTable.<ClockConstr>builder()
+                            .addCase(TrueExpr.class, this::transformTrue)
+                            .addCase(FalseExpr.class, this::transformFalse)
+                            .addCase(RatLtExpr.class, this::transformLt)
+                            .addCase(RatLeqExpr.class, this::transformLeq)
+                            .addCase(RatGtExpr.class, this::transformGt)
+                            .addCase(RatGeqExpr.class, this::transformGeq)
+                            .addCase(RatEqExpr.class, this::transformEq)
+                            .addCase(AndExpr.class, this::transformAnd)
+                            .addDefault(
+                                    o -> {
+                                        throw new IllegalArgumentException();
+                                    })
+                            .build();
         }
 
         public ClockConstr transform(final Expr<BoolType> expr) {
@@ -305,7 +289,5 @@ public final class ClockConstrs {
 
             throw new IllegalArgumentException();
         }
-
     }
-
 }

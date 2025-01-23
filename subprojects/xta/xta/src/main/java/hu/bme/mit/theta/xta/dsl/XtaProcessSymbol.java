@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xta.dsl;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -30,15 +34,10 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.XtaVariableSymbol.InstantiateResult;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 final class XtaProcessSymbol implements Symbol, Scope {
 
@@ -63,15 +62,18 @@ final class XtaProcessSymbol implements Symbol, Scope {
         parameters = new ArrayList<>();
         variables = new ArrayList<>();
         states = new ArrayList<>();
-        transitions = context.fProcessBody.fTransitions.fTransitions.stream()
-                .map(t -> new XtaTransition(this, t))
-                .collect(toList());
+        transitions =
+                context.fProcessBody.fTransitions.fTransitions.stream()
+                        .map(t -> new XtaTransition(this, t))
+                        .collect(toList());
 
         declareAllParameters(context.fParameterList.fParameterDecls);
         declareAllTypes(context.fProcessBody.fTypeDecls);
         declareAllVariables(context.fProcessBody.fVariableDecls);
         declareAllFunctions(context.fProcessBody.fFunctionDecls);
-        declareAllStates(context.fProcessBody.fStates.fStateDecls, context.fProcessBody.fUrgent,
+        declareAllStates(
+                context.fProcessBody.fStates.fStateDecls,
+                context.fProcessBody.fUrgent,
                 context.fProcessBody.fCommit);
     }
 
@@ -81,17 +83,19 @@ final class XtaProcessSymbol implements Symbol, Scope {
     }
 
     public Set<List<Expr<?>>> getArgumentLists(final Env env) {
-        final List<Set<Expr<?>>> argumentValues = parameters.stream()
-                .map(p -> p.instantiateValues(env))
-                .collect(toList());
+        final List<Set<Expr<?>>> argumentValues =
+                parameters.stream().map(p -> p.instantiateValues(env)).collect(toList());
         final Set<List<Expr<?>>> argumentLists = Sets.cartesianProduct(argumentValues);
         return argumentLists;
     }
 
     ////
 
-    public XtaProcess instantiate(final XtaSystem system, final String name,
-                                  final List<? extends Expr<?>> arguments, final Env env) {
+    public XtaProcess instantiate(
+            final XtaSystem system,
+            final String name,
+            final List<? extends Expr<?>> arguments,
+            final Env env) {
         checkArgument(arguments.size() == parameters.size());
         checkArgument(argumentTypesMatch(arguments));
 
@@ -121,14 +125,14 @@ final class XtaProcessSymbol implements Symbol, Scope {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
-                final InstantiateResult instantiateResult = variable.instantiate(
-                        process.getName() + "_", env);
+                final InstantiateResult instantiateResult =
+                        variable.instantiate(process.getName() + "_", env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
-                    final VarDecl<RatType> varDecl = instantiateResult.asClockVariable()
-                            .getVarDecl();
+                    final VarDecl<RatType> varDecl =
+                            instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
                     process.getSystem().addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
@@ -173,8 +177,8 @@ final class XtaProcessSymbol implements Symbol, Scope {
     private void declare(final ParameterDeclContext context) {
         final TypeContext typeContext = context.fType;
         for (final ParameterIdContext parameterIdContext : context.fparameterIds) {
-            final XtaParameterSymbol parameterSymbol = new XtaParameterSymbol(this, typeContext,
-                    parameterIdContext);
+            final XtaParameterSymbol parameterSymbol =
+                    new XtaParameterSymbol(this, typeContext, parameterIdContext);
             parameters.add(parameterSymbol);
             symbolTable.add(parameterSymbol);
         }
@@ -203,8 +207,8 @@ final class XtaProcessSymbol implements Symbol, Scope {
     private void declare(final VariableDeclContext context) {
         final TypeContext typeContext = context.fType;
         for (final VariableIdContext variableIdContext : context.fVariableIds) {
-            final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext,
-                    variableIdContext);
+            final XtaVariableSymbol variableSymbol =
+                    new XtaVariableSymbol(this, typeContext, variableIdContext);
             variables.add(variableSymbol);
             symbolTable.add(variableSymbol);
         }
@@ -223,13 +227,17 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
     ////
 
-    private void declareAllStates(final List<StateDeclContext> contexts, final UrgentContext urgent,
-                                  final CommitContext commit) {
+    private void declareAllStates(
+            final List<StateDeclContext> contexts,
+            final UrgentContext urgent,
+            final CommitContext commit) {
         contexts.forEach(s -> declare(s, urgent, commit));
     }
 
-    private void declare(final StateDeclContext context, final UrgentContext urgent,
-                         final CommitContext commit) {
+    private void declare(
+            final StateDeclContext context,
+            final UrgentContext urgent,
+            final CommitContext commit) {
         final XtaStateSymbol stateSymbol = new XtaStateSymbol(this, context, urgent, commit);
         states.add(stateSymbol);
         symbolTable.add(stateSymbol);
@@ -251,5 +259,4 @@ final class XtaProcessSymbol implements Symbol, Scope {
             return scope.resolve(name);
         }
     }
-
 }

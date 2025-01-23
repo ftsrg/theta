@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-
-import java.math.BigInteger;
-import java.util.List;
-
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import java.math.BigInteger;
+import java.util.List;
 
 public final class RatMulExpr extends MulExpr<RatType> {
 
@@ -90,5 +89,4 @@ public final class RatMulExpr extends MulExpr<RatType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

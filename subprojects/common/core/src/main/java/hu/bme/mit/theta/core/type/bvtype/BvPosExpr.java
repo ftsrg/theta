@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
+
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvPosExpr extends PosExpr<BvType> {
 
@@ -81,5 +80,4 @@ public final class BvPosExpr extends PosExpr<BvType> {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

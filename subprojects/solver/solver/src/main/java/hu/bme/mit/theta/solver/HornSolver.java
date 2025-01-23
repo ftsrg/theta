@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,9 @@ package hu.bme.mit.theta.solver;
 
 import hu.bme.mit.theta.core.Relation;
 import hu.bme.mit.theta.core.Rule;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Collection;
 
-/**
- * The HornSolver can provide proofs, and accept Relations
- */
+/** The HornSolver can provide proofs, and accept Relations */
 public interface HornSolver extends Solver {
 
     default void add(Relation relation) {
@@ -35,9 +30,7 @@ public interface HornSolver extends Solver {
         add(relations.stream().flatMap(it -> it.getRules().stream().map(Rule::toExpr)).toList());
     }
 
-    /**
-     * Get the proof found in the solver.
-     */
+    /** Get the proof found in the solver. */
     default ProofNode getProof() {
         throw new UnsupportedOperationException("Cannot get proof.");
     }

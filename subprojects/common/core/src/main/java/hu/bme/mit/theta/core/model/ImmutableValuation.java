@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Basic, immutable implementation of a valuation. The inner builder class can be used to create a
@@ -79,8 +78,8 @@ public final class ImmutableValuation extends Valuation {
     @Override
     public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
         checkNotNull(decl);
-        @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(
-                decl);
+        @SuppressWarnings("unchecked")
+        final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
         return Optional.ofNullable(val);
     }
 
@@ -103,7 +102,7 @@ public final class ImmutableValuation extends Valuation {
         return new Builder();
     }
 
-    public final static class Builder {
+    public static final class Builder {
 
         private final ImmutableMap.Builder<Decl<?>, LitExpr<?>> builder;
 
@@ -120,7 +119,5 @@ public final class ImmutableValuation extends Valuation {
         public ImmutableValuation build() {
             return new ImmutableValuation(this);
         }
-
     }
-
 }

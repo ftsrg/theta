@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
@@ -25,12 +27,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvid
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public final class SimpleSaturationTest {
     public static String reverseString(String str) {
@@ -47,19 +46,21 @@ public final class SimpleSaturationTest {
         assertEquals(1, petriNets.size());
 
         final List<Place> ordering =
-                VariableOrderingFactory.fromPathString(getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(),
+                VariableOrderingFactory.fromPathString(
+                        getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(),
                         petriNets.get(0));
         // 	ordering = new ArrayList<>(petriNets.get(0).getPlaces());
-        // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
+        // ordering.sort((p1, p2) ->
+        // String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
         //  	reverseString(p2.getId())));
-        //ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(p1.getId(),
+        // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(p1.getId(),
         //	p2.getId()));
 
         PtNetSystem system = new PtNetSystem(petriNets.get(0), ordering);
 
         System.out.println(system.printDependencyMatrixCsv());
 
-        //new BufferedReader(new InputStreamReader(System.in)).readLine();
+        // new BufferedReader(new InputStreamReader(System.in)).readLine();
 
         MddVariableOrder variableOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
@@ -69,13 +70,14 @@ public final class SimpleSaturationTest {
 
         SimpleSaturationProvider ss = new SimpleSaturationProvider(variableOrder);
 
-        final MddHandle stateSpace = ss.compute(system.getInitializer(),
-                system.getTransitions(),
-                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-        );
+        final MddHandle stateSpace =
+                ss.compute(
+                        system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle());
 
-        //String dot = GraphvizSerializer.serialize(stateSpace);
-        //System.out.println(dot);
+        // String dot = GraphvizSerializer.serialize(stateSpace);
+        // System.out.println(dot);
 
         System.out.println(ss.getSaturatedNodes().size());
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package hu.bme.mit.theta.common.visualization;
 
-import java.awt.Color;
-
 import hu.bme.mit.theta.common.visualization.writer.YedWriter;
+import java.awt.Color;
 
 public class VisualizationTest {
 
@@ -26,14 +25,20 @@ public class VisualizationTest {
         g.addNode("n1", NodeAttributes.builder().fillColor(Color.RED).label("1").build());
         g.addNode("n2", NodeAttributes.builder().lineColor(Color.BLUE).label("2").build());
         g.addNode("n3", NodeAttributes.builder().lineStyle(LineStyle.DASHED).label("3").build());
-        g.addNode("n4",
+        g.addNode(
+                "n4",
                 NodeAttributes.builder().peripheries(3).label("4").shape(Shape.RECTANGLE).build());
 
-        g.addCompositeNode("c1",
-                NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED)
-                        .shape(Shape.RECTANGLE).peripheries(2).build());
-        g.addCompositeNode("c2",
-                NodeAttributes.builder().label("cluster2").shape(Shape.RECTANGLE).build());
+        g.addCompositeNode(
+                "c1",
+                NodeAttributes.builder()
+                        .label("cluster1")
+                        .lineStyle(LineStyle.DOTTED)
+                        .shape(Shape.RECTANGLE)
+                        .peripheries(2)
+                        .build());
+        g.addCompositeNode(
+                "c2", NodeAttributes.builder().label("cluster2").shape(Shape.RECTANGLE).build());
 
         g.setChild("c1", "n1");
         g.setChild("c1", "n2");

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Map;
-
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -38,14 +35,12 @@ import hu.bme.mit.theta.sts.aiger.elements.AndGate;
 import hu.bme.mit.theta.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.sts.aiger.elements.Latch;
+import java.util.Map;
 
-/**
- * A converter from out internal AIGER representation to STSs.
- */
+/** A converter from out internal AIGER representation to STSs. */
 public final class AigerToSts {
 
-    private AigerToSts() {
-    }
+    private AigerToSts() {}
 
     /**
      * Convert an AIGER system to an STS
@@ -83,15 +78,17 @@ public final class AigerToSts {
         return builder.build();
     }
 
-    private static void transformFalseConst(final Builder builder,
-                                            final Map<AigerNode, VarDecl<BoolType>> vars,
-                                            final FalseConst falseConst) {
+    private static void transformFalseConst(
+            final Builder builder,
+            final Map<AigerNode, VarDecl<BoolType>> vars,
+            final FalseConst falseConst) {
         builder.addInvar(Not(vars.get(falseConst).getRef()));
     }
 
-    private static void transformLatch(final Builder builder,
-                                       final Map<AigerNode, VarDecl<BoolType>> vars,
-                                       final Latch latch) {
+    private static void transformLatch(
+            final Builder builder,
+            final Map<AigerNode, VarDecl<BoolType>> vars,
+            final Latch latch) {
         builder.addInit(Not(vars.get(latch).getRef()));
         final AigerWire inWire = latch.getInWire();
         final AigerNode source = inWire.getSource();
@@ -101,9 +98,10 @@ public final class AigerToSts {
         builder.addTrans(Iff(lhs, rhs));
     }
 
-    private static void transformAndGate(final Builder builder,
-                                         final Map<AigerNode, VarDecl<BoolType>> vars,
-                                         final AndGate andGate) {
+    private static void transformAndGate(
+            final Builder builder,
+            final Map<AigerNode, VarDecl<BoolType>> vars,
+            final AndGate andGate) {
         final AigerWire inWire1 = andGate.getInWire1();
         final AigerWire inWire2 = andGate.getInWire2();
         final AigerNode source1 = inWire1.getSource();
@@ -115,5 +113,4 @@ public final class AigerToSts {
                 inWire2.isPonated() ? vars.get(source2).getRef() : Not(vars.get(source2).getRef());
         builder.addInvar(Iff(lhs, And(rhs1, rhs2)));
     }
-
 }

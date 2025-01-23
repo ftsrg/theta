@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class XstsPropInitPrec implements XstsInitPrec {
 
     @Override
     public Prod2Prec<ExplPrec, PredPrec> createProd2ExplPred(XSTS xsts) {
-        return Prod2Prec.of(ExplPrec.of(xsts.getCtrlVars()),
-                PredPrec.of(ExprUtils.getAtoms(xsts.getProp())));
+        return Prod2Prec.of(
+                ExplPrec.of(xsts.getCtrlVars()), PredPrec.of(ExprUtils.getAtoms(xsts.getProp())));
     }
 }

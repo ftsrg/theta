@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package hu.bme.mit.theta.core.type;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import hu.bme.mit.theta.core.model.Valuation;
 import java.util.List;
 import java.util.function.Function;
-
-import hu.bme.mit.theta.core.model.Valuation;
 
 public interface Expr<ExprType extends Type> {
 
@@ -46,5 +45,4 @@ public interface Expr<ExprType extends Type> {
     default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
         return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
     }
-
 }

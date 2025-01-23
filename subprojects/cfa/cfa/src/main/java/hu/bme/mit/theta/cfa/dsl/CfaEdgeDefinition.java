@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@ package hu.bme.mit.theta.cfa.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
@@ -29,6 +25,9 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.StmtContext;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 final class CfaEdgeDefinition {
 
@@ -55,8 +54,8 @@ final class CfaEdgeDefinition {
 
         final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
         final Loc targetLoc = (Loc) env.eval(targetSymbol);
-        final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env))
-                .collect(Collectors.toList());
+        final List<Stmt> stmts =
+                statements.stream().map(s -> s.instantiate(env)).collect(Collectors.toList());
         if (stmts.isEmpty()) {
             stmts.add(Stmts.Skip());
         }
@@ -85,5 +84,4 @@ final class CfaEdgeDefinition {
         }
         return result;
     }
-
 }

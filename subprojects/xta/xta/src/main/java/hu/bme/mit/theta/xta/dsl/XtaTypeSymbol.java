@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ final class XtaTypeSymbol implements Symbol {
     private final String name;
     private final XtaType type;
 
-    public XtaTypeSymbol(final Scope scope, final TypeContext typeContext,
-                         final ArrayIdContext arrayIdContext) {
+    public XtaTypeSymbol(
+            final Scope scope, final TypeContext typeContext, final ArrayIdContext arrayIdContext) {
         checkNotNull(typeContext);
         checkNotNull(arrayIdContext);
         name = arrayIdContext.fId.getText();
@@ -45,5 +45,4 @@ final class XtaTypeSymbol implements Symbol {
     public Type instantiate(final Env env) {
         return type.instantiate(env);
     }
-
 }

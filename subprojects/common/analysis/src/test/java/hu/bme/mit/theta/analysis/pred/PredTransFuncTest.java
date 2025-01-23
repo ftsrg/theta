@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,15 +22,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
@@ -40,14 +32,19 @@ import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PredTransFuncTest {
 
     private final VarDecl<IntType> x = Var("x", Int());
     private final VarDecl<IntType> y = Var("y", Int());
     private final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
-    private final PredTransFunc transFunc = PredTransFunc.create(
-            PredAbstractors.booleanSplitAbstractor(solver));
+    private final PredTransFunc transFunc =
+            PredTransFunc.create(PredAbstractors.booleanSplitAbstractor(solver));
 
     @Test
     public void test1() {
@@ -70,8 +67,8 @@ public class PredTransFuncTest {
     @Test
     public void test3() {
         // (x>0) ---[x := x+y]--> (x>0, y>0)?
-        final PredPrec prec = PredPrec.of(
-                ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
+        final PredPrec prec =
+                PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
         final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
         final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
         Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
@@ -83,8 +80,8 @@ public class PredTransFuncTest {
         final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
         final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
         final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
-        final Collection<? extends PredState> succStates = transFunc.getSuccStates(state, action,
-                prec);
+        final Collection<? extends PredState> succStates =
+                transFunc.getSuccStates(state, action, prec);
         Assert.assertEquals(1, succStates.size());
         Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
     }

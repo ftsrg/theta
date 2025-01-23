@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
@@ -26,20 +25,24 @@ import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
-class XcfaSporCoiLts(
-    xcfa: XCFA,
-    coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
-) : XcfaSporLts(xcfa) {
+class XcfaSporCoiLts(xcfa: XCFA, coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>) :
+  XcfaSporLts(xcfa) {
 
-    init {
-        simpleXcfaLts = coiLTS
-    }
+  init {
+    simpleXcfaLts = coiLTS
+  }
 
-    override fun <P : Prec?> getEnabledActionsFor(
-        state: XcfaState<out PtrState<*>>, exploredActions: Collection<XcfaAction>, prec: P
-    ): Set<XcfaAction> {
-        return getEnabledActionsFor(state, simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec))
-    }
+  override fun <P : Prec?> getEnabledActionsFor(
+    state: XcfaState<out PtrState<*>>,
+    exploredActions: Collection<XcfaAction>,
+    prec: P,
+  ): Set<XcfaAction> {
+    return getEnabledActionsFor(
+      state,
+      simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec),
+    )
+  }
 
-    override fun getEdge(action: XcfaAction): XcfaEdge = super.getEdge(action.transFuncVersion ?: action)
+  override fun getEdge(action: XcfaAction): XcfaEdge =
+    super.getEdge(action.transFuncVersion ?: action)
 }

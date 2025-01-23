@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.HavocStmtContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AssignStmtContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AssumeStmtContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.HavocStmtContext;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -44,8 +44,8 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
     @Override
     public Stmt visitAssignStmt(final AssignStmtContext ctx) {
-        @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
-                ctx.lhs.getText());
+        @SuppressWarnings("unchecked")
+        final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope, ctx.lhs.getText());
         final Expr<?> expr = CoreDslHelper.createExpr(scope, ctx.value);
         final Expr<Type> value = TypeUtils.cast(expr, lhs.getType());
         return Assign(lhs, value);
@@ -67,9 +67,8 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
     @Override
     public Stmt visitHavocStmt(final HavocStmtContext ctx) {
-        @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
-                ctx.lhs.getText());
+        @SuppressWarnings("unchecked")
+        final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope, ctx.lhs.getText());
         return Havoc(lhs);
     }
-
 }

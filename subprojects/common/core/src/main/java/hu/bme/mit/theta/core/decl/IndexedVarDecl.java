@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl;
 
 import hu.bme.mit.theta.core.type.Type;
@@ -32,7 +31,8 @@ public class IndexedVarDecl<DeclType extends Type> extends VarDecl<DeclType> {
         this.constRef = RefExpr.of(constDecl);
     }
 
-    public static <DeclType extends Type> IndexedVarDecl<DeclType> of(final String name, final VarDecl<DeclType> original) {
+    public static <DeclType extends Type> IndexedVarDecl<DeclType> of(
+            final String name, final VarDecl<DeclType> original) {
         return new IndexedVarDecl<>(name, original);
     }
 

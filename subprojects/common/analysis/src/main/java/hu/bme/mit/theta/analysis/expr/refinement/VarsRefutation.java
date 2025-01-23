@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.IndexedVars;
 
-/**
- * A variable-based refutation that is a sequence of sets of variables.
- */
+/** A variable-based refutation that is a sequence of sets of variables. */
 public final class VarsRefutation implements Refutation {
 
     private final IndexedVars indexedVars;
@@ -31,8 +29,8 @@ public final class VarsRefutation implements Refutation {
 
     private VarsRefutation(final IndexedVars indexedVars) {
         checkNotNull(indexedVars);
-        checkArgument(!indexedVars.isEmpty(),
-                "Trying to create refutation with empty set of variables");
+        checkArgument(
+                !indexedVars.isEmpty(), "Trying to create refutation with empty set of variables");
         this.indexedVars = indexedVars;
         int i = 0;
         while (indexedVars.getVars(i).isEmpty()) {

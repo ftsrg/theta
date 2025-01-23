@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers;
 
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType;
@@ -30,40 +29,39 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.concrete.TerminatorInstructionHandler
 import hu.bme.mit.theta.llvm2xcfa.handlers.concrete.UnaryInstructionHandler;
 import hu.bme.mit.theta.llvm2xcfa.handlers.concrete.VectorInstructionHandler;
 import hu.bme.mit.theta.llvm2xcfa.handlers.concrete.checks.PointerArithmeticCheck;
-
 import java.util.List;
 
 public class InstructionHandlerManager {
 
-    private static final List<Class<? extends InstructionHandler>> defaultInstructionHandlers = List.of(
-            PointerArithmeticCheck.class,
-            BuiltinFunctionHandler.class,
-            ArrayIntrinsicsHandler.class,
-            TerminatorInstructionHandler.class,
-            UnaryInstructionHandler.class,
-            BinaryInstructionHandler.class,
-            BitwiseInstructionHandler.class,
-            VectorInstructionHandler.class,
-            AggregateInstructionHandler.class,
-            MemoryInstructionHandler.class,
-            ConversionInstructionHandler.class,
-            OtherInstructionHandler.class
-    );
-    private static final List<Class<? extends InstructionHandler>> bitvectorInstructionHandlers = List.of(
-            PointerArithmeticCheck.class,
-            BitvectorInstructionHandler.class,
-            BuiltinFunctionHandler.class,
-            ArrayIntrinsicsHandler.class,
-            TerminatorInstructionHandler.class,
-            UnaryInstructionHandler.class,
-            BinaryInstructionHandler.class,
-            BitwiseInstructionHandler.class,
-            VectorInstructionHandler.class,
-            AggregateInstructionHandler.class,
-            MemoryInstructionHandler.class,
-            ConversionInstructionHandler.class,
-            OtherInstructionHandler.class
-    );
+    private static final List<Class<? extends InstructionHandler>> defaultInstructionHandlers =
+            List.of(
+                    PointerArithmeticCheck.class,
+                    BuiltinFunctionHandler.class,
+                    ArrayIntrinsicsHandler.class,
+                    TerminatorInstructionHandler.class,
+                    UnaryInstructionHandler.class,
+                    BinaryInstructionHandler.class,
+                    BitwiseInstructionHandler.class,
+                    VectorInstructionHandler.class,
+                    AggregateInstructionHandler.class,
+                    MemoryInstructionHandler.class,
+                    ConversionInstructionHandler.class,
+                    OtherInstructionHandler.class);
+    private static final List<Class<? extends InstructionHandler>> bitvectorInstructionHandlers =
+            List.of(
+                    PointerArithmeticCheck.class,
+                    BitvectorInstructionHandler.class,
+                    BuiltinFunctionHandler.class,
+                    ArrayIntrinsicsHandler.class,
+                    TerminatorInstructionHandler.class,
+                    UnaryInstructionHandler.class,
+                    BinaryInstructionHandler.class,
+                    BitwiseInstructionHandler.class,
+                    VectorInstructionHandler.class,
+                    AggregateInstructionHandler.class,
+                    MemoryInstructionHandler.class,
+                    ConversionInstructionHandler.class,
+                    OtherInstructionHandler.class);
     private final List<Class<? extends InstructionHandler>> instructionHandlers;
 
     public InstructionHandlerManager(ArithmeticType arithmeticType) {
@@ -74,7 +72,8 @@ public class InstructionHandlerManager {
         }
     }
 
-    public InstructionHandlerManager(List<Class<? extends InstructionHandler>> instructionHandlers) {
+    public InstructionHandlerManager(
+            List<Class<? extends InstructionHandler>> instructionHandlers) {
         this.instructionHandlers = instructionHandlers;
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -27,14 +33,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
 import hu.bme.mit.theta.xta.utils.RangeType;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XtaType {
 
@@ -43,8 +42,10 @@ final class XtaType {
     private final TypeContext typeContext;
     private final List<ArrayIndexContext> arrayIndexContexts;
 
-    public XtaType(final Scope scope, final TypeContext typeContext,
-                   final List<ArrayIndexContext> arrayIndexContexts) {
+    public XtaType(
+            final Scope scope,
+            final TypeContext typeContext,
+            final List<ArrayIndexContext> arrayIndexContexts) {
         this.scope = checkNotNull(scope);
         this.typeContext = checkNotNull(typeContext);
         this.arrayIndexContexts = checkNotNull(arrayIndexContexts);
@@ -139,7 +140,6 @@ final class XtaType {
             final Type result = (Type) value;
             return result;
         }
-
     }
 
     private final class IndexTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
@@ -156,8 +156,9 @@ final class XtaType {
             if (symbol instanceof XtaVariableSymbol) {
                 final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
                 assert variableSymbol.isConstant();
-                final Object value = env.compute(variableSymbol,
-                        v -> v.instantiate("", env).asConstant().getExpr());
+                final Object value =
+                        env.compute(
+                                variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
 
                 final IntLitExpr elemCount = (IntLitExpr) value;
                 final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
@@ -181,7 +182,5 @@ final class XtaType {
             final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
             return result;
         }
-
     }
-
 }

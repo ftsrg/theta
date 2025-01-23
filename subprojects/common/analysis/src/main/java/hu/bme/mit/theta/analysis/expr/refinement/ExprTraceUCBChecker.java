@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.expr.refinement;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -39,7 +44,6 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,16 +53,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-import static java.util.stream.Collectors.toList;
-
 /**
- * An ExprTraceChecker that generates new predicates based on the UCB algorithm by
- * Leucker, Martin &amp; Markin, Grigory &amp; Neuhausser, Martin. (2015). A New Refinement
- * Strategy for CEGAR-Based Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
+ * An ExprTraceChecker that generates new predicates based on the UCB algorithm by Leucker, Martin
+ * &amp; Markin, Grigory &amp; Neuhausser, Martin. (2015). A New Refinement Strategy for CEGAR-Based
+ * Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
@@ -67,7 +65,8 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
     private final Expr<BoolType> target;
     private final ExprSimplifier exprSimplifier;
 
-    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
+    private ExprTraceUCBChecker(
+            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
@@ -75,14 +74,14 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static ExprTraceUCBChecker create(
-            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
-    ) {
+            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         return new ExprTraceUCBChecker(init, target, solver);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+    public ExprTraceStatus<ItpRefutation> check(
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         try {
             return check2((Trace<? extends ExprState, ? extends StmtAction>) trace);
@@ -91,7 +90,8 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
         }
     }
 
-    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private ExprTraceStatus<ItpRefutation> check2(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var ftrace = flattenTrace(trace);
         final int stateCount = trace.getStates().size();
 
@@ -107,9 +107,8 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                 indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
                 solver.track(
                         ExprUtils.getConjuncts(
-                                PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))
-                        )
-                );
+                                PathUtils.unfold(
+                                        trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
             }
 
             concretizable = solver.check().isSat();
@@ -140,8 +139,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
     private ExprTraceStatus.Feasible<ItpRefutation> createCounterexample(
             final Valuation model,
             final List<VarIndexing> indexings,
-            final Trace<? extends ExprState, ? extends ExprAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
         for (final VarIndexing indexing : indexings) {
             builder.add(PathUtils.extractValuation(model, indexing));
@@ -152,8 +150,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
     private ExprTraceStatus.Infeasible<ItpRefutation> createRefinement(
             final Collection<Expr<BoolType>> unsatCore,
             final List<VarIndexing> indexings,
-            final Trace<? extends ExprState, ? extends StmtAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final int stateCount = trace.getStates().size();
         final List<Expr<BoolType>> wps = calculateWpStates(trace, indexings);
 
@@ -169,7 +166,10 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                     solver.track(True());
                     dataRegion.add(True());
                 } else /* i > 0 */ {
-                    var spState = SpState.of(PathUtils.foldin(predicates.get(i - 1), indexings.get(i - 1)), constCount);
+                    var spState =
+                            SpState.of(
+                                    PathUtils.foldin(predicates.get(i - 1), indexings.get(i - 1)),
+                                    constCount);
                     for (var stmt : trace.getAction(i - 1).getStmts()) {
                         spState = spState.sp(stmt);
                     }
@@ -198,25 +198,20 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                 /* Add the negated of the above expression as the new predicate */
                 predicates.add(
                         exprSimplifier.simplify(
-                                Not(And(new HashSet<>(predicate))),
-                                ImmutableValuation.empty()
-                        )
-                );
+                                Not(And(new HashSet<>(predicate))), ImmutableValuation.empty()));
             }
         }
         return ExprTraceStatus.infeasible(
                 ItpRefutation.sequence(
                         IntStream.range(0, predicates.size())
-                                .mapToObj(i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
-                                .collect(Collectors.toUnmodifiableList())
-                )
-        );
+                                .mapToObj(
+                                        i -> PathUtils.foldin(predicates.get(i), indexings.get(i)))
+                                .collect(Collectors.toUnmodifiableList())));
     }
 
     private List<Expr<BoolType>> calculateWpStates(
             final Trace<? extends ExprState, ? extends StmtAction> trace,
-            final List<VarIndexing> indexings
-    ) {
+            final List<VarIndexing> indexings) {
         final int stateCount = trace.getStates().size();
         final List<Expr<BoolType>> wps = new ArrayList<>(Collections.nCopies(stateCount, null));
 
@@ -235,7 +230,8 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
         return wps;
     }
 
-    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
         final var flattenedActions = new ArrayList<StmtAction>(stateCount - 1);
 
@@ -245,23 +241,25 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                             ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
                             : Stream.<AssumeStmt>empty();
 
-            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
+            var stateStream =
+                    ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream()
+                            .map(AssumeStmt::of);
 
             var actionStream = trace.getAction(i - 1).getStmts().stream();
 
             var targetStream =
                     (i == stateCount - 1)
                             ? Stream.concat(
-                            ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream().map(AssumeStmt::of),
-                            ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of)
-                    )
+                                    ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream()
+                                            .map(AssumeStmt::of),
+                                    ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of))
                             : Stream.<AssumeStmt>empty();
 
             flattenedActions.add(
                     UCBAction.of(
-                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e).collect(toList())
-                    )
-            );
+                            Stream.of(initStream, stateStream, actionStream, targetStream)
+                                    .flatMap(e -> e)
+                                    .collect(toList())));
         }
 
         return ExprTraceUtils.traceFrom(flattenedActions);
@@ -289,7 +287,10 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .body()
+                    .addAll(stmts)
+                    .toString();
         }
     }
 }

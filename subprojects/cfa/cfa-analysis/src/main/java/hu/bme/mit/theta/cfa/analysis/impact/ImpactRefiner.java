@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,8 +27,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 
     abstract class RefinementResult<S extends State, A extends Action> {
 
-        private RefinementResult() {
-        }
+        private RefinementResult() {}
 
         public static <S extends State, A extends Action> Succesful<S, A> succesful(
                 final Trace<S, A> trace) {
@@ -83,8 +82,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 
     final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 
-        private Unsuccesful() {
-        }
+        private Unsuccesful() {}
 
         @Override
         public boolean isSuccesful() {
@@ -106,5 +104,4 @@ public interface ImpactRefiner<S extends State, A extends Action> {
             return this;
         }
     }
-
 }

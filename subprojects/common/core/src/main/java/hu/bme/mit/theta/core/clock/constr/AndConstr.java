@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static java.util.stream.Collectors.toSet;
+
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.Collection;
 import java.util.StringJoiner;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static java.util.stream.Collectors.toSet;
 
 public final class AndConstr implements ClockConstr {
 
@@ -65,8 +64,8 @@ public final class AndConstr implements ClockConstr {
     }
 
     @Override
-    public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-                           final P param) {
+    public <P, R> R accept(
+            final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
         return visitor.visit(this, param);
     }
 
@@ -118,5 +117,4 @@ public final class AndConstr implements ClockConstr {
         }
         return builder.build();
     }
-
 }

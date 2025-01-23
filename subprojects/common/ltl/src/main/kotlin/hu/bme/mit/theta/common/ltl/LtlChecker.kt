@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopcheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.SingleASGTraceRefiner
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -75,7 +75,7 @@ class LtlChecker<
   ltl: String,
   solverFactory: SolverFactory,
   logger: Logger,
-  searchStrategy: LoopcheckerSearchStrategy,
+  searchStrategy: LoopCheckerSearchStrategy,
   refinerStrategy: ASGTraceCheckerStrategy,
   ltl2BuchiTransformer: Ltl2BuchiTransformer,
   variables: Collection<VarDecl<*>>,

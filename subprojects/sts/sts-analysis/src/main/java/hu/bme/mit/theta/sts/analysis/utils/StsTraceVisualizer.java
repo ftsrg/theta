@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,21 @@
  */
 package hu.bme.mit.theta.sts.analysis.utils;
 
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.Set;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.sts.analysis.StsAction;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
 
 public final class StsTraceVisualizer {
 
-    private StsTraceVisualizer() {
-    }
+    private StsTraceVisualizer() {}
 
-    public static void printTraceTable(final Trace<Valuation, StsAction> trace,
-                                       final TableWriter writer) {
+    public static void printTraceTable(
+            final Trace<Valuation, StsAction> trace, final TableWriter writer) {
         final Set<Decl<?>> allVars = new LinkedHashSet<>();
         for (final Valuation val : trace.getStates()) {
             allVars.addAll(val.getDecls());
@@ -50,5 +48,4 @@ public final class StsTraceVisualizer {
         }
         writer.endTable();
     }
-
 }

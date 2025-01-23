@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FunctionDeclaration;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 final class JavaSMTSymbolTable {
 
@@ -53,13 +53,17 @@ final class JavaSMTSymbolTable {
     }
 
     public Formula getSymbolAsFormula(final ConstDecl<?> constDecl) {
-        checkArgument(definesConstAsFormula(constDecl), "Declaration %s not found in symbol table",
+        checkArgument(
+                definesConstAsFormula(constDecl),
+                "Declaration %s not found in symbol table",
                 constDecl);
         return constToSymbol.get(constDecl);
     }
 
     public FunctionDeclaration<?> getSymbolAsFunction(final ConstDecl<?> constDecl) {
-        checkArgument(definesConstAsFunction(constDecl), "Declaration %s not found in symbol table",
+        checkArgument(
+                definesConstAsFunction(constDecl),
+                "Declaration %s not found in symbol table",
                 constDecl);
         return constToFuncDecl.get(constDecl);
     }
@@ -92,5 +96,4 @@ final class JavaSMTSymbolTable {
         constToSymbol.clear();
         constToFuncDecl.clear();
     }
-
 }

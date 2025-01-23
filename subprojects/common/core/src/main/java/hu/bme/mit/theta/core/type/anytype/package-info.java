@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 /**
  * Expressions that work with any type. Use {@link hu.bme.mit.theta.core.type.anytype.Exprs} to
  * create them.
- * <p>
- * - {@link hu.bme.mit.theta.core.type.anytype.IteExpr}: conditional expression, e.g., if x &gt; 0
- * then x else -x - {@link hu.bme.mit.theta.core.type.anytype.PrimeExpr}: primed expression, e.g.,
+ *
+ * <p>- {@link hu.bme.mit.theta.core.type.anytype.IteExpr}: conditional expression, e.g., if x &gt;
+ * 0 then x else -x - {@link hu.bme.mit.theta.core.type.anytype.PrimeExpr}: primed expression, e.g.,
  * x' - {@link hu.bme.mit.theta.core.type.anytype.RefExpr}: reference to a declaration, e.g., x
  */
-
 package hu.bme.mit.theta.core.type.anytype;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
+
+import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -32,15 +32,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
     private final DeclarationVisitor declarationVisitor;
 
     public GlobalDeclUsageVisitor(DeclarationVisitor declarationVisitor) {
         this.declarationVisitor = declarationVisitor;
     }
-
 
     public void clear() {
         globalUsages.clear();
@@ -49,18 +46,28 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
     }
 
     private final Map<String, Set<String>> globalUsages = new LinkedHashMap<>();
-    private final List<Tuple2<String, CParser.ExternalDeclarationContext>> usedContexts = new ArrayList<>();
+    private final List<Tuple2<String, CParser.ExternalDeclarationContext>> usedContexts =
+            new ArrayList<>();
     private String current;
 
     @Override
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
-        List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList(), false);
+        List<CDeclaration> declarations =
+                declarationVisitor.getDeclarations(
+                        ctx.declaration().declarationSpecifiers(),
+                        ctx.declaration().initDeclaratorList(),
+                        false);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
                 globalUsages.remove(declaration.getName());
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
-                if (usedContexts.stream().anyMatch(c -> Objects.equals(c.get1(), declaration.getName()))) {
-                    usedContexts.replaceAll(c -> Objects.equals(c.get1(), declaration.getName()) ? Tuple2.of(declaration.getName(), ctx) : c); // keep the order, but overwrite the context
+                if (usedContexts.stream()
+                        .anyMatch(c -> Objects.equals(c.get1(), declaration.getName()))) {
+                    usedContexts.replaceAll(
+                            c ->
+                                    Objects.equals(c.get1(), declaration.getName())
+                                            ? Tuple2.of(declaration.getName(), ctx)
+                                            : c); // keep the order, but overwrite the context
                 } else {
                     usedContexts.add(Tuple2.of(declaration.getName(), ctx));
                 }
@@ -73,7 +80,8 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
     }
 
     @Override
-    public List<CDeclaration> visitExternalFunctionDefinition(CParser.ExternalFunctionDefinitionContext ctx) {
+    public List<CDeclaration> visitExternalFunctionDefinition(
+            CParser.ExternalFunctionDefinitionContext ctx) {
         CDeclaration funcDecl = ctx.functionDefinition().declarator().accept(declarationVisitor);
         globalUsages.put(funcDecl.getName(), new LinkedHashSet<>());
         usedContexts.add(Tuple2.of(funcDecl.getName(), ctx));
@@ -89,10 +97,12 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
         return null;
     }
 
-    public List<CParser.ExternalDeclarationContext> getGlobalUsages(CParser.CompilationUnitContext ctx) {
+    public List<CParser.ExternalDeclarationContext> getGlobalUsages(
+            CParser.CompilationUnitContext ctx) {
         globalUsages.clear();
         usedContexts.clear();
-        for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
+        for (CParser.ExternalDeclarationContext externalDeclarationContext :
+                ctx.translationUnit().externalDeclaration()) {
             try {
                 externalDeclarationContext.accept(this);
             } catch (Throwable e) {
@@ -107,10 +117,17 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
             Optional<String> remOpt = remaining.stream().findAny();
             String rem = remOpt.get();
             ret.add(rem);
-            Set<String> toAdd = globalUsages.get(rem).stream().filter(globalUsages::containsKey).collect(Collectors.toSet());
+            Set<String> toAdd =
+                    globalUsages.get(rem).stream()
+                            .filter(globalUsages::containsKey)
+                            .collect(Collectors.toSet());
             remaining.addAll(toAdd);
             remaining.removeAll(ret);
         }
-        return usedContexts.stream().filter(objects -> ret.contains(objects.get1())).map(Tuple2::get2).distinct().collect(Collectors.toList());
+        return usedContexts.stream()
+                .filter(objects -> ret.contains(objects.get1()))
+                .map(Tuple2::get2)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

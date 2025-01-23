@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class ASGAbstractor<S : ExprState, A : ExprAction, P : Prec>(
   private val analysis: Analysis<S, in A, in P>,
   private val lts: LTS<in S, A>,
   private val acceptancePredicate: AcceptancePredicate<S, A>,
-  private val searchStrategy: LoopcheckerSearchStrategy,
+  private val searchStrategy: LoopCheckerSearchStrategy,
   private val logger: Logger,
 ) : Abstractor<P, ASG<S, A>> {
 

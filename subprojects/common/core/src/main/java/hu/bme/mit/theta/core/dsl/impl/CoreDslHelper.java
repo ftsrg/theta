@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -40,11 +36,13 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public final class CoreDslHelper {
 
-    private CoreDslHelper() {
-    }
+    private CoreDslHelper() {}
 
     public static ParamDecl<?> createParamDecl(final DeclContext declCtx) {
         final String name = declCtx.name.getText();
@@ -73,13 +71,13 @@ public final class CoreDslHelper {
         return expr;
     }
 
-    public static List<Expr<?>> createExprList(final Scope scope,
-                                               final ExprListContext exprListCtx) {
+    public static List<Expr<?>> createExprList(
+            final Scope scope, final ExprListContext exprListCtx) {
         if (exprListCtx == null || exprListCtx.exprs == null) {
             return Collections.emptyList();
         } else {
-            final List<Expr<?>> exprs = exprListCtx.exprs.stream()
-                    .map(ctx -> createExpr(scope, ctx)).collect(toList());
+            final List<Expr<?>> exprs =
+                    exprListCtx.exprs.stream().map(ctx -> createExpr(scope, ctx)).collect(toList());
             return exprs;
         }
     }
@@ -88,11 +86,11 @@ public final class CoreDslHelper {
         return TypeUtils.cast(createExpr(scope, exprCtx), Bool());
     }
 
-    public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
-                                                          final ExprListContext exprListCtx) {
+    public static List<Expr<BoolType>> createBoolExprList(
+            final Scope scope, final ExprListContext exprListCtx) {
         final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
-        final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool()))
-                .collect(toList());
+        final List<Expr<BoolType>> boolExprs =
+                exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());
         return boolExprs;
     }
 
@@ -106,8 +104,8 @@ public final class CoreDslHelper {
         if (stmtListCtx == null || stmtListCtx.stmts.isEmpty()) {
             return Collections.emptyList();
         } else {
-            final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx))
-                    .collect(toList());
+            final List<Stmt> stmts =
+                    stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx)).collect(toList());
             return stmts;
         }
     }
@@ -123,5 +121,4 @@ public final class CoreDslHelper {
 
         return declSymbol;
     }
-
 }

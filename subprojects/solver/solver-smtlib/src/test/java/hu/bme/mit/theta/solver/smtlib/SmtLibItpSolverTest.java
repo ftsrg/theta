@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,23 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.smtlib;
+
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
+import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.OsHelper;
@@ -32,32 +49,14 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import java.io.IOException;
+import java.nio.file.Path;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.nio.file.Path;
-
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
-import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
-import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
-import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 public final class SmtLibItpSolverTest {
 
@@ -178,8 +177,8 @@ public final class SmtLibItpSolverTest {
         final ItpMarker I3 = solver.createMarker();
         final ItpMarker I4 = solver.createMarker();
         final ItpMarker I5 = solver.createMarker();
-        final ItpPattern pattern = solver.createTreePattern(
-                Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+        final ItpPattern pattern =
+                solver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
         solver.add(I1, Eq(a, Int(0)));
         solver.add(I2, Eq(a, b));
@@ -290,5 +289,4 @@ public final class SmtLibItpSolverTest {
         System.out.println(itp.eval(A));
         System.out.println("----------");
     }
-
 }

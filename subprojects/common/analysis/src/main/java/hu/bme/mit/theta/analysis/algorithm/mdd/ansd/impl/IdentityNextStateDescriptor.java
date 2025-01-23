@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
-import java.util.Optional;
-
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import java.util.Optional;
 
 public final class IdentityNextStateDescriptor implements AbstractNextStateDescriptor {
-    private static final UniqueTable<IdentityNextStateDescriptor> uniqueTable = UniqueTable.newInstance();
+    private static final UniqueTable<IdentityNextStateDescriptor> uniqueTable =
+            UniqueTable.newInstance();
 
-    public static final AbstractNextStateDescriptor TERMINAL_IDENTITY = new IdentityNextStateDescriptor();
+    public static final AbstractNextStateDescriptor TERMINAL_IDENTITY =
+            new IdentityNextStateDescriptor();
 
     public static AbstractNextStateDescriptor withChild(AbstractNextStateDescriptor child) {
         return uniqueTable.checkIn(new IdentityNextStateDescriptor(child));
@@ -51,7 +52,8 @@ public final class IdentityNextStateDescriptor implements AbstractNextStateDescr
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
         // TODO: cache this instead of creating on demand
-        return IntObjMapView.empty(IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
+        return IntObjMapView.empty(
+                IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
     }
 
     @Override

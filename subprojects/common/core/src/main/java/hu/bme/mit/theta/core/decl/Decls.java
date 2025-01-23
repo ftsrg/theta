@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package hu.bme.mit.theta.core.decl;
 
 import hu.bme.mit.theta.core.type.Type;
 
-/**
- * Factory class to create declarations.
- */
+/** Factory class to create declarations. */
 public final class Decls {
 
-    private Decls() {
-    }
+    private Decls() {}
 
     /**
      * Create a constant declaration with a given name and type.
@@ -60,5 +57,4 @@ public final class Decls {
     public static <T extends Type> VarDecl<T> Var(final String name, final T type) {
         return new VarDecl<>(name, type);
     }
-
 }

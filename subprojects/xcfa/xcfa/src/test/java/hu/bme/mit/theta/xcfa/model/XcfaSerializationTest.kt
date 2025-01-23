@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,55 +27,49 @@ import org.junit.Test
 
 class XcfaSerializationTest {
 
-    private fun getXcfa() = xcfa("example") {
-        lateinit var x: VarDecl<*>
-        lateinit var y: VarDecl<*>
-        global {
-            x = "x" type Int() init "1"
+  private fun getXcfa() =
+    xcfa("example") {
+      lateinit var x: VarDecl<*>
+      lateinit var y: VarDecl<*>
+      global { x = "x" type Int() init "1" }
+      threadlocal { y = "y" type Int() init "2" }
+      val proc1 =
+        procedure("proc1") {
+          "a" type Int() direction IN
+          "b" type Int() direction OUT
+          val c = "c" type Int() direction INOUT
+          val d = "d" type Int()
+
+          (init to final) {
+            d assign "a + c"
+
+            havoc("b")
+            havoc(c)
+
+            "x" assign d.ref
+            "y" assign d.ref
+          }
         }
-        threadlocal {
-            y = "y" type Int() init "2"
-        }
-        val proc1 = procedure("proc1") {
-            "a" type Int() direction IN
-            "b" type Int() direction OUT
-            val c = "c" type Int() direction INOUT
-            val d = "d" type Int()
+      val main =
+        procedure("main") {
+          val ret = "ret" type Int()
+          val param = "param" type Int()
 
-            (init to final) {
-                d assign "a + c"
-
-                havoc("b")
-                havoc(c)
-
-                "x" assign d.ref
-                "y" assign d.ref
-            }
-        }
-        val main = procedure("main") {
-            val ret = "ret" type Int()
-            val param = "param" type Int()
-
-            (init to "L0") {
-                param assign "0"
-                proc1("1", ret.ref, param.ref)
-                proc1.invoke("1", ret.ref, param.ref)
-                proc1.invoke("2", ret.ref, param.ref)
-            }
-            ("L0" to final) {
-                assume(Eq(x.ref as RefExpr<IntType>, y.ref as RefExpr<IntType>))
-            }
-            ("L0" to err) {
-                assume("(/= x y)")
-            }
+          (init to "L0") {
+            param assign "0"
+            proc1("1", ret.ref, param.ref)
+            proc1.invoke("1", ret.ref, param.ref)
+            proc1.invoke("2", ret.ref, param.ref)
+          }
+          ("L0" to final) { assume(Eq(x.ref as RefExpr<IntType>, y.ref as RefExpr<IntType>)) }
+          ("L0" to err) { assume("(/= x y)") }
         }
 
-        main.start()
+      main.start()
     }
 
-    @Test
-    fun serializeXcfa() {
-        getXcfa().toC(ParseContext(), true, true, true)
-    }
-
+  @Test
+  fun serializeXcfa() {
+    getXcfa().toC(ParseContext(), true, true, true)
+  }
 }

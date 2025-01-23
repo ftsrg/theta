@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.smtlib.solver;
+
+import static com.google.common.base.Preconditions.*;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -36,14 +38,11 @@ import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.*;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpSolver {
 
@@ -62,21 +61,25 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
     private Valuation model;
     private SolverStatus status;
 
-
     public SmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
-    ) {
-        this(symbolTable, transformationManager, termTransformer, solverBinary, SmtLibEnumStrategy.getDefaultStrategy());
+            final SmtLibTermTransformer termTransformer,
+            final SmtLibSolverBinary solverBinary) {
+        this(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                SmtLibEnumStrategy.getDefaultStrategy());
     }
 
     public SmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
-            final SmtLibEnumStrategy enumStrategy
-    ) {
+            final SmtLibTermTransformer termTransformer,
+            final SmtLibSolverBinary solverBinary,
+            final SmtLibEnumStrategy enumStrategy) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -91,7 +94,6 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
 
         init();
     }
-
 
     @Override
     public abstract T createMarker();
@@ -112,21 +114,39 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         final var consts = ExprUtils.getConstants(assertion);
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
-        enumStrategy.declareDatatypes((Collection<Type>) consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
+        enumStrategy.declareDatatypes(
+                (Collection<Type>) consts.stream().map(ConstDecl::getType).toList(),
+                typeStack,
+                this::issueGeneralCommand);
 
         final var itpMarker = (T) marker;
         final var term = transformationManager.toTerm(assertion);
 
-        itpMarker.add(assertion, enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
+        itpMarker.add(
+                assertion,
+                enumStrategy.wrapAssertionExpression(
+                        term,
+                        ExprUtils.getConstants(assertion).stream()
+                                .collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
 
         assertions.add(assertion);
-        add(itpMarker, assertion, consts, enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
+        add(
+                itpMarker,
+                assertion,
+                consts,
+                enumStrategy.wrapAssertionExpression(
+                        term,
+                        ExprUtils.getConstants(assertion).stream()
+                                .collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
 
         clearState();
     }
 
-    protected abstract void add(final T marker, final Expr<BoolType> assertion,
-                                final Set<ConstDecl<?>> consts, final String term);
+    protected abstract void add(
+            final T marker,
+            final Expr<BoolType> assertion,
+            final Set<ConstDecl<?>> consts,
+            final String term);
 
     @Override
     public SolverStatus check() {
@@ -209,7 +229,10 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             throw new SmtLibSolverException(res.getReason());
         } else if (res.isSpecific()) {
             final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
-            return new SmtLibValuation(symbolTable, transformationManager, termTransformer,
+            return new SmtLibValuation(
+                    symbolTable,
+                    transformationManager,
+                    termTransformer,
                     getModelResponse.getModel());
         } else {
             throw new AssertionError();

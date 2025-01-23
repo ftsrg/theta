@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.utils;
 
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.common.visualization.writer.AbstractGraphWriter;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -43,24 +41,25 @@ public final class WitnessWriter extends AbstractGraphWriter {
 
     private final String programHash;
     private final boolean isViolationWitness;
-    private final String toolName = "theta"; // TODO maybe we should add the version number to this field as well
+    private final String toolName =
+            "theta"; // TODO maybe we should add the version number to this field as well
     private final String sourceCodeLang = "C";
     private final String architecture; // TODO add 64bit option later
     private final String specification;
     private final String programFile;
 
-    public static WitnessWriter createViolationWitnessWriter(String programFile,
-                                                             String specification, boolean is64bit) {
+    public static WitnessWriter createViolationWitnessWriter(
+            String programFile, String specification, boolean is64bit) {
         return new WitnessWriter(programFile, specification, true, is64bit);
     }
 
-    public static WitnessWriter createCorrectnessWitnessWriter(String programFile,
-                                                               String specification, boolean is64bit) {
+    public static WitnessWriter createCorrectnessWitnessWriter(
+            String programFile, String specification, boolean is64bit) {
         return new WitnessWriter(programFile, specification, false, is64bit);
     }
 
-    private WitnessWriter(String programFile, String specification, boolean isViolationWitness,
-                          boolean is64bit) {
+    private WitnessWriter(
+            String programFile, String specification, boolean isViolationWitness, boolean is64bit) {
         programHash = createTaskHash(programFile);
         this.isViolationWitness = isViolationWitness;
         this.specification = specification;
@@ -92,11 +91,13 @@ public final class WitnessWriter extends AbstractGraphWriter {
         return sb.toString();
     }
 
-    // TODO should this be a bit more flexible or should we add keys we don't use for now, but we might use in the future?
+    // TODO should this be a bit more flexible or should we add keys we don't use for now, but we
+    // might use in the future?
     private void printKeys(StringBuilder sb) {
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>").append(System.lineSeparator());
         sb.append(
-                        "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
+                        "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\""
+                                + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
                 .append(System.lineSeparator());
 
         appendKeyLine(sb, "sourcecodelang", "string", "graph", "sourcecodelang");
@@ -122,7 +123,6 @@ public final class WitnessWriter extends AbstractGraphWriter {
         } else {
             appendKeyWithDefaultValue(sb, "invariant", "string", "node", "invariant", "true");
         }
-
     }
 
     private void printGraphKeyValues(StringBuilder sb) {
@@ -139,20 +139,26 @@ public final class WitnessWriter extends AbstractGraphWriter {
         appendDataNode(sb, "architecture", architecture);
 
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat(
-                "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        DateFormat df =
+                new SimpleDateFormat(
+                        "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone
+        // offset
         df.setTimeZone(tz);
         String ISOdate = df.format(new Date());
         appendDataNode(sb, "creationtime", ISOdate);
     }
 
     private void appendDataNode(StringBuilder sb, String key, String value) {
-        sb.append("<data key=\"").append(key).append("\">").append(value).append("</data>")
+        sb.append("<data key=\"")
+                .append(key)
+                .append("\">")
+                .append(value)
+                .append("</data>")
                 .append(System.lineSeparator());
     }
 
-    private void appendKeyLine(StringBuilder sb, String attrName, String attrType,
-                               String forElement, String id) {
+    private void appendKeyLine(
+            StringBuilder sb, String attrName, String attrType, String forElement, String id) {
         sb.append("<key attr.name=\"");
         sb.append(attrName);
         sb.append("\" attr.type=\"");
@@ -165,8 +171,13 @@ public final class WitnessWriter extends AbstractGraphWriter {
         sb.append(System.lineSeparator());
     }
 
-    private void appendKeyWithDefaultValue(StringBuilder sb, String attrName, String attrType,
-                                           String forElement, String id, String defaultValue) {
+    private void appendKeyWithDefaultValue(
+            StringBuilder sb,
+            String attrName,
+            String attrType,
+            String forElement,
+            String id,
+            String defaultValue) {
         sb.append("<key attr.name=\"");
         sb.append(attrName);
         sb.append("\" attr.type=\"");
@@ -187,10 +198,14 @@ public final class WitnessWriter extends AbstractGraphWriter {
 
     private void printNode(final Node node, final StringBuilder sb) {
         if (node.getAttributes().getLabel().equals("")) {
-            sb.append("<node id=\"").append(node.getId()).append("\"/>")
+            sb.append("<node id=\"")
+                    .append(node.getId())
+                    .append("\"/>")
                     .append(System.lineSeparator());
         } else {
-            sb.append("<node id=\"").append(node.getId()).append("\">")
+            sb.append("<node id=\"")
+                    .append(node.getId())
+                    .append("\">")
                     .append(System.lineSeparator());
             sb.append(node.getAttributes().getLabel()).append(System.lineSeparator()); // TODO tabs?
             sb.append("</node>").append(System.lineSeparator());
@@ -200,7 +215,9 @@ public final class WitnessWriter extends AbstractGraphWriter {
     private void printEdges(final Node node, final StringBuilder sb) {
         for (final Edge edge : node.getOutEdges()) {
             sb.append("<edge source=\"").append(edge.getSource().getId());
-            sb.append("\" target=\"").append(edge.getTarget().getId()).append("\">")
+            sb.append("\" target=\"")
+                    .append(edge.getTarget().getId())
+                    .append("\">")
                     .append(System.lineSeparator());
             sb.append(edge.getAttributes().getLabel()).append(System.lineSeparator()); // TODO tabs?
             sb.append("</edge>").append(System.lineSeparator());
@@ -215,9 +232,8 @@ public final class WitnessWriter extends AbstractGraphWriter {
             e.printStackTrace();
         }
         try (InputStream is = Files.newInputStream(Paths.get(programFile));
-             DigestInputStream dis = new DigestInputStream(is, md)) {
-            while (dis.read() != -1) {
-            }
+                DigestInputStream dis = new DigestInputStream(is, md)) {
+            while (dis.read() != -1) {}
         } catch (IOException e) {
             e.printStackTrace();
         }

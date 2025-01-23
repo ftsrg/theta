@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ typealias BacktrackResult<S, A> = Pair<Set<ASGNode<S, A>>?, List<ASGTrace<S, A>>
 fun <S : ExprState, A : ExprAction> combineLassos(results: Collection<BacktrackResult<S, A>>) =
   Pair(setOf<ASGNode<S, A>>(), results.flatMap { it.second ?: emptyList() })
 
-abstract class AbstractSearchStrategy : ILoopcheckerSearchStrategy {
+abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
 
   internal fun <S : ExprState, A : ExprAction> expandFromInitNodeUntilTarget(
     initNode: ASGNode<S, A>,

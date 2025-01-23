@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ internal constructor(
     val to = getOrCreateLocation(list[0])
     val edge =
       builder.createEdge(from, to, Stmts.Assume(apBoolExpressionToInternal(booleanExpression)))
-    if (list1 != null && !list1.isEmpty()) builder.setAcceptingEdge(edge)
+    if (list1 != null && !list1.isEmpty()) builder.addAcceptingEdge(edge)
   }
 
   override fun notifyEndOfState(i: Int) {

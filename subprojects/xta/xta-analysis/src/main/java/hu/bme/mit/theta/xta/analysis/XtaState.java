@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -23,12 +25,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XtaState<S extends State> implements ExprState {
 
@@ -70,8 +69,8 @@ public final class XtaState<S extends State> implements ExprState {
         return new XtaState<>(locs, state);
     }
 
-    public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-                                                                         final Collection<? extends S> states) {
+    public static <S extends State> Collection<XtaState<S>> collectionOf(
+            final List<Loc> locs, final Collection<? extends S> states) {
         final Collection<XtaState<S>> result = new ArrayList<>();
         for (final S state : states) {
             final XtaState<S> initXtaState = XtaState.of(locs, state);
@@ -142,9 +141,8 @@ public final class XtaState<S extends State> implements ExprState {
     @Override
     public String toString() {
         final String prefix = getClass().getSimpleName();
-        final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName))
-                .toString();
+        final String locString =
+                Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName)).toString();
         return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
     }
-
 }

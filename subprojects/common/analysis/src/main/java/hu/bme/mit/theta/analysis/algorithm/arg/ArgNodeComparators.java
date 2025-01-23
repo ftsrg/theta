@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,25 +15,19 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.arg;
 
-import java.io.Serializable;
-import java.util.Comparator;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
+import java.io.Serializable;
+import java.util.Comparator;
 
-/**
- * A collection of comparators for ArgNodes.
- */
+/** A collection of comparators for ArgNodes. */
 public class ArgNodeComparators {
 
-    private ArgNodeComparators() {
-    }
+    private ArgNodeComparators() {}
 
-    public interface ArgNodeComparator extends
-            Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
-
-    }
+    public interface ArgNodeComparator
+            extends Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {}
 
     ////
 
@@ -49,8 +43,8 @@ public class ArgNodeComparators {
         return new Inverter(comparator);
     }
 
-    public static ArgNodeComparator combine(final ArgNodeComparator first,
-                                            final ArgNodeComparator then) {
+    public static ArgNodeComparator combine(
+            final ArgNodeComparator first, final ArgNodeComparator then) {
         return new Combinator(first, then);
     }
 
@@ -73,8 +67,9 @@ public class ArgNodeComparators {
         private static final long serialVersionUID = 6538293612674961734L;
 
         @Override
-        public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                           final ArgNode<? extends State, ? extends Action> n2) {
+        public int compare(
+                final ArgNode<? extends State, ? extends Action> n1,
+                final ArgNode<? extends State, ? extends Action> n2) {
             return Integer.compare(n1.getDepth(), n2.getDepth());
         }
 
@@ -89,8 +84,9 @@ public class ArgNodeComparators {
         private static final long serialVersionUID = -8221009565128954827L;
 
         @Override
-        public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                           final ArgNode<? extends State, ? extends Action> n2) {
+        public int compare(
+                final ArgNode<? extends State, ? extends Action> n1,
+                final ArgNode<? extends State, ? extends Action> n2) {
             return Integer.compare(n1.getId(), n2.getId());
         }
 
@@ -105,8 +101,9 @@ public class ArgNodeComparators {
         private static final long serialVersionUID = 4913094714715832187L;
 
         @Override
-        public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                           final ArgNode<? extends State, ? extends Action> n2) {
+        public int compare(
+                final ArgNode<? extends State, ? extends Action> n1,
+                final ArgNode<? extends State, ? extends Action> n2) {
             return Boolean.compare(n1.isTarget(), n2.isTarget()) * -1;
         }
 
@@ -126,8 +123,9 @@ public class ArgNodeComparators {
         }
 
         @Override
-        public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                           final ArgNode<? extends State, ? extends Action> n2) {
+        public int compare(
+                final ArgNode<? extends State, ? extends Action> n1,
+                final ArgNode<? extends State, ? extends Action> n2) {
             return comparator.compare(n1, n2) * -1;
         }
 
@@ -148,8 +146,9 @@ public class ArgNodeComparators {
         }
 
         @Override
-        public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                           final ArgNode<? extends State, ? extends Action> n2) {
+        public int compare(
+                final ArgNode<? extends State, ? extends Action> n1,
+                final ArgNode<? extends State, ? extends Action> n2) {
             final int compareFirst = first.compare(n1, n2);
             if (compareFirst == 0) {
                 return then.compare(n1, n2);
@@ -160,7 +159,9 @@ public class ArgNodeComparators {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).add(first).add(then)
+            return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .add(first)
+                    .add(then)
                     .toString();
         }
     }

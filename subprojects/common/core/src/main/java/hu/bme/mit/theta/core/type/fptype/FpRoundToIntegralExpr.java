@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
+import java.math.BigInteger;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
-
-import java.math.BigInteger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
 public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round to integral
 
@@ -63,9 +62,12 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
         final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
         BigFloat value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal);
         BigInteger bigInteger = value.toBigInteger();
-        BigFloat round = value.round(
-                new BinaryMathContext(bigInteger.bitLength(), opVal.getType().getExponent(),
-                        FpUtils.getMathContextRoundingMode(roundingMode)));
+        BigFloat round =
+                value.round(
+                        new BinaryMathContext(
+                                bigInteger.bitLength(),
+                                opVal.getType().getExponent(),
+                                FpUtils.getMathContextRoundingMode(roundingMode)));
         round = round.round(FpUtils.getMathContext(getType(), roundingMode));
         FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.getType());
         return fpLitExpr;
@@ -102,4 +104,3 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
         return OPERATOR_LABEL + "[" + roundingMode.toString() + "]";
     }
 }
- 

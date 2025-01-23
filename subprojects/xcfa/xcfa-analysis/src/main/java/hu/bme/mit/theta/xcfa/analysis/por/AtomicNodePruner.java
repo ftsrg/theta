@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.por;
 
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
@@ -24,13 +23,15 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 
 /**
- * Prunes the given node from the given ARG if the action of its incoming edge is not part of an atomic block.
- * Otherwise, the closest ancestor of the node is pruned for whom the above condition holds.
+ * Prunes the given node from the given ARG if the action of its incoming edge is not part of an
+ * atomic block. Otherwise, the closest ancestor of the node is pruned for whom the above condition
+ * holds.
  *
  * @param <S> {@link XcfaState}
  * @param <A> {@link XcfaAction}
  */
-public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction> implements NodePruner<S, A> {
+public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction>
+        implements NodePruner<S, A> {
     @Override
     public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
         while (node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -150,14 +151,10 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -170,7 +167,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     private final DispatchTable<String> table;
     private final Env env;
 
-    public GenericSmtLibExprTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
+    public GenericSmtLibExprTransformer(
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
         this.env = new Env();
@@ -179,230 +177,133 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         this.table = buildDispatchTable(DispatchTable.builder()).build();
     }
 
-    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+    protected DispatchTable.Builder<String> buildDispatchTable(
+            DispatchTable.Builder<String> builder) {
         builder
                 // General
 
                 .addCase(RefExpr.class, this::transformRef)
-
                 .addCase(IteExpr.class, this::transformIte)
 
                 // Boolean
 
                 .addCase(FalseExpr.class, this::transformFalse)
-
                 .addCase(TrueExpr.class, this::transformTrue)
-
                 .addCase(NotExpr.class, this::transformNot)
-
                 .addCase(ImplyExpr.class, this::transformImply)
-
                 .addCase(IffExpr.class, this::transformIff)
-
                 .addCase(XorExpr.class, this::transformXor)
-
                 .addCase(AndExpr.class, this::transformAnd)
-
                 .addCase(OrExpr.class, this::transformOr)
-
                 .addCase(ExistsExpr.class, this::transformExists)
-
                 .addCase(ForallExpr.class, this::transformForall)
 
                 // Rationals
 
                 .addCase(RatLitExpr.class, this::transformRatLit)
-
                 .addCase(RatAddExpr.class, this::transformRatAdd)
-
                 .addCase(RatSubExpr.class, this::transformRatSub)
-
                 .addCase(RatPosExpr.class, this::transformRatPos)
-
                 .addCase(RatNegExpr.class, this::transformRatNeg)
-
                 .addCase(RatMulExpr.class, this::transformRatMul)
-
                 .addCase(RatDivExpr.class, this::transformRatDiv)
-
                 .addCase(RatEqExpr.class, this::transformRatEq)
-
                 .addCase(RatNeqExpr.class, this::transformRatNeq)
-
                 .addCase(RatGeqExpr.class, this::transformRatGeq)
-
                 .addCase(RatGtExpr.class, this::transformRatGt)
-
                 .addCase(RatLeqExpr.class, this::transformRatLeq)
-
                 .addCase(RatLtExpr.class, this::transformRatLt)
-
                 .addCase(RatToIntExpr.class, this::transformRatToInt)
 
                 // Integers
 
                 .addCase(IntLitExpr.class, this::transformIntLit)
-
                 .addCase(IntAddExpr.class, this::transformIntAdd)
-
                 .addCase(IntSubExpr.class, this::transformIntSub)
-
                 .addCase(IntPosExpr.class, this::transformIntPos)
-
                 .addCase(IntNegExpr.class, this::transformIntNeg)
-
                 .addCase(IntMulExpr.class, this::transformIntMul)
-
                 .addCase(IntDivExpr.class, this::transformIntDiv)
-
                 .addCase(IntModExpr.class, this::transformIntMod)
-
                 .addCase(IntRemExpr.class, this::transformIntRem)
-
                 .addCase(IntEqExpr.class, this::transformIntEq)
-
                 .addCase(IntNeqExpr.class, this::transformIntNeq)
-
                 .addCase(IntGeqExpr.class, this::transformIntGeq)
-
                 .addCase(IntGtExpr.class, this::transformIntGt)
-
                 .addCase(IntLeqExpr.class, this::transformIntLeq)
-
                 .addCase(IntLtExpr.class, this::transformIntLt)
-
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
 
                 // Enums
 
                 .addCase(EnumLitExpr.class, this::transformEnumLit)
-
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
-
                 .addCase(EnumEqExpr.class, this::transformEnumEq)
 
                 // Bitvectors
 
                 .addCase(BvLitExpr.class, this::transformBvLit)
-
                 .addCase(BvConcatExpr.class, this::transformBvConcat)
-
                 .addCase(BvExtractExpr.class, this::transformBvExtract)
-
                 .addCase(BvZExtExpr.class, this::transformBvZExt)
-
                 .addCase(BvSExtExpr.class, this::transformBvSExt)
-
                 .addCase(BvAddExpr.class, this::transformBvAdd)
-
                 .addCase(BvSubExpr.class, this::transformBvSub)
-
                 .addCase(BvPosExpr.class, this::transformBvPos)
-
                 .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
-
                 .addCase(BvNegExpr.class, this::transformBvNeg)
-
                 .addCase(BvMulExpr.class, this::transformBvMul)
-
                 .addCase(BvUDivExpr.class, this::transformBvUDiv)
-
                 .addCase(BvSDivExpr.class, this::transformBvSDiv)
-
                 .addCase(BvSModExpr.class, this::transformBvSMod)
-
                 .addCase(BvURemExpr.class, this::transformBvURem)
-
                 .addCase(BvSRemExpr.class, this::transformBvSRem)
-
                 .addCase(BvAndExpr.class, this::transformBvAnd)
-
                 .addCase(BvOrExpr.class, this::transformBvOr)
-
                 .addCase(BvXorExpr.class, this::transformBvXor)
-
                 .addCase(BvNotExpr.class, this::transformBvNot)
-
                 .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
-
                 .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
-
                 .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
-
                 .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
-
                 .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
-
                 .addCase(BvEqExpr.class, this::transformBvEq)
-
                 .addCase(BvNeqExpr.class, this::transformBvNeq)
-
                 .addCase(BvUGeqExpr.class, this::transformBvUGeq)
-
                 .addCase(BvUGtExpr.class, this::transformBvUGt)
-
                 .addCase(BvULeqExpr.class, this::transformBvULeq)
-
                 .addCase(BvULtExpr.class, this::transformBvULt)
-
                 .addCase(BvSGeqExpr.class, this::transformBvSGeq)
-
                 .addCase(BvSGtExpr.class, this::transformBvSGt)
-
                 .addCase(BvSLeqExpr.class, this::transformBvSLeq)
-
                 .addCase(BvSLtExpr.class, this::transformBvSLt)
 
                 // Floating points
 
                 .addCase(FpLitExpr.class, this::transformFpLit)
-
                 .addCase(FpAddExpr.class, this::transformFpAdd)
-
                 .addCase(FpSubExpr.class, this::transformFpSub)
-
                 .addCase(FpPosExpr.class, this::transformFpPos)
-
                 .addCase(FpNegExpr.class, this::transformFpNeg)
-
                 .addCase(FpMulExpr.class, this::transformFpMul)
-
                 .addCase(FpDivExpr.class, this::transformFpDiv)
-
                 .addCase(FpEqExpr.class, this::transformFpEq)
-
                 .addCase(FpAssignExpr.class, this::transformFpAssign)
-
                 .addCase(FpGeqExpr.class, this::transformFpGeq)
-
                 .addCase(FpLeqExpr.class, this::transformFpLeq)
-
                 .addCase(FpGtExpr.class, this::transformFpGt)
-
                 .addCase(FpLtExpr.class, this::transformFpLt)
-
                 .addCase(FpNeqExpr.class, this::transformFpNeq)
-
                 .addCase(FpAbsExpr.class, this::transformFpAbs)
-
                 .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
-
                 .addCase(FpMaxExpr.class, this::transformFpMax)
-
                 .addCase(FpMinExpr.class, this::transformFpMin)
-
                 .addCase(FpSqrtExpr.class, this::transformFpSqrt)
-
                 .addCase(FpRemExpr.class, this::transformFpRem)
-
                 .addCase(FpIsNanExpr.class, this::transformFpIsNaN)
-
                 .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
-
                 .addCase(FpFromBvExpr.class, this::transformFpFromBv)
-
                 .addCase(FpToBvExpr.class, this::transformFpToBv)
-
                 .addCase(FpToFpExpr.class, this::transformFpToFp)
 
                 // Functions
@@ -412,21 +313,15 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 // Arrays
 
                 .addCase(ArrayReadExpr.class, this::transformArrayRead)
-
                 .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
-
                 .addCase(ArrayEqExpr.class, this::transformArrayEq)
-
                 .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
-
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
-
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
                 // References
-                .addCase(Dereference.class, this::transformDereference)
+                .addCase(Dereference.class, this::transformDereference);
 
-        ;
         return builder;
     }
 
@@ -498,12 +393,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "true";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(and %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(and %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(and %s %s)", op1, op2));
         }
     }
 
@@ -513,12 +408,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "false";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(or %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(or %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(or %s %s)", op1, op2));
         }
     }
 
@@ -526,8 +421,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         env.push();
         final String[] paramTerms = transformParamDecls(expr.getParamDecls());
         final String opTerm = toTerm(expr.getOp());
-        final String result = String.format("(exists (%s) %s)", String.join(" ", paramTerms),
-                opTerm);
+        final String result =
+                String.format("(exists (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
@@ -536,8 +431,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         env.push();
         final String[] paramTerms = transformParamDecls(expr.getParamDecls());
         final String opTerm = toTerm(expr.getOp());
-        final String result = String.format("(forall (%s) %s)", String.join(" ", paramTerms),
-                opTerm);
+        final String result =
+                String.format("(forall (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
@@ -577,12 +472,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "0.0";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(+ %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(+ %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(+ %s %s)", op1, op2));
         }
     }
 
@@ -604,12 +499,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "1.0";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(* %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(* %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(* %s %s)", op1, op2));
         }
     }
 
@@ -622,8 +517,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformRatNeq(final RatNeqExpr expr) {
-        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformRatGeq(final RatGeqExpr expr) {
@@ -664,12 +559,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "0";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(+ %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(+ %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(+ %s %s)", op1, op2));
         }
     }
 
@@ -691,12 +586,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         } else if (expr.getArity() == 0) {
             return "1";
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(* %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(* %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(* %s %s)", op1, op2));
         }
     }
 
@@ -717,8 +612,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformIntNeq(final IntNeqExpr expr) {
-        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformIntGeq(final IntGeqExpr expr) {
@@ -750,8 +645,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformEnumNeq(final EnumNeqExpr expr) {
-        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformEnumLit(final EnumLitExpr expr) {
@@ -775,9 +670,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformBvConcat(final BvConcatExpr expr) {
-        final String[] opTerms = expr.getOps().stream()
-                .map(this::toTerm)
-                .toArray(String[]::new);
+        final String[] opTerms = expr.getOps().stream().map(this::toTerm).toArray(String[]::new);
 
         return String.format("(concat %s)", String.join(" ", opTerms));
     }
@@ -804,14 +697,15 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
             return toTerm(
-                    BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+                    BvUtils.bigIntegerToNeutralBvLitExpr(
+                            BigInteger.ZERO, expr.getType().getSize()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(bvadd %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(bvadd %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(bvadd %s %s)", op1, op2));
         }
     }
 
@@ -838,12 +732,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(
                     BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, expr.getType().getSize()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(bvmul %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(bvmul %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(bvmul %s %s)", op1, op2));
         }
     }
 
@@ -871,16 +765,17 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         if (expr.getArity() == 1) {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
-            return toTerm(BvUtils.bigIntegerToNeutralBvLitExpr(
-                    BigInteger.TWO.pow(expr.getType().getSize()).subtract(BigInteger.ONE),
-                    expr.getType().getSize()));
+            return toTerm(
+                    BvUtils.bigIntegerToNeutralBvLitExpr(
+                            BigInteger.TWO.pow(expr.getType().getSize()).subtract(BigInteger.ONE),
+                            expr.getType().getSize()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(bvand %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(bvand %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(bvand %s %s)", op1, op2));
         }
     }
 
@@ -889,14 +784,15 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
             return toTerm(
-                    BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+                    BvUtils.bigIntegerToNeutralBvLitExpr(
+                            BigInteger.ZERO, expr.getType().getSize()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(bvor %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(bvor %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(bvor %s %s)", op1, op2));
         }
     }
 
@@ -905,14 +801,15 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
             return toTerm(
-                    BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, expr.getType().getSize()));
+                    BvUtils.bigIntegerToNeutralBvLitExpr(
+                            BigInteger.ZERO, expr.getType().getSize()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
                             (acc, op) -> String.format("(bvxor %s %s)", acc, toTerm(op)),
-                            (op1, op2) -> String.format("(bvxor %s %s)", op1, op2)
-                    );
+                            (op1, op2) -> String.format("(bvxor %s %s)", op1, op2));
         }
     }
 
@@ -935,21 +832,27 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     protected String transformBvRotateLeft(final BvRotateLeftExpr expr) {
         final var toRotate = toTerm(expr.getLeftOp());
         final var rotateWith = toTerm(expr.getRightOp());
-        final var size = toTerm(
-                BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(expr.getType().getSize()),
-                        expr.getType().getSize()));
-        return String.format("(bvor (bvshl %s %s) (bvlshr %s (bvsub %s %s)))", toRotate, rotateWith,
-                toRotate, size, rotateWith);
+        final var size =
+                toTerm(
+                        BvUtils.bigIntegerToNeutralBvLitExpr(
+                                BigInteger.valueOf(expr.getType().getSize()),
+                                expr.getType().getSize()));
+        return String.format(
+                "(bvor (bvshl %s %s) (bvlshr %s (bvsub %s %s)))",
+                toRotate, rotateWith, toRotate, size, rotateWith);
     }
 
     protected String transformBvRotateRight(final BvRotateRightExpr expr) {
         final var toRotate = toTerm(expr.getLeftOp());
         final var rotateWith = toTerm(expr.getRightOp());
-        final var size = toTerm(
-                BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(expr.getType().getSize()),
-                        expr.getType().getSize()));
-        return String.format("(bvor (bvlshr %s %s) (bvshl %s (bvsub %s %s)))", toRotate, rotateWith,
-                toRotate, size, rotateWith);
+        final var size =
+                toTerm(
+                        BvUtils.bigIntegerToNeutralBvLitExpr(
+                                BigInteger.valueOf(expr.getType().getSize()),
+                                expr.getType().getSize()));
+        return String.format(
+                "(bvor (bvlshr %s %s) (bvshl %s (bvsub %s %s)))",
+                toRotate, rotateWith, toRotate, size, rotateWith);
     }
 
     protected String transformBvEq(final BvEqExpr expr) {
@@ -957,8 +860,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformBvNeq(final BvNeqExpr expr) {
-        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformBvUGeq(final BvUGeqExpr expr) {
@@ -998,34 +901,46 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
      */
 
     protected String transformFpLit(final FpLitExpr expr) {
-        return String.format("(fp #b%s  #b%s #b%s)",
+        return String.format(
+                "(fp #b%s  #b%s #b%s)",
                 expr.getHidden() ? "1" : "0",
                 transformBvLit(expr.getExponent()).substring(2),
-                transformBvLit(expr.getSignificand()).substring(2)
-        );
+                transformBvLit(expr.getSignificand()).substring(2));
     }
 
     protected String transformFpAdd(final FpAddExpr expr) {
         if (expr.getArity() == 1) {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
-            return String.format("(_ +zero %d %d)", expr.getType().getExponent(),
-                    expr.getType().getSignificand());
+            return String.format(
+                    "(_ +zero %d %d)",
+                    expr.getType().getExponent(), expr.getType().getSignificand());
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
-                            (acc, op) -> String.format("(fp.add %s %s %s)",
-                                    transformFpRoundingMode(expr.getRoundingMode()), acc, toTerm(op)),
-                            (op1, op2) -> String.format("(fp.add %s %s %s)",
-                                    transformFpRoundingMode(expr.getRoundingMode()), op1, op2)
-                    );
+                            (acc, op) ->
+                                    String.format(
+                                            "(fp.add %s %s %s)",
+                                            transformFpRoundingMode(expr.getRoundingMode()),
+                                            acc,
+                                            toTerm(op)),
+                            (op1, op2) ->
+                                    String.format(
+                                            "(fp.add %s %s %s)",
+                                            transformFpRoundingMode(expr.getRoundingMode()),
+                                            op1,
+                                            op2));
         }
     }
 
     protected String transformFpSub(final FpSubExpr expr) {
-        return String.format("(fp.sub %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()),
-                toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        return String.format(
+                "(fp.sub %s %s %s)",
+                transformFpRoundingMode(expr.getRoundingMode()),
+                toTerm(expr.getLeftOp()),
+                toTerm(expr.getRightOp()));
     }
 
     protected String transformFpPos(final FpPosExpr expr) {
@@ -1040,24 +955,36 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         if (expr.getArity() == 1) {
             return toTerm(expr.getOps().get(0));
         } else if (expr.getArity() == 0) {
-            return String.format("(fp #b0 #b0%s #b%s)",
+            return String.format(
+                    "(fp #b0 #b0%s #b%s)",
                     "1".repeat(expr.getType().getExponent() - 1),
                     "0".repeat(expr.getType().getSignificand()));
         } else {
-            return expr.getOps().stream().skip(1)
+            return expr.getOps().stream()
+                    .skip(1)
                     .reduce(
                             toTerm(expr.getOps().get(0)),
-                            (acc, op) -> String.format("(fp.mul %s %s %s)",
-                                    transformFpRoundingMode(expr.getRoundingMode()), acc, toTerm(op)),
-                            (op1, op2) -> String.format("(fp.mul %s %s %s)",
-                                    transformFpRoundingMode(expr.getRoundingMode()), op1, op2)
-                    );
+                            (acc, op) ->
+                                    String.format(
+                                            "(fp.mul %s %s %s)",
+                                            transformFpRoundingMode(expr.getRoundingMode()),
+                                            acc,
+                                            toTerm(op)),
+                            (op1, op2) ->
+                                    String.format(
+                                            "(fp.mul %s %s %s)",
+                                            transformFpRoundingMode(expr.getRoundingMode()),
+                                            op1,
+                                            op2));
         }
     }
 
     protected String transformFpDiv(final FpDivExpr expr) {
-        return String.format("(fp.div %s %s %s)", transformFpRoundingMode(expr.getRoundingMode()),
-                toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+        return String.format(
+                "(fp.div %s %s %s)",
+                transformFpRoundingMode(expr.getRoundingMode()),
+                toTerm(expr.getLeftOp()),
+                toTerm(expr.getRightOp()));
     }
 
     protected String transformFpEq(final FpEqExpr expr) {
@@ -1069,8 +996,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformFpNeq(final FpNeqExpr expr) {
-        return String.format("(not (fp.eq %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (fp.eq %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformFpGeq(final FpGeqExpr expr) {
@@ -1094,7 +1021,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {
-        return String.format("(fp.roundToIntegral %s %s)",
+        return String.format(
+                "(fp.roundToIntegral %s %s)",
                 transformFpRoundingMode(expr.getRoundingMode()), toTerm(expr.getOp()));
     }
 
@@ -1107,8 +1035,9 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformFpSqrt(final FpSqrtExpr expr) {
-        return String.format("(fp.sqrt %s %s)", transformFpRoundingMode(expr.getRoundingMode()),
-                toTerm(expr.getOp()));
+        return String.format(
+                "(fp.sqrt %s %s)",
+                transformFpRoundingMode(expr.getRoundingMode()), toTerm(expr.getOp()));
     }
 
     protected String transformFpRem(final FpRemExpr expr) {
@@ -1125,29 +1054,44 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformFpFromBv(final FpFromBvExpr expr) {
         if (expr.isSigned()) {
-            return String.format("((_ to_fp %d %d) %s %s)", expr.getType().getExponent(),
-                    expr.getType().getSignificand(), transformFpRoundingMode(expr.getRoundingMode()),
+            return String.format(
+                    "((_ to_fp %d %d) %s %s)",
+                    expr.getType().getExponent(),
+                    expr.getType().getSignificand(),
+                    transformFpRoundingMode(expr.getRoundingMode()),
                     toTerm(expr.getOp()));
         } else {
-            return String.format("((_ to_fp_unsigned %d %d) %s %s)", expr.getType().getExponent(),
-                    expr.getType().getSignificand(), transformFpRoundingMode(expr.getRoundingMode()),
+            return String.format(
+                    "((_ to_fp_unsigned %d %d) %s %s)",
+                    expr.getType().getExponent(),
+                    expr.getType().getSignificand(),
+                    transformFpRoundingMode(expr.getRoundingMode()),
                     toTerm(expr.getOp()));
         }
     }
 
     protected String transformFpToBv(final FpToBvExpr expr) {
         if (expr.getSgn()) {
-            return String.format("((_ fp.to_sbv %d) %s %s) ", expr.getType().getSize(),
-                    transformFpRoundingMode(expr.getRoundingMode()), toTerm(expr.getOp()));
+            return String.format(
+                    "((_ fp.to_sbv %d) %s %s) ",
+                    expr.getType().getSize(),
+                    transformFpRoundingMode(expr.getRoundingMode()),
+                    toTerm(expr.getOp()));
         } else {
-            return String.format("((_ fp.to_ubv %d) %s %s) ", expr.getType().getSize(),
-                    transformFpRoundingMode(expr.getRoundingMode()), toTerm(expr.getOp()));
+            return String.format(
+                    "((_ fp.to_ubv %d) %s %s) ",
+                    expr.getType().getSize(),
+                    transformFpRoundingMode(expr.getRoundingMode()),
+                    toTerm(expr.getOp()));
         }
     }
 
     protected String transformFpToFp(final FpToFpExpr expr) {
-        return String.format("((_ to_fp %d %d) %s %s)", expr.getType().getExponent(),
-                expr.getType().getSignificand(), transformFpRoundingMode(expr.getRoundingMode()),
+        return String.format(
+                "((_ to_fp %d %d) %s %s)",
+                expr.getType().getExponent(),
+                expr.getType().getSignificand(),
+                transformFpRoundingMode(expr.getRoundingMode()),
                 toTerm(expr.getOp()));
     }
 
@@ -1180,9 +1124,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             final RefExpr<?> ref = (RefExpr<?>) func;
             final Decl<?> decl = ref.getDecl();
             final String funcDecl = transformer.toSymbol(decl);
-            final String[] argTerms = args.stream()
-                    .map(this::toTerm)
-                    .toArray(String[]::new);
+            final String[] argTerms = args.stream().map(this::toTerm).toArray(String[]::new);
 
             return String.format("(%s %s)", funcDecl, String.join(" ", argTerms));
         } else if (func instanceof FuncLitExpr<?, ?>) {
@@ -1191,7 +1133,9 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
             while (replaced instanceof FuncLitExpr<?, ?>) {
                 final ParamDecl<?> param = ((FuncLitExpr<?, ?>) replaced).getParam();
                 final Expr<?> funcExpr = ((FuncLitExpr<?, ?>) replaced).getResult();
-                replaced = ExprUtils.changeDecls(funcExpr, Map.of(param, ((RefExpr<?>) args.get(i++)).getDecl()));
+                replaced =
+                        ExprUtils.changeDecls(
+                                funcExpr, Map.of(param, ((RefExpr<?>) args.get(i++)).getDecl()));
             }
             return toTerm(replaced);
         } else {
@@ -1209,8 +1153,9 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
-        return String.format("(store %s %s %s)", toTerm(expr.getArray()), toTerm(expr.getIndex()),
-                toTerm(expr.getElem()));
+        return String.format(
+                "(store %s %s %s)",
+                toTerm(expr.getArray()), toTerm(expr.getIndex()), toTerm(expr.getElem()));
     }
 
     protected String transformArrayEq(final ArrayEqExpr<?, ?> expr) {
@@ -1218,32 +1163,44 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
-        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
-                toTerm(expr.getRightOp()));
+        return String.format(
+                "(not (= %s %s))", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 
     protected String transformArrayLit(final ArrayLitExpr<?, ?> expr) {
-        String running = String.format("((as const %s) %s)", transformer.toSort(expr.getType()),
-                toTerm(expr.getElseElem()));
+        String running =
+                String.format(
+                        "((as const %s) %s)",
+                        transformer.toSort(expr.getType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = String.format("(store %s %s %s)", running, toTerm(elem.get1()),
-                    toTerm(elem.get2()));
+            running =
+                    String.format(
+                            "(store %s %s %s)", running, toTerm(elem.get1()), toTerm(elem.get2()));
         }
         return running;
     }
 
     protected String transformArrayInit(final ArrayInitExpr<?, ?> expr) {
-        String running = String.format("((as const %s) %s)", transformer.toSort(expr.getType()),
-                toTerm(expr.getElseElem()));
+        String running =
+                String.format(
+                        "((as const %s) %s)",
+                        transformer.toSort(expr.getType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = String.format("(store %s %s %s)", running, toTerm(elem.get1()),
-                    toTerm(elem.get2()));
+            running =
+                    String.format(
+                            "(store %s %s %s)", running, toTerm(elem.get1()), toTerm(elem.get2()));
         }
         return running;
     }
 
     private String transformDereference(final Dereference<?, ?, ?> expr) {
-        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
-        return "(deref %s %s %s)".formatted(toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
+        checkState(
+                expr.getUniquenessIdx().isPresent(),
+                "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        return "(deref %s %s %s)"
+                .formatted(
+                        toTerm(expr.getArray()),
+                        toTerm(expr.getOffset()),
+                        toTerm(expr.getUniquenessIdx().get()));
     }
 }

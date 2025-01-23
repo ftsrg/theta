@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,21 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.javasmt;
-
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Test;
-
-import java.math.BigInteger;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -41,13 +27,27 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3;
 
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.math.BigInteger;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Test;
+
 public class JavaSMTUserPropagatorTest {
 
     @Test
     public void testUserPropagatorBool() throws Exception {
         TestKnownValuePropagator testPropagator = new TestKnownValuePropagator();
 
-        try (final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
+        try (final var solver =
+                JavaSMTSolverFactory.create(Z3, new String[] {})
+                        .createSolverWithPropagators(testPropagator)) {
             final var c1 = Const("x", Bool());
             final var c2 = Const("y", Bool());
             final var c3 = Const("z", Bool());
@@ -63,12 +63,13 @@ public class JavaSMTUserPropagatorTest {
         }
     }
 
-
     @Test
     public void testUserPropagatorFunc() throws Exception {
         TestConsequencePropagator testPropagator = new TestConsequencePropagator();
 
-        try (final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
+        try (final var solver =
+                JavaSMTSolverFactory.create(Z3, new String[] {})
+                        .createSolverWithPropagators(testPropagator)) {
             final var c1 = Const("x", Int());
             final var c2 = Const("y", Int());
             final var c3 = Const("z", Int());
@@ -91,14 +92,16 @@ public class JavaSMTUserPropagatorTest {
             assertTrue("Should be SAT", solver.getStatus().isSat());
 
             final var model = solver.getModel();
-            assertEquals("Should only be one.", BigInteger.ONE, ((IntLitExpr) model.eval(c2).get()).getValue());
+            assertEquals(
+                    "Should only be one.",
+                    BigInteger.ONE,
+                    ((IntLitExpr) model.eval(c2).get()).getValue());
 
             solver.add(Not(Eq(c2.getRef(), Int(1))));
             solver.check();
             assertTrue("Should be UNSAT", solver.getStatus().isUnsat());
         }
     }
-
 
     private static class TestConsequencePropagator extends JavaSMTUserPropagator {
         @Override
@@ -107,7 +110,8 @@ public class JavaSMTUserPropagatorTest {
             FuncAppExpr<?, ?> appOuter = (FuncAppExpr<?, ?>) expr;
             FuncAppExpr<?, ?> appInner = (FuncAppExpr<?, ?>) appOuter.getFunc();
 
-            final var consequence = Lt((Expr<IntType>) appInner.getParam(), (Expr<IntType>) appOuter.getParam());
+            final var consequence =
+                    Lt((Expr<IntType>) appInner.getParam(), (Expr<IntType>) appOuter.getParam());
 
             if (value) {
                 System.err.printf("Consequence: %s\n", consequence);
@@ -118,7 +122,6 @@ public class JavaSMTUserPropagatorTest {
             }
         }
     }
-
 
     private static class TestKnownValuePropagator extends JavaSMTUserPropagator {
 

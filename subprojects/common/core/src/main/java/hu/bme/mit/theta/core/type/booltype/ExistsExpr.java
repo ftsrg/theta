@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ExistsExpr extends QuantifiedExpr {
 
@@ -33,13 +33,13 @@ public final class ExistsExpr extends QuantifiedExpr {
         super(paramDecls, op);
     }
 
-    public static ExistsExpr of(final Iterable<? extends ParamDecl<?>> paramDecls,
-                                final Expr<BoolType> op) {
+    public static ExistsExpr of(
+            final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
         return new ExistsExpr(paramDecls, op);
     }
 
-    public static ExistsExpr create(final Iterable<? extends ParamDecl<?>> paramDecls,
-                                    final Expr<?> op) {
+    public static ExistsExpr create(
+            final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<?> op) {
         final Expr<BoolType> newOp = cast(op, Bool());
         return ExistsExpr.of(paramDecls, newOp);
     }
@@ -64,8 +64,8 @@ public final class ExistsExpr extends QuantifiedExpr {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final ExistsExpr that = (ExistsExpr) obj;
-            return this.getParamDecls().equals(that.getParamDecls()) && this.getOp()
-                    .equals(that.getOp());
+            return this.getParamDecls().equals(that.getParamDecls())
+                    && this.getOp().equals(that.getOp());
         } else {
             return false;
         }
@@ -80,5 +80,4 @@ public final class ExistsExpr extends QuantifiedExpr {
     public String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

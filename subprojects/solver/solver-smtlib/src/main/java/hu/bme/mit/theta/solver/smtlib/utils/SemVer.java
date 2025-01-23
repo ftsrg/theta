@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.solver.smtlib.utils;
 
-import hu.bme.mit.theta.common.OsHelper;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.OsHelper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SemVer implements Comparable<SemVer> {
 
@@ -109,8 +108,9 @@ public class SemVer implements Comparable<SemVer> {
         private final SemVer version;
         private final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string;
 
-        private VersionDecoder(final SemVer version,
-                               final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string) {
+        private VersionDecoder(
+                final SemVer version,
+                final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string) {
             this.version = version;
             this.string = string;
         }
@@ -123,14 +123,15 @@ public class SemVer implements Comparable<SemVer> {
             return version;
         }
 
-        public String getOsArchString(final OsHelper.OperatingSystem os,
-                                      final OsHelper.Architecture arch) {
+        public String getOsArchString(
+                final OsHelper.OperatingSystem os, final OsHelper.Architecture arch) {
             if (!string.containsKey(os)) {
                 throw new UnsupportedOperationException(
                         String.format("Operating system %s is not supported by z3", os));
             } else if (!string.get(os).containsKey(arch)) {
                 throw new UnsupportedOperationException(
-                        String.format("Architecture %s on operating system %s is not supported by z3",
+                        String.format(
+                                "Architecture %s on operating system %s is not supported by z3",
                                 arch, os));
             } else {
                 return string.get(os).get(arch);
@@ -147,8 +148,10 @@ public class SemVer implements Comparable<SemVer> {
                 this.string = new HashMap<>();
             }
 
-            public VersionDecoder.Builder addString(final OsHelper.OperatingSystem os,
-                                                    final OsHelper.Architecture arch, final String string) {
+            public VersionDecoder.Builder addString(
+                    final OsHelper.OperatingSystem os,
+                    final OsHelper.Architecture arch,
+                    final String string) {
                 if (!this.string.containsKey(os)) {
                     this.string.put(os, new HashMap<>());
                 }

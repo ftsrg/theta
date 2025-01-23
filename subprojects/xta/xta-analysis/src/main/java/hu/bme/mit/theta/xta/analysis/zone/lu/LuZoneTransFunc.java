@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package hu.bme.mit.theta.xta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 final class LuZoneTransFunc<A extends Action> implements TransFunc<LuZoneState, A, ZonePrec> {
 
@@ -41,15 +40,15 @@ final class LuZoneTransFunc<A extends Action> implements TransFunc<LuZoneState, 
     }
 
     @Override
-    public Collection<LuZoneState> getSuccStates(final LuZoneState state, final A action,
-                                                 final ZonePrec prec) {
+    public Collection<LuZoneState> getSuccStates(
+            final LuZoneState state, final A action, final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final ZoneState subState = state.getZone();
-        final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState,
-                action, prec);
+        final Collection<? extends ZoneState> subSuccStates =
+                transFunc.getSuccStates(subState, action, prec);
 
         if (subSuccStates.isEmpty()) {
             final LuZoneState succState = LuZoneState.of(ZoneState.bottom(), BoundFunc.top());
@@ -63,5 +62,4 @@ final class LuZoneTransFunc<A extends Action> implements TransFunc<LuZoneState, 
             return result;
         }
     }
-
 }

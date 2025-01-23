@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.analysis;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.delta.java.mdd.GraphvizSerializer;
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddHandle;
@@ -27,12 +29,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationP
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public final class GeneralizedSaturationTest {
     public static String reverseString(String str) {
@@ -48,9 +47,13 @@ public final class GeneralizedSaturationTest {
 
         assertEquals(1, petriNets.size());
 
-        final List<Place> ordering = VariableOrderingFactory.fromPathString(getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(), petriNets.get(0));
+        final List<Place> ordering =
+                VariableOrderingFactory.fromPathString(
+                        getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(),
+                        petriNets.get(0));
         // 	ordering = new ArrayList<>(petriNets.get(0).getPlaces());
-        // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
+        // ordering.sort((p1, p2) ->
+        // String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
         // 	reverseString(p2.getId())));
         // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(p1.getId(),
         // 	p2.getId()));
@@ -59,7 +62,7 @@ public final class GeneralizedSaturationTest {
 
         System.out.println(system.printDependencyMatrixCsv());
 
-        //new BufferedReader(new InputStreamReader(System.in)).readLine();
+        // new BufferedReader(new InputStreamReader(System.in)).readLine();
 
         MddVariableOrder variableOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
@@ -67,20 +70,22 @@ public final class GeneralizedSaturationTest {
             variableOrder.createOnTop(MddVariableDescriptor.create(p));
         }
 
-        GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder,
-                new CursorRelationalProductProvider(variableOrder));
+        GeneralizedSaturationProvider gs =
+                new GeneralizedSaturationProvider(
+                        variableOrder, new CursorRelationalProductProvider(variableOrder));
 
-        final MddHandle stateSpace = gs.compute(system.getInitializer(),
-                system.getTransitions(),
-                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-        );
+        final MddHandle stateSpace =
+                gs.compute(
+                        system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle());
 
         String dot = GraphvizSerializer.serialize(stateSpace);
         System.out.println(dot);
 
-//		StringSelection stringSelection = new StringSelection(dot);
-//		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-//		clipboard.setContents(stringSelection, null);
+        //		StringSelection stringSelection = new StringSelection(dot);
+        //		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        //		clipboard.setContents(stringSelection, null);
 
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
         assertEquals(TestData.STATESPACESIZE, stateSpaceSize.longValue());

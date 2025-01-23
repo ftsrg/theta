@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,6 @@ package hu.bme.mit.theta.cfa.dsl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ProcDeclContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.SpecContext;
@@ -32,6 +28,9 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 final class CfaSpecification implements Scope {
 
@@ -65,9 +64,8 @@ final class CfaSpecification implements Scope {
             env.define(variable, var);
         }
 
-        final List<CfaProcessSymbol> mainProcesses = processes.stream()
-                .filter(CfaProcessSymbol::isMain)
-                .collect(toList());
+        final List<CfaProcessSymbol> mainProcesses =
+                processes.stream().filter(CfaProcessSymbol::isMain).collect(toList());
 
         if (mainProcesses.isEmpty()) {
             throw new IllegalArgumentException("No main process defined");
@@ -115,5 +113,4 @@ final class CfaSpecification implements Scope {
         }
         return result;
     }
-
 }

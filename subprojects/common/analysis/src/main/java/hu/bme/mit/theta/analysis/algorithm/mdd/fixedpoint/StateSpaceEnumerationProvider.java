@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.MddTransformationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
-public interface StateSpaceEnumerationProvider extends MddTransformationProvider.Cached<AbstractNextStateDescriptor>, MddTransformationProvider.Initializable<AbstractNextStateDescriptor, AbstractNextStateDescriptor.Postcondition> {
-}
+public interface StateSpaceEnumerationProvider
+        extends MddTransformationProvider.Cached<AbstractNextStateDescriptor>,
+                MddTransformationProvider.Initializable<
+                        AbstractNextStateDescriptor, AbstractNextStateDescriptor.Postcondition> {}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@ package hu.bme.mit.theta.analysis.expl;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.Collections;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Collections;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ExplPrecTest {
 
@@ -52,8 +49,9 @@ public class ExplPrecTest {
     @Test
     public void testMapping() {
         final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
-        final ExplState s1 = prec.createState(
-                ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
+        final ExplState s1 =
+                prec.createState(
+                        ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
         final ExplState s2 = prec.createState(ImmutableValuation.builder().put(y, Int(2)).build());
 
         Assert.assertEquals(1, s1.getDecls().size());

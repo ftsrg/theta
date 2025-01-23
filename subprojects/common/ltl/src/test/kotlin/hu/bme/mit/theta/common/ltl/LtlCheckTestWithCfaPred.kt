@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.common.ltl
 
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopcheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.multi.NextSideFunctions
@@ -43,7 +43,7 @@ class LtlCheckTestWithCfaPred(
   private val cfaName: String,
   private val ltlExpr: String,
   private val result: Boolean,
-  private val searchStrategy: LoopcheckerSearchStrategy,
+  private val searchStrategy: LoopCheckerSearchStrategy,
   private val refinerStrategy: ASGTraceCheckerStrategy,
 ) {
 
@@ -76,11 +76,9 @@ class LtlCheckTestWithCfaPred(
     @JvmStatic
     @Parameterized.Parameters(name = "{3}-{4}: {0}")
     fun params() =
-      listOf(LoopcheckerSearchStrategy.GDFS, LoopcheckerSearchStrategy.NDFS).flatMap { search ->
-        listOf(ASGTraceCheckerStrategy.DIRECT_REFINEMENT, ASGTraceCheckerStrategy.BOUNDED_UNROLLING).flatMap {
-          ref ->
-          data().map { arrayOf(*it, search, ref) }
-        }
+      listOf(LoopCheckerSearchStrategy.GDFS, LoopCheckerSearchStrategy.NDFS).flatMap { search ->
+        listOf(ASGTraceCheckerStrategy.DIRECT_REFINEMENT, ASGTraceCheckerStrategy.BOUNDED_UNROLLING)
+          .flatMap { ref -> data().map { arrayOf(*it, search, ref) } }
       }
   }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopcheckerSearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.SingleASGTraceRefiner;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -140,7 +140,7 @@ public class ASGCegarVerifierTest {
         final AcceptancePredicate<XstsState<PredState>, XstsAction> target =
                 new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
         logger.write(Logger.Level.MAINSTEP, "Verifying %s%n", xsts.getProp());
-        LoopcheckerSearchStrategy.getEntries()
+        LoopCheckerSearchStrategy.getEntries()
                 .forEach(
                         lStrat -> {
                             ASGTraceCheckerStrategy.getEntries()
@@ -212,7 +212,7 @@ public class ASGCegarVerifierTest {
                 new ItpRefToPredPrec(ExprSplitters.atoms());
         final RefutationToGlobalCfaPrec<PredPrec, ItpRefutation> cfaRefToPrec =
                 new RefutationToGlobalCfaPrec<>(refToPrec, cfa.getInitLoc());
-        LoopcheckerSearchStrategy.getEntries()
+        LoopCheckerSearchStrategy.getEntries()
                 .forEach(
                         lStrat -> {
                             ASGTraceCheckerStrategy.getEntries()

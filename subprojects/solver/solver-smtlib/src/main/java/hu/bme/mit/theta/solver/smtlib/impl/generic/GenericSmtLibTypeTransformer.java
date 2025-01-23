@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
-
 import java.util.concurrent.ExecutionException;
 
 public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
@@ -49,9 +48,9 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
         table = buildDispatchTable(DispatchTable.builder()).build();
     }
 
-    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
-        builder
-                .addCase(BoolType.class, this::boolType)
+    protected DispatchTable.Builder<String> buildDispatchTable(
+            DispatchTable.Builder<String> builder) {
+        builder.addCase(BoolType.class, this::boolType)
                 .addCase(IntType.class, this::intType)
                 .addCase(RatType.class, this::ratType)
                 .addCase(BvType.class, this::bvType)
@@ -91,8 +90,8 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
     }
 
     protected String arrayType(final ArrayType<?, ?> type) {
-        return String.format("(Array %s %s)", toSort(type.getIndexType()),
-                toSort(type.getElemType()));
+        return String.format(
+                "(Array %s %s)", toSort(type.getIndexType()), toSort(type.getElemType()));
     }
 
     protected String enumType(final EnumType type) {

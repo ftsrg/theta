@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package hu.bme.mit.theta.analysis.waitlist;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
+import hu.bme.mit.theta.common.Utils;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.stream.Stream;
-
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
-import hu.bme.mit.theta.common.Utils;
 
 /**
  * Priority waitlist. The least item is always removed based on a comparator or on the natural
@@ -90,7 +89,9 @@ public final class PriorityWaitlist<T> implements Waitlist<T> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(items.comparator())
-                .addAll(items).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(items.comparator())
+                .addAll(items)
+                .toString();
     }
 }

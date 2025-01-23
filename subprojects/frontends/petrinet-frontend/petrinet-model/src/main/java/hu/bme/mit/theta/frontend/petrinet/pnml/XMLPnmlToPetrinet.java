@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,32 +15,33 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.pnml;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class XMLPnmlToPetrinet {
 
-    private XMLPnmlToPetrinet() {
-    }
+    private XMLPnmlToPetrinet() {}
 
     public static PetriNet parse(final String fileName, final String initialMarkingString)
-            throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+            throws ParserConfigurationException,
+                    IOException,
+                    SAXException,
+                    XPathExpressionException {
 
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder builder = factory.newDocumentBuilder();
@@ -70,30 +71,34 @@ public class XMLPnmlToPetrinet {
 
         // Find all places
         final XPathExpression childPlacesExpr = xPath.compile("./place");
-        final NodeList placeList = (NodeList) childPlacesExpr.evaluate(netElement,
-                XPathConstants.NODESET);
+        final NodeList placeList =
+                (NodeList) childPlacesExpr.evaluate(netElement, XPathConstants.NODESET);
         for (int i = 0; i < placeList.getLength(); i++) {
             final Element placeElement = (Element) placeList.item(i);
             final String id = placeElement.getAttribute("id");
 
-//			final String name;
-//			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
-//			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
-//			final String nameText = (String) nameTextExpr.evaluate(placeElement,XPathConstants.STRING);
-//			if(nameText.equals("")){
-//				name = (String) nameValueExpr.evaluate(placeElement,XPathConstants.STRING);
-//			} else {
-//				name = nameText;
-//			}
+            //			final String name;
+            //			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
+            //			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
+            //			final String nameText = (String)
+            // nameTextExpr.evaluate(placeElement,XPathConstants.STRING);
+            //			if(nameText.equals("")){
+            //				name = (String) nameValueExpr.evaluate(placeElement,XPathConstants.STRING);
+            //			} else {
+            //				name = nameText;
+            //			}
 
             final int initialMarking;
             if (overrideInitialMarking) {
                 initialMarking = values[i];
             } else {
-                final XPathExpression initialMarkingTextExpr = xPath.compile(
-                        "./initialMarking/text/text()");
-                initialMarking = ((Double) initialMarkingTextExpr.evaluate(placeElement,
-                        XPathConstants.NUMBER)).intValue();
+                final XPathExpression initialMarkingTextExpr =
+                        xPath.compile("./initialMarking/text/text()");
+                initialMarking =
+                        ((Double)
+                                        initialMarkingTextExpr.evaluate(
+                                                placeElement, XPathConstants.NUMBER))
+                                .intValue();
             }
 
             final Place place = new Place(id);
@@ -104,21 +109,22 @@ public class XMLPnmlToPetrinet {
 
         // Find all transitions
         final XPathExpression childTransitionsExpr = xPath.compile("./transition");
-        final NodeList transitionList = (NodeList) childTransitionsExpr.evaluate(netElement,
-                XPathConstants.NODESET);
+        final NodeList transitionList =
+                (NodeList) childTransitionsExpr.evaluate(netElement, XPathConstants.NODESET);
         for (int i = 0; i < transitionList.getLength(); i++) {
             final Element transitionElement = (Element) transitionList.item(i);
             final String id = transitionElement.getAttribute("id");
 
-//			final String name;
-//			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
-//			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
-//			final String nameText = (String) nameTextExpr.evaluate(transitionElement,XPathConstants.STRING);
-//			if(nameText.equals("")){
-//				name = (String) nameValueExpr.evaluate(transitionElement,XPathConstants.STRING);
-//			} else {
-//				name = nameText;
-//			}
+            //			final String name;
+            //			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
+            //			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
+            //			final String nameText = (String)
+            // nameTextExpr.evaluate(transitionElement,XPathConstants.STRING);
+            //			if(nameText.equals("")){
+            //				name = (String) nameValueExpr.evaluate(transitionElement,XPathConstants.STRING);
+            //			} else {
+            //				name = nameText;
+            //			}
 
             final Transition transition = new Transition(id);
             idMap.put(id, transition);
@@ -127,8 +133,8 @@ public class XMLPnmlToPetrinet {
 
         // Find all arcs
         final XPathExpression childArcsExpr = xPath.compile("./arc");
-        final NodeList arcList = (NodeList) childArcsExpr.evaluate(netElement,
-                XPathConstants.NODESET);
+        final NodeList arcList =
+                (NodeList) childArcsExpr.evaluate(netElement, XPathConstants.NODESET);
         for (int i = 0; i < arcList.getLength(); i++) {
             final Element arcElement = (Element) arcList.item(i);
             final String id = arcElement.getAttribute("id");
@@ -141,10 +147,11 @@ public class XMLPnmlToPetrinet {
             final Identified target = idMap.get(targetId);
             checkNotNull(source, "Target node not found of arc " + id);
 
-            final XPathExpression toolspecificWeightExpr = xPath.compile(
-                    "./toolspecific/weight/text()");
-            final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,
-                    XPathConstants.NUMBER)).intValue();
+            final XPathExpression toolspecificWeightExpr =
+                    xPath.compile("./toolspecific/weight/text()");
+            final int toolspecificWeight =
+                    ((Double) toolspecificWeightExpr.evaluate(arcElement, XPathConstants.NUMBER))
+                            .intValue();
             final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
 
             if (source instanceof Place) {
@@ -168,5 +175,4 @@ public class XMLPnmlToPetrinet {
 
         return ptNet;
     }
-
 }

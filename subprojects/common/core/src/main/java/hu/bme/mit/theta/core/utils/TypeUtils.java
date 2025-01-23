@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,21 +31,14 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import org.kframework.mpfr.BigFloat;
-
 import java.math.BigInteger;
 import java.util.Iterator;
+import org.kframework.mpfr.BigFloat;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Utility functions related to types.
- */
+/** Utility functions related to types. */
 public final class TypeUtils {
 
-    private TypeUtils() {
-    }
+    private TypeUtils() {}
 
     /**
      * Cast a declaration to a given type.
@@ -56,7 +52,8 @@ public final class TypeUtils {
         checkNotNull(type);
 
         if (decl.getType().equals(type)) {
-            @SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) decl;
+            @SuppressWarnings("unchecked")
+            final Decl<T> result = (Decl<T>) decl;
             return result;
         } else {
             throw new ClassCastException(
@@ -76,7 +73,8 @@ public final class TypeUtils {
         checkNotNull(type);
 
         if (decl.getType().equals(type)) {
-            @SuppressWarnings("unchecked") final VarDecl<T> result = (VarDecl<T>) decl;
+            @SuppressWarnings("unchecked")
+            final VarDecl<T> result = (VarDecl<T>) decl;
             return result;
         } else {
             throw new ClassCastException(
@@ -96,11 +94,17 @@ public final class TypeUtils {
         checkNotNull(type);
 
         if (expr.getType().equals(type)) {
-            @SuppressWarnings("unchecked") final Expr<T> result = (Expr<T>) expr;
+            @SuppressWarnings("unchecked")
+            final Expr<T> result = (Expr<T>) expr;
             return result;
         } else {
             throw new ClassCastException(
-                    "The type of expression " + expr + " is not of type " + type + ", but " + expr.getType());
+                    "The type of expression "
+                            + expr
+                            + " is not of type "
+                            + type
+                            + ", but "
+                            + expr.getType());
         }
     }
 
@@ -114,7 +118,8 @@ public final class TypeUtils {
         checkNotNull(expr);
 
         if (expr.getType() instanceof BvType) {
-            @SuppressWarnings("unchecked") final Expr<BvType> result = (Expr<BvType>) expr;
+            @SuppressWarnings("unchecked")
+            final Expr<BvType> result = (Expr<BvType>) expr;
             return result;
         } else {
             throw new ClassCastException(
@@ -132,7 +137,8 @@ public final class TypeUtils {
         checkNotNull(expr);
 
         if (expr.getType() instanceof FpType) {
-            @SuppressWarnings("unchecked") final Expr<FpType> result = (Expr<FpType>) expr;
+            @SuppressWarnings("unchecked")
+            final Expr<FpType> result = (Expr<FpType>) expr;
             return result;
         } else {
             throw new ClassCastException(
@@ -187,12 +193,19 @@ public final class TypeUtils {
         } else if (type instanceof RatType) {
             return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
         } else if (type instanceof BvType) {
-            return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
+            return (LitExpr<T>)
+                    cast(
+                            BvUtils.bigIntegerToNeutralBvLitExpr(
+                                    BigInteger.ZERO, ((BvType) type).getSize()),
+                            type);
         } else if (type instanceof FpType) {
-            return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
+            return (LitExpr<T>)
+                    cast(
+                            FpUtils.bigFloatToFpLitExpr(
+                                    BigFloat.zero(((FpType) type).getSignificand()), (FpType) type),
+                            type);
         } else {
             throw new AssertionError();
         }
     }
-
 }

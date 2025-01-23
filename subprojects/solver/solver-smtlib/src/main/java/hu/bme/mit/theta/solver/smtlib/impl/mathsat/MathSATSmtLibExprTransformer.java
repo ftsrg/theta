@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,13 +22,15 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 
 public class MathSATSmtLibExprTransformer extends GenericSmtLibExprTransformer {
 
-    public MathSATSmtLibExprTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
+    public MathSATSmtLibExprTransformer(
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         super(transformer, symbolTable);
     }
 
     @Override
     protected String transformIntRem(final IntRemExpr expr) {
-        return String.format("(ite (< %2$s 0) (- (mod %1$s %2$s)) (mod %1$s %2$s))",
+        return String.format(
+                "(ite (< %2$s 0) (- (mod %1$s %2$s)) (mod %1$s %2$s))",
                 toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 }

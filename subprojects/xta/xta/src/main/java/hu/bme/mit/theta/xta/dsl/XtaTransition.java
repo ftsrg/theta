@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,11 +21,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -41,6 +36,10 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SelectContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TransitionContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 final class XtaTransition implements Scope {
 
@@ -123,8 +122,8 @@ final class XtaTransition implements Scope {
             guards = emptySet();
         }
 
-        final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env))
-                .collect(toList());
+        final List<Stmt> assignments =
+                updates.stream().map(u -> u.instantiate(env)).collect(toList());
         final Optional<Sync> label = sync.map(s -> s.instantiate(env));
 
         process.createEdge(source, target, guards, label, assignments);
@@ -147,5 +146,4 @@ final class XtaTransition implements Scope {
             return scope.resolve(name);
         }
     }
-
 }

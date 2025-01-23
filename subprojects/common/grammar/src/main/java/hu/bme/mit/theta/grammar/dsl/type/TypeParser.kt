@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,58 +34,58 @@ import org.antlr.v4.runtime.CommonTokenStream
 
 class TypeWrapper(content: String) {
 
-    private val context: TypeContext
+  private val context: TypeContext
 
-    init {
-        val lexer = TypeLexer(CharStreams.fromString(content))
-        lexer.addErrorListener(ThrowingErrorListener)
-        val parser = TypeParser(CommonTokenStream(lexer))
-        parser.errorHandler = BailErrorStrategy()
-        this.context = parser.type()
+  init {
+    val lexer = TypeLexer(CharStreams.fromString(content))
+    lexer.addErrorListener(ThrowingErrorListener)
+    val parser = TypeParser(CommonTokenStream(lexer))
+    parser.errorHandler = BailErrorStrategy()
+    this.context = parser.type()
+  }
+
+  fun instantiate(): Type {
+    return TypeCreatorVisitor.INSTANCE.visit(context)
+  }
+
+  private class TypeCreatorVisitor private constructor() : TypeBaseVisitor<Type>() {
+
+    override fun visitBoolType(ctx: BoolTypeContext): Type {
+      return BoolExprs.Bool()
     }
 
-    fun instantiate(): Type {
-        return TypeCreatorVisitor.INSTANCE.visit(context)
+    override fun visitIntType(ctx: IntTypeContext): Type {
+      return IntExprs.Int()
     }
 
-    private class TypeCreatorVisitor private constructor() : TypeBaseVisitor<Type>() {
-
-        override fun visitBoolType(ctx: BoolTypeContext): Type {
-            return BoolExprs.Bool()
-        }
-
-        override fun visitIntType(ctx: IntTypeContext): Type {
-            return IntExprs.Int()
-        }
-
-        override fun visitRatType(ctx: RatTypeContext): Type {
-            return RatExprs.Rat()
-        }
-
-        override fun visitArrayType(ctx: ArrayTypeContext): Type {
-            val indexType: Type = ctx.indexType.accept<Type>(this)
-            val elemType: Type = ctx.elemType.accept<Type>(this)
-            return ArrayExprs.Array(indexType, elemType)
-        }
-
-        override fun visitBvType(ctx: BvTypeContext): Type {
-            val size: Int = ctx.size.getText().toInt()
-            return BvExprs.BvType(size)
-        }
-
-        override fun visitFpType(ctx: TypeParser.FpTypeContext): Type {
-            val expSize = ctx.exponent.text.toInt()
-            val sigSize = ctx.significand.text.toInt()
-            return FpType.of(expSize, sigSize)
-        }
-
-        override fun visitFuncType(ctx: FuncTypeContext?): Type {
-            return Func(ctx!!.from.accept(this), ctx.to.accept(this))
-        }
-
-        companion object {
-
-            val INSTANCE = TypeCreatorVisitor()
-        }
+    override fun visitRatType(ctx: RatTypeContext): Type {
+      return RatExprs.Rat()
     }
+
+    override fun visitArrayType(ctx: ArrayTypeContext): Type {
+      val indexType: Type = ctx.indexType.accept<Type>(this)
+      val elemType: Type = ctx.elemType.accept<Type>(this)
+      return ArrayExprs.Array(indexType, elemType)
+    }
+
+    override fun visitBvType(ctx: BvTypeContext): Type {
+      val size: Int = ctx.size.getText().toInt()
+      return BvExprs.BvType(size)
+    }
+
+    override fun visitFpType(ctx: TypeParser.FpTypeContext): Type {
+      val expSize = ctx.exponent.text.toInt()
+      val sigSize = ctx.significand.text.toInt()
+      return FpType.of(expSize, sigSize)
+    }
+
+    override fun visitFuncType(ctx: FuncTypeContext?): Type {
+      return Func(ctx!!.from.accept(this), ctx.to.accept(this))
+    }
+
+    companion object {
+
+      val INSTANCE = TypeCreatorVisitor()
+    }
+  }
 }

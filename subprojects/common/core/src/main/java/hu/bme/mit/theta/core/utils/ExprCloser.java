@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,31 +18,31 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static java.lang.String.format;
 
-import java.util.Map;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import java.util.Map;
 
 final class ExprCloser {
 
     private static final String PARAM_NAME_FORMAT = "_%s_p";
 
-    private ExprCloser() {
-    }
+    private ExprCloser() {}
 
-    static <T extends Type> Expr<T> close(final Expr<T> expr,
-                                          final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+    static <T extends Type> Expr<T> close(
+            final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
         if (expr instanceof RefExpr) {
             final RefExpr<T> ref = (RefExpr<T>) expr;
             final Decl<T> decl = ref.getDecl();
             if (decl instanceof VarDecl) {
                 final VarDecl<T> varDecl = (VarDecl<T>) decl;
-                final ParamDecl<?> param = mapping.computeIfAbsent(varDecl,
-                        v -> Param(format(PARAM_NAME_FORMAT, v.getName()), v.getType()));
+                final ParamDecl<?> param =
+                        mapping.computeIfAbsent(
+                                varDecl,
+                                v -> Param(format(PARAM_NAME_FORMAT, v.getName()), v.getType()));
                 final Expr<T> paramRef = TypeUtils.cast(param.getRef(), expr.getType());
                 return paramRef;
             }
@@ -50,5 +50,4 @@ final class ExprCloser {
 
         return expr.map(op -> close(op, mapping));
     }
-
 }

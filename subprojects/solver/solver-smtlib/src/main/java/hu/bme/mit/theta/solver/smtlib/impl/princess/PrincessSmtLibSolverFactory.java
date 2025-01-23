@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,17 +18,22 @@ package hu.bme.mit.theta.solver.smtlib.impl.princess;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.*;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
-
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class PrincessSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
-    private PrincessSmtLibSolverFactory(Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
-        super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS), enumStrategy);
+    private PrincessSmtLibSolverFactory(
+            Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
+        super(
+                solverPath,
+                args,
+                EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS),
+                enumStrategy);
     }
 
-    public static PrincessSmtLibSolverFactory create(Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
+    public static PrincessSmtLibSolverFactory create(
+            Path solverPath, String[] args, final SmtLibEnumStrategy enumStrategy) {
         return new PrincessSmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 
@@ -37,10 +42,11 @@ public class PrincessSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
-                EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
+        final var solverBinary =
+                new GenericSmtLibSolverBinary(
+                        solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
 
-        return new PrincessSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                solverBinary, enumStrategy);
+        return new PrincessSmtLibItpSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 package hu.bme.mit.theta.solver.smtlib.solver.parser;
 
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Get_unsat_core_responseContext;
-import org.antlr.v4.runtime.RuleContext;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.RuleContext;
 
 public class GetUnsatCoreResponse extends SpecificResponse {
 
@@ -32,8 +31,9 @@ public class GetUnsatCoreResponse extends SpecificResponse {
 
     public static GetUnsatCoreResponse fromContext(Get_unsat_core_responseContext ctx) {
         return new GetUnsatCoreResponse(
-                ctx.symbol().stream().map(RuleContext::getText).collect(Collectors.toUnmodifiableSet())
-        );
+                ctx.symbol().stream()
+                        .map(RuleContext::getText)
+                        .collect(Collectors.toUnmodifiableSet()));
     }
 
     public static GetUnsatCoreResponse empty() {

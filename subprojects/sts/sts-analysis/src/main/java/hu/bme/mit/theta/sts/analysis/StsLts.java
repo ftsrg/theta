@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package hu.bme.mit.theta.sts.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.sts.STS;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * An LTS implementation for the STS formalism. The STS has only one enabled Action for every State,
@@ -51,5 +50,4 @@ public final class StsLts implements LTS<State, StsAction> {
     public Collection<StsAction> getEnabledActionsFor(final State state) {
         return actions;
     }
-
 }

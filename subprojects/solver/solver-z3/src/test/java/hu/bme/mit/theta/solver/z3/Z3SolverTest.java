@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,25 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.z3;
+
+import static com.google.common.collect.ImmutableList.of;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -36,31 +55,11 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static com.google.common.collect.ImmutableList.of;
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
 
 public final class Z3SolverTest {
 
@@ -120,10 +119,12 @@ public final class Z3SolverTest {
         final ParamDecl<IntType> px = Param("x", Int());
         final Expr<IntType> x = px.getRef();
 
-        solver.add(BoolExprs.Forall(of(px),
-                BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
-        solver.add(BoolExprs.Forall(of(px),
-                BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
+        solver.add(
+                BoolExprs.Forall(
+                        of(px), BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
+        solver.add(
+                BoolExprs.Forall(
+                        of(px), BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
 
         // Act
         final SolverStatus status = solver.check();
@@ -136,7 +137,7 @@ public final class Z3SolverTest {
         assertEquals(ca.getType(), val.getType());
     }
 
-    //@Test
+    // @Test
     public void testArray() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
@@ -157,7 +158,7 @@ public final class Z3SolverTest {
         assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
     }
 
-    //@Test
+    // @Test
     public void testArrayInit() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
         var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
@@ -226,8 +227,8 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, false, true, false})));
         solver.add(BvExprs.Eq(cx.getRef(), cy.getRef()));
 
         SolverStatus status = solver.check();
@@ -243,7 +244,7 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false})));
         solver.add(BvExprs.Neq(cx.getRef(), cz.getRef()));
 
         SolverStatus status = solver.check();
@@ -263,9 +264,14 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
-        solver.add(BvExprs.Eq(cy.getRef(),
-                BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[]{false, false, false, true})))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false})));
+        solver.add(
+                BvExprs.Eq(
+                        cy.getRef(),
+                        BvExprs.Add(
+                                List.of(
+                                        cx.getRef(),
+                                        Bv(new boolean[] {false, false, false, true})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -284,9 +290,11 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(),
-                BvExprs.Sub(cx.getRef(), Bv(new boolean[]{false, false, false, true}))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+        solver.add(
+                BvExprs.Eq(
+                        cy.getRef(),
+                        BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -305,7 +313,7 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
         solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
 
         SolverStatus status = solver.check();
@@ -325,9 +333,14 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(),
-                BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[]{false, false, true, false})))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+        solver.add(
+                BvExprs.Eq(
+                        cy.getRef(),
+                        BvExprs.Mul(
+                                List.of(
+                                        cx.getRef(),
+                                        Bv(new boolean[] {false, false, true, false})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -346,8 +359,8 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[]{true, true, true, true})));
-        solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[]{true, true, true, true})));
+        solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[] {true, true, true, true})));
+        solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[] {true, true, true, true})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -366,9 +379,11 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{true, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(),
-                BvExprs.SMod(cx.getRef(), Bv(new boolean[]{false, true, false, false}))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {true, false, true, false})));
+        solver.add(
+                BvExprs.Eq(
+                        cy.getRef(),
+                        BvExprs.SMod(cx.getRef(), Bv(new boolean[] {false, true, false, false}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -387,9 +402,11 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())),
-                Bv(new boolean[]{true, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+        solver.add(
+                BvExprs.Eq(
+                        BvExprs.Or(List.of(cx.getRef(), cy.getRef())),
+                        Bv(new boolean[] {true, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -408,9 +425,11 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())),
-                Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+        solver.add(
+                BvExprs.Eq(
+                        BvExprs.And(List.of(cx.getRef(), cy.getRef())),
+                        Bv(new boolean[] {false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -429,9 +448,11 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())),
-                Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+        solver.add(
+                BvExprs.Eq(
+                        BvExprs.Xor(List.of(cx.getRef(), cy.getRef())),
+                        Bv(new boolean[] {false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -450,10 +471,12 @@ public final class Z3SolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
-        solver.add(BvExprs.Eq(
-                BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[]{false, false, false, true})),
-                cx.getRef()));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
+        solver.add(
+                BvExprs.Eq(
+                        BvExprs.ArithShiftRight(
+                                cy.getRef(), Bv(new boolean[] {false, false, false, true})),
+                        cx.getRef()));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());

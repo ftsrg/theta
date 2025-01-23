@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,53 +18,59 @@ package hu.bme.mit.theta.core.type.arraytype;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.List;
 
 public final class ArrayExprs {
 
-    private ArrayExprs() {
-    }
+    private ArrayExprs() {}
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayType<IndexType, ElemType> Array(
-            final IndexType indexType, final ElemType elemType) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayType<IndexType, ElemType> Array(
+                    final IndexType indexType, final ElemType elemType) {
         return ArrayType.of(indexType, elemType);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> Array(
-            final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
-            final Expr<ElemType> elseElem,
-            final ArrayType<IndexType, ElemType> type) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayLitExpr<IndexType, ElemType> Array(
+                    final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
+                    final Expr<ElemType> elseElem,
+                    final ArrayType<IndexType, ElemType> type) {
         return ArrayLitExpr.of(elems, elseElem, type);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayInitExpr<IndexType, ElemType> ArrayInit(
-            final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems, final Expr<ElemType> elseElem,
-            final ArrayType<IndexType, ElemType> type) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayInitExpr<IndexType, ElemType> ArrayInit(
+                    final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+                    final Expr<ElemType> elseElem,
+                    final ArrayType<IndexType, ElemType> type) {
         return ArrayInitExpr.of(elems, elseElem, type);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> Read(
-            final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayReadExpr<IndexType, ElemType> Read(
+                    final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
         return ArrayReadExpr.of(array, index);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<IndexType, ElemType> Write(
-            final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
-            final Expr<ElemType> elem) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayWriteExpr<IndexType, ElemType> Write(
+                    final Expr<ArrayType<IndexType, ElemType>> array,
+                    final Expr<IndexType> index,
+                    final Expr<ElemType> elem) {
         return ArrayWriteExpr.of(array, index, elem);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayEqExpr<IndexType, ElemType> Eq(
-            final Expr<ArrayType<IndexType, ElemType>> leftOp,
-            final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayEqExpr<IndexType, ElemType> Eq(
+                    final Expr<ArrayType<IndexType, ElemType>> leftOp,
+                    final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         return ArrayEqExpr.of(leftOp, rightOp);
     }
 
-    public static <IndexType extends Type, ElemType extends Type> ArrayNeqExpr<IndexType, ElemType> Neq(
-            final Expr<ArrayType<IndexType, ElemType>> leftOp,
-            final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+    public static <IndexType extends Type, ElemType extends Type>
+            ArrayNeqExpr<IndexType, ElemType> Neq(
+                    final Expr<ArrayType<IndexType, ElemType>> leftOp,
+                    final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         return ArrayNeqExpr.of(leftOp, rightOp);
     }
-
 }

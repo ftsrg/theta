@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package hu.bme.mit.theta.cfa.parser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.Reader;
-
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.common.parser.LispLexer;
 import hu.bme.mit.theta.common.parser.LispParser;
 import hu.bme.mit.theta.common.parser.SExpr;
 import hu.bme.mit.theta.core.parser.Env;
+import java.io.Reader;
 
 public final class CfaParser {
 
@@ -43,5 +42,4 @@ public final class CfaParser {
         final CFA cfa = interpreter.cfa(sexpr);
         return cfa;
     }
-
 }

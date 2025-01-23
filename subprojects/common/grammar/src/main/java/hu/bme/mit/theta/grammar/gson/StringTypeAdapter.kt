@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.grammar.gson
 
 import com.google.gson.TypeAdapter
@@ -23,18 +22,16 @@ import com.google.gson.stream.JsonWriter
 
 class StringTypeAdapter<T>(val fromString: (String) -> T) : TypeAdapter<T>() {
 
-    override fun write(writer: JsonWriter, value: T?) {
-        if (value != null) writer.value(value.toString())
-        else writer.nullValue()
-    }
+  override fun write(writer: JsonWriter, value: T?) {
+    if (value != null) writer.value(value.toString()) else writer.nullValue()
+  }
 
-    override fun read(reader: JsonReader): T? {
-        if (reader.peek() == JsonToken.NULL) {
-            return null
-        } else {
-            check(reader.peek() == JsonToken.STRING)
-            return fromString(reader.nextString())
-        }
+  override fun read(reader: JsonReader): T? {
+    if (reader.peek() == JsonToken.NULL) {
+      return null
+    } else {
+      check(reader.peek() == JsonToken.STRING)
+      return fromString(reader.nextString())
     }
-
+  }
 }

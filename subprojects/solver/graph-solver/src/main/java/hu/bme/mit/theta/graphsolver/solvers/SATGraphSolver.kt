@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.graphsolver.solvers
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -24,10 +23,11 @@ import hu.bme.mit.theta.solver.SolverStatus
 
 class SATGraphSolver(val solver: Solver) : GraphSolver<Expr<BoolType>> {
 
-    override fun add(t: Expr<BoolType>) = solver.add(t)
+  override fun add(t: Expr<BoolType>) = solver.add(t)
 
-    override fun getAll(): Collection<Expr<BoolType>> = solver.assertions
+  override fun getAll(): Collection<Expr<BoolType>> = solver.assertions
 
-    override fun check(): SolverStatus = solver.check()
-    override fun getModel(): Valuation = solver.model
+  override fun check(): SolverStatus = solver.check()
+
+  override fun getModel(): Valuation = solver.model
 }

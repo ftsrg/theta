@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,14 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.HashMap;
+import java.util.Map;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.EnumerationFormula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
 import org.sosy_lab.java_smt.api.SolverContext;
-
-import java.util.HashMap;
-import java.util.Map;
 
 final class JavaSMTTypeTransformer {
 
@@ -57,12 +56,17 @@ final class JavaSMTTypeTransformer {
         } else if (type instanceof RatType) {
             return realSort;
         } else if (type instanceof EnumType enumType) {
-            return enumSorts.computeIfAbsent(enumType.getName(), name -> solverContext.getFormulaManager().getEnumerationFormulaManager().declareEnumeration(name, enumType.getLongValues()));
+            return enumSorts.computeIfAbsent(
+                    enumType.getName(),
+                    name ->
+                            solverContext
+                                    .getFormulaManager()
+                                    .getEnumerationFormulaManager()
+                                    .declareEnumeration(name, enumType.getLongValues()));
         } else if (type instanceof BvType bvType) {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {
-            return FormulaType.getFloatingPointType(fpType.getExponent(),
-                    fpType.getSignificand());
+            return FormulaType.getFloatingPointType(fpType.getExponent(), fpType.getSignificand());
         } else if (type instanceof ArrayType<?, ?> arrayType) {
             final FormulaType<?> indexSort = toSort(arrayType.getIndexType());
             final FormulaType<?> elemSort = toSort(arrayType.getElemType());
@@ -72,5 +76,4 @@ final class JavaSMTTypeTransformer {
                     "Unsupported type: " + type.getClass().getSimpleName());
         }
     }
-
 }

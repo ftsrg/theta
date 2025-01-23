@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,18 +22,15 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.StrengtheningOperator;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Set;
 
-public final class Prod2ExplPredStrengtheningOperator implements
-        StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
+public final class Prod2ExplPredStrengtheningOperator
+        implements StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
 
     private final Solver solver;
 
@@ -62,7 +59,6 @@ public final class Prod2ExplPredStrengtheningOperator implements
                     validStates.add(prod2State);
                 }
             }
-
         }
         if (validStates.size() < prod2States.size()) {
             var removed = Containers.createSet();
@@ -76,4 +72,3 @@ public final class Prod2ExplPredStrengtheningOperator implements
         return validStates;
     }
 }
-

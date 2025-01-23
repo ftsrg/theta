@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
     private final Refiner<P, Pr, C> refiner;
     private final Logger logger;
     private final Pr proof;
-    public final ProofVisualizer<? super Pr> proofVisualizer;
+    private final ProofVisualizer<? super Pr> proofVisualizer;
 
     private CegarChecker(
             final Abstractor<P, Pr> abstractor,

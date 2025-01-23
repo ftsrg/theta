@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.cvc4;
 
+import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
+
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -31,10 +34,6 @@ import java.nio.channels.Channels;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
-import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
@@ -51,12 +50,17 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
 
-        try (
-                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-                final var outputChannel = new FileOutputStream(
-                        installDir.resolve(getSolverBinaryName()).toAbsolutePath().toString()).getChannel()
-        ) {
-            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n",
+        try (final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
+                final var outputChannel =
+                        new FileOutputStream(
+                                        installDir
+                                                .resolve(getSolverBinaryName())
+                                                .toAbsolutePath()
+                                                .toString())
+                                .getChannel()) {
+            logger.write(
+                    Logger.Level.MAINSTEP,
+                    "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
@@ -74,17 +78,16 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[]{
-                "--lang", "smt2",
-                "--output-lang", "smt2",
-                "--quiet",
-                "--incremental"
-        };
+        return new String[] {"--lang", "smt2", "--output-lang", "smt2", "--quiet", "--incremental"};
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version,
-                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+    public SolverFactory getSolverFactory(
+            final Path installDir,
+            final String version,
+            final Path solverPath,
+            final String[] solverArgs)
+            throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
         return CVC4SmtLibSolverFactory.create(solverFilePath, solverArgs);
@@ -120,10 +123,11 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             }
         }
 
-        return URI.create(String.format(
-                "https://cvc4.cs.stanford.edu/downloads/builds/%s/cvc4-%s-%s%s",
-                archString, version, archString, platformExtension
-        )).toURL();
+        return URI.create(
+                        String.format(
+                                "https://cvc4.cs.stanford.edu/downloads/builds/%s/cvc4-%s-%s%s",
+                                archString, version, archString, platformExtension))
+                .toURL();
     }
 
     private String getSolverBinaryName() {

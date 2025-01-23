@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,38 +13,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.arg;
+
+import static com.google.common.base.Objects.equal;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Objects.equal;
-
 /**
- * Structural comparisons using equal() and hashCode() for ARG-related classes.
- * Each node is uniquely identifiable using its incoming edge (or its absence), and wrapped state.
- * Each edge is uniquely identifiable using its source node, and wrapped action.
- * An ARG is uniquely identifiable using its leaf nodes.
- * An ArgTrace is uniquely identifiable using its last node.
- * <p>
- * We perform caching for the hash codes, but equals() checks will always traverse the ancestors of
- * a node (and edge). However, this traversal only goes towards the root, rather than in all
+ * Structural comparisons using equal() and hashCode() for ARG-related classes. Each node is
+ * uniquely identifiable using its incoming edge (or its absence), and wrapped state. Each edge is
+ * uniquely identifiable using its source node, and wrapped action. An ARG is uniquely identifiable
+ * using its leaf nodes. An ArgTrace is uniquely identifiable using its last node.
+ *
+ * <p>We perform caching for the hash codes, but equals() checks will always traverse the ancestors
+ * of a node (and edge). However, this traversal only goes towards the root, rather than in all
  * directions.
  */
 public final class ArgStructuralEquality {
     private static final Map<Object, Integer> hashCodeCache = new LinkedHashMap<>();
 
-    private ArgStructuralEquality() {
-    }
+    private ArgStructuralEquality() {}
 
-    public static boolean equals(final ArgNode<? extends State, ? extends Action> n1,
-                                 final ArgNode<? extends State, ? extends Action> n2) {
+    public static boolean equals(
+            final ArgNode<? extends State, ? extends Action> n1,
+            final ArgNode<? extends State, ? extends Action> n2) {
 
         // if references are the same, the two nodes are equal
         if (n1 == n2) {
@@ -74,8 +71,9 @@ public final class ArgStructuralEquality {
         return true;
     }
 
-    public static boolean equals(final ArgEdge<? extends State, ? extends Action> e1,
-                                 final ArgEdge<? extends State, ? extends Action> e2) {
+    public static boolean equals(
+            final ArgEdge<? extends State, ? extends Action> e1,
+            final ArgEdge<? extends State, ? extends Action> e2) {
 
         // if references are the same, the two edges are equal
         if (e1 == e2) {
@@ -86,7 +84,6 @@ public final class ArgStructuralEquality {
         if (e1 == null || e2 == null) {
             return false;
         }
-
 
         // if wrapped action is not same, edges are not equal
         if (!e1.getAction().equals(e2.getAction())) {
@@ -101,8 +98,9 @@ public final class ArgStructuralEquality {
         return true;
     }
 
-    public static boolean equals(final ARG<? extends State, ? extends Action> a1,
-                                 final ARG<? extends State, ? extends Action> a2) {
+    public static boolean equals(
+            final ARG<? extends State, ? extends Action> a1,
+            final ARG<? extends State, ? extends Action> a2) {
 
         // if references are the same, the two edges are equal
         if (a1 == a2) {
@@ -114,8 +112,10 @@ public final class ArgStructuralEquality {
             return false;
         }
 
-        Set<ArgNode<? extends State, ? extends Action>> leaves1 = a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
-        Set<ArgNode<? extends State, ? extends Action>> leaves2 = a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves1 =
+                a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves2 =
+                a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
 
         // if the two ARGs contain a different number of leaf nodes, they are not equal
         if (leaves1.size() != leaves2.size()) {
@@ -135,12 +135,12 @@ public final class ArgStructuralEquality {
         return true;
     }
 
-    public static boolean equals(final ArgTrace<? extends State, ? extends Action> t1,
-                                 final ArgTrace<? extends State, ? extends Action> t2) {
+    public static boolean equals(
+            final ArgTrace<? extends State, ? extends Action> t1,
+            final ArgTrace<? extends State, ? extends Action> t2) {
 
         return equal(t1.node(t1.length()), t2.node(t2.length()));
     }
-
 
     public static int hashCode(final ArgNode<? extends State, ? extends Action> n) {
         if (!hashCodeCache.containsKey(n)) {
@@ -173,7 +173,8 @@ public final class ArgStructuralEquality {
     public static int hashCode(final ARG<? extends State, ? extends Action> a) {
         int hashcode = 0;
 
-        Set<ArgNode<? extends State, ? extends Action>> leaves = a.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves =
+                a.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
         for (ArgNode<? extends State, ? extends Action> leaf : leaves) {
             hashcode += hashCode(leaf);
         }
@@ -188,5 +189,4 @@ public final class ArgStructuralEquality {
         }
         return hashCodeCache.get(t);
     }
-
 }

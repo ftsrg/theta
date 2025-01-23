@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package hu.bme.mit.theta.core.type.functype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements
-        Expr<ResultType> {
+public final class FuncAppExpr<ParamType extends Type, ResultType extends Type>
+        implements Expr<ResultType> {
 
     private static final int HASH_SEED = 7951;
 
@@ -37,21 +36,23 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
     private volatile int hashCode = 0;
 
-    private FuncAppExpr(final Expr<FuncType<ParamType, ResultType>> func,
-                        final Expr<ParamType> param) {
+    private FuncAppExpr(
+            final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
         this.func = checkNotNull(func);
         this.param = checkNotNull(param);
     }
 
-    public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> of(
-            final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
+    public static <ParamType extends Type, ResultType extends Type>
+            FuncAppExpr<ParamType, ResultType> of(
+                    final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
         return new FuncAppExpr<>(func, param);
     }
 
     public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<?, ?> create(
-            final Expr<?> func,
-            final Expr<?> param) {
-        @SuppressWarnings("unchecked") final FuncType<ParamType, ResultType> funcType = (FuncType<ParamType, ResultType>) func.getType();
+            final Expr<?> func, final Expr<?> param) {
+        @SuppressWarnings("unchecked")
+        final FuncType<ParamType, ResultType> funcType =
+                (FuncType<ParamType, ResultType>) func.getType();
         final Expr<FuncType<ParamType, ResultType>> newFunc = cast(func, funcType);
         final Expr<ParamType> newParam = cast(param, funcType.getParamType());
         return FuncAppExpr.of(newFunc, newParam);
@@ -91,8 +92,8 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
         return cast(create(ops.get(0), ops.get(1)), getType());
     }
 
-    public FuncAppExpr<ParamType, ResultType> with(final Expr<FuncType<ParamType, ResultType>> func,
-                                                   final Expr<ParamType> param) {
+    public FuncAppExpr<ParamType, ResultType> with(
+            final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
         if (this.func == func && this.param == param) {
             return this;
         } else {
@@ -137,5 +138,4 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
     public String toString() {
         return Utils.lispStringBuilder().add(func).body().add(param).toString();
     }
-
 }

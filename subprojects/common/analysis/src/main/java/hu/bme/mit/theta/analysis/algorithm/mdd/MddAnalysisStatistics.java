@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,12 @@ public class MddAnalysisStatistics extends Statistics {
     private final Long queryCount;
     private final Long cacheSize;
 
-
-    public MddAnalysisStatistics(Long violatingSize, Long stateSpaceSize, Long hitCount, Long queryCount, Long cacheSize) {
+    public MddAnalysisStatistics(
+            Long violatingSize,
+            Long stateSpaceSize,
+            Long hitCount,
+            Long queryCount,
+            Long cacheSize) {
         this.violatingSize = violatingSize;
         this.stateSpaceSize = stateSpaceSize;
         this.hitCount = hitCount;

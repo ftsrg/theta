@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.prod2;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Collection;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
 
@@ -38,8 +37,8 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
         this.prec2 = checkNotNull(prec2);
     }
 
-    public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(final P1 prec1,
-                                                                          final P2 prec2) {
+    public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(
+            final P1 prec1, final P2 prec2) {
         return new Prod2Prec<>(prec1, prec2);
     }
 
