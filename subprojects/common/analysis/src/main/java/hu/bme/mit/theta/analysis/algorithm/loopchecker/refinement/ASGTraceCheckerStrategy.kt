@@ -36,14 +36,14 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.*
 
 enum class ASGTraceCheckerStrategy {
-  MILANO {
+  DIRECT_REFINEMENT {
 
     override fun <S : ExprState, A : ExprAction> check(
       trace: ASGTrace<S, A>,
       solverFactory: SolverFactory,
       init: Expr<BoolType>,
       logger: Logger,
-    ) = MilanoASGTraceCheckerStrategy(trace, solverFactory, init, logger).check()
+    ) = DirectRefinementASGTraceCheckerStrategy(trace, solverFactory, init, logger).check()
   },
   BOUNDED_UNROLLING {
 
@@ -66,7 +66,7 @@ enum class ASGTraceCheckerStrategy {
 
   companion object {
 
-    val default = MILANO
+    val default = DIRECT_REFINEMENT
   }
 
   abstract fun <S : ExprState, A : ExprAction> check(

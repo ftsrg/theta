@@ -140,13 +140,13 @@ Options related to output and statistics
 
 Options related to LTL property checking
 
-| Option                                         | Description                                                                                                                                      |
-|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| --ltl-expression=<text>                        | LTL expression to check                                                                                                                          |
-| --ltl2buchi-command=<text>                     | A command that runs on your system. The expression gets appended at the end of it.For example, if you use SPOT, this should be: spot ltl2tgba -f |
-| --search-strategy=(GDFS\|NDFS\|FULL)           | Which strategy to use for search                                                                                                                 |
-| --refiner-strategy=(MILANO\|BOUNDED_UNROLLING) | Which strategy to use for concretization                                                                                                         |
-| --envtran-separation=(COMBINED\|SEPARATE)      | Whether Buchi evaluation should happen between env and trans transitions or not (SEPARATED and COMBINED, respectively)                           |
+| Option                                                    | Description                                                                                                                                      |
+|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| --ltl-expression=<text>                                   | LTL expression to check                                                                                                                          |
+| --ltl2buchi-command=<text>                                | A command that runs on your system. The expression gets appended at the end of it.For example, if you use SPOT, this should be: spot ltl2tgba -f |
+| --search-strategy=(GDFS\|NDFS\|FULL)                      | Which strategy to use for search                                                                                                                 |
+| --refiner-strategy=(DIRECT_REFINEMENT\|BOUNDED_UNROLLING) | Which strategy to use for concretization                                                                                                         |
+| --envtran-separation=(COMBINED\|SEPARATE)                 | Whether Buchi evaluation should happen between env and trans transitions or not (SEPARATED and COMBINED, respectively)                           |
 
 
 ### Options

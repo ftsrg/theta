@@ -99,7 +99,7 @@ class LtlCheckTestWithCfaExpl(
         itpSolverFactory,
         logger,
         LoopcheckerSearchStrategy.GDFS,
-        ASGTraceCheckerStrategy.MILANO,
+        ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
         Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
         variables,
         nextSideFunction = NextSideFunctions.Alternating(),

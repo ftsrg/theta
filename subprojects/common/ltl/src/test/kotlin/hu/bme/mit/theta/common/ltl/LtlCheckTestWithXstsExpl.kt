@@ -104,7 +104,7 @@ class LtlCheckTestWithXstsExpl(
         solverFactory,
         logger,
         LoopcheckerSearchStrategy.GDFS,
-        ASGTraceCheckerStrategy.MILANO,
+        ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
         Ltl2BuchiThroughHoaf(Ltl2HoafFromDir("src/test/resources/hoa"), logger),
         xsts.vars,
         xsts.initFormula,

@@ -47,7 +47,7 @@ Concretizing a lasso trace requires an extra step after simple concretization. F
 trace, and a classic concretization is used to determine if it's even feasible. However, after that, one needs to make
 sure that the loop of the lasso is also a possible loop in the concrete state space.
 
-#### Milano
+#### Direct refinement
 
 This is a more direct approach. It checks whether the honda can be in the same
 state before and after the loop. This is done by adding the cycle validity constraint to the
@@ -86,4 +86,4 @@ To find all the variables that contribute towards the needed number of unwinding
 
 Since infinite bounds can
 still be encountered, there is a configurable maximum for the bound. If m would be greater
-than that, the refiner falls back to the default concretizer algorithm, which is Milano in the current implementation.
+than that, the refiner falls back to the default concretizer algorithm, which is direct refinement in the current implementation.

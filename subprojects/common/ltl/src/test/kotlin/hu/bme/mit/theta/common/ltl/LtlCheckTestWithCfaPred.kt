@@ -77,7 +77,7 @@ class LtlCheckTestWithCfaPred(
     @Parameterized.Parameters(name = "{3}-{4}: {0}")
     fun params() =
       listOf(LoopcheckerSearchStrategy.GDFS, LoopcheckerSearchStrategy.NDFS).flatMap { search ->
-        listOf(ASGTraceCheckerStrategy.MILANO, ASGTraceCheckerStrategy.BOUNDED_UNROLLING).flatMap {
+        listOf(ASGTraceCheckerStrategy.DIRECT_REFINEMENT, ASGTraceCheckerStrategy.BOUNDED_UNROLLING).flatMap {
           ref ->
           data().map { arrayOf(*it, search, ref) }
         }

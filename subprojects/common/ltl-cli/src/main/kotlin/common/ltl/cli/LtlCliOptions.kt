@@ -40,5 +40,5 @@ open class LtlCliOptions :
   val refinerStrategy by
     option(help = "Which strategy to use for search")
       .enum<ASGTraceCheckerStrategy>()
-      .default(ASGTraceCheckerStrategy.MILANO)
+      .default(ASGTraceCheckerStrategy.DIRECT_REFINEMENT)
 }

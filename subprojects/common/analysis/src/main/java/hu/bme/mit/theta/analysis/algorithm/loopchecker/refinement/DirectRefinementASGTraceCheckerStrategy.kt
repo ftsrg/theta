@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.solver.Interpolant
 import hu.bme.mit.theta.solver.SolverFactory
 
-class MilanoASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
+class DirectRefinementASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   private val trace: ASGTrace<S, A>,
   solverFactory: SolverFactory,
   init: Expr<BoolType>,
