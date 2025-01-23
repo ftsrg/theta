@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Thu, 2024-11-14 13:08:48 UTC
+tool:                    Theta 6.8.5
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1939-615
+os:                      Linux-6.8.0-1016-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3244.228 MHz
+ram:                     16766.783488 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (generic error)            0.18        0.19        None
+and-02.yml                            ERROR (generic error)            0.28        0.57        None
+and-03-false.yml                      ERROR (generic error)            0.25        0.24        None
+and-03.yml                            ERROR (generic error)            0.25        0.24        None
+and-04-false.yml                      ERROR (generic error)            0.25        0.24        None
+and-04.yml                            ERROR (generic error)            0.28        0.28        None
+and-05-false.yml                      ERROR (generic error)            0.25        0.24        None
+and-05.yml                            ERROR (generic error)            0.25        0.24        None
+and-06.yml                            ERROR (generic error)            0.25        0.24        None
+and-assume.yml                        ERROR (generic error)            0.18        0.18        None
+consecutive-zero-bits-trailing.yml    ERROR (generic error)            0.25        0.25        None
+counting-bits-BK.yml                  ERROR (generic error)            0.25        0.24        None
+counting-bits-BK1.yml                 ERROR (generic error)            0.25        0.25        None
+counting-bits-set.yml                 ERROR (generic error)            0.25        0.26        None
+not-01.yml                            ERROR (generic error)            0.25        0.25        None
+not-02-false.yml                      ERROR (generic error)            0.25        0.25        None
+not-02.yml                            ERROR (generic error)            0.25        0.24        None
+not-03-false.yml                      ERROR (generic error)            0.25        0.25        None
+not-03.yml                            ERROR (generic error)            0.25        0.25        None
+not-04-false.yml                      ERROR (generic error)            0.25        0.24        None
+not-04.yml                            ERROR (generic error)            0.25        0.24        None
+not-05-false.yml                      ERROR (generic error)            0.25        0.24        None
+not-05.yml                            ERROR (generic error)            0.25        0.25        None
+or-01.yml                             ERROR (generic error)            0.25        0.25        None
+or-02.yml                             ERROR (generic error)            0.25        0.24        None
+or-03.yml                             ERROR (generic error)            0.25        0.25        None
+or-04.yml                             ERROR (generic error)            0.25        0.24        None
+or-05-false.yml                       ERROR (generic error)            0.25        0.24        None
+or-05.yml                             ERROR (generic error)            0.25        0.25        None
+or-06.yml                             ERROR (generic error)            0.25        0.24        None
+parity0.yml                           ERROR (generic error)            0.25        0.25        None
+parity1.yml                           ERROR (generic error)            0.25        0.25        None
+reverse-bits1.yml                     ERROR (generic error)            0.25        0.24        None
+xor-01.yml                            ERROR (generic error)            0.26        0.25        None
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                             8.41       12.12           -
+
+Statistics:             34 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              34
+  Score:                 0 (max: 57)
