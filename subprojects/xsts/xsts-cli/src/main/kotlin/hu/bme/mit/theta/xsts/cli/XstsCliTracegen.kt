@@ -80,7 +80,7 @@ class XstsCliTracegen :
 
     for (node in summaryStateMap.keys) {
       for (outEdge in node.outEdges) {
-        sb.add("${node.id} -> ${outEdge.target.id}")
+        sb.add("_${node.id} -> _${outEdge.target.id}")
       }
     }
 
@@ -200,6 +200,7 @@ class XstsCliTracegen :
       traceDirPath.mkdir()
     }
 
+    // TODO FIX: if prop at end of xsts, it uses that, not this one
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())
     val xsts =
       XstsDslManager.createXsts(SequenceInputStream(FileInputStream(modelFile), propStream))

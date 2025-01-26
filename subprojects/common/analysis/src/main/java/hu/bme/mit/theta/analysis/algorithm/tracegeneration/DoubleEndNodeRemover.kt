@@ -37,9 +37,7 @@ class DoubleEndNodeRemover<S : State, A : Action> {
       val parent = node.parent.get()
       if (parent.parent.isEmpty) return false
       val grandParent = node.parent.get().parent.get()
-      return if (
-        node.isCovered && parent.parent.get() == node.coveringNode.get()
-      ) { // node is covered and parent is checked above
+      return if (node.state == grandParent.state) { // node is covered and parent is checked above
         // bad node
         true
       } else {
@@ -49,7 +47,7 @@ class DoubleEndNodeRemover<S : State, A : Action> {
       var transitionFired = false
       if (node.parent.isPresent && node.parent.get().parent.isPresent) {
         val grandParent = node.parent.get().parent.get()
-        if (!(node.isCovered && node.coveringNode.get() == grandParent)) return false
+        if (node.state != grandParent.state) return false
 
         val state = node.parent.get().state.toString()
         val bufReader = BufferedReader(StringReader(state))

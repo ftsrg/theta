@@ -26,7 +26,6 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTrace
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
-import kotlin.collections.ArrayList
 
 class TraceGenerationChecker<S : State, A : Action, P : Prec>(
   private val logger: Logger,
