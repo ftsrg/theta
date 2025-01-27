@@ -48,6 +48,11 @@ class SolverStub implements Solver {
         nPush -= n;
     }
 
+		@Override 
+		public void popAll() {
+				pop(nPush);
+		}
+
     @Override
     public void reset() {
         // Stub
