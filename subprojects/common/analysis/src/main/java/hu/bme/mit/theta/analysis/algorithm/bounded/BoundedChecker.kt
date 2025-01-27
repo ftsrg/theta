@@ -248,6 +248,7 @@ constructor(
       val itpFormula =
         PathUtils.unfold(PathUtils.foldin(interpolant.eval(a), indices[1]), indices[0])
 			
+			imcFpSolver.push()
 			imcFpSolver.add(itpFormula)
 			imcFpSolver.add(Not(img))
 			if (imcFpSolver.check().isUnsat) {
@@ -260,8 +261,8 @@ constructor(
       img = Or(img, itpFormula)
 			
 			itpSolver.pop();
+			itpSolver.push();
 			itpSolver.add(a, itpFormula)
-      itpSolver.push();
     }
 		
 		itpSolver.popAll()
