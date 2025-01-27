@@ -253,6 +253,7 @@ constructor(
 			imcFpSolver.add(Not(img))
 			if (imcFpSolver.check().isUnsat) {
 				logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC step\n")
+				imcFpSolver.popAll()
 				itpSolver.popAll()
 				return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
 			}
