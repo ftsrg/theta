@@ -489,7 +489,7 @@ All contributions have been implemented in practical tools and are available pub
 }
 
 @incollection{tacas2021,
-    author     = {\'Adam, Zs\'ofia and Sallai, Gyula and Hajdu, \'Akos},
+    author     = {\'Ad\'am, Zs\'ofia and Sallai, Gyula and Hajdu, \'Akos},
     title      = {{G}azer-{T}heta: {LLVM}-based Verifier Portfolio with {BMC}/{CEGAR} (Competition Contribution)},
     year       = {2021},
     booktitle  = {Tools and Algorithms for the Construction and Analysis of Systems},
@@ -643,7 +643,7 @@ To summarize, I designed approaches for efficient verification by automating som
     abstract = {Ensuring the safe operation of real-time software-intensive systems is crucial in many critical applications, such as automatic driver assist systems, monitors for railway systems, and smart cities. Automated model checking provides a mathematically precise way to maintain safety and prevent damage to property by formally verifying correctness. Real-time scheduling requirements and complex timed behavior make the verification of real-time software-intensive systems difficult. These systems also contain computations with external data, \eg sensor data, and heavily data-dependent computations. These properties pose a twofold challenge: (1) development of the software often requires complex toolchains, such as statechart-based modeling to adequately express behaviors, and (2) formal verification is adversely affected by state space explosion caused by the possible scheduling and data inputs. To counteract the latter problem, abstraction-based model checking tools have been developed in the literature. In our previous work, we developed a combination of abstraction-based algorithms to simultaneously handle timed behaviors and complex data acquisition. However, existing low-level formalisms for timed model checking lack the expressive power to represent system models from high-level modeling toolchains. While discrete approximations of timed behaviors are a common solution to enable the use of more expressive verification algorithms that do not natively support timed behaviors, this may introduce unsoundness due to discretization error. This work aims to propose an intermediate formalism to represent real-time software-intensive system models, and adapt existing abstraction-based model checking algorithms. In particular, we (i) propose an extension to the Extended Symbolic Transition System (XSTS) formalism used as an intermediate model in the Gamma statchart-based modeling toolchain to represent timed systems, leveraging the existing capabilities of Gamma and XSTS to represent complex data-driven behaviors and communication between system components. We also (ii) adapt abstraction-based model checking approaches to handle the verification of timed XSTS, including (iii) handling complex control flow caused by component communication and hierarchical modeling in our combined verification algorithm. We (iv) implement the timed XSTS formalism and the verification algorithms in the open-source Theta verification framework and (v) evaluate the proposed approaches on case studies from industrial projects, as well as synthetic benchmarks. As a result, verification of complex real-time software-intensive systems is enabled without limitations to expressive power or unsoundness introduced by discretization.},
 }
 
-@inproceedings{tacas2024theta,
+@incollection{tacas2024theta,
     title        = {Theta: Abstraction Based Techniques for Verifying Concurrency (Competition Contribution)},
     author       = {Levente Bajczi and Csan{\'{a}}d Telbisz and M{\'{a}}rk Somorjai and Zs{\'{o}}fia {\'{A}}d{\'{a}}m and Mih{\'{a}}ly Dobos{-}Kov{\'{a}}cs and D{\'{a}}niel Szekeres and Mil{\'{a}}n Mondok and Vince Moln{\'{a}}r},
     editor       = {Bernd Finkbeiner and Laura Kov{\'{a}}cs},
@@ -659,7 +659,7 @@ To summarize, I designed approaches for efficient verification by automating som
 	type         = {Conference}
 }
 
-@inproceedings{tacas2024emergentheta,
+@incollection{tacas2024emergentheta,
     title        = {EmergenTheta: Verification Beyond Abstraction Refinement (Competition Contribution)},
     author       = {Levente Bajczi and D{\'{a}}niel Szekeres and Mil{\'{a}}n Mondok and Zs{\'{o}}fia {\'{A}}d{\'{a}}m and M{\'{a}}rk Somorjai and Csan{\'{a}}d Telbisz and Mih{\'{a}}ly Dobos{-}Kov{\'{a}}cs and Vince Moln{\'{a}}r},
     editor       = {Bernd Finkbeiner and Laura Kov{\'{a}}cs},
