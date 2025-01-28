@@ -54,12 +54,12 @@ public final class NullSolver implements Solver {
     public void pop(final int n) {
         throw new UnsupportedOperationException();
     }
-		
-		@Override
-		public void popAll() {
+
+    @Override
+    public void popAll() {
         throw new UnsupportedOperationException();
-		}
-			
+    }
+
     @Override
     public void reset() {
         throw new UnsupportedOperationException();

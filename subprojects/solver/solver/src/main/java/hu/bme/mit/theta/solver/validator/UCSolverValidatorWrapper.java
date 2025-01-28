@@ -57,10 +57,10 @@ public class UCSolverValidatorWrapper implements UCSolver {
         solver.pop();
     }
 
-		@Override 
-		public void popAll() {
-				solver.pop();
-		}
+    @Override
+    public void popAll() {
+        solver.pop();
+    }
 
     @Override
     public void reset() {

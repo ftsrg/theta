@@ -86,10 +86,10 @@ public class ItpSolverValidatorWrapper implements ItpSolver {
         solver.pop();
     }
 
-		@Override
-		public void popAll() {
-				solver.pop();
-		}
+    @Override
+    public void popAll() {
+        solver.pop();
+    }
 
     @Override
     public void reset() {

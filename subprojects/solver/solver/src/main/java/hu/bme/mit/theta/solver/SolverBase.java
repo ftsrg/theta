@@ -49,7 +49,7 @@ public interface SolverBase extends AutoCloseable {
     }
 
     /** Remove all expressions added. */
-		void popAll();
+    void popAll();
 
     /** Reset the solver state. */
     void reset();
