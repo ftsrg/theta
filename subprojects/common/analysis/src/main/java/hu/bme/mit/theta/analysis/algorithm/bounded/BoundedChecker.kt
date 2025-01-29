@@ -69,7 +69,7 @@ constructor(
   private val lfPathOnly: () -> Boolean = { true },
   private val itpSolver: ItpSolver? = null,
   private val imcFpSolver: Solver? = null,
-  private val imcEnabled: (Int) -> Boolean = { itpSolver != null && imcFpSolver != null},
+  private val imcEnabled: (Int) -> Boolean = { itpSolver != null && imcFpSolver != null },
   private val indSolver: Solver? = null,
   private val kindEnabled: (Int) -> Boolean = { indSolver != null },
   private val valToState: (Valuation) -> S,
@@ -90,7 +90,9 @@ constructor(
     check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
     check(bmcSolver != indSolver || bmcSolver == null) { "Use distinct solvers for BMC and KInd!" }
     check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
-    check((itpSolver == null) == (imcFpSolver == null)) { "Both itpSolver and imcFpSolver must be either null or non-null!" }
+    check((itpSolver == null) == (imcFpSolver == null)) {
+      "Both itpSolver and imcFpSolver must be either null or non-null!"
+    }
   }
 
   override fun check(prec: UnitPrec?): SafetyResult<EmptyProof, Trace<S, A>> {
@@ -194,18 +196,18 @@ constructor(
     val imcFpSolver = this.imcFpSolver!!
     logger.write(Logger.Level.MAINSTEP, "\tStarting IMC\n")
 
-    itpSolver.push();
+    itpSolver.push()
 
     val a = itpSolver.createMarker()
     val b = itpSolver.createMarker()
     val pattern = itpSolver.createBinPattern(a, b)
 
-    itpSolver.push();
+    itpSolver.push()
 
     itpSolver.add(a, exprs[0])
     itpSolver.add(b, exprs.subList(1, exprs.size))
 
-    itpSolver.push();
+    itpSolver.push()
 
     itpSolver.add(a, unfoldedInitExpr)
 
@@ -224,7 +226,7 @@ constructor(
       }
 
       if (itpSolver.check().isUnsat) {
-        itpSolver.popAll();
+        itpSolver.popAll()
         logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
         return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
       }
@@ -262,8 +264,8 @@ constructor(
 
       img = Or(img, itpFormula)
 
-      itpSolver.pop();
-      itpSolver.push();
+      itpSolver.pop()
+      itpSolver.push()
       itpSolver.add(a, itpFormula)
     }
 

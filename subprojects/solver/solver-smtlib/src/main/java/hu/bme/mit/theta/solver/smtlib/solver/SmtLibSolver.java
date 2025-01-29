@@ -237,7 +237,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         issueGeneralCommand("(pop 1)");
         clearState();
     }
-    
+
     @Override
     public void popAll() {
         pop(expCnt);

@@ -57,8 +57,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
 
     private final JavaSMTTermTransformer termTransformer;
     private final SolverContext context;
-    
-     private int expCnt = 0;
+
+    private int expCnt = 0;
 
     public JavaSMTItpSolver(
             final JavaSMTSymbolTable symbolTable,
@@ -209,7 +209,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
 
     @Override
     public void pop(final int n) {
-        expCnt-=n;
+        expCnt -= n;
         markers.pop(n);
         termMap.pop(n);
         for (final JavaSMTItpMarker marker : markers) {
@@ -221,7 +221,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                         .collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
     }
 
-    @Override 
+    @Override
     public void popAll() {
         pop(expCnt);
     }
