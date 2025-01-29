@@ -61,6 +61,8 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
     private Valuation model;
     private SolverStatus status;
 
+    private int expCnt = 0;
+
     public SmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
@@ -172,6 +174,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
 
     @Override
     public void push() {
+        expCnt++;
         markers.push();
         for (final var marker : markers) {
             marker.push();
@@ -184,6 +187,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
 
     @Override
     public void pop(final int n) {
+        expCnt -= n;
         markers.pop(n);
         for (final var marker : markers) {
             marker.pop(n);
@@ -196,7 +200,13 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
     }
 
     @Override
+    public void popAll() {
+        pop(expCnt);
+    }
+
+    @Override
     public void reset() {
+        expCnt = 0;
         issueGeneralCommand("(reset)");
         clearState();
         init();

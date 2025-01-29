@@ -88,6 +88,7 @@ class XstsCliBounded :
           monolithicExpr,
           solverFactory.createSolver(),
           solverFactory.createItpSolver(),
+          solverFactory.createSolver(),
           valToState,
           biValToAction,
           logger,

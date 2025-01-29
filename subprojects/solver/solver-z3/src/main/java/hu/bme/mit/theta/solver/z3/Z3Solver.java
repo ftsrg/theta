@@ -69,6 +69,8 @@ class Z3Solver implements UCSolver, Solver {
     protected Collection<Expr<BoolType>> unsatCore;
     protected SolverStatus status;
 
+    private int expCnt = 0;
+
     public Z3Solver(
             final Z3SymbolTable symbolTable,
             final Z3TransformationManager transformationManager,
@@ -138,19 +140,27 @@ class Z3Solver implements UCSolver, Solver {
 
     @Override
     public void push() {
+        expCnt++;
         assertions.push();
         z3Solver.push();
     }
 
     @Override
     public void pop(final int n) {
+        expCnt -= n;
         assertions.pop(n);
         z3Solver.pop(n);
         clearState();
     }
 
     @Override
+    public void popAll() {
+        pop(expCnt);
+    }
+
+    @Override
     public void reset() {
+        expCnt = 0;
         z3Solver.reset();
         assertions.clear();
         assumptions.clear();

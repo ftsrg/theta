@@ -72,6 +72,8 @@ public class SmtLibSolver implements UCSolver, Solver {
     protected Collection<Expr<BoolType>> unsatCore;
     protected SolverStatus status;
 
+    private int expCnt = 0;
+
     public SmtLibSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
@@ -219,6 +221,7 @@ public class SmtLibSolver implements UCSolver, Solver {
 
     @Override
     public void push() {
+        expCnt++;
         assertions.push();
         declarationStack.push();
         typeStack.push();
@@ -227,6 +230,7 @@ public class SmtLibSolver implements UCSolver, Solver {
 
     @Override
     public void pop(int n) {
+        expCnt -= n;
         assertions.pop(n);
         declarationStack.pop(n);
         typeStack.pop(n);
@@ -235,7 +239,13 @@ public class SmtLibSolver implements UCSolver, Solver {
     }
 
     @Override
+    public void popAll() {
+        pop(expCnt);
+    }
+
+    @Override
     public void reset() {
+        expCnt = 0;
         issueGeneralCommand("(reset)");
         clearState();
         init();

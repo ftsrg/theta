@@ -155,6 +155,11 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
     }
 
     @Override
+    public void popAll() {
+        throw new UnsupportedOperationException("PopAll is not supported.");
+    }
+
+    @Override
     public Collection<Expr<BoolType>> getUnsatCore() {
         throw new UnsupportedOperationException("This solver cannot return unsat cores");
     }

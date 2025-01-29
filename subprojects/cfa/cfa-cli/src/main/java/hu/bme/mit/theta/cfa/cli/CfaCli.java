@@ -361,6 +361,7 @@ public class CfaCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createItpSolver(),
+                                    abstractionSolverFactory.createSolver(),
                                     val -> CfaToMonolithicExprKt.valToState(cfa, val),
                                     (val1, val2) ->
                                             CfaToMonolithicExprKt.valToAction(cfa, val1, val2),

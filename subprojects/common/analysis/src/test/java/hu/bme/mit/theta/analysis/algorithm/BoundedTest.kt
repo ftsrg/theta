@@ -69,11 +69,13 @@ class BoundedTest {
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
     val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
+    val fpSolver = Z3LegacySolverFactory.getInstance().createSolver()
     val checker: BoundedChecker<*, *> =
       BoundedChecker(
         monolithicExpr = unsafeMonolithicExpr!!,
         bmcSolver = solver,
         itpSolver = itpSolver,
+        imcFpSolver = fpSolver,
         indSolver = indSolver,
         valToState = valToState,
         biValToAction = biValToAction,
@@ -88,11 +90,13 @@ class BoundedTest {
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
     val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
+    val fpSolver = Z3LegacySolverFactory.getInstance().createSolver()
     val checker: BoundedChecker<*, *> =
       BoundedChecker(
         monolithicExpr = safeMonolithicExpr!!,
         bmcSolver = solver,
         itpSolver = itpSolver,
+        imcFpSolver = fpSolver,
         indSolver = indSolver,
         valToState = valToState,
         biValToAction = biValToAction,
