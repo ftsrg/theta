@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collection;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
@@ -37,6 +34,8 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
+import java.util.Collection;
+import java.util.function.Function;
 
 final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZoneState> {
 
@@ -48,8 +47,9 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
         checkNotNull(system);
         this.lens = checkNotNull(lens);
         final ZonePrec zonePrec = ZonePrec.of(system.getClockVars());
-        analysis = PrecMappingAnalysis.create(LuZoneAnalysis.create(XtaZoneAnalysis.getInstance()),
-                p -> zonePrec);
+        analysis =
+                PrecMappingAnalysis.create(
+                        LuZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> zonePrec);
         projection = s -> unit();
     }
 
@@ -64,16 +64,19 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
     }
 
     @Override
-    public boolean mightCover(final ArgNode<S, XtaAction> coveree,
-                              final ArgNode<S, XtaAction> coverer) {
+    public boolean mightCover(
+            final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
         final LuZoneState covereeState = lens.get(coveree.getState());
         final LuZoneState covererState = lens.get(coverer.getState());
         return covereeState.getZone().isLeq(covererState.getZone(), covererState.getBoundFunc());
     }
 
     @Override
-    public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public void cover(
+            final ArgNode<S, XtaAction> coveree,
+            final ArgNode<S, XtaAction> coverer,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         stats.startCloseZoneRefinement();
         final LuZoneState covererState = lens.get(coverer.getState());
         final BoundFunc boundFunc = covererState.getBoundFunc();
@@ -82,8 +85,12 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
     }
 
     @Override
-    public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public void block(
+            final ArgNode<S, XtaAction> node,
+            final XtaAction action,
+            final S succState,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         assert lens.get(succState).isBottom();
         stats.startExpandZoneRefinement();
         final BoundFunc preImage = XtaLuZoneUtils.pre(BoundFunc.top(), action);
@@ -93,8 +100,11 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 
     ////
 
-    private void propagateBounds(final ArgNode<S, XtaAction> node, final BoundFunc boundFunc,
-                                 final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    private void propagateBounds(
+            final ArgNode<S, XtaAction> node,
+            final BoundFunc boundFunc,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         final LuZoneState oldState = lens.get(node.getState());
         final BoundFunc oldBoundFunc = oldState.getBoundFunc();
         if (!boundFunc.isLeq(oldBoundFunc)) {
@@ -123,22 +133,26 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
         node.setState(newState);
     }
 
-    private void maintainCoverage(final ArgNode<S, XtaAction> node, final BoundFunc interpolant,
-                                  final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+    private void maintainCoverage(
+            final ArgNode<S, XtaAction> node,
+            final BoundFunc interpolant,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
 
         final LuZoneState covererState = lens.get(node.getState());
-        final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
-                .filter(covered -> shouldUncover(covered, covererState, interpolant)).collect(toList());
+        final Collection<ArgNode<S, XtaAction>> uncovered =
+                node.getCoveredNodes()
+                        .filter(covered -> shouldUncover(covered, covererState, interpolant))
+                        .collect(toList());
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, XtaAction> covered,
-                                  final LuZoneState covererState,
-                                  final BoundFunc interpolant) {
+    private boolean shouldUncover(
+            final ArgNode<S, XtaAction> covered,
+            final LuZoneState covererState,
+            final BoundFunc interpolant) {
         final LuZoneState coveredState = lens.get(covered.getState());
         return !interpolant.isLeq(coveredState.getBoundFunc())
                 || !coveredState.getZone().isLeq(covererState.getZone(), interpolant);
     }
-
 }

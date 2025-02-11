@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,25 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.z3;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static java.lang.String.format;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.ArrayExpr;
@@ -65,8 +84,6 @@ import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-import org.kframework.mpfr.BigFloat;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,32 +95,15 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static java.lang.String.format;
+import org.kframework.mpfr.BigFloat;
 
 final class Z3TermTransformer {
 
     private static final String PARAM_NAME_FORMAT = "_p%d";
 
     private final Z3SymbolTable symbolTable;
-    private final Map<String, TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>>> environment;
+    private final Map<String, TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>>>
+            environment;
 
     public Z3TermTransformer(final Z3SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -137,9 +137,10 @@ final class Z3TermTransformer {
         return transform(term, null, new ArrayList<>());
     }
 
-    public Expr<?> toFuncLitExpr(final FuncDecl funcDecl, final Model model,
-                                 final List<Decl<?>> vars) {
-        checkNotNull(model,
+    public Expr<?> toFuncLitExpr(
+            final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
+        checkNotNull(
+                model,
                 "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
         final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
         final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
@@ -149,11 +150,11 @@ final class Z3TermTransformer {
         return funcLitExpr;
     }
 
-    public Expr<?> toArrayLitExpr(final FuncDecl funcDecl, final Model model,
-                                  final List<Decl<?>> vars) {
+    public Expr<?> toArrayLitExpr(
+            final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
         final com.microsoft.z3.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
-        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model,
-                vars);
+        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
+                createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
         final ArraySort sort = (ArraySort) funcDecl.getRange();
@@ -161,27 +162,38 @@ final class Z3TermTransformer {
         return createArrayLitExpr(sort, entryExprs, elseExpr);
     }
 
-    private Expr<?> createArrayLitExpr(ArraySort sort,
-                                       List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
-        return this.createIndexValueArrayLitExpr(transformSort(sort.getDomain()),
-                transformSort(sort.getRange()), entryExprs, elseExpr);
+    private Expr<?> createArrayLitExpr(
+            ArraySort sort, List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
+        return this.createIndexValueArrayLitExpr(
+                transformSort(sort.getDomain()),
+                transformSort(sort.getRange()),
+                entryExprs,
+                elseExpr);
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(I indexType,
-                                                                                  E elemType, List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
-        return Array(entryExprs.stream().map(entry -> {
-                    checkState(entry.get1().size() == 1);
-                    return Tuple2.of((Expr<I>) entry.get1().get(0), (Expr<E>) entry.get2());
-                }).collect(Collectors.toUnmodifiableList()),
+    private <I extends Type, E extends Type> Expr<?> createIndexValueArrayLitExpr(
+            I indexType,
+            E elemType,
+            List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs,
+            Expr<?> elseExpr) {
+        return Array(
+                entryExprs.stream()
+                        .map(
+                                entry -> {
+                                    checkState(entry.get1().size() == 1);
+                                    return Tuple2.of(
+                                            (Expr<I>) entry.get1().get(0), (Expr<E>) entry.get2());
+                                })
+                        .collect(Collectors.toUnmodifiableList()),
                 (Expr<E>) elseExpr,
                 ArrayType.of(indexType, elemType));
     }
 
     ////////
 
-    private Expr<?> transform(final com.microsoft.z3.Expr term, final Model model,
-                              final List<Decl<?>> vars) {
+    private Expr<?> transform(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
         if (term.isIntNum()) {
             return transformIntLit(term);
 
@@ -189,7 +201,8 @@ final class Z3TermTransformer {
             return transformRatLit(term);
 
             // BitVecNum is not BVNumeral? Potential bug?
-        } else if (/* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
+        } else if (
+        /* term.isBVNumeral() */ term instanceof com.microsoft.z3.BitVecNum) {
             return transformBvLit(term);
 
         } else if (term instanceof FPNum) {
@@ -233,12 +246,12 @@ final class Z3TermTransformer {
         return Rat(num, denom);
     }
 
-    private Expr<?> transformArrLit(final com.microsoft.z3.Expr term, final Model model,
-                                    final List<Decl<?>> vars) {
+    private Expr<?> transformArrLit(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
         final ArrayExpr arrayExpr = (ArrayExpr) term;
         final ArraySort sort = (ArraySort) arrayExpr.getSort();
-        return createArrayLitExpr(sort, Arrays.asList(),
-                transform(arrayExpr.getArgs()[0], model, vars));
+        return createArrayLitExpr(
+                sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
     }
 
     private Expr<?> transformBvLit(final com.microsoft.z3.Expr term) {
@@ -254,11 +267,11 @@ final class Z3TermTransformer {
         FpType type = FpType.of((fpTerm).getEBits(), (fpTerm).getSBits());
         String printed = term.toString();
         if (printed.equals("+oo")) {
-            return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()),
-                    type);
+            return FpUtils.bigFloatToFpLitExpr(
+                    BigFloat.positiveInfinity(type.getSignificand()), type);
         } else if (printed.equals("-oo")) {
-            return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()),
-                    type);
+            return FpUtils.bigFloatToFpLitExpr(
+                    BigFloat.negativeInfinity(type.getSignificand()), type);
         } else if (printed.equals("NaN")) {
             return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
         } else if (printed.equals("+zero")) {
@@ -266,24 +279,31 @@ final class Z3TermTransformer {
         } else if (printed.equals("-zero")) {
             return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
         }
-        BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(),
-                FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(
-                new BigFloat("2", FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(
-                        new BigFloat((fpTerm).getExponent(true),
-                                FpUtils.getMathContext(type, FpRoundingMode.RNE)),
-                        FpUtils.getMathContext(type, FpRoundingMode.RNE)),
-                FpUtils.getMathContext(type, FpRoundingMode.RNE));
+        BigFloat bigFloat =
+                new BigFloat(
+                                (fpTerm).getSignificand(),
+                                FpUtils.getMathContext(type, FpRoundingMode.RNE))
+                        .multiply(
+                                new BigFloat("2", FpUtils.getMathContext(type, FpRoundingMode.RNE))
+                                        .pow(
+                                                new BigFloat(
+                                                        (fpTerm).getExponent(true),
+                                                        FpUtils.getMathContext(
+                                                                type, FpRoundingMode.RNE)),
+                                                FpUtils.getMathContext(type, FpRoundingMode.RNE)),
+                                FpUtils.getMathContext(type, FpRoundingMode.RNE));
         return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
     }
 
-    private Expr<EnumType> transformEnumLit(final com.microsoft.z3.Expr term, final EnumType enumType) {
+    private Expr<EnumType> transformEnumLit(
+            final com.microsoft.z3.Expr term, final EnumType enumType) {
         String longName = term.getFuncDecl().getName().toString();
         String literal = EnumType.getShortName(longName);
         return EnumLitExpr.of(enumType, literal);
     }
 
-    private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model,
-                                 final List<Decl<?>> vars) {
+    private Expr<?> transformApp(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
 
         final FuncDecl funcDecl = term.getFuncDecl();
         final String symbol = funcDecl.getName().toString();
@@ -301,11 +321,15 @@ final class Z3TermTransformer {
         }
     }
 
-    private Expr<?> transformFuncInterp(final com.microsoft.z3.FuncInterp funcInterp,
-                                        final Model model, final List<Decl<?>> vars) {
+    private Expr<?> transformFuncInterp(
+            final com.microsoft.z3.FuncInterp funcInterp,
+            final Model model,
+            final List<Decl<?>> vars) {
         checkArgument(funcInterp.getArity() >= 1);
-        final List<ParamDecl<?>> params = vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
-                .map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList());
+        final List<ParamDecl<?>> params =
+                vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
+                        .map(decl -> (ParamDecl<?>) decl)
+                        .collect(Collectors.toList());
         Expr<?> op = createFuncLitExprBody(params, funcInterp, model, vars);
         for (ParamDecl<?> param : params) {
             op = Func(param, op);
@@ -313,30 +337,33 @@ final class Z3TermTransformer {
         return op;
     }
 
-    private Expr<?> createFuncLitExprBody(final List<ParamDecl<?>> paramDecl,
-                                          final com.microsoft.z3.FuncInterp funcInterp,
-                                          final Model model, final List<Decl<?>> vars) {
-        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model,
-                vars);
+    private Expr<?> createFuncLitExprBody(
+            final List<ParamDecl<?>> paramDecl,
+            final com.microsoft.z3.FuncInterp funcInterp,
+            final Model model,
+            final List<Decl<?>> vars) {
+        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
+                createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
         return createNestedIteExpr(paramDecl, entryExprs, elseExpr);
     }
 
-    private Expr<?> createNestedIteExpr(final List<ParamDecl<?>> paramDecl,
-                                        final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs,
-                                        final Expr<?> elseExpr) {
+    private Expr<?> createNestedIteExpr(
+            final List<ParamDecl<?>> paramDecl,
+            final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs,
+            final Expr<?> elseExpr) {
         if (entryExprs.isEmpty()) {
             return elseExpr;
         } else {
             final Tuple2<List<Expr<?>>, Expr<?>> head = head(entryExprs);
-            checkState(paramDecl.size() == head.get1().size(),
-                    "Mismatched argument-parameter size!");
+            checkState(
+                    paramDecl.size() == head.get1().size(), "Mismatched argument-parameter size!");
             final List<Tuple2<List<Expr<?>>, Expr<?>>> tail = tail(entryExprs);
 
             Expr<BoolType> cond = null;
             for (int i = 0; i < paramDecl.size(); i++) {
-                final Expr<BoolType> newTerm = EqExpr.create2(paramDecl.get(i).getRef(),
-                        head.get1().get(i));
+                final Expr<BoolType> newTerm =
+                        EqExpr.create2(paramDecl.get(i).getRef(), head.get1().get(i));
                 cond = cond == null ? newTerm : And(cond, newTerm);
             }
 
@@ -348,8 +375,10 @@ final class Z3TermTransformer {
 
     private List<Tuple2<List<Expr<?>>, Expr<?>>> createEntryExprs(
             final com.microsoft.z3.FuncInterp funcInterp,
-            final Model model, final List<Decl<?>> vars) {
-        final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder = ImmutableList.builder();
+            final Model model,
+            final List<Decl<?>> vars) {
+        final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder =
+                ImmutableList.builder();
         for (final com.microsoft.z3.FuncInterp.Entry entry : funcInterp.getEntries()) {
             checkArgument(entry.getArgs().length >= 1);
             final List<Expr<?>> args = new ArrayList<>();
@@ -364,8 +393,8 @@ final class Z3TermTransformer {
         return builder.build();
     }
 
-    private Expr<?> transformQuantifier(final com.microsoft.z3.Quantifier term, final Model model,
-                                        final List<Decl<?>> vars) {
+    private Expr<?> transformQuantifier(
+            final com.microsoft.z3.Quantifier term, final Model model, final List<Decl<?>> vars) {
         if (term.isUniversal()) {
             return transformForall(term, model, vars);
 
@@ -383,25 +412,35 @@ final class Z3TermTransformer {
         return decl.getRef();
     }
 
-    private <P extends Type, R extends Type> Expr<?> transformFuncApp(final Expr<?> expr,
-                                                                      final com.microsoft.z3.Expr[] argTerms, final Model model, final List<Decl<?>> vars) {
-        final List<com.microsoft.z3.Expr> terms = Arrays.stream(argTerms)
-                .collect(Collectors.toList());
+    private <P extends Type, R extends Type> Expr<?> transformFuncApp(
+            final Expr<?> expr,
+            final com.microsoft.z3.Expr[] argTerms,
+            final Model model,
+            final List<Decl<?>> vars) {
+        final List<com.microsoft.z3.Expr> terms =
+                Arrays.stream(argTerms).collect(Collectors.toList());
         return toApp((Expr<FuncType<P, R>>) expr, terms, model, vars);
     }
 
-    private <P extends Type, R extends Type> Expr<?> toApp(Expr<FuncType<P, R>> expr,
-                                                           List<com.microsoft.z3.Expr> terms, Model model, List<Decl<?>> vars) {
+    private <P extends Type, R extends Type> Expr<?> toApp(
+            Expr<FuncType<P, R>> expr,
+            List<com.microsoft.z3.Expr> terms,
+            Model model,
+            List<Decl<?>> vars) {
         if (terms.size() == 0) {
             return expr;
         }
-        return UnsafeApp(expr, terms.stream().map(it -> transform(it, model, vars)).collect(Collectors.toUnmodifiableList()));
+        return UnsafeApp(
+                expr,
+                terms.stream()
+                        .map(it -> transform(it, model, vars))
+                        .collect(Collectors.toUnmodifiableList()));
     }
 
     ////
 
-    private Expr<?> transformForall(final com.microsoft.z3.Expr term, final Model model,
-                                    final List<Decl<?>> vars) {
+    private Expr<?> transformForall(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
         final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
         final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
         final com.microsoft.z3.Sort[] sorts = quantifier.getBoundVariableSorts();
@@ -414,8 +453,8 @@ final class Z3TermTransformer {
         return Forall(paramDecls, op);
     }
 
-    private Expr<?> transformExists(final com.microsoft.z3.Expr term, final Model model,
-                                    final List<Decl<?>> vars) {
+    private Expr<?> transformExists(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
         final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
         final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
         final com.microsoft.z3.Sort[] sorts = quantifier.getBoundVariableSorts();
@@ -428,8 +467,8 @@ final class Z3TermTransformer {
         return Exists(paramDecls, op);
     }
 
-    private List<ParamDecl<?>> transformParams(final List<Decl<?>> vars,
-                                               final com.microsoft.z3.Sort[] sorts) {
+    private List<ParamDecl<?>> transformParams(
+            final List<Decl<?>> vars, final com.microsoft.z3.Sort[] sorts) {
         final ImmutableList.Builder<ParamDecl<?>> builder = ImmutableList.builder();
         int parambase = vars.size();
         for (final com.microsoft.z3.Sort sort : sorts) {
@@ -440,8 +479,7 @@ final class Z3TermTransformer {
         return paramDecls;
     }
 
-    private ParamDecl<?> transformParam(final List<Decl<?>> vars,
-                                        final Sort sort, int i) {
+    private ParamDecl<?> transformParam(final List<Decl<?>> vars, final Sort sort, int i) {
         final Type type = transformSort(sort);
         final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, i), type);
         return param;
@@ -472,8 +510,8 @@ final class Z3TermTransformer {
         }
     }
 
-    private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final Model model,
-                                         final List<Decl<?>> vars) {
+    private Expr<?> transformUnsupported(
+            final com.microsoft.z3.Expr term, final Model model, final List<Decl<?>> vars) {
         throw new UnsupportedOperationException("Unsupported term: " + term);
     }
 
@@ -506,16 +544,19 @@ final class Z3TermTransformer {
             if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
                 // binary operator is on enum types
                 // if either arg is a literal, we need special handling to get its type
-                // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is Z3_OP_DT_CONSTRUCTOR)
+                // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is
+                // Z3_OP_DT_CONSTRUCTOR)
                 int litIndex = -1;
                 for (int i = 0; i < 2; i++) {
-                    if (args[i].getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
-                        litIndex = i;
+                    if (args[i].getFuncDecl()
+                            .getDeclKind()
+                            .equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) litIndex = i;
                 }
                 if (litIndex > -1) {
                     int refIndex = Math.abs(litIndex - 1);
                     final Expr<?> refOp = transform(args[refIndex], model, vars);
-                    final Expr<EnumType> litExpr = transformEnumLit(args[litIndex], (EnumType) refOp.getType());
+                    final Expr<EnumType> litExpr =
+                            transformEnumLit(args[litIndex], (EnumType) refOp.getType());
                     return function.apply(refOp, litExpr);
                 }
             }
@@ -541,11 +582,11 @@ final class Z3TermTransformer {
             final Function<List<Expr<?>>, Expr<?>> function) {
         return (term, model, vars) -> {
             final com.microsoft.z3.Expr[] args = term.getArgs();
-            final List<Expr<?>> ops = Stream.of(args).map(arg -> transform(arg, model, vars))
-                    .collect(toImmutableList());
+            final List<Expr<?>> ops =
+                    Stream.of(args)
+                            .map(arg -> transform(arg, model, vars))
+                            .collect(toImmutableList());
             return function.apply(ops);
         };
     }
-
 }
- 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,16 +32,22 @@ public final class LoopStmt implements Stmt {
 
     private volatile int hashCode = 0;
 
-    private LoopStmt(final Stmt stmt, final VarDecl<IntType> loopVariable, final Expr<IntType> from,
-                     final Expr<IntType> to) {
+    private LoopStmt(
+            final Stmt stmt,
+            final VarDecl<IntType> loopVariable,
+            final Expr<IntType> from,
+            final Expr<IntType> to) {
         this.stmt = stmt;
         this.loopVariable = loopVariable;
         this.from = from;
         this.to = to;
     }
 
-    public static LoopStmt of(final Stmt stmt, final VarDecl<IntType> loopVariable,
-                              final Expr<IntType> from, final Expr<IntType> to) {
+    public static LoopStmt of(
+            final Stmt stmt,
+            final VarDecl<IntType> loopVariable,
+            final Expr<IntType> from,
+            final Expr<IntType> to) {
         return new LoopStmt(stmt, loopVariable, from, to);
     }
 
@@ -71,8 +77,12 @@ public final class LoopStmt implements Stmt {
         int result = hashCode;
         if (result == 0) {
             result = HASH_SEED;
-            result = 37 * result + stmt.hashCode() + loopVariable.hashCode() + from.hashCode()
-                    + to.hashCode();
+            result =
+                    37 * result
+                            + stmt.hashCode()
+                            + loopVariable.hashCode()
+                            + from.hashCode()
+                            + to.hashCode();
             hashCode = result;
         }
         return result;
@@ -96,7 +106,7 @@ public final class LoopStmt implements Stmt {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(STMT_LABEL)
-                .add(loopVariable + " from " + from + " to " + to + " " + stmt).toString();
+                .add(loopVariable + " from " + from + " to " + to + " " + stmt)
+                .toString();
     }
-
 }

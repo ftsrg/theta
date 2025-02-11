@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
-import hu.bme.mit.theta.core.utils.StmtSimplifier;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.utils.StmtSimplifier;
 
 public class PredStmtOptimizer implements StmtOptimizer<PredState> {
 
-    private PredStmtOptimizer() {
-    }
+    private PredStmtOptimizer() {}
 
     private static class LazyHolder {
 

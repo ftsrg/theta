@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,16 @@
  */
 package hu.bme.mit.theta.common;
 
-import com.google.common.base.Strings;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-/**
- * Utility class for printing Lisp style strings, e.g., (A (B 1 2) (C 3)).
- */
+/** Utility class for printing Lisp style strings, e.g., (A (B 1 2) (C 3)). */
 public final class LispStringBuilder {
 
     private static final String LPAREN = "(";
@@ -44,7 +41,10 @@ public final class LispStringBuilder {
     private int minLengthForMultiline = 75;
 
     private static enum State {
-        HEAD, ALIGNED, BODY, BUILT;
+        HEAD,
+        ALIGNED,
+        BODY,
+        BUILT;
     }
 
     LispStringBuilder(final String prefix) {
@@ -168,5 +168,4 @@ public final class LispStringBuilder {
     private static String[] lines(final String string) {
         return string.split("\\r\\n|\\n|\\r");
     }
-
 }

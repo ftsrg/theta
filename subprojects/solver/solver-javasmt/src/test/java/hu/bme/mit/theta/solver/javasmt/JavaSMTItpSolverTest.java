@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,33 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.javasmt;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
-
-import java.util.Collection;
-import java.util.List;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
@@ -60,10 +33,37 @@ import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 import static org.junit.Assume.assumeFalse;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Interpolant;
+import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpPattern;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.SolverStatus;
+import java.util.Collection;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
+
 @RunWith(Parameterized.class)
 public final class JavaSMTItpSolverTest {
     @Parameter(0)
     public Solvers solver;
+
     @Parameter(1)
     public ItpSolver itpSolver;
 
@@ -75,20 +75,36 @@ public final class JavaSMTItpSolverTest {
     Expr<FuncType<IntType, IntType>> f;
     Expr<FuncType<IntType, IntType>> g;
 
-
     @Parameters(name = "solver: {0}")
     public static Collection<?> operations() {
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
             return List.of(
-                    new Object[]{Solvers.SMTINTERPOL, JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver()},
-                    new Object[]{Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createItpSolver()},
-                    new Object[]{Solvers.CVC5, JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createItpSolver()}
-            );
+                    new Object[] {
+                        Solvers.SMTINTERPOL,
+                        JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[] {})
+                                .createItpSolver()
+                    },
+                    new Object[] {
+                        Solvers.PRINCESS,
+                        JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
+                                .createItpSolver()
+                    },
+                    new Object[] {
+                        Solvers.CVC5,
+                        JavaSMTSolverFactory.create(Solvers.CVC5, new String[] {}).createItpSolver()
+                    });
         } else {
             return List.of(
-                    new Object[]{Solvers.SMTINTERPOL, JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver()},
-                    new Object[]{Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createItpSolver()}
-            );
+                    new Object[] {
+                        Solvers.SMTINTERPOL,
+                        JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[] {})
+                                .createItpSolver()
+                    },
+                    new Object[] {
+                        Solvers.PRINCESS,
+                        JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[] {})
+                                .createItpSolver()
+                    });
         }
     }
 
@@ -167,8 +183,8 @@ public final class JavaSMTItpSolverTest {
         final ItpMarker I3 = itpSolver.createMarker();
         final ItpMarker I4 = itpSolver.createMarker();
         final ItpMarker I5 = itpSolver.createMarker();
-        final ItpPattern pattern = itpSolver.createTreePattern(
-                Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+        final ItpPattern pattern =
+                itpSolver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
         itpSolver.add(I1, Eq(a, Int(0)));
         itpSolver.add(I2, Eq(a, b));
@@ -265,5 +281,4 @@ public final class JavaSMTItpSolverTest {
         System.out.println(itp.eval(A));
         System.out.println("----------");
     }
-
 }

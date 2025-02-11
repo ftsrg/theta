@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewAtomsAutoExpl;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtAtomCollector;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.StmtAtomCollector;
 import hu.bme.mit.theta.xsts.XSTS;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,10 +37,11 @@ public class XstsNewAtomsAutoExpl implements XstsAutoExpl {
         atoms.addAll(ExprUtils.getAtoms(xsts.getProp()));
         atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 
-        final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
-                .map(ExprUtils::canonize)
-                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-                .collect(Collectors.toSet());
+        final Set<Expr<BoolType>> canonicalAtoms =
+                atoms.stream()
+                        .map(ExprUtils::canonize)
+                        .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+                        .collect(Collectors.toSet());
         return new NewAtomsAutoExpl(xsts.getCtrlVars(), canonicalAtoms, 0);
     }
 }

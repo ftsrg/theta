@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.common.datalog;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.TupleN;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /*
  * Tests initial and incremental deduction with Datalog
@@ -42,22 +41,30 @@ public final class DatalogJavaTest {
 
     public DatalogJavaTest() {
         datalog = Datalog.createProgram();
-        //datalog.setDebug(true);
+        // datalog.setDebug(true);
         edge = datalog.createRelation("edge", 2);
         successor = datalog.createRelation("successor", 2);
         reflexive = datalog.createRelation("reflexive", 1);
 
-        Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(
-                datalog.getVariable(), datalog.getVariable());
+        Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables =
+                Tuple2.of(datalog.getVariable(), datalog.getVariable());
         Datalog.Variable next = datalog.getVariable();
-        successor.addRule(TupleN.of(accessibleVariables), Set.of(
-                Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
-        successor.addRule(TupleN.of(accessibleVariables),
-                Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)),
+        successor.addRule(
+                TupleN.of(accessibleVariables),
+                Set.of(
+                        Tuple2.of(
+                                edge,
+                                TupleN.of(
+                                        accessibleVariables.get1(), accessibleVariables.get2()))));
+        successor.addRule(
+                TupleN.of(accessibleVariables),
+                Set.of(
+                        Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)),
                         Tuple2.of(successor, TupleN.of(next, accessibleVariables.get2()))));
 
         Datalog.Variable reflexivity = datalog.getVariable();
-        reflexive.addRule(TupleN.of(List.of(reflexivity)),
+        reflexive.addRule(
+                TupleN.of(List.of(reflexivity)),
                 Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
     }
 
@@ -106,10 +113,7 @@ public final class DatalogJavaTest {
 
         @Override
         public String toString() {
-            return "Node" + c + "{" +
-                    "i=" + i +
-                    '}';
+            return "Node" + c + "{" + "i=" + i + '}';
         }
     }
-
 }

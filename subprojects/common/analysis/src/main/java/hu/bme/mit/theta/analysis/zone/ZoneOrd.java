@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ public final class ZoneOrd implements PartialOrd<ZoneState> {
 
     private static final ZoneOrd INSTANCE = new ZoneOrd();
 
-    private ZoneOrd() {
-    }
+    private ZoneOrd() {}
 
     public static ZoneOrd getInstance() {
         return INSTANCE;
@@ -32,5 +31,4 @@ public final class ZoneOrd implements PartialOrd<ZoneState> {
     public boolean isLeq(final ZoneState state1, final ZoneState state2) {
         return state1.isLeq(state2);
     }
-
 }

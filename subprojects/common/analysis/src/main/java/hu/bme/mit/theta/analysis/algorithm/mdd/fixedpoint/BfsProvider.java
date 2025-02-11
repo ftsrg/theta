@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-
 import java.util.Optional;
 
 public final class BfsProvider implements StateSpaceEnumerationProvider {
     public static boolean verbose = false;
 
-    private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(
-            v -> new BinaryOperationCache<>());
+    private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>
+            cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
     private final RelationalProductProvider relProdProvider;
 
@@ -32,7 +31,8 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
         this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
     }
 
-    public BfsProvider(final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider) {
+    public BfsProvider(
+            final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider) {
         this.variableOrder = variableOrder;
         this.relProdProvider = relProdProvider;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
@@ -41,10 +41,13 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
     public MddHandle compute(
             AbstractNextStateDescriptor.Postcondition initializer,
             AbstractNextStateDescriptor nextStateRelation,
-            MddVariableHandle highestAffectedVariable
-    ) {
+            MddVariableHandle highestAffectedVariable) {
 
-        final MddHandle initialStates = relProdProvider.compute(variableOrder.getMddGraph().getHandleForTop(), initializer, highestAffectedVariable);
+        final MddHandle initialStates =
+                relProdProvider.compute(
+                        variableOrder.getMddGraph().getHandleForTop(),
+                        initializer,
+                        highestAffectedVariable);
 
         MddNode result;
 
@@ -52,10 +55,12 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
             final MddVariable variable = highestAffectedVariable.getVariable().get();
             result = this.compute(initialStates.getNode(), nextStateRelation, variable);
         } else {
-            result = this.computeTerminal(initialStates.getNode(), nextStateRelation,
-                    highestAffectedVariable.getMddGraph());
+            result =
+                    this.computeTerminal(
+                            initialStates.getNode(),
+                            nextStateRelation,
+                            highestAffectedVariable.getMddGraph());
         }
-
 
         return highestAffectedVariable.getHandleFor(result);
     }
@@ -64,8 +69,7 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
     public MddNode compute(
             final MddNode mddNode,
             final AbstractNextStateDescriptor nextStateRelation,
-            final MddVariable mddVariable
-    ) {
+            final MddVariable mddVariable) {
         MddNode res = variableOrder.getMddGraph().getTerminalZeroNode();
         MddNode nextLayer = mddNode;
 
@@ -78,19 +82,26 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
                 // System.out.println(GraphvizSerializer.serialize(variableOrder.getDefaultSetSignature().getTopVariableHandle().getHandleFor(nextLayer)));
             }
             res = nextLayer;
-            final Optional<Iterable<AbstractNextStateDescriptor>> splitNS = nextStateRelation.split();
+            final Optional<Iterable<AbstractNextStateDescriptor>> splitNS =
+                    nextStateRelation.split();
             if (splitNS.isPresent()) {
                 for (AbstractNextStateDescriptor next : splitNS.get()) {
                     if (verbose) {
                         System.out.println("Applying transition: " + next);
                     }
-                    nextLayer = mddVariable.union(nextLayer, relProdProvider.compute(nextLayer, next, mddVariable));
+                    nextLayer =
+                            mddVariable.union(
+                                    nextLayer,
+                                    relProdProvider.compute(nextLayer, next, mddVariable));
                 }
             } else {
                 if (verbose) {
                     System.out.println("Applying transition: " + nextStateRelation);
                 }
-                nextLayer = mddVariable.union(nextLayer, relProdProvider.compute(nextLayer, nextStateRelation, mddVariable));
+                nextLayer =
+                        mddVariable.union(
+                                nextLayer,
+                                relProdProvider.compute(nextLayer, nextStateRelation, mddVariable));
             }
         }
 
@@ -99,16 +110,16 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
 
     @Override
     public MddNode computeTerminal(
-            final MddNode mddNode, final AbstractNextStateDescriptor nextStateRelation, final MddGraph<?> mddGraph
-    ) {
+            final MddNode mddNode,
+            final AbstractNextStateDescriptor nextStateRelation,
+            final MddGraph<?> mddGraph) {
         MddNode res = variableOrder.getMddGraph().getTerminalZeroNode();
         MddNode nextLayer = mddNode;
 
         while (res != nextLayer) {
-            nextLayer = mddGraph.unionTerminal(
-                    res,
-                    relProdProvider.computeTerminal(res, nextStateRelation, mddGraph)
-            );
+            nextLayer =
+                    mddGraph.unionTerminal(
+                            res, relProdProvider.computeTerminal(res, nextStateRelation, mddGraph));
         }
 
         return res;
@@ -126,10 +137,12 @@ public final class BfsProvider implements StateSpaceEnumerationProvider {
 
     @Override
     public void cleanup() {
-        this.cacheManager.forEachCache((cache) -> cache.clearSelectively((source, ns, result) -> source.getReferenceCount() ==
-                0 ||
-                result.getReferenceCount() ==
-                        0));
+        this.cacheManager.forEachCache(
+                (cache) ->
+                        cache.clearSelectively(
+                                (source, ns, result) ->
+                                        source.getReferenceCount() == 0
+                                                || result.getReferenceCount() == 0));
     }
 
     public Cache getRelProdCache() {

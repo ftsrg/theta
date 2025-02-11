@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
@@ -43,8 +42,9 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
         return "generic";
     }
 
-    public void install(final Path home, final String version, final Path solverPath,
-                        final String[] solverArgs) throws SmtLibSolverInstallerException {
+    public void install(
+            final Path home, final String version, final Path solverPath, final String[] solverArgs)
+            throws SmtLibSolverInstallerException {
         this.solverPath = solverPath;
         this.solverArgs = solverArgs;
         super.install(home, version, version, solverPath);
@@ -56,16 +56,15 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
         checkState(solverPath != null);
         try {
             final var solverFilePath = solverFile(installDir);
-            Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(),
-                    StandardCharsets.UTF_8);
+            Files.writeString(
+                    solverFilePath, solverPath.toAbsolutePath().toString(), StandardCharsets.UTF_8);
 
             final var solverInfoPath = infoFile(installDir);
             final var info = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
             Files.writeString(
                     solverInfoPath,
                     info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
-                    StandardCharsets.UTF_8
-            );
+                    StandardCharsets.UTF_8);
 
             solverPath = null;
         } catch (IOException e) {
@@ -85,8 +84,11 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version,
-                                          final Path solverPath, final String[] solverArgs) {
+    public SolverFactory getSolverFactory(
+            final Path installDir,
+            final String version,
+            final Path solverPath,
+            final String[] solverArgs) {
         return GenericSmtLibSolverFactory.create(solverPath, solverArgs);
     }
 

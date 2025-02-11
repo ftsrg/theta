@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ package hu.bme.mit.theta.cfa.analysis;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
+import java.util.ArrayList;
+import java.util.Collection;
 
-final class CfaTransFunc<S extends ExprState, P extends Prec> implements
-        TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> {
+final class CfaTransFunc<S extends ExprState, P extends Prec>
+        implements TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> {
 
     private final TransFunc<S, ? super CfaAction, ? super P> transFunc;
 
@@ -41,8 +40,8 @@ final class CfaTransFunc<S extends ExprState, P extends Prec> implements
     }
 
     @Override
-    public Collection<CfaState<S>> getSuccStates(final CfaState<S> state, final CfaAction action,
-                                                 final CfaPrec<P> prec) {
+    public Collection<CfaState<S>> getSuccStates(
+            final CfaState<S> state, final CfaAction action, final CfaPrec<P> prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -56,13 +55,12 @@ final class CfaTransFunc<S extends ExprState, P extends Prec> implements
         final P subPrec = prec.getPrec(target);
         final S subState = state.getState();
 
-        final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action,
-                subPrec);
+        final Collection<? extends S> subSuccStates =
+                transFunc.getSuccStates(subState, action, subPrec);
         for (final S subSuccState : subSuccStates) {
             final CfaState<S> succState = CfaState.of(target, subSuccState);
             succStates.add(succState);
         }
         return succStates;
     }
-
 }

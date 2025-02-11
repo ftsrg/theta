@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,22 +26,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -49,6 +36,14 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ExplStmtTransFuncTest {
 
@@ -68,12 +63,12 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assign(x, Add(x.getRef(), Int(1))));
         stmts.add(Assume(Leq(x.getRef(), Int(100))));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
 
         Assert.assertEquals(1, succStates.size());
-        final ExplState expectedState = ExplState.of(
-                ImmutableValuation.builder().put(x, Int(2)).build());
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build());
         Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
     }
 
@@ -86,8 +81,8 @@ public class ExplStmtTransFuncTest {
         stmts.add(Havoc(x));
         stmts.add(Assume(Lt(Mul(x.getRef(), x.getRef()), Int(0))));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
 
         Assert.assertEquals(1, succStates.size());
         final ExplState expectedState = ExplState.bottom();
@@ -103,12 +98,12 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assign(x, Int(5)));
         stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
 
         Assert.assertEquals(1, succStates.size());
-        final ExplState expectedState = ExplState
-                .of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
         Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
     }
 
@@ -121,12 +116,12 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assign(x, Int(5)));
         stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
-        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
 
         Assert.assertEquals(1, succStates.size());
-        final ExplState expectedState = ExplState
-                .of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
         Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
     }
 
@@ -146,11 +141,10 @@ public class ExplStmtTransFuncTest {
 
         for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
             final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, entry.getKey());
-            final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                    stmts, prec);
+            final Collection<? extends ExplState> succStates =
+                    transFunc.getSuccStates(sourceState, stmts, prec);
 
             Assert.assertEquals(entry.getValue().intValue(), succStates.size());
         }
-
     }
 }

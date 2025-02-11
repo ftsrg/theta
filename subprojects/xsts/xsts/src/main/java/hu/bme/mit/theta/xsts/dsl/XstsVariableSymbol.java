@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.VariableDeclarationContext;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-
 public class XstsVariableSymbol implements Symbol {
 
     private final String name;
     private final XstsType type;
 
-    public XstsVariableSymbol(final SymbolTable typeTable,
-                              final VariableDeclarationContext context) {
+    public XstsVariableSymbol(
+            final SymbolTable typeTable, final VariableDeclarationContext context) {
         checkNotNull(context);
         name = context.name.getText();
         type = new XstsType(typeTable, context.ttype);

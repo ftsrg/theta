@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,16 +28,19 @@ import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-public final class IntType implements Additive<IntType>, Multiplicative<IntType>,
-        Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
-        Castable<IntType> {
+public final class IntType
+        implements Additive<IntType>,
+                Multiplicative<IntType>,
+                Divisible<IntType>,
+                Equational<IntType>,
+                Ordered<IntType>,
+                Castable<IntType> {
 
     private static final IntType INSTANCE = new IntType();
     private static final int HASH_SEED = 222670;
     private static final String TYPE_LABEL = "Int";
 
-    private IntType() {
-    }
+    private IntType() {}
 
     public static IntType getInstance() {
         return INSTANCE;
@@ -131,11 +134,11 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
     }
 
     @Override
-    public <TargetType extends Type> Expr<TargetType> Cast(final Expr<IntType> op,
-                                                           final TargetType type) {
+    public <TargetType extends Type> Expr<TargetType> Cast(
+            final Expr<IntType> op, final TargetType type) {
         if (type instanceof RatType) {
-            @SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(
-                    op);
+            @SuppressWarnings("unchecked")
+            final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
             return result;
         } else {
             throw new ClassCastException("Int cannot be cast to " + type);

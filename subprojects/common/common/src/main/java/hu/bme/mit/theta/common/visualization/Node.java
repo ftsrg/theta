@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Represents a simple node of the visualizable graph.
- */
+/** Represents a simple node of the visualizable graph. */
 public class Node {
 
     private final String id;
@@ -90,5 +88,4 @@ public class Node {
     public boolean isRoot() {
         return getParent() == null;
     }
-
 }

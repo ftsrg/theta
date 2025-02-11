@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -29,7 +36,6 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,45 +45,36 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
-/**
- * Strategies for performing predicate abstraction over an expression.
- */
+/** Strategies for performing predicate abstraction over an expression. */
 public class PredAbstractors {
 
-    private PredAbstractors() {
-    }
+    private PredAbstractors() {}
 
-    /**
-     * Interface for performing predicate abstraction over an expression.
-     */
+    /** Interface for performing predicate abstraction over an expression. */
     public interface PredAbstractor {
 
         /**
          * Create predicate states for a given expression with a given precision.
          *
-         * @param expr         Expression to be abstracted
+         * @param expr Expression to be abstracted
          * @param exprIndexing Unfold indexing of the expression
-         * @param prec         Precision
+         * @param prec Precision
          * @param precIndexing Unfold indexing of the precision
          * @return
          */
-        Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-                                                  final VarIndexing exprIndexing,
-                                                  final PredPrec prec, final VarIndexing precIndexing);
+        Collection<PredState> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final PredPrec prec,
+                final VarIndexing precIndexing);
 
-        default Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-                                                          final VarIndexing exprIndexing,
-                                                          final PredPrec prec,
-                                                          final VarIndexing precIndexing,
-                                                          final PredState state,
-                                                          final ExprAction action) {
+        default Collection<PredState> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final PredPrec prec,
+                final VarIndexing precIndexing,
+                final PredState state,
+                final ExprAction action) {
             return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
         }
     }
@@ -129,9 +126,11 @@ public class PredAbstractors {
         }
 
         @Override
-        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-                                                         final VarIndexing exprIndexing,
-                                                         final PredPrec prec, final VarIndexing precIndexing) {
+        public Collection<PredState> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final PredPrec prec,
+                final VarIndexing precIndexing) {
             checkNotNull(expr);
             checkNotNull(exprIndexing);
             checkNotNull(prec);
@@ -147,7 +146,9 @@ public class PredAbstractors {
                 solver.add(PathUtils.unfold(expr, exprIndexing));
                 for (int i = 0; i < preds.size(); ++i) {
                     solver.add(
-                            Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), precIndexing)));
+                            Iff(
+                                    actLits.get(i).getRef(),
+                                    PathUtils.unfold(preds.get(i), precIndexing)));
                 }
                 while (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
@@ -173,8 +174,8 @@ public class PredAbstractors {
                 }
             }
             if (!split && states.size() > 1) {
-                final Expr<BoolType> pred = Or(
-                        states.stream().map(PredState::toExpr).collect(Collectors.toList()));
+                final Expr<BoolType> pred =
+                        Or(states.stream().map(PredState::toExpr).collect(Collectors.toList()));
                 return Collections.singleton(PredState.of(pred));
             } else {
                 return states;
@@ -197,9 +198,11 @@ public class PredAbstractors {
         }
 
         @Override
-        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-                                                         final VarIndexing exprIndexing,
-                                                         final PredPrec prec, final VarIndexing precIndexing) {
+        public Collection<PredState> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final PredPrec prec,
+                final VarIndexing precIndexing) {
             final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
 
             try (WithPushPop wp = new WithPushPop(solver)) {
@@ -221,8 +224,8 @@ public class PredAbstractors {
                         negEntailed = solver.check().isUnsat();
                     }
 
-                    assert !(ponEntailed
-                            && negEntailed) : "Ponated and negated predicates are both entailed.";
+                    assert !(ponEntailed && negEntailed)
+                            : "Ponated and negated predicates are both entailed.";
 
                     if (ponEntailed) {
                         newStatePreds.add(pred);
@@ -237,19 +240,25 @@ public class PredAbstractors {
         }
 
         @Override
-        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-                                                         final VarIndexing exprIndexing,
-                                                         final PredPrec prec,
-                                                         final VarIndexing precIndexing,
-                                                         final PredState state,
-                                                         final ExprAction action) {
+        public Collection<PredState> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final PredPrec prec,
+                final VarIndexing precIndexing,
+                final PredState state,
+                final ExprAction action) {
             var actionExpr = action.toExpr();
             if (actionExpr.equals(True())) {
-                var filteredPreds = state.getPreds().stream().filter(p -> {
-                    var vars = ExprUtils.getVars(p);
-                    var indexing = action.nextIndexing();
-                    return vars.stream().allMatch(v -> indexing.get(v) == 0);
-                }).collect(Collectors.toList());
+                var filteredPreds =
+                        state.getPreds().stream()
+                                .filter(
+                                        p -> {
+                                            var vars = ExprUtils.getVars(p);
+                                            var indexing = action.nextIndexing();
+                                            return vars.stream()
+                                                    .allMatch(v -> indexing.get(v) == 0);
+                                        })
+                                .collect(Collectors.toList());
                 return Collections.singleton(PredState.of(filteredPreds));
             }
             return createStatesForExpr(expr, exprIndexing, prec, precIndexing);

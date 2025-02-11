@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,83 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.dsl.impl;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessorExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AdditiveExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AndExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ArrayAccessContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseAndExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseOrExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseShiftExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseXorExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvConcatExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtendExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtractAccessContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DeclListContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EqualityExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ExistsExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FalseExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ForallExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FuncAccessContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FuncLitExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IdExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IffExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ImplyExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IntLitExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IteExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MultiplicativeExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.NotExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.OrExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ParenExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatLitExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RelationExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TrueExprContext;
-import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.UnaryExprContext;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.functype.FuncExprs;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import org.antlr.v4.runtime.Token;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -170,6 +93,82 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AccessorExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AdditiveExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AndExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ArrayAccessContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseAndExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseOrExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseShiftExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BitwiseXorExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvConcatExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtendExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BvExtractAccessContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DeclListContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.EqualityExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ExistsExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FalseExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ForallExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FuncAccessContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FuncLitExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IdExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IffExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ImplyExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IntLitExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IteExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.MultiplicativeExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.NotExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.OrExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ParenExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatLitExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RelationExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TrueExprContext;
+import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.UnaryExprContext;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.utils.TypeUtils;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+import org.antlr.v4.runtime.Token;
+
 public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
     private Scope currentScope;
@@ -199,13 +198,13 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
             final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
             checkArgument(params.size() == 1);
-            @SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(
-                    params);
+            @SuppressWarnings("unchecked")
+            final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
             push(params);
 
-            @SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(
-                    this);
+            @SuppressWarnings("unchecked")
+            final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
             pop();
 
@@ -220,9 +219,15 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (ctx.decls == null) {
             return Collections.emptyList();
         } else {
-            final List<ParamDecl<?>> paramDecls = ctx.decls.stream()
-                    .map(d -> Param(d.name.getText(), d.ttype.accept(TypeCreatorVisitor.getInstance())))
-                    .collect(toList());
+            final List<ParamDecl<?>> paramDecls =
+                    ctx.decls.stream()
+                            .map(
+                                    d ->
+                                            Param(
+                                                    d.name.getText(),
+                                                    d.ttype.accept(
+                                                            TypeCreatorVisitor.getInstance())))
+                            .collect(toList());
             return paramDecls;
         }
     }
@@ -296,8 +301,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitOrExpr(final OrExprContext ctx) {
         if (ctx.ops.size() > 1) {
-            final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+            final Stream<Expr<BoolType>> opStream =
+                    ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return Or(ops);
         } else {
@@ -308,8 +313,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitAndExpr(final AndExprContext ctx) {
         if (ctx.ops.size() > 1) {
-            final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+            final Stream<Expr<BoolType>> opStream =
+                    ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return And(ops);
         } else {
@@ -486,8 +491,10 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-                                       final List<? extends Token> opers) {
+    private Expr<?> createAdditiveExpr(
+            final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -505,10 +512,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                          final Token oper) {
+    private Expr<?> createAdditiveSubExpr(
+            final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
         switch (oper.getType()) {
-
             case PLUS:
                 return createAddExpr(leftOp, rightOp);
 
@@ -529,8 +535,11 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
         if (leftOp instanceof AddExpr) {
             final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-            final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                    .add(rightOp).build();
+            final List<Expr<?>> ops =
+                    ImmutableList.<Expr<?>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return Add(ops);
         } else {
             return Add(leftOp, rightOp);
@@ -544,9 +553,11 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     private BvAddExpr createBvAddExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp instanceof BvAddExpr) {
             final BvAddExpr addLeftOp = (BvAddExpr) leftOp;
-            final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                    .addAll(addLeftOp.getOps()).add(rightOp)
-                    .build();
+            final List<Expr<BvType>> ops =
+                    ImmutableList.<Expr<BvType>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return BvExprs.Add(ops);
         } else {
             return BvExprs.Add(Arrays.asList(leftOp, rightOp));
@@ -572,12 +583,12 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         } else {
             return visitChildren(ctx);
         }
-
     }
 
-    private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-                                             final List<? extends Expr<?>> opsTail,
-                                             final List<? extends Token> opers) {
+    private Expr<?> createMutliplicativeExpr(
+            final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -595,10 +606,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                final Token oper) {
+    private Expr<?> createMultiplicativeSubExpr(
+            final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
         switch (oper.getType()) {
-
             case MUL:
                 return createMulExpr(leftOp, rightOp);
 
@@ -637,8 +647,11 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
         if (leftOp instanceof MulExpr) {
             final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-            final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                    .add(rightOp).build();
+            final List<Expr<?>> ops =
+                    ImmutableList.<Expr<?>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return Mul(ops);
         } else {
             return Mul(leftOp, rightOp);
@@ -648,9 +661,11 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     private BvMulExpr createBvMulExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp instanceof BvMulExpr) {
             final BvMulExpr addLeftOp = (BvMulExpr) leftOp;
-            final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                    .addAll(addLeftOp.getOps()).add(rightOp)
-                    .build();
+            final List<Expr<BvType>> ops =
+                    ImmutableList.<Expr<BvType>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return BvExprs.Mul(ops);
         } else {
             return BvExprs.Mul(Arrays.asList(leftOp, rightOp));
@@ -710,8 +725,10 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createConcatExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-                                     final List<? extends Token> opers) {
+    private Expr<?> createConcatExpr(
+            final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -729,8 +746,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         }
     }
 
-    private Expr<?> createConcatSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                        final Token oper) {
+    private Expr<?> createConcatSubExpr(
+            final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
         switch (oper.getType()) {
             case BV_CONCAT:
                 return createBvConcatExpr(castBv(leftOp), castBv(rightOp));
@@ -743,15 +760,16 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     private BvConcatExpr createBvConcatExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
         if (leftOp instanceof BvConcatExpr) {
             final BvConcatExpr addLeftOp = (BvConcatExpr) leftOp;
-            final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                    .addAll(addLeftOp.getOps()).add(rightOp)
-                    .build();
+            final List<Expr<BvType>> ops =
+                    ImmutableList.<Expr<BvType>>builder()
+                            .addAll(addLeftOp.getOps())
+                            .add(rightOp)
+                            .build();
             return BvExprs.Concat(ops);
         } else {
             return BvExprs.Concat(Arrays.asList(leftOp, rightOp));
         }
     }
-
 
     @Override
     public Expr<?> visitBvExtendExpr(final BvExtendExprContext ctx) {
@@ -890,5 +908,4 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     public Expr<?> visitParenExpr(final ParenExprContext ctx) {
         return ctx.op.accept(this);
     }
-
 }

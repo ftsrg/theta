@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,5 +24,4 @@ public interface Lattice<S extends State> extends PartialOrd<S> {
     S meet(S state1, S state2);
 
     S join(S state1, S state2);
-
 }

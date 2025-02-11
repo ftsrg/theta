@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.javasmt;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -144,6 +148,12 @@ import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sosy_lab.java_smt.api.ArrayFormula;
 import org.sosy_lab.java_smt.api.ArrayFormulaManager;
 import org.sosy_lab.java_smt.api.BitvectorFormula;
@@ -167,17 +177,6 @@ import org.sosy_lab.java_smt.api.QuantifiedFormulaManager;
 import org.sosy_lab.java_smt.api.RationalFormulaManager;
 import org.sosy_lab.java_smt.api.SolverContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-
 final class JavaSMTExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
@@ -198,270 +197,177 @@ final class JavaSMTExprTransformer {
     private final DispatchTable<Formula> table;
     private final Env env;
 
-    public JavaSMTExprTransformer(final JavaSMTTransformationManager transformer, final JavaSMTSymbolTable symbolTable, final SolverContext context) {
+    public JavaSMTExprTransformer(
+            final JavaSMTTransformationManager transformer,
+            final JavaSMTSymbolTable symbolTable,
+            final SolverContext context) {
         this.symbolTable = symbolTable;
         this.context = context;
         this.transformer = transformer;
         this.env = new Env();
 
-        booleanFormulaManager = orElseNull(() -> context.getFormulaManager().getBooleanFormulaManager());
-        integerFormulaManager = orElseNull(() -> context.getFormulaManager().getIntegerFormulaManager());
-        rationalFormulaManager = orElseNull(() -> context.getFormulaManager().getRationalFormulaManager());
-        bitvectorFormulaManager = orElseNull(() -> context.getFormulaManager().getBitvectorFormulaManager());
-        floatingPointFormulaManager = orElseNull(() -> context.getFormulaManager().getFloatingPointFormulaManager());
-        quantifiedFormulaManager = orElseNull(() -> context.getFormulaManager().getQuantifiedFormulaManager());
-        arrayFormulaManager = orElseNull(() -> context.getFormulaManager().getArrayFormulaManager());
-        enumFormulaManager = orElseNull(() -> context.getFormulaManager().getEnumerationFormulaManager());
+        booleanFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getBooleanFormulaManager());
+        integerFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getIntegerFormulaManager());
+        rationalFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getRationalFormulaManager());
+        bitvectorFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getBitvectorFormulaManager());
+        floatingPointFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getFloatingPointFormulaManager());
+        quantifiedFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getQuantifiedFormulaManager());
+        arrayFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getArrayFormulaManager());
+        enumFormulaManager =
+                orElseNull(() -> context.getFormulaManager().getEnumerationFormulaManager());
 
         exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
-        table = DispatchTable.<Formula>builder()
-
-                // General
-
-                .addCase(RefExpr.class, this::transformRef)
-
-                .addCase(IteExpr.class, this::transformIte)
-
-                // Boolean
-
-                .addCase(FalseExpr.class, this::transformFalse)
-
-                .addCase(TrueExpr.class, this::transformTrue)
-
-                .addCase(NotExpr.class, this::transformNot)
-
-                .addCase(ImplyExpr.class, this::transformImply)
-
-                .addCase(IffExpr.class, this::transformIff)
-
-                .addCase(XorExpr.class, this::transformXor)
-
-                .addCase(AndExpr.class, this::transformAnd)
-
-                .addCase(OrExpr.class, this::transformOr)
-
-                .addCase(ExistsExpr.class, this::transformExists)
-
-                .addCase(ForallExpr.class, this::transformForall)
-
-                // Rationals
-
-                .addCase(RatLitExpr.class, this::transformRatLit)
-
-                .addCase(RatAddExpr.class, this::transformRatAdd)
-
-                .addCase(RatSubExpr.class, this::transformRatSub)
-
-                .addCase(RatPosExpr.class, this::transformRatPos)
-
-                .addCase(RatNegExpr.class, this::transformRatNeg)
-
-                .addCase(RatMulExpr.class, this::transformRatMul)
-
-                .addCase(RatDivExpr.class, this::transformRatDiv)
-
-                .addCase(RatEqExpr.class, this::transformRatEq)
-
-                .addCase(RatNeqExpr.class, this::transformRatNeq)
-
-                .addCase(RatGeqExpr.class, this::transformRatGeq)
-
-                .addCase(RatGtExpr.class, this::transformRatGt)
-
-                .addCase(RatLeqExpr.class, this::transformRatLeq)
-
-                .addCase(RatLtExpr.class, this::transformRatLt)
-
-                .addCase(RatToIntExpr.class, this::transformRatToInt)
-
-                // Integers
-
-                .addCase(IntLitExpr.class, this::transformIntLit)
-
-                .addCase(IntAddExpr.class, this::transformIntAdd)
-
-                .addCase(IntSubExpr.class, this::transformIntSub)
-
-                .addCase(IntPosExpr.class, this::transformIntPos)
-
-                .addCase(IntNegExpr.class, this::transformIntNeg)
-
-                .addCase(IntMulExpr.class, this::transformIntMul)
-
-                .addCase(IntDivExpr.class, this::transformIntDiv)
-
-                .addCase(IntModExpr.class, this::transformIntMod)
-
-                .addCase(IntRemExpr.class, this::transformIntRem)
-
-                .addCase(IntEqExpr.class, this::transformIntEq)
-
-                .addCase(IntNeqExpr.class, this::transformIntNeq)
-
-                .addCase(IntGeqExpr.class, this::transformIntGeq)
-
-                .addCase(IntGtExpr.class, this::transformIntGt)
-
-                .addCase(IntLeqExpr.class, this::transformIntLeq)
-
-                .addCase(IntLtExpr.class, this::transformIntLt)
-
-                .addCase(IntToRatExpr.class, this::transformIntToRat)
-
-                // Bitvectors
-
-                .addCase(BvLitExpr.class, this::transformBvLit)
-
-                .addCase(BvConcatExpr.class, this::transformBvConcat)
-
-                .addCase(BvExtractExpr.class, this::transformBvExtract)
-
-                .addCase(BvZExtExpr.class, this::transformBvZExt)
-
-                .addCase(BvSExtExpr.class, this::transformBvSExt)
-
-                .addCase(BvAddExpr.class, this::transformBvAdd)
-
-                .addCase(BvSubExpr.class, this::transformBvSub)
-
-                .addCase(BvPosExpr.class, this::transformBvPos)
-
-                .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
-
-                .addCase(BvNegExpr.class, this::transformBvNeg)
-
-                .addCase(BvMulExpr.class, this::transformBvMul)
-
-                .addCase(BvUDivExpr.class, this::transformBvUDiv)
-
-                .addCase(BvSDivExpr.class, this::transformBvSDiv)
-
-                .addCase(BvSModExpr.class, this::transformBvSMod)
-
-                .addCase(BvURemExpr.class, this::transformBvURem)
-
-                .addCase(BvSRemExpr.class, this::transformBvSRem)
-
-                .addCase(BvAndExpr.class, this::transformBvAnd)
-
-                .addCase(BvOrExpr.class, this::transformBvOr)
-
-                .addCase(BvXorExpr.class, this::transformBvXor)
-
-                .addCase(BvNotExpr.class, this::transformBvNot)
-
-                .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
-
-                .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
-
-                .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
-
-                .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
-
-                .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
-
-                .addCase(BvEqExpr.class, this::transformBvEq)
-
-                .addCase(BvNeqExpr.class, this::transformBvNeq)
-
-                .addCase(BvUGeqExpr.class, this::transformBvUGeq)
-
-                .addCase(BvUGtExpr.class, this::transformBvUGt)
-
-                .addCase(BvULeqExpr.class, this::transformBvULeq)
-
-                .addCase(BvULtExpr.class, this::transformBvULt)
-
-                .addCase(BvSGeqExpr.class, this::transformBvSGeq)
-
-                .addCase(BvSGtExpr.class, this::transformBvSGt)
-
-                .addCase(BvSLeqExpr.class, this::transformBvSLeq)
-
-                .addCase(BvSLtExpr.class, this::transformBvSLt)
-
-                // Floating points
-
-                .addCase(FpLitExpr.class, this::transformFpLit)
-
-                .addCase(FpAddExpr.class, this::transformFpAdd)
-
-                .addCase(FpSubExpr.class, this::transformFpSub)
-
-                .addCase(FpPosExpr.class, this::transformFpPos)
-
-                .addCase(FpNegExpr.class, this::transformFpNeg)
-
-                .addCase(FpMulExpr.class, this::transformFpMul)
-
-                .addCase(FpDivExpr.class, this::transformFpDiv)
-
-                .addCase(FpEqExpr.class, this::transformFpEq)
-
-                .addCase(FpAssignExpr.class, this::transformFpAssign)
-
-                .addCase(FpGeqExpr.class, this::transformFpGeq)
-
-                .addCase(FpLeqExpr.class, this::transformFpLeq)
-
-                .addCase(FpGtExpr.class, this::transformFpGt)
-
-                .addCase(FpLtExpr.class, this::transformFpLt)
-
-                .addCase(FpNeqExpr.class, this::transformFpNeq)
-
-                .addCase(FpAbsExpr.class, this::transformFpAbs)
-
-                .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
-
-                .addCase(FpMaxExpr.class, this::transformFpMax)
-
-                .addCase(FpMinExpr.class, this::transformFpMin)
-
-                .addCase(FpSqrtExpr.class, this::transformFpSqrt)
-
-                .addCase(FpRemExpr.class, this::transformFpRem)
-
-                .addCase(FpIsNanExpr.class, this::transformFpIsNan)
-
-                .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
-
-                .addCase(FpFromBvExpr.class, this::transformFpFromBv)
-
-                .addCase(FpToBvExpr.class, this::transformFpToBv)
-
-                .addCase(FpToFpExpr.class, this::transformFpToFp)
-
-                // Functions
-
-                .addCase(FuncAppExpr.class, this::transformFuncApp)
-
-                // Arrays
-
-                .addCase(ArrayReadExpr.class, this::transformArrayRead)
-
-                .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
-
-                .addCase(ArrayEqExpr.class, this::transformArrayEq)
-
-                .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
-
-                .addCase(ArrayLitExpr.class, this::transformArrayLit)
-
-                .addCase(ArrayInitExpr.class, this::transformArrayInit)
-
-                .addCase(Dereference.class, this::transformDereference)
-
-                // Enums
-
-                .addCase(EnumLitExpr.class, this::transformEnumLit)
-
-                .addCase(EnumNeqExpr.class, this::transformEnumNeq)
-
-                .addCase(EnumEqExpr.class, this::transformEnumEq)
-
-                .build();
+        table =
+                DispatchTable.<Formula>builder()
+
+                        // General
+
+                        .addCase(RefExpr.class, this::transformRef)
+                        .addCase(IteExpr.class, this::transformIte)
+
+                        // Boolean
+
+                        .addCase(FalseExpr.class, this::transformFalse)
+                        .addCase(TrueExpr.class, this::transformTrue)
+                        .addCase(NotExpr.class, this::transformNot)
+                        .addCase(ImplyExpr.class, this::transformImply)
+                        .addCase(IffExpr.class, this::transformIff)
+                        .addCase(XorExpr.class, this::transformXor)
+                        .addCase(AndExpr.class, this::transformAnd)
+                        .addCase(OrExpr.class, this::transformOr)
+                        .addCase(ExistsExpr.class, this::transformExists)
+                        .addCase(ForallExpr.class, this::transformForall)
+
+                        // Rationals
+
+                        .addCase(RatLitExpr.class, this::transformRatLit)
+                        .addCase(RatAddExpr.class, this::transformRatAdd)
+                        .addCase(RatSubExpr.class, this::transformRatSub)
+                        .addCase(RatPosExpr.class, this::transformRatPos)
+                        .addCase(RatNegExpr.class, this::transformRatNeg)
+                        .addCase(RatMulExpr.class, this::transformRatMul)
+                        .addCase(RatDivExpr.class, this::transformRatDiv)
+                        .addCase(RatEqExpr.class, this::transformRatEq)
+                        .addCase(RatNeqExpr.class, this::transformRatNeq)
+                        .addCase(RatGeqExpr.class, this::transformRatGeq)
+                        .addCase(RatGtExpr.class, this::transformRatGt)
+                        .addCase(RatLeqExpr.class, this::transformRatLeq)
+                        .addCase(RatLtExpr.class, this::transformRatLt)
+                        .addCase(RatToIntExpr.class, this::transformRatToInt)
+
+                        // Integers
+
+                        .addCase(IntLitExpr.class, this::transformIntLit)
+                        .addCase(IntAddExpr.class, this::transformIntAdd)
+                        .addCase(IntSubExpr.class, this::transformIntSub)
+                        .addCase(IntPosExpr.class, this::transformIntPos)
+                        .addCase(IntNegExpr.class, this::transformIntNeg)
+                        .addCase(IntMulExpr.class, this::transformIntMul)
+                        .addCase(IntDivExpr.class, this::transformIntDiv)
+                        .addCase(IntModExpr.class, this::transformIntMod)
+                        .addCase(IntRemExpr.class, this::transformIntRem)
+                        .addCase(IntEqExpr.class, this::transformIntEq)
+                        .addCase(IntNeqExpr.class, this::transformIntNeq)
+                        .addCase(IntGeqExpr.class, this::transformIntGeq)
+                        .addCase(IntGtExpr.class, this::transformIntGt)
+                        .addCase(IntLeqExpr.class, this::transformIntLeq)
+                        .addCase(IntLtExpr.class, this::transformIntLt)
+                        .addCase(IntToRatExpr.class, this::transformIntToRat)
+
+                        // Bitvectors
+
+                        .addCase(BvLitExpr.class, this::transformBvLit)
+                        .addCase(BvConcatExpr.class, this::transformBvConcat)
+                        .addCase(BvExtractExpr.class, this::transformBvExtract)
+                        .addCase(BvZExtExpr.class, this::transformBvZExt)
+                        .addCase(BvSExtExpr.class, this::transformBvSExt)
+                        .addCase(BvAddExpr.class, this::transformBvAdd)
+                        .addCase(BvSubExpr.class, this::transformBvSub)
+                        .addCase(BvPosExpr.class, this::transformBvPos)
+                        .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
+                        .addCase(BvNegExpr.class, this::transformBvNeg)
+                        .addCase(BvMulExpr.class, this::transformBvMul)
+                        .addCase(BvUDivExpr.class, this::transformBvUDiv)
+                        .addCase(BvSDivExpr.class, this::transformBvSDiv)
+                        .addCase(BvSModExpr.class, this::transformBvSMod)
+                        .addCase(BvURemExpr.class, this::transformBvURem)
+                        .addCase(BvSRemExpr.class, this::transformBvSRem)
+                        .addCase(BvAndExpr.class, this::transformBvAnd)
+                        .addCase(BvOrExpr.class, this::transformBvOr)
+                        .addCase(BvXorExpr.class, this::transformBvXor)
+                        .addCase(BvNotExpr.class, this::transformBvNot)
+                        .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
+                        .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
+                        .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
+                        .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
+                        .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
+                        .addCase(BvEqExpr.class, this::transformBvEq)
+                        .addCase(BvNeqExpr.class, this::transformBvNeq)
+                        .addCase(BvUGeqExpr.class, this::transformBvUGeq)
+                        .addCase(BvUGtExpr.class, this::transformBvUGt)
+                        .addCase(BvULeqExpr.class, this::transformBvULeq)
+                        .addCase(BvULtExpr.class, this::transformBvULt)
+                        .addCase(BvSGeqExpr.class, this::transformBvSGeq)
+                        .addCase(BvSGtExpr.class, this::transformBvSGt)
+                        .addCase(BvSLeqExpr.class, this::transformBvSLeq)
+                        .addCase(BvSLtExpr.class, this::transformBvSLt)
+
+                        // Floating points
+
+                        .addCase(FpLitExpr.class, this::transformFpLit)
+                        .addCase(FpAddExpr.class, this::transformFpAdd)
+                        .addCase(FpSubExpr.class, this::transformFpSub)
+                        .addCase(FpPosExpr.class, this::transformFpPos)
+                        .addCase(FpNegExpr.class, this::transformFpNeg)
+                        .addCase(FpMulExpr.class, this::transformFpMul)
+                        .addCase(FpDivExpr.class, this::transformFpDiv)
+                        .addCase(FpEqExpr.class, this::transformFpEq)
+                        .addCase(FpAssignExpr.class, this::transformFpAssign)
+                        .addCase(FpGeqExpr.class, this::transformFpGeq)
+                        .addCase(FpLeqExpr.class, this::transformFpLeq)
+                        .addCase(FpGtExpr.class, this::transformFpGt)
+                        .addCase(FpLtExpr.class, this::transformFpLt)
+                        .addCase(FpNeqExpr.class, this::transformFpNeq)
+                        .addCase(FpAbsExpr.class, this::transformFpAbs)
+                        .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
+                        .addCase(FpMaxExpr.class, this::transformFpMax)
+                        .addCase(FpMinExpr.class, this::transformFpMin)
+                        .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpRemExpr.class, this::transformFpRem)
+                        .addCase(FpIsNanExpr.class, this::transformFpIsNan)
+                        .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                        .addCase(FpFromBvExpr.class, this::transformFpFromBv)
+                        .addCase(FpToBvExpr.class, this::transformFpToBv)
+                        .addCase(FpToFpExpr.class, this::transformFpToFp)
+
+                        // Functions
+
+                        .addCase(FuncAppExpr.class, this::transformFuncApp)
+
+                        // Arrays
+
+                        .addCase(ArrayReadExpr.class, this::transformArrayRead)
+                        .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
+                        .addCase(ArrayEqExpr.class, this::transformArrayEq)
+                        .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
+                        .addCase(ArrayLitExpr.class, this::transformArrayLit)
+                        .addCase(ArrayInitExpr.class, this::transformArrayInit)
+                        .addCase(Dereference.class, this::transformDereference)
+
+                        // Enums
+
+                        .addCase(EnumLitExpr.class, this::transformEnumLit)
+                        .addCase(EnumNeqExpr.class, this::transformEnumNeq)
+                        .addCase(EnumEqExpr.class, this::transformEnumEq)
+                        .build();
     }
 
     private static <T> T orElseNull(Supplier<T> supplier) {
@@ -472,7 +378,8 @@ final class JavaSMTExprTransformer {
         }
     }
 
-    private static FloatingPointRoundingMode transformRoundingMode(final FpRoundingMode fpRoundingMode) {
+    private static FloatingPointRoundingMode transformRoundingMode(
+            final FpRoundingMode fpRoundingMode) {
         return switch (fpRoundingMode) {
             case RNE -> FloatingPointRoundingMode.NEAREST_TIES_TO_EVEN;
             case RNA -> FloatingPointRoundingMode.NEAREST_TIES_AWAY;
@@ -521,7 +428,6 @@ final class JavaSMTExprTransformer {
 
     private Formula transformFalse(final FalseExpr expr) {
         return booleanFormulaManager.makeFalse();
-
     }
 
     private Formula transformTrue(final TrueExpr expr) {
@@ -552,16 +458,14 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformAnd(final AndExpr expr) {
-        final List<BooleanFormula> opTerms = expr.getOps().stream()
-                .map(e -> (BooleanFormula) toTerm(e))
-                .toList();
+        final List<BooleanFormula> opTerms =
+                expr.getOps().stream().map(e -> (BooleanFormula) toTerm(e)).toList();
         return booleanFormulaManager.and(opTerms);
     }
 
     private Formula transformOr(final OrExpr expr) {
-        final List<BooleanFormula> opTerms = expr.getOps().stream()
-                .map(e -> (BooleanFormula) toTerm(e))
-                .toList();
+        final List<BooleanFormula> opTerms =
+                expr.getOps().stream().map(e -> (BooleanFormula) toTerm(e)).toList();
         return booleanFormulaManager.or(opTerms);
     }
 
@@ -614,17 +518,14 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformRatAdd(final RatAddExpr expr) {
-        final List<RationalFormula> opTerms = expr.getOps().stream()
-                .map(e -> (RationalFormula) toTerm(e))
-                .toList();
+        final List<RationalFormula> opTerms =
+                expr.getOps().stream().map(e -> (RationalFormula) toTerm(e)).toList();
         return opTerms.stream().reduce(rationalFormulaManager::add).get();
     }
 
     private Formula transformRatSub(final RatSubExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.subtract(leftOpTerm, rightOpTerm);
     }
 
@@ -638,17 +539,14 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformRatMul(final RatMulExpr expr) {
-        final List<RationalFormula> opTerms = expr.getOps().stream()
-                .map(e -> (RationalFormula) toTerm(e))
-                .toList();
+        final List<RationalFormula> opTerms =
+                expr.getOps().stream().map(e -> (RationalFormula) toTerm(e)).toList();
         return opTerms.stream().reduce(rationalFormulaManager::multiply).get();
     }
 
     private Formula transformRatDiv(final RatDivExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.divide(leftOpTerm, rightOpTerm);
     }
 
@@ -665,18 +563,14 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformRatGeq(final RatGeqExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.greaterOrEquals(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformRatGt(final RatGtExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.greaterThan(leftOpTerm, rightOpTerm);
     }
 
@@ -685,18 +579,14 @@ final class JavaSMTExprTransformer {
      */
 
     private Formula transformRatLeq(final RatLeqExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.lessOrEquals(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformRatLt(final RatLtExpr expr) {
-        final RationalFormula leftOpTerm = (RationalFormula) toTerm(
-                expr.getLeftOp());
-        final RationalFormula rightOpTerm = (RationalFormula) toTerm(
-                expr.getRightOp());
+        final RationalFormula leftOpTerm = (RationalFormula) toTerm(expr.getLeftOp());
+        final RationalFormula rightOpTerm = (RationalFormula) toTerm(expr.getRightOp());
         return rationalFormulaManager.lessThan(leftOpTerm, rightOpTerm);
     }
 
@@ -709,17 +599,14 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformIntAdd(final IntAddExpr expr) {
-        final List<IntegerFormula> opTerms = expr.getOps().stream()
-                .map(e -> (IntegerFormula) toTerm(e))
-                .toList();
+        final List<IntegerFormula> opTerms =
+                expr.getOps().stream().map(e -> (IntegerFormula) toTerm(e)).toList();
         return opTerms.stream().reduce(integerFormulaManager::add).get();
     }
 
     private Formula transformIntSub(final IntSubExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.subtract(leftOpTerm, rightOpTerm);
     }
 
@@ -733,38 +620,32 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformIntMul(final IntMulExpr expr) {
-        final List<IntegerFormula> opTerms = expr.getOps().stream()
-                .map(e -> (IntegerFormula) toTerm(e))
-                .toList();
+        final List<IntegerFormula> opTerms =
+                expr.getOps().stream().map(e -> (IntegerFormula) toTerm(e)).toList();
         return opTerms.stream().reduce(integerFormulaManager::multiply).get();
     }
 
     private Formula transformIntDiv(final IntDivExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.divide(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformIntMod(final IntModExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.modulo(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformIntRem(final IntRemExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return booleanFormulaManager.ifThenElse(
-                integerFormulaManager.greaterOrEquals(rightOpTerm, integerFormulaManager.makeNumber(0)),
+                integerFormulaManager.greaterOrEquals(
+                        rightOpTerm, integerFormulaManager.makeNumber(0)),
                 integerFormulaManager.modulo(leftOpTerm, rightOpTerm),
-                integerFormulaManager.negate(integerFormulaManager.modulo(leftOpTerm, rightOpTerm))
-        );
+                integerFormulaManager.negate(
+                        integerFormulaManager.modulo(leftOpTerm, rightOpTerm)));
     }
 
     private Formula transformIntEq(final IntEqExpr expr) {
@@ -780,26 +661,20 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformIntGeq(final IntGeqExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.greaterOrEquals(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformIntGt(final IntGtExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.greaterThan(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformIntLeq(final IntLeqExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.lessOrEquals(leftOpTerm, rightOpTerm);
     }
 
@@ -808,10 +683,8 @@ final class JavaSMTExprTransformer {
      */
 
     private Formula transformIntLt(final IntLtExpr expr) {
-        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
-                expr.getLeftOp());
-        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
-                expr.getRightOp());
+        final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(expr.getLeftOp());
+        final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(expr.getRightOp());
         return integerFormulaManager.lessThan(leftOpTerm, rightOpTerm);
     }
 
@@ -821,8 +694,7 @@ final class JavaSMTExprTransformer {
 
     private Formula transformBvLit(final BvLitExpr expr) {
         return bitvectorFormulaManager.makeBitvector(
-                expr.getType().getSize(),
-                BvUtils.neutralBvLitExprToBigInteger(expr));
+                expr.getType().getSize(), BvUtils.neutralBvLitExprToBigInteger(expr));
     }
 
     private Formula transformBvEq(final BvEqExpr expr) {
@@ -838,9 +710,10 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvConcat(final BvConcatExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::concat);
     }
@@ -868,9 +741,10 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvAdd(final BvAddExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::add);
     }
@@ -895,9 +769,10 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvMul(final BvMulExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::multiply);
     }
@@ -938,25 +813,28 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvAnd(final BvAndExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::and);
     }
 
     private Formula transformBvOr(final BvOrExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::or);
     }
 
     private Formula transformBvXor(final BvXorExpr expr) {
-        final BitvectorFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (BitvectorFormula) toTerm(e))
-                .toArray(BitvectorFormula[]::new);
+        final BitvectorFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (BitvectorFormula) toTerm(e))
+                        .toArray(BitvectorFormula[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], bitvectorFormulaManager::xor);
     }
@@ -1067,25 +945,30 @@ final class JavaSMTExprTransformer {
                 BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
                 BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
                 expr.getHidden(),
-                FloatingPointType.getFloatingPointType(expr.getType().getExponent(), expr.getType().getSignificand() - 1)
-        );
+                FloatingPointType.getFloatingPointType(
+                        expr.getType().getExponent(), expr.getType().getSignificand() - 1));
     }
 
     private Formula transformFpAdd(final FpAddExpr expr) {
-        final FloatingPointFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (FloatingPointFormula) toTerm(e))
-                .toArray(FloatingPointFormula[]::new);
+        final FloatingPointFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (FloatingPointFormula) toTerm(e))
+                        .toArray(FloatingPointFormula[]::new);
 
-        return Stream.of(opTerms).skip(1).reduce(opTerms[0],
-                (op1, op2) -> floatingPointFormulaManager.add(op1, op2,
-                        transformFpRoundingMode(expr.getRoundingMode())
-                ));
+        return Stream.of(opTerms)
+                .skip(1)
+                .reduce(
+                        opTerms[0],
+                        (op1, op2) ->
+                                floatingPointFormulaManager.add(
+                                        op1, op2, transformFpRoundingMode(expr.getRoundingMode())));
     }
 
     private Formula transformFpSub(final FpSubExpr expr) {
         final FloatingPointFormula leftOpTerm = (FloatingPointFormula) toTerm(expr.getLeftOp());
         final FloatingPointFormula rightOpTerm = (FloatingPointFormula) toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.subtract(leftOpTerm, rightOpTerm, transformFpRoundingMode(expr.getRoundingMode()));
+        return floatingPointFormulaManager.subtract(
+                leftOpTerm, rightOpTerm, transformFpRoundingMode(expr.getRoundingMode()));
     }
 
     private Formula transformFpPos(final FpPosExpr expr) {
@@ -1114,28 +997,37 @@ final class JavaSMTExprTransformer {
 
     private Formula transformFpSqrt(final FpSqrtExpr expr) {
         final FloatingPointFormula opTerm = (FloatingPointFormula) toTerm(expr.getOp());
-        return floatingPointFormulaManager.sqrt(opTerm, transformFpRoundingMode(expr.getRoundingMode()));
+        return floatingPointFormulaManager.sqrt(
+                opTerm, transformFpRoundingMode(expr.getRoundingMode()));
     }
 
     private Formula transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {
         final FloatingPointFormula opTerm = (FloatingPointFormula) toTerm(expr.getOp());
-        return floatingPointFormulaManager.round(opTerm, transformFpRoundingMode(expr.getRoundingMode()));
+        return floatingPointFormulaManager.round(
+                opTerm, transformFpRoundingMode(expr.getRoundingMode()));
     }
 
     private Formula transformFpMul(final FpMulExpr expr) {
-        final FloatingPointFormula[] opTerms = expr.getOps().stream()
-                .map(e -> (FloatingPointFormula) toTerm(e))
-                .toArray(FloatingPointFormula[]::new);
+        final FloatingPointFormula[] opTerms =
+                expr.getOps().stream()
+                        .map(e -> (FloatingPointFormula) toTerm(e))
+                        .toArray(FloatingPointFormula[]::new);
 
-        return Stream.of(opTerms).skip(1).reduce(opTerms[0],
-                (op1, op2) -> floatingPointFormulaManager.multiply(op1, op2, transformFpRoundingMode(expr.getRoundingMode())));
+        return Stream.of(opTerms)
+                .skip(1)
+                .reduce(
+                        opTerms[0],
+                        (op1, op2) ->
+                                floatingPointFormulaManager.multiply(
+                                        op1, op2, transformFpRoundingMode(expr.getRoundingMode())));
     }
 
     private Formula transformFpDiv(final FpDivExpr expr) {
         final FloatingPointFormula leftOpTerm = (FloatingPointFormula) toTerm(expr.getLeftOp());
         final FloatingPointFormula rightOpTerm = (FloatingPointFormula) toTerm(expr.getRightOp());
 
-        return floatingPointFormulaManager.divide(leftOpTerm, rightOpTerm, transformFpRoundingMode(expr.getRoundingMode()));
+        return floatingPointFormulaManager.divide(
+                leftOpTerm, rightOpTerm, transformFpRoundingMode(expr.getRoundingMode()));
     }
 
     private Formula transformFpRem(final FpRemExpr expr) {
@@ -1147,43 +1039,51 @@ final class JavaSMTExprTransformer {
     private Formula transformFpEq(final FpEqExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.equalWithFPSemantics((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.equalWithFPSemantics(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private Formula transformFpAssign(final FpAssignExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.assignment((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.assignment(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private Formula transformFpNeq(final FpNeqExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return booleanFormulaManager.not(floatingPointFormulaManager.equalWithFPSemantics((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm));
+        return booleanFormulaManager.not(
+                floatingPointFormulaManager.equalWithFPSemantics(
+                        (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm));
     }
 
     private Formula transformFpGeq(final FpGeqExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.greaterOrEquals((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.greaterOrEquals(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private Formula transformFpLeq(final FpLeqExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.lessOrEquals((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.lessOrEquals(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private Formula transformFpGt(final FpGtExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.greaterThan((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.greaterThan(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private Formula transformFpLt(final FpLtExpr expr) {
         final Formula leftOpTerm = toTerm(expr.getLeftOp());
         final Formula rightOpTerm = toTerm(expr.getRightOp());
-        return floatingPointFormulaManager.lessThan((FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
+        return floatingPointFormulaManager.lessThan(
+                (FloatingPointFormula) leftOpTerm, (FloatingPointFormula) rightOpTerm);
     }
 
     private FloatingPointRoundingMode transformFpRoundingMode(final FpRoundingMode roundingMode) {
@@ -1210,20 +1110,26 @@ final class JavaSMTExprTransformer {
 
     private Formula transformFpFromBv(final FpFromBvExpr expr) {
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
-        final FloatingPointType fpSort = FloatingPointType.getFloatingPointType(
-                expr.getFpType().getExponent(),
-                expr.getFpType().getSignificand() - 1);
+        final FloatingPointType fpSort =
+                FloatingPointType.getFloatingPointType(
+                        expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
+
     /*
      * Arrays
      */
 
     private Formula transformFpToBv(final FpToBvExpr expr) {
         final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
-        final FloatingPointRoundingMode roundingMode = transformRoundingMode(expr.getRoundingMode());
+        final FloatingPointRoundingMode roundingMode =
+                transformRoundingMode(expr.getRoundingMode());
 
-        return floatingPointFormulaManager.castTo(op, expr.getSgn(), FormulaType.getBitvectorTypeWithSize(expr.getSize()), roundingMode);
+        return floatingPointFormulaManager.castTo(
+                op,
+                expr.getSgn(),
+                FormulaType.getBitvectorTypeWithSize(expr.getSize()),
+                roundingMode);
     }
 
     private Formula transformFpToFp(final FpToFpExpr expr) {
@@ -1237,21 +1143,20 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformArrayRead(final ArrayReadExpr<?, ?> expr) {
-        final ArrayFormula arrayTerm = (ArrayFormula) toTerm(
-                expr.getArray());
+        final ArrayFormula arrayTerm = (ArrayFormula) toTerm(expr.getArray());
         final Formula indexTerm = toTerm(expr.getIndex());
         return arrayFormulaManager.select(arrayTerm, indexTerm);
     }
 
     private Formula transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
-        final ArrayFormula arrayTerm = (ArrayFormula) toTerm(
-                expr.getArray());
+        final ArrayFormula arrayTerm = (ArrayFormula) toTerm(expr.getArray());
         final Formula indexTerm = toTerm(expr.getIndex());
         final Formula elemTerm = toTerm(expr.getElem());
         return arrayFormulaManager.store(arrayTerm, indexTerm, elemTerm);
     }
 
-    private <T1 extends Formula, T2 extends Formula> Formula transformArrayEq(final ArrayEqExpr<?, ?> expr) {
+    private <T1 extends Formula, T2 extends Formula> Formula transformArrayEq(
+            final ArrayEqExpr<?, ?> expr) {
         final ArrayFormula<T1, T2> leftOpTerm = (ArrayFormula<T1, T2>) toTerm(expr.getLeftOp());
         final ArrayFormula<T1, T2> rightOpTerm = (ArrayFormula<T1, T2>) toTerm(expr.getRightOp());
         return arrayFormulaManager.equivalence(leftOpTerm, rightOpTerm);
@@ -1259,18 +1164,18 @@ final class JavaSMTExprTransformer {
 
     private Formula transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
         return booleanFormulaManager.not(
-                (BooleanFormula) transformArrayEq(ArrayEqExpr.create(expr.getLeftOp(), expr.getRightOp()))
-        );
+                (BooleanFormula)
+                        transformArrayEq(ArrayEqExpr.create(expr.getLeftOp(), expr.getRightOp())));
     }
 
-    private <TI extends Formula, TE extends Formula> Formula transformArrayLit(final ArrayLitExpr<?, ?> expr) {
+    private <TI extends Formula, TE extends Formula> Formula transformArrayLit(
+            final ArrayLitExpr<?, ?> expr) {
         final TE elseElem = (TE) toTerm(expr.getElseElem());
-        final FormulaType<TE> elemType = (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
-        final FormulaType<TI> indexType = (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(
-                elseElem,
-                indexType,
-                elemType);
+        final FormulaType<TE> elemType =
+                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
+        final FormulaType<TI> indexType =
+                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
+        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
         for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());
@@ -1279,19 +1184,18 @@ final class JavaSMTExprTransformer {
         return arr;
     }
 
-
     /*
      * Functions
      */
 
-    private <TI extends Formula, TE extends Formula> Formula transformArrayInit(final ArrayInitExpr<?, ?> expr) {
+    private <TI extends Formula, TE extends Formula> Formula transformArrayInit(
+            final ArrayInitExpr<?, ?> expr) {
         final TE elseElem = (TE) toTerm(expr.getElseElem());
-        final FormulaType<TE> elemType = (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
-        final FormulaType<TI> indexType = (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(
-                elseElem,
-                indexType,
-                elemType);
+        final FormulaType<TE> elemType =
+                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
+        final FormulaType<TI> indexType =
+                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
+        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());
@@ -1309,19 +1213,21 @@ final class JavaSMTExprTransformer {
             final String name = decl.getName();
 
             final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Formula> argTerms = args.stream()
-                    .map(this::toTerm)
-                    .toList();
-
+            final List<Formula> argTerms = args.stream().map(this::toTerm).toList();
 
             final FunctionDeclaration<?> funcDecl;
             if (symbolTable.definesConstAsFunction(decl)) {
                 funcDecl = symbolTable.getSymbolAsFunction(decl);
             } else {
-                funcDecl = context.getFormulaManager().getUFManager().declareUF(
-                        name,
-                        transformer.toSort(expr.getType()),
-                        argTerms.stream().map(context.getFormulaManager()::getFormulaType).collect(Collectors.toList()));
+                funcDecl =
+                        context.getFormulaManager()
+                                .getUFManager()
+                                .declareUF(
+                                        name,
+                                        transformer.toSort(expr.getType()),
+                                        argTerms.stream()
+                                                .map(context.getFormulaManager()::getFormulaType)
+                                                .collect(Collectors.toList()));
 
                 symbolTable.put(decl, funcDecl);
             }
@@ -1334,37 +1240,53 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformDereference(final Dereference<?, ?, ?> expr) {
-        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        checkState(
+                expr.getUniquenessIdx().isPresent(),
+                "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
         final var sort = transformer.toSort(expr.getArray().getType());
         final var sortName = expr.getArray().getType().toString() + "-" + expr.getType().toString();
         final var constSort = transformer.toSort(Int());
-        final var funcDecl = context.getFormulaManager().getUFManager().declareUF(
-                "deref-" + sortName.replaceAll(" ", "_"),
-                transformer.toSort(expr.getType()),
-                List.of(sort, sort, constSort));
+        final var funcDecl =
+                context.getFormulaManager()
+                        .getUFManager()
+                        .declareUF(
+                                "deref-" + sortName.replaceAll(" ", "_"),
+                                transformer.toSort(expr.getType()),
+                                List.of(sort, sort, constSort));
 
-        final var func = context.getFormulaManager().getUFManager()
-                .callUF(funcDecl, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
+        final var func =
+                context.getFormulaManager()
+                        .getUFManager()
+                        .callUF(
+                                funcDecl,
+                                toTerm(expr.getArray()),
+                                toTerm(expr.getOffset()),
+                                toTerm(expr.getUniquenessIdx().get()));
         return func;
     }
 
     // Enums
 
     private Formula transformEnumEq(EnumEqExpr enumEqExpr) {
-        return enumFormulaManager.equivalence((EnumerationFormula) toTerm(enumEqExpr.getLeftOp()), (EnumerationFormula) toTerm(enumEqExpr.getRightOp()));
+        return enumFormulaManager.equivalence(
+                (EnumerationFormula) toTerm(enumEqExpr.getLeftOp()),
+                (EnumerationFormula) toTerm(enumEqExpr.getRightOp()));
     }
 
     private Formula transformEnumLit(EnumLitExpr enumLitExpr) {
-        return enumFormulaManager.makeConstant(EnumType.makeLongName(enumLitExpr.getType(), enumLitExpr.getValue()), (FormulaType.EnumerationFormulaType) transformer.toSort(enumLitExpr.getType()));
+        return enumFormulaManager.makeConstant(
+                EnumType.makeLongName(enumLitExpr.getType(), enumLitExpr.getValue()),
+                (FormulaType.EnumerationFormulaType) transformer.toSort(enumLitExpr.getType()));
     }
 
     private Formula transformEnumNeq(EnumNeqExpr enumNeqExpr) {
-        return booleanFormulaManager.not(enumFormulaManager.equivalence((EnumerationFormula) toTerm(enumNeqExpr.getLeftOp()), (EnumerationFormula) toTerm(enumNeqExpr.getRightOp())));
+        return booleanFormulaManager.not(
+                enumFormulaManager.equivalence(
+                        (EnumerationFormula) toTerm(enumNeqExpr.getLeftOp()),
+                        (EnumerationFormula) toTerm(enumNeqExpr.getRightOp())));
     }
-
 
     public void reset() {
         exprToTerm.invalidateAll();
     }
-
 }

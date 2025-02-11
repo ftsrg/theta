@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package hu.bme.mit.theta.common;
 
-import com.google.common.collect.ImmutableList;
-
-import java.util.function.Function;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableList;
+import java.util.function.Function;
 
 public final class Tuple1<T1> extends Tuple {
 
@@ -32,7 +31,8 @@ public final class Tuple1<T1> extends Tuple {
     }
 
     public T1 get1() {
-        @SuppressWarnings("unchecked") final T1 result = (T1) elem(0);
+        @SuppressWarnings("unchecked")
+        final T1 result = (T1) elem(0);
         return result;
     }
 
@@ -40,5 +40,4 @@ public final class Tuple1<T1> extends Tuple {
         checkNotNull(function);
         return function.apply(get1());
     }
-
 }

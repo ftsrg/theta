@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,25 +15,22 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-/**
- * Basic, immutable implementation of a substitution.
- */
+/** Basic, immutable implementation of a substitution. */
 public final class BasicSubstitution implements Substitution {
 
     private static final int HASH_SEED = 2521;
@@ -51,8 +48,8 @@ public final class BasicSubstitution implements Substitution {
     public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
         checkNotNull(decl);
         if (declToExpr.containsKey(decl)) {
-            @SuppressWarnings("unchecked") final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(
-                    decl);
+            @SuppressWarnings("unchecked")
+            final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(decl);
             return Optional.of(val);
         }
         return Optional.empty();
@@ -66,8 +63,9 @@ public final class BasicSubstitution implements Substitution {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("Substitution")
-                .addAll(declToExpr.entrySet().stream()
-                        .map(e -> e.getKey().getName() + " <- " + e.getValue()))
+                .addAll(
+                        declToExpr.entrySet().stream()
+                                .map(e -> e.getKey().getName() + " <- " + e.getValue()))
                 .toString();
     }
 

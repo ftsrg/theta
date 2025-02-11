@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.function.Function;
-
-import hu.bme.mit.theta.common.Utils;
 
 public final class Env {
 
@@ -61,8 +59,8 @@ public final class Env {
         return value;
     }
 
-    public Object compute(final String symbol,
-                          final Function<? super String, ? extends Object> mapping) {
+    public Object compute(
+            final String symbol, final Function<? super String, ? extends Object> mapping) {
         checkNotNull(symbol);
         checkNotNull(mapping);
         Object value = currentFrame.eval(symbol);
@@ -85,7 +83,8 @@ public final class Env {
         }
 
         public void define(final String symbol, final Object value) {
-            checkArgument(!symbolToValue.containsKey(symbol),
+            checkArgument(
+                    !symbolToValue.containsKey(symbol),
                     "Symbol   \"" + symbol + "\" is already defined");
             symbolToValue.put(symbol, value);
         }
@@ -103,11 +102,12 @@ public final class Env {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(
+            return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .aligned()
+                    .addAll(
                             symbolToValue.entrySet().stream()
                                     .map(e -> String.format("(%s %s)", e.getKey(), e.getValue())))
                     .toString();
         }
     }
-
 }

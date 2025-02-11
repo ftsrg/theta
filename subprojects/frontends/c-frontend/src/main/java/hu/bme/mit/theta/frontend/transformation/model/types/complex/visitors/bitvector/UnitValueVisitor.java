@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -27,10 +26,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Sign
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
+import java.math.BigInteger;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
-
-import java.math.BigInteger;
 
 public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
     private final ParseContext parseContext;

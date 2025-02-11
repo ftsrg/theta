@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,16 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.Lists;
 import com.microsoft.z3.Z3Exception;
@@ -37,18 +47,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.parser.GetProofResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * This class is a HornSolver that expects the proofs to be in the style of Z3 (using hyper-res
@@ -56,8 +55,19 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
  */
 public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver {
 
-    public GenericSmtLibHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary, false, SmtLibEnumStrategy.getDefaultStrategy(), "HORN");
+    public GenericSmtLibHornSolver(
+            SmtLibSymbolTable symbolTable,
+            SmtLibTransformationManager transformationManager,
+            SmtLibTermTransformer termTransformer,
+            SmtLibSolverBinary solverBinary) {
+        super(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                false,
+                SmtLibEnumStrategy.getDefaultStrategy(),
+                "HORN");
     }
 
     public static Type transformSort(final SortContext ctx) {
@@ -87,14 +97,21 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
             throw new SmtLibSolverException(res.getReason());
         } else if (res.isSpecific()) {
             final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
-            getModelResponse.getFunDeclarations().forEach((name, def) -> {
-                var type = transformSort(def.get2());
-                for (SortContext s : Lists.reverse(def.get1())) {
-                    type = FuncType.of(transformSort(s), type);
-                }
-                symbolTable.put(Const(name, type), name, def.get3());
-            });
-            final var proof = termTransformer.toExpr(getModelResponse.getProof(), Bool(), new SmtLibModel(Collections.emptyMap()));
+            getModelResponse
+                    .getFunDeclarations()
+                    .forEach(
+                            (name, def) -> {
+                                var type = transformSort(def.get2());
+                                for (SortContext s : Lists.reverse(def.get1())) {
+                                    type = FuncType.of(transformSort(s), type);
+                                }
+                                symbolTable.put(Const(name, type), name, def.get3());
+                            });
+            final var proof =
+                    termTransformer.toExpr(
+                            getModelResponse.getProof(),
+                            Bool(),
+                            new SmtLibModel(Collections.emptyMap()));
             return proofFromExpr(proof);
         } else {
             throw new AssertionError();
@@ -127,7 +144,8 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
 
             if (proofNodeExpr instanceof FuncAppExpr<?, ?> funcAppExpr) {
                 final var nameAndArgs = extractFuncAndArgs(funcAppExpr);
-                if (nameAndArgs.get1() instanceof RefExpr<?> refName && refName.getDecl().getName().startsWith("hyper-res")) {
+                if (nameAndArgs.get1() instanceof RefExpr<?> refName
+                        && refName.getDecl().getName().startsWith("hyper-res")) {
                     if (!nameAndArgs.get2().isEmpty()) {
                         for (int i = 1; i < nameAndArgs.get2().size() - 1; ++i) {
                             final var child = nameAndArgs.get2().get(i);
@@ -135,7 +153,8 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
                                 if (!lookup.containsKey(child)) {
                                     lookup.put(child, id++);
                                 }
-                                visited.put(lookup.get(child), new Builder(extractProofExpr(child)));
+                                visited.put(
+                                        lookup.get(child), new Builder(extractProofExpr(child)));
                                 proofStack.push(child);
                             }
                             proofNode.addChild(visited.get(lookup.get(child)));
@@ -155,6 +174,4 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
         checkState(lastArg instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
         return (Expr<BoolType>) lastArg;
     }
-
-
 }

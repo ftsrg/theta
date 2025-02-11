@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,6 @@ package hu.bme.mit.theta.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -30,10 +24,12 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeCompara
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
+import hu.bme.mit.theta.common.container.Containers;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-/**
- * A comparator for ArgNodes that is based on the distance from the error location.
- */
+/** A comparator for ArgNodes that is based on the distance from the error location. */
 public class DistToErrComparator implements ArgNodeComparator {
 
     private static final long serialVersionUID = -6915823336852930450L;
@@ -48,8 +44,8 @@ public class DistToErrComparator implements ArgNodeComparator {
         this(cfa, errLoc, 1, 0);
     }
 
-    public DistToErrComparator(final CFA cfa, final Loc errLoc, final int errorWeight,
-                               final int depthWeight) {
+    public DistToErrComparator(
+            final CFA cfa, final Loc errLoc, final int errorWeight, final int depthWeight) {
         this.cfa = cfa;
         this.errLoc = errLoc;
         this.errorWeight = errorWeight;
@@ -58,8 +54,9 @@ public class DistToErrComparator implements ArgNodeComparator {
     }
 
     @Override
-    public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                       final ArgNode<? extends State, ? extends Action> n2) {
+    public int compare(
+            final ArgNode<? extends State, ? extends Action> n1,
+            final ArgNode<? extends State, ? extends Action> n2) {
         final int dist1 = getWeightedDistance(n1);
         final int dist2 = getWeightedDistance(n2);
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import java.io.PrintStream;
 /**
  * A simple table writer that prints tables to a PrintStream using an arbitrary delimeter and a cell
  * pre/postfix.
- * <p>
- * For exemple in ordinary CSV files, the delimeter is ',' and the pre/postfix is '"'.
+ *
+ * <p>For exemple in ordinary CSV files, the delimeter is ',' and the pre/postfix is '"'.
  */
 public final class BasicTableWriter implements TableWriter {
 
@@ -31,8 +31,11 @@ public final class BasicTableWriter implements TableWriter {
     private final String postfix;
     private boolean isFirstCell = true;
 
-    public BasicTableWriter(final PrintStream stream, final String delimeter, final String prefix,
-                            final String postfix) {
+    public BasicTableWriter(
+            final PrintStream stream,
+            final String delimeter,
+            final String prefix,
+            final String postfix) {
         this.stream = stream;
         this.delimeter = delimeter;
         this.prefix = prefix;
@@ -82,5 +85,4 @@ public final class BasicTableWriter implements TableWriter {
     public TableWriter endTable() {
         return this;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,19 +21,16 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 import static java.lang.String.format;
 
-import java.util.Collection;
-import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Set;
-
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * An immutable Symbolic Transition System (STS) implementation. An STS consists of an initial
@@ -47,9 +44,7 @@ public final class STS {
     private final Expr<BoolType> trans;
     private final Expr<BoolType> prop;
 
-    /**
-     * Create a new STS from an initial expression, a transition relation and a property.
-     */
+    /** Create a new STS from an initial expression, a transition relation and a property. */
     public STS(final Expr<BoolType> init, final Expr<BoolType> trans, final Expr<BoolType> prop) {
         this.init = checkNotNull(init);
         this.trans = checkNotNull(trans);
@@ -61,44 +56,37 @@ public final class STS {
         this.vars = Collections.unmodifiableCollection(tmpVars);
     }
 
-    /**
-     * Gets the collection of variables appearing in the expressions of the STS.
-     */
+    /** Gets the collection of variables appearing in the expressions of the STS. */
     public Collection<VarDecl<?>> getVars() {
         return vars;
     }
 
-    /**
-     * Gets the initial expression.
-     */
+    /** Gets the initial expression. */
     public Expr<BoolType> getInit() {
         return init;
     }
 
-    /**
-     * Gets the transition relation expression.
-     */
+    /** Gets the transition relation expression. */
     public Expr<BoolType> getTrans() {
         return trans;
     }
 
-    /**
-     * Gets the property expression.
-     */
+    /** Gets the property expression. */
     public Expr<BoolType> getProp() {
         return prop;
     }
 
-    /**
-     * Creates a new builder instance.
-     */
+    /** Creates a new builder instance. */
     public static Builder builder() {
         return new Builder();
     }
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder("system").aligned().addAll(vars).body()
+        return Utils.lispStringBuilder("system")
+                .aligned()
+                .addAll(vars)
+                .body()
                 .addAll(getConjuncts(init).stream().map(e -> format("(init %s)", e)))
                 .addAll(getConjuncts(trans).stream().map(e -> format("(trans %s)", e)))
                 .add(format("(prop %s)", prop))
@@ -157,9 +145,7 @@ public final class STS {
             return this;
         }
 
-        /**
-         * Set the property expression. Previously set property will be overridden.
-         */
+        /** Set the property expression. Previously set property will be overridden. */
         public Builder setProp(final Expr<BoolType> expr) {
             this.prop = checkNotNull(expr);
             return this;

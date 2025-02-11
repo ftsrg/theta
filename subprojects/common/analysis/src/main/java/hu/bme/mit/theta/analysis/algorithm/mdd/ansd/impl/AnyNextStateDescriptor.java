@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
-import java.util.Optional;
-
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import java.util.Optional;
 
 public class AnyNextStateDescriptor implements AbstractNextStateDescriptor {
-    private static final UniqueTable<AnyNextStateDescriptor> uniqueTable = UniqueTable.newInstance();
+    private static final UniqueTable<AnyNextStateDescriptor> uniqueTable =
+            UniqueTable.newInstance();
 
     public static AbstractNextStateDescriptor withChild(AbstractNextStateDescriptor child) {
         return uniqueTable.checkIn(new AnyNextStateDescriptor(child));
@@ -56,5 +56,4 @@ public class AnyNextStateDescriptor implements AbstractNextStateDescriptor {
         // TODO: this might be a performance overhead
         return Optional.empty();
     }
-
 }

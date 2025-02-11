@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ExplOrdTest {
 
@@ -36,8 +35,8 @@ public class ExplOrdTest {
     private final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).build());
     private final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).build());
     private final ExplState s3 = ExplState.of(ImmutableValuation.builder().put(Y, Int(1)).build());
-    private final ExplState s4 = ExplState.of(
-            ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
+    private final ExplState s4 =
+            ExplState.of(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
     private final ExplState sb = ExplState.bottom();
 
     @Test

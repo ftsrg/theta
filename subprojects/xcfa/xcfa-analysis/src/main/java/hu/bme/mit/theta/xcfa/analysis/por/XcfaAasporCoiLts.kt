@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
@@ -27,14 +26,15 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 class XcfaAasporCoiLts(
-    xcfa: XCFA,
-    ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
-    coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
+  xcfa: XCFA,
+  ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
+  coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
 ) : XcfaAasporLts(xcfa, ignoredVarRegistry) {
 
-    init {
-        simpleXcfaLts = coiLTS
-    }
+  init {
+    simpleXcfaLts = coiLTS
+  }
 
-    override fun getEdge(action: XcfaAction): XcfaEdge = super.getEdge(action.transFuncVersion ?: action)
+  override fun getEdge(action: XcfaAction): XcfaEdge =
+    super.getEdge(action.transFuncVersion ?: action)
 }

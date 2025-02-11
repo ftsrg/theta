@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -26,20 +29,13 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
-import kotlin.Pair;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import kotlin.Pair;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * A comparator for ArgNodes that is based on the distance from the error
- * location.
- */
+/** A comparator for ArgNodes that is based on the distance from the error location. */
 public class XcfaDistToErrComparator implements ArgNodeComparator {
     private Map<XcfaLocation, Integer> distancesToError;
     private final int errorWeight;
@@ -55,7 +51,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
         this.xcfa = xcfa;
         Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
         Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
-//        checkState(errorLocOpt.isPresent());
+        //        checkState(errorLocOpt.isPresent());
         this.errLoc = errorLocOpt.orElse(null);
         this.errorWeight = errorWeight;
         this.depthWeight = depthWeight;
@@ -63,8 +59,9 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
     }
 
     @Override
-    public int compare(final ArgNode<? extends State, ? extends Action> n1,
-                       final ArgNode<? extends State, ? extends Action> n2) {
+    public int compare(
+            final ArgNode<? extends State, ? extends Action> n1,
+            final ArgNode<? extends State, ? extends Action> n2) {
         final int dist1 = getWeightedDistance(n1);
         final int dist2 = getWeightedDistance(n2);
 
@@ -73,12 +70,16 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 
     private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
         final var localState = node.getState();
-        checkArgument(localState instanceof XcfaState && ((XcfaState) localState).getProcesses().size() <= 1, "XcfaState expected with a single process.");
+        checkArgument(
+                localState instanceof XcfaState
+                        && ((XcfaState) localState).getProcesses().size() <= 1,
+                "XcfaState expected with a single process.");
         if (((XcfaState) localState).getProcesses().size() == 0) {
             return Integer.MAX_VALUE;
         }
         final XcfaState<?> state = (XcfaState<?>) localState;
-        final int distanceToError = getDistanceToError(state.getProcesses().get(0).component1().peek());
+        final int distanceToError =
+                getDistanceToError(state.getProcesses().get(0).component1().peek());
         if (distanceToError == Integer.MAX_VALUE) {
             return distanceToError;
         }
@@ -94,7 +95,8 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
         return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
     }
 
-    static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa, final XcfaLocation errLoc) {
+    static Map<XcfaLocation, Integer> calculateDistancesToError(
+            final XCFA cfa, final XcfaLocation errLoc) {
         List<XcfaLocation> queue = new LinkedList<>();
         final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
         queue.add(errLoc);

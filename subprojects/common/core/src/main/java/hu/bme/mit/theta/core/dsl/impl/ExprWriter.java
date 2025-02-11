@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -124,7 +124,6 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
-
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -142,236 +141,139 @@ public final class ExprWriter {
     }
 
     private ExprWriter() {
-        table = DispatchTable.<String>builder()
-
-                // Boolean
-
-                .addCase(NotExpr.class, e -> prefixUnary(e, "not "))
-
-                .addCase(ImplyExpr.class, e -> infixBinary(e, " imply "))
-
-                .addCase(IffExpr.class, e -> infixBinary(e, " iff "))
-
-                .addCase(AndExpr.class, e -> infixMultiary(e, " and "))
-
-                .addCase(OrExpr.class, e -> infixMultiary(e, " or "))
-
-                .addCase(XorExpr.class, e -> infixBinary(e, " xor "))
-
-                .addCase(TrueExpr.class, e -> "true")
-
-                .addCase(FalseExpr.class, e -> "false")
-
-                .addCase(ForallExpr.class, this::forall)
-
-                .addCase(ExistsExpr.class, this::exists)
-
-                // Integer
-
-                .addCase(IntAddExpr.class, e -> infixMultiary(e, " + "))
-
-                .addCase(IntSubExpr.class, e -> infixBinary(e, " - "))
-
-                .addCase(IntPosExpr.class, e -> prefixUnary(e, "+"))
-
-                .addCase(IntNegExpr.class, e -> prefixUnary(e, "-"))
-
-                .addCase(IntMulExpr.class, e -> infixMultiary(e, " * "))
-
-                .addCase(IntDivExpr.class, e -> infixBinary(e, " / "))
-
-                .addCase(IntModExpr.class, e -> infixBinary(e, " mod "))
-
-                .addCase(IntRemExpr.class, e -> infixBinary(e, " rem "))
-
-                .addCase(IntEqExpr.class, e -> infixBinary(e, " = "))
-
-                .addCase(IntNeqExpr.class, e -> infixBinary(e, " /= "))
-
-                .addCase(IntGeqExpr.class, e -> infixBinary(e, " >= "))
-
-                .addCase(IntGtExpr.class, e -> infixBinary(e, " > "))
-
-                .addCase(IntLeqExpr.class, e -> infixBinary(e, " <= "))
-
-                .addCase(IntLtExpr.class, e -> infixBinary(e, " < "))
-
-                .addCase(IntLitExpr.class, e -> e.getValue() + "")
-
-                .addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
-
-                // Rational
-
-                .addCase(RatAddExpr.class, e -> infixMultiary(e, " + "))
-
-                .addCase(RatSubExpr.class, e -> infixBinary(e, " - "))
-
-                .addCase(RatPosExpr.class, e -> prefixUnary(e, "+"))
-
-                .addCase(RatNegExpr.class, e -> prefixUnary(e, "-"))
-
-                .addCase(RatMulExpr.class, e -> infixMultiary(e, " * "))
-
-                .addCase(RatDivExpr.class, e -> infixBinary(e, " / "))
-
-                .addCase(RatEqExpr.class, e -> infixBinary(e, " = "))
-
-                .addCase(RatNeqExpr.class, e -> infixBinary(e, " /= "))
-
-                .addCase(RatGeqExpr.class, e -> infixBinary(e, " >= "))
-
-                .addCase(RatGtExpr.class, e -> infixBinary(e, " > "))
-
-                .addCase(RatLeqExpr.class, e -> infixBinary(e, " <= "))
-
-                .addCase(RatLtExpr.class, e -> infixBinary(e, " < "))
-
-                .addCase(RatLitExpr.class, e -> e.getNum() + "%" + e.getDenom())
-
-                // Bitvector
-
-                .addCase(BvConcatExpr.class, this::bvConcat)
-
-                .addCase(BvExtractExpr.class, this::bvExtract)
-
-                .addCase(BvZExtExpr.class, this::bvZExt)
-
-                .addCase(BvSExtExpr.class, this::bvSExt)
-
-                .addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
-
-                .addCase(BvSubExpr.class, e -> infixBinary(e, " bvsub "))
-
-                .addCase(BvMulExpr.class, e -> infixMultiary(e, " bvmul "))
-
-                .addCase(BvUDivExpr.class, e -> infixBinary(e, " bvudiv "))
-
-                .addCase(BvSDivExpr.class, e -> infixBinary(e, " bvsdiv "))
-
-                .addCase(BvSModExpr.class, e -> infixBinary(e, " bvsmod "))
-
-                .addCase(BvURemExpr.class, e -> infixBinary(e, " bvurem "))
-
-                .addCase(BvSRemExpr.class, e -> infixBinary(e, " bvsrem "))
-
-                .addCase(BvPosExpr.class, e -> prefixUnary(e, "bvpos"))
-
-                .addCase(BvSignChangeExpr.class, e -> prefixUnary(e, "bvsign"))
-
-                .addCase(BvNegExpr.class, e -> prefixUnary(e, "bvneg"))
-
-                .addCase(BvAndExpr.class, e -> infixMultiary(e, " bvand "))
-
-                .addCase(BvOrExpr.class, e -> infixMultiary(e, " bvor "))
-
-                .addCase(BvXorExpr.class, e -> infixMultiary(e, " bvxor "))
-
-                .addCase(BvNotExpr.class, e -> prefixUnary(e, "bvnot"))
-
-                .addCase(BvShiftLeftExpr.class, e -> infixBinary(e, " bvshl "))
-
-                .addCase(BvArithShiftRightExpr.class, e -> infixBinary(e, " bvashr "))
-
-                .addCase(BvLogicShiftRightExpr.class, e -> infixBinary(e, " bvlshr "))
-
-                .addCase(BvRotateLeftExpr.class, e -> infixBinary(e, " bvrol "))
-
-                .addCase(BvRotateRightExpr.class, e -> infixBinary(e, " bvror "))
-
-                .addCase(BvEqExpr.class, e -> infixBinary(e, " = "))
-
-                .addCase(BvNeqExpr.class, e -> infixBinary(e, " /= "))
-
-                .addCase(BvULtExpr.class, e -> infixBinary(e, " bvult "))
-
-                .addCase(BvULeqExpr.class, e -> infixBinary(e, " bvule "))
-
-                .addCase(BvUGtExpr.class, e -> infixBinary(e, " bvugt "))
-
-                .addCase(BvUGeqExpr.class, e -> infixBinary(e, " buge "))
-
-                .addCase(BvSLtExpr.class, e -> infixBinary(e, " bvslt "))
-
-                .addCase(BvSLeqExpr.class, e -> infixBinary(e, " bvsle "))
-
-                .addCase(BvSGtExpr.class, e -> infixBinary(e, " bvsgt "))
-
-                .addCase(BvSGeqExpr.class, e -> infixBinary(e, " bsge "))
-
-                .addCase(BvLitExpr.class, this::bvLit)
-
-                // Array
-
-                .addCase(ArrayReadExpr.class, this::arrayRead)
-
-                .addCase(ArrayWriteExpr.class, this::arrayWrite)
-
-                .addCase(ArrayEqExpr.class, e -> infixBinary(e, " = "))
-
-                .addCase(ArrayNeqExpr.class, e -> infixBinary(e, " /= "))
-
-                .addCase(ArrayLitExpr.class, this::arrayLit)
-
-                .addCase(ArrayInitExpr.class, this::arrayInit)
-
-                // FloatingPoint
-
-                .addCase(FpAbsExpr.class, e -> prefixUnary(e, " fpabs "))
-
-                .addCase(FpAddExpr.class, e -> infixMultiary(e, " + "))
-
-                .addCase(FpDivExpr.class, e -> infixBinary(e, " / "))
-
-                .addCase(FpEqExpr.class, e -> infixBinary(e, " == "))
-
-                .addCase(FpFromBvExpr.class, e -> prefixUnary(e, " fpfrombv "))
-
-                .addCase(FpGeqExpr.class, e -> infixBinary(e, " >= "))
-
-                .addCase(FpGtExpr.class, e -> infixBinary(e, " > "))
-
-                .addCase(FpLeqExpr.class, e -> infixBinary(e, " <= "))
-
-                .addCase(FpLtExpr.class, e -> infixBinary(e, " < "))
-
-                .addCase(FpLitExpr.class, FpLitExpr::toString)
-
-                .addCase(FpMaxExpr.class, e -> infixBinary(e, " fpmax "))
-
-                .addCase(FpMinExpr.class, e -> infixBinary(e, " fpmin "))
-
-                .addCase(FpMulExpr.class, e -> infixMultiary(e, " * "))
-
-                .addCase(FpNegExpr.class, e -> prefixUnary(e, " - "))
-
-                .addCase(FpNeqExpr.class, e -> infixBinary(e, " != "))
-
-                .addCase(FpPosExpr.class, e -> prefixUnary(e, " + "))
-
-                .addCase(FpRemExpr.class, e -> infixBinary(e, " % "))
-
-                .addCase(FpSqrtExpr.class, e -> prefixUnary(e, " sqrt "))
-
-                .addCase(FpSubExpr.class, e -> infixBinary(e, " - "))
-
-                .addCase(FpToBvExpr.class, e -> prefixUnary(e, " fptobv "))
-
-                .addCase(FpToFpExpr.class, e -> prefixUnary(e, " fptofp "))
-
-                // General
-
-                .addCase(RefExpr.class, e -> e.getDecl().getName())
-
-                .addCase(IteExpr.class, this::ite)
-
-                .addCase(PrimeExpr.class, e -> postfixUnary(e, "'"))
-
-                .addDefault(e -> {
-                    throw new UnsupportedOperationException(
-                            "Expression not supported: " + e.toString());
-                })
-
-                .build();
+        table =
+                DispatchTable.<String>builder()
+
+                        // Boolean
+
+                        .addCase(NotExpr.class, e -> prefixUnary(e, "not "))
+                        .addCase(ImplyExpr.class, e -> infixBinary(e, " imply "))
+                        .addCase(IffExpr.class, e -> infixBinary(e, " iff "))
+                        .addCase(AndExpr.class, e -> infixMultiary(e, " and "))
+                        .addCase(OrExpr.class, e -> infixMultiary(e, " or "))
+                        .addCase(XorExpr.class, e -> infixBinary(e, " xor "))
+                        .addCase(TrueExpr.class, e -> "true")
+                        .addCase(FalseExpr.class, e -> "false")
+                        .addCase(ForallExpr.class, this::forall)
+                        .addCase(ExistsExpr.class, this::exists)
+
+                        // Integer
+
+                        .addCase(IntAddExpr.class, e -> infixMultiary(e, " + "))
+                        .addCase(IntSubExpr.class, e -> infixBinary(e, " - "))
+                        .addCase(IntPosExpr.class, e -> prefixUnary(e, "+"))
+                        .addCase(IntNegExpr.class, e -> prefixUnary(e, "-"))
+                        .addCase(IntMulExpr.class, e -> infixMultiary(e, " * "))
+                        .addCase(IntDivExpr.class, e -> infixBinary(e, " / "))
+                        .addCase(IntModExpr.class, e -> infixBinary(e, " mod "))
+                        .addCase(IntRemExpr.class, e -> infixBinary(e, " rem "))
+                        .addCase(IntEqExpr.class, e -> infixBinary(e, " = "))
+                        .addCase(IntNeqExpr.class, e -> infixBinary(e, " /= "))
+                        .addCase(IntGeqExpr.class, e -> infixBinary(e, " >= "))
+                        .addCase(IntGtExpr.class, e -> infixBinary(e, " > "))
+                        .addCase(IntLeqExpr.class, e -> infixBinary(e, " <= "))
+                        .addCase(IntLtExpr.class, e -> infixBinary(e, " < "))
+                        .addCase(IntLitExpr.class, e -> e.getValue() + "")
+                        .addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
+
+                        // Rational
+
+                        .addCase(RatAddExpr.class, e -> infixMultiary(e, " + "))
+                        .addCase(RatSubExpr.class, e -> infixBinary(e, " - "))
+                        .addCase(RatPosExpr.class, e -> prefixUnary(e, "+"))
+                        .addCase(RatNegExpr.class, e -> prefixUnary(e, "-"))
+                        .addCase(RatMulExpr.class, e -> infixMultiary(e, " * "))
+                        .addCase(RatDivExpr.class, e -> infixBinary(e, " / "))
+                        .addCase(RatEqExpr.class, e -> infixBinary(e, " = "))
+                        .addCase(RatNeqExpr.class, e -> infixBinary(e, " /= "))
+                        .addCase(RatGeqExpr.class, e -> infixBinary(e, " >= "))
+                        .addCase(RatGtExpr.class, e -> infixBinary(e, " > "))
+                        .addCase(RatLeqExpr.class, e -> infixBinary(e, " <= "))
+                        .addCase(RatLtExpr.class, e -> infixBinary(e, " < "))
+                        .addCase(RatLitExpr.class, e -> e.getNum() + "%" + e.getDenom())
+
+                        // Bitvector
+
+                        .addCase(BvConcatExpr.class, this::bvConcat)
+                        .addCase(BvExtractExpr.class, this::bvExtract)
+                        .addCase(BvZExtExpr.class, this::bvZExt)
+                        .addCase(BvSExtExpr.class, this::bvSExt)
+                        .addCase(BvAddExpr.class, e -> infixMultiary(e, " bvadd "))
+                        .addCase(BvSubExpr.class, e -> infixBinary(e, " bvsub "))
+                        .addCase(BvMulExpr.class, e -> infixMultiary(e, " bvmul "))
+                        .addCase(BvUDivExpr.class, e -> infixBinary(e, " bvudiv "))
+                        .addCase(BvSDivExpr.class, e -> infixBinary(e, " bvsdiv "))
+                        .addCase(BvSModExpr.class, e -> infixBinary(e, " bvsmod "))
+                        .addCase(BvURemExpr.class, e -> infixBinary(e, " bvurem "))
+                        .addCase(BvSRemExpr.class, e -> infixBinary(e, " bvsrem "))
+                        .addCase(BvPosExpr.class, e -> prefixUnary(e, "bvpos"))
+                        .addCase(BvSignChangeExpr.class, e -> prefixUnary(e, "bvsign"))
+                        .addCase(BvNegExpr.class, e -> prefixUnary(e, "bvneg"))
+                        .addCase(BvAndExpr.class, e -> infixMultiary(e, " bvand "))
+                        .addCase(BvOrExpr.class, e -> infixMultiary(e, " bvor "))
+                        .addCase(BvXorExpr.class, e -> infixMultiary(e, " bvxor "))
+                        .addCase(BvNotExpr.class, e -> prefixUnary(e, "bvnot"))
+                        .addCase(BvShiftLeftExpr.class, e -> infixBinary(e, " bvshl "))
+                        .addCase(BvArithShiftRightExpr.class, e -> infixBinary(e, " bvashr "))
+                        .addCase(BvLogicShiftRightExpr.class, e -> infixBinary(e, " bvlshr "))
+                        .addCase(BvRotateLeftExpr.class, e -> infixBinary(e, " bvrol "))
+                        .addCase(BvRotateRightExpr.class, e -> infixBinary(e, " bvror "))
+                        .addCase(BvEqExpr.class, e -> infixBinary(e, " = "))
+                        .addCase(BvNeqExpr.class, e -> infixBinary(e, " /= "))
+                        .addCase(BvULtExpr.class, e -> infixBinary(e, " bvult "))
+                        .addCase(BvULeqExpr.class, e -> infixBinary(e, " bvule "))
+                        .addCase(BvUGtExpr.class, e -> infixBinary(e, " bvugt "))
+                        .addCase(BvUGeqExpr.class, e -> infixBinary(e, " buge "))
+                        .addCase(BvSLtExpr.class, e -> infixBinary(e, " bvslt "))
+                        .addCase(BvSLeqExpr.class, e -> infixBinary(e, " bvsle "))
+                        .addCase(BvSGtExpr.class, e -> infixBinary(e, " bvsgt "))
+                        .addCase(BvSGeqExpr.class, e -> infixBinary(e, " bsge "))
+                        .addCase(BvLitExpr.class, this::bvLit)
+
+                        // Array
+
+                        .addCase(ArrayReadExpr.class, this::arrayRead)
+                        .addCase(ArrayWriteExpr.class, this::arrayWrite)
+                        .addCase(ArrayEqExpr.class, e -> infixBinary(e, " = "))
+                        .addCase(ArrayNeqExpr.class, e -> infixBinary(e, " /= "))
+                        .addCase(ArrayLitExpr.class, this::arrayLit)
+                        .addCase(ArrayInitExpr.class, this::arrayInit)
+
+                        // FloatingPoint
+
+                        .addCase(FpAbsExpr.class, e -> prefixUnary(e, " fpabs "))
+                        .addCase(FpAddExpr.class, e -> infixMultiary(e, " + "))
+                        .addCase(FpDivExpr.class, e -> infixBinary(e, " / "))
+                        .addCase(FpEqExpr.class, e -> infixBinary(e, " == "))
+                        .addCase(FpFromBvExpr.class, e -> prefixUnary(e, " fpfrombv "))
+                        .addCase(FpGeqExpr.class, e -> infixBinary(e, " >= "))
+                        .addCase(FpGtExpr.class, e -> infixBinary(e, " > "))
+                        .addCase(FpLeqExpr.class, e -> infixBinary(e, " <= "))
+                        .addCase(FpLtExpr.class, e -> infixBinary(e, " < "))
+                        .addCase(FpLitExpr.class, FpLitExpr::toString)
+                        .addCase(FpMaxExpr.class, e -> infixBinary(e, " fpmax "))
+                        .addCase(FpMinExpr.class, e -> infixBinary(e, " fpmin "))
+                        .addCase(FpMulExpr.class, e -> infixMultiary(e, " * "))
+                        .addCase(FpNegExpr.class, e -> prefixUnary(e, " - "))
+                        .addCase(FpNeqExpr.class, e -> infixBinary(e, " != "))
+                        .addCase(FpPosExpr.class, e -> prefixUnary(e, " + "))
+                        .addCase(FpRemExpr.class, e -> infixBinary(e, " % "))
+                        .addCase(FpSqrtExpr.class, e -> prefixUnary(e, " sqrt "))
+                        .addCase(FpSubExpr.class, e -> infixBinary(e, " - "))
+                        .addCase(FpToBvExpr.class, e -> prefixUnary(e, " fptobv "))
+                        .addCase(FpToFpExpr.class, e -> prefixUnary(e, " fptofp "))
+
+                        // General
+
+                        .addCase(RefExpr.class, e -> e.getDecl().getName())
+                        .addCase(IteExpr.class, this::ite)
+                        .addCase(PrimeExpr.class, e -> postfixUnary(e, "'"))
+                        .addDefault(
+                                e -> {
+                                    throw new UnsupportedOperationException(
+                                            "Expression not supported: " + e.toString());
+                                })
+                        .build();
     }
 
     public String write(final Expr<?> expr) {
@@ -392,8 +294,9 @@ public final class ExprWriter {
     }
 
     private String infixBinary(final BinaryExpr<?, ?> expr, final String operator) {
-        return writeWithBrackets(expr.getLeftOp()) + operator + writeWithBrackets(
-                expr.getRightOp());
+        return writeWithBrackets(expr.getLeftOp())
+                + operator
+                + writeWithBrackets(expr.getRightOp());
     }
 
     private String infixMultiary(final MultiaryExpr<?, ?> expr, final String operator) {
@@ -431,17 +334,27 @@ public final class ExprWriter {
     }
 
     private String bvExtract(final BvExtractExpr e) {
-        return writeWithBrackets(e.getBitvec()) + "[" + write(e.getFrom()) + ":" + write(
-                e.getUntil()) + "]";
+        return writeWithBrackets(e.getBitvec())
+                + "["
+                + write(e.getFrom())
+                + ":"
+                + write(e.getUntil())
+                + "]";
     }
 
     private String bvZExt(final BvZExtExpr e) {
-        return "(" + writeWithBrackets(e.getOp()) + " zero_extend " + e.getExtendType().toString()
+        return "("
+                + writeWithBrackets(e.getOp())
+                + " zero_extend "
+                + e.getExtendType().toString()
                 + ")";
     }
 
     private String bvSExt(final BvSExtExpr e) {
-        return "(" + writeWithBrackets(e.getOp()) + " sign_extend " + e.getExtendType().toString()
+        return "("
+                + writeWithBrackets(e.getOp())
+                + " sign_extend "
+                + e.getExtendType().toString()
                 + ")";
     }
 
@@ -450,8 +363,12 @@ public final class ExprWriter {
     }
 
     private String arrayWrite(final ArrayWriteExpr<?, ?> e) {
-        return writeWithBrackets(e.getArray()) + "[" + write(e.getIndex()) + " <- " + write(
-                e.getElem()) + "]";
+        return writeWithBrackets(e.getArray())
+                + "["
+                + write(e.getIndex())
+                + " <- "
+                + write(e.getElem())
+                + "]";
     }
 
     private String ite(final IteExpr<?> expr) {
@@ -466,33 +383,40 @@ public final class ExprWriter {
     }
 
     private String bvLit(final BvLitExpr expr) {
-        var value = Arrays.toString(expr.getValue())
-                .replace("true", "1")
-                .replace("false", "0")
-                .replace("[", "")
-                .replace("]", "")
-                .replace(",", "")
-                .replace(" ", "");
+        var value =
+                Arrays.toString(expr.getValue())
+                        .replace("true", "1")
+                        .replace("false", "0")
+                        .replace("[", "")
+                        .replace("]", "")
+                        .replace(",", "")
+                        .replace(" ", "");
         return expr.getType().getSize() + "'b" + value;
     }
 
     private String arrayLit(final ArrayLitExpr<?, ?> expr) {
-        return "[" +
-                expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2()))
-                        .collect(Collectors.joining(", ")) +
-                "<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(
-                expr.getElseElem()) +
-                "]";
+        return "["
+                + expr.getElements().stream()
+                        .map(e -> write(e.get1()) + " <- " + write(e.get2()))
+                        .collect(Collectors.joining(", "))
+                + "<"
+                + expr.getType().getIndexType().toString()
+                + ">default"
+                + " <- "
+                + write(expr.getElseElem())
+                + "]";
     }
 
     private String arrayInit(final ArrayInitExpr<?, ?> expr) {
-        return "[" +
-                expr.getElements().stream().map(e -> write(e.get1()) + " <- " + write(e.get2()))
-                        .collect(Collectors.joining(", ")) +
-                "<" + expr.getType().getIndexType().toString() + ">default" + " <- " + write(
-                expr.getElseElem()) +
-                "]";
+        return "["
+                + expr.getElements().stream()
+                        .map(e -> write(e.get1()) + " <- " + write(e.get2()))
+                        .collect(Collectors.joining(", "))
+                + "<"
+                + expr.getType().getIndexType().toString()
+                + ">default"
+                + " <- "
+                + write(expr.getElseElem())
+                + "]";
     }
-
 }
- 

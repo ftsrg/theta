@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,5 +29,4 @@ public class ExprTest {
         Assert.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
         Assert.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,18 +29,16 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.Collection;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
     private static final class LazyHolder {
 
-        private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
+        private static final VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
     }
 
-    private VarCollectorStmtVisitor() {
-    }
+    private VarCollectorStmtVisitor() {}
 
     static VarCollectorStmtVisitor getInstance() {
         return LazyHolder.INSTANCE;
@@ -58,23 +56,24 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
     }
 
     @Override
-    public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
-                                              final Collection<VarDecl<?>> vars) {
+    public <DeclType extends Type> Void visit(
+            final AssignStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
         vars.add(stmt.getVarDecl());
         ExprUtils.collectVars(stmt.getExpr(), vars);
         return null;
     }
 
     @Override
-    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Void visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Collection<VarDecl<?>> vars) {
+    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Void visit(
+            MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Collection<VarDecl<?>> vars) {
         ExprUtils.collectVars(stmt.getDeref(), vars);
         ExprUtils.collectVars(stmt.getExpr(), vars);
         return null;
     }
 
     @Override
-    public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-                                              final Collection<VarDecl<?>> vars) {
+    public <DeclType extends Type> Void visit(
+            final HavocStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
         vars.add(stmt.getVarDecl());
         return null;
     }
@@ -117,5 +116,4 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
         stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
         return null;
     }
-
 }

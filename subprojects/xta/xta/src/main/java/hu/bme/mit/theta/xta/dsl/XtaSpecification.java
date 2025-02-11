@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
+
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -26,12 +29,8 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
-import org.antlr.v4.runtime.Token;
-
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
+import org.antlr.v4.runtime.Token;
 
 final class XtaSpecification implements Scope {
 
@@ -114,8 +113,8 @@ final class XtaSpecification implements Scope {
         return system;
     }
 
-    private static String createName(final XtaProcessSymbol processSymbol,
-                                     final List<Expr<?>> argumentList) {
+    private static String createName(
+            final XtaProcessSymbol processSymbol, final List<Expr<?>> argumentList) {
         final StringBuilder sb = new StringBuilder();
         sb.append(processSymbol.getName());
         argumentList.forEach(a -> sb.append("_" + a.toString()));
@@ -135,14 +134,14 @@ final class XtaSpecification implements Scope {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
-                final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate(
-                        "", env);
+                final XtaVariableSymbol.InstantiateResult instantiateResult =
+                        variable.instantiate("", env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
-                    final VarDecl<RatType> varDecl = instantiateResult.asClockVariable()
-                            .getVarDecl();
+                    final VarDecl<RatType> varDecl =
+                            instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
                     system.addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
@@ -181,8 +180,8 @@ final class XtaSpecification implements Scope {
     private void declare(final VariableDeclContext context) {
         final TypeContext typeContext = context.fType;
         for (final VariableIdContext variableIdContext : context.fVariableIds) {
-            final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext,
-                    variableIdContext);
+            final XtaVariableSymbol variableSymbol =
+                    new XtaVariableSymbol(this, typeContext, variableIdContext);
             variables.add(variableSymbol);
             symbolTable.add(variableSymbol);
         }

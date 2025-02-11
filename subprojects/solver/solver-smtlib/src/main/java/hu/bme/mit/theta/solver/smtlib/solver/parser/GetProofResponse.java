@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,19 +19,21 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Proof_responseContext;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 public class GetProofResponse extends SpecificResponse {
 
     private final String proofTerm;
-    private final Map<String, Tuple3<List<SortContext>, SortContext, String>> funDeclarations; // name -> [inSorts, outSort, declaration]
+    private final Map<String, Tuple3<List<SortContext>, SortContext, String>>
+            funDeclarations; // name -> [inSorts, outSort, declaration]
 
-    private GetProofResponse(String proofNode, Map<String, Tuple3<List<SortContext>, SortContext, String>> funDeclarations) {
+    private GetProofResponse(
+            String proofNode,
+            Map<String, Tuple3<List<SortContext>, SortContext, String>> funDeclarations) {
         this.proofTerm = proofNode;
         this.funDeclarations = funDeclarations;
     }
@@ -39,17 +41,18 @@ public class GetProofResponse extends SpecificResponse {
     public static GetProofResponse fromContext(final Proof_responseContext ctx) {
         return new GetProofResponse(
                 extractString(ctx.proof_term().term()),
-                ctx.proof_funs().stream().map(it -> Tuple2.of(
-                        extractString(it.symbol()),
-                        Tuple3.of(
-                                it.in,
-                                it.out,
-                                extractString(it)
-                        ))).collect(Collectors.toMap(Tuple2::get1, Tuple2::get2)));
+                ctx.proof_funs().stream()
+                        .map(
+                                it ->
+                                        Tuple2.of(
+                                                extractString(it.symbol()),
+                                                Tuple3.of(it.in, it.out, extractString(it))))
+                        .collect(Collectors.toMap(Tuple2::get1, Tuple2::get2)));
     }
 
     public static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream()
+        return ctx.start
+                .getInputStream()
                 .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 

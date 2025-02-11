@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@ import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
 import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewOperandsAutoExpl;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtAtomCollector;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.StmtAtomCollector;
 import hu.bme.mit.theta.xsts.XSTS;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -43,10 +41,11 @@ public class XstsNewOperandsAutoExpl implements XstsAutoExpl {
         atoms.addAll(ExprUtils.getAtoms(xsts.getProp()));
         atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 
-        final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
-                .map(ExprUtils::canonize)
-                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-                .collect(Collectors.toSet());
+        final Set<Expr<BoolType>> canonicalAtoms =
+                atoms.stream()
+                        .map(ExprUtils::canonize)
+                        .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+                        .collect(Collectors.toSet());
         final Map<Decl<?>, Set<Expr<?>>> declToOps = Containers.createMap();
         canonicalAtoms.stream()
                 .filter(atom -> atom.getOps().size() > 1)
@@ -56,15 +55,20 @@ public class XstsNewOperandsAutoExpl implements XstsAutoExpl {
                                     .filter(RefExpr.class::isInstance)
                                     .map(RefExpr.class::cast)
                                     .forEach(
-                                            ref -> atom.getOps().stream()
-                                                    .filter(Predicate.not(ref::equals))
-                                                    .forEach(
-                                                            op -> declToOps.computeIfAbsent(ref.getDecl(),
-                                                                    k -> Containers.createSet()).add((op))
-                                                    )
-                                    );
-                        }
-                );
+                                            ref ->
+                                                    atom.getOps().stream()
+                                                            .filter(Predicate.not(ref::equals))
+                                                            .forEach(
+                                                                    op ->
+                                                                            declToOps
+                                                                                    .computeIfAbsent(
+                                                                                            ref
+                                                                                                    .getDecl(),
+                                                                                            k ->
+                                                                                                    Containers
+                                                                                                            .createSet())
+                                                                                    .add((op))));
+                        });
         return new NewOperandsAutoExpl(xsts.getCtrlVars(), declToOps, 0);
     }
 }

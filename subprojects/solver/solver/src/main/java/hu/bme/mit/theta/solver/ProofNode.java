@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,23 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-
 public record ProofNode(int id, Expr<BoolType> expr, List<ProofNode> children) {
     public AndExpr toExpr() {
-        return And(Stream.concat(Stream.of(expr), children.stream().flatMap(it -> it.toExpr().getOps().stream())).toList());
+        return And(
+                Stream.concat(
+                                Stream.of(expr),
+                                children.stream().flatMap(it -> it.toExpr().getOps().stream()))
+                        .toList());
     }
 
     public int depth() {
@@ -40,9 +42,7 @@ public record ProofNode(int id, Expr<BoolType> expr, List<ProofNode> children) {
         final var sj = new StringJoiner(", ");
         children.stream().map(ProofNode::id).forEach(it -> sj.add(it.toString()));
         StringBuilder sb = new StringBuilder();
-        sb.append(id).
-                append(": ").
-                append(expr.toString().replaceAll("[\r\n]", " "));
+        sb.append(id).append(": ").append(expr.toString().replaceAll("[\r\n]", " "));
 
         if (!children.isEmpty()) {
             sb.append(" -> ").append(sj);
@@ -67,9 +67,7 @@ public record ProofNode(int id, Expr<BoolType> expr, List<ProofNode> children) {
             return this;
         }
 
-        /**
-         * This will fail for non-acyclic proofs, but we don't care, we should never have those.
-         */
+        /** This will fail for non-acyclic proofs, but we don't care, we should never have those. */
         public ProofNode build() {
             return build(0);
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package hu.bme.mit.theta.solver.impl;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import java.util.Collection;
 
 public final class NullSolver implements Solver {
 
-    private NullSolver() {
-    }
+    private NullSolver() {}
 
     private static class LazyHolder {
 
@@ -81,5 +79,4 @@ public final class NullSolver implements Solver {
     public void close() throws Exception {
         throw new UnsupportedOperationException();
     }
-
 }

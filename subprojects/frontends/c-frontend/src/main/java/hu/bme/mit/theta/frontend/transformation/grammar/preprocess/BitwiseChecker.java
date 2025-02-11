@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
@@ -24,7 +23,6 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray3Context
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray4Context;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.MultiplicativeExpressionContext;
 import hu.bme.mit.theta.frontend.ParseContext;
-
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +33,8 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
         this.parseContext = parseContext;
     }
 
-    public static Set<ArithmeticTrait> gatherArithmeticTraits(ParseContext parseContext, List<CParser.ExternalDeclarationContext> contexts) {
+    public static Set<ArithmeticTrait> gatherArithmeticTraits(
+            ParseContext parseContext, List<CParser.ExternalDeclarationContext> contexts) {
         BitwiseChecker instance = new BitwiseChecker(parseContext);
         for (CParser.ExternalDeclarationContext ctx : contexts) {
             ctx.accept(instance);

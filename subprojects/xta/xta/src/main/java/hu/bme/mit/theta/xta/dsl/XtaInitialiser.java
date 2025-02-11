@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.type.Expr;
@@ -23,9 +26,6 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.CompoundInitialiserContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InitialiserContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SimpleInitialiserContext;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XtaInitialiser {
 
@@ -64,7 +64,5 @@ final class XtaInitialiser {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException("TODO: auto-generated method stub");
         }
-
     }
-
 }

@@ -1,0 +1,16 @@
+ctrl var x: integer = 0
+
+trans {
+    choice {
+        assume x<50;
+        x:=x+1;
+    } or {
+        assume x == 50;
+    }
+}
+
+init {}
+
+env {}
+
+prop{true}

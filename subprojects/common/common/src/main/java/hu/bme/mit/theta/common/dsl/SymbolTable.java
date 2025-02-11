@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public final class SymbolTable {
 
     public void add(final Symbol symbol) {
         checkNotNull(symbol);
-        checkArgument(!stringToSymbol.containsKey(symbol.getName()),
+        checkArgument(
+                !stringToSymbol.containsKey(symbol.getName()),
                 String.format("Symbol %s is already declared in this scope", symbol.getName()));
         stringToSymbol.put(symbol.getName(), symbol);
     }
@@ -59,5 +60,4 @@ public final class SymbolTable {
         }
         return sj.toString();
     }
-
 }

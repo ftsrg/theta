@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.Optional;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Optional;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ExplStateTest {
 
@@ -68,7 +66,8 @@ public class ExplStateTest {
     public void testToExpr() {
         Assert.assertEquals(True(), ExplState.top().toExpr());
         Assert.assertEquals(False(), ExplState.bottom().toExpr());
-        Assert.assertEquals(And(Eq(x.getRef(), Int(1)), Eq(y.getRef(), Int(2))),
+        Assert.assertEquals(
+                And(Eq(x.getRef(), Int(1)), Eq(y.getRef(), Int(2))),
                 ExplState.of(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build())
                         .toExpr());
     }

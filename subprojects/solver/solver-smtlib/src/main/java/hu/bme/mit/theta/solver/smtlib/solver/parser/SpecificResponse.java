@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,40 +15,41 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.parser;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Proof_responseContext;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Specific_success_responseContext;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public abstract class SpecificResponse {
 
     static SpecificResponse fromContext(final Specific_success_responseContext ctx) {
-        return ctx.accept(new SMTLIBv2BaseVisitor<>() {
-            @Override
-            public SpecificResponse visitCheck_sat_response(
-                    SMTLIBv2Parser.Check_sat_responseContext ctx) {
-                return CheckSatResponse.fromContext(ctx);
-            }
+        return ctx.accept(
+                new SMTLIBv2BaseVisitor<>() {
+                    @Override
+                    public SpecificResponse visitCheck_sat_response(
+                            SMTLIBv2Parser.Check_sat_responseContext ctx) {
+                        return CheckSatResponse.fromContext(ctx);
+                    }
 
-            @Override
-            public SpecificResponse visitGet_unsat_core_response(
-                    SMTLIBv2Parser.Get_unsat_core_responseContext ctx) {
-                return GetUnsatCoreResponse.fromContext(ctx);
-            }
+                    @Override
+                    public SpecificResponse visitGet_unsat_core_response(
+                            SMTLIBv2Parser.Get_unsat_core_responseContext ctx) {
+                        return GetUnsatCoreResponse.fromContext(ctx);
+                    }
 
-            @Override
-            public SpecificResponse visitGet_model_response(
-                    SMTLIBv2Parser.Get_model_responseContext ctx) {
-                return GetModelResponse.fromContext(ctx);
-            }
+                    @Override
+                    public SpecificResponse visitGet_model_response(
+                            SMTLIBv2Parser.Get_model_responseContext ctx) {
+                        return GetModelResponse.fromContext(ctx);
+                    }
 
-            @Override
-            public SpecificResponse visitProof_response(Proof_responseContext ctx) {
-                return GetProofResponse.fromContext(ctx);
-            }
-        });
+                    @Override
+                    public SpecificResponse visitProof_response(Proof_responseContext ctx) {
+                        return GetProofResponse.fromContext(ctx);
+                    }
+                });
     }
 
     public boolean isCheckSatResponse() {
@@ -56,17 +57,15 @@ public abstract class SpecificResponse {
     }
 
     public boolean isGetUnsatCoreResponse() {
-        return
-                this instanceof GetUnsatCoreResponse ||
-                        this instanceof GetModelResponse
-                                && ((GetModelResponse) this).getModel().size() == 0;
+        return this instanceof GetUnsatCoreResponse
+                || this instanceof GetModelResponse
+                        && ((GetModelResponse) this).getModel().size() == 0;
     }
 
     public boolean isGetModelResponse() {
-        return
-                this instanceof GetModelResponse ||
-                        this instanceof GetUnsatCoreResponse
-                                && ((GetUnsatCoreResponse) this).getLabels().size() == 0;
+        return this instanceof GetModelResponse
+                || this instanceof GetUnsatCoreResponse
+                        && ((GetUnsatCoreResponse) this).getLabels().size() == 0;
     }
 
     public boolean isGetProofResponse() {

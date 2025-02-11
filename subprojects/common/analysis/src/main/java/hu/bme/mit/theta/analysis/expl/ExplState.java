@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -25,19 +27,15 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public abstract class ExplState extends Valuation implements ExprState {
 
-    private ExplState() {
-    }
+    private ExplState() {}
 
     public static ExplState of(final Valuation val) {
         if (val.getDecls().isEmpty()) {
@@ -128,9 +126,12 @@ public abstract class ExplState extends Valuation implements ExprState {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
-                    .addAll(val.getDecls().stream().sorted(Comparator.comparing((Decl<?> decl) -> decl.getName()))
-                            .map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
+            return Utils.lispStringBuilder(ExplState.class.getSimpleName())
+                    .aligned()
+                    .addAll(
+                            val.getDecls().stream()
+                                    .sorted(Comparator.comparing((Decl<?> decl) -> decl.getName()))
+                                    .map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
                     .toString();
         }
     }
@@ -176,7 +177,8 @@ public abstract class ExplState extends Valuation implements ExprState {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(ExplState.class.getSimpleName()).add("Bottom")
+            return Utils.lispStringBuilder(ExplState.class.getSimpleName())
+                    .add("Bottom")
                     .toString();
         }
     }
@@ -190,5 +192,4 @@ public abstract class ExplState extends Valuation implements ExprState {
 
         static final ExplState INSTANCE = new NonBottom(ImmutableValuation.empty());
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslLexer;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.XtaContext;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public final class XtaDslManager {
 
-    private XtaDslManager() {
-    }
+    private XtaDslManager() {}
 
     public static XtaSystem createSystem(final String inputString) throws IOException {
-        final InputStream stream = new ByteArrayInputStream(
-                inputString.getBytes(StandardCharsets.UTF_8.name()));
+        final InputStream stream =
+                new ByteArrayInputStream(inputString.getBytes(StandardCharsets.UTF_8.name()));
         return createSystem(stream);
     }
 

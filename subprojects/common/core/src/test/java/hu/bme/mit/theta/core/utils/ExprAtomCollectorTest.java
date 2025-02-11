@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,20 +28,18 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public class ExprAtomCollectorTest {
@@ -59,18 +57,16 @@ public class ExprAtomCollectorTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {And(CA, Or(CA, Not(CB))), of(CA, CB)},
-
-                {Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY))},
-
-                {Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)),
-                        of(CA, Leq(CX, CY), Eq(CX, CY))},
-
-                {And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB))},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {And(CA, Or(CA, Not(CB))), of(CA, CB)},
+                    {Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY))},
+                    {
+                        Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)),
+                        of(CA, Leq(CX, CY), Eq(CX, CY))
+                    },
+                    {And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB))},
+                });
     }
 
     @Test
@@ -78,5 +74,4 @@ public class ExprAtomCollectorTest {
         final Set<Expr<BoolType>> atoms = ExprUtils.getAtoms(expr);
         Assert.assertEquals(expectedAtoms, atoms);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.graphsolver
 
 import hu.bme.mit.theta.graphsolver.patterns.constraints.*
 import hu.bme.mit.theta.graphsolver.patterns.patterns.*
 
-fun GraphConstraint.collectSubRelations(): Set<GraphPattern> = when (this) {
+fun GraphConstraint.collectSubRelations(): Set<GraphPattern> =
+  when (this) {
     is Acyclic -> this.constrainedRule.collectSubRelations()
     is Cyclic -> this.constrainedRule.collectSubRelations()
     is Empty -> this.constrainedRule.collectSubRelations()
@@ -27,9 +27,10 @@ fun GraphConstraint.collectSubRelations(): Set<GraphPattern> = when (this) {
     is Nonempty -> this.constrainedRule.collectSubRelations()
     is Reflexive -> this.constrainedRule.collectSubRelations()
     else -> error("") // this should not be necessary, but the compiler complains otherwise
-}
+  }
 
-fun GraphPattern.collectSubRelations(): Set<GraphPattern> = when (this) {
+fun GraphPattern.collectSubRelations(): Set<GraphPattern> =
+  when (this) {
     is BasicRelation -> emptySet()
     is CartesianProduct -> op1.collectSubRelations() union op2.collectSubRelations()
     is Complement -> op.collectSubRelations()
@@ -53,4 +54,4 @@ fun GraphPattern.collectSubRelations(): Set<GraphPattern> = when (this) {
     is Range -> op.collectSubRelations()
     is UnionNode -> op1.collectSubRelations() union op2.collectSubRelations()
     else -> error("Should not be here")
-} union if (patternName != null) setOf(this) else emptySet()
+  } union if (patternName != null) setOf(this) else emptySet()

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,24 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
-/**
- * Removes unused locations
- */
-
+/** Removes unused locations */
 class UnusedLocRemovalPass : ProcedurePass {
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        builder.removeLocs {
-            !it.final &&
-                !it.error &&
-                !it.initial &&
-                it.incomingEdges.size == 0
-        }
-        return builder
-    }
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    builder.removeLocs { !it.final && !it.error && !it.initial && it.incomingEdges.size == 0 }
+    return builder
+  }
 }

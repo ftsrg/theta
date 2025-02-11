@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,25 +24,28 @@ import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
 
 final class ClockStrategies {
 
-    private ClockStrategies() {
-    }
+    private ClockStrategies() {}
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<S, LuZoneState>>, LuZoneState> createLuStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<S, LuZoneState>>, LuZoneState> createLuStrategy(
+                    final XtaSystem system) {
         return new LuZoneStrategy<>(system, createRightLens());
     }
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<S, ItpZoneState>>, ItpZoneState> createFwItpStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<S, ItpZoneState>>, ItpZoneState>
+                    createFwItpStrategy(final XtaSystem system) {
         return new FwItpZoneStrategy<>(system, createRightLens());
     }
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<S, ItpZoneState>>, ItpZoneState> createBwItpStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<S, ItpZoneState>>, ItpZoneState>
+                    createBwItpStrategy(final XtaSystem system) {
         return new BwItpZoneStrategy<>(system, createRightLens());
     }
 
-    private static <S1 extends State, S2 extends State> Lens<XtaState<Prod2State<S1, S2>>, S2> createRightLens() {
+    private static <S1 extends State, S2 extends State>
+            Lens<XtaState<Prod2State<S1, S2>>, S2> createRightLens() {
         return new Lens<XtaState<Prod2State<S1, S2>>, S2>() {
             @Override
             public S2 get(final XtaState<Prod2State<S1, S2>> state) {
@@ -50,8 +53,8 @@ final class ClockStrategies {
             }
 
             @Override
-            public XtaState<Prod2State<S1, S2>> set(final XtaState<Prod2State<S1, S2>> state,
-                                                    final S2 s2) {
+            public XtaState<Prod2State<S1, S2>> set(
+                    final XtaState<Prod2State<S1, S2>> state, final S2 s2) {
                 final Prod2State<S1, S2> prodState = state.getState();
                 final Prod2State<S1, S2> newProdState = prodState.with2(s2);
                 final XtaState<Prod2State<S1, S2>> newState = state.withState(newProdState);
@@ -59,5 +62,4 @@ final class ClockStrategies {
             }
         };
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,14 +23,17 @@ public interface TernaryOperator<T> extends TriFunction<T, T, T, T> {
 
     public static <T> TernaryOperator<T> minBy(final Comparator<? super T> comparator) {
         Objects.requireNonNull(comparator);
-        return (a, b, c) -> comparator.compare(a, b) <= 0 ? (comparator.compare(a, c) <= 0 ? a : c)
-                : (comparator.compare(b, c) <= 0 ? b : c);
+        return (a, b, c) ->
+                comparator.compare(a, b) <= 0
+                        ? (comparator.compare(a, c) <= 0 ? a : c)
+                        : (comparator.compare(b, c) <= 0 ? b : c);
     }
 
     public static <T> TernaryOperator<T> maxBy(final Comparator<? super T> comparator) {
         Objects.requireNonNull(comparator);
-        return (a, b, c) -> comparator.compare(a, b) >= 0 ? (comparator.compare(a, c) >= 0 ? a : c)
-                : (comparator.compare(b, c) >= 0 ? b : c);
+        return (a, b, c) ->
+                comparator.compare(a, b) >= 0
+                        ? (comparator.compare(a, c) >= 0 ? a : c)
+                        : (comparator.compare(b, c) >= 0 ? b : c);
     }
-
 }

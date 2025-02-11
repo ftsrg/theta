@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.*;
 
 final class Z3TypeTransformer {
 
     @SuppressWarnings("unused")
     private final Z3TransformationManager transformer;
+
     private final Context context;
 
     private final com.microsoft.z3.BoolSort boolSort;
@@ -63,26 +63,30 @@ final class Z3TypeTransformer {
             return realSort;
         } else if (type instanceof BvType) {
             final BvType bvType = (BvType) type;
-            final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream()
-                    .filter(sort -> sort.getSize() == bvType.getSize()).findAny();
+            final Optional<com.microsoft.z3.BitVecSort> bvSort =
+                    bvSorts.stream().filter(sort -> sort.getSize() == bvType.getSize()).findAny();
             if (bvSort.isPresent()) {
                 return bvSort.get();
             } else {
-                final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(
-                        bvType.getSize());
+                final com.microsoft.z3.BitVecSort newBvSort =
+                        context.mkBitVecSort(bvType.getSize());
                 bvSorts.add(newBvSort);
                 return newBvSort;
             }
         } else if (type instanceof FpType) {
             final FpType fpType = (FpType) type;
-            final Optional<com.microsoft.z3.FPSort> fpSort = fpSorts.stream().filter(
-                    sort -> sort.getEBits() == fpType.getExponent()
-                            && sort.getSBits() == fpType.getSignificand()).findAny();
+            final Optional<com.microsoft.z3.FPSort> fpSort =
+                    fpSorts.stream()
+                            .filter(
+                                    sort ->
+                                            sort.getEBits() == fpType.getExponent()
+                                                    && sort.getSBits() == fpType.getSignificand())
+                            .findAny();
             if (fpSort.isPresent()) {
                 return fpSort.get();
             } else {
-                final com.microsoft.z3.FPSort newFpSort = context.mkFPSort(fpType.getExponent(),
-                        fpType.getSignificand());
+                final com.microsoft.z3.FPSort newFpSort =
+                        context.mkFPSort(fpType.getExponent(), fpType.getSignificand());
                 fpSorts.add(newFpSort);
                 return newFpSort;
             }
@@ -104,7 +108,10 @@ final class Z3TypeTransformer {
     }
 
     private EnumSort createEnumSort(EnumType enumType) {
-        return context.mkEnumSort(enumType.getName(), enumType.getValues().stream().map(lit -> EnumType.makeLongName(enumType, lit)).toArray(String[]::new));
+        return context.mkEnumSort(
+                enumType.getName(),
+                enumType.getValues().stream()
+                        .map(lit -> EnumType.makeLongName(enumType, lit))
+                        .toArray(String[]::new));
     }
-
 }

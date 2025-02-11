@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -30,40 +29,47 @@ import hu.bme.mit.theta.xsts.cli.optiongroup.InputOptions
 
 class XstsCliMetrics : CliktCommand(name = "metrics") {
 
-    private val inputOptions by InputOptions()
+  private val inputOptions by InputOptions()
 
-    override fun run() {
-        val logger = ConsoleLogger(Logger.Level.VERBOSE)
-        val xsts = inputOptions.loadXsts()
-        logger.write(Logger.Level.RESULT, "Vars: %s%n", xsts.vars.size)
-        logger.write(
-            Logger.Level.RESULT, "  Bool vars: %s%n",
-            xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BoolType }.count()
-        )
-        logger.write(
-            Logger.Level.RESULT, "  Int vars: %s%n",
-            xsts.vars.stream().filter { v: VarDecl<*> -> v.type is IntType }.count()
-        )
-        logger.write(
-            Logger.Level.RESULT, "  Bitvector vars: %s%n",
-            xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BvType }.count()
-        )
-        logger.write(
-            Logger.Level.RESULT, "  Array vars: %s%n",
-            xsts.vars.stream().filter { v: VarDecl<*> -> v.type is ArrayType<*, *> }.count()
-        )
-        logger.write(Logger.Level.RESULT, "  Ctrl vars: %s%n", xsts.ctrlVars.size)
-        logger.write(
-            Logger.Level.RESULT, "Tran statements: %s%n",
-            xsts.tran.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null)
-        )
-        logger.write(
-            Logger.Level.RESULT, "Env statements: %s%n",
-            xsts.env.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null)
-        )
-        logger.write(
-            Logger.Level.RESULT, "Init statements: %s%n",
-            xsts.init.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null)
-        )
-    }
+  override fun run() {
+    val logger = ConsoleLogger(Logger.Level.VERBOSE)
+    val xsts = inputOptions.loadXsts()
+    logger.write(Logger.Level.RESULT, "Vars: %s%n", xsts.vars.size)
+    logger.write(
+      Logger.Level.RESULT,
+      "  Bool vars: %s%n",
+      xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BoolType }.count(),
+    )
+    logger.write(
+      Logger.Level.RESULT,
+      "  Int vars: %s%n",
+      xsts.vars.stream().filter { v: VarDecl<*> -> v.type is IntType }.count(),
+    )
+    logger.write(
+      Logger.Level.RESULT,
+      "  Bitvector vars: %s%n",
+      xsts.vars.stream().filter { v: VarDecl<*> -> v.type is BvType }.count(),
+    )
+    logger.write(
+      Logger.Level.RESULT,
+      "  Array vars: %s%n",
+      xsts.vars.stream().filter { v: VarDecl<*> -> v.type is ArrayType<*, *> }.count(),
+    )
+    logger.write(Logger.Level.RESULT, "  Ctrl vars: %s%n", xsts.ctrlVars.size)
+    logger.write(
+      Logger.Level.RESULT,
+      "Tran statements: %s%n",
+      xsts.tran.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
+    )
+    logger.write(
+      Logger.Level.RESULT,
+      "Env statements: %s%n",
+      xsts.env.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
+    )
+    logger.write(
+      Logger.Level.RESULT,
+      "Init statements: %s%n",
+      xsts.init.accept<Void?, Int>(StmtCounterVisitor.getInstance(), null),
+    )
+  }
 }

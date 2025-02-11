@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
+
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -34,14 +39,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clon
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
-
 import java.math.BigInteger;
-
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> {
     private final ParseContext parseContext;
@@ -50,116 +48,125 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
         this.parseContext = parseContext;
     }
 
-
     @Override
     public AssumeStmt visit(CSignedShort type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("short");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsignedShort type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("short");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(Fitsall type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("fitsall");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CSigned128 type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("__int128");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsigned128 type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("__int128");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
-
 
     @Override
     public AssumeStmt visit(CSignedLongLong type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("longlong");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsignedLongLong type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("longlong");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsignedLong type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("long");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CSignedLong type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("long");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CSignedInt type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("int");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsignedInt type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("int");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CSignedChar type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("char");
-        return Assume(And(
-                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
-                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                        Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CUnsignedChar type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("char");
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+        return Assume(
+                And(
+                        Geq(param, Int(0)),
+                        Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
     }
 
     @Override
     public AssumeStmt visit(CBool type, Expr<?> param) {
-        return Assume(And(
-                Geq(param, Int(0)),
-                Leq(param, Int(1))));
+        return Assume(And(Geq(param, Int(0)), Leq(param, Int(1))));
     }
 }

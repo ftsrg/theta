@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package hu.bme.mit.theta.frontend.petrinet.analysis;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.model.Transition;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -99,7 +98,8 @@ public final class PtNetDependency2Gxl {
     }
 
     public static String toGxl(PtNetSystem system, final boolean omitReadOnly) {
-        final Map<Transition, Map<Place, PtNetSystem.TransitionEffect>> depMat = system.getDependencyMatrix();
+        final Map<Transition, Map<Place, PtNetSystem.TransitionEffect>> depMat =
+                system.getDependencyMatrix();
 
         Set<PlaceRef> nodes = HashObjSets.newUpdatableSet();
         Set<DepEdge> edges = HashObjSets.newUpdatableSet();
@@ -118,13 +118,14 @@ public final class PtNetDependency2Gxl {
         }
         // }
 
-        for (Map.Entry<Transition, Map<Place, PtNetSystem.TransitionEffect>> t : depMat.entrySet()) {
+        for (Map.Entry<Transition, Map<Place, PtNetSystem.TransitionEffect>> t :
+                depMat.entrySet()) {
             Set<Place> inPlaces = HashObjSets.newUpdatableSet();
             Set<Place> outPlaces = HashObjSets.newUpdatableSet();
-            //Set<Place> readOnlyPlaces = HashObjSets.newUpdatableSet();
+            // Set<Place> readOnlyPlaces = HashObjSets.newUpdatableSet();
             for (Map.Entry<Place, PtNetSystem.TransitionEffect> e : t.getValue().entrySet()) {
                 if (e.getValue().takes == e.getValue().puts) {
-                    //readOnlyPlaces.add(e.getKey());
+                    // readOnlyPlaces.add(e.getKey());
                     if (omitReadOnly) {
                         continue;
                     }
@@ -161,8 +162,7 @@ public final class PtNetDependency2Gxl {
     }
 
     private static String serializeGxl(
-            final String name, final Set<PlaceRef> nodes, final Set<DepEdge> edges
-    ) {
+            final String name, final Set<PlaceRef> nodes, final Set<DepEdge> edges) {
         StringBuilder sb = new StringBuilder();
         sb.append("<gxl>\n");
         sb.append("<graph id=\"" + name + "\" edgemode=\"defaultdirected\">\n");
@@ -173,16 +173,17 @@ public final class PtNetDependency2Gxl {
 
         for (DepEdge edge : edges) {
             // if (edge.weight == 1) {
-            sb.append("<edge id=\"" +
-                    edge.a.getId() +
-                    "_" +
-                    edge.b.getId() +
-                    "\" from=\"" +
-                    edge.a.getId() +
-                    "\" " +
-                    "to=\"" +
-                    edge.b.getId() +
-                    "\" isdirected=\"true\" />\n");
+            sb.append(
+                    "<edge id=\""
+                            + edge.a.getId()
+                            + "_"
+                            + edge.b.getId()
+                            + "\" from=\""
+                            + edge.a.getId()
+                            + "\" "
+                            + "to=\""
+                            + edge.b.getId()
+                            + "\" isdirected=\"true\" />\n");
             // } else {
             // sb.append("<edge id=\"")
             // 	.append(edge.a.getId())

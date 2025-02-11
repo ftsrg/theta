@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
@@ -22,15 +27,8 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-
 import java.math.BigInteger;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvExtractExpr implements Expr<BvType> {
 
@@ -43,8 +41,8 @@ public final class BvExtractExpr implements Expr<BvType> {
 
     private volatile int hashCode = 0;
 
-    private BvExtractExpr(final Expr<BvType> bitvec, final IntLitExpr from,
-                          final IntLitExpr until) {
+    private BvExtractExpr(
+            final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
         checkNotNull(bitvec);
         checkNotNull(from);
         checkNotNull(until);
@@ -57,13 +55,13 @@ public final class BvExtractExpr implements Expr<BvType> {
         this.until = until;
     }
 
-    public static BvExtractExpr of(final Expr<BvType> bitvec, final IntLitExpr from,
-                                   final IntLitExpr until) {
+    public static BvExtractExpr of(
+            final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
         return new BvExtractExpr(bitvec, from, until);
     }
 
-    public static BvExtractExpr create(final Expr<?> bitvec, final Expr<?> from,
-                                       final Expr<?> until) {
+    public static BvExtractExpr create(
+            final Expr<?> bitvec, final Expr<?> from, final Expr<?> until) {
         final Expr<BvType> newBitvec = castBv(bitvec);
         final IntLitExpr newFrom = (IntLitExpr) cast(from, Int());
         final IntLitExpr newUntil = (IntLitExpr) cast(until, Int());
@@ -137,8 +135,8 @@ public final class BvExtractExpr implements Expr<BvType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvExtractExpr that = (BvExtractExpr) obj;
-            return this.getBitvec().equals(that.getBitvec()) && this.getFrom()
-                    .equals(that.getFrom())
+            return this.getBitvec().equals(that.getBitvec())
+                    && this.getFrom().equals(that.getFrom())
                     && this.getUntil().equals(that.getUntil());
         } else {
             return false;
@@ -147,7 +145,11 @@ public final class BvExtractExpr implements Expr<BvType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getBitvec()).add(getFrom())
-                .add(getUntil()).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL)
+                .body()
+                .add(getBitvec())
+                .add(getFrom())
+                .add(getUntil())
+                .toString();
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
 import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
@@ -35,6 +28,12 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class CfaType {
 
@@ -57,8 +56,7 @@ final class CfaType {
 
         private static final TypeCreatorVisitor INSTANCE = new TypeCreatorVisitor();
 
-        private TypeCreatorVisitor() {
-        }
+        private TypeCreatorVisitor() {}
 
         @Override
         public Type visitBoolType(final BoolTypeContext ctx) {
@@ -115,6 +113,4 @@ final class CfaType {
             }
         }
     }
-
 }
- 

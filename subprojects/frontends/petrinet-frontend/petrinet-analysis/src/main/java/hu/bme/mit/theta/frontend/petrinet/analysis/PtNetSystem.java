@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import hu.bme.mit.delta.collections.impl.MapUniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -35,7 +34,8 @@ import java.util.Map;
 
 public final class PtNetSystem {
     public static class TransitionEffect {
-        public static final TransitionEffect INDEPENDENT = new TransitionEffect(0, Integer.MAX_VALUE, 0);
+        public static final TransitionEffect INDEPENDENT =
+                new TransitionEffect(0, Integer.MAX_VALUE, 0);
 
         public final int takes;
         public final int inhibits;
@@ -73,7 +73,8 @@ public final class PtNetSystem {
     private PetriNet petriNet;
     private final List<Place> placeOrdering;
 
-    private Map<Transition, Map<Place, TransitionEffect>> dependencyMatrix = HashObjObjMaps.newUpdatableMap();
+    private Map<Transition, Map<Place, TransitionEffect>> dependencyMatrix =
+            HashObjObjMaps.newUpdatableMap();
     private ObjIntMap<Transition> transitionTop = HashObjIntMaps.newUpdatableMap();
     boolean hasReadOnlyEffect = false;
     boolean hasReadOnlyEffectOnTop = false;
@@ -101,15 +102,17 @@ public final class PtNetSystem {
     }
 
     private AbstractNextStateDescriptor.Postcondition createInitializer() {
-        PtNetInitializer current = new PtNetInitializer(placeOrdering.get(0),
-                Math.toIntExact(placeOrdering.get(0).getInitialMarking()),
-                AbstractNextStateDescriptor.terminalIdentity()
-        );
+        PtNetInitializer current =
+                new PtNetInitializer(
+                        placeOrdering.get(0),
+                        Math.toIntExact(placeOrdering.get(0).getInitialMarking()),
+                        AbstractNextStateDescriptor.terminalIdentity());
         for (int i = 1; i < placeOrdering.size(); ++i) {
-            current = new PtNetInitializer(placeOrdering.get(i),
-                    Math.toIntExact(placeOrdering.get(i).getInitialMarking()),
-                    current
-            );
+            current =
+                    new PtNetInitializer(
+                            placeOrdering.get(i),
+                            Math.toIntExact(placeOrdering.get(i).getInitialMarking()),
+                            current);
         }
         return current;
     }
@@ -124,8 +127,7 @@ public final class PtNetSystem {
     }
 
     private AbstractNextStateDescriptor createTransition(
-            final Transition t, final UniqueTable<AbstractNextStateDescriptor> uniqueTable
-    ) {
+            final Transition t, final UniqueTable<AbstractNextStateDescriptor> uniqueTable) {
         ObjIntMap<Place> takes = HashObjIntMaps.newUpdatableMap(t.getIncomingArcs().size());
         ObjIntMap<Place> puts = HashObjIntMaps.newUpdatableMap(t.getOutgoingArcs().size());
         ObjIntMap<Place> inhibits = HashObjIntMaps.newUpdatableMap();
@@ -141,7 +143,8 @@ public final class PtNetSystem {
             puts.put(arc.getTarget(), Math.toIntExact(arc.getWeight()));
         }
 
-        final HashObjObjMap<Place, TransitionEffect> transitionDependecies = HashObjObjMaps.newUpdatableMap();
+        final HashObjObjMap<Place, TransitionEffect> transitionDependecies =
+                HashObjObjMaps.newUpdatableMap();
 
         boolean readOnlyOnTop = false;
 
@@ -163,13 +166,15 @@ public final class PtNetSystem {
                     readOnlyOnTop = false;
                 }
 
-                current = uniqueTable.checkIn(new PtNetTransitionNextStateDescriptor(t,
-                        placeOrdering.get(i),
-                        nTakes,
-                        nInhibits,
-                        nPuts,
-                        current
-                ));
+                current =
+                        uniqueTable.checkIn(
+                                new PtNetTransitionNextStateDescriptor(
+                                        t,
+                                        placeOrdering.get(i),
+                                        nTakes,
+                                        nInhibits,
+                                        nPuts,
+                                        current));
             }
         }
 
@@ -206,15 +211,19 @@ public final class PtNetSystem {
 
             for (Place p : placeOrdering) {
                 sb2.append(';');
-                sb2.append(dependencyMatrix.getOrDefault(t, Map.of())
-                        .getOrDefault(p, TransitionEffect.INDEPENDENT)
-                        .toString());
+                sb2.append(
+                        dependencyMatrix
+                                .getOrDefault(t, Map.of())
+                                .getOrDefault(p, TransitionEffect.INDEPENDENT)
+                                .toString());
             }
             sb2.append('\n');
             transitionLines.add(sb2.toString());
         }
 
-        transitionLines.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(a), reverseString(b)));
+        transitionLines.sort(
+                (a, b) ->
+                        String.CASE_INSENSITIVE_ORDER.compare(reverseString(a), reverseString(b)));
 
         for (String line : transitionLines) {
             sb.append(line);
@@ -230,7 +239,8 @@ public final class PtNetSystem {
     }
 
     public BufferedImage dependencyMatrixImage(final int blockWidth) {
-        int width = placeOrdering.size() * blockWidth, height = petriNet.getTransitions().size() * blockWidth;
+        int width = placeOrdering.size() * blockWidth,
+                height = petriNet.getTransitions().size() * blockWidth;
 
         // TYPE_INT_ARGB specifies the image format: 8-bit RGBA packed
         // into integer pixels
@@ -245,9 +255,10 @@ public final class PtNetSystem {
 
             for (int x = 0; x < placeOrdering.size(); x++) {
                 final Place p = placeOrdering.get(x);
-                final TransitionEffect effect = dependencyMatrix.getOrDefault(t, Map.of()).getOrDefault(p,
-                        TransitionEffect.INDEPENDENT
-                );
+                final TransitionEffect effect =
+                        dependencyMatrix
+                                .getOrDefault(t, Map.of())
+                                .getOrDefault(p, TransitionEffect.INDEPENDENT);
 
                 if (effect.writes()) {
                     graphics.setPaint(Color.RED);

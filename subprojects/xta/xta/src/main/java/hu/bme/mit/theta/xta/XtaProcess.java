@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.xta;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
@@ -24,11 +27,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XtaProcess {
 
@@ -88,16 +87,19 @@ public final class XtaProcess {
         this.initLoc = loc;
     }
 
-    public Loc createLoc(final String name, final LocKind kind,
-                         final Collection<Expr<BoolType>> invars) {
+    public Loc createLoc(
+            final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
         final Loc loc = new Loc(name, kind, invars);
         locs.add(loc);
         return loc;
     }
 
-    public Edge createEdge(final Loc source, final Loc target,
-                           final Collection<Expr<BoolType>> guards,
-                           final Optional<Sync> sync, final List<Stmt> updates) {
+    public Edge createEdge(
+            final Loc source,
+            final Loc target,
+            final Collection<Expr<BoolType>> guards,
+            final Optional<Sync> sync,
+            final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
         final Edge edge = new Edge(source, target, guards, sync, updates);
@@ -174,7 +176,9 @@ public final class XtaProcess {
     ////
 
     public enum LocKind {
-        NORMAL, URGENT, COMMITTED;
+        NORMAL,
+        URGENT,
+        COMMITTED;
     }
 
     public final class Loc {
@@ -188,8 +192,8 @@ public final class XtaProcess {
         private final Collection<Edge> unmodInEdges;
         private final Collection<Edge> unmodOutEdges;
 
-        private Loc(final String name, final LocKind kind,
-                    final Collection<Expr<BoolType>> invars) {
+        private Loc(
+                final String name, final LocKind kind, final Collection<Expr<BoolType>> invars) {
             inEdges = new ArrayList<>();
             outEdges = new ArrayList<>();
             this.name = checkNotNull(name);
@@ -236,8 +240,12 @@ public final class XtaProcess {
         private final Optional<Sync> sync;
         private final List<Update> updates;
 
-        private Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-                     final Optional<Sync> sync, final List<Stmt> updates) {
+        private Edge(
+                final Loc source,
+                final Loc target,
+                final Collection<Expr<BoolType>> guards,
+                final Optional<Sync> sync,
+                final List<Stmt> updates) {
             this.source = checkNotNull(source);
             this.target = checkNotNull(target);
             this.guards = createGuards(guards);
@@ -265,5 +273,4 @@ public final class XtaProcess {
             return updates;
         }
     }
-
 }

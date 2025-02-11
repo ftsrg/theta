@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.bvtype;
 
+import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
-
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
 
@@ -79,8 +79,8 @@ public final class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvArithShiftRightExpr that = (BvArithShiftRightExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }

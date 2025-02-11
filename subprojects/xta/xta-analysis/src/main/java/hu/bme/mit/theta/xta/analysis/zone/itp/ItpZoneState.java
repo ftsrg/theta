@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone.itp;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class ItpZoneState implements ExprState {
 
@@ -104,8 +104,8 @@ public final class ItpZoneState implements ExprState {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final ItpZoneState that = (ItpZoneState) obj;
-            return this.concrState.equals(that.concrState) && this.abstrState.equals(
-                    that.abstrState);
+            return this.concrState.equals(that.concrState)
+                    && this.abstrState.equals(that.abstrState);
         } else {
             return false;
         }
@@ -113,8 +113,10 @@ public final class ItpZoneState implements ExprState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState)
-                .add(abstrState).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .body()
+                .add(concrState)
+                .add(abstrState)
+                .toString();
     }
-
 }

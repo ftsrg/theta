@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
@@ -23,13 +25,11 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public final class ArrayType<IndexType extends Type, ElemType extends Type>
         implements Equational<ArrayType<IndexType, ElemType>> {
 
-    private final static int HASH_SEED = 4919;
-    private final static String TYPE_LABEL = "Array";
+    private static final int HASH_SEED = 4919;
+    private static final String TYPE_LABEL = "Array";
 
     private final IndexType indexType;
     private final ElemType elemType;
@@ -86,8 +86,8 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayType<?, ?> that = (ArrayType<?, ?>) obj;
-            return this.getIndexType().equals(that.getIndexType()) && this.getElemType()
-                    .equals(that.getElemType());
+            return this.getIndexType().equals(that.getIndexType())
+                    && this.getElemType().equals(that.getElemType());
         } else {
             return false;
         }

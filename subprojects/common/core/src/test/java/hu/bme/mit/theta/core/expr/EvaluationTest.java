@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,19 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.expr;
-
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Test;
-
-import java.util.ArrayList;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -73,6 +60,18 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 import static org.junit.Assert.assertEquals;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.ArrayList;
+import org.junit.Test;
+
 public class EvaluationTest {
 
     private final ConstDecl<IntType> ca = Const("a", Int());
@@ -84,8 +83,8 @@ public class EvaluationTest {
         return expr.eval(ImmutableValuation.empty());
     }
 
-    private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
-                                                                      final Valuation val) {
+    private static <ExprType extends Type> LitExpr<ExprType> evaluate(
+            final Expr<ExprType> expr, final Valuation val) {
         return expr.eval(val);
     }
 
@@ -420,7 +419,8 @@ public class EvaluationTest {
     public void testIte() {
         assertEquals(Int(1), evaluate(Ite(True(), Int(1), Int(2))));
         assertEquals(Int(2), evaluate(Ite(False(), Int(1), Int(2))));
-        assertEquals(Int(1),
+        assertEquals(
+                Int(1),
                 evaluate(Ite(True(), Ite(True(), Ite(True(), Int(1), Int(2)), Int(3)), Int(4))));
     }
 

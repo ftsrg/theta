@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.function.Function;
 
@@ -35,8 +34,9 @@ public final class DispatchTable<R> {
 
     public <T> R dispatch(final T param) {
         final Class<?> clazz = param.getClass();
-        @SuppressWarnings("unchecked") final Function<? super T, ? extends R> function = (Function<? super T, ? extends R>) cases.get(
-                clazz);
+        @SuppressWarnings("unchecked")
+        final Function<? super T, ? extends R> function =
+                (Function<? super T, ? extends R>) cases.get(clazz);
         if (function == null) {
             return defaultCase.apply(param);
         } else {
@@ -61,8 +61,8 @@ public final class DispatchTable<R> {
             built = false;
         }
 
-        public <T> Builder<R> addCase(final Class<T> clazz,
-                                      final Function<? super T, ? extends R> function) {
+        public <T> Builder<R> addCase(
+                final Class<T> clazz, final Function<? super T, ? extends R> function) {
             checkState(!built, "Already built.");
             checkNotNull(clazz);
             checkNotNull(function);
@@ -83,13 +83,12 @@ public final class DispatchTable<R> {
             checkState(!built, "Already built.");
             built = true;
             if (defaultCase == null) {
-                defaultCase = o -> {
-                    throw new AssertionError("Undefined default case executed for: " + o);
-                };
+                defaultCase =
+                        o -> {
+                            throw new AssertionError("Undefined default case executed for: " + o);
+                        };
             }
             return new DispatchTable<>(this);
         }
-
     }
-
 }

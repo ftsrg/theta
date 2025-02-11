@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,25 +15,24 @@
  */
 package hu.bme.mit.theta.core.utils.indexings;
 
+import static com.google.common.base.Preconditions.*;
+import static java.lang.Math.max;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.*;
-import static java.lang.Math.max;
-
 /**
- * Represents an immutable mapping, where each variable is associated with an
- * index. The inner builder class can also be used to create a new instance.
+ * Represents an immutable mapping, where each variable is associated with an index. The inner
+ * builder class can also be used to create a new instance.
  */
 public class BasicVarIndexing implements VarIndexing {
 
@@ -91,7 +90,7 @@ public class BasicVarIndexing implements VarIndexing {
      * Increment the index of a given variable with a given amount
      *
      * @param varDecl Variable to increment
-     * @param n       Amount to increment
+     * @param n Amount to increment
      * @return Transformed indexing
      */
     public BasicVarIndexing inc(final VarDecl<?> varDecl, final int n) {
@@ -201,14 +200,17 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder add(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be added together!");
+            checkArgument(
+                    genericThat instanceof BasicVarIndexingBuilder,
+                    "Only builders of the same type can be added together!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls =
+                    Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -228,7 +230,9 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder sub(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be subtracted!");
+            checkArgument(
+                    genericThat instanceof BasicVarIndexingBuilder,
+                    "Only builders of the same type can be subtracted!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
@@ -236,7 +240,8 @@ public class BasicVarIndexing implements VarIndexing {
             checkArgument(newDefaultIndex >= 0, "Negative default index");
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls =
+                    Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -256,14 +261,17 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder join(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be joined!");
+            checkArgument(
+                    genericThat instanceof BasicVarIndexingBuilder,
+                    "Only builders of the same type can be joined!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls =
+                    Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -289,12 +297,15 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public VarIndexingBuilder copyVars(Map<VarDecl<?>, VarDecl<?>> decls) {
             checkNotNull(decls);
-            decls.forEach((varDecl, varDecl2) -> {
-                if (varToOffset.containsKey(varDecl)) {
-                    checkState(!varToOffset.containsKey(varDecl2), "Cannot copy, as new decl already in map.");
-                    varToOffset.put(varDecl2, varToOffset.get(varDecl));
-                }
-            });
+            decls.forEach(
+                    (varDecl, varDecl2) -> {
+                        if (varToOffset.containsKey(varDecl)) {
+                            checkState(
+                                    !varToOffset.containsKey(varDecl2),
+                                    "Cannot copy, as new decl already in map.");
+                            varToOffset.put(varDecl2, varToOffset.get(varDecl));
+                        }
+                    });
             return this;
         }
 
@@ -302,7 +313,6 @@ public class BasicVarIndexing implements VarIndexing {
         public BasicVarIndexing build() {
             return new BasicVarIndexing(this);
         }
-
     }
 
     @Override

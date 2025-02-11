@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.sts.parser;
 
+import hu.bme.mit.theta.sts.STS;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,8 +30,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.sts.STS;
 
 @RunWith(Parameterized.class)
 public final class StsParserTest {
@@ -47,13 +45,11 @@ public final class StsParserTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"src/test/resources/simple1.lisp.sts", 2},
-
-                {"src/test/resources/readerswriters.lisp.sts", 3},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"src/test/resources/simple1.lisp.sts", 2},
+                    {"src/test/resources/readerswriters.lisp.sts", 3},
+                });
     }
 
     @Before
@@ -74,5 +70,4 @@ public final class StsParserTest {
         System.out.println(sts);
         Assert.assertEquals(vars, sts.getVars().size());
     }
-
 }

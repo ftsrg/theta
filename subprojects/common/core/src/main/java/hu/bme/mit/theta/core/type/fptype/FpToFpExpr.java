@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import org.kframework.mpfr.BigFloat;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
 
@@ -34,8 +34,11 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
 
     private final FpRoundingMode roundingMode;
 
-    private FpToFpExpr(final FpRoundingMode roundingMode, final Expr<FpType> op, final int expBits,
-                       final int signBits) {
+    private FpToFpExpr(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int expBits,
+            final int signBits) {
         super(op);
         checkNotNull(op);
         this.op = op;
@@ -47,13 +50,19 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
         this.roundingMode = roundingMode;
     }
 
-    public static FpToFpExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                final int exp, final int signBits) {
+    public static FpToFpExpr of(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int exp,
+            final int signBits) {
         return new FpToFpExpr(roundingMode, op, exp, signBits);
     }
 
-    public static FpToFpExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op,
-                                    final int exp, final int signBits) {
+    public static FpToFpExpr create(
+            final FpRoundingMode roundingMode,
+            final Expr<FpType> op,
+            final int exp,
+            final int signBits) {
         return FpToFpExpr.of(roundingMode, op, exp, signBits);
     }
 
@@ -93,8 +102,10 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpToFpExpr that = (FpToFpExpr) obj;
-            return this.getOp().equals(that.getOp()) && expBits == that.expBits
-                    && signBits == that.signBits && roundingMode.equals(that.roundingMode);
+            return this.getOp().equals(that.getOp())
+                    && expBits == that.expBits
+                    && signBits == that.signBits
+                    && roundingMode.equals(that.roundingMode);
         } else {
             return false;
         }
@@ -112,4 +123,3 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
         return roundingMode;
     }
 }
- 

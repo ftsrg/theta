@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,23 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.solver.z3;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
@@ -48,6 +31,23 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
+
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Interpolant;
+import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpPattern;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.SolverStatus;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public final class Z3ItpSolverTest {
 
@@ -129,15 +129,15 @@ public final class Z3ItpSolverTest {
         System.out.println("----------");
     }
 
-    //@Test
+    // @Test
     public void testTreeInterpolation() {
         final ItpMarker I1 = solver.createMarker();
         final ItpMarker I2 = solver.createMarker();
         final ItpMarker I3 = solver.createMarker();
         final ItpMarker I4 = solver.createMarker();
         final ItpMarker I5 = solver.createMarker();
-        final ItpPattern pattern = solver.createTreePattern(
-                Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+        final ItpPattern pattern =
+                solver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
         solver.add(I1, Eq(a, Int(0)));
         solver.add(I2, Eq(a, b));
@@ -193,7 +193,7 @@ public final class Z3ItpSolverTest {
         System.out.println("----------");
     }
 
-    //@Test
+    // @Test
     public void testQuantifiers() {
         final ItpMarker A = solver.createMarker();
         final ItpMarker B = solver.createMarker();
@@ -248,5 +248,4 @@ public final class Z3ItpSolverTest {
         System.out.println(itp.eval(A));
         System.out.println("----------");
     }
-
 }

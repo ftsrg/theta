@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createBoolExpr;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createConstDecl;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createVarDecl;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -40,6 +38,7 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.InitConstrContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.InvarConstrContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TransConstrContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.VarDeclContext;
+import java.util.Optional;
 
 final class StsDefScope implements Scope {
 
@@ -52,8 +51,10 @@ final class StsDefScope implements Scope {
     private final STS.Builder stsBuilder;
     private final STS sts;
 
-    private StsDefScope(final Scope enclosingScope, final Substitution assignment,
-                        final DefStsContext defTcfaContext) {
+    private StsDefScope(
+            final Scope enclosingScope,
+            final Substitution assignment,
+            final DefStsContext defTcfaContext) {
         checkNotNull(assignment);
         this.enclosingScope = checkNotNull(enclosingScope);
         this.defStsContext = checkNotNull(defTcfaContext);
@@ -63,8 +64,8 @@ final class StsDefScope implements Scope {
         declareVars();
 
         // TODO Handle recursive constant definitions
-        final Substitution constAssignment = StsDslHelper.createConstDefs(this, assignment,
-                defTcfaContext.constDecls);
+        final Substitution constAssignment =
+                StsDslHelper.createConstDefs(this, assignment, defTcfaContext.constDecls);
         this.assignment = NestedSubstitution.create(assignment, constAssignment);
 
         stsBuilder = STS.builder();
@@ -79,8 +80,10 @@ final class StsDefScope implements Scope {
         sts = stsBuilder.build();
     }
 
-    public static StsDefScope create(final Scope enclosingScope, final Substitution assignment,
-                                     final DefStsContext defTcfaContext) {
+    public static StsDefScope create(
+            final Scope enclosingScope,
+            final Substitution assignment,
+            final DefStsContext defTcfaContext) {
         return new StsDefScope(enclosingScope, assignment, defTcfaContext);
     }
 
@@ -157,5 +160,4 @@ final class StsDefScope implements Scope {
         final Symbol symbol = DeclSymbol.of(varDecl);
         symbolTable.add(symbol);
     }
-
 }

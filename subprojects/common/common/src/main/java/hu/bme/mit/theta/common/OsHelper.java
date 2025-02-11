@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.google.common.base.StandardSystemProperty;
 
 public final class OsHelper {
 
-    private OsHelper() {
-
-    }
+    private OsHelper() {}
 
     public enum OperatingSystem {
-        WINDOWS, LINUX, MAC
+        WINDOWS,
+        LINUX,
+        MAC
     }
 
     public static OperatingSystem getOs() {
@@ -44,7 +44,8 @@ public final class OsHelper {
     }
 
     public enum Architecture {
-        X86, X64
+        X86,
+        X64
     }
 
     public static Architecture getArch() {

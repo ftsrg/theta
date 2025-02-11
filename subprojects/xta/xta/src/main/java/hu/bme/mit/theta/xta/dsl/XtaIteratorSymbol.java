@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@ package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collections;
-
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
+import java.util.Collections;
 
 final class XtaIteratorSymbol implements Symbol {
 
     private final String name;
+
     @SuppressWarnings("unused")
     private final XtaType type;
 
@@ -39,5 +39,4 @@ final class XtaIteratorSymbol implements Symbol {
     public String getName() {
         return name;
     }
-
 }

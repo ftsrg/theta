@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.javasmt;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.Formula;
-import org.sosy_lab.java_smt.api.PropagatorBackend;
-import org.sosy_lab.java_smt.basicimpl.AbstractUserPropagator;
-
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,10 +28,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import org.sosy_lab.java_smt.api.BooleanFormula;
+import org.sosy_lab.java_smt.api.Formula;
+import org.sosy_lab.java_smt.api.PropagatorBackend;
+import org.sosy_lab.java_smt.basicimpl.AbstractUserPropagator;
 
 public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     private Function<Expr<?>, Formula> toTerm;
@@ -59,33 +57,34 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     }
 
     /**
-     * Gets called when the solver decides on the value for a bool expression.
-     * Can call propagate* calls from here.
-     * When overriding, no need to call super.
+     * Gets called when the solver decides on the value for a bool expression. Can call propagate*
+     * calls from here. When overriding, no need to call super.
      *
-     * @param expr  The expression for which a value became available
+     * @param expr The expression for which a value became available
      * @param value The value of the expression
      */
-    public void onKnownValue(final Expr<BoolType> expr, final boolean value) {
-    }
+    public void onKnownValue(final Expr<BoolType> expr, final boolean value) {}
 
     @Override
     public final void onKnownValue(final BooleanFormula expr, final boolean value) {
         super.onKnownValue(expr, value);
-        final var entry = registeredTerms.entrySet().stream().filter(e -> e.getValue().equals(expr)).findAny();
-        final var tExpr = entry.isPresent() ? entry.get().getKey() : cast(toExpr.apply(expr), Bool());
+        final var entry =
+                registeredTerms.entrySet().stream()
+                        .filter(e -> e.getValue().equals(expr))
+                        .findAny();
+        final var tExpr =
+                entry.isPresent() ? entry.get().getKey() : cast(toExpr.apply(expr), Bool());
         onKnownValue(tExpr, value);
     }
 
     /**
-     * Gets called when a branching is done on a registered expression.
-     * Change the decision by calling propagateNextDecision.
+     * Gets called when a branching is done on a registered expression. Change the decision by
+     * calling propagateNextDecision.
      *
      * @param expr
      * @param value
      */
-    public void onDecision(final Expr<BoolType> expr, final boolean value) {
-    }
+    public void onDecision(final Expr<BoolType> expr, final boolean value) {}
 
     @Override
     public final void onDecision(final BooleanFormula expr, final boolean value) {
@@ -124,19 +123,26 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
         getBackend().propagateConflict(terms);
     }
 
-    public final void propagateConsequence(final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
+    public final void propagateConsequence(
+            final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
         for (var expr : exprs) {
             if (registeredTerms.get(expr) == null) {
                 System.err.println(expr);
             }
         }
-        checkState(Arrays.stream(terms).noneMatch(Objects::isNull), "Registered terms failed to look up one or more expressions from %s. Registered terms: %s", exprs, registeredTerms.keySet());
+        checkState(
+                Arrays.stream(terms).noneMatch(Objects::isNull),
+                "Registered terms failed to look up one or more expressions from %s. Registered"
+                        + " terms: %s",
+                exprs,
+                registeredTerms.keySet());
         final BooleanFormula consequenceTerm = (BooleanFormula) toTerm.apply(consequence);
         getBackend().propagateConsequence(terms, consequenceTerm);
     }
 
-    public final boolean propagateNextDecision(final Expr<BoolType> formula, Optional<Boolean> optional) {
+    public final boolean propagateNextDecision(
+            final Expr<BoolType> formula, Optional<Boolean> optional) {
         final BooleanFormula term = (BooleanFormula) toTerm.apply(formula);
         return getBackend().propagateNextDecision(term, optional);
     }

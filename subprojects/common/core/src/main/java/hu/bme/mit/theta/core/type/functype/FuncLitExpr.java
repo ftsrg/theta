@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.core.type.functype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -23,12 +27,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
         implements LitExpr<FuncType<ParamType, ResultType>> {
@@ -46,8 +45,9 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
         this.result = checkNotNull(result);
     }
 
-    public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> of(
-            final ParamDecl<ParamType> param, final Expr<ResultType> result) {
+    public static <ParamType extends Type, ResultType extends Type>
+            FuncLitExpr<ParamType, ResultType> of(
+                    final ParamDecl<ParamType> param, final Expr<ResultType> result) {
         return new FuncLitExpr<>(param, result);
     }
 
@@ -113,8 +113,8 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final FuncLitExpr<?, ?> that = (FuncLitExpr<?, ?>) obj;
-            return this.getParam().equals(that.getParam()) && this.getResult()
-                    .equals(that.getResult());
+            return this.getParam().equals(that.getParam())
+                    && this.getResult().equals(that.getResult());
         } else {
             return false;
         }
@@ -123,7 +123,10 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
     @Override
     public String toString() {
         final String paramString = String.format("(%s %s)", param.getName(), param.getType());
-        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(paramString).add(result).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL)
+                .body()
+                .add(paramString)
+                .add(result)
+                .toString();
     }
-
 }

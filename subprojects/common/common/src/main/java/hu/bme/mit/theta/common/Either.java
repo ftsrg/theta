@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.common;
 
-import java.util.NoSuchElementException;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.NoSuchElementException;
 
 public abstract class Either<L, R> {
 
-    private Either() {
-    }
+    private Either() {}
 
     public static <L> Left<L, ?> Left(final L left) {
         return new Left<>(left);
@@ -100,7 +99,6 @@ public abstract class Either<L, R> {
         public String toString() {
             return Utils.lispStringBuilder("left").add(left).toString();
         }
-
     }
 
     public static final class Right<L, R> extends Either<L, R> {
@@ -161,7 +159,5 @@ public abstract class Either<L, R> {
         public String toString() {
             return Utils.lispStringBuilder("right").add(right).toString();
         }
-
     }
-
 }

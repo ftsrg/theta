@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,28 +25,25 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import com.google.common.collect.ImmutableMap;
-
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ExprIndexedVarCollectorTest {
@@ -68,17 +65,15 @@ public class ExprIndexedVarCollectorTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
-
-                {And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
-
-                {And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
-                        ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
-
-        });
-
+        return Arrays.asList(
+                new Object[][] {
+                    {And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
+                    {And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
+                    {
+                        And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
+                        ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))
+                    },
+                });
     }
 
     @Test

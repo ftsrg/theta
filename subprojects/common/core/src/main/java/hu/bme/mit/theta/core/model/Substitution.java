@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package hu.bme.mit.theta.core.model;
 
-import java.util.Collection;
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import java.util.Collection;
+import java.util.Optional;
 
-/**
- * Interface for a substitution, which is a mapping from declarations to expressions.
- */
+/** Interface for a substitution, which is a mapping from declarations to expressions. */
 public interface Substitution {
 
     /**

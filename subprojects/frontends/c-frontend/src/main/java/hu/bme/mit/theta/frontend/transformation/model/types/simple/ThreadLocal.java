@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class ThreadLocal extends CSimpleType {
 
-    public final static ThreadLocal instance = new ThreadLocal();
+    public static final ThreadLocal instance = new ThreadLocal();
 
-    private ThreadLocal() {
-    }
+    private ThreadLocal() {}
 
     @Override
     public CSimpleType copyOf() {

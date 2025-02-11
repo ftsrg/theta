@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import com.google.common.base.Objects;
+import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.base.Objects;
 import java.math.BigInteger;
 import java.util.function.BinaryOperator;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class DomainSize {
 
@@ -43,9 +42,9 @@ public class DomainSize {
         return of(BigInteger.valueOf(val));
     }
 
-    private static DomainSize infiniteForAnyInfiniteApplyElse(DomainSize left, DomainSize right, BinaryOperator<BigInteger> operator) {
-        if (left.isInfinite() || right.isInfinite())
-            return INFINITY;
+    private static DomainSize infiniteForAnyInfiniteApplyElse(
+            DomainSize left, DomainSize right, BinaryOperator<BigInteger> operator) {
+        if (left.isInfinite() || right.isInfinite()) return INFINITY;
         return of(operator.apply(left.finiteSize, right.finiteSize));
     }
 
@@ -62,8 +61,7 @@ public class DomainSize {
      * parameter is infinite or exponent is too large ( = can't fit into an integer)
      */
     public static DomainSize pow(DomainSize base, DomainSize exponent) {
-        if (base.isInfinite() || exponent.isInfinite())
-            return INFINITY;
+        if (base.isInfinite() || exponent.isInfinite()) return INFINITY;
         int iExp;
         try {
             iExp = exponent.finiteSize.intValueExact();

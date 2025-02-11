@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.xsts.analysis.concretizer;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkElementIndex;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkElementIndex;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsStateSequence {
 
@@ -80,12 +79,13 @@ public final class XstsStateSequence {
         final LispStringBuilder sb = Utils.lispStringBuilder(getClass().getSimpleName()).body();
         for (int i = 0; i <= length(); i++) {
             XstsState<ExplState> state = states.get(i);
-            sb.add(Utils.lispStringBuilder(XstsState.class.getSimpleName())
-                    .add(state.isInitialized() ? "post_init" : "pre_init")
-                    .add(state.lastActionWasEnv() ? "last_env" : "last_internal").body()
-                    .add(state.getState().toString()));
+            sb.add(
+                    Utils.lispStringBuilder(XstsState.class.getSimpleName())
+                            .add(state.isInitialized() ? "post_init" : "pre_init")
+                            .add(state.lastActionWasEnv() ? "last_env" : "last_internal")
+                            .body()
+                            .add(state.getState().toString()));
         }
         return sb.toString();
     }
-
 }

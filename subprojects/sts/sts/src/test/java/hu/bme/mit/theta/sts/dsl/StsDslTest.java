@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package hu.bme.mit.theta.sts.dsl;
 
+import hu.bme.mit.theta.sts.STS;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.sts.STS;
 
 @RunWith(Parameterized.class)
 public class StsDslTest {
@@ -44,13 +42,11 @@ public class StsDslTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"/readerswriters.system", "safe", 3},
-
-                {"/simple1.system", "safe", 2}
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"/readerswriters.system", "safe", 3},
+                    {"/simple1.system", "safe", 2}
+                });
     }
 
     @Test
@@ -60,5 +56,4 @@ public class StsDslTest {
         final STS sts = spec.createProp(propertyName);
         Assert.assertEquals(varCount, sts.getVars().size());
     }
-
 }

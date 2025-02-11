@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3legacy.Context;
 import hu.bme.mit.theta.common.Tuple2;
@@ -22,10 +24,7 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 final class Z3DeclTransformer {
 
@@ -35,8 +34,10 @@ final class Z3DeclTransformer {
 
     private int symbolCount;
 
-    Z3DeclTransformer(final Z3TransformationManager transformer, final Z3SymbolTable symbolTable,
-                      final Context context) {
+    Z3DeclTransformer(
+            final Z3TransformationManager transformer,
+            final Z3SymbolTable symbolTable,
+            final Context context) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
         this.context = context;
@@ -64,9 +65,10 @@ final class Z3DeclTransformer {
             final Type returnType = extractedTypes.get2();
 
             final com.microsoft.z3legacy.Sort returnSort = transformer.toSort(returnType);
-            final com.microsoft.z3legacy.Sort[] paramSorts = paramTypes.stream()
-                    .map(t -> transformer.toSort(t))
-                    .toArray(size -> new com.microsoft.z3legacy.Sort[size]);
+            final com.microsoft.z3legacy.Sort[] paramSorts =
+                    paramTypes.stream()
+                            .map(t -> transformer.toSort(t))
+                            .toArray(size -> new com.microsoft.z3legacy.Sort[size]);
 
             symbol = context.mkFuncDecl(symbolNameFor(decl), paramSorts, returnSort);
             symbolTable.put(decl, symbol);
@@ -87,8 +89,8 @@ final class Z3DeclTransformer {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
-                    .addAll(paramTypes).build();
+            final List<Type> newParamTypes =
+                    ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;
@@ -100,5 +102,4 @@ final class Z3DeclTransformer {
     private String symbolNameFor(final Decl<?> decl) {
         return String.format("%s_%d", decl.getName(), symbolCount++);
     }
-
 }

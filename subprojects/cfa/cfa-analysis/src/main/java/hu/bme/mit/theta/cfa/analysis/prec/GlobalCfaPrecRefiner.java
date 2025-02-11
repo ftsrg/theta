@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
-public final class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+public final class GlobalCfaPrecRefiner<
+                S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
         implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
     private final RefutationToPrec<P, R> refToPrec;
@@ -37,14 +38,14 @@ public final class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P
         this.refToPrec = checkNotNull(refToPrec);
     }
 
-    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GlobalCfaPrecRefiner<S, A, P, R> create(
-            final RefutationToPrec<P, R> refToPrec) {
+    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+            GlobalCfaPrecRefiner<S, A, P, R> create(final RefutationToPrec<P, R> refToPrec) {
         return new GlobalCfaPrecRefiner<>(refToPrec);
     }
 
     @Override
-    public CfaPrec<P> refine(final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace,
-                             final R refutation) {
+    public CfaPrec<P> refine(
+            final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace, final R refutation) {
         checkNotNull(trace);
         checkNotNull(prec);
         checkNotNull(refutation);
@@ -64,5 +65,4 @@ public final class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
+
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -38,17 +46,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clon
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
-
 import java.math.BigInteger;
-
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
     private final ParseContext parseContext;
@@ -99,7 +97,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
     }
-
 
     @Override
     public Expr<?> visit(CSigned128 type, Expr<?> param) {
@@ -181,7 +178,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
     }
-
 
     @Override
     public Expr<?> visit(CUnsignedInt type, Expr<?> param) {

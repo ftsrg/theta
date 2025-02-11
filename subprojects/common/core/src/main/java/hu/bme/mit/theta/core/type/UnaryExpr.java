@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements
-        Expr<ExprType> {
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
+import java.util.List;
+
+public abstract class UnaryExpr<OpType extends Type, ExprType extends Type>
+        implements Expr<ExprType> {
 
     private final Expr<OpType> op;
 

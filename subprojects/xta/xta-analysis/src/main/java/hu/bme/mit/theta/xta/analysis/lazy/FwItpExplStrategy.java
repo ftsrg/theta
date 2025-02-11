@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -31,6 +29,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
+import java.util.Collection;
 
 final class FwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
@@ -39,8 +38,11 @@ final class FwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
     }
 
     @Override
-    protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-                                  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    protected Valuation blockExpl(
+            final ArgNode<S, XtaAction> node,
+            final Expr<BoolType> expr,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         final ExplState abstrState = getLens().get(node.getState()).getAbstrState();
 
         final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstrState);
@@ -78,5 +80,4 @@ final class FwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
             return interpolant;
         }
     }
-
 }

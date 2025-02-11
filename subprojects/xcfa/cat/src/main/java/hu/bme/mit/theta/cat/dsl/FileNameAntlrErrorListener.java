@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.cat.dsl;
 
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -28,7 +27,21 @@ class FileNameAntlrErrorListener extends BaseErrorListener {
     }
 
     @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        System.err.println("Syntax error in " + filename + " at " + line + ":" + charPositionInLine + ": " + msg);
+    public void syntaxError(
+            Recognizer<?, ?> recognizer,
+            Object offendingSymbol,
+            int line,
+            int charPositionInLine,
+            String msg,
+            RecognitionException e) {
+        System.err.println(
+                "Syntax error in "
+                        + filename
+                        + " at "
+                        + line
+                        + ":"
+                        + charPositionInLine
+                        + ": "
+                        + msg);
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,4 @@ package hu.bme.mit.theta.solver.smtlib.impl.smtinterpol;
 
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpMarker;
 
-public class SMTInterpolSmtLibItpMarker extends SmtLibItpMarker {
-
-}
+public class SMTInterpolSmtLibItpMarker extends SmtLibItpMarker {}

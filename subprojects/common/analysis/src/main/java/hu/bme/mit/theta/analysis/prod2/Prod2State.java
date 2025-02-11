@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,26 +15,24 @@
  */
 package hu.bme.mit.theta.analysis.prod2;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-
 public abstract class Prod2State<S1 extends State, S2 extends State> implements ExprState {
 
-    private Prod2State() {
-    }
+    private Prod2State() {}
 
-    public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1,
-                                                                             final S2 state2) {
+    public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(
+            final S1 state1, final S2 state2) {
         checkNotNull(state1);
         checkNotNull(state2);
         if (state1.isBottom()) {
@@ -54,8 +52,8 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
         return new Bottom2<>(state);
     }
 
-    private static <S1 extends State, S2 extends State> Prod2State<S1, S2> product(final S1 state1,
-                                                                                   final S2 state2) {
+    private static <S1 extends State, S2 extends State> Prod2State<S1, S2> product(
+            final S1 state1, final S2 state2) {
         return new Product<>(state1, state2);
     }
 
@@ -82,8 +80,8 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 
     public abstract <S extends State> Prod2State<S1, S> with2(final S state);
 
-    private static final class Product<S1 extends State, S2 extends State> extends
-            Prod2State<S1, S2> {
+    private static final class Product<S1 extends State, S2 extends State>
+            extends Prod2State<S1, S2> {
 
         private static final int HASH_SEED = 7879;
         private volatile int hashCode = 0;
@@ -180,19 +178,21 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).body().add(state1)
-                    .add(state2).toString();
+            return Utils.lispStringBuilder(Prod2State.class.getSimpleName())
+                    .body()
+                    .add(state1)
+                    .add(state2)
+                    .toString();
         }
     }
 
-    private static abstract class Bottom<S1 extends State, S2 extends State> extends
-            Prod2State<S1, S2> {
+    private abstract static class Bottom<S1 extends State, S2 extends State>
+            extends Prod2State<S1, S2> {
 
         private static final int HASH_SEED = 2879;
         private volatile int hashCode = 0;
 
-        private Bottom() {
-        }
+        private Bottom() {}
 
         public abstract int getIndex();
 
@@ -232,8 +232,8 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
                 return true;
             } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Bottom<?, ?> that = (Bottom<?, ?>) obj;
-                return this.getIndex() == that.getIndex() && this.getState()
-                        .equals(that.getState());
+                return this.getIndex() == that.getIndex()
+                        && this.getState().equals(that.getState());
             } else {
                 return false;
             }
@@ -241,8 +241,10 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 
         @Override
         public final String toString() {
-            return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).add(getIndex())
-                    .add(getState()).toString();
+            return Utils.lispStringBuilder(Prod2State.class.getSimpleName())
+                    .add(getIndex())
+                    .add(getState())
+                    .toString();
         }
     }
 
@@ -353,5 +355,4 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
             return (Prod2State<S1, S>) this;
         }
     }
-
 }

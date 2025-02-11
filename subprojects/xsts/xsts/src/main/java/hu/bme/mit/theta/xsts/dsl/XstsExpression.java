@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,21 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xsts.dsl;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
@@ -34,8 +49,6 @@ import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
-import org.antlr.v4.runtime.Token;
-
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
@@ -43,21 +56,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-import static java.util.stream.Collectors.toList;
+import org.antlr.v4.runtime.Token;
 
 final class XstsExpression {
 
@@ -65,8 +64,8 @@ final class XstsExpression {
     private final SymbolTable typeTable;
     private final ExprContext context;
 
-    public XstsExpression(final DynamicScope scope, final SymbolTable typeTable,
-                          final ExprContext context) {
+    public XstsExpression(
+            final DynamicScope scope, final SymbolTable typeTable, final ExprContext context) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
@@ -88,8 +87,8 @@ final class XstsExpression {
         private final SymbolTable typeTable;
         private final Env env;
 
-        private ExprCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable,
-                                   final Env env) {
+        private ExprCreatorVisitor(
+                final DynamicScope scope, final SymbolTable typeTable, final Env env) {
             currentScope = checkNotNull(scope);
             this.typeTable = checkNotNull(typeTable);
             this.env = checkNotNull(env);
@@ -132,8 +131,8 @@ final class XstsExpression {
         @Override
         public Expr<?> visitOrExpr(final OrExprContext ctx) {
             if (ctx.ops.size() > 1) {
-                final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                        .map(op -> cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.ops.stream().map(op -> cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return Or(ops);
             } else {
@@ -155,8 +154,8 @@ final class XstsExpression {
         @Override
         public Expr<?> visitAndExpr(final AndExprContext ctx) {
             if (ctx.ops.size() > 1) {
-                final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                        .map(op -> cast(op.accept(this), Bool()));
+                final Stream<Expr<BoolType>> opStream =
+                        ctx.ops.stream().map(op -> cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return And(ops);
             } else {
@@ -190,11 +189,14 @@ final class XstsExpression {
                 }
                 if (leftOp.getType() instanceof EnumType enumType) {
                     env.push();
-                    enumType.getValues().forEach(literal -> CustomTypeDeclarationUtil.declareTypeWithShortName(currentScope, enumType, literal, env));
+                    enumType.getValues()
+                            .forEach(
+                                    literal ->
+                                            CustomTypeDeclarationUtil.declareTypeWithShortName(
+                                                    currentScope, enumType, literal, env));
                 }
                 rightOp = (inverse ? ctx.leftOp : ctx.rightOp).accept(this);
-                if (leftOp.getType() instanceof EnumType)
-                    env.pop();
+                if (leftOp.getType() instanceof EnumType) env.pop();
                 return switch (ctx.oper.getType()) {
                     case EQ -> Eq(leftOp, rightOp);
                     case NEQ -> Neq(leftOp, rightOp);
@@ -245,9 +247,11 @@ final class XstsExpression {
             }
         }
 
-        private Expr<?> createAdditiveExpr(final Expr<?> opsHead,
-                                           final List<? extends Expr<?>> opsTail,
-                                           final List<? extends Token> opers, final AdditiveExprContext ctx) {
+        private Expr<?> createAdditiveExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<? extends Token> opers,
+                final AdditiveExprContext ctx) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -265,11 +269,12 @@ final class XstsExpression {
             }
         }
 
-        private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                              final Token oper,
-                                              final AdditiveExprContext ctx) {
+        private Expr<?> createAdditiveSubExpr(
+                final Expr<?> leftOp,
+                final Expr<?> rightOp,
+                final Token oper,
+                final AdditiveExprContext ctx) {
             switch (oper.getType()) {
-
                 case PLUS:
                     return createAddExpr(leftOp, rightOp);
 
@@ -284,9 +289,11 @@ final class XstsExpression {
         private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof AddExpr) {
                 final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Add(ops);
             } else {
                 return Add(leftOp, rightOp);
@@ -310,12 +317,13 @@ final class XstsExpression {
             } else {
                 return visitChildren(ctx);
             }
-
         }
 
-        private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-                                                 final List<? extends Expr<?>> opsTail,
-                                                 final List<? extends Token> opers, final MultiplicativeExprContext ctx) {
+        private Expr<?> createMutliplicativeExpr(
+                final Expr<?> opsHead,
+                final List<? extends Expr<?>> opsTail,
+                final List<? extends Token> opers,
+                final MultiplicativeExprContext ctx) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -327,18 +335,19 @@ final class XstsExpression {
                 final Token operHead = opers.get(0);
                 final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
-                final Expr<?> subExpr = createMultiplicativeSubExpr(opsHead, newOpsHead, operHead,
-                        ctx);
+                final Expr<?> subExpr =
+                        createMultiplicativeSubExpr(opsHead, newOpsHead, operHead, ctx);
 
                 return createMutliplicativeExpr(subExpr, newOpsTail, opersTail, ctx);
             }
         }
 
-        private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                    final Token oper,
-                                                    final MultiplicativeExprContext ctx) {
+        private Expr<?> createMultiplicativeSubExpr(
+                final Expr<?> leftOp,
+                final Expr<?> rightOp,
+                final Token oper,
+                final MultiplicativeExprContext ctx) {
             switch (oper.getType()) {
-
                 case MUL:
                     return createMulExpr(leftOp, rightOp);
 
@@ -359,9 +368,11 @@ final class XstsExpression {
         private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof MulExpr) {
                 final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
-                        .addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops =
+                        ImmutableList.<Expr<?>>builder()
+                                .addAll(addLeftOp.getOps())
+                                .add(rightOp)
+                                .build();
                 return Mul(ops);
             } else {
                 return Mul(leftOp, rightOp);
@@ -429,18 +440,20 @@ final class XstsExpression {
             }
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(final Expr<?> op,
-                                                                               final ArrayReadAccessContext ctx) {
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(
+                final Expr<?> op, final ArrayReadAccessContext ctx) {
             checkArgument(op.getType() instanceof ArrayType);
-            @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+            @SuppressWarnings("unchecked")
+            final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
             final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
             return Read(array, index);
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(final Expr<?> op,
-                                                                                final ArrayWriteAccessContext ctx) {
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(
+                final Expr<?> op, final ArrayWriteAccessContext ctx) {
             checkArgument(op.getType() instanceof ArrayType);
-            @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+            @SuppressWarnings("unchecked")
+            final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
             final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
             final Expr<T2> elem = cast(ctx.elem.accept(this), array.getType().getElemType());
             return Write(array, index, elem);
@@ -484,13 +497,18 @@ final class XstsExpression {
             }
             valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-            final List<Tuple2<Expr<T1>, Expr<T2>>> elems = IntStream
-                    .range(0, ctx.indexExpr.size())
-                    .mapToObj(i -> Tuple2.of(
-                            cast(ctx.indexExpr.get(i).accept(this), indexType),
-                            cast(ctx.valueExpr.get(i).accept(this), valueType)
-                    ))
-                    .collect(Collectors.toUnmodifiableList());
+            final List<Tuple2<Expr<T1>, Expr<T2>>> elems =
+                    IntStream.range(0, ctx.indexExpr.size())
+                            .mapToObj(
+                                    i ->
+                                            Tuple2.of(
+                                                    cast(
+                                                            ctx.indexExpr.get(i).accept(this),
+                                                            indexType),
+                                                    cast(
+                                                            ctx.valueExpr.get(i).accept(this),
+                                                            valueType)))
+                            .collect(Collectors.toUnmodifiableList());
 
             final Expr<T2> elseExpr = cast(ctx.elseExpr.accept(this), valueType);
             return simplify(ArrayInit(elems, elseExpr, ArrayType.of(indexType, valueType)));
@@ -500,8 +518,8 @@ final class XstsExpression {
         public Expr<?> visitIdExpr(final IdExprContext ctx) {
             Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
             if (optSymbol.isEmpty()) {
-                throw new ParseException(ctx,
-                        "Identifier '" + ctx.id.getText() + "' cannot be resolved");
+                throw new ParseException(
+                        ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved");
             }
             final Symbol symbol = optSymbol.get();
             final Object val = env.eval(symbol);
@@ -510,15 +528,14 @@ final class XstsExpression {
             } else if (val instanceof Decl<?> decl) {
                 return decl.getRef();
             }
-            throw new ParseException(ctx,
+            throw new ParseException(
+                    ctx,
                     "Identifier '" + ctx.id.getText() + "' does not refer to a valid expression");
-
         }
 
         @Override
         public Expr<?> visitParenExpr(final ParenExprContext ctx) {
             return ctx.op.accept(this);
         }
-
     }
 }

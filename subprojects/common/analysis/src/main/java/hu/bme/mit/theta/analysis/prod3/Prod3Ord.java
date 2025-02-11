@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,16 +27,20 @@ final class Prod3Ord<S1 extends State, S2 extends State, S3 extends State>
     private final PartialOrd<S2> partialOrd2;
     private final PartialOrd<S3> partialOrd3;
 
-    private Prod3Ord(final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-                     final PartialOrd<S3> partialOrd3) {
+    private Prod3Ord(
+            final PartialOrd<S1> partialOrd1,
+            final PartialOrd<S2> partialOrd2,
+            final PartialOrd<S3> partialOrd3) {
         this.partialOrd1 = checkNotNull(partialOrd1);
         this.partialOrd2 = checkNotNull(partialOrd2);
         this.partialOrd3 = checkNotNull(partialOrd3);
     }
 
-    public static <S1 extends State, S2 extends State, S3 extends State> Prod3Ord<S1, S2, S3> create(
-            final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-            final PartialOrd<S3> partialOrd3) {
+    public static <S1 extends State, S2 extends State, S3 extends State>
+            Prod3Ord<S1, S2, S3> create(
+                    final PartialOrd<S1> partialOrd1,
+                    final PartialOrd<S2> partialOrd2,
+                    final PartialOrd<S3> partialOrd3) {
         return new Prod3Ord<>(partialOrd1, partialOrd2, partialOrd3);
     }
 
@@ -52,5 +56,4 @@ final class Prod3Ord<S1 extends State, S2 extends State, S3 extends State>
                     && partialOrd3.isLeq(state1.getState3(), state2.getState3());
         }
     }
-
 }

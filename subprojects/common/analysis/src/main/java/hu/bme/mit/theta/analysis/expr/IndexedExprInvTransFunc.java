@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,34 @@
  */
 package hu.bme.mit.theta.analysis.expr;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
 import hu.bme.mit.theta.analysis.InvTransFunc;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
 import java.util.Collection;
 import java.util.Collections;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+public final class IndexedExprInvTransFunc
+        implements InvTransFunc<IndexedExprState, ExprAction, UnitPrec> {
 
-public final class IndexedExprInvTransFunc implements InvTransFunc<IndexedExprState, ExprAction, UnitPrec> {
+    private static final IndexedExprInvTransFunc INSTANCE = new IndexedExprInvTransFunc();
 
-    private final static IndexedExprInvTransFunc INSTANCE = new IndexedExprInvTransFunc();
-
-    private IndexedExprInvTransFunc() {
-    }
+    private IndexedExprInvTransFunc() {}
 
     public static IndexedExprInvTransFunc getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public Collection<? extends IndexedExprState> getPreStates(IndexedExprState state, ExprAction action, UnitPrec prec) {
+    public Collection<? extends IndexedExprState> getPreStates(
+            IndexedExprState state, ExprAction action, UnitPrec prec) {
         final VarIndexing currentIndexing = state.getVarIndexing();
-        final Expr<BoolType> preExpr = And(state.toExpr(), PathUtils.unfoldReverse(action.toExpr(), currentIndexing));
+        final Expr<BoolType> preExpr =
+                And(state.toExpr(), PathUtils.unfoldReverse(action.toExpr(), currentIndexing));
         final VarIndexing newIndexing = currentIndexing.add(action.nextIndexing());
         final IndexedExprState preState = IndexedExprState.of(preExpr, newIndexing);
         return Collections.singleton(preState);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package hu.bme.mit.theta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.type.Expr;
@@ -38,7 +38,6 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
         this.partialOrd = ExplOrd.getInstance();
         this.initFunc = ExplInitFunc.create(solver, initExpr);
         this.transFunc = ExplTransFunc.create(solver);
-
     }
 
     public static ExplAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
@@ -59,5 +58,4 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
     public TransFunc<ExplState, ExprAction, ExplPrec> getTransFunc() {
         return transFunc;
     }
-
 }

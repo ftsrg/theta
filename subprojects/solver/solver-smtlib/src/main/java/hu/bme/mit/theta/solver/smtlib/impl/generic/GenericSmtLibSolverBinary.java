@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
+
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Math.min;
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
 import com.zaxxer.nuprocess.NuProcess;
 import com.zaxxer.nuprocess.NuProcessBuilder;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.Math.min;
 
 public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
 
@@ -40,8 +38,8 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         this(solverPath, args, EnumSet.noneOf(Solver.class));
     }
 
-    public GenericSmtLibSolverBinary(final Path solverPath, final String[] args,
-                                     final EnumSet<Solver> solverOverride) {
+    public GenericSmtLibSolverBinary(
+            final Path solverPath, final String[] args, final EnumSet<Solver> solverOverride) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
@@ -84,7 +82,8 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     }
 
     public enum Solver {
-        CVC4, PRINCESS
+        CVC4,
+        PRINCESS
     }
 
     private static final class ProcessHandler extends NuAbstractProcessHandler {
@@ -119,10 +118,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
             if (!inputQueue.isEmpty()) {
                 final var output = inputQueue.peek();
                 final var eol = "\n".getBytes(StandardCharsets.US_ASCII);
-                final var cutoff = min(buffer.remaining() - eol.length,
-                        output.length() - headDoneIndex);
-                buffer.put(output.substring(headDoneIndex, headDoneIndex + cutoff)
-                        .getBytes(StandardCharsets.US_ASCII));
+                final var cutoff =
+                        min(buffer.remaining() - eol.length, output.length() - headDoneIndex);
+                buffer.put(
+                        output.substring(headDoneIndex, headDoneIndex + cutoff)
+                                .getBytes(StandardCharsets.US_ASCII));
                 if (headDoneIndex + cutoff < output.length()) {
                     headDoneIndex = headDoneIndex + cutoff;
                 } else {
@@ -153,7 +153,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
             final var buf = new byte[buffer.remaining()];
             buffer.get(buf);
             final var input = new String(buf, StandardCharsets.US_ASCII);
-            //System.out.println(input);
+            // System.out.println(input);
 
             for (var c : input.toCharArray()) {
                 if (readProcessor == null) {
@@ -189,7 +189,12 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     private static final class ReadProcessor {
 
         private enum ReadStatus {
-            INIT, LINE, PARENTHESES, STRING, COMMENT, READY
+            INIT,
+            LINE,
+            PARENTHESES,
+            STRING,
+            COMMENT,
+            READY
         }
 
         private ReadProcessor.ReadStatus status = ReadProcessor.ReadStatus.INIT;

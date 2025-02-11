@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.common.visualization.writer;
 
-import java.awt.Color;
-
 import hu.bme.mit.theta.common.visualization.CompositeNode;
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
@@ -25,14 +23,12 @@ import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.common.visualization.Shape;
+import java.awt.Color;
 
-/**
- * Class for writing graphs in yED (GraphML) format.
- */
+/** Class for writing graphs in yED (GraphML) format. */
 public final class YedWriter extends AbstractGraphWriter {
 
-    private YedWriter() {
-    }
+    private YedWriter() {}
 
     private static class LazyHolder {
 
@@ -55,7 +51,8 @@ public final class YedWriter extends AbstractGraphWriter {
         sb.append("\txmlns:y=\"http://www.yworks.com/xml/graphml\"").append(System.lineSeparator());
         sb.append("\txmlns:yed=\"http://www.yworks.com/xml/yed/3\"").append(System.lineSeparator());
         sb.append(
-                        "\txsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">")
+                        "\txsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns"
+                                + " http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">")
                 .append(System.lineSeparator());
         sb.append("<key for=\"node\" id=\"d6\" yfiles.type=\"nodegraphics\"/>")
                 .append(System.lineSeparator());
@@ -89,7 +86,8 @@ public final class YedWriter extends AbstractGraphWriter {
         sb.append("\t<node id=\"").append(node.getId()).append("\">");
         sb.append("<data key=\"d6\"><y:ShapeNode>");
         sb.append("<y:NodeLabel>").append(escape(attributes.getLabel())).append("</y:NodeLabel>");
-        sb.append("<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
+        sb.append("<y:Fill color=\"")
+                .append(mapColorToString(attributes.getFillColor()))
                 .append("\" transparent=\"false\"/>");
         sb.append("<y:BorderStyle");
         sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append('\"');
@@ -99,21 +97,27 @@ public final class YedWriter extends AbstractGraphWriter {
         }
         // TODO: peripheries
         sb.append("/>");
-        sb.append("<y:Shape type=\"").append(mapShapeToString(attributes.getShape()))
-                .append("\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
+        sb.append("<y:Shape type=\"")
+                .append(mapShapeToString(attributes.getShape()))
+                .append("\"/></y:ShapeNode></data></node>")
+                .append(System.lineSeparator());
     }
 
     private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
         final NodeAttributes attributes = node.getAttributes();
         sb.append("<node id=\"").append(node.getId()).append("\">").append(System.lineSeparator());
         sb.append(
-                        "\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers active=\"0\"><y:GroupNode>")
+                        "\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers"
+                                + " active=\"0\"><y:GroupNode>")
                 .append(System.lineSeparator());
         sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">")
                 .append(escape(attributes.getLabel()))
-                .append("</y:NodeLabel>").append(System.lineSeparator());
-        sb.append("\t<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
-                .append("\" transparent=\"false\"/>").append(System.lineSeparator());
+                .append("</y:NodeLabel>")
+                .append(System.lineSeparator());
+        sb.append("\t<y:Fill color=\"")
+                .append(mapColorToString(attributes.getFillColor()))
+                .append("\" transparent=\"false\"/>")
+                .append(System.lineSeparator());
         sb.append("<y:BorderStyle");
         sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append('\"');
         final String style = mapLineStyleToString(attributes.getLineStyle());
@@ -124,7 +128,8 @@ public final class YedWriter extends AbstractGraphWriter {
         // TODO: peripheries
         sb.append("/>");
 
-        sb.append("\t<y:Shape type=\"").append(mapShapeToString(attributes.getShape()))
+        sb.append("\t<y:Shape type=\"")
+                .append(mapShapeToString(attributes.getShape()))
                 .append("\"/></y:GroupNode></y:Realizers></y:ProxyAutoBoundsNode>")
                 .append(System.lineSeparator());
         sb.append("\t</data>").append(System.lineSeparator());
@@ -132,18 +137,25 @@ public final class YedWriter extends AbstractGraphWriter {
         for (final Node child : node.getChildren()) {
             printNode(child, sb);
         }
-        sb.append("\t</graph>").append(System.lineSeparator()).append("</node>")
+        sb.append("\t</graph>")
+                .append(System.lineSeparator())
+                .append("</node>")
                 .append(System.lineSeparator());
     }
 
     private void printEdges(final Node node, final StringBuilder sb) {
         for (final Edge edge : node.getOutEdges()) {
             final EdgeAttributes attributes = edge.getAttributes();
-            sb.append("\t<edge id=\"").append(edge.hashCode()).append("\" source=\"")
+            sb.append("\t<edge id=\"")
+                    .append(edge.hashCode())
+                    .append("\" source=\"")
                     .append(edge.getSource().getId())
-                    .append("\" target=\"").append(edge.getTarget().getId()).append("\">");
+                    .append("\" target=\"")
+                    .append(edge.getTarget().getId())
+                    .append("\">");
             sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
-                    .append(mapColorToString(attributes.getColor())).append('\"');
+                    .append(mapColorToString(attributes.getColor()))
+                    .append('\"');
             final String style = mapLineStyleToString(attributes.getLineStyle());
             if (!"".equals(style)) {
                 sb.append(" type=\"").append(style).append('\"');
@@ -158,7 +170,6 @@ public final class YedWriter extends AbstractGraphWriter {
 
     private static String escape(final String str) {
         return str.replace("<", "&lt;").replace(">", "&lt;");
-
     }
 
     private String mapColorToString(final Color color) {

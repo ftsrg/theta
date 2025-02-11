@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,4 +81,6 @@ object Deps {
     val clikt = "com.github.ajalt.clikt:clikt:${Versions.clikt}"
 
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
+
+    val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
 }

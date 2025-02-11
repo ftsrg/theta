@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class IfStmt implements Stmt {
 
@@ -82,9 +82,9 @@ public class IfStmt implements Stmt {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final IfStmt that = (IfStmt) obj;
-            return this.cond.equals(that.getCond()) &&
-                    this.then.equals(that.getThen()) &&
-                    this.elze.equals(that.getElze());
+            return this.cond.equals(that.getCond())
+                    && this.then.equals(that.getThen())
+                    && this.elze.equals(that.getElze());
         } else {
             return false;
         }
@@ -94,5 +94,4 @@ public class IfStmt implements Stmt {
     public String toString() {
         return Utils.lispStringBuilder(STMT_LABEL).add(cond).add(then).add(elze).toString();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import org.junit.Before;
 
 public final class RelationalProductTest {
-    private static final int[] tupleSignature = new int[]{0, 0, 0};
+    private static final int[] tupleSignature = new int[] {0, 0, 0};
 
     private MddGraph<Boolean> graph;
     private MddVariableOrder order;
@@ -36,7 +36,9 @@ public final class RelationalProductTest {
         graph = JavaMddFactory.getDefault().createMddGraph(LatticeDefinition.forSets());
         order = JavaMddFactory.getDefault().createMddVariableOrder(graph);
         for (int i = 0; i < tupleSignature.length; i++) {
-            order.createOnTop(MddVariableDescriptor.create("x" + i, tupleSignature[tupleSignature.length - i - 1]));
+            order.createOnTop(
+                    MddVariableDescriptor.create(
+                            "x" + i, tupleSignature[tupleSignature.length - i - 1]));
         }
         signature = order.getDefaultSetSignature();
     }

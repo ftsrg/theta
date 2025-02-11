@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,19 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.parser;
 
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Check_sat_responseContext;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
-
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Sat;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Unknown;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.PS_Unsat;
 
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Check_sat_responseContext;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
+
 public class CheckSatResponse extends SpecificResponse {
 
     private enum Status {
-        SAT, UNSAT, UNKNOWN
+        SAT,
+        UNSAT,
+        UNKNOWN
     }
 
     private final Status status;
@@ -44,7 +46,6 @@ public class CheckSatResponse extends SpecificResponse {
                 return new CheckSatResponse(Status.UNKNOWN);
             default:
                 throw new SmtLibSolverException("Invalid interface");
-
         }
     }
 

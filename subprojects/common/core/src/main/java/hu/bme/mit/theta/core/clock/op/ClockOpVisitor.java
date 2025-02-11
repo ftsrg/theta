@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,5 +26,4 @@ public interface ClockOpVisitor<P, R> {
     R visit(final ResetOp op, final P param);
 
     R visit(final ShiftOp op, final P param);
-
 }

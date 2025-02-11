@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ final class PropDeclSymbol implements Symbol {
         name = propDeclContext.name.getText();
     }
 
-    public static PropDeclSymbol create(final StsSpecSymbol scope,
-                                        final PropDeclContext propDeclContext) {
+    public static PropDeclSymbol create(
+            final StsSpecSymbol scope, final PropDeclContext propDeclContext) {
         return new PropDeclSymbol(scope, propDeclContext);
     }
 
@@ -54,8 +54,8 @@ final class PropDeclSymbol implements Symbol {
     ////
 
     public STS instantiate(final Substitution assignment) {
-        final StsDefScope stsDefScope = StsCreator.createSts(scope, assignment,
-                propDeclContext.system);
+        final StsDefScope stsDefScope =
+                StsCreator.createSts(scope, assignment, propDeclContext.system);
         final Expr<BoolType> prop = createBoolExpr(stsDefScope, assignment, propDeclContext.cond);
 
         final STS sts = stsDefScope.getSts();
@@ -66,5 +66,4 @@ final class PropDeclSymbol implements Symbol {
         builder.setProp(prop);
         return builder.build();
     }
-
 }

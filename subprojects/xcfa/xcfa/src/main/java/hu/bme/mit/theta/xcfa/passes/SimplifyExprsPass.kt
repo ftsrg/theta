@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.model.ImmutableValuation
@@ -32,85 +31,94 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.simplify
 
 /**
- * This pass simplifies the expressions inside statements and substitutes the values of constant variables
- * (that is, variables assigned only once).
- * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
- * Sets the `simplifiedExprs` flag on the ProcedureBuilder
+ * This pass simplifies the expressions inside statements and substitutes the values of constant
+ * variables (that is, variables assigned only once). Requires the ProcedureBuilder to be
+ * `deterministic` (@see DeterministicPass) Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
-
 class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
-    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        checkNotNull(builder.metaData["deterministic"])
-        val unusedLocRemovalPass = UnusedLocRemovalPass()
-        val valuations = LinkedHashMap<XcfaEdge, Valuation>()
-        var edges = LinkedHashSet(builder.getEdges())
-        val constValuation = MutableValuation()
-        val modifiedGlobalVars = builder.parent.getVars().map { it.wrappedVar }.filter { v ->
-            var firstWrite: XcfaEdge? = null
-            (builder.parent.getProcedures().sumOf { p ->
-                p.getEdges().count { e ->
-                    e.getFlatLabels().any { l ->
-                        l.collectVarsWithAccessType().any { it.value.isWritten && it.key == v }
-                    }.also { written ->
-                        if (written && firstWrite == null) firstWrite = e
-                    }
-                }
-            } > 1).also { modified ->
-                if (!modified && firstWrite != null) {
-                    val valuation = MutableValuation()
-                    firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
-                    valuation.toMap()[v]?.let { constValuation.put(v, it) }
-                }
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    checkNotNull(builder.metaData["deterministic"])
+    val unusedLocRemovalPass = UnusedLocRemovalPass()
+    val valuations = LinkedHashMap<XcfaEdge, Valuation>()
+    var edges = LinkedHashSet(builder.getEdges())
+    val constValuation = MutableValuation()
+    val modifiedGlobalVars =
+      builder.parent
+        .getVars()
+        .map { it.wrappedVar }
+        .filter { v ->
+          var firstWrite: XcfaEdge? = null
+          (builder.parent.getProcedures().sumOf { p ->
+              p.getEdges().count { e ->
+                e.getFlatLabels()
+                  .any { l ->
+                    l.collectVarsWithAccessType().any { it.value.isWritten && it.key == v }
+                  }
+                  .also { written -> if (written && firstWrite == null) firstWrite = e }
+              }
+            } > 1)
+            .also { modified ->
+              if (!modified && firstWrite != null) {
+                val valuation = MutableValuation()
+                firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
+                valuation.toMap()[v]?.let { constValuation.put(v, it) }
+              }
             }
         }
-        lateinit var lastEdges: LinkedHashSet<XcfaEdge>
-        do {
-            lastEdges = edges
+    lateinit var lastEdges: LinkedHashSet<XcfaEdge>
+    do {
+      lastEdges = edges
 
-            val toVisit = builder.initLoc.outgoingEdges.toMutableList()
-            val visited = mutableSetOf<XcfaEdge>()
-            while (toVisit.isNotEmpty()) {
-                val edge = toVisit.removeFirst()
-                visited.add(edge)
+      val toVisit = builder.initLoc.outgoingEdges.toMutableList()
+      val visited = mutableSetOf<XcfaEdge>()
+      while (toVisit.isNotEmpty()) {
+        val edge = toVisit.removeFirst()
+        visited.add(edge)
 
-                val incomingValuations = edge.source.incomingEdges
-                    .filter { it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) } }
-                    .map(valuations::get).reduceOrNull(this::intersect)
-                val localValuation = MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
-                localValuation.putAll(constValuation)
-                val oldLabels = edge.getFlatLabels()
-                val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
+        val incomingValuations =
+          edge.source.incomingEdges
+            .filter { it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) } }
+            .map(valuations::get)
+            .reduceOrNull(this::intersect)
+        val localValuation =
+          MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
+        localValuation.putAll(constValuation)
+        val oldLabels = edge.getFlatLabels()
+        val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
 
-                // note that global variable values are still propagated within an edge (XcfaEdge is considered atomic)
-                modifiedGlobalVars.forEach { localValuation.remove(it) }
+        // note that global variable values are still propagated within an edge (XcfaEdge is
+        // considered atomic)
+        modifiedGlobalVars.forEach { localValuation.remove(it) }
 
-                if (newLabels != oldLabels) {
-                    builder.removeEdge(edge)
-                    valuations.remove(edge)
-                    if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
-                        val newEdge = edge.withLabel(SequenceLabel(newLabels))
-                        builder.addEdge(newEdge)
-                        valuations[newEdge] = localValuation
-                    }
-                } else {
-                    valuations[edge] = localValuation
-                }
+        if (newLabels != oldLabels) {
+          builder.removeEdge(edge)
+          valuations.remove(edge)
+          if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
+            val newEdge = edge.withLabel(SequenceLabel(newLabels))
+            builder.addEdge(newEdge)
+            valuations[newEdge] = localValuation
+          }
+        } else {
+          valuations[edge] = localValuation
+        }
 
-                toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
-            }
-            unusedLocRemovalPass.run(builder)
+        toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
+      }
+      unusedLocRemovalPass.run(builder)
 
-            edges = LinkedHashSet(builder.getEdges())
-        } while (lastEdges != edges)
-        builder.metaData["simplifiedExprs"] = Unit
-        return builder
-    }
+      edges = LinkedHashSet(builder.getEdges())
+    } while (lastEdges != edges)
+    builder.metaData["simplifiedExprs"] = Unit
+    return builder
+  }
 
-    private fun intersect(v1: Valuation?, v2: Valuation?): Valuation {
-        if (v1 == null || v2 == null) return ImmutableValuation.empty()
-        val v1map = v1.toMap()
-        val v2map = v2.toMap()
-        return ImmutableValuation.from(v1map.filter { v2map.containsKey(it.key) && v2map[it.key] == it.value })
-    }
+  private fun intersect(v1: Valuation?, v2: Valuation?): Valuation {
+    if (v1 == null || v2 == null) return ImmutableValuation.empty()
+    val v1map = v1.toMap()
+    val v2map = v2.toMap()
+    return ImmutableValuation.from(
+      v1map.filter { v2map.containsKey(it.key) && v2map[it.key] == it.value }
+    )
+  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,12 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.utils;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -34,12 +40,6 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 public final class WpState {
 
@@ -118,15 +118,15 @@ public final class WpState {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr)
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .add(expr)
                 .add(Integer.valueOf(constCount))
                 .toString();
     }
 
     private static final class WpVisitor implements StmtVisitor<WpState, WpState> {
 
-        private WpVisitor() {
-        }
+        private WpVisitor() {}
 
         private static class LazyHolder {
 
@@ -143,24 +143,25 @@ public final class WpState {
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
-                                                     final WpState state) {
+        public <DeclType extends Type> WpState visit(
+                final AssignStmt<DeclType> stmt, final WpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
-            final Substitution sub = BasicSubstitution.builder().put(varDecl, stmt.getExpr())
-                    .build();
+            final Substitution sub =
+                    BasicSubstitution.builder().put(varDecl, stmt.getExpr()).build();
             final Expr<BoolType> expr = sub.apply(state.getExpr());
             final int constCount = state.constCount;
             return new WpState(expr, constCount);
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(
+                MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
-                                                     final WpState state) {
+        public <DeclType extends Type> WpState visit(
+                final HavocStmt<DeclType> stmt, final WpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_wp_%d", constCount);
@@ -204,8 +205,7 @@ public final class WpState {
 
     private static final class WepVisitor implements StmtVisitor<WpState, WpState> {
 
-        private WepVisitor() {
-        }
+        private WepVisitor() {}
 
         private static class LazyHolder {
 
@@ -222,19 +222,20 @@ public final class WpState {
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
-                                                     final WpState state) {
+        public <DeclType extends Type> WpState visit(
+                final AssignStmt<DeclType> stmt, final WpState state) {
             return WpVisitor.getInstance().visit(stmt, state);
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(
+                MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
-                                                     final WpState state) {
+        public <DeclType extends Type> WpState visit(
+                final HavocStmt<DeclType> stmt, final WpState state) {
             return WpVisitor.getInstance().visit(stmt, state);
         }
 

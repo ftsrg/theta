@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,30 +25,54 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
-public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec>
+public final class Prod3Analysis<
+                S1 extends State,
+                S2 extends State,
+                S3 extends State,
+                A extends Action,
+                P1 extends Prec,
+                P2 extends Prec,
+                P3 extends Prec>
         implements Analysis<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> {
 
     private final PartialOrd<Prod3State<S1, S2, S3>> partialOrd;
     private final InitFunc<Prod3State<S1, S2, S3>, Prod3Prec<P1, P2, P3>> initFunc;
     private final TransFunc<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> transFunc;
 
-    private Prod3Analysis(final Analysis<S1, ? super A, P1> analysis1,
-                          final Analysis<S2, ? super A, P2> analysis2,
-                          final Analysis<S3, ? super A, P3> analysis3) {
+    private Prod3Analysis(
+            final Analysis<S1, ? super A, P1> analysis1,
+            final Analysis<S2, ? super A, P2> analysis2,
+            final Analysis<S3, ? super A, P3> analysis3) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
         checkNotNull(analysis3);
-        partialOrd = Prod3Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd(),
-                analysis3.getPartialOrd());
-        initFunc = Prod3InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(),
-                analysis3.getInitFunc());
-        transFunc = Prod3TransFunc.create(analysis1.getTransFunc(), analysis2.getTransFunc(),
-                analysis3.getTransFunc());
+        partialOrd =
+                Prod3Ord.create(
+                        analysis1.getPartialOrd(),
+                        analysis2.getPartialOrd(),
+                        analysis3.getPartialOrd());
+        initFunc =
+                Prod3InitFunc.create(
+                        analysis1.getInitFunc(), analysis2.getInitFunc(), analysis3.getInitFunc());
+        transFunc =
+                Prod3TransFunc.create(
+                        analysis1.getTransFunc(),
+                        analysis2.getTransFunc(),
+                        analysis3.getTransFunc());
     }
 
-    public static <S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Analysis<S1, S2, S3, A, P1, P2, P3> create(
-            final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
-            final Analysis<S3, ? super A, P3> analysis3) {
+    public static <
+                    S1 extends State,
+                    S2 extends State,
+                    S3 extends State,
+                    A extends Action,
+                    P1 extends Prec,
+                    P2 extends Prec,
+                    P3 extends Prec>
+            Prod3Analysis<S1, S2, S3, A, P1, P2, P3> create(
+                    final Analysis<S1, ? super A, P1> analysis1,
+                    final Analysis<S2, ? super A, P2> analysis2,
+                    final Analysis<S3, ? super A, P3> analysis3) {
         return new Prod3Analysis<>(analysis1, analysis2, analysis3);
     }
 
@@ -66,5 +90,4 @@ public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends 
     public TransFunc<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> getTransFunc() {
         return transFunc;
     }
-
 }

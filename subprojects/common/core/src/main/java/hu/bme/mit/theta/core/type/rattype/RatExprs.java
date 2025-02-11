@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.core.type.Expr;
-
 import java.math.BigInteger;
 
 public final class RatExprs {
 
-    private RatExprs() {
-    }
+    private RatExprs() {}
 
     public static RatType Rat() {
         return RatType.getInstance();
@@ -122,20 +119,25 @@ public final class RatExprs {
         return RatAddExpr.of(ImmutableList.of(op1, op2));
     }
 
-    public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3) {
+    public static RatAddExpr Add(
+            final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
-    public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3,
-                                 final Expr<RatType> op4) {
+    public static RatAddExpr Add(
+            final Expr<RatType> op1,
+            final Expr<RatType> op2,
+            final Expr<RatType> op3,
+            final Expr<RatType> op4) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
-    public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3,
-                                 final Expr<RatType> op4, final Expr<RatType> op5) {
+    public static RatAddExpr Add(
+            final Expr<RatType> op1,
+            final Expr<RatType> op2,
+            final Expr<RatType> op3,
+            final Expr<RatType> op4,
+            final Expr<RatType> op5) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 
@@ -145,20 +147,25 @@ public final class RatExprs {
         return RatMulExpr.of(ImmutableList.of(op1, op2));
     }
 
-    public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3) {
+    public static RatMulExpr Mul(
+            final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
-    public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3,
-                                 final Expr<RatType> op4) {
+    public static RatMulExpr Mul(
+            final Expr<RatType> op1,
+            final Expr<RatType> op2,
+            final Expr<RatType> op3,
+            final Expr<RatType> op4) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
-    public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-                                 final Expr<RatType> op3,
-                                 final Expr<RatType> op4, final Expr<RatType> op5) {
+    public static RatMulExpr Mul(
+            final Expr<RatType> op1,
+            final Expr<RatType> op2,
+            final Expr<RatType> op3,
+            final Expr<RatType> op4,
+            final Expr<RatType> op5) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 

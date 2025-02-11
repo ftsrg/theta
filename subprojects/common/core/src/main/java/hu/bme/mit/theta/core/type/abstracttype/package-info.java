@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,24 +14,23 @@
  *  limitations under the License.
  */
 /**
- * Expressions that work with multiple types. Use
- * {@link hu.bme.mit.theta.core.type.abstracttype.AbstractExprs} to create them. Note that these are
+ * Expressions that work with multiple types. Use {@link
+ * hu.bme.mit.theta.core.type.abstracttype.AbstractExprs} to create them. Note that these are
  * abstract classes, and the corresponding expression for a given type will be created (e.g.,
  * integer addition).
- * <p>
- * Arithmetic: - {@link hu.bme.mit.theta.core.type.abstracttype.AddExpr}: addition -
- * {@link hu.bme.mit.theta.core.type.abstracttype.DivExpr}: division -
- * {@link hu.bme.mit.theta.core.type.abstracttype.MulExpr}: multiplication -
- * {@link hu.bme.mit.theta.core.type.abstracttype.SubExpr}: subtraction
- * <p>
- * Comparison: - {@link hu.bme.mit.theta.core.type.abstracttype.EqExpr}: equal -
- * {@link hu.bme.mit.theta.core.type.abstracttype.GeqExpr}: greater or equal -
- * {@link hu.bme.mit.theta.core.type.abstracttype.GtExpr}: greater -
- * {@link hu.bme.mit.theta.core.type.abstracttype.LeqExpr}: less or equal -
- * {@link hu.bme.mit.theta.core.type.abstracttype.LtExpr}: less -
- * {@link hu.bme.mit.theta.core.type.abstracttype.NeqExpr}: not equal
- * <p>
- * Other - {@link hu.bme.mit.theta.core.type.abstracttype.CastExpr}: cast
+ *
+ * <p>Arithmetic: - {@link hu.bme.mit.theta.core.type.abstracttype.AddExpr}: addition - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.DivExpr}: division - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.MulExpr}: multiplication - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.SubExpr}: subtraction
+ *
+ * <p>Comparison: - {@link hu.bme.mit.theta.core.type.abstracttype.EqExpr}: equal - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.GeqExpr}: greater or equal - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.GtExpr}: greater - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.LeqExpr}: less or equal - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.LtExpr}: less - {@link
+ * hu.bme.mit.theta.core.type.abstracttype.NeqExpr}: not equal
+ *
+ * <p>Other - {@link hu.bme.mit.theta.core.type.abstracttype.CastExpr}: cast
  */
-
 package hu.bme.mit.theta.core.type.abstracttype;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,34 +25,66 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
-public final class Prod4Analysis<S1 extends State, S2 extends State, S3 extends State, S4 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec, P4 extends Prec>
+public final class Prod4Analysis<
+                S1 extends State,
+                S2 extends State,
+                S3 extends State,
+                S4 extends State,
+                A extends Action,
+                P1 extends Prec,
+                P2 extends Prec,
+                P3 extends Prec,
+                P4 extends Prec>
         implements Analysis<Prod4State<S1, S2, S3, S4>, A, Prod4Prec<P1, P2, P3, P4>> {
 
     private final PartialOrd<Prod4State<S1, S2, S3, S4>> partialOrd;
     private final InitFunc<Prod4State<S1, S2, S3, S4>, Prod4Prec<P1, P2, P3, P4>> initFunc;
     private final TransFunc<Prod4State<S1, S2, S3, S4>, A, Prod4Prec<P1, P2, P3, P4>> transFunc;
 
-    private Prod4Analysis(final Analysis<S1, ? super A, P1> analysis1,
-                          final Analysis<S2, ? super A, P2> analysis2,
-                          final Analysis<S3, ? super A, P3> analysis3, final Analysis<S4, ? super A, P4> analysis4) {
+    private Prod4Analysis(
+            final Analysis<S1, ? super A, P1> analysis1,
+            final Analysis<S2, ? super A, P2> analysis2,
+            final Analysis<S3, ? super A, P3> analysis3,
+            final Analysis<S4, ? super A, P4> analysis4) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
         checkNotNull(analysis3);
         checkNotNull(analysis4);
-        partialOrd = Prod4Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd(),
-                analysis3.getPartialOrd(),
-                analysis4.getPartialOrd());
-        initFunc = Prod4InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(),
-                analysis3.getInitFunc(),
-                analysis4.getInitFunc());
-        transFunc = Prod4TransFunc.create(analysis1.getTransFunc(), analysis2.getTransFunc(),
-                analysis3.getTransFunc(),
-                analysis4.getTransFunc());
+        partialOrd =
+                Prod4Ord.create(
+                        analysis1.getPartialOrd(),
+                        analysis2.getPartialOrd(),
+                        analysis3.getPartialOrd(),
+                        analysis4.getPartialOrd());
+        initFunc =
+                Prod4InitFunc.create(
+                        analysis1.getInitFunc(),
+                        analysis2.getInitFunc(),
+                        analysis3.getInitFunc(),
+                        analysis4.getInitFunc());
+        transFunc =
+                Prod4TransFunc.create(
+                        analysis1.getTransFunc(),
+                        analysis2.getTransFunc(),
+                        analysis3.getTransFunc(),
+                        analysis4.getTransFunc());
     }
 
-    public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec, P4 extends Prec> Prod4Analysis<S1, S2, S3, S4, A, P1, P2, P3, P4> create(
-            final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
-            final Analysis<S3, ? super A, P3> analysis3, final Analysis<S4, ? super A, P4> analysis4) {
+    public static <
+                    S1 extends State,
+                    S2 extends State,
+                    S3 extends State,
+                    S4 extends State,
+                    A extends Action,
+                    P1 extends Prec,
+                    P2 extends Prec,
+                    P3 extends Prec,
+                    P4 extends Prec>
+            Prod4Analysis<S1, S2, S3, S4, A, P1, P2, P3, P4> create(
+                    final Analysis<S1, ? super A, P1> analysis1,
+                    final Analysis<S2, ? super A, P2> analysis2,
+                    final Analysis<S3, ? super A, P3> analysis3,
+                    final Analysis<S4, ? super A, P4> analysis4) {
         return new Prod4Analysis<>(analysis1, analysis2, analysis3, analysis4);
     }
 
@@ -70,5 +102,4 @@ public final class Prod4Analysis<S1 extends State, S2 extends State, S3 extends 
     public TransFunc<Prod4State<S1, S2, S3, S4>, A, Prod4Prec<P1, P2, P3, P4>> getTransFunc() {
         return transFunc;
     }
-
 }

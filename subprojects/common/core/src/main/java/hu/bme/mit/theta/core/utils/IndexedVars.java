@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,21 +17,18 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import hu.bme.mit.theta.common.LispStringBuilder;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import java.util.Collection;
 import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-
-import hu.bme.mit.theta.common.LispStringBuilder;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.IndexedConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
 
 /**
  * Represents an immutable mapping, where each integer index can be associated with a set of
@@ -83,21 +80,17 @@ public final class IndexedVars {
      * @return Set of variables
      */
     public Set<VarDecl<?>> getAllVars() {
-        final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+        final Set<VarDecl<?>> allVars =
+                varSets.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
         return Collections.unmodifiableSet(allVars);
     }
 
-    /**
-     * Create a new builder instance.
-     */
+    /** Create a new builder instance. */
     public static Builder builder() {
         return new Builder();
     }
 
-    /**
-     * Helper class for building a new instance.
-     */
+    /** Helper class for building a new instance. */
     public static final class Builder {
 
         private final Map<Integer, Set<VarDecl<?>>> varSets;

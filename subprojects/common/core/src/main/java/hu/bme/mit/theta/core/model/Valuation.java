@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -22,17 +24,12 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-
-/**
- * Interface for a valuation, which is a mapping from declarations to literal expressions.
- */
+/** Interface for a valuation, which is a mapping from declarations to literal expressions. */
 public abstract class Valuation implements Substitution {
 
     private static final int HASH_SEED = 2141;
@@ -97,10 +94,11 @@ public abstract class Valuation implements Substitution {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder("val").aligned()
+        return Utils.lispStringBuilder("val")
+                .aligned()
                 .addAll(
-                        getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
+                        getDecls().stream()
+                                .map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
                 .toString();
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,13 +30,19 @@ public class LlvmIrProvider implements SSAProvider {
         System.loadLibrary("theta-llvm");
     }
 
-    private final Map<Tuple2<String, String>, Integer> bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
+    private final Map<Tuple2<String, String>, Integer>
+            bbNamefuncIndexLut; // key: BasicBlock name, value: index of function in module
 
     public LlvmIrProvider(String irFilename) {
         this(irFilename, true, true, true, true);
     }
 
-    public LlvmIrProvider(String irFilename, Boolean inlining, Boolean cleanup, Boolean optimization, Boolean debugPrintIr) {
+    public LlvmIrProvider(
+            String irFilename,
+            Boolean inlining,
+            Boolean cleanup,
+            Boolean optimization,
+            Boolean debugPrintIr) {
         if (!inlining) {
             JniDisableInlining();
         }
@@ -65,7 +69,6 @@ public class LlvmIrProvider implements SSAProvider {
                 bbNamefuncIndexLut.put(Tuple2.of(functionName, JniGetBlockName(f, b)), f);
             }
         }
-
     }
 
     private native void JniParseIr(String irFilename);
@@ -91,14 +94,15 @@ public class LlvmIrProvider implements SSAProvider {
     public Collection<Tuple3<String, String, String>> getGlobalVariables() {
         int numOfGlobalVar = JniGetGlobalVariablesNum();
         Tuple3<String, String, String> globalVar;
-        ArrayList<Tuple3<String, String, String>> globalVarList = new ArrayList<Tuple3<String, String, String>>();
+        ArrayList<Tuple3<String, String, String>> globalVarList =
+                new ArrayList<Tuple3<String, String, String>>();
 
         for (int i = 0; i < numOfGlobalVar; i++) {
-            globalVar = Tuple3.of(
-                    JniGetGlobalVariableName(i),
-                    JniGetGlobalVariableType(i),
-                    JniGetGlobalVariableValue(i)
-            );
+            globalVar =
+                    Tuple3.of(
+                            JniGetGlobalVariableName(i),
+                            JniGetGlobalVariableType(i),
+                            JniGetGlobalVariableValue(i));
             globalVarList.add(globalVar);
         }
         return globalVarList;
@@ -117,13 +121,16 @@ public class LlvmIrProvider implements SSAProvider {
     private native String JniGetParameterName(int funcIndex, int paramIndex);
 
     @Override
-    public Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> getFunctions() {
+    public Collection<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>>
+            getFunctions() {
         int numOfFunctions = JniGetFunctionsNum();
-        ArrayList<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions = new ArrayList<>();
+        ArrayList<Tuple3<String, Optional<String>, List<Tuple2<String, String>>>> functions =
+                new ArrayList<>();
 
         for (int f = 0; f < numOfFunctions; f++) {
             String functionName = JniGetFunctionName(f);
-            String retType = JniGetFunctionRetType(f); // TODO make this really optional? (->when void)
+            String retType =
+                    JniGetFunctionRetType(f); // TODO make this really optional? (->when void)
             int numOfParams = JniGetNumOfFunctionParameters(f);
 
             ArrayList<Tuple2<String, String>> parameters = new ArrayList<>();
@@ -170,19 +177,34 @@ public class LlvmIrProvider implements SSAProvider {
 
     private native String JniGetInstructionRetName(int functionIndex, int basicBlockIndex, int i);
 
-    private native int JniGetInstructionNumOfOperands(int functionIndex, int basicBlockIndex, int i);
+    private native int JniGetInstructionNumOfOperands(
+            int functionIndex, int basicBlockIndex, int i);
 
-    private native String JniGetInstructionOperandVarType(int functionIndex, int basicBlockIndex, int i, int o);
+    private native String JniGetInstructionOperandVarType(
+            int functionIndex, int basicBlockIndex, int i, int o);
 
-    private native String JniGetInstructionOperandVarName(int functionIndex, int basicBlockIndex, int i, int o);
+    private native String JniGetInstructionOperandVarName(
+            int functionIndex, int basicBlockIndex, int i, int o);
 
     @Override
-    public List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String funcName, String blockName) {
+    public List<
+                    Tuple4<
+                            String,
+                            Optional<Tuple2<String, String>>,
+                            List<Tuple2<Optional<String>, String>>,
+                            Integer>>
+            getInstructions(String funcName, String blockName) {
         int functionIndex = bbNamefuncIndexLut.get(Tuple2.of(funcName, blockName));
         int basicBlockIndex = JniGetBlockIndex(functionIndex, blockName);
         int numOfInstructions = JniGetNumOfInstructions(functionIndex, basicBlockIndex);
 
-        ArrayList<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> instructions = new ArrayList<>();
+        ArrayList<
+                        Tuple4<
+                                String,
+                                Optional<Tuple2<String, String>>,
+                                List<Tuple2<Optional<String>, String>>,
+                                Integer>>
+                instructions = new ArrayList<>();
         for (int i = 0; i < numOfInstructions; i++) {
             int lineNumber = JniGetInstructionLineNumber(functionIndex, basicBlockIndex, i);
             String opcode = JniGetInstructionOpcode(functionIndex, basicBlockIndex, i);
@@ -191,8 +213,10 @@ public class LlvmIrProvider implements SSAProvider {
             int numOfOperands = JniGetInstructionNumOfOperands(functionIndex, basicBlockIndex, i);
             ArrayList<Tuple2<Optional<String>, String>> instructionOperands = new ArrayList<>();
             for (int o = 0; o < numOfOperands; o++) {
-                String varType = JniGetInstructionOperandVarType(functionIndex, basicBlockIndex, i, o);
-                String varName = JniGetInstructionOperandVarName(functionIndex, basicBlockIndex, i, o);
+                String varType =
+                        JniGetInstructionOperandVarType(functionIndex, basicBlockIndex, i, o);
+                String varName =
+                        JniGetInstructionOperandVarName(functionIndex, basicBlockIndex, i, o);
                 if (varType.equals("constant")) {
                     instructionOperands.add(Tuple2.of(Optional.empty(), varName));
                 } else {
@@ -201,9 +225,15 @@ public class LlvmIrProvider implements SSAProvider {
             }
 
             if (retType.equals("")) {
-                instructions.add(Tuple4.of(opcode, Optional.empty(), instructionOperands, lineNumber));
+                instructions.add(
+                        Tuple4.of(opcode, Optional.empty(), instructionOperands, lineNumber));
             } else {
-                instructions.add(Tuple4.of(opcode, Optional.of(Tuple2.of(retType, retVar)), instructionOperands, lineNumber));
+                instructions.add(
+                        Tuple4.of(
+                                opcode,
+                                Optional.of(Tuple2.of(retType, retVar)),
+                                instructionOperands,
+                                lineNumber));
             }
         }
 
@@ -223,5 +253,4 @@ public class LlvmIrProvider implements SSAProvider {
     public boolean shouldUseBitwiseArithmetics() {
         return JniGetBitwiseArithmeticAnalysisResult();
     }
-
 }
