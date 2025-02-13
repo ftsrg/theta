@@ -29,9 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -204,8 +202,7 @@ public class StsCli {
                 final SafetyChecker<?, ?, ?> checker =
                         buildMddChecker(sts, Z3LegacySolverFactory.getInstance());
                 status = checker.check(null);
-            }
-            else {
+            } else {
                 throw new UnsupportedOperationException(
                         "Algorithm " + algorithm + " not supported");
             }
@@ -329,8 +326,8 @@ public class StsCli {
         return checker;
     }
 
-    private SafetyChecker<?, ?, ?> buildMddChecker(
-            final STS sts, final SolverFactory solverFactory) throws Exception {
+    private SafetyChecker<?, ?, ?> buildMddChecker(final STS sts, final SolverFactory solverFactory)
+            throws Exception {
         try (var solverPool = new SolverPool(solverFactory)) {
             return MddChecker.<ExprAction>create(
                     sts.getInit(),
@@ -352,18 +349,15 @@ public class StsCli {
                     logger,
                     MddChecker.IterationStrategy.GSAT);
         }
-
     }
 
     private void printResult(
-            final SafetyResult<?, ? extends Cex> status,
-            final STS sts,
-            final long totalTimeMs) {
+            final SafetyResult<?, ? extends Cex> status, final STS sts, final long totalTimeMs) {
         final Statistics stats = status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
-            if(stats instanceof CegarStatistics) {
+            if (stats instanceof CegarStatistics) {
                 writer.cell(((CegarStatistics) stats).getAlgorithmTimeMs());
                 writer.cell(((CegarStatistics) stats).getAbstractorTimeMs());
                 writer.cell(((CegarStatistics) stats).getRefinerTimeMs());
