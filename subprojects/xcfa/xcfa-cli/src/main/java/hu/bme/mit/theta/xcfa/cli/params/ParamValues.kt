@@ -60,6 +60,7 @@ enum class InputType {
   DSL,
   CHC,
   LITMUS,
+  CFA,
 }
 
 enum class Backend {
