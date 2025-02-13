@@ -19,13 +19,20 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.CliUtils;
@@ -37,9 +44,14 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
@@ -56,6 +68,7 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.*;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -70,7 +83,8 @@ public class StsCli {
         CEGAR,
         BMC,
         KINDUCTION,
-        IMC
+        IMC,
+        MDD
     }
 
     @Parameter(
@@ -176,7 +190,7 @@ public class StsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
 
-            SafetyResult<?, ? extends Trace<?, ?>> status = null;
+            SafetyResult<?, ? extends Cex> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
@@ -186,7 +200,12 @@ public class StsCli {
                 final BoundedChecker<?, ?> checker =
                         buildBoundedChecker(sts, Z3LegacySolverFactory.getInstance());
                 status = checker.check(null);
-            } else {
+            } else if (algorithm == Algorithm.MDD) {
+                final SafetyChecker<?, ?, ?> checker =
+                        buildMddChecker(sts, Z3LegacySolverFactory.getInstance());
+                status = checker.check(null);
+            }
+            else {
                 throw new UnsupportedOperationException(
                         "Algorithm " + algorithm + " not supported");
             }
@@ -310,19 +329,51 @@ public class StsCli {
         return checker;
     }
 
+    private SafetyChecker<?, ?, ?> buildMddChecker(
+            final STS sts, final SolverFactory solverFactory) throws Exception {
+        try (var solverPool = new SolverPool(solverFactory)) {
+            return MddChecker.<ExprAction>create(
+                    sts.getInit(),
+                    VarIndexingFactory.indexing(0),
+                    new ExprAction() {
+                        @Override
+                        public Expr<BoolType> toExpr() {
+                            return sts.getTrans();
+                        }
+
+                        @Override
+                        public VarIndexing nextIndexing() {
+                            return VarIndexingFactory.indexing(1);
+                        }
+                    },
+                    sts.getProp(),
+                    List.copyOf(sts.getVars()),
+                    solverPool,
+                    logger,
+                    MddChecker.IterationStrategy.GSAT);
+        }
+
+    }
+
     private void printResult(
-            final SafetyResult<?, ? extends Trace<?, ?>> status,
+            final SafetyResult<?, ? extends Cex> status,
             final STS sts,
             final long totalTimeMs) {
-        final CegarStatistics stats =
-                (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+        final Statistics stats = status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
-            writer.cell(stats.getAlgorithmTimeMs());
-            writer.cell(stats.getAbstractorTimeMs());
-            writer.cell(stats.getRefinerTimeMs());
-            writer.cell(stats.getIterations());
+            if(stats instanceof CegarStatistics) {
+                writer.cell(((CegarStatistics) stats).getAlgorithmTimeMs());
+                writer.cell(((CegarStatistics) stats).getAbstractorTimeMs());
+                writer.cell(((CegarStatistics) stats).getRefinerTimeMs());
+                writer.cell(((CegarStatistics) stats).getIterations());
+            } else {
+                writer.cell("");
+                writer.cell("");
+                writer.cell("");
+                writer.cell("");
+            }
             if (status.getProof() instanceof ARG<?, ?> arg) {
                 writer.cell(arg.size());
                 writer.cell(arg.getDepth());
@@ -364,7 +415,7 @@ public class StsCli {
         }
     }
 
-    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?, ?>> status)
+    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Cex> status)
             throws FileNotFoundException {
         @SuppressWarnings("unchecked")
         final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
