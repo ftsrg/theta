@@ -31,12 +31,13 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
 fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
-    var saved = Decls.Var("saved", BoolType.getInstance());
-
+    val saved = Decls.Var("saved", BoolType.getInstance());
     val saveList = ArrayList<Expr<BoolType>>()
     val skipList = ArrayList<Expr<BoolType>>()
     val saveMap: Map<VarDecl<*>, VarDecl<*>> = HashMap()
     val indx = VarIndexingFactory.indexing(1)
+
+    // New transition expr
     for ((key, value) in saveMap.entries) {
         saveList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(value.ref, indx), key.ref))
     }
@@ -44,11 +45,6 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
         skipList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(varDecl.ref, indx), varDecl.ref))
     }
 
-    /*
-        v1,v2,v3,... -> T: v1'==v1+1
-        ____________ AND
-        _saved_v1, _saved_v2, ... -> skip or save
-         */
     skipList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(saved.ref, indx), saved.ref))
     saveList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(saved.ref, indx), BoolExprs.True()))
     val skipOrSave = SmartBoolExprs.Or(And(skipList), And(saveList))
@@ -57,13 +53,14 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     )
     newTransExpr.add(skipOrSave)
 
+    // New prop expr
     var prop: Expr<BoolType?>? = saved.ref
-
     for ((key, value) in saveMap) {
         val exp = AbstractExprs.Eq(value.ref, key.ref)
         prop = And(exp, prop)
     }
 
+    // New offset
     var newIndexing: VarIndexing = transOffsetIndex
     for (varDecl in saveMap.values) {
         newIndexing = newIndexing.inc(varDecl, 1)
