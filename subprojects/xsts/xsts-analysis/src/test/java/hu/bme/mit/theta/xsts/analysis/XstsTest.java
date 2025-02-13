@@ -196,10 +196,10 @@ public class XstsTest {
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED
                     },
                     {
-                            "src/test/resources/model/literals_fullname.xsts",
-                            "src/test/resources/property/literals.prop",
-                            false,
-                            XstsConfigBuilder.Domain.PRED_CART
+                        "src/test/resources/model/literals_fullname.xsts",
+                        "src/test/resources/property/literals.prop",
+                        false,
+                        XstsConfigBuilder.Domain.PRED_CART
                     },
                     {
                         "src/test/resources/model/literals.xsts",
