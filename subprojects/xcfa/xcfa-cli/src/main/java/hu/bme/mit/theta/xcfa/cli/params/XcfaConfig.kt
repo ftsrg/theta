@@ -139,6 +139,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.JSON -> null
         InputType.DSL -> null
         InputType.LITMUS -> null
+        InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
       }
   }

@@ -108,6 +108,7 @@ constructor(
 
       if (isBmcEnabled) {
         bmc()?.let {
+          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
       }
@@ -117,6 +118,7 @@ constructor(
           error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
         }
         kind()?.let {
+          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
         kindLastIterLookup = iteration
@@ -124,6 +126,7 @@ constructor(
 
       if (imcEnabled(iteration)) {
         itp()?.let {
+          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
       }
