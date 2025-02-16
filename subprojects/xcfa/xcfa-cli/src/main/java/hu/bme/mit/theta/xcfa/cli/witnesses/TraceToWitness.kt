@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.witnesses
 import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.core.model.Valuation
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
+import java.util.function.Predicate
 
 enum class Verbosity {
   NECESSARY,
@@ -49,7 +51,10 @@ fun traceToWitness(
   val newStates = ArrayList<WitnessNode>()
   val newActions = ArrayList<WitnessEdge>()
 
-  val isError = getXcfaErrorPredicate(property)
+  val isError =
+    if (property == ErrorDetection.TERMINATION) {
+      Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+    } else getXcfaErrorPredicate(property)
 
   var lastNode =
     WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
