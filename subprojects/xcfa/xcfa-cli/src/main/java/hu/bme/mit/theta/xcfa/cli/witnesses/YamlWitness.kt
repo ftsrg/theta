@@ -253,13 +253,31 @@ data class WaypointContent(
   val action: Action,
 )
 
+/**
+ * A `cycle_head` expresses the recurrent set of the non-termination.
+ * @param location The location must point to the first character of an arbitrary
+ * statement or a declaration that is within a compound statement.
+ * If column is not given, it is assumed to match the leftmost suitable position.
+ * @param value The key `value` holds the actual string expressing the recurrent set
+ * (e.g., "s <= i*255 && 0 <= i && i <= 255 && n <= 255").
+ * The recurrent set value must be a side-effect-free C expression
+ * over variables in the scope of the statement or declaration inside a compound
+ * statement to which the location points.
+ * @param format The format specifies the format of the invariant string (e.g., `c_expression`).
+ * @param invariant The key `invariant` is a boolean value that is true if the recurrent set is an invariant.
+ * It is false if the recurrent set is not an invariant.
+ * @param inductive The key `inductive` is a boolean value that is true if the recurrent set is a
+ * 1-inductive invariant.
+ * It is false if the recurrent set is not an invariant or if it is an invariant
+ * which is not 1-inductive.
+ */
 @Serializable
 data class CycleHeadContent(
   val location: Location,
   val value: String,
   val format: String,
-  val invariant: Boolean = false,
-  val inductive: Boolean = false,
+  val invariant: Boolean?,
+  val inductive: Boolean?,
 )
 
 @Serializable
