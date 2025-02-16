@@ -23,8 +23,12 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
@@ -33,6 +37,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesses.*
 import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
 import java.io.File
 import java.util.*
@@ -149,10 +154,9 @@ class YmlWitnessWriter {
                             concrTrace.actions[cycleHeadFirst - 1]?.edge?.metadata,
                           )
                           ?: error("Cycle head's metadata is missing."),
-                      value = cycleHead.sGlobal.toExpr().toC(parseContext),
+                      value =
+                        cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
                       format = "c_expression",
-                      invariant = false,
-                      inductive = false,
                     ),
                     (0..<lassoTrace.length()).flatMap {
                       listOfNotNull(
@@ -199,6 +203,14 @@ class YmlWitnessWriter {
       witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     }
   }
+}
+
+private fun Expr<BoolType>.replaceVars(parseContext: ParseContext): Expr<BoolType> {
+  val vars =
+    ExprUtils.getVars(this).associateWith {
+      Var(parseContext.metadata.getMetadataValue(it.name, "cName").get() as String, it.type)
+    }
+  return this.changeVars(vars)
 }
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {

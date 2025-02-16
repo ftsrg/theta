@@ -274,8 +274,8 @@ data class CycleHeadContent(
   val location: Location,
   val value: String,
   val format: String,
-  val invariant: Boolean?,
-  val inductive: Boolean?,
+  val invariant: Boolean? = null,
+  val inductive: Boolean? = null,
 )
 
 @Serializable
