@@ -168,7 +168,7 @@ data class ContentItem(
     segments: List<WaypointContent>,
   ) : this(
     cycle =
-      listOf(CycleItem(CycleHead(cycleHeadContent))) +
+      listOf(CycleItem(cycleHeadContent)) +
         segments.map { CycleItem(segment = listOf(Waypoint(it))) }
   )
 }
@@ -177,11 +177,10 @@ typealias Segment = List<Waypoint>
 
 typealias Cycle = List<CycleItem>
 
-@Serializable data class CycleItem(val cycleHead: CycleHead? = null, val segment: Segment? = null)
+@Serializable
+data class CycleItem(val cycleHead: CycleHeadContent? = null, val segment: Segment? = null)
 
 @Serializable data class Waypoint(val waypoint: WaypointContent)
-
-@Serializable data class CycleHead(val chContent: CycleHeadContent)
 
 /**
  * The `waypoint` elements are the basic building block of violation witnesses. They have the form

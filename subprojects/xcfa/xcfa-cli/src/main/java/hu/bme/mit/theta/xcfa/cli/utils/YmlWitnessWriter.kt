@@ -81,23 +81,110 @@ class YmlWitnessWriter {
           parseContext,
         )
 
-      val witnessTrace =
-        traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
-
       val witness =
-        YamlWitness(
-          entryType = EntryType.VIOLATION,
-          metadata = metadata,
-          content =
-            (0..(witnessTrace.length())).flatMap {
-              listOfNotNull(
-                witnessTrace.states
-                  .get(it)
-                  ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
-                witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
-              )
-            },
-        )
+        if (property == ErrorDetection.TERMINATION) {
+          // last state is cycle_head, find its earliest occurrence
+          // stem is everything beforehand
+          // cycle's segments are everything in-between
+
+          val cycleHead = concrTrace.states.last()
+          val cycleHeadFirst =
+            concrTrace.states.indexOfFirst {
+              it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+                it.sGlobal == cycleHead.sGlobal
+            }
+          if (cycleHeadFirst == -1) {
+            error("Lasso not found")
+          }
+          val stem =
+            Trace.of(
+              concrTrace.states.subList(0, cycleHeadFirst),
+              concrTrace.actions.subList(0, cycleHeadFirst - 1),
+            )
+          val lasso =
+            Trace.of(
+              concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
+              concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
+            )
+
+          val backEdge =
+            Trace.of(
+              concrTrace.states.subList(concrTrace.states.size - 2, concrTrace.states.size),
+              concrTrace.actions.subList(concrTrace.actions.size - 1, concrTrace.actions.size),
+            )
+
+          val stemTrace =
+            traceToWitness(trace = stem, parseContext = parseContext, property = property)
+          val lassoTrace =
+            traceToWitness(trace = lasso, parseContext = parseContext, property = property)
+          val backEdgeTrace =
+            traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
+
+          YamlWitness(
+            entryType = EntryType.VIOLATION,
+            metadata = metadata,
+            content =
+              (0..(stemTrace.length()))
+                .flatMap {
+                  listOfNotNull(
+                    stemTrace.states
+                      .get(it)
+                      ?.toSegment(stemTrace.actions.getOrNull(it - 1), inputFile),
+                    stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
+                  )
+                }
+                .map { ContentItem(it) } +
+                run {
+                  val loc = cycleHead.processes.values.first().locs.first
+                  ContentItem(
+                    CycleHeadContent(
+                      location =
+                        getLocation(inputFile, loc.metadata)
+                          ?: getLocation(inputFile, backEdgeTrace.actions.last())
+                          ?: getLocation(inputFile, backEdgeTrace.actions.last()?.edge?.metadata)
+                          ?: getLocation(inputFile, lassoTrace.actions.last())
+                          ?: getLocation(inputFile, lassoTrace.actions.last()?.edge?.metadata)
+                          ?: getLocation(
+                            inputFile,
+                            concrTrace.actions[cycleHeadFirst - 1]?.edge?.metadata,
+                          )
+                          ?: error("Cycle head's metadata is missing."),
+                      value = cycleHead.sGlobal.toExpr().toC(parseContext),
+                      format = "c_expression",
+                      invariant = false,
+                      inductive = false,
+                    ),
+                    (0..<lassoTrace.length()).flatMap {
+                      listOfNotNull(
+                        lassoTrace.states
+                          .get(it)
+                          ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile),
+                        lassoTrace.actions.getOrNull(it)?.toSegment(inputFile),
+                      )
+                    },
+                  )
+                },
+          )
+        } else {
+          val witnessTrace =
+            traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+
+          YamlWitness(
+            entryType = EntryType.VIOLATION,
+            metadata = metadata,
+            content =
+              (0..(witnessTrace.length()))
+                .flatMap {
+                  listOfNotNull(
+                    witnessTrace.states
+                      .get(it)
+                      ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
+                    witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+                  )
+                }
+                .map { ContentItem(it) },
+          )
+        }
 
       witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     } else if (safetyResult.isSafe) {
@@ -120,7 +207,7 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
       ?: (metadata as? CMetaData)?.lineNumberStop
       ?: return null
   val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
-  return Location(fileName = inputFile.name, line = line, column = column)
+  return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -134,7 +221,7 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   return endLoc
 }
 
-private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): ContentItem? {
+private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): WaypointContent? {
   if (violation) {
     val loc = xcfaLocations.values.first().first()
     val locLoc =
@@ -142,15 +229,13 @@ private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): C
         ?: getLocation(inputFile, witnessEdge)
         ?: getLocation(inputFile, witnessEdge?.edge?.metadata)
         ?: return null
-    return ContentItem(
-      WaypointContent(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW)
-    )
+    return WaypointContent(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW)
   } else {
     return null
   }
 }
 
-private fun WitnessEdge.toSegment(inputFile: File): ContentItem? {
+private fun WitnessEdge.toSegment(inputFile: File): WaypointContent? {
   val endLoc =
     Location(
       fileName = inputFile.name,
@@ -180,8 +265,11 @@ private fun WitnessEdge.toSegment(inputFile: File): ContentItem? {
     } else if (returnFromFunction != null) {
       Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
     } else return null
-  return ContentItem(
-    WaypointContent(type = type, constraint = constraint, location = loc, action = Action.FOLLOW)
+  return WaypointContent(
+    type = type,
+    constraint = constraint,
+    location = loc,
+    action = Action.FOLLOW,
   )
 }
 
