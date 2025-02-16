@@ -156,13 +156,32 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null) {
+data class ContentItem(
+  val segment: Segment? = null,
+  val invariant: Invariant? = null,
+  val cycle: Cycle? = null,
+) {
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
+
+  constructor(
+    cycleHeadContent: CycleHeadContent,
+    segments: List<WaypointContent>,
+  ) : this(
+    cycle =
+      listOf(CycleItem(CycleHead(cycleHeadContent))) +
+        segments.map { CycleItem(segment = listOf(Waypoint(it))) }
+  )
 }
 
 typealias Segment = List<Waypoint>
 
+typealias Cycle = List<CycleItem>
+
+@Serializable data class CycleItem(val cycleHead: CycleHead? = null, val segment: Segment? = null)
+
 @Serializable data class Waypoint(val waypoint: WaypointContent)
+
+@Serializable data class CycleHead(val chContent: CycleHeadContent)
 
 /**
  * The `waypoint` elements are the basic building block of violation witnesses. They have the form
@@ -232,6 +251,15 @@ data class WaypointContent(
   val constraint: Constraint? = null,
   val location: Location,
   val action: Action,
+)
+
+@Serializable
+data class CycleHeadContent(
+  val location: Location,
+  val value: String,
+  val format: String,
+  val invariant: Boolean = false,
+  val inductive: Boolean = false,
 )
 
 @Serializable
