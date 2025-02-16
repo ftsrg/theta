@@ -81,5 +81,10 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     transExpr = And(newTransExpr),
     propExpr = Not(And(prop, propExpr)),
     transOffsetIndex = newIndexing,
+    valToState = valToState,
+    biValToAction = biValToAction,
+    ctrlVars = ctrlVars,
+    vars = this.vars,
+    initOffsetIndex = initOffsetIndex,
   )
 }
