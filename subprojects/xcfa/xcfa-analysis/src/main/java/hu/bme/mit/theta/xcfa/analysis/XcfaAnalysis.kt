@@ -207,6 +207,7 @@ enum class ErrorDetection {
   MEMSAFETY,
   MEMCLEANUP,
   NO_ERROR,
+  TERMINATION,
 }
 
 fun getXcfaErrorPredicate(
@@ -250,6 +251,8 @@ fun getXcfaErrorPredicate(
 
     ErrorDetection.NO_ERROR,
     ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+
+    ErrorDetection.TERMINATION -> error("Termination only supports BOUNDED backend right now.")
   }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =

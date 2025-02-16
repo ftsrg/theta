@@ -77,7 +77,7 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
   Preconditions.checkArgument(
     proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
   )
-  Preconditions.checkArgument(proc.errorLoc.isPresent)
+  //  Preconditions.checkArgument(proc.errorLoc.isPresent)
 
   val locMap = mutableMapOf<XcfaLocation, Int>()
   for ((i, x) in proc.locs.withIndex()) {
@@ -138,7 +138,8 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
     initExpr =
       And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
     transExpr = And(transUnfold.exprs),
-    propExpr = Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)),
+    propExpr =
+      if (proc.errorLoc.isPresent) Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)) else True(),
     transOffsetIndex = transUnfold.indexing,
     vars =
       StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +

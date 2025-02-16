@@ -20,11 +20,13 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
+import hu.bme.mit.theta.analysis.l2s.createMonolithicL2S
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
@@ -46,9 +48,14 @@ fun getBoundedChecker(
   val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
   val monolithicExpr =
-    xcfa.toMonolithicExpr(parseContext).let {
-      if (boundedConfig.reversed) it.createReversed() else it
-    }
+    xcfa
+      .toMonolithicExpr(parseContext)
+      .let { if (boundedConfig.reversed) it.createReversed() else it }
+      .let {
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          it.copy(propExpr = True()).createMonolithicL2S()
+        else it
+      }
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     BoundedChecker(

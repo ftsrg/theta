@@ -43,6 +43,10 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection 
         ErrorDetection.MEMCLEANUP
       }
 
+      propertyFile.name.endsWith("termination.prp") -> {
+        ErrorDetection.TERMINATION
+      }
+
       else -> {
         logger.write(
           Logger.Level.INFO,
