@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.l2s
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.common.container.Containers
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -28,12 +29,23 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import java.util.*
 
 fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   val saved = Decls.Var("saved", BoolType.getInstance())
+  val saveMap: MutableMap<VarDecl<*>, VarDecl<*>> = HashMap()
+  val tmpVars: Set<VarDecl<*>> = Containers.createSet()
+  ExprUtils.collectVars(initExpr, tmpVars)
+  ExprUtils.collectVars(transExpr, tmpVars)
+  ExprUtils.collectVars(propExpr, tmpVars)
+  val vars = Collections.unmodifiableCollection(tmpVars)
+  for (varDecl in vars) {
+    val newVar: VarDecl<*> = Decls.Var("_saved_" + varDecl.name, varDecl.type)
+    saveMap[varDecl] = newVar
+  }
+
   val saveList = ArrayList<Expr<BoolType>>()
   val skipList = ArrayList<Expr<BoolType>>()
-  val saveMap: Map<VarDecl<*>, VarDecl<*>> = HashMap()
   val indx = VarIndexingFactory.indexing(1)
 
   // New transition expr
