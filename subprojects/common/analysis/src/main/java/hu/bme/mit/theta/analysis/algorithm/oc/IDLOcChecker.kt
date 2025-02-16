@@ -80,9 +80,10 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
 
     // WS
     wss.forEach { (_, vWss) ->
-      vWss.forEach { ws1 ->
+      val wsList = vWss.toList()
+      for ((index, ws1) in wsList.withIndex()) {
         addLt(ws1.declRef, ws1.from, ws1.to)
-        vWss.forEach { ws2 ->
+        for (ws2 in wsList.subList(index + 1, wsList.size)) {
           if (ws1.from == ws2.to && ws1.to == ws2.from) {
             addWsCond(solver, ws1, ws2)
           }
@@ -95,15 +96,21 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
       val writes = events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }
       writes?.forEach { w1 ->
         writes.forEach { w2 ->
-          vRfs.forEach { rf ->
-            if (w1 == rf.from) {
-              val wsExpr =
-                if (w1.clkId == w2.clkId) {
-                  Lt(w1.clkAtomicVar.ref, w2.clkAtomicVar.ref)
-                } else {
-                  Lt(w1.clkId.clkGlobalVar.ref, w2.clkId.clkGlobalVar.ref)
-                }
-              addLt(And(wsExpr, rf.declRef), rf.to, w2)
+          if (w1 != w2) {
+            vRfs.forEach { rf ->
+              if (w1 == rf.from) {
+                val wsExpr =
+                  And(
+                    w1.guardExpr,
+                    w2.guardExpr,
+                    if (w1.clkId == w2.clkId) {
+                      Lt(w1.clkAtomicVar.ref, w2.clkAtomicVar.ref)
+                    } else {
+                      Lt(w1.clkId.clkGlobalVar.ref, w2.clkId.clkGlobalVar.ref)
+                    },
+                  )
+                addLt(And(wsExpr, rf.declRef), rf.to, w2)
+              }
             }
           }
         }
