@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.util.*
 
 fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
-  val saved = Decls.Var("saved", BoolType.getInstance())
+  val saved = Decls.Var("__saved_", BoolType.getInstance())
   val saveMap: MutableMap<VarDecl<*>, VarDecl<*>> = HashMap()
   val tmpVars: Set<VarDecl<*>> = Containers.createSet()
   ExprUtils.collectVars(initExpr, tmpVars)
@@ -40,7 +40,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   ExprUtils.collectVars(propExpr, tmpVars)
   val vars = Collections.unmodifiableCollection(tmpVars)
   for (varDecl in vars) {
-    val newVar: VarDecl<*> = Decls.Var("_saved_" + varDecl.name, varDecl.type)
+    val newVar: VarDecl<*> = Decls.Var("__saved_" + varDecl.name, varDecl.type)
     saveMap[varDecl] = newVar
   }
 
