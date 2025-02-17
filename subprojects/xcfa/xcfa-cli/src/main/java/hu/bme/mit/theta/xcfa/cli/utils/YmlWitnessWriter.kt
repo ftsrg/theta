@@ -139,35 +139,39 @@ class YmlWitnessWriter {
                   )
                 }
                 .map { ContentItem(it) } +
-                run {
-                  val loc = cycleHead.processes.values.first().locs.first
-                  ContentItem(
-                    CycleHeadContent(
-                      location =
-                        getLocation(inputFile, loc.metadata)
-                          ?: getLocation(inputFile, backEdgeTrace.actions.last())
-                          ?: getLocation(inputFile, backEdgeTrace.actions.last()?.edge?.metadata)
-                          ?: getLocation(inputFile, lassoTrace.actions.last())
-                          ?: getLocation(inputFile, lassoTrace.actions.last()?.edge?.metadata)
-                          ?: getLocation(
-                            inputFile,
-                            concrTrace.actions[cycleHeadFirst - 1]?.edge?.metadata,
-                          )
-                          ?: error("Cycle head's metadata is missing."),
-                      value =
-                        cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
-                      format = "c_expression",
-                    ),
-                    (0..<lassoTrace.length()).flatMap {
-                      listOfNotNull(
-                        lassoTrace.states
-                          .get(it)
-                          ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile),
-                        lassoTrace.actions.getOrNull(it)?.toSegment(inputFile),
-                      )
-                    },
+                ContentItem(
+                  WaypointContent(
+                    type = WaypointType.RECURRENCE_CONDITION,
+                    location =
+                      getLocation(inputFile, cycleHead.processes.values.first().locs.first.metadata)
+                        ?: getLocation(inputFile, backEdgeTrace.actions.last())
+                        ?: getLocation(inputFile, backEdgeTrace.actions.last()?.edge?.metadata)
+                        ?: getLocation(inputFile, lassoTrace.actions.last())
+                        ?: getLocation(inputFile, lassoTrace.actions.last()?.edge?.metadata)
+                        ?: getLocation(
+                          inputFile,
+                          concrTrace.actions[cycleHeadFirst - 1]?.edge?.metadata,
+                        )
+                        ?: error("Cycle head's metadata is missing."),
+                    constraint =
+                      Constraint(
+                        value =
+                          cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
+                        format = Format.C_EXPRESSION,
+                      ),
+                    action = Action.CYCLE,
                   )
-                },
+                ) +
+                (0..<lassoTrace.length())
+                  .flatMap {
+                    listOfNotNull(
+                      lassoTrace.states
+                        .get(it)
+                        ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile, Action.CYCLE),
+                      lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
+                    )
+                  }
+                  .map { ContentItem(it) },
           )
         } else {
           val witnessTrace =
@@ -233,7 +237,11 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   return endLoc
 }
 
-private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): WaypointContent? {
+private fun WitnessNode.toSegment(
+  witnessEdge: WitnessEdge?,
+  inputFile: File,
+  action: Action = Action.FOLLOW,
+): WaypointContent? {
   if (violation) {
     val loc = xcfaLocations.values.first().first()
     val locLoc =
@@ -241,13 +249,16 @@ private fun WitnessNode.toSegment(witnessEdge: WitnessEdge?, inputFile: File): W
         ?: getLocation(inputFile, witnessEdge)
         ?: getLocation(inputFile, witnessEdge?.edge?.metadata)
         ?: return null
-    return WaypointContent(type = WaypointType.TARGET, location = locLoc, action = Action.FOLLOW)
+    return WaypointContent(type = WaypointType.TARGET, location = locLoc, action = action)
   } else {
     return null
   }
 }
 
-private fun WitnessEdge.toSegment(inputFile: File): WaypointContent? {
+private fun WitnessEdge.toSegment(
+  inputFile: File,
+  action: Action = Action.FOLLOW,
+): WaypointContent? {
   val endLoc =
     Location(
       fileName = inputFile.name,
@@ -277,12 +288,7 @@ private fun WitnessEdge.toSegment(inputFile: File): WaypointContent? {
     } else if (returnFromFunction != null) {
       Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
     } else return null
-  return WaypointContent(
-    type = type,
-    constraint = constraint,
-    location = loc,
-    action = Action.FOLLOW,
-  )
+  return WaypointContent(type = type, constraint = constraint, location = loc, action = action)
 }
 
 private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<ContentItem> {

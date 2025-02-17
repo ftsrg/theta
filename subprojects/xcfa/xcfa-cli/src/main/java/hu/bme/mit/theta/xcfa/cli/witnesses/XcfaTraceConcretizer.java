@@ -56,7 +56,7 @@ public class XcfaTraceConcretizer {
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
-        sbeStates.add(trace.getState(0).withState(new PtrState<>(ExplState.top())));
+        sbeStates.add(trace.getState(0));
 
         Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         for (int i = 0; i < trace.getActions().size(); ++i) {
@@ -74,7 +74,7 @@ public class XcfaTraceConcretizer {
                             trace.getAction(i).getInCnt());
             sbeActions.add(action);
             nextW = action.nextWriteTriples();
-            sbeStates.add(trace.getState(i + 1).withState(new PtrState<>(ExplState.top())));
+            sbeStates.add(trace.getState(i + 1));
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
         final ExprTraceChecker<ItpRefutation> checker =
