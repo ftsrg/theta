@@ -244,7 +244,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
     @Override
     public void pop(final int n) {
-        expCnt += n;
+        expCnt -= n;
         markers.pop(n);
         for (final Z3ItpMarker marker : markers) {
             marker.pop(n);
