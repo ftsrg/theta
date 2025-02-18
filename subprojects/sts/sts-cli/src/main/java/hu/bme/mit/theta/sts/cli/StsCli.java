@@ -306,7 +306,9 @@ public class StsCli {
             final STS sts, final SolverFactory abstractionSolverFactory) {
         final MonolithicExpr monolithicExpr;
         if (reversed) {
-            monolithicExpr = ReversedMonolithicExprKt.createReversed(StsToMonolithicExprKt.toMonolithicExpr(sts));
+            monolithicExpr =
+                    ReversedMonolithicExprKt.createReversed(
+                            StsToMonolithicExprKt.toMonolithicExpr(sts));
         } else {
             monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
         }
@@ -377,7 +379,9 @@ public class StsCli {
             throws Exception {
         final MonolithicExpr monolithicExpr;
         if (reversed) {
-            monolithicExpr = ReversedMonolithicExprKt.createReversed(StsToMonolithicExprKt.toMonolithicExpr(sts));
+            monolithicExpr =
+                    ReversedMonolithicExprKt.createReversed(
+                            StsToMonolithicExprKt.toMonolithicExpr(sts));
         } else {
             monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
         }
@@ -386,15 +390,13 @@ public class StsCli {
                 true,
                 solverFactory,
                 valuation -> monolithicExpr.getValToState().invoke(valuation),
-                (Valuation v1, Valuation v2) ->
-                        monolithicExpr.getBiValToAction().invoke(v1, v2),
+                (Valuation v1, Valuation v2) -> monolithicExpr.getBiValToAction().invoke(v1, v2),
                 true,
                 true,
                 true,
                 true,
                 true,
                 true);
-
     }
 
     private void printResult(

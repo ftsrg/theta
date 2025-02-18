@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.options.default
@@ -25,18 +24,24 @@ import hu.bme.mit.theta.analysis.l2s.createMonolithicL2S
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithicExpr
 
-abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String = ""):
-    XstsCliBaseCommand(name = name, help = help) {
+abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String = "") :
+  XstsCliBaseCommand(name = name, help = help) {
 
-    protected val reversed: Boolean by option(help = "Reversed state space exploration").boolean().default(false)
-    protected val livenessToSafety: Boolean by option(help = "Use liveness to safety transformation").boolean().default(false)
-    protected val abstracted: Boolean by option(help = "Wrap analysis in CEGAR loop").boolean().default(false)
+  protected val reversed: Boolean by
+    option(help = "Reversed state space exploration").boolean().default(false)
+  protected val livenessToSafety: Boolean by
+    option(help = "Use liveness to safety transformation").boolean().default(false)
+  protected val abstracted: Boolean by
+    option(help = "Wrap analysis in CEGAR loop").boolean().default(false)
 
-    fun createMonolithicExpr(xsts: XSTS): MonolithicExpr {
-        var monolithicExpr = xsts.toMonolithicExpr()
-        if (livenessToSafety) { monolithicExpr = monolithicExpr.createMonolithicL2S() }
-        if (reversed) { monolithicExpr = monolithicExpr.createReversed() }
-        return monolithicExpr
+  fun createMonolithicExpr(xsts: XSTS): MonolithicExpr {
+    var monolithicExpr = xsts.toMonolithicExpr()
+    if (livenessToSafety) {
+      monolithicExpr = monolithicExpr.createMonolithicL2S()
     }
-
+    if (reversed) {
+      monolithicExpr = monolithicExpr.createReversed()
+    }
+    return monolithicExpr
+  }
 }

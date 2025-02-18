@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.IfStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
@@ -49,59 +48,53 @@ fun XSTS.toMonolithicExpr(): MonolithicExpr {
   val monolithicTransition =
     IfStmt.of(
       Not(initialized.ref),
-      SequenceStmt.of(
-        ImmutableList.of(
-          this.init,
-          AssignStmt.of(initialized, True())
-        )
-      ),
+      SequenceStmt.of(ImmutableList.of(this.init, AssignStmt.of(initialized, True()))),
       IfStmt.of(
         lastActionWasEnv.ref,
-        SequenceStmt.of(
-          ImmutableList.of(
-            this.tran,
-            AssignStmt.of(lastActionWasEnv, False())
-          )
-        ),
-        SequenceStmt.of(
-          ImmutableList.of(
-            this.env,
-            AssignStmt.of(lastActionWasEnv, True())
-          )
-        )
-      )
+        SequenceStmt.of(ImmutableList.of(this.tran, AssignStmt.of(lastActionWasEnv, False()))),
+        SequenceStmt.of(ImmutableList.of(this.env, AssignStmt.of(lastActionWasEnv, True()))),
+      ),
     )
-  val monolithicUnfoldResult = StmtUtils.toExpr(monolithicTransition, VarIndexingFactory.indexing(0))
+  val monolithicUnfoldResult =
+    StmtUtils.toExpr(monolithicTransition, VarIndexingFactory.indexing(0))
   val transExpr = And(monolithicUnfoldResult.exprs)
 
-  return MonolithicExpr(initExpr, transExpr, propExpr, monolithicUnfoldResult.indexing, VarIndexingFactory.indexing(0))
+  return MonolithicExpr(
+    initExpr,
+    transExpr,
+    propExpr,
+    monolithicUnfoldResult.indexing,
+    VarIndexingFactory.indexing(0),
+  )
 }
 
 fun XSTS.valToAction(val1: Valuation, val2: Valuation): XstsAction {
   val val1Map = val1.toMap()
-  val lastActionWasEnv1 = (val1Map[val1Map.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
-  val initialized1 = (val1Map[val1Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
+  val lastActionWasEnv1 =
+    (val1Map[val1Map.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
+  val initialized1 =
+    (val1Map[val1Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
 
   val val2Map = val1.toMap()
-  val lastActionWasEnv2 = (val2Map[val2Map.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
-  val initialized2 = (val2Map[val2Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
+  val lastActionWasEnv2 =
+    (val2Map[val2Map.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
+  val initialized2 =
+    (val2Map[val2Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
 
   checkArgument(initialized2)
   checkArgument(lastActionWasEnv1 != lastActionWasEnv2)
 
-  if(!initialized1) return XstsAction.create(this.init)
-  else if(lastActionWasEnv1) return XstsAction.create(this.tran)
+  if (!initialized1) return XstsAction.create(this.init)
+  else if (lastActionWasEnv1) return XstsAction.create(this.tran)
   else return XstsAction.create(this.env)
 }
 
 fun XSTS.valToState(val1: Valuation): XstsState<ExplState> {
   val valMap = val1.toMap()
-  val lastActionWasEnv = (valMap[valMap.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
-  val initialized = (valMap[valMap.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
+  val lastActionWasEnv =
+    (valMap[valMap.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
+  val initialized =
+    (valMap[valMap.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
 
-  return XstsState.of(
-    ExplState.of(val1),
-    lastActionWasEnv,
-    initialized
-  )
+  return XstsState.of(ExplState.of(val1), lastActionWasEnv, initialized)
 }

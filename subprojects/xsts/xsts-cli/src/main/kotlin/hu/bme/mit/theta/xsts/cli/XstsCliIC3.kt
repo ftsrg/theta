@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.options.default
@@ -34,11 +33,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 class XstsCliIC3 :
-  XstsCliMonolithicBaseCommand(
-    name = "IC3",
-    help =
-      "Model checking using the IC3 algorithm.",
-  ) {
+  XstsCliMonolithicBaseCommand(name = "IC3", help = "Model checking using the IC3 algorithm.") {
 
   private val formerFramesOpt: Boolean by option().boolean().default(true)
   private val unSatOpt: Boolean by option().boolean().default(true)
@@ -61,7 +56,7 @@ class XstsCliIC3 :
       doRun()
     } catch (e: Exception) {
       printError(e)
-        exitProcess(1)
+      exitProcess(1)
     }
   }
 
@@ -71,19 +66,20 @@ class XstsCliIC3 :
     val xsts = inputOptions.loadXsts()
     val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
-    val checker = Ic3Checker(
-            monolithicExpr,
-            reversed,
-            solverFactory,
-            xsts::valToState,
-            xsts::valToAction,
-            formerFramesOpt,
-            unSatOpt,
-            notBOpt,
-            propagateOpt,
-            filterOpt,
-            false
-        )
+    val checker =
+      Ic3Checker(
+        monolithicExpr,
+        reversed,
+        solverFactory,
+        xsts::valToState,
+        xsts::valToAction,
+        formerFramesOpt,
+        unSatOpt,
+        notBOpt,
+        propagateOpt,
+        filterOpt,
+        false,
+      )
     val result = checker.check()
     sw.stop()
     printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
