@@ -51,7 +51,10 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverPool;
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
@@ -140,6 +143,11 @@ public class StsCli {
     Boolean abstracted = false;
 
     @Parameter(
+            names = {"--solver"},
+            description = "SMT solver")
+    String solver = "Z3";
+
+    @Parameter(
             names = {"--loglevel"},
             description = "Detailedness of logging")
     Logger.Level logLevel = Level.SUBSTEP;
@@ -201,6 +209,9 @@ public class StsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
 
+            registerSolverManagers();
+            final SolverFactory solverFactory = SolverManager.resolveSolverFactory(solver);
+
             SafetyResult<?, ? extends Cex> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
@@ -209,15 +220,15 @@ public class StsCli {
                     || algorithm == Algorithm.KINDUCTION
                     || algorithm == Algorithm.IMC) {
                 final BoundedChecker<?, ?> checker =
-                        buildBoundedChecker(sts, Z3LegacySolverFactory.getInstance());
+                        buildBoundedChecker(sts, solverFactory);
                 status = checker.check(null);
             } else if (algorithm == Algorithm.MDD) {
                 final SafetyChecker<?, ?, ?> checker =
-                        buildMddChecker(sts, Z3LegacySolverFactory.getInstance());
+                        buildMddChecker(sts, solverFactory);
                 status = checker.check(null);
             } else if (algorithm == Algorithm.IC3) {
                 final SafetyChecker<?, ?, ?> checker =
-                        buildIc3Checker(sts, Z3LegacySolverFactory.getInstance());
+                        buildIc3Checker(sts, solverFactory);
                 status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException(
@@ -232,6 +243,13 @@ public class StsCli {
             printError(ex);
             System.exit(1);
         }
+    }
+
+    private void registerSolverManagers() throws IOException {
+        SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
+        SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, logger));
+        SolverManager.registerSolverManager(JavaSMTSolverManager.create());
     }
 
     private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(
