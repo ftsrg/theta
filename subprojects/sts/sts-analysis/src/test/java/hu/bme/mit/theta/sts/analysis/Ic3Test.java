@@ -97,8 +97,6 @@ public class Ic3Test {
             sts = Utils.singleElementOf(spec.getAllSts());
         }
         final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
-        MonolithicExpr reverseMonolithicExpr =
-                ReversedMonolithicExprKt.createReversed(monolithicExpr);
         var checker =
                 new Ic3Checker<>(
                         monolithicExpr,

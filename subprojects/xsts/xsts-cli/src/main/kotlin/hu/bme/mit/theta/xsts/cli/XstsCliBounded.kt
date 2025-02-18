@@ -40,7 +40,7 @@ import kotlin.system.exitProcess
 typealias S = XstsState<ExplState>
 
 class XstsCliBounded :
-  XstsCliBaseCommand(
+  XstsCliMonolithicBasedCommand(
     name = "BOUNDED",
     help =
       "Bounded model checking algorithms (BMC, IMC, KINDUCTION). Use --variant to select the algorithm (by default BMC is selected).",
@@ -130,10 +130,11 @@ class XstsCliBounded :
     registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
+    val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val checker =
       variant.buildChecker(
-        xsts.toMonolithicExpr(),
+        monolithicExpr,
         solverFactory,
         xsts::valToState,
         xsts::valToAction,

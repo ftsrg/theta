@@ -28,7 +28,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -82,7 +84,8 @@ public class StsCli {
         BMC,
         KINDUCTION,
         IMC,
-        MDD
+        MDD,
+        IC3
     }
 
     @Parameter(
@@ -125,6 +128,16 @@ public class StsCli {
             names = "--prunestrategy",
             description = "Strategy for pruning the ARG after refinement")
     PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+
+    @Parameter(
+            names = {"--reversed"},
+            description = "Reversed state space exploration")
+    Boolean reversed = false;
+
+    @Parameter(
+            names = {"--abstract"},
+            description = "Implicit predicate abstraction")
+    Boolean abstracted = false;
 
     @Parameter(
             names = {"--loglevel"},
@@ -201,6 +214,10 @@ public class StsCli {
             } else if (algorithm == Algorithm.MDD) {
                 final SafetyChecker<?, ?, ?> checker =
                         buildMddChecker(sts, Z3LegacySolverFactory.getInstance());
+                status = checker.check(null);
+            } else if (algorithm == Algorithm.IC3) {
+                final SafetyChecker<?, ?, ?> checker =
+                        buildIc3Checker(sts, Z3LegacySolverFactory.getInstance());
                 status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException(
@@ -287,7 +304,12 @@ public class StsCli {
 
     private BoundedChecker<?, ?> buildBoundedChecker(
             final STS sts, final SolverFactory abstractionSolverFactory) {
-        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        final MonolithicExpr monolithicExpr;
+        if (reversed) {
+            monolithicExpr = ReversedMonolithicExprKt.createReversed(StsToMonolithicExprKt.toMonolithicExpr(sts));
+        } else {
+            monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        }
         final BoundedChecker<?, ?> checker;
         switch (algorithm) {
             case BMC ->
@@ -295,9 +317,9 @@ public class StsCli {
                             BoundedCheckerBuilderKt.buildBMC(
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
-                                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                                    val -> monolithicExpr.getValToState().invoke(val),
                                     (val1, val2) ->
-                                            StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
                                     logger);
             case KINDUCTION ->
                     checker =
@@ -305,9 +327,9 @@ public class StsCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createSolver(),
-                                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                                    val -> monolithicExpr.getValToState().invoke(val),
                                     (val1, val2) ->
-                                            StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
                                     logger);
             case IMC ->
                     checker =
@@ -315,9 +337,9 @@ public class StsCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createItpSolver(),
-                                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                                    val -> monolithicExpr.getValToState().invoke(val),
                                     (val1, val2) ->
-                                            StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
                                     logger);
             default ->
                     throw new UnsupportedOperationException(
@@ -349,6 +371,30 @@ public class StsCli {
                     logger,
                     MddChecker.IterationStrategy.GSAT);
         }
+    }
+
+    private SafetyChecker<?, ?, ?> buildIc3Checker(final STS sts, final SolverFactory solverFactory)
+            throws Exception {
+        final MonolithicExpr monolithicExpr;
+        if (reversed) {
+            monolithicExpr = ReversedMonolithicExprKt.createReversed(StsToMonolithicExprKt.toMonolithicExpr(sts));
+        } else {
+            monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        }
+        return new Ic3Checker<>(
+                monolithicExpr,
+                true,
+                solverFactory,
+                valuation -> monolithicExpr.getValToState().invoke(valuation),
+                (Valuation v1, Valuation v2) ->
+                        monolithicExpr.getBiValToAction().invoke(v1, v2),
+                true,
+                true,
+                true,
+                true,
+                true,
+                true);
+
     }
 
     private void printResult(
