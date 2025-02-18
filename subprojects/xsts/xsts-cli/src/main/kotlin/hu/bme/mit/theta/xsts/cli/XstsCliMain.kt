@@ -47,6 +47,7 @@ fun main(args: Array<String>) =
       XstsCliMdd(),
       XstsCliPetrinetMdd(),
       XstsCliChc(),
+      XstsCliIC3(),
       XstsCliHeader(),
       XstsCliMetrics(),
     )

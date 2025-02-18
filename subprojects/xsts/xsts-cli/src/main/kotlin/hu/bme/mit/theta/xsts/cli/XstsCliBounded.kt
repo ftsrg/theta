@@ -31,7 +31,6 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithicExpr
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToAction
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
 import java.util.concurrent.TimeUnit
@@ -40,7 +39,7 @@ import kotlin.system.exitProcess
 typealias S = XstsState<ExplState>
 
 class XstsCliBounded :
-  XstsCliMonolithicBasedCommand(
+  XstsCliMonolithicBaseCommand(
     name = "BOUNDED",
     help =
       "Bounded model checking algorithms (BMC, IMC, KINDUCTION). Use --variant to select the algorithm (by default BMC is selected).",

@@ -25,12 +25,12 @@ import hu.bme.mit.theta.analysis.l2s.createMonolithicL2S
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithicExpr
 
-abstract class XstsCliMonolithicBasedCommand(name: String? = null, help: String = ""):
+abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String = ""):
     XstsCliBaseCommand(name = name, help = help) {
 
-    private val reversed: Boolean by option(help = "Reversed state space exploration").boolean().default(false)
-    private val livenessToSafety: Boolean by option(help = "Use liveness to safety transformation").boolean().default(false)
-    private val abstracted: Boolean by option(help = "Wrap analysis in CEGAR loop").boolean().default(false)
+    protected val reversed: Boolean by option(help = "Reversed state space exploration").boolean().default(false)
+    protected val livenessToSafety: Boolean by option(help = "Use liveness to safety transformation").boolean().default(false)
+    protected val abstracted: Boolean by option(help = "Wrap analysis in CEGAR loop").boolean().default(false)
 
     fun createMonolithicExpr(xsts: XSTS): MonolithicExpr {
         var monolithicExpr = xsts.toMonolithicExpr()
