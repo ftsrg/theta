@@ -74,6 +74,8 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     private final SmtLibTransformationManager smtLibTransformationManager;
     private final SmtLibTermTransformer smtLibTermTransformer;
 
+    private int expCnt = 0;
+
     public Z3ItpSolver(
             final Z3SymbolTable symbolTable,
             final Z3TransformationManager transformationManager,
@@ -231,6 +233,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
     @Override
     public void push() {
+        expCnt++;
         markers.push();
         for (final Z3ItpMarker marker : markers) {
             marker.push();
@@ -241,6 +244,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
     @Override
     public void pop(final int n) {
+        expCnt -= n;
         markers.pop(n);
         for (final Z3ItpMarker marker : markers) {
             marker.pop(n);
@@ -250,7 +254,13 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     }
 
     @Override
+    public void popAll() {
+        pop(expCnt);
+    }
+
+    @Override
     public void reset() {
+        expCnt = 0;
         solver.reset();
     }
 

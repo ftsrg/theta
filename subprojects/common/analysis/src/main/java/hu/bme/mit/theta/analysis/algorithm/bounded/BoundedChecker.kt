@@ -68,7 +68,8 @@ constructor(
   private val bmcEnabled: () -> Boolean = { bmcSolver != null },
   private val lfPathOnly: () -> Boolean = { true },
   private val itpSolver: ItpSolver? = null,
-  private val imcEnabled: (Int) -> Boolean = { itpSolver != null },
+  private val imcFpSolver: Solver? = null,
+  private val imcEnabled: (Int) -> Boolean = { itpSolver != null && imcFpSolver != null },
   private val indSolver: Solver? = null,
   private val kindEnabled: (Int) -> Boolean = { indSolver != null },
   private val valToState: (Valuation) -> S,
@@ -89,6 +90,9 @@ constructor(
     check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
     check(bmcSolver != indSolver || bmcSolver == null) { "Use distinct solvers for BMC and KInd!" }
     check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
+    check((itpSolver == null) == (imcFpSolver == null)) {
+      "Both itpSolver and imcFpSolver must be either null or non-null!"
+    }
   }
 
   override fun check(prec: UnitPrec?): SafetyResult<EmptyProof, Trace<S, A>> {
@@ -192,6 +196,7 @@ constructor(
 
   private fun itp(): SafetyResult<EmptyProof, Trace<S, A>>? {
     val itpSolver = this.itpSolver!!
+    val imcFpSolver = this.imcFpSolver!!
     logger.write(Logger.Level.MAINSTEP, "\tStarting IMC\n")
 
     itpSolver.push()
@@ -202,9 +207,12 @@ constructor(
 
     itpSolver.push()
 
-    itpSolver.add(a, unfoldedInitExpr)
     itpSolver.add(a, exprs[0])
     itpSolver.add(b, exprs.subList(1, exprs.size))
+
+    itpSolver.push()
+
+    itpSolver.add(a, unfoldedInitExpr)
 
     if (lfPathOnly()) { // indices contains currIndex as last()
       itpSolver.push()
@@ -221,23 +229,22 @@ constructor(
       }
 
       if (itpSolver.check().isUnsat) {
-        itpSolver.pop()
-        itpSolver.pop()
+        itpSolver.popAll()
         logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
         return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
       }
       itpSolver.pop()
     }
 
+    itpSolver.pop()
     itpSolver.add(b, Not(unfoldedPropExpr(indices.last())))
+    itpSolver.push()
+    itpSolver.add(a, unfoldedInitExpr)
 
-    val status = itpSolver.check()
-
-    if (status.isSat) {
+    if (itpSolver.check().isSat) {
       val trace = getTrace(itpSolver.model)
       logger.write(Logger.Level.MAINSTEP, "CeX found in IMC/BMC step (length ${trace.length()})\n")
-      itpSolver.pop()
-      itpSolver.pop()
+      itpSolver.popAll()
       return SafetyResult.unsafe(trace, EmptyProof.getInstance(), BoundedStatistics(iteration))
     }
 
@@ -246,30 +253,26 @@ constructor(
       val interpolant = itpSolver.getInterpolant(pattern)
       val itpFormula =
         PathUtils.unfold(PathUtils.foldin(interpolant.eval(a), indices[1]), indices[0])
-      itpSolver.pop()
 
-      itpSolver.push()
-      itpSolver.add(a, itpFormula)
-      itpSolver.add(a, Not(img))
-      val itpStatus = itpSolver.check()
-      if (itpStatus.isUnsat) {
+      imcFpSolver.push()
+      imcFpSolver.add(itpFormula)
+      imcFpSolver.add(Not(img))
+      if (imcFpSolver.check().isUnsat) {
         logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC step\n")
-        itpSolver.pop()
-        itpSolver.pop()
+        imcFpSolver.popAll()
+        itpSolver.popAll()
         return SafetyResult.safe(EmptyProof.getInstance(), BoundedStatistics(iteration))
       }
-      itpSolver.pop()
+      imcFpSolver.popAll()
+
       img = Or(img, itpFormula)
 
+      itpSolver.pop()
       itpSolver.push()
       itpSolver.add(a, itpFormula)
-      itpSolver.add(a, exprs[0])
-      itpSolver.add(b, exprs.subList(1, exprs.size))
-      itpSolver.add(b, Not(unfoldedPropExpr(indices.last())))
     }
 
-    itpSolver.pop()
-    itpSolver.pop()
+    itpSolver.popAll()
     return null
   }
 

@@ -48,6 +48,9 @@ public interface SolverBase extends AutoCloseable {
         pop(1);
     }
 
+    /** Remove all expressions added. */
+    void popAll();
+
     /** Reset the solver state. */
     void reset();
 

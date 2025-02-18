@@ -315,6 +315,7 @@ public class StsCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createItpSolver(),
+                                    abstractionSolverFactory.createSolver(),
                                     val -> StsToMonolithicExprKt.valToState(sts, val),
                                     (val1, val2) ->
                                             StsToMonolithicExprKt.valToAction(sts, val1, val2),

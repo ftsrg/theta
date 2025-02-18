@@ -56,6 +56,11 @@ public final class NullSolver implements Solver {
     }
 
     @Override
+    public void popAll() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void reset() {
         throw new UnsupportedOperationException();
     }

@@ -69,6 +69,8 @@ final class JavaSMTSolver implements UCSolver, Solver {
     private final Map<String, Expr<BoolType>> assumptions;
     private SolverStatus status;
 
+    private int expCnt = 0;
+
     public JavaSMTSolver(
             final JavaSMTSymbolTable symbolTable,
             final JavaSMTTransformationManager transformationManager,
@@ -154,6 +156,7 @@ final class JavaSMTSolver implements UCSolver, Solver {
 
     @Override
     public void push() {
+        expCnt++;
         assertions.push();
         try {
             solver.push();
@@ -164,11 +167,17 @@ final class JavaSMTSolver implements UCSolver, Solver {
 
     @Override
     public void pop(final int n) {
+        expCnt -= n;
         assertions.pop(n);
         for (int i = 0; i < n; i++) {
             solver.pop();
         }
         clearState();
+    }
+
+    @Override
+    public void popAll() {
+        pop(expCnt);
     }
 
     @Override

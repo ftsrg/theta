@@ -68,6 +68,9 @@ fun getBoundedChecker(
       itpSolver =
         tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
           ?.createItpSolver(),
+      imcFpSolver =
+        tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
+          ?.createSolver(),
       imcEnabled = { !boundedConfig.itpConfig.disable },
       indSolver =
         tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)

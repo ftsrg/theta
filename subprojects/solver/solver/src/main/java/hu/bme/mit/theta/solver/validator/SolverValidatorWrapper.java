@@ -63,6 +63,11 @@ public class SolverValidatorWrapper implements Solver {
     }
 
     @Override
+    public void popAll() {
+        solver.pop();
+    }
+
+    @Override
     public void reset() {
         solver.reset();
     }
