@@ -28,7 +28,6 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToAction
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
@@ -84,7 +83,11 @@ class XstsCliIC3 :
       )
     val result = checker.check()
     sw.stop()
-    printResult(result as SafetyResult<EmptyProof, Trace<XstsState<ExplState>, XstsAction>>, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printResult(
+      result as SafetyResult<EmptyProof, Trace<XstsState<ExplState>, XstsAction>>,
+      xsts,
+      sw.elapsed(TimeUnit.MILLISECONDS),
+    )
     writeCex(result, xsts)
   }
 }

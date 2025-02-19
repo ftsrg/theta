@@ -22,7 +22,6 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
-import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.xsts.XSTS
@@ -63,5 +62,6 @@ class InputOptions :
     )
   }
 
-  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/ mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
+  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/
+    mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
 }

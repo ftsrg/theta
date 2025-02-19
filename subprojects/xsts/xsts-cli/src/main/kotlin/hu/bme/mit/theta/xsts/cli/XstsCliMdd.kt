@@ -28,7 +28,6 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
-import hu.bme.mit.theta.xsts.analysis.orderVars
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
