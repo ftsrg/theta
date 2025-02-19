@@ -79,6 +79,7 @@ class XstsCliIC3 :
         propagateOpt,
         filterOpt,
         false,
+        logger,
       )
     val result = checker.check()
     sw.stop()

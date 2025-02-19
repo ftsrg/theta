@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -56,13 +57,15 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
     private int currentFrameNumber;
     private final boolean forwardTrace;
     private final boolean propertyOpt;
+    private final Logger logger;
 
     public Ic3Checker(
             MonolithicExpr monolithicExpr,
             boolean forwardTrace,
             SolverFactory solverFactory,
             Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction) {
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            Logger logger) {
         this(
                 monolithicExpr,
                 forwardTrace,
@@ -74,7 +77,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 true,
                 true,
                 true,
-                false);
+                false,
+                logger);
     }
 
     public Ic3Checker(
@@ -88,7 +92,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             boolean notBOpt,
             boolean propagateOpt,
             boolean filterOpt,
-            boolean propertyOpt) {
+            boolean propertyOpt,
+            Logger logger) {
         this.monolithicExpr = monolithicExpr;
         this.valToState = valToState;
         this.biValToAction = biValToAction;
@@ -99,6 +104,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         this.filterOpt = filterOpt;
         this.forwardTrace = forwardTrace;
         this.propertyOpt = propertyOpt;
+        this.logger = logger;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();
         frames.add(new Frame(null, solver, monolithicExpr));
@@ -111,7 +117,9 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         // check if init violates prop
         var firstTrace = checkFirst();
         if (firstTrace != null) {
-            return SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
+            final var result = SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
+            logger.writeln(Logger.Level.RESULT, result.toString());
+            return result;
         }
         while (true) {
             final Collection<Expr<BoolType>> counterExample =
@@ -123,11 +131,16 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                         new HashSet<>(counterExample), currentFrameNumber));
                 if (proofObligationsList != null) {
                     var trace = traceMaker(proofObligationsList);
-                    return SafetyResult.unsafe(trace, EmptyProof.getInstance());
+                    final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
+                    logger.writeln(Logger.Level.RESULT, result.toString());
+                    return result;
                 }
             } else {
                 if (propagate()) {
-                    return SafetyResult.safe(EmptyProof.getInstance());
+                    final SafetyResult<EmptyProof, Trace<S, A>> result =
+                            SafetyResult.safe(EmptyProof.getInstance());
+                    logger.writeln(Logger.Level.RESULT, result.toString());
+                    return result;
                 }
             }
         }

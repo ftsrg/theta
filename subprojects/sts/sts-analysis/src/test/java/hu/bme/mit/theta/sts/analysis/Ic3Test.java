@@ -34,6 +34,8 @@ package hu.bme.mit.theta.sts.analysis;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
@@ -83,7 +85,9 @@ public class Ic3Test {
     }
 
     @Test
-    public void testConnected() throws IOException {
+    public void testIC3() throws IOException {
+
+        final Logger logger = new ConsoleLogger(Logger.Level.VERBOSE);
 
         final STS sts;
         if (filePath.endsWith("aag")) {
@@ -109,7 +113,8 @@ public class Ic3Test {
                         true,
                         true,
                         true,
-                        true);
+                        true,
+                        logger);
         Assert.assertEquals(isSafe, checker.check().isSafe());
     }
 }

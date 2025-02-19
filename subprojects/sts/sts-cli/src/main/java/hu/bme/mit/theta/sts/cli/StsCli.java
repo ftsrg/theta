@@ -219,16 +219,13 @@ public class StsCli {
             } else if (algorithm == Algorithm.BMC
                     || algorithm == Algorithm.KINDUCTION
                     || algorithm == Algorithm.IMC) {
-                final BoundedChecker<?, ?> checker =
-                        buildBoundedChecker(sts, solverFactory);
+                final BoundedChecker<?, ?> checker = buildBoundedChecker(sts, solverFactory);
                 status = checker.check(null);
             } else if (algorithm == Algorithm.MDD) {
-                final SafetyChecker<?, ?, ?> checker =
-                        buildMddChecker(sts, solverFactory);
+                final SafetyChecker<?, ?, ?> checker = buildMddChecker(sts, solverFactory);
                 status = checker.check(null);
             } else if (algorithm == Algorithm.IC3) {
-                final SafetyChecker<?, ?, ?> checker =
-                        buildIc3Checker(sts, solverFactory);
+                final SafetyChecker<?, ?, ?> checker = buildIc3Checker(sts, solverFactory);
                 status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException(
@@ -247,8 +244,10 @@ public class StsCli {
 
     private void registerSolverManagers() throws IOException {
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
-        SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
-        SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, logger));
+        SolverManager.registerSolverManager(
+                hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
+        SolverManager.registerSolverManager(
+                SmtLibSolverManager.create(SmtLibSolverManager.HOME, logger));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
     }
 
@@ -414,7 +413,8 @@ public class StsCli {
                 true,
                 true,
                 true,
-                true);
+                true,
+                logger);
     }
 
     private void printResult(

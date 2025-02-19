@@ -65,6 +65,9 @@ fun XSTS.toMonolithicExpr(): MonolithicExpr {
     propExpr,
     monolithicUnfoldResult.indexing,
     VarIndexingFactory.indexing(0),
+    valToState = this::valToState,
+    biValToAction = this::valToAction,
+    ctrlVars = this.ctrlVars,
   )
 }
 
@@ -75,14 +78,14 @@ fun XSTS.valToAction(val1: Valuation, val2: Valuation): XstsAction {
   val initialized1 =
     (val1Map[val1Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
 
-  val val2Map = val1.toMap()
+  val val2Map = val2.toMap()
   val lastActionWasEnv2 =
     (val2Map[val2Map.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
   val initialized2 =
     (val2Map[val2Map.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
 
   checkArgument(initialized2)
-  checkArgument(lastActionWasEnv1 != lastActionWasEnv2)
+  checkArgument(!initialized1 || lastActionWasEnv1 != lastActionWasEnv2)
 
   if (!initialized1) return XstsAction.create(this.init)
   else if (lastActionWasEnv1) return XstsAction.create(this.tran)
