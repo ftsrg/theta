@@ -22,11 +22,12 @@ import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.bounded.*
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToAction
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
 import java.util.concurrent.TimeUnit
@@ -69,10 +70,10 @@ class XstsCliIC3 :
     val checker =
       Ic3Checker(
         monolithicExpr,
-        reversed,
+        !reversed,
         solverFactory,
-        xsts::valToState,
-        xsts::valToAction,
+        monolithicExpr.valToState,
+        monolithicExpr.biValToAction,
         formerFramesOpt,
         unSatOpt,
         notBOpt,
@@ -83,7 +84,7 @@ class XstsCliIC3 :
       )
     val result = checker.check()
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printResult(result as SafetyResult<EmptyProof, Trace<XstsState<ExplState>, XstsAction>>, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
   }
 }

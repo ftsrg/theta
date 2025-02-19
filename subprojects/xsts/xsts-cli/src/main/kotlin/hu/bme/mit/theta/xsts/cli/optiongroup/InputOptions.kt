@@ -63,5 +63,5 @@ class InputOptions :
     )
   }
 
-  fun loadPetriNet(): MutableList<PetriNet> = PetriNetParser.loadPnml(model).parsePTNet()
+  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/ mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
 }
