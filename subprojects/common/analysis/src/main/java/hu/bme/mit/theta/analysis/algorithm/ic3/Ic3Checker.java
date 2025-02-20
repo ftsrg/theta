@@ -287,7 +287,11 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                 Not(monolithicExpr.getPropExpr()),
                                 monolithicExpr.getTransOffsetIndex()));
                 if (solver.check().isSat()) {
-                    return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
+                    return Trace.of(
+                            List.of(
+                                    valToState.apply(
+                                            PathUtils.extractValuation(solver.getModel(), 0))),
+                            List.of());
                 } else {
                     return null;
                 }
@@ -374,6 +378,10 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             if (!abstractStates.isEmpty())
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
             abstractStates.add(PredState.of(currentProofObligation.getExpressions()));
+        }
+        if (propertyOpt) {
+            abstractActions.add(MonolithicExprKt.action(monolithicExpr));
+            abstractStates.add(PredState.of(Not(monolithicExpr.getPropExpr())));
         }
         final ExprTraceChecker<ItpRefutation> checker =
                 ExprTraceFwBinItpChecker.create(
