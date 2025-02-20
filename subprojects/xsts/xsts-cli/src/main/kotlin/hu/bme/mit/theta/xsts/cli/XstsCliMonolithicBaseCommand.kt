@@ -15,10 +15,8 @@
  */
 package hu.bme.mit.theta.xsts.cli
 
-import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.boolean
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
@@ -28,12 +26,10 @@ import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithi
 abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String = "") :
   XstsCliBaseCommand(name = name, help = help) {
 
-  protected val reversed: Boolean by
-    option(help = "Reversed state space exploration").flag()
+  protected val reversed: Boolean by option(help = "Reversed state space exploration").flag()
   protected val livenessToSafety: Boolean by
     option(help = "Use liveness to safety transformation").flag()
-  protected val abstracted: Boolean by
-    option(help = "Wrap analysis in CEGAR loop").flag()
+  protected val abstracted: Boolean by option(help = "Wrap analysis in CEGAR loop").flag()
 
   fun createMonolithicExpr(xsts: XSTS): MonolithicExpr {
     var monolithicExpr = xsts.toMonolithicExpr()

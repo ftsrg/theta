@@ -366,14 +366,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         var abstractStates = new ArrayList<ExprState>();
         var abstractActions = new ArrayList<ExprAction>();
         while (!forwardProofObligations.isEmpty()) {
-            final ProofObligation currentProofObligation;
-            if (forwardTrace) {
-                currentProofObligation = forwardProofObligations.getLast();
-                forwardProofObligations.removeLast();
-            } else {
-                currentProofObligation = forwardProofObligations.getFirst();
-                forwardProofObligations.removeFirst();
-            }
+            final ProofObligation currentProofObligation = forwardProofObligations.getLast();
+            forwardProofObligations.removeLast();
 
             if (!abstractStates.isEmpty())
                 abstractActions.add(MonolithicExprKt.action(monolithicExpr));
@@ -392,7 +386,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 checker.check(Trace.of(abstractStates, abstractActions));
         checkArgument(status.isFeasible(), "Infeasible trace.");
 
-        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        if (!forwardTrace) valuations = valuations.reverse();
         final List<S> states = new ArrayList<>();
         final List<A> actions = new ArrayList<>();
         for (int i = 0; i < valuations.getStates().size(); ++i) {
