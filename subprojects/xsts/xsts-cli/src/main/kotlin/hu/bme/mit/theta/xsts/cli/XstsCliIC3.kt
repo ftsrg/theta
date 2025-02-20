@@ -78,7 +78,7 @@ class XstsCliIC3 :
         notBOpt,
         propagateOpt,
         filterOpt,
-        false,
+        true,
         logger,
       )
     val result = checker.check()

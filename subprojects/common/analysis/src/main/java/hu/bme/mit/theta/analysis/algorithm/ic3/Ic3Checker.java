@@ -85,7 +85,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 true,
                 true,
                 true,
-                false,
+                true,
                 logger);
     }
 
