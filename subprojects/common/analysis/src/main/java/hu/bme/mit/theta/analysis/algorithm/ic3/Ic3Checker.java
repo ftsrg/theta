@@ -15,23 +15,30 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
+import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -46,6 +53,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         implements SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
     private final MonolithicExpr monolithicExpr;
     private final List<Frame> frames;
+    private final SolverFactory solverFactory;
     private final UCSolver solver;
     private final Function<Valuation, S> valToState;
     private final BiFunction<Valuation, Valuation, A> biValToAction;
@@ -105,6 +113,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         this.forwardTrace = forwardTrace;
         this.propertyOpt = propertyOpt;
         this.logger = logger;
+        this.solverFactory = solverFactory;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();
         frames.add(new Frame(null, solver, monolithicExpr));
@@ -264,7 +273,9 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
             solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
             if (solver.check().isSat()) {
-                return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
+                return Trace.of(
+                        List.of(valToState.apply(PathUtils.extractValuation(solver.getModel(), 0))),
+                        List.of());
             }
         }
         if (propertyOpt) {
@@ -348,9 +359,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
     }
 
     public Trace<S, A> traceMaker(LinkedList<ProofObligation> forwardProofObligations) {
-        var stateList = new ArrayList<S>();
-        var actionList = new ArrayList<A>();
-        Valuation lastValuation = null;
+        var abstractStates = new ArrayList<ExprState>();
+        var abstractActions = new ArrayList<ExprAction>();
         while (!forwardProofObligations.isEmpty()) {
             final ProofObligation currentProofObligation;
             if (forwardTrace) {
@@ -360,18 +370,30 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 currentProofObligation = forwardProofObligations.getFirst();
                 forwardProofObligations.removeFirst();
             }
-            MutableValuation mutableValuation = new MutableValuation();
-            for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
-                RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
-                LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
-                mutableValuation.put(refExpr.getDecl(), litExpr);
-            }
-            stateList.add(valToState.apply(mutableValuation));
-            if (lastValuation != null) {
-                actionList.add(biValToAction.apply(lastValuation, mutableValuation));
-            }
-            lastValuation = mutableValuation;
+
+            if (!abstractStates.isEmpty())
+                abstractActions.add(MonolithicExprKt.action(monolithicExpr));
+            abstractStates.add(PredState.of(currentProofObligation.getExpressions()));
         }
-        return Trace.of(stateList, actionList);
+        final ExprTraceChecker<ItpRefutation> checker =
+                ExprTraceFwBinItpChecker.create(
+                        monolithicExpr.getInitExpr(),
+                        Not(monolithicExpr.getPropExpr()),
+                        solverFactory.createItpSolver());
+        final ExprTraceStatus<ItpRefutation> status =
+                checker.check(Trace.of(abstractStates, abstractActions));
+        checkArgument(status.isFeasible(), "Infeasible trace.");
+
+        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        final List<S> states = new ArrayList<>();
+        final List<A> actions = new ArrayList<>();
+        for (int i = 0; i < valuations.getStates().size(); ++i) {
+            states.add(valToState.apply(valuations.getState(i)));
+            if (i > 0) {
+                actions.add(
+                        biValToAction.apply(valuations.getState(i - 1), valuations.getState(i)));
+            }
+        }
+        return Trace.of(states, actions);
     }
 }

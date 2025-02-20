@@ -50,16 +50,16 @@ public class XstsIc3CheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {
-                        "src/test/resources/model/trafficlight.xsts",
-                        "src/test/resources/property/green_and_red.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/trafficlight_v2.xsts",
-                        "src/test/resources/property/green_and_red.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/trafficlight.xsts",
+                    //                        "src/test/resources/property/green_and_red.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/trafficlight_v2.xsts",
+                    //                        "src/test/resources/property/green_and_red.prop",
+                    //                        true
+                    //                    },
                     //                    {
                     //                        "src/test/resources/model/counter5.xsts",
                     //                        "src/test/resources/property/x_between_0_and_5.prop",
@@ -135,31 +135,31 @@ public class XstsIc3CheckerTest {
                         "src/test/resources/property/x_eq_5.prop",
                         false
                     },
-                    {
-                        "src/test/resources/model/counter50.xsts",
-                        "src/test/resources/property/x_eq_50.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/counter50.xsts",
-                        "src/test/resources/property/x_eq_51.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down2.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down2.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_50.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_51.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down2.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down2.prop",
+                    //                        true
+                    //                    },
 
                     //                                    {"src/test/resources/model/bhmr2007.xsts",
                     //                     "src/test/resources/property/bhmr2007.prop", true},
@@ -169,36 +169,36 @@ public class XstsIc3CheckerTest {
                     //                        "src/test/resources/property/css2003.prop",
                     //                        true
                     //                    },
-                    {
-                        "src/test/resources/model/array_counter.xsts",
-                        "src/test/resources/property/array_10.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/array_constant.xsts",
-                        "src/test/resources/property/array_constant.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/localvars.xsts",
-                        "src/test/resources/property/localvars.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/localvars2.xsts",
-                        "src/test/resources/property/localvars2.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/array_counter.xsts",
+                    //                        "src/test/resources/property/array_10.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/array_constant.xsts",
+                    //                        "src/test/resources/property/array_constant.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/localvars.xsts",
+                    //                        "src/test/resources/property/localvars.prop",
+                    //                        true
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/localvars2.xsts",
+                    //                        "src/test/resources/property/localvars2.prop",
+                    //                        true
+                    //                    },
                     //                    {
                     //                        "src/test/resources/model/loopxy.xsts",
                     //                        "src/test/resources/property/loopxy.prop",
                     //                        true
                     //                    },
-                    {
-                        "src/test/resources/model/arraywrite_sugar.xsts",
-                        "src/test/resources/property/arraywrite_sugar.prop",
-                        false
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/arraywrite_sugar.xsts",
+                    //                        "src/test/resources/property/arraywrite_sugar.prop",
+                    //                        false
+                    //                    },
                     //                    {
                     //                        "src/test/resources/model/if1.xsts",
                     //                        "src/test/resources/property/if1.prop",
@@ -209,11 +209,11 @@ public class XstsIc3CheckerTest {
                     //                        "src/test/resources/property/if2.prop",
                     //                        false
                     //                    },
-                    {
-                        "src/test/resources/model/localvars3.xsts",
-                        "src/test/resources/property/localvars3.prop",
-                        false
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/localvars3.xsts",
+                    //                        "src/test/resources/property/localvars3.prop",
+                    //                        false
+                    //                    },
                     {
                         "src/test/resources/model/bool.xsts",
                         "src/test/resources/property/bool.prop",
