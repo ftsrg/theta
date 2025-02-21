@@ -274,7 +274,10 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
             if (solver.check().isSat()) {
                 return Trace.of(
-                        List.of(valToState.apply(PathUtils.extractValuation(solver.getModel(), 0))),
+                        List.of(
+                                valToState.apply(
+                                        PathUtils.extractValuation(
+                                                solver.getModel(), 0, monolithicExpr.getVars()))),
                         List.of());
             }
         }
@@ -290,7 +293,10 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                     return Trace.of(
                             List.of(
                                     valToState.apply(
-                                            PathUtils.extractValuation(solver.getModel(), 0))),
+                                            PathUtils.extractValuation(
+                                                    solver.getModel(),
+                                                    0,
+                                                    monolithicExpr.getVars()))),
                             List.of());
                 } else {
                     return null;
@@ -386,15 +392,33 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 checker.check(Trace.of(abstractStates, abstractActions));
         checkArgument(status.isFeasible(), "Infeasible trace.");
 
-        Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
-        if (!forwardTrace) valuations = valuations.reverse();
+        Trace<Valuation, ? extends Action> trace = status.asFeasible().getValuations();
+        if (!forwardTrace) trace = trace.reverse();
+        final List<MutableValuation> valuations =
+                trace.getStates().stream()
+                        .map(
+                                it -> {
+                                    final MutableValuation newValuation = new MutableValuation();
+                                    it.toMap().entrySet().stream()
+                                            .filter(
+                                                    entry ->
+                                                            monolithicExpr
+                                                                    .getVars()
+                                                                    .contains(entry.getKey()))
+                                            .forEach(
+                                                    entry ->
+                                                            newValuation.put(
+                                                                    entry.getKey(),
+                                                                    entry.getValue()));
+                                    return newValuation;
+                                })
+                        .toList();
         final List<S> states = new ArrayList<>();
         final List<A> actions = new ArrayList<>();
-        for (int i = 0; i < valuations.getStates().size(); ++i) {
-            states.add(valToState.apply(valuations.getState(i)));
+        for (int i = 0; i < valuations.size(); ++i) {
+            states.add(valToState.apply(valuations.get(i)));
             if (i > 0) {
-                actions.add(
-                        biValToAction.apply(valuations.getState(i - 1), valuations.getState(i)));
+                actions.add(biValToAction.apply(valuations.get(i - 1), valuations.get(i)));
             }
         }
         return Trace.of(states, actions);

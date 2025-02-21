@@ -17,9 +17,17 @@ package hu.bme.mit.theta.xsts.cli
 
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.Proof
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithicExpr
 
@@ -41,4 +49,16 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
     }
     return monolithicExpr
   }
+
+  fun <W : Proof> wrapInCegarIfNeeded(
+    monolithicExpr: MonolithicExpr,
+    solverFactory: SolverFactory,
+    builder:
+      (MonolithicExpr) -> SafetyChecker<W, out Trace<out ExprState, out ExprAction>, UnitPrec>,
+  ): SafetyChecker<*, *, *> =
+    if (abstracted) {
+      MonolithicExprCegarChecker(monolithicExpr, builder, logger, solverFactory)
+    } else {
+      builder(monolithicExpr)
+    }
 }

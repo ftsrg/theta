@@ -67,7 +67,7 @@ fun XSTS.toMonolithicExpr(): MonolithicExpr {
     VarIndexingFactory.indexing(0),
     valToState = this::valToState,
     biValToAction = this::valToAction,
-    ctrlVars = this.ctrlVars,
+    ctrlVars = this.ctrlVars + listOf(lastActionWasEnv, initialized),
   )
 }
 

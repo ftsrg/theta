@@ -67,20 +67,22 @@ class XstsCliIC3 :
     val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val checker =
-      Ic3Checker(
-        monolithicExpr,
-        !reversed,
-        solverFactory,
-        monolithicExpr.valToState,
-        monolithicExpr.biValToAction,
-        formerFramesOpt,
-        unSatOpt,
-        notBOpt,
-        propagateOpt,
-        filterOpt,
-        true,
-        logger,
-      )
+      wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
+        Ic3Checker(
+          it,
+          !reversed,
+          solverFactory,
+          it.valToState,
+          it.biValToAction,
+          formerFramesOpt,
+          unSatOpt,
+          notBOpt,
+          propagateOpt,
+          filterOpt,
+          true,
+          logger,
+        )
+      }
     val result = checker.check()
     sw.stop()
     printResult(

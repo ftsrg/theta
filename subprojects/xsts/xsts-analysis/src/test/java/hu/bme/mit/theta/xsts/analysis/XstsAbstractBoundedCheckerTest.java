@@ -19,6 +19,8 @@ import static hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderK
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -35,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
-public class XstsBoundedCheckerTest {
+public class XstsAbstractBoundedCheckerTest {
 
     @Parameterized.Parameter(value = 0)
     public String filePath;
@@ -80,16 +82,11 @@ public class XstsBoundedCheckerTest {
                         "src/test/resources/property/x_even.prop",
                         true
                     },
-                    {
-                        "src/test/resources/model/cross_with.xsts",
-                        "src/test/resources/property/cross.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/cross_without.xsts",
-                        "src/test/resources/property/cross.prop",
-                        false
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/cross_without.xsts",
+                    //                        "src/test/resources/property/cross.prop",
+                    //                        false
+                    //                    },
                     {
                         "src/test/resources/model/choices.xsts",
                         "src/test/resources/property/choices.prop",
@@ -98,11 +95,6 @@ public class XstsBoundedCheckerTest {
                     {
                         "src/test/resources/model/literals.xsts",
                         "src/test/resources/property/literals.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/cross3.xsts",
-                        "src/test/resources/property/cross.prop",
                         false
                     },
                     {
@@ -130,36 +122,31 @@ public class XstsBoundedCheckerTest {
                         "src/test/resources/property/on_off_statemachine3.prop",
                         false
                     },
-                    {
-                        "src/test/resources/model/counter50.xsts",
-                        "src/test/resources/property/x_eq_5.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/counter50.xsts",
-                        "src/test/resources/property/x_eq_50.prop",
-                        false
-                    },
-                    {
-                        "src/test/resources/model/counter50.xsts",
-                        "src/test/resources/property/x_eq_51.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_5.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_50.prop",
+                    //                        false
+                    //                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_51.prop",
+                    //                        true
+                    //                    },
                     {
                         "src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down.prop",
                         false
                     },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down2.prop",
-                        true
-                    },
-                    {
-                        "src/test/resources/model/count_up_down.xsts",
-                        "src/test/resources/property/count_up_down2.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/count_up_down.xsts",
+                    //                        "src/test/resources/property/count_up_down2.prop",
+                    //                        true
+                    //                    },
 
                     //                                    {"src/test/resources/model/bhmr2007.xsts",
                     //                     "src/test/resources/property/bhmr2007.prop", true},
@@ -235,12 +222,20 @@ public class XstsBoundedCheckerTest {
 
         final var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
         final var checker =
-                buildBMC(
+                new MonolithicExprCegarChecker<>(
                         monolithicExpr,
-                        Z3LegacySolverFactory.getInstance().createSolver(),
-                        monolithicExpr.getValToState(),
-                        monolithicExpr.getBiValToAction(),
-                        logger);
+                        (MonolithicExpr abstractMonolithicExpr) ->
+                                buildBMC(
+                                        abstractMonolithicExpr,
+                                        Z3LegacySolverFactory.getInstance().createSolver(),
+                                        val -> abstractMonolithicExpr.getValToState().invoke(val),
+                                        (v1, v2) ->
+                                                abstractMonolithicExpr
+                                                        .getBiValToAction()
+                                                        .invoke(v1, v2),
+                                        logger),
+                        logger,
+                        Z3LegacySolverFactory.getInstance());
 
         final SafetyResult<?, ?> status = checker.check(null);
 

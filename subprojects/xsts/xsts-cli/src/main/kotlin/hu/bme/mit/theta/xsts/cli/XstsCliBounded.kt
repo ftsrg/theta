@@ -133,13 +133,9 @@ class XstsCliBounded :
     val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val checker =
-      variant.buildChecker(
-        monolithicExpr,
-        solverFactory,
-        monolithicExpr.valToState,
-        monolithicExpr.biValToAction,
-        logger,
-      )
+      wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
+        variant.buildChecker(it, solverFactory, it.valToState, it.biValToAction, logger)
+      }
     val result = checker.check()
     sw.stop()
     printResult(

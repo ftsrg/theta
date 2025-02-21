@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -35,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
-public class XstsIc3CheckerTest {
+public class XstsAbstractIc3CheckerTest {
 
     @Parameterized.Parameter(value = 0)
     public String filePath;
@@ -263,13 +265,21 @@ public class XstsIc3CheckerTest {
 
         final var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
         final var checker =
-                new Ic3Checker<>(
+                new MonolithicExprCegarChecker<>(
                         monolithicExpr,
-                        true,
-                        Z3LegacySolverFactory.getInstance(),
-                        v -> monolithicExpr.getValToState().invoke(v),
-                        (v1, v2) -> monolithicExpr.getBiValToAction().invoke(v1, v2),
-                        logger);
+                        (MonolithicExpr abstractMonolithicExpr) ->
+                                new Ic3Checker<>(
+                                        abstractMonolithicExpr,
+                                        true,
+                                        Z3LegacySolverFactory.getInstance(),
+                                        v -> abstractMonolithicExpr.getValToState().invoke(v),
+                                        (v1, v2) ->
+                                                abstractMonolithicExpr
+                                                        .getBiValToAction()
+                                                        .invoke(v1, v2),
+                                        logger),
+                        logger,
+                        Z3LegacySolverFactory.getInstance());
 
         final SafetyResult<?, ?> status = checker.check(null);
 
