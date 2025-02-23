@@ -35,10 +35,11 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.witnesses.*
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.witnesses.*
 import java.io.File
 import java.util.*
 import kotlinx.serialization.encodeToString
@@ -276,7 +277,7 @@ private fun WitnessEdge.toSegment(
     if (assumption != null) {
       Triple(
         endLoc,
-        Constraint(value = assumption, format = Format.C_EXPRESSION),
+        Constraint(value = assumption!!, format = Format.C_EXPRESSION),
         WaypointType.ASSUMPTION,
       )
     } else if (control != null) {
@@ -284,9 +285,9 @@ private fun WitnessEdge.toSegment(
     } else if (enterLoopHead) {
       Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
     } else if (enterFunction != null) {
-      Triple(startLoc, Constraint(value = enterFunction), WaypointType.FUNCTION_ENTER)
+      Triple(startLoc, Constraint(value = enterFunction!!), WaypointType.FUNCTION_ENTER)
     } else if (returnFromFunction != null) {
-      Triple(endLoc, Constraint(value = returnFromFunction), WaypointType.FUNCTION_RETURN)
+      Triple(endLoc, Constraint(value = returnFromFunction!!), WaypointType.FUNCTION_RETURN)
     } else return null
   return WaypointContent(type = type, constraint = constraint, location = loc, action = action)
 }

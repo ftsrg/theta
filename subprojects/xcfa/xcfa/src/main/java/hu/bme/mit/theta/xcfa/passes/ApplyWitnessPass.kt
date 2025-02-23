@@ -13,17 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("kotlin-common")
-    id("kaml-serialization")
-}
+package hu.bme.mit.theta.xcfa.passes
 
-dependencies {
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-grammar"))
-    implementation(project(":theta-c-frontend"))
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-z3"))
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+
+class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    // val result = YamlWitness.WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness)
+    return builder
+  }
 }
