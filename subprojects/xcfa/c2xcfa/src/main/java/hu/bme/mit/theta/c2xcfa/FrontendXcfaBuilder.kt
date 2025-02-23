@@ -61,6 +61,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fits
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.NontermValidationPasses
 import java.math.BigInteger
@@ -259,6 +260,7 @@ class FrontendXcfaBuilder(
       XcfaProcedureBuilder(
         funcDecl.name,
         NontermValidationPasses(checkOverflow, parseContext, uniqueWarningLogger),
+        //CPasses(checkOverflow, parseContext, uniqueWarningLogger),
       )
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
