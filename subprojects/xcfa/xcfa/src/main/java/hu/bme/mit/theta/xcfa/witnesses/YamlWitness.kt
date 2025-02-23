@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.witnesses
+package hu.bme.mit.theta.xcfa.witnesses
 
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.SerialName

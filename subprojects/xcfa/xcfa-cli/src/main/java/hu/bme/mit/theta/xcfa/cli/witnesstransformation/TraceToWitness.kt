@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.witnesses
+package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
@@ -32,6 +32,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
+import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
 import java.util.function.Predicate
 
