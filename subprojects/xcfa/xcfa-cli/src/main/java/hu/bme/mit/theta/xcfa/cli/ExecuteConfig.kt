@@ -179,9 +179,7 @@ fun frontend(
     parseContext.architecture = cConfig.architecture
   }
 
-  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
-  xcfa.optimizeFurther(ApplyWitnessPasses(parseContext, logger))
+  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger).optimizeFurther(ApplyWitnessPasses(parseContext, logger))
 
   val mcm =
     if (config.inputConfig.catFile != null) {
