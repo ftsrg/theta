@@ -15,42 +15,80 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.algorithm.oc.Event
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType.READ
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType.WRITE
 import hu.bme.mit.theta.core.decl.VarDecl
 
 internal fun interface MemoryConsistencyModelFilter {
   operator fun invoke(
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: MutableList<R>,
-    rfs: MutableMap<VarDecl<*>, MutableSet<R>>,
     wss: MutableMap<VarDecl<*>, MutableSet<R>>,
-  ): Triple<
-    MutableList<R>,
-    MutableMap<VarDecl<*>, MutableSet<R>>,
-    MutableMap<VarDecl<*>, MutableSet<R>>,
+  ): Pair<
+    Array<Array<Boolean>>, // ppo
+    MutableMap<VarDecl<*>, MutableSet<R>>, // wss
   >
 }
 
 @Suppress("unused")
 enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyModelFilter) {
-  SC({ pos, rfs, wss -> Triple(pos, rfs, wss) }),
-  WSC({ pos, rfs, _ -> Triple(pos, rfs, mutableMapOf()) }),
-  TSO({ pos, rfs, wss ->
-    val newPos =
-      pos
-        .filter {
-          !(it.from.const.varDecl != it.to.const.varDecl &&
-            it.from.type == WRITE &&
-            it.to.type == READ)
+  SC({ events, pos, wss -> getClosedPo(pos, events) to wss }),
+  WSC({ events, pos, _ -> getClosedPo(pos, events) to mutableMapOf() }),
+  TSO({ events, pos, wss ->
+    getPpo(events, pos) { v1, access1, v2, access2 ->
+      v1 != v2 && access1 == setOf(WRITE) && access2 == setOf(READ)
+    } to wss
+  }),
+  PSO({ events, pos, wss ->
+    getPpo(events, pos) { v1, access1, v2, _ -> v1 != v2 && access1 == setOf(WRITE) } to wss
+  }),
+}
+
+private fun getClosedPo(
+  pos: MutableList<R>,
+  events: Map<VarDecl<*>, Map<Int, List<E>>>,
+): Array<Array<Boolean>> {
+  val eventSize = events.values.sumOf { v -> v.values.sumOf { it.size } }
+  val rels = Array(eventSize) { Array(eventSize) { false } }
+  val globalPos = pos.filter { it.from.clkId != it.to.clkId }
+  close(rels, globalPos.map { it.from.clkId to it.to.clkId }, false)
+  return rels
+}
+
+private typealias VarAccessMetadata = MutableMap<VarDecl<*>, MutableSet<EventType>>
+
+private fun getBlockVarAccessMetadata(
+  events: Map<VarDecl<*>, Map<Int, List<E>>>
+): Array<VarAccessMetadata> {
+  val blockVarAccessMetadata = Array<VarAccessMetadata>(Event.clkIdSize) { mutableMapOf() }
+  events.values.forEach { v ->
+    v.values.forEach { evs ->
+      evs.forEach { e ->
+        blockVarAccessMetadata[e.clkId].getOrPut(e.const.varDecl) { mutableSetOf() }.add(e.type)
+      }
+    }
+  }
+  return blockVarAccessMetadata
+}
+
+private fun getPpo(
+  events: Map<VarDecl<*>, Map<Int, List<E>>>,
+  pos: MutableList<R>,
+  filterOut: (VarDecl<*>, Set<EventType>, VarDecl<*>, Set<EventType>) -> Boolean,
+): Array<Array<Boolean>> {
+  val closedPos = getClosedPo(pos, events)
+  val blockVarAccessMetadata = getBlockVarAccessMetadata(events)
+  closedPos.forEachIndexed { i, other ->
+    other.forEachIndexed { j, b ->
+      val f = {
+        blockVarAccessMetadata[i].all { (v1, access1) ->
+          blockVarAccessMetadata[j].all { (v2, access2) -> filterOut(v1, access1, v2, access2) }
         }
-        .toMutableList()
-    Triple(newPos, rfs, wss)
-  }),
-  PSO({ pos, rfs, wss ->
-    val newPos =
-      pos
-        .filter { !(it.from.const.varDecl != it.to.const.varDecl && it.from.type == WRITE) }
-        .toMutableList()
-    Triple(newPos, rfs, wss)
-  }),
+      }
+      if (b && f()) closedPos[i][j] = false
+    }
+  }
+  return closedPos
 }

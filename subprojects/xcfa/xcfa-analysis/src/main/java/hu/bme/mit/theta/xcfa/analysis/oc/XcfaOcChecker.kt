@@ -81,8 +81,8 @@ class XcfaOcChecker(
   private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
   private val violations = mutableListOf<Violation>() // OR!
   private val branchingConditions = mutableListOf<Expr<BoolType>>()
-  private var pos = mutableListOf<R>()
-  private var rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
+  private val pos = mutableListOf<R>() // not transitively closed!
+  private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
   private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
   private val ocChecker: OcChecker<E> =
@@ -103,11 +103,6 @@ class XcfaOcChecker(
         logger.mainStep("Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
-        memoryModel.filter(pos, rfs, wss).let { (filteredPos, filteredRfs, filteredWss) ->
-          pos = filteredPos
-          rfs = filteredRfs
-          wss = filteredWss
-        }
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
 
         // "Manually" add some conflicts
@@ -123,7 +118,8 @@ class XcfaOcChecker(
 
         logger.mainStep("Start checking...")
         val status: SolverStatus?
-        val checkerTime = measureTime { status = ocChecker.check(events, pos, rfs, wss) }
+        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
+        val checkerTime = measureTime { status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss) }
         if (ocChecker !is XcfaOcCorrectnessValidator)
           logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
         logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
@@ -148,9 +144,13 @@ class XcfaOcChecker(
           status?.isSat == true -> {
             if (ocChecker is XcfaOcCorrectnessValidator)
               return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-            val trace =
-              XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-            SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+            if (memoryModel == XcfaOcMemoryConsistencyModel.SC) {
+              val trace =
+                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+            } else {
+              SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
+            }
           }
 
           else -> SafetyResult.unknown()

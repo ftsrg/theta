@@ -112,23 +112,12 @@ private class ReachableEdges(procedure: XcfaProcedure) {
         edge.target.outgoingEdges.map { LocalEdge(it) }.filter { it !in ids && it !in toVisit }
       toVisit.addAll(toAdd)
     }
+
     reachable = Array(ids.size) { Array(ids.size) { false } }
-    close(initials) // close reachable transitively
+    close(reachable, initials) // close reachable transitively
+    for (i in reachable.indices) reachable[i][i] = true
   }
 
   fun reachable(from: GlobalEdge, to: XcfaEdge): Boolean =
     reachable[ids[LocalEdge(from)]!!][ids[LocalEdge(to)]!!]
-
-  private fun close(initials: List<Pair<Int, Int>>) {
-    val toClose = initials.toMutableList()
-    while (toClose.isNotEmpty()) {
-      val (from, to) = toClose.removeFirst()
-      if (reachable[from][to]) continue
-
-      reachable[from][to] = true
-      reachable[to].forEachIndexed { i, b -> if (b && !reachable[from][i]) toClose.add(from to i) }
-      reachable.forEachIndexed { i, b -> if (b[from] && !reachable[i][to]) toClose.add(i to to) }
-    }
-    for (i in reachable.indices) reachable[i][i] = true
-  }
 }

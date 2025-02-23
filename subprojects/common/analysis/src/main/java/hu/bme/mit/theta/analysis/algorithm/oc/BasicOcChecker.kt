@@ -30,13 +30,17 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     var modifiableRels = rfs.values.flatten() // modifiable relation vars
     val flatEvents = events.values.flatMap { it.values.flatten() }
-    val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
-    pos.forEach { setAndClose(initialRels, it) }
+    check(ppos.size == flatEvents.size)
+    val initialRels =
+      Array(flatEvents.size) { i ->
+        Array<Reason?>(flatEvents.size) { j -> if (ppos[i][j]) PoReason else null }
+      }
     val decisionStack = Stack<OcAssignment<E>>()
     decisionStack.push(OcAssignment(initialRels)) // not really a decision point (initial)
     var finalWsCheck = false

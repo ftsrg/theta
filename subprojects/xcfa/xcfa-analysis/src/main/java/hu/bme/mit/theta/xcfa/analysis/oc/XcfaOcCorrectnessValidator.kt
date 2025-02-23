@@ -57,6 +57,7 @@ internal class XcfaOcCorrectnessValidator(
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
@@ -108,7 +109,7 @@ internal class XcfaOcCorrectnessValidator(
         measureTime {
             result =
               if (permissive) {
-                ocChecker.check(events, pos, rfs, wss)
+                ocChecker.check(events, pos, ppos, rfs, wss)
               } else {
                 nonOcSolver.check()
               }

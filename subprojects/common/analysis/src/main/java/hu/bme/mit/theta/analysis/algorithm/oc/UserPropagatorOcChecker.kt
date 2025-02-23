@@ -99,6 +99,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
@@ -112,9 +113,10 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     this.wss = wss
     flatWss = wss.values.flatten()
 
-    val clkSize = events.values.flatMap { it.values.flatten() }.maxOf { it.clkId } + 1
-    val initialRels = Array(clkSize) { Array<Reason?>(clkSize) { null } }
-    pos.forEach { setAndClose(initialRels, it) }
+    val initialRels =
+      Array(Event.clkIdSize) { i ->
+        Array<Reason?>(Event.clkIdSize) { j -> if (ppos[i][j]) PoReason else null }
+      }
     PropagatorOcAssignment(partialAssignment, initialRels)
     registerExpressions()
 

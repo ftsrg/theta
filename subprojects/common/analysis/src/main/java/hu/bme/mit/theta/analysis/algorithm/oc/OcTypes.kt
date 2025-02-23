@@ -48,6 +48,16 @@ abstract class Event(
   val pid: Int,
   val clkId: Int,
 ) {
+  companion object {
+    var clkIdSize = 0
+      private set
+  }
+
+  init {
+    if (clkId >= clkIdSize) {
+      clkIdSize = clkId + 1
+    }
+  }
 
   val guardExpr: Expr<BoolType>
     get() = guard.toAnd()

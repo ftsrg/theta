@@ -62,6 +62,22 @@ internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> =
     else -> setOf(Or(map { it.toAnd() }))
   }
 
+/**
+ * Takes a relation matrix and a list of initial pairs in the relation and closes the relation.
+ */
+internal fun close(relation: Array<Array<Boolean>>, initials: List<Pair<Int, Int>>, cycleAllowed: Boolean = true) {
+  val toClose = initials.toMutableList()
+  while (toClose.isNotEmpty()) {
+    val (from, to) = toClose.removeFirst()
+    check(cycleAllowed || from != to) { "Self-loop not allowed." }
+    if (relation[from][to]) continue
+
+    relation[from][to] = true
+    relation[to].forEachIndexed { i, b -> if (b && !relation[from][i]) toClose.add(from to i) }
+    relation.forEachIndexed { i, b -> if (b[from] && !relation[i][to]) toClose.add(i to to) }
+  }
+}
+
 internal class XcfaEvent(
   const: IndexedConstDecl<*>,
   type: EventType,

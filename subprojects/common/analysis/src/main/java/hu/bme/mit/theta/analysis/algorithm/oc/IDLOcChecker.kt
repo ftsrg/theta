@@ -67,13 +67,25 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     this.events = events.values.flatMap { it.values }.flatten()
 
     // PO
-    pos.forEach { addLt(null, it.from, it.to) }
+    ppos.forEachIndexed { i, row ->
+      row.forEachIndexed { j, enabled ->
+        if (enabled) {
+          solver.add(Lt(i.clkGlobalVar.ref, j.clkGlobalVar.ref))
+        }
+      }
+    }
+    pos.forEach {
+      if (it.from.clkId == it.to.clkId) {
+        addLt(null, it.from, it.to)
+      }
+    }
 
     // RF
     rfs.forEach { (_, vRfs) -> vRfs.forEach { addLt(it.declRef, it.from, it.to) } }

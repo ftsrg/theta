@@ -48,8 +48,8 @@ interface OcChecker<E : Event> {
    * satisfying the given constraints).
    *
    * @param events the set of events grouped by variables
-   * @param pos the elements of the relation "program-order" (the relations always present based on
-   *   the input model)
+   * @param pos the elements of the program order relation
+   * @param ppos preserved program order relation (as a matrix with indices as clkIds)
    * @param rfs the (possible) elements of the "read-from" relation (not all of these are
    *   necessarily enabled)
    * @return returns the status of the solver after running the consistency checking
@@ -57,6 +57,7 @@ interface OcChecker<E : Event> {
   fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus?
