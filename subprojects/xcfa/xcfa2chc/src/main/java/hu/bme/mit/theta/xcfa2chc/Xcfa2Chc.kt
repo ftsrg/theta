@@ -17,10 +17,15 @@ package hu.bme.mit.theta.xcfa2chc
 
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Param
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.plus
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
@@ -28,23 +33,66 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-fun XcfaProcedure.toCHC(): List<Relation> {
-  val i2i = ArrayType.of(Int(), Int())
+fun XcfaProcedure.toCHC(termination: Boolean = false): List<Relation> {
+  val vars = edges.flatMap { it.label.collectVars() }.toSet().toMutableList()
 
-  val vars = edges.flatMap { it.label.collectVars() }.toSet().toList()
+  val rankingFunction = Var("__ranking_func", Int())
+  val havocArrays =
+    edges
+      .flatMap { it.label.getFlatLabels() }
+      .mapNotNull { ((it as? StmtLabel)?.stmt as? HavocStmt<*>)?.varDecl?.type }
+      .associateWith { Var("__nondet_array_${it}", ArrayType.of(Int(), it)) }
+
+  if (termination) {
+    vars.add(rankingFunction)
+    vars.addAll(havocArrays.values)
+  }
 
   val types = vars.map { it.type }.toTypedArray()
   val oldParams = vars.associateWith { Param("|" + it.name + "|", it.type) }
   val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
   val newParams = vars.associateWith { Param("|" + it.name + "_new|", it.type) }
 
-  val ufs = locs.associateWith { Relation(it.name, *types) } // br, co, rf, com
+  val ufs = locs.associateWith { Relation(it.name, *types) }
 
   edges.forEach {
-    val unfoldResult = StmtUtils.toExpr(it.label.toStmt(), VarIndexingFactory.basicVarIndexing(0))
+    val stmts =
+      if (termination) {
+          val labels = it.label.getFlatLabels()
+          val newLabels = ArrayList<XcfaLabel>()
+          if (it.source.initial) {
+            newLabels.add(AssignStmtLabel(rankingFunction, Int(0)))
+          } else {
+            newLabels.add(AssignStmtLabel(rankingFunction, Add(rankingFunction.ref, Int(1))))
+          }
+          for (label in labels) {
+            if (label is StmtLabel && label.stmt is HavocStmt<*>) {
+              val havoc = (label.stmt as HavocStmt<*>)
+              newLabels.add(
+                AssignStmtLabel(
+                  havoc.varDecl,
+                  Read(havocArrays[havoc.varDecl.type]!!.ref, rankingFunction.ref),
+                )
+              )
+            } else {
+              newLabels.add(label)
+            }
+          }
+          newLabels
+        } else {
+          it.label.getFlatLabels()
+        }
+        .map(XcfaLabel::toStmt)
+
+    val unfoldResult =
+      StmtUtils.toExpr(SequenceStmt.of(stmts), VarIndexingFactory.basicVarIndexing(0))
     val expr = PathUtils.unfold(And(unfoldResult.exprs), VarIndexingFactory.indexing(0))
     // var[0] is oldParam, var[-1]is newParam, everything else is a fresh param
     var cnt = 0
@@ -62,7 +110,29 @@ fun XcfaProcedure.toCHC(): List<Relation> {
     (ufs[it.target]!!)(*newParamList) += (ufs[it.source]!!)(*oldParamList).expr + paramdExpr
   }
 
-  if (errorLoc.isPresent) {
+  if (termination) {
+    ufs
+      .filter { !it.key.initial }
+      .map { it.value }
+      .forEach {
+        !(it(*oldParamList) with
+          And(
+            it(
+                oldParamList
+                  .map {
+                    if (it.decl == oldParams[rankingFunction]) {
+                      newParams[rankingFunction]!!.ref
+                    } else {
+                      it
+                    }
+                  }
+                  .toList()
+              )
+              .expr,
+            Neq(oldParams[rankingFunction]!!.ref, newParams[rankingFunction]!!.ref),
+          ))
+      }
+  } else if (errorLoc.isPresent) {
     !(ufs[errorLoc.get()]!!(*oldParamList))
   }
 
@@ -71,8 +141,8 @@ fun XcfaProcedure.toCHC(): List<Relation> {
   return ufs.values.toList()
 }
 
-fun XcfaProcedure.toSMT2CHC(): String {
-  val chc = toCHC()
+fun XcfaProcedure.toSMT2CHC(termination: Boolean = false): String {
+  val chc = toCHC(termination)
   val smt2 = chc.toSMT2()
   return smt2
 }
