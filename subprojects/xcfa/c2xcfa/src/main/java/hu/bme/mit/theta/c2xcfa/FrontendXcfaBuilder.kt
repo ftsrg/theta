@@ -43,7 +43,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -62,8 +61,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fits
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
+import hu.bme.mit.theta.xcfa.passes.NontermValidationPasses
 import java.math.BigInteger
 import java.util.stream.Collectors
 
@@ -257,7 +256,10 @@ class FrontendXcfaBuilder(
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
+      XcfaProcedureBuilder(
+        funcDecl.name,
+        NontermValidationPasses(checkOverflow, parseContext, uniqueWarningLogger),
+      )
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {
