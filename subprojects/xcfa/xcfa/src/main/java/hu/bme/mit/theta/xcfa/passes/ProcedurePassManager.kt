@@ -74,11 +74,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
-class NontermValidationPasses(
-  checkOverflow: Boolean,
-  parseContext: ParseContext,
-  uniqueWarningLogger: Logger,
-) :
+class NontermValidationPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -96,7 +92,7 @@ class NontermValidationPasses(
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
       // optimizing
-      UnusedLocRemovalPass()
+      UnusedLocRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
@@ -113,12 +109,7 @@ class NontermValidationPasses(
       UnusedVarPass(uniqueWarningLogger),
       UnusedLocRemovalPass(),
     ),
-    listOf(
-      ApplyWitnessPass(parseContext),
-      LbePass(parseContext),
-      NormalizePass(), // needed after lbe, TODO
-      DeterministicPass(), // needed after lbe, TODO
-    ),
+    //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
