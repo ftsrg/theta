@@ -13,17 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("kotlin-common")
-    id("kaml-serialization")
-}
 
-dependencies {
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-grammar"))
-    implementation(project(":theta-c-frontend"))
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-z3"))
-}
+package hu.bme.mit.theta.xcfa.cli.witnesstransformation
+
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.passes.*
+
+class ApplyWitnessPasses(
+  parseContext: ParseContext,
+  uniqueWarningLogger: Logger,
+) :
+  ProcedurePassManager(
+    listOf(
+      NormalizePass(), // needed after lbe, TODO
+      DeterministicPass(), // needed after lbe, TODO
+      EliminateSelfLoops(),
+      ApplyWitnessPass(parseContext),
+      LbePass(parseContext),
+      NormalizePass(), // needed after lbe, TODO
+      DeterministicPass(), // needed after lbe, TODO
+    )
+  )
