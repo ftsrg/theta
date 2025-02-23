@@ -18,17 +18,17 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.passes.DeterministicPass
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.NormalizePass
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.*
 
-class NontermValidationPasses(
+class ApplyWitnessPasses(
   parseContext: ParseContext,
   uniqueWarningLogger: Logger,
 ) :
   ProcedurePassManager(
     listOf(
+      NormalizePass(), // needed after lbe, TODO
+      DeterministicPass(), // needed after lbe, TODO
+      EliminateSelfLoops(),
       ApplyWitnessPass(parseContext),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO

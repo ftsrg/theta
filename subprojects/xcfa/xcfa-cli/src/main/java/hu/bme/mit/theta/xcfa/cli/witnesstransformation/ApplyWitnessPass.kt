@@ -90,29 +90,76 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
     val allWaypoints = cycleWaypoints + followWaypoints
 
     // collect edges corresponding to recurrence location, cycle and follow waypoints
-    val edgesToKeep = mutableSetOf<XcfaEdge>()
+    val edgesOfWaypoints = mutableSetOf<XcfaEdge>()
     for (wayPoint in allWaypoints) {
       println("witness wp: ${wayPoint.location.line}, ${wayPoint.location.column}")
       for (edge in builder.getEdges()) {
         val edgeMetadata = (edge.metadata as? CMetaData)
         if (edgeMetadata == null) {
-          edgesToKeep.add(edge) // if no metadata, keep it ?
+          edgesOfWaypoints.add(edge) // if no metadata, keep it ?
         }
         if (edgeMetadata != null && edgeMetadata.lineNumberStart == wayPoint.location.line) {
-          if (edgeMetadata.colNumberStart!=null && edgeMetadata.colNumberStart!!+1 == wayPoint.location.column) edgesToKeep.add(edge)
+          if (edgeMetadata.colNumberStart!=null && edgeMetadata.colNumberStart!!+1 == wayPoint.location.column) edgesOfWaypoints.add(edge)
         }
         if (edgeMetadata != null && edgeMetadata.lineNumberStop == wayPoint.location.line) {
-          if (edgeMetadata.colNumberStop!=null && edgeMetadata.colNumberStop!!+1 == wayPoint.location.column) edgesToKeep.add(edge)
+          if (edgeMetadata.colNumberStop!=null && edgeMetadata.colNumberStop!!+1 == wayPoint.location.column) edgesOfWaypoints.add(edge)
         }
       }
     }
 
-    val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesToKeep }.toSet()
+    // all edges, from which the waypoint edges are not reachable, should be removed
+    val edgesToKeep = mutableSetOf<XcfaEdge>()
+    val dist = floydWarshall(builder.getEdges())
+    for (edgeToKeep in edgesOfWaypoints) {
+      for (edge in builder.getEdges()) {
+        if (dist[edge to edgeToKeep] != -1) {
+          edgesToKeep.add(edge)
+        }
+      }
+    }
+    edgesToKeep.addAll(edgesOfWaypoints)
+
+    val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesOfWaypoints }.toMutableSet()
 
     for(edge in edgesToDelete) {
       builder.removeEdge(edge)
     }
 
     return builder
+  }
+
+  private val inf = -1
+
+  fun floydWarshall(edges: Set<XcfaEdge>): Map<Pair<XcfaEdge, XcfaEdge>, Int> {
+    // Initialize distance map for edges
+    val dist = mutableMapOf<Pair<XcfaEdge, XcfaEdge>, Int>()
+
+    for (edge1 in edges) {
+      for (edge2 in edges) {
+        dist[edge1 to edge2] = if (edge1 == edge2) 0 else inf
+      }
+    }
+
+    // Set initial distances based on connectivity
+    for (edge1 in edges) {
+      for (edge2 in edges) {
+        if (edge1.target == edge2.source) {  // Can transition from edge1 to edge2
+          dist[edge1 to edge2] = 1  // Assuming unit weight
+        }
+      }
+    }
+
+    // Floyd-Warshall Algorithm for edge connectivity
+    for (k in edges) {
+      for (i in edges) {
+        for (j in edges) {
+          if (dist[i to k]!! != inf && dist[k to j]!! != inf) {
+            dist[i to j] = minOf(dist[i to j]!!, dist[i to k]!! + dist[k to j]!!)
+          }
+        }
+      }
+    }
+
+    return dist
   }
 }
