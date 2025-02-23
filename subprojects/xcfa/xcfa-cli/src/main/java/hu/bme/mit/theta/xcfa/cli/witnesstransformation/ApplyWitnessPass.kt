@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
+import com.charleskorn.kaml.YamlPathSegment.Root.location
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.witnesses.*
@@ -92,7 +94,6 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
     // collect edges corresponding to recurrence location, cycle and follow waypoints
     val edgesOfWaypoints = mutableSetOf<XcfaEdge>()
     for (wayPoint in allWaypoints) {
-      println("witness wp: ${wayPoint.location.line}, ${wayPoint.location.column}")
       for (edge in builder.getEdges()) {
         val edgeMetadata = (edge.metadata as? CMetaData)
         if (edgeMetadata == null) {
@@ -119,10 +120,33 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
     }
     edgesToKeep.addAll(edgesOfWaypoints)
 
-    val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesOfWaypoints }.toMutableSet()
+    val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesToKeep }.toMutableSet()
 
     for(edge in edgesToDelete) {
       builder.removeEdge(edge)
+    }
+
+    val locsToDelete = mutableSetOf<XcfaLocation>()
+
+    var foundOne = true
+    while(foundOne) {
+      foundOne = false
+      for(location in builder.getLocs()) {
+        if(!location.initial && (location.incomingEdges.isEmpty() || location.outgoingEdges.isEmpty())) {
+          foundOne = true
+          locsToDelete.add(location)
+          break
+        }
+      }
+      for(loc in locsToDelete) {
+        for (edge in loc.incomingEdges) {
+          builder.removeEdge(edge)
+        }
+        for (edge in loc.outgoingEdges) {
+          builder.removeEdge(edge)
+        }
+        builder.removeLoc(loc)
+      }
     }
 
     return builder
@@ -154,7 +178,11 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
       for (i in edges) {
         for (j in edges) {
           if (dist[i to k]!! != inf && dist[k to j]!! != inf) {
-            dist[i to j] = minOf(dist[i to j]!!, dist[i to k]!! + dist[k to j]!!)
+            if (dist[i to j]!! == inf) {
+              dist[i to j] = dist[i to k]!! + dist[k to j]!!
+            } else {
+              dist[i to j] = minOf(dist[i to j]!!, dist[i to k]!! + dist[k to j]!!)
+            }
           }
         }
       }
