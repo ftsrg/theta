@@ -13,10 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa
 
 import com.charleskorn.kaml.Yaml
-import hu.bme.mit.theta.xcfa.cli.witnesses.*
+import hu.bme.mit.theta.xcfa.witnesses.*
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.encodeToString
 import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -55,12 +58,12 @@ class YamlParseTest {
           ),
       )
 
-    val result = WitnessYamlConfig.encodeToString(YamlWitness.serializer(), witness)
+    val result = WitnessYamlConfig.encodeToString(listOf(witness))
 
     System.err.println(result)
 
-    val parsedPack = Yaml.default.decodeFromString(YamlWitness.serializer(), result)
+    val parsedPack = WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), result)
 
-    Assertions.assertEquals(witness, parsedPack)
+    Assertions.assertEquals(listOf(witness), parsedPack)
   }
 }
