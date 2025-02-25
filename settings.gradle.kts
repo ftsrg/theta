@@ -43,6 +43,7 @@ include(
     "xcfa/xcfa",
     "xcfa/cat",
     "xcfa/c2xcfa",
+    "xcfa/btor2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
     "xcfa/xcfa2chc",

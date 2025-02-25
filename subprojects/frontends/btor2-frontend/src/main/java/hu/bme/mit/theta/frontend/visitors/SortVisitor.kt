@@ -16,8 +16,9 @@
 
 package hu.bme.mit.theta.frontend.visitors
 
-import gen.Btor2BaseVisitor
-import gen.Btor2Parser
+
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 
 class SortVisitor : Btor2BaseVisitor<Btor2Sort>() {

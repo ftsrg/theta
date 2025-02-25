@@ -13,18 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+plugins {
+    id("kotlin-common")
+}
 
-package hu.bme.mit.theta.frontend.visitors
-
-import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
-import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
-
-class IdVisitor : Btor2BaseVisitor<UInt>() {
-    override fun visitNid(ctx: Btor2Parser.NidContext): UInt {
-        return ctx.NUM().text.toUInt()
-    }
-
-    override fun visitSid(ctx: Btor2Parser.SidContext): UInt {
-        return ctx.NUM().text.toUInt()
-    }
+dependencies {
+    implementation(project(":theta-common"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-xcfa"))
+    implementation(project(":theta-btor2-frontend"))
 }
