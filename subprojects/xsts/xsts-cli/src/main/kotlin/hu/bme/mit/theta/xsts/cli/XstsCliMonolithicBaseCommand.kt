@@ -37,7 +37,7 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
   protected val reversed: Boolean by option(help = "Reversed state space exploration").flag()
   protected val livenessToSafety: Boolean by
     option(help = "Use liveness to safety transformation").flag()
-  protected val abstracted: Boolean by option(help = "Wrap analysis in CEGAR loop").flag()
+  protected val cegar: Boolean by option(help = "Wrap analysis in CEGAR loop").flag()
 
   fun createMonolithicExpr(xsts: XSTS): MonolithicExpr {
     var monolithicExpr = xsts.toMonolithicExpr()
@@ -56,7 +56,7 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
     builder:
       (MonolithicExpr) -> SafetyChecker<W, out Trace<out ExprState, out ExprAction>, UnitPrec>,
   ): SafetyChecker<*, *, *> =
-    if (abstracted) {
+    if (cegar) {
       MonolithicExprCegarChecker(monolithicExpr, builder, logger, solverFactory)
     } else {
       builder(monolithicExpr)

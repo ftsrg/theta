@@ -92,8 +92,8 @@ public class MonolithicExprCegarChecker<W extends Proof>
 
                 final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
                         ExprTraceFwBinItpChecker.create(
-                                abstractMonolithicExpr.getInitExpr(),
-                                Not(abstractMonolithicExpr.getPropExpr()),
+                                model.getInitExpr(),
+                                Not(model.getPropExpr()),
                                 solverFactory.createItpSolver());
 
                 if (trace != null) {
