@@ -140,7 +140,7 @@ public class StsCli {
     Boolean cegar = false;
 
     @Parameter(
-            names = {"--cegar"},
+            names = {"--liveness-to-safety"},
             description = "Use liveness to safety transformation")
     Boolean livenessToSafety = false;
 
