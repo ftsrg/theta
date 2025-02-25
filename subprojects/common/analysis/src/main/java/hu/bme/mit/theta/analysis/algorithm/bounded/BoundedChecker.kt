@@ -101,6 +101,15 @@ constructor(
     while (!shouldGiveUp(iteration)) {
       iteration++
       logger.write(Logger.Level.MAINSTEP, "Starting iteration $iteration\n")
+      if (!kindEnabled(iteration) && imcEnabled(iteration) && bmcEnabled()) {
+        logger.writeln(
+          Logger.Level.INFO,
+          "BMC and IMC together are inefficient; IMC includes BMC as a substep.",
+        )
+      }
+      check((!kindEnabled(iteration)) || bmcEnabled()) {
+        "K-Induction needs BMC as an external substep."
+      }
 
       exprs.add(PathUtils.unfold(monolithicExpr.transExpr, indices.last()))
 

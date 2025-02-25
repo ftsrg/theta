@@ -139,7 +139,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                 new ProofObligation(
                                         new HashSet<>(counterExample), currentFrameNumber));
                 if (proofObligationsList != null) {
-                    var trace = traceMaker(proofObligationsList);
+                    var trace = makeTrace(proofObligationsList);
                     final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
                     logger.writeln(Logger.Level.RESULT, result.toString());
                     return result;
@@ -277,7 +277,9 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                         List.of(
                                 valToState.apply(
                                         PathUtils.extractValuation(
-                                                solver.getModel(), 0, monolithicExpr.getVars()))),
+                                                solver.getModel(),
+                                                monolithicExpr.getInitOffsetIndex(),
+                                                monolithicExpr.getVars()))),
                         List.of());
             }
         }
@@ -295,9 +297,23 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                     valToState.apply(
                                             PathUtils.extractValuation(
                                                     solver.getModel(),
-                                                    0,
+                                                    monolithicExpr.getInitOffsetIndex(),
+                                                    monolithicExpr.getVars())),
+                                    valToState.apply(
+                                            PathUtils.extractValuation(
+                                                    solver.getModel(),
+                                                    monolithicExpr.getTransOffsetIndex(),
                                                     monolithicExpr.getVars()))),
-                            List.of());
+                            List.of(
+                                    biValToAction.apply(
+                                            PathUtils.extractValuation(
+                                                    solver.getModel(),
+                                                    monolithicExpr.getInitOffsetIndex(),
+                                                    monolithicExpr.getVars()),
+                                            PathUtils.extractValuation(
+                                                    solver.getModel(),
+                                                    monolithicExpr.getTransOffsetIndex(),
+                                                    monolithicExpr.getVars()))));
                 } else {
                     return null;
                 }
@@ -368,7 +384,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         return false;
     }
 
-    public Trace<S, A> traceMaker(LinkedList<ProofObligation> forwardProofObligations) {
+    public Trace<S, A> makeTrace(LinkedList<ProofObligation> forwardProofObligations) {
         var abstractStates = new ArrayList<ExprState>();
         var abstractActions = new ArrayList<ExprAction>();
         while (!forwardProofObligations.isEmpty()) {

@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.bounded;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.*;
@@ -92,7 +92,9 @@ public class MonolithicExprCegarChecker<W extends Proof>
 
                 final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
                         ExprTraceFwBinItpChecker.create(
-                                True(), True(), solverFactory.createItpSolver());
+                                abstractMonolithicExpr.getInitExpr(),
+                                Not(abstractMonolithicExpr.getPropExpr()),
+                                solverFactory.createItpSolver());
 
                 if (trace != null) {
                     logger.write(Logger.Level.VERBOSE, "\tFound trace: %s\n", trace);

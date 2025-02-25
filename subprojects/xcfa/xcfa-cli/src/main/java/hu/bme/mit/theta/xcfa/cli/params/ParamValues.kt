@@ -71,6 +71,7 @@ enum class Backend {
   LAZY,
   PORTFOLIO,
   MDD,
+  IC3,
   NONE,
 }
 
