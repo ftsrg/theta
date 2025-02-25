@@ -39,6 +39,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationP
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -53,7 +54,7 @@ import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, Void> {
+public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, UnitPrec> {
 
     private final Expr<BoolType> initRel;
     private final VarIndexing initIndexing;
@@ -129,7 +130,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
     }
 
     @Override
-    public SafetyResult<MddProof, MddCex> check(Void input) {
+    public SafetyResult<MddProof, MddCex> check(UnitPrec prec) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
