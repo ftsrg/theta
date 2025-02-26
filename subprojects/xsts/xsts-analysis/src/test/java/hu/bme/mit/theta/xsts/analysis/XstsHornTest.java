@@ -19,10 +19,15 @@ import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
+import hu.bme.mit.theta.analysis.algorithm.chc.Invariant;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
@@ -562,6 +567,12 @@ public class XstsHornTest {
         }
     }
 
+    private static Expr<BoolType> getBody(Expr<?> func) {
+        if (func instanceof FuncLitExpr<?, ?> funcLitExpr) {
+            return getBody(funcLitExpr.getResult());
+        } else return (Expr<BoolType>) func;
+    }
+
     @Test(timeout = 10_000)
     public void test() throws Exception {
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
@@ -594,6 +605,11 @@ public class XstsHornTest {
 
             if (safe) {
                 assertTrue(status.isSafe());
+                var safe = (Invariant) status.asSafe().getProof();
+                System.err.println(
+                        safe.component1().values().stream()
+                                .map(XstsHornTest::getBody)
+                                .reduce(BoolExprs::Or));
             } else {
                 assertTrue(status.isUnsafe());
             }
