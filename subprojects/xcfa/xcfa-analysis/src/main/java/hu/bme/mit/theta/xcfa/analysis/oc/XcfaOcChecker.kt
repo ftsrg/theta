@@ -50,6 +50,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
@@ -66,7 +67,7 @@ class XcfaOcChecker(
   nonPermissiveValidation: Boolean,
   autoConflictConfig: AutoConflictFinderConfig,
   autoConflictBound: Int,
-  private val memoryModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
+  private val memoryModel: XcfaOcMemoryConsistencyModel = SC,
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
@@ -119,7 +120,9 @@ class XcfaOcChecker(
         logger.mainStep("Start checking...")
         val status: SolverStatus?
         val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
-        val checkerTime = measureTime { status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss) }
+        val checkerTime = measureTime {
+          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss, memoryModel == SC)
+        }
         if (ocChecker !is XcfaOcCorrectnessValidator)
           logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
         logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
@@ -144,7 +147,7 @@ class XcfaOcChecker(
           status?.isSat == true -> {
             if (ocChecker is XcfaOcCorrectnessValidator)
               return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-            if (memoryModel == XcfaOcMemoryConsistencyModel.SC) {
+            if (memoryModel == SC) {
               val trace =
                 XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
               SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())

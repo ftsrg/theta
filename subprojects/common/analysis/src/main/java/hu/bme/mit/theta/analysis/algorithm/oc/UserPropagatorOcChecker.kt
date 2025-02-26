@@ -102,6 +102,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
+    isSc: Boolean,
   ): SolverStatus? {
     writes =
       events.keys.associateWith { v ->

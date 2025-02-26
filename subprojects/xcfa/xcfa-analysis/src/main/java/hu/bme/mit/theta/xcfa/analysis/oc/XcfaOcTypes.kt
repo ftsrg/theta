@@ -62,10 +62,12 @@ internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> =
     else -> setOf(Or(map { it.toAnd() }))
   }
 
-/**
- * Takes a relation matrix and a list of initial pairs in the relation and closes the relation.
- */
-internal fun close(relation: Array<Array<Boolean>>, initials: List<Pair<Int, Int>>, cycleAllowed: Boolean = true) {
+/** Takes a relation matrix and a list of initial pairs in the relation and closes the relation. */
+internal fun close(
+  relation: Array<Array<Boolean>>,
+  initials: List<Pair<Int, Int>>,
+  cycleAllowed: Boolean = true,
+) {
   val toClose = initials.toMutableList()
   while (toClose.isNotEmpty()) {
     val (from, to) = toClose.removeFirst()

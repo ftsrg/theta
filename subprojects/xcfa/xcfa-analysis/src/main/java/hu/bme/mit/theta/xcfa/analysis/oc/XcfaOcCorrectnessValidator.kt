@@ -60,6 +60,7 @@ internal class XcfaOcCorrectnessValidator(
     ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
+    isSc: Boolean,
   ): SolverStatus? {
     val flatRfs = rfs.values.flatten()
     val flatEvents = events.values.flatMap { it.values.flatten() }
@@ -109,7 +110,7 @@ internal class XcfaOcCorrectnessValidator(
         measureTime {
             result =
               if (permissive) {
-                ocChecker.check(events, pos, ppos, rfs, wss)
+                ocChecker.check(events, pos, ppos, rfs, wss, isSc)
               } else {
                 nonOcSolver.check()
               }

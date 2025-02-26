@@ -60,6 +60,7 @@ interface OcChecker<E : Event> {
     ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
+    isSc: Boolean,
   ): SolverStatus?
 
   /**
