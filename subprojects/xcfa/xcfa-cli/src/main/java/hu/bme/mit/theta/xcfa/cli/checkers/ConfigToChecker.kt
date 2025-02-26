@@ -58,5 +58,6 @@ fun getChecker(
           SafetyResult.unknown()
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
+      Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
     }
   }

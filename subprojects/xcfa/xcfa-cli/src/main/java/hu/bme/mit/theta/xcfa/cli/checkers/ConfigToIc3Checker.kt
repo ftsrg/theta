@@ -21,22 +21,24 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
+import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
+import hu.bme.mit.theta.xcfa.cli.params.Ic3Config
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getBoundedChecker(
+fun getIc3Checker(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -44,50 +46,46 @@ fun getBoundedChecker(
   logger: Logger,
 ): SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
-  val boundedConfig = config.backendConfig.specConfig as BoundedConfig
+  val ic3Config = config.backendConfig.specConfig as Ic3Config
+  val solverFactory: SolverFactory = getSolver(ic3Config.solver, ic3Config.validateSolver)
 
   val monolithicExpr =
     xcfa
       .toMonolithicExpr(parseContext)
-      .let { if (boundedConfig.reversed) it.createReversed() else it }
       .let {
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
           it.copy(propExpr = True()).createMonolithicL2S()
         else it
       }
+      .let { if (ic3Config.reversed) it.createReversed() else it }
 
-  val baseChecker = { nonlfPath: Boolean ->
-    { monolithicExpr: MonolithicExpr ->
-      BoundedChecker(
-        monolithicExpr = monolithicExpr,
-        bmcSolver =
-          tryGetSolver(boundedConfig.bmcConfig.bmcSolver, boundedConfig.bmcConfig.validateBMCSolver)
-            ?.createSolver(),
-        bmcEnabled = { !boundedConfig.bmcConfig.disable },
-        lfPathOnly = { !nonlfPath },
-        itpSolver =
-          tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
-            ?.createItpSolver(),
-        imcEnabled = { !boundedConfig.itpConfig.disable },
-        indSolver =
-          tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)
-            ?.createSolver(),
-        kindEnabled = { !boundedConfig.indConfig.disable },
-        valToState = monolithicExpr.valToState,
-        biValToAction = monolithicExpr.biValToAction,
-        logger = logger,
-      )
-    }
+  val baseChecker = { monolithicExpr: MonolithicExpr ->
+    Ic3Checker(
+      /* monolithicExpr = */ monolithicExpr,
+      /* forwardTrace = */ true,
+      /* solverFactory = */ solverFactory,
+      /* valToState = */ { valuation -> monolithicExpr.valToState.invoke(valuation) },
+      /* biValToAction = */ { v1: Valuation, v2: Valuation ->
+        monolithicExpr.biValToAction.invoke(v1, v2)
+      },
+      /* formerFramesOpt = */ true,
+      /* unSatOpt = */ true,
+      /* notBOpt = */ true,
+      /* propagateOpt = */ true,
+      /* filterOpt = */ true,
+      /* propertyOpt = */ true,
+      /* logger = */ logger,
+    )
   }
 
   val checker =
-    if (boundedConfig.cegar) {
+    if (ic3Config.cegar) {
       val cegarChecker =
         MonolithicExprCegarChecker(
           monolithicExpr,
-          baseChecker(true),
+          baseChecker,
           logger,
-          getSolver(boundedConfig.bmcConfig.bmcSolver, false),
+          getSolver(ic3Config.solver, false),
         )
       object :
         SafetyChecker<
@@ -98,8 +96,7 @@ fun getBoundedChecker(
         override fun check(
           initPrec: XcfaPrec<PtrPrec<PredPrec>>
         ): SafetyResult<EmptyProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
-          val result =
-            cegarChecker.check(initPrec.p.innerPrec) // states are PredState, actions are XcfaAction
+          val result = cegarChecker.check() // states are PredState, actions are XcfaAction
           if (result.isUnsafe) {
             val cex = result.asUnsafe().cex as Trace<PredState, XcfaAction>
             val locs =
@@ -114,21 +111,13 @@ fun getBoundedChecker(
 
         override fun check():
           SafetyResult<EmptyProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
-          return check(boundedConfig.initPrec.predPrec(xcfa))
+          return check(ic3Config.initPrec.predPrec(xcfa))
         }
       }
     } else {
-      baseChecker(boundedConfig.bmcConfig.nonLfPath)(monolithicExpr)
+      baseChecker(monolithicExpr)
     }
 
   return checker
     as SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
-}
-
-private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {
-  try {
-    return getSolver(name, validate)
-  } catch (e: Throwable) {
-    return null
-  }
 }
