@@ -64,6 +64,12 @@ public final class AigerParser {
             nAndGates = parseInt(header[5]);
 
             if (nOutputs != 1) {
+                if (nOutputs == 0) {
+                    // retry using new format
+                    nOutputs =
+                            parseInt(header[6]); // this is actually a 'bad' state, hopefully it's
+                    // alright to use
+                }
                 throw new UnsupportedOperationException(
                         "Only a single output variable is supported.");
             }
