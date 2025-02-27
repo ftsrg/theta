@@ -49,7 +49,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
@@ -88,11 +87,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             SolverPool solverPool,
             Logger logger) {
         return new MddChecker<A>(
-                monolithicExpr,
-                variableOrdering,
-                solverPool,
-                logger,
-                IterationStrategy.GSAT);
+                monolithicExpr, variableOrdering, solverPool, logger, IterationStrategy.GSAT);
     }
 
     public static <A extends ExprAction> MddChecker<A> create(
@@ -102,11 +97,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
             Logger logger,
             IterationStrategy iterationStrategy) {
         return new MddChecker<A>(
-                monolithicExpr,
-                variableOrdering,
-                solverPool,
-                logger,
-                iterationStrategy);
+                monolithicExpr, variableOrdering, solverPool, logger, iterationStrategy);
     }
 
     @Override
@@ -120,6 +111,12 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
+        variableOrdering.forEach(
+                v ->
+                        checkArgument(
+                                monolithicExpr.getVars().contains(v),
+                                "Variable ordering contains variable not present in vars List"));
+
         checkArgument(
                 variableOrdering.size() == Containers.createSet(variableOrdering).size(),
                 "Variable ordering contains duplicates");
@@ -131,14 +128,14 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 domainSize = 0;
             }
 
-            stateOrder.createOnTop(
-                    MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
             final var index = monolithicExpr.getTransOffsetIndex().get(v);
             if (index > 0) {
                 transOrder.createOnTop(
                         MddVariableDescriptor.create(
-                                v.getConstDecl(monolithicExpr.getTransOffsetIndex().get(v)), domainSize));
+                                v.getConstDecl(monolithicExpr.getTransOffsetIndex().get(v)),
+                                domainSize));
             } else {
                 transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize));
                 identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
@@ -159,7 +156,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
 
         final Expr<BoolType> transExpr =
                 And(
-                        PathUtils.unfold(monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)),
+                        PathUtils.unfold(
+                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)),
                         And(identityExprs));
         final MddHandle transitionNode =
                 transSig.getTopVariableHandle()
@@ -191,7 +189,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
 
         logger.write(Level.INFO, "Enumerated state-space");
 
-        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
+        final Expr<BoolType> negatedPropExpr =
+                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
         final MddHandle propNode =
                 stateSig.getTopVariableHandle()
                         .checkInNode(
