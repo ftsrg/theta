@@ -18,6 +18,7 @@ package hu.bme.mit.theta.sts.analysis;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
@@ -89,22 +90,10 @@ public class StsMddCheckerTest {
 
         final SafetyResult<MddProof, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+            final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
             final MddChecker<ExprAction> checker =
                     MddChecker.create(
-                            sts.getInit(),
-                            VarIndexingFactory.indexing(0),
-                            new ExprAction() {
-                                @Override
-                                public Expr<BoolType> toExpr() {
-                                    return sts.getTrans();
-                                }
-
-                                @Override
-                                public VarIndexing nextIndexing() {
-                                    return VarIndexingFactory.indexing(1);
-                                }
-                            },
-                            sts.getProp(),
+                            monolithicExpr,
                             List.copyOf(sts.getVars()),
                             solverPool,
                             logger,
