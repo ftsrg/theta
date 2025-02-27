@@ -64,15 +64,6 @@ fun getMddChecker(
       }
       .let { if (mddConfig.reversed) it.createReversed() else it }
 
-  val initRel = monolithicExpr.initExpr
-  val initIndexing = monolithicExpr.initOffsetIndex
-  val transRel =
-    object : ExprAction {
-      override fun toExpr() = monolithicExpr.transExpr
-
-      override fun nextIndexing() = monolithicExpr.transOffsetIndex
-    }
-  val safetyProperty = monolithicExpr.propExpr
   val stmts =
     xcfa.procedures
       .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
@@ -81,11 +72,8 @@ fun getMddChecker(
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  return MddChecker.create(
-    initRel,
-    initIndexing,
-    transRel,
-    safetyProperty,
+  return MddChecker.create<ExprAction>(
+    monolithicExpr,
     variableOrder,
     solverPool,
     logger,
