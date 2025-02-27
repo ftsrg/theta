@@ -23,8 +23,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-
 import java.util.Objects;
 
 public class EnumEqExpr extends EqExpr<EnumType> {

@@ -80,20 +80,20 @@ public class XstsIc3CheckerTest {
                         "src/test/resources/property/x_even.prop",
                         true
                     },
-//                                                            {
-//
-//                     "src/test/resources/model/cross_with.xsts",
-//
-//                     "src/test/resources/property/cross.prop",
-//                                                                false
-//                                                            },
-//                                                            {
-//
-//                     "src/test/resources/model/cross_without.xsts",
-//
-//                     "src/test/resources/property/cross.prop",
-//                                                                false
-//                                                            },
+                    //                                                            {
+                    //
+                    //                     "src/test/resources/model/cross_with.xsts",
+                    //
+                    //                     "src/test/resources/property/cross.prop",
+                    //                                                                false
+                    //                                                            },
+                    //                                                            {
+                    //
+                    //                     "src/test/resources/model/cross_without.xsts",
+                    //
+                    //                     "src/test/resources/property/cross.prop",
+                    //                                                                false
+                    //                                                            },
                     {
                         "src/test/resources/model/choices.xsts",
                         "src/test/resources/property/choices.prop",

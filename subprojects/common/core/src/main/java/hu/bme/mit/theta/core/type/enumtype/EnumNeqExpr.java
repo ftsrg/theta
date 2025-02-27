@@ -23,7 +23,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Objects;
 
 public final class EnumNeqExpr extends NeqExpr<EnumType> {
