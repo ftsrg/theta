@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Floats, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Tue, 2024-08-13 08:29:01 UTC
+tool:                    Theta 6.5.1
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az888-803
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2934.257 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Floats
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                     status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------------------------
+float-benchs/float_double.yml                                 true                             5.29        2.86        None
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml               TIMEOUT                         20.55       13.76        None
+float-benchs/float_int_inv_square.yml                         false(unreach-call)              6.76        3.22        None
+floats-cdfpl/square_3.yml                                     TIMEOUT                         20.90       16.15        None
+floats-cbmc-regression/float11.yml                            true                             5.40        3.01        None
+float-benchs/nan_double.yml                                   false(unreach-call)              6.20        3.15        None
+float-benchs/Rump_double.yml                                  true                             6.48        3.23        None
+floats-cdfpl/newton_2_2.yml                                   TIMEOUT                         20.87       16.28        None
+floats-cdfpl/sine_3.yml                                       false(unreach-call)             14.11       10.36        None
+float-benchs/zonotope_3.c.v+lhb-reducer.yml                   TIMEOUT                         21.07       12.68        None
+float-benchs/filter2.yml                                      TIMEOUT                         20.85       12.16        None
+floats-cdfpl/sine_4.yml                                       TIMEOUT                         20.78       16.53        None
+floats-esbmc-regression/Float_div.yml                         true                            11.14        4.52        None
+floats-cdfpl/newton_2_7.yml                                   false(unreach-call)              9.46        5.51        None
+float-benchs/rlim_invariant.c.v+lhb-reducer.yml               TIMEOUT                         20.12        8.41        None
+float-benchs/zonotope_tight.yml                               TIMEOUT                         20.89       13.55        None
+loop-floats-scientific-comp/loop1-1.yml                       TIMEOUT                         21.03        9.79        None
+neural-networks/tanh_1_unsafe.c-amalgamation.yml              ERROR (frontend failed)          4.51        1.62        None
+floats-cdfpl/newton_2_5.yml                                   TIMEOUT                         20.98       15.94        None
+float-benchs/rlim_invariant.c.v+nlh-reducer.yml               TIMEOUT                         20.67        9.63        None
+floats-esbmc-regression/Double_div_bad.i.p+cfa-reducer.yml    TIMEOUT                         20.41        8.49        None
+floats-cdfpl/newton_2_6.yml                                   TIMEOUT                         20.91       16.16        None
+floats-cdfpl/sine_1.yml                                       false(unreach-call)             10.84        7.23        None
+float-benchs/rlim_invariant.c.p+cfa-reducer.yml               TIMEOUT                         20.07        8.55        None
+floats-cbmc-regression/float-to-double1.yml                   TIMEOUT                         20.39       13.90        None
+floats-cdfpl/newton_2_3.yml                                   TIMEOUT                         20.87       16.27        None
+floats-cdfpl/newton_3_2.yml                                   TIMEOUT                         20.99       15.91        None
+floats-cdfpl/newton_3_6.yml                                   TIMEOUT                         20.95       16.05        None
+neural-networks/lunarlander_26_safe.c-amalgamation.yml        ERROR (frontend failed)          6.37        2.21        None
+float-benchs/exp_loop.yml                                     TIMEOUT                         11.20       60.61        None
+floats-cbmc-regression/float14.yml                            true                             7.82        3.55        None
+float-benchs/filter2_reinit.yml                               TIMEOUT                         20.25       14.58        None
+floats-cdfpl/newton_1_6.yml                                   false(unreach-call)              8.26        4.56        None
+floats-cdfpl/square_2.yml                                     TIMEOUT                         20.76       16.60        None
+float-benchs/filter1.c.v+nlh-reducer.yml                      TIMEOUT                         20.70       10.90        None
+float-benchs/zonotope_3.yml                                   TIMEOUT                         20.67        9.08        None
+floats-cbmc-regression/float6.yml                             true                             7.66        3.47        None
+floats-esbmc-regression/Float_div_bad.yml                     false(unreach-call)             10.96        4.71        None
+floats-esbmc-regression/rounding_functions.yml                true                             8.77        3.64        None
+float-benchs/zonotope_3.c.p+cfa-reducer.yml                   TIMEOUT                         20.59       11.51        None
+floats-cdfpl/square_1.yml                                     false(unreach-call)             19.46       15.69        None
+float-benchs/nan_float_range.yml                              TIMEOUT                         20.29       14.12        None
+float-benchs/loop-1.yml                                       TIMEOUT                         21.64        8.93        None
+float-benchs/Muller_Kahan.yml                                 TIMEOUT                         21.11       11.16        None
+float-benchs/feedback_diverge.yml                             TIMEOUT                         20.08        9.59        None
+float-benchs/interpolation.c.v+nlh-reducer.yml                TIMEOUT                          7.24       60.80        None
+floats-cdfpl/newton_1_3.yml                                   TIMEOUT                         20.80       16.49        None
+floats-cdfpl/sine_7.yml                                       TIMEOUT                         20.81       16.46        None
+float-benchs/rlim_invariant.yml                               TIMEOUT                         20.91       12.78        None
+floats-cdfpl/newton_2_1.yml                                   TIMEOUT                         20.88       16.26        None
+---------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                     done                           125.25      634.36           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:              15
+    correct true:        7
+    correct false:       8
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              35
+  Score:                22 (max: 86)

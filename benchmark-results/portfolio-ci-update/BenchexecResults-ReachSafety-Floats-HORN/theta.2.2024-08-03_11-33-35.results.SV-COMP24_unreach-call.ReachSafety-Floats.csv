@@ -1,0 +1,53 @@
+tool		Theta 6.3.4	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4
+run set		SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+float-benchs/float_double.yml	true	Parsing OK	15.130558	7.851184759000034	536.023040
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml	true	Parsing OK	16.263923	8.784486248999997	532.500480
+float-benchs/float_int_inv_square.yml	false	Parsing OK	15.581025	8.556101522000063	548.683776
+floats-cdfpl/square_3.yml	false	Parsing OK	15.439635	8.520025951000093	524.853248
+floats-cbmc-regression/float11.yml	true	Parsing OK	13.138442	7.6529469680000375	496.599040
+float-benchs/nan_double.yml	false	Parsing OK	14.968956	8.17916449400002	523.190272
+float-benchs/Rump_double.yml	true	Parsing OK	15.211122	8.432306874000005	526.483456
+floats-cdfpl/newton_2_2.yml	true	Parsing OK	16.742839	8.58932788300001	541.978624
+floats-cdfpl/sine_3.yml	false	Parsing OK	14.734168	8.382655667999984	533.131264
+float-benchs/zonotope_3.c.v+lhb-reducer.yml	true	TIMEOUT	20.277674	11.291511065999998	726.511616
+float-benchs/filter2.yml	true	Parsing OK	17.831714	9.05568750100008	563.875840
+floats-cdfpl/sine_4.yml	true	Parsing OK	15.850994	8.582080244000053	546.246656
+floats-esbmc-regression/Float_div.yml	true	Parsing OK	14.926688	8.059982096999988	532.455424
+floats-cdfpl/newton_2_7.yml	false	Parsing OK	16.76141	8.52863684099998	546.058240
+float-benchs/rlim_invariant.c.v+lhb-reducer.yml	true	TIMEOUT (Parsing OK)	20.325137	9.59932456599995	632.676352
+float-benchs/zonotope_tight.yml	true	Parsing OK	15.859987	8.480115138999963	546.205696
+loop-floats-scientific-comp/loop1-1.yml	true	Parsing OK	16.668859	8.958378260000018	544.239616
+neural-networks/tanh_1_unsafe.c-amalgamation.yml	false	ERROR (frontend failed)	5.142239	1.824392911000018	296.443904
+floats-cdfpl/newton_2_5.yml	true	Parsing OK	16.671467	8.79309311999998	551.907328
+float-benchs/rlim_invariant.c.v+nlh-reducer.yml	true	TIMEOUT	21.597681	10.003963440999996	634.994688
+floats-esbmc-regression/Double_div_bad.i.p+cfa-reducer.yml	false	Parsing OK	14.936274	7.836782240000048	527.003648
+floats-cdfpl/newton_2_6.yml	false	Parsing OK	16.155814	8.498652137000022	542.289920
+floats-cdfpl/sine_1.yml	false	Parsing OK	14.932237	8.278370499999937	540.987392
+float-benchs/rlim_invariant.c.p+cfa-reducer.yml	true	Parsing OK	18.456971	9.249906708000026	560.861184
+floats-cbmc-regression/float-to-double1.yml	true	Parsing OK	15.397122	8.269427150999945	598.429696
+floats-cdfpl/newton_2_3.yml	true	Parsing OK	16.751824	8.76739395300001	547.897344
+floats-cdfpl/newton_3_2.yml	true	Parsing OK	16.676044	8.825029596000036	561.254400
+floats-cdfpl/newton_3_6.yml	false	Parsing OK	16.684222	8.865908158000025	548.864000
+neural-networks/lunarlander_26_safe.c-amalgamation.yml	true	ERROR (frontend failed)	6.252794	2.1899207440000055	420.786176
+float-benchs/exp_loop.yml	true	Parsing OK	10.251608	4.763830119999966	361.992192
+floats-cbmc-regression/float14.yml	true	Parsing OK	16.72777	8.313701294999987	625.762304
+float-benchs/filter2_reinit.yml	true	Parsing OK	17.618836	8.987225499999909	551.571456
+floats-cdfpl/newton_1_6.yml	false	Parsing OK	16.116461	8.602015319999964	542.326784
+floats-cdfpl/square_2.yml	false	Parsing OK	14.530533	8.329755354999975	538.046464
+float-benchs/filter1.c.v+nlh-reducer.yml	true	Parsing OK	19.83371	9.973394815000006	600.092672
+float-benchs/zonotope_3.yml	true	Parsing OK	18.059004	8.846949160000008	554.557440
+floats-cbmc-regression/float6.yml	true	Parsing OK	18.114829	9.063484132999974	550.846464
+floats-esbmc-regression/Float_div_bad.yml	false	Parsing OK	15.292689	8.434969379999984	529.485824
+floats-esbmc-regression/rounding_functions.yml	true	TIMEOUT	20.5124	8.23708862500007	744.820736
+float-benchs/zonotope_3.c.p+cfa-reducer.yml	true	TIMEOUT (Parsing OK)	20.188839	9.719552627999974	641.323008
+floats-cdfpl/square_1.yml	false	Parsing OK	15.309866	8.60819974399999	537.198592
+float-benchs/nan_float_range.yml	true	Parsing OK	14.902057	8.028226393000068	533.970944
+float-benchs/loop-1.yml	true	Parsing OK	15.443832	8.394793880000066	543.211520
+float-benchs/Muller_Kahan.yml	true	TIMEOUT	22.367088	9.772990184000037	657.121280
+float-benchs/feedback_diverge.yml	true	Parsing OK	16.344975	8.767426813999919	550.666240
+float-benchs/interpolation.c.v+nlh-reducer.yml	true	Parsing OK	11.95427	5.600829175000058	425.398272
+floats-cdfpl/newton_1_3.yml	true	Parsing OK	15.783287	8.614137146999951	551.444480
+floats-cdfpl/sine_7.yml	true	Parsing OK	15.220098	8.499720349999961	541.925376
+float-benchs/rlim_invariant.yml	true	Parsing OK	17.751747	8.908495140000014	573.247488
+floats-cdfpl/newton_2_1.yml	true	Parsing OK	16.262447	8.788778460000003	544.739328

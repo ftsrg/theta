@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Sun, 2025-02-23 21:19:34 UTC
+tool:                    Theta 6.11.0
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1048-16
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.517 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (generic error, before parsing finished)        0.20        0.28        None
+and-02.yml                            true                             9.16       10.79        None
+and-03-false.yml                      true                             9.72        4.48        None
+and-03.yml                            true                             8.23        4.24        None
+and-04-false.yml                      true                             9.94        4.67        None
+and-04.yml                            true                            10.36        4.82        None
+and-05-false.yml                      true                             9.82        4.53        None
+and-05.yml                            true                             9.93        4.54        None
+and-06.yml                            true                            10.00        4.68        None
+and-assume.yml                        ERROR (generic error, before parsing finished)        0.19        0.21        None
+consecutive-zero-bits-trailing.yml    ERROR (generic error, before parsing finished)        4.23        1.63        None
+counting-bits-BK.yml                  true                            10.77        5.01        None
+counting-bits-BK1.yml                 true                             9.25        4.66        None
+counting-bits-set.yml                 ERROR (frontend failed, before parsing finished)        5.29        2.18        None
+not-01.yml                            ERROR (frontend failed, before parsing finished)        5.91        2.24        None
+not-02-false.yml                      ERROR (frontend failed, before parsing finished)        5.91        2.26        None
+not-02.yml                            ERROR (frontend failed, before parsing finished)        5.92        2.23        None
+not-03-false.yml                      ERROR (frontend failed, before parsing finished)        5.22        2.17        None
+not-03.yml                            ERROR (frontend failed, before parsing finished)        5.71        2.21        None
+not-04-false.yml                      ERROR (frontend failed, before parsing finished)        4.95        2.14        None
+not-04.yml                            ERROR (frontend failed, before parsing finished)        5.12        2.15        None
+not-05-false.yml                      ERROR (frontend failed, before parsing finished)        5.72        2.22        None
+not-05.yml                            ERROR (frontend failed, before parsing finished)        5.12        2.12        None
+or-01.yml                             true                            10.28        4.88        None
+or-02.yml                             true                             8.43        4.42        None
+or-03.yml                             true                             8.45        4.40        None
+or-04.yml                             ERROR (generic error, before parsing finished)        8.04        4.29        None
+or-05-false.yml                       true                            10.28        4.81        None
+or-05.yml                             true                             8.47        4.46        None
+or-06.yml                             true                             9.09        4.39        None
+parity0.yml                           true                            10.30        5.05        None
+parity1.yml                           true                            10.21        4.81        None
+reverse-bits1.yml                     ERROR (generic error, before parsing finished)        3.42        1.49        None
+xor-01.yml                            true                             9.34        4.60        None
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           253.42      127.84           -
+
+Statistics:             34 Files
+  correct:              14
+    correct true:       14
+    correct false:       0
+  incorrect:             5
+    incorrect true:      5
+    incorrect false:     0
+  unknown:              15
+  Score:              -132 (max: 57)

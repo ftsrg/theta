@@ -1,0 +1,8 @@
+tool	Theta 5.1.0	Theta 5.1.0	Theta 5.1.0	Theta 5.1.0
+run set	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	Parsing OK	5.946241	2.6637025429999994	378.257408
+pthread-atomic/read_write_lock-1.yml	true	9.411177	3.712605712000027	502.722560
+pthread-wmm/rfi003_tso.yml	true	10.622134	4.112897971999985	499.834880
+pthread/lazy01.yml	true	7.441764	3.1936141429999907	440.111104
+pthread-wmm/mix000.oepc.yml	true	10.318235	3.941088458999957	501.211136
