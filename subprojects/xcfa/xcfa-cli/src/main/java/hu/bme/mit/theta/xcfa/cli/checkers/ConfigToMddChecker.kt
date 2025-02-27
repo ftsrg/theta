@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.createAbstract
+import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
@@ -25,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomSt
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
@@ -49,11 +51,18 @@ fun getMddChecker(
   val monolithicExpr =
     xcfa
       .toMonolithicExpr(parseContext, initValues = true)
-      .let { if (mddConfig.reversed) it.createReversed() else it }
       .let {
-        if (mddConfig.cegar) it.createAbstract(mddConfig.initPrec.predPrec(xcfa).p.innerPrec)
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          it.copy(propExpr = True()).createMonolithicL2S()
         else it
       }
+      .let {
+        if (mddConfig.cegar) {
+          TODO("MDD cannot return traces, and thus, --cegar won't work yet.")
+          it.createAbstract(mddConfig.initPrec.predPrec(xcfa).p.innerPrec)
+        } else it
+      }
+      .let { if (mddConfig.reversed) it.createReversed() else it }
 
   val initRel = monolithicExpr.initExpr
   val initIndexing = monolithicExpr.initOffsetIndex

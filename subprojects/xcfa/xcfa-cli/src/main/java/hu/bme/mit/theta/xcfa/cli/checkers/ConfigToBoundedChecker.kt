@@ -49,12 +49,12 @@ fun getBoundedChecker(
   val monolithicExpr =
     xcfa
       .toMonolithicExpr(parseContext)
-      .let { if (boundedConfig.reversed) it.createReversed() else it }
       .let {
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
           it.copy(propExpr = True()).createMonolithicL2S()
         else it
       }
+      .let { if (boundedConfig.reversed) it.createReversed() else it }
 
   val baseChecker = { nonlfPath: Boolean ->
     { monolithicExpr: MonolithicExpr ->
