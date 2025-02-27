@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -34,8 +35,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
@@ -175,20 +174,7 @@ public class MddCheckerTest {
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddChecker<ExprAction> checker =
                     MddChecker.create(
-                            initExpr,
-                            VarIndexingFactory.indexing(0),
-                            new ExprAction() {
-                                @Override
-                                public Expr<BoolType> toExpr() {
-                                    return tranExpr;
-                                }
-
-                                @Override
-                                public VarIndexing nextIndexing() {
-                                    return VarIndexingFactory.indexing(1);
-                                }
-                            },
-                            propExpr,
+                            new MonolithicExpr(initExpr, tranExpr, propExpr),
                             List.copyOf(ExprUtils.getVars(List.of(initExpr, tranExpr, propExpr))),
                             solverPool,
                             logger,
