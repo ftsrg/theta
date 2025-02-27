@@ -67,6 +67,7 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.*;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -143,6 +144,11 @@ public class StsCli {
             names = {"--liveness-to-safety"},
             description = "Use liveness to safety transformation")
     Boolean livenessToSafety = false;
+
+    @Parameter(
+            names = {"--smt-home"},
+            description = "Solver installation directory")
+    String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
     @Parameter(
             names = {"--solver"},
@@ -258,7 +264,7 @@ public class StsCli {
         SolverManager.registerSolverManager(
                 hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
         SolverManager.registerSolverManager(
-                SmtLibSolverManager.create(SmtLibSolverManager.HOME, logger));
+                SmtLibSolverManager.create(Path.of(solverHome), logger));
         SolverManager.registerSolverManager(JavaSMTSolverManager.create());
     }
 
