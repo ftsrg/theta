@@ -80,20 +80,20 @@ public class XstsIc3CheckerTest {
                         "src/test/resources/property/x_even.prop",
                         true
                     },
-                    //                                        {
-                    //
-                    // "src/test/resources/model/cross_with.xsts",
-                    //
-                    // "src/test/resources/property/cross.prop",
-                    //                                            false
-                    //                                        },
-                    //                                        {
-                    //
-                    // "src/test/resources/model/cross_without.xsts",
-                    //
-                    // "src/test/resources/property/cross.prop",
-                    //                                            false
-                    //                                        },
+//                                                            {
+//
+//                     "src/test/resources/model/cross_with.xsts",
+//
+//                     "src/test/resources/property/cross.prop",
+//                                                                false
+//                                                            },
+//                                                            {
+//
+//                     "src/test/resources/model/cross_without.xsts",
+//
+//                     "src/test/resources/property/cross.prop",
+//                                                                false
+//                                                            },
                     {
                         "src/test/resources/model/choices.xsts",
                         "src/test/resources/property/choices.prop",
@@ -269,6 +269,12 @@ public class XstsIc3CheckerTest {
                         Z3LegacySolverFactory.getInstance(),
                         v -> monolithicExpr.getValToState().invoke(v),
                         (v1, v2) -> monolithicExpr.getBiValToAction().invoke(v1, v2),
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
+                        true,
                         logger);
 
         final SafetyResult<?, ?> status = checker.check(null);

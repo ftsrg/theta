@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+import java.util.Objects;
+
 public final class EnumNeqExpr extends NeqExpr<EnumType> {
 
     private static final int HASH_SEED = 7212;
@@ -75,5 +77,18 @@ public final class EnumNeqExpr extends NeqExpr<EnumType> {
     public LitExpr<BoolType> eval(Valuation val) {
         return EnumLitExpr.neq(
                 (EnumLitExpr) getLeftOp().eval(val), (EnumLitExpr) getRightOp().eval(val));
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final EnumNeqExpr that = (EnumNeqExpr) obj;
+            return Objects.equals(this.getLeftOp(), that.getLeftOp())
+                    && Objects.equals(this.getRightOp(), that.getRightOp());
+        } else {
+            return false;
+        }
     }
 }

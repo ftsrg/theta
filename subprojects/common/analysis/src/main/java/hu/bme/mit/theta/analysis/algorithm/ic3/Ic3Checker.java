@@ -270,8 +270,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
 
     public Trace<S, A> checkFirst() {
         try (var wpp = new WithPushPop(solver)) {
-            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-            solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), monolithicExpr.getInitOffsetIndex()));
+            solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), monolithicExpr.getInitOffsetIndex()));
             if (solver.check().isSat()) {
                 return Trace.of(
                         List.of(
@@ -285,8 +285,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         }
         if (propertyOpt) {
             try (var wpp = new WithPushPop(solver)) {
-                solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-                solver.track(PathUtils.unfold(monolithicExpr.getTransExpr(), 0));
+                solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), monolithicExpr.getInitOffsetIndex()));
+                solver.track(PathUtils.unfold(monolithicExpr.getTransExpr(), monolithicExpr.getInitOffsetIndex()));
                 solver.track(
                         PathUtils.unfold(
                                 Not(monolithicExpr.getPropExpr()),
@@ -353,9 +353,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
         currentFrameNumber++;
         if (propertyOpt) {
-            for (int j = 1; j <= currentFrameNumber; j++) {
-                frames.get(j).refine(monolithicExpr.getPropExpr());
-            }
+           frames.get(currentFrameNumber).refine(monolithicExpr.getPropExpr());
         }
 
         if (propagateOpt) {
