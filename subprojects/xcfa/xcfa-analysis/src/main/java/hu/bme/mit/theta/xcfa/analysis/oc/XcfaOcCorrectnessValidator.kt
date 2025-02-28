@@ -28,14 +28,13 @@ import kotlin.time.measureTime
 internal class XcfaOcCorrectnessValidator(
   private val ocChecker: OcChecker<E>,
   private val inputConflictClauseFile: String,
-  private val threads: Set<Thread>,
   private val permissive: Boolean = true,
   private val logger: Logger,
 ) : OcChecker<E> {
 
   private var clauseValidationTime = 0L
-  private lateinit var exactPo: XcfaExactPo
   private lateinit var nonOcSolver: Solver
+  private lateinit var ppos: BooleanGlobalRelation
 
   init {
     if (!permissive) {
@@ -59,8 +58,10 @@ internal class XcfaOcCorrectnessValidator(
       wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     val flatRfs = rfs.values.flatten()
+    val flatWss = wss.values.flatten()
     val flatEvents = events.values.flatMap { it.values.flatten() }
-    val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
+    this.ppos = ppos
+    val parser = XcfaOcReasonParser(flatRfs union flatWss, flatEvents.toSet())
     var parseFailure = 0
     val propagatedClauses: List<Reason>
     logger.info(
@@ -78,8 +79,6 @@ internal class XcfaOcCorrectnessValidator(
           }
           .inWholeMilliseconds
     )
-
-    clauseValidationTime += measureTime { exactPo = XcfaExactPo(threads) }.inWholeMilliseconds
 
     val validConflicts: List<Reason>
     clauseValidationTime +=
@@ -154,7 +153,10 @@ internal class XcfaOcCorrectnessValidator(
     return possibleOrders.any { isPo(it.first.last().to, it.first.first().from) } // check cylce
   }
 
-  private fun isPo(from: E, to: E): Boolean = exactPo.isPo(from, to)
+  private fun isPo(from: E, to: E): Boolean {
+    if(from.clkId == to.clkId) return true
+    return ppos[from.clkId, to.clkId]
+  }
 
   private fun isRf(rf: Relation<*>): Boolean =
     rf.from.const.varDecl == rf.to.const.varDecl &&

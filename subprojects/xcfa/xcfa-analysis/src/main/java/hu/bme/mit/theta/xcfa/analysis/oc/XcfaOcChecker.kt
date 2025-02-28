@@ -89,14 +89,7 @@ class XcfaOcChecker(
   private val ocChecker: OcChecker<E> =
     decisionProcedure.checker(memoryModel).let { ocChecker ->
       if (conflictInput == null) ocChecker
-      else
-        XcfaOcCorrectnessValidator(
-          ocChecker,
-          conflictInput,
-          threads,
-          !nonPermissiveValidation,
-          logger,
-        )
+      else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation, logger)
     }
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
