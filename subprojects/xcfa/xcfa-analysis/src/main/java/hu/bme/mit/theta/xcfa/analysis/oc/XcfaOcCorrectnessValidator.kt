@@ -26,7 +26,7 @@ import java.io.File
 import kotlin.time.measureTime
 
 internal class XcfaOcCorrectnessValidator(
-  decisionProcedure: OcDecisionProcedureType,
+  private val ocChecker: OcChecker<E>,
   private val inputConflictClauseFile: String,
   private val threads: Set<Thread>,
   private val permissive: Boolean = true,
@@ -35,13 +35,10 @@ internal class XcfaOcCorrectnessValidator(
 
   private var clauseValidationTime = 0L
   private lateinit var exactPo: XcfaExactPo
-  private lateinit var ocChecker: OcChecker<E>
   private lateinit var nonOcSolver: Solver
 
   init {
-    if (permissive) {
-      ocChecker = decisionProcedure.checker()
-    } else {
+    if (!permissive) {
       nonOcSolver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
     }
   }
@@ -55,12 +52,11 @@ internal class XcfaOcCorrectnessValidator(
     if (permissive) ocChecker.getPropagatedClauses() else listOf()
 
   override fun check(
-    events: Map<VarDecl<*>, Map<Int, List<E>>>,
-    pos: List<Relation<E>>,
-    ppos: Array<Array<Boolean>>,
-    rfs: Map<VarDecl<*>, Set<Relation<E>>>,
-    wss: Map<VarDecl<*>, Set<Relation<E>>>,
-    isSc: Boolean,
+      events: Map<VarDecl<*>, Map<Int, List<E>>>,
+      pos: List<Relation<E>>,
+      ppos: Array<Array<Boolean>>,
+      rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+      wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     val flatRfs = rfs.values.flatten()
     val flatEvents = events.values.flatMap { it.values.flatten() }
@@ -110,7 +106,7 @@ internal class XcfaOcCorrectnessValidator(
         measureTime {
             result =
               if (permissive) {
-                ocChecker.check(events, pos, ppos, rfs, wss, isSc)
+                ocChecker.check(events, pos, ppos, rfs, wss)
               } else {
                 nonOcSolver.check()
               }

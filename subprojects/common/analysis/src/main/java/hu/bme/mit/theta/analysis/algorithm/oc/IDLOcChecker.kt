@@ -29,9 +29,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 
-class IDLOcChecker<E : Event> : OcChecker<E> {
-  private var isSc: Boolean = false
-
+class IDLOcChecker<E : Event>(private val isSc: Boolean = false) : OcChecker<E> {
   override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
 
   private var clkGlobalCnt = 0
@@ -100,9 +98,7 @@ class IDLOcChecker<E : Event> : OcChecker<E> {
     ppos: Array<Array<Boolean>>,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
-    isSc: Boolean,
   ): SolverStatus? {
-    this.isSc = isSc
     this.events = events.values.flatMap { it.values }.flatten()
     hbVars = Array(Event.clkIdSize) { arrayOfNulls(Event.clkIdSize) }
 

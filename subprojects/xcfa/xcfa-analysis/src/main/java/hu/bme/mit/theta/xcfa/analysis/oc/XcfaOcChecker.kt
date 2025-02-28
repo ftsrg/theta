@@ -87,15 +87,17 @@ class XcfaOcChecker(
   private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
   private val ocChecker: OcChecker<E> =
-    if (conflictInput == null) decisionProcedure.checker()
-    else
-      XcfaOcCorrectnessValidator(
-        decisionProcedure,
-        conflictInput,
-        threads,
-        !nonPermissiveValidation,
-        logger,
-      )
+    decisionProcedure.checker(memoryModel).let { ocChecker ->
+      if (conflictInput == null) ocChecker
+      else
+        XcfaOcCorrectnessValidator(
+          ocChecker,
+          conflictInput,
+          threads,
+          !nonPermissiveValidation,
+          logger,
+        )
+    }
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
@@ -121,7 +123,7 @@ class XcfaOcChecker(
         val status: SolverStatus?
         val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
         val checkerTime = measureTime {
-          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss, memoryModel == SC)
+          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
         }
         if (ocChecker !is XcfaOcCorrectnessValidator)
           logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
