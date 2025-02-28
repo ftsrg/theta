@@ -25,24 +25,20 @@ import java.util.*
 class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
 
   override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
-  private var relations: Array<Array<Reason?>>? = null
+  private var relations: GlobalRelation? = null
 
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
-    ppos: Array<Array<Boolean>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     var modifiableRels = rfs.values.flatten() // modifiable relation vars
     val flatEvents = events.values.flatMap { it.values.flatten() }
     check(ppos.size == flatEvents.size)
-    val initialRels =
-      Array(flatEvents.size) { i ->
-        Array<Reason?>(flatEvents.size) { j -> if (ppos[i][j]) PoReason else null }
-      }
     val decisionStack = Stack<OcAssignment<E>>()
-    decisionStack.push(OcAssignment(initialRels)) // not really a decision point (initial)
+    decisionStack.push(OcAssignment(getInitialRels(ppos))) // not really a decision point (initial)
     var finalWsCheck = false
 
     dpllLoop@ while (solver.check().isSat) { // DPLL loop
@@ -118,7 +114,7 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
     return solver.status
   }
 
-  override fun getRelations(): Array<Array<Reason?>>? = relations?.copy()
+  override fun getHappensBefore(): GlobalRelation? = relations?.copy()
 
   override fun propagate(reason: Reason?): Boolean {
     reason ?: return false

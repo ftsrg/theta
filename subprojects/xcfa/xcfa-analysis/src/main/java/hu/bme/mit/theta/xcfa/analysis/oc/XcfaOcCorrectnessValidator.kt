@@ -46,7 +46,7 @@ internal class XcfaOcCorrectnessValidator(
   override val solver
     get() = if (permissive) ocChecker.solver else nonOcSolver
 
-  override fun getRelations() = if (permissive) ocChecker.getRelations() else null
+  override fun getHappensBefore() = if (permissive) ocChecker.getHappensBefore() else null
 
   override fun getPropagatedClauses(): List<Reason> =
     if (permissive) ocChecker.getPropagatedClauses() else listOf()
@@ -54,7 +54,7 @@ internal class XcfaOcCorrectnessValidator(
   override fun check(
       events: Map<VarDecl<*>, Map<Int, List<E>>>,
       pos: List<Relation<E>>,
-      ppos: Array<Array<Boolean>>,
+      ppos: BooleanGlobalRelation,
       rfs: Map<VarDecl<*>, Set<Relation<E>>>,
       wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {

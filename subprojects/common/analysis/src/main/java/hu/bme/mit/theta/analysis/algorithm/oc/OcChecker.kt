@@ -57,16 +57,20 @@ interface OcChecker<E : Event> {
   fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
-    ppos: Array<Array<Boolean>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus?
 
   /**
    * Get the discovered relations represented by their reasons between the events (or more exactly
-   * between atomic blocks, see Event::clkId)
+   * between atomic blocks, see Event::clkId). You may index the relation by clkIds:
+   * ```
+   * val relation = checker.getHappensBefore()
+   * val reason = relation[clkId1, clkId2]
+   * ```
    */
-  fun getRelations(): Array<Array<Reason?>>?
+  fun getHappensBefore(): GlobalRelation?
 
   /**
    * Get the list of propagated conflict clauses (their negations were added to the solver) in the
@@ -87,80 +91,44 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
 
   protected abstract fun propagate(reason: Reason?): Boolean
 
-  protected fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? =
+  protected fun derive(rels: GlobalRelation, rf: Relation<E>, w: E): Reason? =
     when {
       !rf.from.sameMemory(w) -> null // different referenced memory locations
       rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
       w.clkId == rf.from.clkId || w.clkId == rf.to.clkId ->
         null // w within an atomic block with one of the rf ends
 
-      rels[w.clkId][rf.to.clkId] != null -> { // WS derivation
-        val reason = WriteSerializationReason(rf, w, rels[w.clkId][rf.to.clkId]!!)
-        setAndClose(rels, w.clkId, rf.from.clkId, reason)
+      rels[w.clkId, rf.to.clkId] != null -> { // WS derivation
+        val reason = WriteSerializationReason(rf, w, rels[w.clkId, rf.to.clkId]!!)
+        rels.close(w.clkId, rf.from.clkId, reason)
       }
 
-      rels[rf.from.clkId][w.clkId] != null -> { // FR derivation
-        val reason = FromReadReason(rf, w, rels[rf.from.clkId][w.clkId]!!)
-        setAndClose(rels, rf.to.clkId, w.clkId, reason)
+      rels[rf.from.clkId, w.clkId] != null -> { // FR derivation
+        val reason = FromReadReason(rf, w, rels[rf.from.clkId, w.clkId]!!)
+        rels.close(rf.to.clkId, w.clkId, reason)
       }
 
       else -> null
     }
 
-  protected fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation<E>): Reason? {
+  protected fun setAndClose(rels: GlobalRelation, rel: Relation<E>): Reason? {
     if (rel.from.clkId == rel.to.clkId) return null // within an atomic block
-    return setAndClose(
-      rels,
+    return rels.close(
       rel.from.clkId,
       rel.to.clkId,
       if (rel.type == RelationType.PO) PoReason else RelationReason(rel),
     )
   }
 
-  private fun setAndClose(
-    rels: Array<Array<Reason?>>,
-    from: Int,
-    to: Int,
-    reason: Reason,
-  ): Reason? {
-    if (from == to) return reason // cycle (self-loop) found
-    val toClose = mutableListOf(from to to to reason)
-    while (toClose.isNotEmpty()) {
-      val (fromTo, r) = toClose.removeFirst()
-      val (i1, i2) = fromTo
-      check(i1 != i2)
-      if (rels[i1][i2] != null) continue
-
-      rels[i1][i2] = r
-      rels[i2].forEachIndexed { i2next, b ->
-        if (b != null && rels[i1][i2next] == null) { // i2 -> i2next, not i1 -> i2next
-          val combinedReason = r and b
-          if (i1 == i2next) return combinedReason // cycle (self-loop) found
-          toClose.add(i1 to i2next to combinedReason)
-        }
-      }
-      rels.forEachIndexed { i1previous, b ->
-        if (
-          b[i1] != null && rels[i1previous][i2] == null
-        ) { // i1previous -> i1, not i1previous -> i2
-          val combinedReason = r and b[i1]!!
-          if (i1previous == i2) return combinedReason // cycle (self-loop) found
-          toClose.add(i1previous to i2 to combinedReason)
-        }
-      }
-    }
-    return null
-  }
-
   protected fun finalWsCheck(
-    rels: Array<Array<Reason?>>,
+    rels: GlobalRelation,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): List<Relation<E>> {
     val unassignedWss = mutableListOf<Relation<E>>()
     wss.forEach { (_, wsRels) ->
       unassignedWss.addAll(
         wsRels.filter { ws ->
-          rels[ws.from.clkId][ws.to.clkId] == null && rels[ws.to.clkId][ws.from.clkId] == null
+          rels[ws.from.clkId, ws.to.clkId] == null && rels[ws.to.clkId, ws.from.clkId] == null
         }
       )
     }
@@ -181,6 +149,9 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
 
     return unassignedWss
   }
+
+  protected fun getInitialRels(ppos: BooleanGlobalRelation) =
+    GlobalRelation(ppos.size) { (i, j) -> if (ppos[i, j]) PoReason else null }
 }
 
 /**
@@ -191,15 +162,12 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
  */
 open class OcAssignment<E : Event>
 internal constructor(
-  val rels: Array<Array<Reason?>>,
+  val rels: GlobalRelation,
   val relation: Relation<E>? = null,
   val event: E? = null,
 ) {
 
-  internal constructor(rels: Array<Array<Reason?>>, e: E) : this(rels.copy(), event = e)
+  internal constructor(rels: GlobalRelation, e: E) : this(rels.copy(), event = e)
 
-  internal constructor(
-    rels: Array<Array<Reason?>>,
-    r: Relation<E>,
-  ) : this(rels.copy(), relation = r)
+  internal constructor(rels: GlobalRelation, r: Relation<E>) : this(rels.copy(), relation = r)
 }

@@ -49,13 +49,13 @@ abstract class Event(
   val clkId: Int,
 ) {
   companion object {
-    var clkIdSize = 0
+    var clkSize = 0
       private set
   }
 
   init {
-    if (clkId >= clkIdSize) {
-      clkIdSize = clkId + 1
+    if (clkId >= clkSize) {
+      clkSize = clkId + 1
     }
   }
 

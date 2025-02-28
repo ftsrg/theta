@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
 import hu.bme.mit.theta.analysis.algorithm.oc.Event
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType.READ
@@ -27,7 +28,7 @@ internal fun interface MemoryConsistencyModelFilter {
     pos: MutableList<R>,
     wss: MutableMap<VarDecl<*>, MutableSet<R>>,
   ): Pair<
-    Array<Array<Boolean>>, // ppo
+    BooleanGlobalRelation, // ppo
     MutableMap<VarDecl<*>, MutableSet<R>>, // wss
   >
 }
@@ -49,46 +50,49 @@ enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyMo
 private fun getClosedPo(
   pos: MutableList<R>,
   events: Map<VarDecl<*>, Map<Int, List<E>>>,
-): Array<Array<Boolean>> {
+): BooleanGlobalRelation {
   val eventSize = events.values.sumOf { v -> v.values.sumOf { it.size } }
-  val rels = Array(eventSize) { Array(eventSize) { false } }
   val globalPos = pos.filter { it.from.clkId != it.to.clkId }
-  close(rels, globalPos.map { it.from.clkId to it.to.clkId }, false)
+  val rels = BooleanGlobalRelation(eventSize) { false }
+  rels.closeNoCycle(globalPos.map { Triple(it.from.clkId, it.to.clkId, true) })
   return rels
 }
 
-private typealias VarAccessMetadata = MutableMap<VarDecl<*>, MutableSet<EventType>>
+private class BlockMetadata(
+  val varAccess: MutableMap<VarDecl<*>, MutableSet<EventType>> = mutableMapOf(),
+  var pid: Int? = null,
+)
 
-private fun getBlockVarAccessMetadata(
-  events: Map<VarDecl<*>, Map<Int, List<E>>>
-): Array<VarAccessMetadata> {
-  val blockVarAccessMetadata = Array<VarAccessMetadata>(Event.clkIdSize) { mutableMapOf() }
+private fun getBlockMetadata(events: Map<VarDecl<*>, Map<Int, List<E>>>): Array<BlockMetadata> {
+  val blockMetadata = Array(Event.clkSize) { BlockMetadata() }
   events.values.forEach { v ->
     v.values.forEach { evs ->
       evs.forEach { e ->
-        blockVarAccessMetadata[e.clkId].getOrPut(e.const.varDecl) { mutableSetOf() }.add(e.type)
+        val metadata = blockMetadata[e.clkId]
+        metadata.varAccess.getOrPut(e.const.varDecl) { mutableSetOf() }.add(e.type)
+        check(metadata.pid == null || metadata.pid == e.pid)
+        metadata.pid = e.pid
       }
     }
   }
-  return blockVarAccessMetadata
+  return blockMetadata
 }
 
 private fun getPpo(
   events: Map<VarDecl<*>, Map<Int, List<E>>>,
   pos: MutableList<R>,
   filterOut: (VarDecl<*>, Set<EventType>, VarDecl<*>, Set<EventType>) -> Boolean,
-): Array<Array<Boolean>> {
+): BooleanGlobalRelation {
   val closedPos = getClosedPo(pos, events)
-  val blockVarAccessMetadata = getBlockVarAccessMetadata(events)
-  closedPos.forEachIndexed { i, other ->
-    other.forEachIndexed { j, b ->
-      val f = {
-        blockVarAccessMetadata[i].all { (v1, access1) ->
-          blockVarAccessMetadata[j].all { (v2, access2) -> filterOut(v1, access1, v2, access2) }
-        }
-      }
-      if (b && f()) closedPos[i][j] = false
+  val blockMetadata = getBlockMetadata(events)
+  fun ignore(i: Int, j: Int): Boolean {
+    val metadata1 = blockMetadata[i]
+    val metadata2 = blockMetadata[j]
+    if (metadata1.pid != metadata2.pid) return false
+    return metadata1.varAccess.all { (v1, access1) ->
+      metadata2.varAccess.all { (v2, access2) -> filterOut(v1, access1, v2, access2) }
     }
   }
+  closedPos.forEachPair { i, j, b -> if (b && ignore(i, j)) closedPos[i, j] = false }
   return closedPos
 }

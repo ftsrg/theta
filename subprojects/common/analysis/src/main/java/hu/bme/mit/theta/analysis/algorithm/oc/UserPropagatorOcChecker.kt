@@ -58,7 +58,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
   private constructor(
     stack: Stack<PropagatorOcAssignment<E>>,
     val solverLevel: Int,
-    rels: Array<Array<Reason?>> = stack.peek().rels.copy(),
+    rels: GlobalRelation = stack.peek().rels.copy(),
     relation: Relation<E>? = null,
     event: E? = null,
     val interference: Pair<E, E>? = null,
@@ -70,7 +70,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     constructor(
       stack: Stack<PropagatorOcAssignment<E>>,
-      rels: Array<Array<Reason?>>,
+      rels: GlobalRelation,
     ) : this(stack, 0, rels)
 
     constructor(
@@ -99,7 +99,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
-    ppos: Array<Array<Boolean>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
@@ -113,11 +113,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     this.wss = wss
     flatWss = wss.values.flatten()
 
-    val initialRels =
-      Array(Event.clkIdSize) { i ->
-        Array<Reason?>(Event.clkIdSize) { j -> if (ppos[i][j]) PoReason else null }
-      }
-    PropagatorOcAssignment(partialAssignment, initialRels)
+    PropagatorOcAssignment(partialAssignment, getInitialRels(ppos))
     registerExpressions()
 
     val result = solver.check()
@@ -125,7 +121,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     return finalWsCheck() ?: return result
   }
 
-  override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
+  override fun getHappensBefore(): GlobalRelation? = partialAssignment.lastOrNull()?.rels?.copy()
 
   private fun registerExpressions() {
     flatRfs.forEach { rf -> userPropagator.registerExpression(rf.declRef) }

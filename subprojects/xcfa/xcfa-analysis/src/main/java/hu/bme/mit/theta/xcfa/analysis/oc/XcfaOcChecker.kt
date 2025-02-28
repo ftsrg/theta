@@ -107,12 +107,13 @@ class XcfaOcChecker(
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
+        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
 
         // "Manually" add some conflicts
         logger.info(
           "Auto conflict time (ms): " +
             measureTime {
-                val conflicts = autoConflictFinder.findConflicts(threads, events, rfs, logger)
+                val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
                 logger.info("Auto conflicts: ${conflicts.size}")
               }
@@ -121,7 +122,6 @@ class XcfaOcChecker(
 
         logger.mainStep("Start checking...")
         val status: SolverStatus?
-        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
         val checkerTime = measureTime {
           status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
         }

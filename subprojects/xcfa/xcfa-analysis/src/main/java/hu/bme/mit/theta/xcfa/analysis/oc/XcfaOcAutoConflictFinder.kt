@@ -31,8 +31,8 @@ enum class AutoConflictFinderConfig(
 
 internal fun interface XcfaOcAutoConflictFinder {
   fun findConflicts(
-    threads: Set<Thread>,
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<R>>,
     logger: Logger,
   ): List<Reason>
@@ -40,9 +40,11 @@ internal fun interface XcfaOcAutoConflictFinder {
 
 internal val NoConflictFinder = XcfaOcAutoConflictFinder { _, _, _, _ -> emptyList() }
 
-internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { threads, events, rfs, logger ->
-  val exactPo = XcfaExactPo(threads)
-  val po = { from: E, to: E -> exactPo.isPo(from, to) }
+internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs, logger ->
+  val po = { from: E, to: E ->
+    if (from.clkId == to.clkId) true
+    else ppos[from.id, to.id]
+  }
   val flatRfs = rfs.values.flatten().toMutableList()
   val conflicts = mutableListOf<Reason>()
 
@@ -80,8 +82,8 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { threads, events, 
         .forEach { w ->
           findSimplePath(w, rf.to)?.let { wRfTo ->
             findSimplePath(rf.from, w)?.let { rfFromW ->
-              conflicts.add(WriteSerializationReason(rf, w, wRfTo) and rfFromW)
-              conflicts.add(FromReadReason(rf, w, rfFromW) and wRfTo)
+//              conflicts.add(WriteSerializationReason(rf, w, wRfTo) and rfFromW)
+//              conflicts.add(FromReadReason(rf, w, rfFromW) and wRfTo)
             }
           }
         }
@@ -89,20 +91,22 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { threads, events, 
   }
 
   logger.info("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
-  conflicts
+  conflicts.also { System.err.println(it) }
 }
 
 internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflictFinder {
 
   override fun findConflicts(
-    threads: Set<Thread>,
     events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
     logger: Logger,
   ): List<Reason> {
     val conflicts = mutableListOf<Reason>()
-    val exactPo = XcfaExactPo(threads)
-    val po = { from: E, to: E -> exactPo.isPo(from, to) }
+    val po = { from: E, to: E ->
+      if (from.clkId == to.clkId) true
+      else ppos[from.id, to.id]
+    }
 
     fun MutableSet<out Reason>.filterOutDirectConflicts() = removeIf {
       po(it.to, it.from).also { isPo -> if (isPo) conflicts.add(it) }

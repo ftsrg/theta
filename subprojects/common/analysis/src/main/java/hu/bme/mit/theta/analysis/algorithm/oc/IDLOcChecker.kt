@@ -95,19 +95,17 @@ class IDLOcChecker<E : Event>(private val isSc: Boolean = false) : OcChecker<E> 
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
-    ppos: Array<Array<Boolean>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     this.events = events.values.flatMap { it.values }.flatten()
-    hbVars = Array(Event.clkIdSize) { arrayOfNulls(Event.clkIdSize) }
+    hbVars = Array(Event.clkSize) { arrayOfNulls(Event.clkSize) }
 
     // PPO
-    ppos.forEachIndexed { i, row ->
-      row.forEachIndexed { j, enabled ->
-        if (enabled) {
-          addHb(null, i, j)
-        }
+    ppos.forEachPair { i, j, enabled ->
+      if (enabled) {
+        addHb(null, i, j)
       }
     }
     pos.forEach {
@@ -160,11 +158,11 @@ class IDLOcChecker<E : Event>(private val isSc: Boolean = false) : OcChecker<E> 
 
     // Transitivity
     if (!isSc) {
-      for (i in 0 until Event.clkIdSize) {
-        for (j in 0 until Event.clkIdSize) {
+      for (i in 0 until Event.clkSize) {
+        for (j in 0 until Event.clkSize) {
           if (i == j) continue
           val hbIJ = hbVar(i, j)
-          for (k in 0 until Event.clkIdSize) {
+          for (k in 0 until Event.clkSize) {
             if (i == k || j == k) continue
             val hbJK = hbVar(j, k)
             val hbIK = hbVar(i, k)
@@ -180,9 +178,9 @@ class IDLOcChecker<E : Event>(private val isSc: Boolean = false) : OcChecker<E> 
     return solver.check()
   }
 
-  override fun getRelations(): Array<Array<Reason?>> {
+  override fun getHappensBefore(): GlobalRelation {
     val model = solver.model.toMap()
-    val rels = Array(Event.clkIdSize) { Array<Reason?>(Event.clkIdSize) { null } }
+    val rels = GlobalRelation(Event.clkSize) { null }
     events.forEach { e1 ->
       events.forEach { e2 ->
         if (e1.clkId != e2.clkId) {
@@ -190,17 +188,17 @@ class IDLOcChecker<E : Event>(private val isSc: Boolean = false) : OcChecker<E> 
             val clk1 = model[e1.clkId.clkGlobalVar] as IntLitExpr
             val clk2 = model[e2.clkId.clkGlobalVar] as IntLitExpr
             if (clk1.value < clk2.value) {
-              rels[e1.clkId][e2.clkId] = UndetailedReason
+              rels[e1.clkId, e2.clkId] = UndetailedReason
             } else {
               check(clk1.value > clk2.value)
-              check(rels[e1.clkId][e2.clkId] == null)
+              check(rels[e1.clkId, e2.clkId] == null)
             }
           } else {
             val hb = model[hbVars[e1.clkId][e2.clkId]] as BoolLitExpr
             if (hb.value) {
-              rels[e1.clkId][e2.clkId] = UndetailedReason
+              rels[e1.clkId, e2.clkId] = UndetailedReason
             } else {
-              check(rels[e1.clkId][e2.clkId] == null)
+              check(rels[e1.clkId, e2.clkId] == null)
             }
           }
         }
