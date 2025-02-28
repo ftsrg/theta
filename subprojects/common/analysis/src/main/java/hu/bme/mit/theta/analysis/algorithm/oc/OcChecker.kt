@@ -23,14 +23,6 @@ import hu.bme.mit.theta.solver.SolverStatus
 internal inline fun <reified T> Array<Array<T?>>.copy(): Array<Array<T?>> =
   Array(size) { i -> Array(size) { j -> this[i][j] } }
 
-internal fun <E : Event> addWsCond(solver: Solver, ws1: Relation<E>, ws2: Relation<E>) {
-  val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
-  val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
-  solver.add(wsCond(ws1))
-  solver.add(wsCond(ws2))
-  solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
-}
-
 /**
  * This is an interface of an ordering consistency checker for concurrent systems (e.g., concurrent
  * programs).
@@ -39,7 +31,7 @@ internal fun <E : Event> addWsCond(solver: Solver, ws1: Relation<E>, ws2: Relati
  * checks whether there is an inconsistency (a cycle in the event graph based on the relations)
  * subject to the constraints added to the SMT-solver.
  */
-interface OcChecker<E : Event> {
+interface IOcChecker<E : Event> {
 
   val solver: Solver
 
@@ -79,11 +71,21 @@ interface OcChecker<E : Event> {
   fun getPropagatedClauses(): List<Reason>
 }
 
+abstract class OcChecker<E : Event> : IOcChecker<E> {
+  protected fun <E : Event> addWsCond(ws1: Relation<E>, ws2: Relation<E>) {
+    val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
+    val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
+    solver.add(wsCond(ws1))
+    solver.add(wsCond(ws2))
+    solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
+  }
+}
+
 /**
  * This interface implements basic utilities for an ordering consistency checker such as derivation
  * rules and transitive closure operations.
  */
-abstract class OcCheckerBase<E : Event> : OcChecker<E> {
+abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 
   protected val propagated: MutableList<Reason> = mutableListOf()
 
@@ -145,7 +147,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
       }
     }
 
-    pairs.forEach { (ws1, ws2) -> addWsCond(solver, ws1, ws2) }
+    pairs.forEach { (ws1, ws2) -> addWsCond(ws1, ws2) }
 
     return unassignedWss
   }

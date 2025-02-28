@@ -30,7 +30,7 @@ internal class XcfaOcCorrectnessValidator(
   private val inputConflictClauseFile: String,
   private val permissive: Boolean = true,
   private val logger: Logger,
-) : OcChecker<E> {
+) : OcChecker<E>() {
 
   private var clauseValidationTime = 0L
   private lateinit var nonOcSolver: Solver
@@ -51,11 +51,11 @@ internal class XcfaOcCorrectnessValidator(
     if (permissive) ocChecker.getPropagatedClauses() else listOf()
 
   override fun check(
-      events: Map<VarDecl<*>, Map<Int, List<E>>>,
-      pos: List<Relation<E>>,
-      ppos: BooleanGlobalRelation,
-      rfs: Map<VarDecl<*>, Set<Relation<E>>>,
-      wss: Map<VarDecl<*>, Set<Relation<E>>>,
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
+    rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+    wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     val flatRfs = rfs.values.flatten()
     val flatWss = wss.values.flatten()
@@ -94,6 +94,16 @@ internal class XcfaOcCorrectnessValidator(
     logger.info("Validated conflict clauses: ${validConflicts.size}")
     logger.info("Clause validation time (ms): $clauseValidationTime")
 
+    wss.forEach { (_, vWss) ->
+      val wsList = vWss.toList()
+      for ((index, ws1) in wsList.withIndex()) {
+        for (ws2 in wsList.subList(index + 1, wsList.size)) {
+          if (ws1.from == ws2.to && ws1.to == ws2.from) {
+            addWsCond(ws1, ws2)
+          }
+        }
+      }
+    }
     if (permissive) {
       ocChecker.solver.add(validConflicts.map { Not(it.expr) })
     } else {
@@ -154,7 +164,7 @@ internal class XcfaOcCorrectnessValidator(
   }
 
   private fun isPo(from: E, to: E): Boolean {
-    if(from.clkId == to.clkId) return true
+    if (from.clkId == to.clkId) return true
     return ppos[from.clkId, to.clkId]
   }
 
