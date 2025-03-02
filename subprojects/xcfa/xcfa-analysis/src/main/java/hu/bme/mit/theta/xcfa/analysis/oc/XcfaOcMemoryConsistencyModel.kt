@@ -35,8 +35,8 @@ internal fun interface MemoryConsistencyModelFilter {
 
 @Suppress("unused")
 enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyModelFilter) {
-  SC({ events, pos, wss -> getClosedPo(pos, events) to wss }),
-  WSC({ events, pos, _ -> getClosedPo(pos, events) to mutableMapOf() }),
+  SC({ _, pos, wss -> getClosedPo(pos) to wss }),
+  WSC({ _, pos, _ -> getClosedPo(pos) to mutableMapOf() }),
   TSO({ events, pos, wss ->
     getPpo(events, pos) { v1, access1, v2, access2 ->
       v1 != v2 && access1 == setOf(WRITE) && access2 == setOf(READ)
@@ -47,13 +47,9 @@ enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyMo
   }),
 }
 
-private fun getClosedPo(
-  pos: MutableList<R>,
-  events: Map<VarDecl<*>, Map<Int, List<E>>>,
-): BooleanGlobalRelation {
-  val eventSize = events.values.sumOf { v -> v.values.sumOf { it.size } }
+private fun getClosedPo(pos: MutableList<R>): BooleanGlobalRelation {
   val globalPos = pos.filter { it.from.clkId != it.to.clkId }
-  val rels = BooleanGlobalRelation(eventSize) { false }
+  val rels = BooleanGlobalRelation(Event.clkSize) { false }
   rels.closeNoCycle(globalPos.map { Triple(it.from.clkId, it.to.clkId, true) })
   return rels
 }
@@ -83,7 +79,7 @@ private fun getPpo(
   pos: MutableList<R>,
   filterOut: (VarDecl<*>, Set<EventType>, VarDecl<*>, Set<EventType>) -> Boolean,
 ): BooleanGlobalRelation {
-  val closedPos = getClosedPo(pos, events)
+  val closedPos = getClosedPo(pos)
   val blockMetadata = getBlockMetadata(events)
   fun ignore(i: Int, j: Int): Boolean {
     val metadata1 = blockMetadata[i]
