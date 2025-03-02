@@ -55,6 +55,10 @@ public final class AigerParser {
             int nLatches;
             int nOutputs;
             int nAndGates;
+            int nBadStates = 0;
+            int nConstraints = 0;
+            int nJusticeProps = 0;
+            int nFairnessConstraints = 0;
             // Parse header
             final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
             nNodes = parseInt(header[1]);
@@ -62,17 +66,14 @@ public final class AigerParser {
             nLatches = parseInt(header[3]);
             nOutputs = parseInt(header[4]);
             nAndGates = parseInt(header[5]);
+            if (header.length > 6) nBadStates = parseInt(header[6]);
+            if (header.length > 7) nConstraints = parseInt(header[7]);
+            if (header.length > 8) nJusticeProps = parseInt(header[8]);
+            if (header.length > 9) nFairnessConstraints = parseInt(header[9]);
 
-            if (nOutputs != 1) {
-                if (nOutputs == 0) {
-                    // retry using new format
-                    // this is actually a 'bad' state, hopefully it's alright to use
-                    nOutputs = parseInt(header[6]);
-                }
-                if (nOutputs != 1) {
-                    throw new UnsupportedOperationException(
-                            "Only a single output variable is supported.");
-                }
+            if ((nOutputs + nBadStates) != 1) {
+                throw new UnsupportedOperationException(
+                        "Only a single output variable / bad state is supported.");
             }
 
             final AigerNode[] nodes = new AigerNode[nNodes + 1];
