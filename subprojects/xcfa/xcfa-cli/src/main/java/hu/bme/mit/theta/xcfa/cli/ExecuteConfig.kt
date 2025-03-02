@@ -51,7 +51,7 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPasses
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPassesManager
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -179,7 +179,9 @@ fun frontend(
     parseContext.architecture = cConfig.architecture
   }
 
-  val xcfa = getXcfa(config, parseContext, logger, uniqueLogger).optimizeFurther(ApplyWitnessPasses(parseContext, logger))
+  val xcfa =
+    getXcfa(config, parseContext, logger, uniqueLogger)
+      .optimizeFurther(ApplyWitnessPassesManager(parseContext, logger))
 
   val mcm =
     if (config.inputConfig.catFile != null) {
