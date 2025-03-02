@@ -1,0 +1,201 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_no-overflow.NoOverflows-Main
+date:                    Sun, 2025-02-23 15:03:34 UTC
+tool:                    Theta 6.11.0
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1927-276
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3242.044 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow.NoOverflows-Main
+Run set 5 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                        status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+array-examples/data_structures_set_multi_proc_trivial_ground.yml                                                                                                 ERROR (generic error, before parsing finished)        3.87        5.83        None
+array-examples/sanfoundry_24-1.yml                                                                                                                               ERROR (generic error, before parsing finished)        3.58        1.58        None
+array-examples/sanfoundry_27_ground.yml                                                                                                                          ERROR (generic error, before parsing finished)        3.70        1.71        None
+array-examples/sorting_bubblesort_2_ground.yml                                                                                                                   ERROR (generic error, before parsing finished)        3.45        1.76        None
+array-examples/sorting_bubblesort_ground-1.yml                                                                                                                   ERROR (generic error, before parsing finished)        3.64        1.61        None
+array-examples/sorting_bubblesort_ground-2.yml                                                                                                                   ERROR (generic error, before parsing finished)        3.55        1.55        None
+array-examples/standard_compareModified_ground.yml                                                                                                               ERROR (generic error, before parsing finished)        3.68        1.76        None
+array-examples/standard_compare_ground.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.57        1.55        None
+array-examples/standard_copy1_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.54        1.54        None
+array-examples/standard_copy1_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.56        1.56        None
+array-examples/standard_copyInit_ground.yml                                                                                                                      ERROR (generic error, before parsing finished)        3.62        1.60        None
+array-examples/standard_find_ground-1.yml                                                                                                                        ERROR (generic error, before parsing finished)        3.57        1.58        None
+array-examples/standard_init1_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.69        1.61        None
+array-examples/standard_init1_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.60        1.57        None
+array-examples/standard_init2_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.60        1.77        None
+array-examples/standard_init2_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.39        1.70        None
+array-examples/standard_init3_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.70        1.83        None
+array-examples/standard_init3_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.65        1.65        None
+array-examples/standard_init4_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.63        1.59        None
+array-examples/standard_init4_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.68        1.60        None
+array-examples/standard_init5_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.40        1.68        None
+array-examples/standard_init5_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.59        1.53        None
+array-examples/standard_init6_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.50        1.73        None
+array-examples/standard_init6_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.62        1.56        None
+array-examples/standard_init7_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.54        1.53        None
+array-examples/standard_init7_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        4.51        1.73        None
+array-examples/standard_init8_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.63        1.63        None
+array-examples/standard_init8_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.78        1.68        None
+array-examples/standard_init9_ground-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.70        1.61        None
+array-examples/standard_init9_ground-2.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.62        1.64        None
+array-examples/standard_maxInArray_ground.yml                                                                                                                    ERROR (generic error, before parsing finished)        3.60        1.57        None
+array-examples/standard_minInArray_ground-1.yml                                                                                                                  ERROR (generic error, before parsing finished)        3.53        1.54        None
+array-examples/standard_minInArray_ground-2.yml                                                                                                                  ERROR (generic error, before parsing finished)        3.57        1.56        None
+array-examples/standard_palindrome_ground.yml                                                                                                                    ERROR (generic error, before parsing finished)        3.58        1.57        None
+array-examples/standard_password_ground.yml                                                                                                                      ERROR (generic error, before parsing finished)        3.47        1.52        None
+array-examples/standard_reverse_ground.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.55        1.54        None
+array-examples/standard_running-1.yml                                                                                                                            ERROR (generic error, before parsing finished)        3.60        1.57        None
+array-examples/standard_running-2.yml                                                                                                                            ERROR (generic error, before parsing finished)        3.53        1.51        None
+array-examples/standard_strcmp_ground.yml                                                                                                                        ERROR (generic error, before parsing finished)        3.56        1.60        None
+array-examples/standard_strcpy_ground-1.yml                                                                                                                      ERROR (generic error, before parsing finished)        3.50        1.54        None
+array-examples/standard_strcpy_original-2.yml                                                                                                                    ERROR (frontend failed, before parsing finished)        4.90        2.14        None
+array-industry-pattern/array_assert_loop_dep.yml                                                                                                                 ERROR (generic error, before parsing finished)        3.65        1.60        None
+array-industry-pattern/array_monotonic.yml                                                                                                                       ERROR (generic error, before parsing finished)        3.58        1.59        None
+array-industry-pattern/array_of_struct_break.yml                                                                                                                 ERROR (generic error, before parsing finished)        3.51        1.52        None
+array-industry-pattern/array_of_struct_loop_dep.yml                                                                                                              ERROR (generic error, before parsing finished)        3.59        1.58        None
+array-industry-pattern/array_of_struct_ptr_cond_init.yml                                                                                                         ERROR (generic error, before parsing finished)        3.54        1.52        None
+array-industry-pattern/array_of_struct_ptr_flag_init.yml                                                                                                         ERROR (generic error, before parsing finished)        3.66        1.60        None
+array-industry-pattern/array_of_struct_ptr_monotonic.yml                                                                                                         ERROR (generic error, before parsing finished)        3.68        1.64        None
+array-industry-pattern/array_of_struct_single_elem_init.yml                                                                                                      ERROR (generic error, before parsing finished)        3.75        1.61        None
+array-industry-pattern/array_ptr_partial_init.yml                                                                                                                ERROR (generic error, before parsing finished)        3.55        1.57        None
+array-industry-pattern/array_ptr_single_elem_init-1.yml                                                                                                          ERROR (generic error, before parsing finished)        3.60        1.56        None
+array-industry-pattern/array_ptr_single_elem_init-2.yml                                                                                                          ERROR (generic error, before parsing finished)        3.68        1.60        None
+array-industry-pattern/array_range_init.yml                                                                                                                      ERROR (generic error, before parsing finished)        3.62        1.56        None
+array-industry-pattern/array_single_elem_init.yml                                                                                                                ERROR (generic error, before parsing finished)        3.57        1.59        None
+reducercommutativity/max.yml                                                                                                                                     ERROR (generic error, before parsing finished)        3.57        1.55        None
+reducercommutativity/max05-1.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.62        1.60        None
+reducercommutativity/max10-1.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.65        1.56        None
+reducercommutativity/max20-1.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.61        1.56        None
+reducercommutativity/max40-1.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.76        1.66        None
+reducercommutativity/max60-2.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.70        1.62        None
+reducercommutativity/sep05-1.yml                                                                                                                                 ERROR (generic error, before parsing finished)        3.66        1.60        None
+array-tiling/mbpr2.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.60        1.61        None
+array-tiling/mbpr3.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.70        1.62        None
+array-tiling/mbpr4.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.73        1.64        None
+array-tiling/mbpr5.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.82        1.63        None
+array-tiling/mlceu.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.67        1.62        None
+array-tiling/mlceu2.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.50        1.55        None
+array-tiling/nr2.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.62        1.60        None
+array-tiling/nr3.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.54        1.56        None
+array-tiling/nr4.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.65        1.66        None
+array-tiling/nr5.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.59        1.63        None
+array-tiling/pnr2.yml                                                                                                                                            ERROR (generic error, before parsing finished)        3.76        1.65        None
+array-tiling/pnr3.yml                                                                                                                                            ERROR (generic error, before parsing finished)        3.59        1.55        None
+array-tiling/pnr4.yml                                                                                                                                            ERROR (generic error, before parsing finished)        3.75        1.64        None
+array-tiling/pnr5.yml                                                                                                                                            ERROR (generic error, before parsing finished)        3.78        1.69        None
+array-tiling/poly1.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.54        1.60        None
+array-tiling/pr2.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.71        1.61        None
+array-tiling/pr3.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.65        1.62        None
+array-tiling/pr4.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.53        1.56        None
+array-tiling/pr5.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.70        1.63        None
+array-tiling/revcpyswp2.yml                                                                                                                                      ERROR (generic error, before parsing finished)        3.81        1.67        None
+array-tiling/rew.yml                                                                                                                                             ERROR (generic error, before parsing finished)        3.57        1.54        None
+array-tiling/rewnif.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.61        1.55        None
+array-tiling/rewnifrev.yml                                                                                                                                       ERROR (generic error, before parsing finished)        3.49        1.54        None
+array-tiling/rewnifrev2.yml                                                                                                                                      ERROR (generic error, before parsing finished)        3.60        1.59        None
+array-tiling/rewrev.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.57        1.58        None
+array-tiling/skipped.yml                                                                                                                                         ERROR (generic error, before parsing finished)        3.54        1.50        None
+array-tiling/skippedu.yml                                                                                                                                        ERROR (generic error, before parsing finished)        3.55        1.58        None
+array-tiling/tcpy.yml                                                                                                                                            ERROR (generic error, before parsing finished)        3.58        1.56        None
+array-crafted/bAnd1.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.70        1.61        None
+array-crafted/bAnd2.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.61        1.56        None
+array-crafted/bAnd3.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.54        1.54        None
+array-crafted/bAnd4.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.68        1.61        None
+array-crafted/bAnd5.yml                                                                                                                                          ERROR (generic error, before parsing finished)        3.58        1.55        None
+array-crafted/bor1.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.57        1.60        None
+array-crafted/bor2.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.61        1.60        None
+array-crafted/bor3.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.66        1.59        None
+array-crafted/bor4.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.65        1.58        None
+array-crafted/bor5.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.59        1.61        None
+array-crafted/xor1.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.70        1.62        None
+array-crafted/xor2.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.70        1.61        None
+array-crafted/xor3.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.65        1.61        None
+array-crafted/xor4.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.61        1.60        None
+array-crafted/xor5.yml                                                                                                                                           ERROR (generic error, before parsing finished)        3.65        1.62        None
+array-multidimensional/add-2-n-u.yml                                                                                                                             ERROR (frontend failed, before parsing finished)        4.97        2.10        None
+array-multidimensional/add-3-n-u.yml                                                                                                                             ERROR (frontend failed, before parsing finished)        5.17        2.21        None
+array-multidimensional/copy-2-u.yml                                                                                                                              ERROR (frontend failed, before parsing finished)        5.26        2.16        None
+array-multidimensional/copy-3-n-u.yml                                                                                                                            ERROR (frontend failed, before parsing finished)        4.84        2.06        None
+array-multidimensional/copy-partial-2-n-u.yml                                                                                                                    ERROR (frontend failed, before parsing finished)        5.06        2.14        None
+array-multidimensional/diff-2-n-u.yml                                                                                                                            ERROR (frontend failed, before parsing finished)        4.97        2.12        None
+array-multidimensional/diff-3-n-u.yml                                                                                                                            ERROR (frontend failed, before parsing finished)        5.16        2.09        None
+array-multidimensional/init-2-n-u.yml                                                                                                                            ERROR (frontend failed, before parsing finished)        4.86        2.10        None
+array-multidimensional/init-3-u.yml                                                                                                                              ERROR (frontend failed, before parsing finished)        4.89        2.12        None
+array-multidimensional/init-4-n-u.yml                                                                                                                            ERROR (frontend failed, before parsing finished)        5.03        2.16        None
+array-multidimensional/init-non-constant-2-n-u.yml                                                                                                               ERROR (frontend failed, before parsing finished)        4.92        2.13        None
+array-multidimensional/init-non-constant-3-u.yml                                                                                                                 ERROR (frontend failed, before parsing finished)        4.95        2.14        None
+array-multidimensional/max-2-u.yml                                                                                                                               ERROR (frontend failed, before parsing finished)        5.14        2.15        None
+array-multidimensional/max-3-n-u.yml                                                                                                                             ERROR (frontend failed, before parsing finished)        5.05        2.18        None
+array-multidimensional/min-2-u.yml                                                                                                                               ERROR (frontend failed, before parsing finished)        4.80        2.02        None
+array-multidimensional/min-3-n-u.yml                                                                                                                             ERROR (frontend failed, before parsing finished)        4.97        2.22        None
+array-multidimensional/rev-2-n-u.yml                                                                                                                             ERROR (frontend failed, before parsing finished)        5.18        2.10        None
+array-multidimensional/rev-3-u.yml                                                                                                                               ERROR (frontend failed, before parsing finished)        6.05        2.26        None
+array-cav19/array_init_nondet_vars.yml                                                                                                                           ERROR (generic error, before parsing finished)        4.67        1.75        None
+array-lopstr16/base_case.yml                                                                                                                                     ERROR (generic error, before parsing finished)        4.38        1.69        None
+array-lopstr16/break-1.yml                                                                                                                                       ERROR (generic error, before parsing finished)        4.60        1.74        None
+array-lopstr16/break-2.yml                                                                                                                                       ERROR (generic error, before parsing finished)        4.35        1.70        None
+array-lopstr16/flag_loopdep.yml                                                                                                                                  ERROR (generic error, before parsing finished)        3.53        1.52        None
+array-lopstr16/flag_loopdep_simple.yml                                                                                                                           ERROR (generic error, before parsing finished)        4.60        1.74        None
+array-lopstr16/partial_lesser_bound-1.yml                                                                                                                        ERROR (generic error, before parsing finished)        4.43        1.73        None
+array-lopstr16/partial_lesser_bound.yml                                                                                                                          ERROR (generic error, before parsing finished)        4.45        1.73        None
+array-lopstr16/single_elem_safe.yml                                                                                                                              ERROR (generic error, before parsing finished)        4.84        1.81        None
+array-fpi/condn.yml                                                                                                                                              ERROR (generic error, before parsing finished)        4.40        1.67        None
+array-fpi/condnf.yml                                                                                                                                             ERROR (generic error, before parsing finished)        4.43        1.68        None
+array-memsafety/add_last-alloca-1.yml                                                                                                                            ERROR (generic error, before parsing finished)        5.12        1.90        None
+array-memsafety/array03-alloca-2.yml                                                                                                                             ERROR (generic error, before parsing finished)        4.16        1.74        None
+array-memsafety/bubblesort-alloca-2.yml                                                                                                                          ERROR (generic error, before parsing finished)        4.20        1.79        None
+array-memsafety/cstrcat-alloca-2.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.08        1.84        None
+array-memsafety/cstrchr-alloca-2.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.40        1.98        None
+array-memsafety/cstrcmp-alloca-2.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.22        1.93        None
+array-memsafety/cstrcpy-alloca-1.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.13        1.89        None
+array-memsafety/cstrcspn-alloca-1.yml                                                                                                                            ERROR (generic error, before parsing finished)        5.23        1.91        None
+array-memsafety/cstrlen-alloca-2.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.07        1.90        None
+array-memsafety/cstrncmp-alloca-1.yml                                                                                                                            ERROR (generic error, before parsing finished)        5.32        1.92        None
+array-memsafety/cstrpbrk-alloca-2.yml                                                                                                                            ERROR (generic error, before parsing finished)        5.41        1.97        None
+array-memsafety/cstrspn-alloca-1.yml                                                                                                                             ERROR (generic error, before parsing finished)        5.39        1.94        None
+array-memsafety/insertionsort-alloca-1.yml                                                                                                                       ERROR (generic error, before parsing finished)        5.30        1.93        None
+array-memsafety/java_BubbleSort-alloca-1.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.27        1.95        None
+array-memsafety/mult_array-alloca-1.yml                                                                                                                          ERROR (generic error, before parsing finished)        5.22        1.92        None
+array-memsafety/openbsd_cmemchr-alloca-2.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.41        1.93        None
+array-memsafety/openbsd_cmemrchr-alloca-2.yml                                                                                                                    ERROR (generic error, before parsing finished)        5.05        1.88        None
+array-memsafety/openbsd_cstpcpy-alloca-1.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.08        1.90        None
+array-memsafety/openbsd_cstpncpy-alloca-1.yml                                                                                                                    ERROR (generic error, before parsing finished)        5.24        1.91        None
+array-memsafety/openbsd_cstrcat-alloca-2.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.34        1.98        None
+array-memsafety/openbsd_cstrcmp-alloca-1.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.28        1.95        None
+array-memsafety/openbsd_cstrcpy-alloca-2.yml                                                                                                                     ERROR (generic error, before parsing finished)        5.24        1.92        None
+array-memsafety/openbsd_cstrcspn-alloca-2.yml                                                                                                                    ERROR (generic error, before parsing finished)        5.24        1.92        None

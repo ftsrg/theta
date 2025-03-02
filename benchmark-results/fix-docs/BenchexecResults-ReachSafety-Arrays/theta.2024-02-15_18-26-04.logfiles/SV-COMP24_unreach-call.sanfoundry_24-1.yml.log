@@ -1,0 +1,62 @@
+theta/theta-start.sh sv-benchmarks/c/array-examples/sanfoundry_24-1.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --input sv-benchmarks/c/array-examples/sanfoundry_24-1.i --smt-home /home/runner/work/theta/theta/theta/solvers
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/array-examples/sanfoundry_24-1.i as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+Arithmetic: [NONLIN_INT, ARR]
+Frontend finished:   (in 333 ms)
+ParsingResult Success
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio ARR
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, loopUnroll=50, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=cvc5:1.0.8, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR), refinerConfig=CegarRefinerConfig(refinementSolver=cvc5:1.0.8, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using CEGAR
+server: Registered Z3 SolverManager
+server: Registered SMT-LIB SolverManager
+server: Writing pre-verification artifacts to directory /home/runner/work/theta/theta/./1301352220790023536
+server: Starting verification of UnnamedXcfa using CEGAR
+server: Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist XcfaDistToErrComparator)) (XcfaSingleExprTraceRefiner ExprTraceNewtonChecker XcfaPrecRefiner))
+server: Iteration 1
+server: | Checking abstraction...
+server: |  |  (Re)initializing ARG...done
+server: |  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+server: |  |  Building ARG...done
+server: |  |  Finished ARG: 11 nodes, 5 incomplete, 1 unsafe
+server: | Checking abstraction done, result: (AbstractorResult Unsafe)
+server: | Refining abstraction...
+server: |  |  Trace length: 6
+server: |  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+server: |  |  Pruning whole ARGdone
+server: Refining abstraction done, result: (RefinerResult Spurious)
+server: ! Precision DID change in this iteration
+server: Iteration 2
+server: | Checking abstraction...
+server: |  |  (Re)initializing ARG...done
+server: |  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+server: |  |  Building ARG...done
+server: |  |  Finished ARG: 11 nodes, 5 incomplete, 1 unsafe
+server: | Checking abstraction done, result: (AbstractorResult Unsafe)
+server: | Refining abstraction...
+server: |  |  Trace length: 6
+server: |  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+server: |  |  Pruning whole ARGdone
+server: Refining abstraction done, result: (RefinerResult Spurious)
+server: ! Precision did NOT change in this iteration
+server: Iteration 3
+server: | Checking abstraction...
+server: |  |  (Re)initializing ARG...done
+server: |  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+server: |  |  Building ARG...done
+server: |  |  Finished ARG: 11 nodes, 5 incomplete, 1 unsafe
+server: | Checking abstraction done, result: (AbstractorResult Unsafe)
+server: Process failed! (hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor.throwNotSolvable(CexMonitor.kt:62), hu.bme.mit.theta.common.exception.NotSolvableException: Task is not solvable with this configuration!)
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115), ErrorCodeException(code=220))

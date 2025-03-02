@@ -1,0 +1,24 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/pthread-wmm/mix003_power.opt_pso.opt_rmo.opt_tso.opt.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/pthread-wmm/mix003_power.opt_pso.opt_rmo.opt_tso.opt.i' with property 'sv-benchmarks/c/properties/valid-memsafety.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32 --input sv-benchmarks/c/pthread-wmm/mix003_power.opt_pso.opt_rmo.opt_tso.opt.i --property sv-benchmarks/c/properties/valid-memsafety.prp --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Arithmetic: []
+Exception in thread "main" java.util.ConcurrentModificationException
+	at java.base/java.util.LinkedHashMap$LinkedHashIterator.nextNode(LinkedHashMap.java:756)
+	at java.base/java.util.LinkedHashMap$LinkedKeyIterator.next(LinkedHashMap.java:778)
+	at hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass.run(ApplyWitnessPass.kt:142)
+	at hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder.optimize(Builders.kt:157)
+	at hu.bme.mit.theta.xcfa.model.XCFA.<init>(XCFA.kt:47)
+	at hu.bme.mit.theta.xcfa.model.XCFA.<init>(XCFA.kt:24)
+	at hu.bme.mit.theta.xcfa.model.XcfaBuilder.build(Builders.kt:46)
+	at hu.bme.mit.theta.xcfa.model.XcfaFurtherOptimizerKt.optimizeFurther(XcfaFurtherOptimizer.kt:59)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.frontend(ExecuteConfig.kt:174)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:79)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:120)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:130)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
