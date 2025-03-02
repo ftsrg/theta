@@ -128,6 +128,15 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
 
     val locsToDelete = mutableSetOf<XcfaLocation>()
 
+    // Removing unnecessary locations below
+
+    // In a lasso, the initial location is the only location, which does not have an incoming edge
+    // every other loc should have both incoming and outgoing edges
+
+    // Also, we need to search and remove iteratively:
+    // if we find a loc that should not be in the lasso, remove it first and then start searching for the next
+    // removing the location might uncover more locations that will have to be removed
+    // e.g., if they have formed a chain and we want to remove the whole chain, not just the last location
     var foundOne = true
     while(foundOne) {
       foundOne = false
