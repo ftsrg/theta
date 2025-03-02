@@ -13,17 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.passes.*
 
-class ApplyWitnessPasses(
-  parseContext: ParseContext,
-  uniqueWarningLogger: Logger,
-) :
+class ApplyWitnessPassesManager(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       NormalizePass(), // needed after lbe, TODO

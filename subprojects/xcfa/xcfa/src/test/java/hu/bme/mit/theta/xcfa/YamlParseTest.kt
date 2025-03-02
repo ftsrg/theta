@@ -15,12 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa
 
-import com.charleskorn.kaml.Yaml
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlinx.serialization.Serializer
+import java.util.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
-import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -62,7 +60,8 @@ class YamlParseTest {
 
     System.err.println(result)
 
-    val parsedPack = WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), result)
+    val parsedPack =
+      WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), result)
 
     Assertions.assertEquals(listOf(witness), parsedPack)
   }

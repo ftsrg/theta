@@ -26,7 +26,8 @@ import hu.bme.mit.theta.xcfa.witnesses.*
 import kotlinx.serialization.builtins.ListSerializer
 
 class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
-  private val witnessExample = """
+  private val witnessExample =
+    """
 - entry_type: "violation_sequence"
   metadata:
     format_version: "2.0"
@@ -76,19 +77,26 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
           line: 10
           column: 9
         action: "cycle"
-  """.trimIndent()
+  """
+      .trimIndent()
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val witness = WitnessYamlConfig.decodeFromString(
-      ListSerializer(YamlWitness.serializer()), witnessExample).get(0)
+    val witness =
+      WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), witnessExample)
+        .get(0)
     val segments = witness.content.map { c -> c.segment }.filterNotNull()
-    val cycleWaypoints = segments.map { segment -> segment.find { waypoint -> waypoint.waypoint.action==Action.CYCLE } }
-      .filterNotNull().map { w -> w.waypoint }
-    val followWaypoints = segments.map { segment -> segment.find { waypoint -> waypoint.waypoint.action==Action.FOLLOW } }
-      .filterNotNull().map { w -> w.waypoint }
-    val recurrentSet = cycleWaypoints.find {
-      waypoint -> waypoint.type == WaypointType.RECURRENCE_CONDITION
-    }!!
+    val cycleWaypoints =
+      segments
+        .map { segment -> segment.find { waypoint -> waypoint.waypoint.action == Action.CYCLE } }
+        .filterNotNull()
+        .map { w -> w.waypoint }
+    val followWaypoints =
+      segments
+        .map { segment -> segment.find { waypoint -> waypoint.waypoint.action == Action.FOLLOW } }
+        .filterNotNull()
+        .map { w -> w.waypoint }
+    val recurrentSet =
+      cycleWaypoints.find { waypoint -> waypoint.type == WaypointType.RECURRENCE_CONDITION }!!
     val allWaypoints = cycleWaypoints + followWaypoints
 
     // collect edges corresponding to recurrence location, cycle and follow waypoints
@@ -100,10 +108,18 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
           edgesOfWaypoints.add(edge) // if no metadata, keep it ?
         }
         if (edgeMetadata != null && edgeMetadata.lineNumberStart == wayPoint.location.line) {
-          if (edgeMetadata.colNumberStart!=null && edgeMetadata.colNumberStart!!+1 == wayPoint.location.column) edgesOfWaypoints.add(edge)
+          if (
+            edgeMetadata.colNumberStart != null &&
+              edgeMetadata.colNumberStart!! + 1 == wayPoint.location.column
+          )
+            edgesOfWaypoints.add(edge)
         }
         if (edgeMetadata != null && edgeMetadata.lineNumberStop == wayPoint.location.line) {
-          if (edgeMetadata.colNumberStop!=null && edgeMetadata.colNumberStop!!+1 == wayPoint.location.column) edgesOfWaypoints.add(edge)
+          if (
+            edgeMetadata.colNumberStop != null &&
+              edgeMetadata.colNumberStop!! + 1 == wayPoint.location.column
+          )
+            edgesOfWaypoints.add(edge)
         }
       }
     }
@@ -122,7 +138,7 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
 
     val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesToKeep }.toMutableSet()
 
-    for(edge in edgesToDelete) {
+    for (edge in edgesToDelete) {
       builder.removeEdge(edge)
     }
 
@@ -134,20 +150,25 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
     // every other loc should have both incoming and outgoing edges
 
     // Also, we need to search and remove iteratively:
-    // if we find a loc that should not be in the lasso, remove it first and then start searching for the next
+    // if we find a loc that should not be in the lasso, remove it first and then start searching
+    // for the next
     // removing the location might uncover more locations that will have to be removed
-    // e.g., if they have formed a chain and we want to remove the whole chain, not just the last location
+    // e.g., if they have formed a chain and we want to remove the whole chain, not just the last
+    // location
     var foundOne = true
-    while(foundOne) {
+    while (foundOne) {
       foundOne = false
-      for(location in builder.getLocs()) {
-        if(!location.initial && (location.incomingEdges.isEmpty() || location.outgoingEdges.isEmpty())) {
+      for (location in builder.getLocs()) {
+        if (
+          !location.initial &&
+            (location.incomingEdges.isEmpty() || location.outgoingEdges.isEmpty())
+        ) {
           foundOne = true
           locsToDelete.add(location)
           break
         }
       }
-      for(loc in locsToDelete) {
+      for (loc in locsToDelete) {
         for (edge in loc.incomingEdges) {
           builder.removeEdge(edge)
         }
@@ -176,8 +197,8 @@ class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
     // Set initial distances based on connectivity
     for (edge1 in edges) {
       for (edge2 in edges) {
-        if (edge1.target == edge2.source) {  // Can transition from edge1 to edge2
-          dist[edge1 to edge2] = 1  // Assuming unit weight
+        if (edge1.target == edge2.source) { // Can transition from edge1 to edge2
+          dist[edge1 to edge2] = 1 // Assuming unit weight
         }
       }
     }
