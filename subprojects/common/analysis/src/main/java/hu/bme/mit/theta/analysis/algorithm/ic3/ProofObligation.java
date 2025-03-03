@@ -13,24 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("cli-tool")
-}
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-dependencies {
-    implementation(project(":theta-sts"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-sts-analysis"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-z3-legacy"))
-    implementation(project(":theta-solver-z3"))
-    implementation(project(":theta-solver-smtlib"))
-    implementation(project(":theta-solver-javasmt"))
-}
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.Set;
 
-application {
-    mainClass.set("hu.bme.mit.theta.sts.cli.StsCli")
+public class ProofObligation {
+    private Set<Expr<BoolType>> expressions;
+    private int time;
+
+    ProofObligation(Set<Expr<BoolType>> expressions, int time) {
+        this.expressions = expressions;
+        this.time = time;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    public Set<Expr<BoolType>> getExpressions() {
+        return expressions;
+    }
 }

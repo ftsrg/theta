@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.Objects;
 
 public class EnumEqExpr extends EqExpr<EnumType> {
 
@@ -75,5 +76,18 @@ public class EnumEqExpr extends EqExpr<EnumType> {
     public LitExpr<BoolType> eval(Valuation val) {
         return EnumLitExpr.eq(
                 (EnumLitExpr) getLeftOp().eval(val), (EnumLitExpr) getRightOp().eval(val));
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final EnumEqExpr that = (EnumEqExpr) obj;
+            return Objects.equals(this.getLeftOp(), that.getLeftOp())
+                    && Objects.equals(this.getRightOp(), that.getRightOp());
+        } else {
+            return false;
+        }
     }
 }

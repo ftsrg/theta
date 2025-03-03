@@ -152,7 +152,7 @@ public class XstsTest {
                         "src/test/resources/property/cross.prop",
                         false,
                         XstsConfigBuilder.Domain.PRED_CART
-                    },
+                    }, // TODO: this might be faulty
 
                     //                { "src/test/resources/model/cross_with.xsts",
                     // "src/test/resources/property/cross.prop", false,

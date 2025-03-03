@@ -72,7 +72,9 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
           .toMap()
           .entries
           .stream()
-          .filter { it.key !in ctrlVars }
+          .filter { /*it.key in vars &&*/
+            it.key !in ctrlVars
+          }
           .map {
             when ((it.value as BoolLitExpr).value) {
               true -> literalToPred[it.key]
@@ -82,7 +84,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
           .toList()
       )
     },
-    biValToAction = this.biValToAction,
+    biValToAction = { _, _ -> this.action() },
     ctrlVars = ctrlVars,
   )
 }
