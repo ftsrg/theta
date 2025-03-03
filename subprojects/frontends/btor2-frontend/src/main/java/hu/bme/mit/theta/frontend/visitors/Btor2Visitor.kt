@@ -18,6 +18,8 @@ package hu.bme.mit.theta.frontend.visitors
 
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.models.*
 
 class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>(){
@@ -25,33 +27,34 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>(){
     private val constantVisitor = ConstantVisitor()
     private val operationVisitor = OperationVisitor()
     private val statefulVisitor = StateVisitor()
+    private val logger = ConsoleLogger(Logger.Level.VERBOSE)
 
     override fun visitLine(ctx: Btor2Parser.LineContext?): Btor2Circuit {
         for (child in ctx?.children!!) {
-            println(child.accept(this))
+            logger.write(Logger.Level.VERBOSE, "Visiting line: ", child.accept(this))
         }
         return Btor2Circuit
     }
 
     override fun visitSort(ctx: Btor2Parser.SortContext?): Btor2Circuit {
         val result = sortVisitor.visit(ctx)
-        println(result)
+        logger.write(Logger.Level.VERBOSE, "Visiting sort: ", result)
         Btor2Circuit.sorts[result.sid] = result
         return Btor2Circuit
     }
 
     override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Circuit {
-        println(constantVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting constant: ", constantVisitor.visit(ctx))
         return Btor2Circuit
     }
 
     override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Circuit {
-        println(operationVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting operation: ", operationVisitor.visit(ctx))
         return Btor2Circuit
     }
 
     override fun visitStateful(ctx: Btor2Parser.StatefulContext?): Btor2Circuit {
-        println(statefulVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting stateful: ", statefulVisitor.visit(ctx))
         return Btor2Circuit
     }
 
