@@ -36,7 +36,6 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
   ): SolverStatus? {
     var modifiableRels = rfs.values.flatten() // modifiable relation vars
     val flatEvents = events.values.flatMap { it.values.flatten() }
-    check(ppos.size == flatEvents.size)
     val decisionStack = Stack<OcAssignment<E>>()
     decisionStack.push(OcAssignment(getInitialRels(ppos))) // not really a decision point (initial)
     var finalWsCheck = false
