@@ -46,3 +46,10 @@ constructor(
   },
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
 )
+
+fun MonolithicExpr.action() =
+  object : ExprAction {
+    override fun toExpr(): Expr<BoolType> = transExpr
+
+    override fun nextIndexing(): VarIndexing = transOffsetIndex
+  }
