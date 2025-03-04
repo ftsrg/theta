@@ -1,0 +1,105 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.frontend.models
+
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvType
+
+// Inputs and States
+data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid, sort)
+{
+    val value = Decls.Var("input_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<*>? {
+        return value
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+
+}
+data class Btor2State(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid, sort) {
+    val value = Decls.Var("state_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<BvType>? {
+        return value
+    }
+
+    override fun getExpr(): Expr<*> {
+        return RefExpr.of(value)
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Const) : Btor2Node(nid, sort)
+{
+    val declsVar = Decls.Var("init_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<*>? {
+        return declsVar
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+
+data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Node) : Btor2Node(nid, sort)
+{
+    val declsVar = Decls.Var("next_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<*>? {
+        return declsVar
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val operand: Btor2Node) : Btor2Node(nid, null)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO()
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
