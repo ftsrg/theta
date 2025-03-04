@@ -31,30 +31,30 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>(){
 
     override fun visitLine(ctx: Btor2Parser.LineContext?): Btor2Circuit {
         for (child in ctx?.children!!) {
-            logger.write(Logger.Level.VERBOSE, "Visiting line: ", child.accept(this))
+            child.accept(this)
         }
         return Btor2Circuit
     }
 
     override fun visitSort(ctx: Btor2Parser.SortContext?): Btor2Circuit {
         val result = sortVisitor.visit(ctx)
-        logger.write(Logger.Level.VERBOSE, "Visiting sort: ", result)
+        logger.write(Logger.Level.VERBOSE, "Visiting sort: " + result + "\n")
         Btor2Circuit.sorts[result.sid] = result
         return Btor2Circuit
     }
 
     override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting constant: ", constantVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting constant: " + constantVisitor.visit(ctx)+ "\n")
         return Btor2Circuit
     }
 
     override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting operation: ", operationVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting operation: "+ operationVisitor.visit(ctx)+ "\n")
         return Btor2Circuit
     }
 
     override fun visitStateful(ctx: Btor2Parser.StatefulContext?): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting stateful: ", statefulVisitor.visit(ctx))
+        logger.write(Logger.Level.VERBOSE, "Visiting stateful: "+ statefulVisitor.visit(ctx)+ "\n")
         return Btor2Circuit
     }
 
