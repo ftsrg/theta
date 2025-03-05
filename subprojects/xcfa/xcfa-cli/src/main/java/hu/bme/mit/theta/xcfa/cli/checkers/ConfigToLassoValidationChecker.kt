@@ -35,6 +35,8 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.LassoValidationConfig
@@ -129,8 +131,13 @@ fun getLassoValidationChecker(
       solver.add(stemExpr)
       solver.check()
       if (solver.status.isUnsat) {
-        logger.writeln(Logger.Level.INFO, "Recurrence location reachability failed.")
-        return@SafetyChecker SafetyResult.unknown()
+        logger.writeln(
+          Logger.Level.INFO,
+          "Recurrence location reachability failed. Current assertions:",
+        )
+        val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
+        solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
+        return@SafetyChecker SafetyResult.safe(EmptyProof.getInstance())
       }
       logger.writeln(Logger.Level.INFO, "Recurrence location reachability successful.")
     }
@@ -156,8 +163,13 @@ fun getLassoValidationChecker(
       solver.add(forall)
       solver.check()
       if (solver.status.isUnsat) {
-        logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability failed.")
-        return@SafetyChecker SafetyResult.unknown()
+        logger.writeln(
+          Logger.Level.INFO,
+          "Recurrence set re-reachability failed. Current assertions:",
+        )
+        val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
+        solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
+        return@SafetyChecker SafetyResult.safe(EmptyProof.getInstance())
       }
       logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability successful.")
     }
