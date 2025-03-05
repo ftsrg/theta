@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 
-class ApplyWitnessPassesManager(parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class ApplyWitnessPassesManager(parseContext: ParseContext, witness: YamlWitness) :
   ProcedurePassManager(
     listOf(
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),
-      ApplyWitnessPass(parseContext),
+      ApplyWitnessPass(parseContext, witness),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
