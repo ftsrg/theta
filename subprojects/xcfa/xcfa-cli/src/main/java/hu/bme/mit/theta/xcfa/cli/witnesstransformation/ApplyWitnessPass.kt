@@ -23,67 +23,9 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlinx.serialization.builtins.ListSerializer
 
-class ApplyWitnessPass(parseContext: ParseContext) : ProcedurePass {
-  private val witnessExample =
-    """
-- entry_type: "violation_sequence"
-  metadata:
-    format_version: "2.0"
-    uuid: "5468f373-a912-4ad5-9308-58e43a204d54"
-    creation_time: "2025-02-18T02:07:15Z"
-    producer:
-      name: "Theta"
-      version: "no version found"
-    task:
-      input_files:
-      - "Ex02.c"
-      input_file_hashes:
-        "Ex02.c": "afd40820c7a09c073d225c09c6690862ff04506300463cb312087d541b42d981"
-      specification: "TERMINATION"
-      data_model: "LP64"
-      language: "C"
-  content:
-  - segment:
-    - waypoint:
-        type: "assumption"
-        constraint:
-          value: "i == 5"
-          format: "c_expression"
-        location:
-          file_name: "Ex02.c"
-          line: 7
-          column: 32
-        action: "follow"
-  - segment:
-    - waypoint:
-        type: "recurrence_condition"
-        constraint:
-          value: "(i == 5)"
-          format: "c_expression"
-        location:
-          file_name: "Ex02.c"
-          line: 9
-          column: 5
-        action: "cycle"
-  - segment:
-    - waypoint:
-        type: "branching"
-        constraint:
-          value: "false"
-        location:
-          file_name: "Ex02.c"
-          line: 10
-          column: 9
-        action: "cycle"
-  """
-      .trimIndent()
-
+class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val witness =
-      WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), witnessExample)
-        .get(0)
     val segments = witness.content.map { c -> c.segment }.filterNotNull()
     val cycleWaypoints =
       segments

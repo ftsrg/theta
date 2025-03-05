@@ -59,5 +59,7 @@ fun getChecker(
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
+      Backend.LASSO_VALIDATION ->
+        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     }
   }

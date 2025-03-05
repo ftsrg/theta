@@ -72,6 +72,7 @@ enum class Backend {
   PORTFOLIO,
   MDD,
   IC3,
+  LASSO_VALIDATION,
   NONE,
 }
 
