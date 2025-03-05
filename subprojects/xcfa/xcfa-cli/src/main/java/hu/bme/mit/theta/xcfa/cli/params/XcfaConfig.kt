@@ -194,6 +194,20 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
+        Backend.BMC ->
+          BoundedConfig(
+            indConfig = InductionConfig(disable = true),
+            itpConfig = InterpolationConfig(disable = true),
+          )
+            as T
+        Backend.KIND -> BoundedConfig(itpConfig = InterpolationConfig(disable = true)) as T
+        Backend.IMC ->
+          BoundedConfig(
+            bmcConfig = BMCConfig(disable = true),
+            itpConfig = InterpolationConfig(disable = true),
+          )
+            as T
+        Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T

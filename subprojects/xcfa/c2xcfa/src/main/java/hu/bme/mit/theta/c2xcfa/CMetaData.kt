@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.math.max
 import kotlin.math.min
@@ -27,6 +28,7 @@ data class CMetaData(
   val offsetStart: Int?,
   val offsetEnd: Int?,
   val sourceText: String?,
+  val astNodes: Collection<CStatement>,
 ) : MetaData() {
 
   override fun combine(other: MetaData): MetaData {
@@ -64,6 +66,7 @@ data class CMetaData(
             it > 0
           } ?: 0,
         sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
+        astNodes = astNodes + other.astNodes,
       )
     } else if (other is EmptyMetaData) {
       return this

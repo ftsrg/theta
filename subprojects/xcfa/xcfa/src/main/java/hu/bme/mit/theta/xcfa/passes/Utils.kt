@@ -49,8 +49,10 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)
-  for (i in 2..(newLabels.size)) {
-    locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData))
+  for (i in 2..(newLabels.size)) { // potentially metadata is off-by-one (i-2 might be suitable?)
+    locations.add(
+      XcfaLocation("loc" + XcfaLocation.uniqueCounter(), metadata = newLabels[i - 1].metadata)
+    )
   }
   locations.add(target)
 

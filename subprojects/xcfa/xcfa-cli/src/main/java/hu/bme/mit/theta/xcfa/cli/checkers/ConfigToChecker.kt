@@ -43,6 +43,10 @@ fun getChecker(
   } else {
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.BMC,
+      Backend.KIND,
+      Backend.IMC,
+      Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()

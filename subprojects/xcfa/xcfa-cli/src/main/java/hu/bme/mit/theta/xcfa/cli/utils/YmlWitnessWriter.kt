@@ -144,16 +144,15 @@ class YmlWitnessWriter {
                   WaypointContent(
                     type = WaypointType.RECURRENCE_CONDITION,
                     location =
-                      getLocation(inputFile, cycleHead.processes.values.first().locs.first.metadata)
-                        ?: getLocation(inputFile, backEdgeTrace.actions.last())
-                        ?: getLocation(inputFile, backEdgeTrace.actions.last()?.edge?.metadata)
-                        ?: getLocation(inputFile, lassoTrace.actions.last())
-                        ?: getLocation(inputFile, lassoTrace.actions.last()?.edge?.metadata)
-                        ?: getLocation(
-                          inputFile,
-                          concrTrace.actions[cycleHeadFirst - 1]?.edge?.metadata,
-                        )
-                        ?: error("Cycle head's metadata is missing."),
+                      ((lasso.actions.first().edge.metadata as? CMetaData)?.astNodes?.first()
+                          ?: error("Cycle's metadata is missing."))
+                        .let {
+                          Location(
+                            fileName = inputFile.name,
+                            line = it.lineNumberStart,
+                            column = it.colNumberStart,
+                          )
+                        },
                     constraint =
                       Constraint(
                         value =

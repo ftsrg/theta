@@ -127,7 +127,6 @@ fun getLassoValidationChecker(
 
     WithPushPop(solver).use {
       logger.writeln(Logger.Level.INFO, "Checking recurrence location reachability..")
-      System.err.println(stemExpr)
       solver.add(stemExpr)
       solver.check()
       if (solver.status.isUnsat) {
@@ -159,7 +158,6 @@ fun getLassoValidationChecker(
             ),
           )
         )
-      System.err.println(forall)
       solver.add(forall)
       solver.check()
       if (solver.status.isUnsat) {
