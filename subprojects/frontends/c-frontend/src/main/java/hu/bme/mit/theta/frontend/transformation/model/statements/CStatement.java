@@ -18,10 +18,8 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
-import org.antlr.v4.runtime.ParserRuleContext;
-
-import javax.swing.text.html.Option;
 import java.util.Optional;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Every Program, Function and Statement is a subclass of this base class. Any CStatement might have
