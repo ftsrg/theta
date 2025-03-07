@@ -24,6 +24,7 @@ public class CDefault extends CStatement {
     public CDefault(CStatement statement, ParseContext parseContext) {
         super(parseContext);
         this.statement = statement;
+        statement.setParent(this);
     }
 
     public CStatement getStatement() {

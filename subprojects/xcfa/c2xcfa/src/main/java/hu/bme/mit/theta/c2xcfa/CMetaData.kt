@@ -28,9 +28,10 @@ data class CMetaData(
   val offsetStart: Int?,
   val offsetEnd: Int?,
   val sourceText: String?,
-  val astNodes: Collection<CStatement>,
+  val astNodes: List<CStatement>,
 ) : MetaData() {
 
+  // AST nodes must be in order of combination!
   override fun combine(other: MetaData): MetaData {
     if (other is CMetaData) {
       return CMetaData(

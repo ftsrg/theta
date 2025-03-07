@@ -24,6 +24,7 @@ public class CRet extends CStatement {
     public CRet(CStatement expr, ParseContext parseContext) {
         super(parseContext);
         this.expr = expr;
+        expr.setParent(this);
     }
 
     public CStatement getExpr() {

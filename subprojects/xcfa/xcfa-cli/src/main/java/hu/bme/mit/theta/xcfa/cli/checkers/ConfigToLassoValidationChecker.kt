@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Param
@@ -103,8 +104,13 @@ fun getLassoValidationChecker(
     xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness)).initProcedures[0].first
 
   return SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-    val hondae = lasso.locs.filter { it.incomingEdges.size > 1 } // only honda should match
-    check(hondae.size == 1) { "More than one location matches predicate: $hondae" }
+    val hondae = lasso.locs.filter {
+          it.incomingEdges.size > 1 &&
+          it.outgoingEdges.size >= 1 &&
+          it.getCMetaData()!!.astNodes.find { node -> node.lineNumberStart==recurrenceSetLocation.line
+              && node.colNumberStart==recurrenceSetLocation.column }!=null
+    } // only honda should match
+    check(hondae.size == 1) { "Zero or more than one location matches predicate: $hondae" }
     val honda = hondae[0]
 
     val stem = getNondetPath(lasso.initLoc, honda)
