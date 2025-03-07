@@ -46,10 +46,7 @@ import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPassesManager
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.witnesses.Format
-import hu.bme.mit.theta.xcfa.witnesses.WaypointType
-import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
-import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
+import hu.bme.mit.theta.xcfa.witnesses.*
 import kotlinx.serialization.builtins.ListSerializer
 
 fun getLassoValidationChecker(
@@ -88,6 +85,19 @@ fun getLassoValidationChecker(
         xcfa.collectVars(),
       )
     } else TODO("Not handled: ${constraint.format}")
+
+  val stemRecurrentLocCount = 0
+
+  val recurrenceSetLocation = recurrenceSet.segment!![0].waypoint.location
+  val waypoints = witness.content.flatMap { it.segment ?: emptyList() }
+
+  check(
+    waypoints.find { w ->
+      w.waypoint.location == recurrenceSetLocation && w.waypoint.action != Action.CYCLE
+    } == null
+  ) {
+    "Theta does not yet support visiting the recurrence location in the stem"
+  }
 
   val lasso =
     xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness)).initProcedures[0].first
