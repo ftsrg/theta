@@ -25,7 +25,9 @@ public class CCase extends CStatement {
     public CCase(CStatement expr, CStatement statement, ParseContext parseContext) {
         super(parseContext);
         this.expr = expr;
+        expr.setParent(this);
         this.statement = statement;
+        statement.setParent(this);
     }
 
     public CStatement getExpr() {

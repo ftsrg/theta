@@ -35,7 +35,7 @@
             location:
               file_name: "Ex02.c"
               line: 9
-              column: 5
+              column: 19
             action: "cycle"
     - segment:
         - waypoint:

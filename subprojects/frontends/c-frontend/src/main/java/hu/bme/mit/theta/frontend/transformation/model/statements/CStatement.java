@@ -20,12 +20,16 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 /**
  * Every Program, Function and Statement is a subclass of this base class. Any CStatement might have
  * an id associated with it, in case there was a label in the source code. This also provides an
  * XcfaLocation, which can be used when jumping to this named location via a _goto_ instruction
  */
 public abstract class CStatement {
+    private Optional<CStatement> parent = Optional.empty();
     protected final ParseContext parseContext;
     private String id;
     protected static int counter = 0;
@@ -51,6 +55,14 @@ public abstract class CStatement {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Optional<CStatement> getParent() {
+        return parent;
+    }
+
+    public void setParent(CStatement parent) {
+        this.parent = Optional.of(parent);
     }
 
     /**

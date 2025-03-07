@@ -162,9 +162,4 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
 
     return dist
   }
-
-  private fun unrollStem(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-
-    return builder
-  }
 }

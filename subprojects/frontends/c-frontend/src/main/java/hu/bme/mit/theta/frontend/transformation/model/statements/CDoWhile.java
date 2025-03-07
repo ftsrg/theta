@@ -25,7 +25,9 @@ public class CDoWhile extends CStatement {
     public CDoWhile(CStatement body, CStatement guard, ParseContext parseContext) {
         super(parseContext);
         this.body = body;
+        body.setParent(this);
         this.guard = guard;
+        guard.setParent(this);
     }
 
     public CStatement getBody() {
