@@ -126,7 +126,7 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
 
   private val inf = -1
 
-  fun floydWarshall(edges: Set<XcfaEdge>): Map<Pair<XcfaEdge, XcfaEdge>, Int> {
+  private fun floydWarshall(edges: Set<XcfaEdge>): Map<Pair<XcfaEdge, XcfaEdge>, Int> {
     // Initialize distance map for edges
     val dist = mutableMapOf<Pair<XcfaEdge, XcfaEdge>, Int>()
 
@@ -161,5 +161,10 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
     }
 
     return dist
+  }
+
+  private fun unrollStem(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+
+    return builder
   }
 }
