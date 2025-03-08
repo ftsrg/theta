@@ -30,7 +30,6 @@ public class LlvmMetadata extends MetaData {
         return this;
     }
 
-
     @Override
     public boolean isSubstantial() {
         return lineNumber > 0;

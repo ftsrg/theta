@@ -30,11 +30,11 @@ public class CIf extends CStatement {
             ParseContext parseContext) {
         super(parseContext);
         this.guard = guard;
-        if (guard!=null) guard.setParent(this);
+        if (guard != null) guard.setParent(this);
         this.body = body;
-        if (body!=null) body.setParent(this);
+        if (body != null) body.setParent(this);
         this.elseStatement = elseStatement;
-        if(elseStatement!=null) elseStatement.setParent(this);
+        if (elseStatement != null) elseStatement.setParent(this);
     }
 
     public CStatement getElseStatement() {

@@ -55,13 +55,13 @@ public class CCompound extends CStatement {
     @Override
     public void setPostStatements(CStatement postStatements) {
         this.postStatements = postStatements;
-        if(postStatements!=null) postStatements.setParent(this);
+        if (postStatements != null) postStatements.setParent(this);
     }
 
     @Override
     public void setPreStatements(CStatement preStatements) {
         this.preStatements = preStatements;
-        if(preStatements!=null) preStatements.setParent(this);
+        if (preStatements != null) preStatements.setParent(this);
     }
 
     @Override
