@@ -29,4 +29,10 @@ public class LlvmMetadata extends MetaData {
     public MetaData combine(@NotNull MetaData other) {
         return this;
     }
+
+
+    @Override
+    public boolean isSubstantial() {
+        return lineNumber > 0;
+    }
 }

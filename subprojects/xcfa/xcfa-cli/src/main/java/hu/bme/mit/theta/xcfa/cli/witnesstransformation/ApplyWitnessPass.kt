@@ -46,22 +46,26 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
     for (wayPoint in allWaypoints) {
       for (edge in builder.getEdges()) {
         val edgeMetadata = (edge.metadata as? CMetaData)
-        if (edgeMetadata == null) {
-          edgesOfWaypoints.add(edge) // if no metadata, keep it ?
-        }
-        if (edgeMetadata != null && edgeMetadata.lineNumberStart == wayPoint.location.line) {
-          if (
-            edgeMetadata.colNumberStart != null &&
-              edgeMetadata.colNumberStart!! + 1 == wayPoint.location.column
-          )
-            edgesOfWaypoints.add(edge)
-        }
-        if (edgeMetadata != null && edgeMetadata.lineNumberStop == wayPoint.location.line) {
-          if (
-            edgeMetadata.colNumberStop != null &&
-              edgeMetadata.colNumberStop!! + 1 == wayPoint.location.column
-          )
-            edgesOfWaypoints.add(edge)
+        if (edgeMetadata == null ||
+          edgeMetadata.lineNumberStart == null ||
+          edgeMetadata.colNumberStart == null ||
+          edgeMetadata.lineNumberStop == null ||
+          edgeMetadata.colNumberStop == null) {
+          // edgesOfWaypoints.add(edge) // if no metadata, keep it ?
+        } else if( // wp in first line of edge
+          edgeMetadata.lineNumberStart!! == wayPoint.location.line &&
+          edgeMetadata.colNumberStart!! <= wayPoint.location.column!!) {
+          edgesOfWaypoints.add(edge)
+        } else if( // wp in last line of edge
+          edgeMetadata.lineNumberStop!! == wayPoint.location.line &&
+          edgeMetadata.colNumberStop!! >= wayPoint.location.column!!
+        ) {
+          edgesOfWaypoints.add(edge)
+        } else if( // wp inbetween first and last lines of edge
+          edgeMetadata.lineNumberStart!! > wayPoint.location.line &&
+          edgeMetadata.lineNumberStop!! < wayPoint.location.line
+          ) {
+          edgesOfWaypoints.add(edge)
         }
       }
     }

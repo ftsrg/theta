@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 abstract class MetaData {
 
   abstract fun combine(other: MetaData): MetaData
+  abstract fun isSubstantial(): Boolean
 }
 
 object EmptyMetaData : MetaData() {
@@ -28,7 +29,12 @@ object EmptyMetaData : MetaData() {
     return other
   }
 
+  override fun isSubstantial(): Boolean {
+    return false
+  }
+
   override fun equals(other: Any?): Boolean = other is EmptyMetaData
 
   override fun hashCode(): Int = hash
+
 }

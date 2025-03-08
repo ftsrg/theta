@@ -37,7 +37,7 @@ public class CFunction extends CStatement {
         super(parseContext);
         this.funcDecl = funcDecl;
         this.compound = compound;
-        compound.setParent(this);
+        if(compound!=null) compound.setParent(this);
         this.flatVariables = flatVariables;
         this.atomicVariables = atomicVariables;
         parseContext

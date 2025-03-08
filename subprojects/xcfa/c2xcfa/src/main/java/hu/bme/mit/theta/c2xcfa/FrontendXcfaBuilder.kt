@@ -101,7 +101,7 @@ class FrontendXcfaBuilder(
       offsetStart = source.offsetStart.takeIf { it != -1 },
       offsetEnd = source.offsetEnd.takeIf { it != -1 },
       sourceText = source.sourceText,
-      astNodes = setOf(source),
+      astNodes = listOf(source),
     )
 
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {

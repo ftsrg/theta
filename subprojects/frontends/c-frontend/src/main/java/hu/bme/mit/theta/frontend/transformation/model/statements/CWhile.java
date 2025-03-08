@@ -26,9 +26,9 @@ public class CWhile extends CStatement {
     public CWhile(CStatement body, CStatement guard, ParseContext parseContext) {
         super(parseContext);
         this.body = body;
-        body.setParent(this);
+        if(body!=null) body.setParent(this);
         this.guard = guard;
-        guard.setParent(this);
+        if(guard!=null) guard.setParent(this);
     }
 
     public CStatement getBody() {

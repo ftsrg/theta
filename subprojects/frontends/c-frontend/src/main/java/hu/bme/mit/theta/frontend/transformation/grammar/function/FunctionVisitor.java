@@ -307,7 +307,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             variables.push(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
         for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
             currentStatementContext.push(Tuple2.of(blockItemContext, Optional.of(compound)));
-            compound.getcStatementList().add(blockItemContext.accept(this));
+            compound.addCStatement(blockItemContext.accept(this));
             currentStatementContext.pop();
         }
         if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
@@ -320,7 +320,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     public CStatement visitIdentifierStatement(CParser.IdentifierStatementContext ctx) {
         CStatement statement = ctx.statement().accept(this);
         CCompound compound = new CCompound(parseContext);
-        compound.getcStatementList().add(statement);
+        compound.addCStatement(statement);
         compound.setId(ctx.Identifier().getText());
         recordMetadata(ctx, compound);
         return compound;
@@ -436,12 +436,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             CCompound newCCompound2 = new CCompound(parseContext);
             CCompound newCCompound3 = new CCompound(parseContext);
             CCompound newCCompound4 = new CCompound(parseContext);
-            newCCompound1.getcStatementList().add(newCCompound2);
+            newCCompound1.addCStatement(newCCompound2);
             Expr<?> one = CComplexType.getSignedInt(parseContext).getUnitValue();
             parseContext
                     .getMetadata()
                     .create(one, "cType", CComplexType.getSignedInt(parseContext));
-            newCCompound2.getcStatementList().add(new CExpr(one, parseContext));
+            newCCompound2.addCStatement(new CExpr(one, parseContext));
             newCCompound2.setPreStatements(newCCompound3);
             newCCompound2.setPostStatements(newCCompound4);
             test = newCCompound1;
@@ -510,13 +510,13 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     instanceof CArray cArray) { // we transform it into a malloc
                 final var malloc =
                         new CCall("malloc", List.of(cArray.getArrayDimension()), parseContext);
-                preCompound.getcStatementList().add(malloc);
+                preCompound.addCStatement(malloc);
                 final var free =
                         new CCall(
                                 "free",
                                 List.of(new CExpr(malloc.getRet().getRef(), parseContext)),
                                 parseContext);
-                preCompound.getcStatementList().add(malloc);
+                preCompound.addCStatement(malloc);
                 CAssignment cAssignment =
                         new CAssignment(
                                 declaration.getVarDecls().get(0).getRef(),
@@ -524,14 +524,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                 "=",
                                 parseContext);
                 recordMetadata(ctx, cAssignment);
-                compound.getcStatementList().add(cAssignment);
+                compound.addCStatement(cAssignment);
                 if (!currentStatementContext.isEmpty()) {
                     final var scope = currentStatementContext.peek().get2();
                     if (scope.isPresent() && scope.get().getPostStatements() instanceof CCompound) {
                         if (scope.get().getPostStatements() == null) {
                             scope.get().setPostStatements(new CCompound(parseContext));
                         }
-                        ((CCompound) scope.get().getPostStatements()).getcStatementList().add(free);
+                        ((CCompound) scope.get().getPostStatements()).addCStatement(free);
                     }
                 }
             }
@@ -557,7 +557,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         CAssignment cAssignment =
                                 new CAssignment(deref, statement.get2(), "=", parseContext);
                         recordMetadata(ctx, cAssignment);
-                        compound.getcStatementList().add(cAssignment);
+                        compound.addCStatement(cAssignment);
                         currentValue =
                                 Add(currentValue, unitValue).eval(ImmutableValuation.empty());
                     }
@@ -584,7 +584,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                             CAssignment cAssignment =
                                     new CAssignment(deref, statement.get2(), "=", parseContext);
                             recordMetadata(ctx, cAssignment);
-                            compound.getcStatementList().add(cAssignment);
+                            compound.addCStatement(cAssignment);
                             currentValue =
                                     Add(currentValue, unitValue).eval(ImmutableValuation.empty());
                         }
@@ -596,12 +596,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                         "=",
                                         parseContext);
                         recordMetadata(ctx, cAssignment);
-                        compound.getcStatementList().add(cAssignment);
+                        compound.addCStatement(cAssignment);
                         if (declaration.getInitExpr() instanceof CCompound compoundInitExpr) {
                             final var preStatements = collectPreStatements(compoundInitExpr);
-                            preCompound.getcStatementList().addAll(preStatements);
+                            preStatements.forEach(preCompound::addCStatement);
                             final var postStatements = collectPostStatements(compoundInitExpr);
-                            postCompound.getcStatementList().addAll(postStatements);
+                            postStatements.forEach(postCompound::addCStatement);
                             resetPreStatements(compoundInitExpr);
                             resetPostStatements(compoundInitExpr);
                         }
@@ -621,7 +621,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                     CComplexType.getType(varDecl.getRef(), parseContext)
                                             .limit(varDecl.getRef());
                             CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                            compound.getcStatementList().add(cAssume);
+                            compound.addCStatement(cAssume);
                         }
                     }
                 } else {
@@ -634,7 +634,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                 CComplexType.getType(varDecl.getRef(), parseContext)
                                         .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                        compound.getcStatementList().add(cAssume);
+                        compound.addCStatement(cAssume);
                     }
                 }
             }
@@ -648,7 +648,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CCompound compound = new CCompound(parseContext);
         for (CParser.AssignmentExpressionContext assignmentExpressionContext :
                 ctx.assignmentExpression()) {
-            compound.getcStatementList().add(assignmentExpressionContext.accept(this));
+            compound.addCStatement(assignmentExpressionContext.accept(this));
         }
         recordMetadata(ctx, compound);
         return compound;
@@ -674,19 +674,19 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CStatement rhs = ctx.assignmentExpression().accept(this);
         if (rhs instanceof CCompound compoundInitExpr) {
             final var preStatementList = collectPreStatements(compoundInitExpr);
-            preStatements.getcStatementList().addAll(preStatementList);
+            preStatementList.forEach(preStatements::addCStatement);
             final var postStatementList = collectPostStatements(compoundInitExpr);
-            postStatements.getcStatementList().addAll(postStatementList);
+            postStatementList.forEach(postStatements::addCStatement);
             resetPreStatements(compoundInitExpr);
             resetPostStatements(compoundInitExpr);
         }
         CAssignment cAssignment =
                 new CAssignment(ret, rhs, ctx.assignmentOperator().getText(), parseContext);
-        compound.getcStatementList().add(cAssignment);
-        preStatements.getcStatementList().addAll(expressionVisitor.getPreStatements());
+        compound.addCStatement(cAssignment);
+        expressionVisitor.getPreStatements().forEach(compound::addCStatement);
         compound.setPreStatements(preStatements);
         recordMetadata(ctx, compound);
-        postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
+        expressionVisitor.getPostStatements().forEach(compound::addCStatement);
         compound.setPostStatements(postStatements);
         recordMetadata(ctx, compound);
         return compound;
@@ -804,41 +804,39 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             Expr<?> rhs = ifFalse.getExpression();
 
             CCompound guardCompound = new CCompound(parseContext);
-            guardCompound.getcStatementList().add(new CExpr(expr, parseContext));
+            guardCompound.addCStatement(new CExpr(expr, parseContext));
             guardCompound.setPostStatements(new CCompound(parseContext));
             guardCompound.setPreStatements(new CCompound(parseContext));
 
             CCompound ifTruePre = new CCompound(parseContext);
             List<CStatement> ifTruePreList = collectPreStatements(ifTrue);
-            ifTruePre.getcStatementList().addAll(ifTruePreList);
+            ifTruePreList.forEach(ifTruePre::addCStatement);
             ifTruePre.setPostStatements(new CCompound(parseContext));
             ifTruePre.setPreStatements(new CCompound(parseContext));
             CCompound ifFalsePre = new CCompound(parseContext);
             List<CStatement> ifFalsePreList = collectPreStatements(ifFalse);
-            ifFalsePre.getcStatementList().addAll(ifFalsePreList);
+            ifFalsePreList.forEach(ifFalsePre::addCStatement);
             ifFalsePre.setPostStatements(new CCompound(parseContext));
             ifFalsePre.setPreStatements(new CCompound(parseContext));
 
             CCompound ifTruePost = new CCompound(parseContext);
             List<CStatement> ifTruePostList = collectPostStatements(ifTrue);
-            ifTruePost.getcStatementList().addAll(ifTruePostList);
+            ifTruePostList.forEach(ifTruePost::addCStatement);
             ifTruePost.setPostStatements(new CCompound(parseContext));
             ifTruePost.setPreStatements(new CCompound(parseContext));
             CCompound ifFalsePost = new CCompound(parseContext);
             List<CStatement> ifFalsePostList = collectPostStatements(ifFalse);
-            ifFalsePost.getcStatementList().addAll(ifFalsePostList);
+            ifFalsePostList.forEach(ifFalsePost::addCStatement);
             ifFalsePost.setPostStatements(new CCompound(parseContext));
             ifFalsePost.setPreStatements(new CCompound(parseContext));
 
             if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
                 preStatements
-                        .getcStatementList()
-                        .add(new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
+                        .addCStatement(new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
             }
             if (!ifTruePostList.isEmpty() || !ifFalsePostList.isEmpty()) {
                 postStatements
-                        .getcStatementList()
-                        .add(new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
+                        .addCStatement(new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
             }
 
             CComplexType smallestCommonType =
@@ -860,12 +858,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         }
 
         CExpr cexpr = new CExpr(iteExpr, parseContext);
-        compound.getcStatementList().add(cexpr);
-        preStatements.getcStatementList().addAll(0, expressionVisitor.getPreStatements());
+        compound.addCStatement(cexpr);
+        preStatements.insertCStatementsToFront(expressionVisitor.getPreStatements());
         compound.setPreStatements(preStatements);
         recordMetadata(ctx, compound);
         compound.setPostStatements(postStatements);
-        postStatements.getcStatementList().addAll(expressionVisitor.getPostStatements());
+        expressionVisitor.getPostStatements().forEach(postStatements::addCStatement);
         recordMetadata(ctx, compound);
         return compound;
     }
@@ -888,7 +886,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                             "=",
                             parseContext);
             recordMetadata(ctx, cAssignment);
-            if (declaration.getInitExpr() != null) compound.getcStatementList().add(cAssignment);
+            if (declaration.getInitExpr() != null) compound.addCStatement(cAssignment);
         }
         recordMetadata(ctx, compound);
         return compound;
@@ -899,7 +897,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CCompound compound = new CCompound(parseContext);
         for (CParser.AssignmentExpressionContext assignmentExpressionContext :
                 ctx.assignmentExpression()) {
-            compound.getcStatementList().add(assignmentExpressionContext.accept(this));
+            compound.addCStatement(assignmentExpressionContext.accept(this));
         }
         recordMetadata(ctx, compound);
         return compound;

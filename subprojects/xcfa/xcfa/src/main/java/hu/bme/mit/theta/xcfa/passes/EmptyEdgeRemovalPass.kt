@@ -33,6 +33,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&
+            //!it.metadata.isSubstantial() &&
             ((it.source.outgoingEdges.size == 1 && !it.source.name.contains("__THETA_")) ||
               (it.target.incomingEdges.size == 1) && !it.target.name.contains("__THETA_"))
         } ?: return builder
@@ -43,7 +44,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         incomingEdges.forEach { builder.removeEdge(it) }
         incomingEdges.forEach {
           builder.addEdge(
-            it.withTarget(edge.target).withMetadata(it.metadata.combine(edge.metadata))
+            it.withTarget(edge.target).withMetadata(edge.metadata)
           )
         }
         builder.removeLoc(edge.source)
@@ -52,7 +53,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         outgoingEdges.forEach { builder.removeEdge(it) }
         outgoingEdges.forEach {
           builder.addEdge(
-            it.withSource(edge.source).withMetadata(edge.metadata.combine(it.metadata))
+            it.withSource(edge.source).withMetadata(edge.metadata)
           )
         }
         builder.removeLoc(edge.target)
