@@ -831,12 +831,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             ifFalsePost.setPreStatements(new CCompound(parseContext));
 
             if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
-                preStatements
-                        .addCStatement(new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
+                preStatements.addCStatement(
+                        new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext));
             }
             if (!ifTruePostList.isEmpty() || !ifFalsePostList.isEmpty()) {
-                postStatements
-                        .addCStatement(new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
+                postStatements.addCStatement(
+                        new CIf(guardCompound, ifTruePost, ifFalsePost, parseContext));
             }
 
             CComplexType smallestCommonType =

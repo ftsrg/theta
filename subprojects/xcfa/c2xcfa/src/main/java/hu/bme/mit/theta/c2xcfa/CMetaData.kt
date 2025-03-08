@@ -77,11 +77,21 @@ data class CMetaData(
   }
 
   override fun isSubstantial(): Boolean {
-    if (astNodes.isEmpty()) { return false }
-    if (lineNumberStart == null || lineNumberStop == null) { return false }
-    if (lineNumberStart < 0 || lineNumberStop < 0) { return false }
-    if (colNumberStart == null || colNumberStop == null) { return false }
-    if (colNumberStart < 0 || colNumberStop < 0) { return false }
+    if (astNodes.isEmpty()) {
+      return false
+    }
+    if (lineNumberStart == null || lineNumberStop == null) {
+      return false
+    }
+    if (lineNumberStart < 0 || lineNumberStop < 0) {
+      return false
+    }
+    if (colNumberStart == null || colNumberStop == null) {
+      return false
+    }
+    if (colNumberStart < 0 || colNumberStop < 0) {
+      return false
+    }
     return true
   }
 }

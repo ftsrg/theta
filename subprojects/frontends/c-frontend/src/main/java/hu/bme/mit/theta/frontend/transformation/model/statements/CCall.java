@@ -34,7 +34,10 @@ public class CCall extends CStatement {
         super(parseContext);
         this.functionId = functionId;
         this.params = params;
-        params.forEach( param -> { if(param!=null) param.setParent(this); });
+        params.forEach(
+                param -> {
+                    if (param != null) param.setParent(this);
+                });
         Optional<Object> cTypeOpt =
                 parseContext.getMetadata().getMetadataValue(functionId, "cType");
         CComplexType type =

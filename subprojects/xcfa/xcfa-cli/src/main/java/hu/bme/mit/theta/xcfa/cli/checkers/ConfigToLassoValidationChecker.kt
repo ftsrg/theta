@@ -50,8 +50,8 @@ import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlinx.serialization.builtins.ListSerializer
 import kotlin.jvm.optionals.getOrNull
+import kotlinx.serialization.builtins.ListSerializer
 
 fun getLassoValidationChecker(
   xcfa: XCFA,
@@ -195,20 +195,24 @@ fun getLassoValidationChecker(
 private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint): XcfaLocation {
   val results = mutableSetOf<XcfaLocation>()
   val resultStatements = mutableSetOf<CStatement>()
-  for (loc in lasso.locs.filter { it -> it.incomingEdges.size>=1 }) {
+  for (loc in lasso.locs.filter { it -> it.incomingEdges.size >= 1 }) {
     for (outEdge in loc.outgoingEdges) {
       val astNodes = outEdge.getCMetaData()!!.astNodes
-      for(node in astNodes) {
+      for (node in astNodes) {
         val parent = node.parent.getOrNull()
-        if (parent!=null && parent is CCompound) {
-          if (parent.getcStatementList()[0] == node &&
-            parent.lineNumberStart == recurrenceSet.waypoint.location.line &&
-            parent.colNumberStart+1 == recurrenceSet.waypoint.location.column) {
+        if (parent != null && parent is CCompound) {
+          if (
+            parent.getcStatementList()[0] == node &&
+              parent.lineNumberStart == recurrenceSet.waypoint.location.line &&
+              parent.colNumberStart + 1 == recurrenceSet.waypoint.location.column
+          ) {
             results.add(loc)
             resultStatements.add(parent)
-          } else if (parent.getcStatementList()[0] != node &&
-            node.lineNumberStart == recurrenceSet.waypoint.location.line &&
-            node.colNumberStart+1 == recurrenceSet.waypoint.location.column) {
+          } else if (
+            parent.getcStatementList()[0] != node &&
+              node.lineNumberStart == recurrenceSet.waypoint.location.line &&
+              node.colNumberStart + 1 == recurrenceSet.waypoint.location.column
+          ) {
             results.add(loc)
             resultStatements.add(node)
           }
@@ -217,7 +221,9 @@ private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint
     }
   }
 
-  check(resultStatements.size == 1) { "Exactly one C statement should be possible to match to recurrence location" }
+  check(resultStatements.size == 1) {
+    "Exactly one C statement should be possible to match to recurrence location"
+  }
   check(results.size == 1) { "There should only be one recurrence location in XCFA" }
 
   return results.iterator().next()
