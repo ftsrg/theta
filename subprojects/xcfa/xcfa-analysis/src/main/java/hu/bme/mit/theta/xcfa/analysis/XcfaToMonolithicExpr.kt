@@ -187,11 +187,12 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
     PtrState(
       ExplState.of(
         ImmutableValuation.from(
-          val1
-            .toMap()
-            .filter { it.key.name != "__loc_" && !it.key.name.startsWith("__temp_") }
-            .map { Pair(Decls.Var("_" + "_" + it.key.name, it.key.type), it.value) }
-            .toMap()
+          val1.toMap().filter {
+            it.key.name != "__loc_" &&
+              it.key.name != "__edge_" &&
+              !it.key.name.startsWith("__temp_") &&
+              !it.key.name.startsWith("__saved_")
+          }
         )
       )
     ),

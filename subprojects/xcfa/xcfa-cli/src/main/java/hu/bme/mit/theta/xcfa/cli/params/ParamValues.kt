@@ -66,12 +66,17 @@ enum class InputType {
 enum class Backend {
   CEGAR,
   BOUNDED,
+  BMC,
+  KIND,
+  IMC,
+  KINDIMC,
   CHC,
   OC,
   LAZY,
   PORTFOLIO,
   MDD,
   IC3,
+  LASSO_VALIDATION,
   NONE,
 }
 

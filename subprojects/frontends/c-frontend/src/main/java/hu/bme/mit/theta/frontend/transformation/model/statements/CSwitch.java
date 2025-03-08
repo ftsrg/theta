@@ -25,7 +25,9 @@ public class CSwitch extends CStatement {
     public CSwitch(CStatement testValue, CStatement body, ParseContext parseContext) {
         super(parseContext);
         this.testValue = testValue;
+        if (testValue != null) testValue.setParent(this);
         this.body = body;
+        if (body != null) body.setParent(this);
     }
 
     public CStatement getBody() {
