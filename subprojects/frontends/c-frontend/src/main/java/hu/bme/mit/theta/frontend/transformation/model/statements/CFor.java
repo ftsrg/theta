@@ -32,13 +32,13 @@ public class CFor extends CStatement {
             ParseContext parseContext) {
         super(parseContext);
         this.body = body;
-        body.setParent(this);
+        if(body!=null) body.setParent(this);
         this.init = init;
-        init.setParent(this);
+        if(init!=null) init.setParent(this);
         this.guard = guard;
-        guard.setParent(this);
+        if(guard!=null) guard.setParent(this);
         this.increment = increment;
-        increment.setParent(this);
+        if(increment!=null) increment.setParent(this);
     }
 
     public CStatement getIncrement() {

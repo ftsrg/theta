@@ -35,6 +35,8 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
@@ -49,6 +51,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.witnesses.*
 import kotlinx.serialization.builtins.ListSerializer
+import kotlin.jvm.optionals.getOrNull
 
 fun getLassoValidationChecker(
   xcfa: XCFA,
@@ -89,7 +92,8 @@ fun getLassoValidationChecker(
 
   val stemRecurrentLocCount = 0
 
-  val recurrenceSetLocation = recurrenceSet.segment!![0].waypoint.location
+  val recurrenceWaypoint = recurrenceSet.segment!![0]
+  val recurrenceSetLocation = recurrenceWaypoint.waypoint.location
   val waypoints = witness.content.flatMap { it.segment ?: emptyList() }
 
   check(
@@ -104,17 +108,7 @@ fun getLassoValidationChecker(
     xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness)).initProcedures[0].first
 
   return SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-    val hondae =
-      lasso.locs.filter {
-        it.incomingEdges.size > 1 &&
-          it.outgoingEdges.size >= 1 &&
-          it.getCMetaData()!!.astNodes.find { node ->
-            node.lineNumberStart == recurrenceSetLocation.line &&
-              node.colNumberStart == recurrenceSetLocation.column
-          } != null
-      } // only honda should match
-    check(hondae.size == 1) { "Zero or more than one location matches predicate: $hondae" }
-    val honda = hondae[0]
+    val honda = findRecurrenceLocation(lasso, recurrenceWaypoint)
 
     val stem = getNondetPath(lasso.initLoc, honda)
     val cycle = getNondetPath(honda, honda)
@@ -196,6 +190,37 @@ fun getLassoValidationChecker(
       EmptyProof.getInstance(),
     )
   }
+}
+
+private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint): XcfaLocation {
+  val results = mutableSetOf<XcfaLocation>()
+  val resultStatements = mutableSetOf<CStatement>()
+  for (loc in lasso.locs.filter { it -> it.incomingEdges.size>=1 }) {
+    for (outEdge in loc.outgoingEdges) {
+      val astNodes = outEdge.getCMetaData()!!.astNodes
+      for(node in astNodes) {
+        val parent = node.parent.getOrNull()
+        if (parent!=null && parent is CCompound) {
+          if (parent.getcStatementList()[0] == node &&
+            parent.lineNumberStart == recurrenceSet.waypoint.location.line &&
+            parent.colNumberStart+1 == recurrenceSet.waypoint.location.column) {
+            results.add(loc)
+            resultStatements.add(parent)
+          } else if (parent.getcStatementList()[0] != node &&
+            node.lineNumberStart == recurrenceSet.waypoint.location.line &&
+            node.colNumberStart+1 == recurrenceSet.waypoint.location.column) {
+            results.add(loc)
+            resultStatements.add(node)
+          }
+        }
+      }
+    }
+  }
+
+  check(resultStatements.size == 1) { "Exactly one C statement should be possible to match to recurrence location" }
+  check(results.size == 1) { "There should only be one recurrence location in XCFA" }
+
+  return results.iterator().next()
 }
 
 private fun getNondetPath(current: XcfaLocation, final: XcfaLocation): Stmt {
