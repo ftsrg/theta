@@ -51,15 +51,12 @@ public class PetriNetToXSTS {
         PN_SAFE
     }
 
-    public static XSTS createXSTS(final PetriNet net,
-                                  final InputStream propStream) {
+    public static XSTS createXSTS(final PetriNet net, final InputStream propStream) {
         return createXSTS(net, propStream, PropType.TARGET_MARKING);
     }
+
     public static XSTS createXSTS(
-            final PetriNet net,
-            final InputStream propStream,
-            final PropType propType
-    ) {
+            final PetriNet net, final InputStream propStream, final PropType propType) {
         final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
 
         final List<Expr<BoolType>> initExprs = new ArrayList<>();
@@ -91,8 +88,8 @@ public class PetriNetToXSTS {
                 final VarDecl<IntType> placeVar = placeIdToVar.get(sourcePlace.getId());
                 final long weight = inArc.getWeight();
 
-                GeqExpr<?> enoughTokensExpr = GeqExpr.create2(
-                        placeVar.getRef(), Int(BigInteger.valueOf(weight)));
+                GeqExpr<?> enoughTokensExpr =
+                        GeqExpr.create2(placeVar.getRef(), Int(BigInteger.valueOf(weight)));
                 enoughTokensExprs.add(enoughTokensExpr);
                 final Stmt enoughTokensStmt = AssumeStmt.of(enoughTokensExpr);
                 stmts.add(enoughTokensStmt);
@@ -135,12 +132,14 @@ public class PetriNetToXSTS {
         final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
         final Expr<BoolType> propExpr;
-        if(propType == PropType.DEADLOCK) {
+        if (propType == PropType.DEADLOCK) {
             propExpr = SmartBoolExprs.Or(transitionToGuard.values());
         } else if (propType == PropType.PN_SAFE) {
-            propExpr = SmartBoolExprs.And(
-                    placeIdToVar.values().stream().map((p) -> Leq(p.getRef(), Int(1))).toList()
-            );
+            propExpr =
+                    SmartBoolExprs.And(
+                            placeIdToVar.values().stream()
+                                    .map((p) -> Leq(p.getRef(), Int(1)))
+                                    .toList());
         } else if (propStream != null) {
             final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
             final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
