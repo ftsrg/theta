@@ -62,7 +62,7 @@ fun getIc3Checker(
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     Ic3Checker(
       /* monolithicExpr = */ monolithicExpr,
-      /* forwardTrace = */ true,
+      /* forwardTrace = */ !ic3Config.reversed,
       /* solverFactory = */ solverFactory,
       /* valToState = */ { valuation -> monolithicExpr.valToState.invoke(valuation) },
       /* biValToAction = */ { v1: Valuation, v2: Valuation ->
