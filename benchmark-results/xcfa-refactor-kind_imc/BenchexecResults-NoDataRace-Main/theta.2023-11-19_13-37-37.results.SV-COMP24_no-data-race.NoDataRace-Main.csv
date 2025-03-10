@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main	SV-COMP24_no-data-race.NoDataRace-Main
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	ERROR (frontend failed)	4.080925	1.524702966999996	255.287296
+pthread-atomic/read_write_lock-1.yml	true	15.512951	5.890312731000051	585.363456
+pthread-wmm/rfi003_tso.yml	true	15.695175	6.053350805000036	561.119232
+pthread/lazy01.yml	true	9.719379	4.282402973999979	451.883008
+pthread-wmm/mix000.oepc.yml	true	14.715094	5.808460717000003	566.169600
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml	true	8.874093	4.318508497000039	436.842496
+pthread-wmm/safe032_tso.yml	true	11.874479	5.10557248799995	556.658688
+goblint-regression/13-privatized_37-traces-ex-4_true.yml	true	10.035284	4.407405696000012	452.079616
+pthread-C-DAC/pthread-demo-datarace-3.yml	ERROR (frontend failed)	6.602203	2.362909485999978	336.412672
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml	true	9.517174	4.310424884000042	457.449472

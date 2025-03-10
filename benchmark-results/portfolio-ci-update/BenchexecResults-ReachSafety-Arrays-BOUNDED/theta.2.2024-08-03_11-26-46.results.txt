@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Arrays, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-08-03 11:26:46 UTC
+tool:                    Theta 6.3.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1144-80
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2955.238 MHz
+ram:                     16757.338112 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Arrays
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                           status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------------------------------
+array-examples/standard_partition_ground-2.yml                      Parsing OK                       6.50        3.30        None
+array-crafted/mapavg4.yml                                           Parsing OK                       7.16        3.66        None
+array-programs/copysome2-1.yml                                      Parsing OK                       7.09        3.40        None
+array-examples/sanfoundry_24-1.yml                                  Parsing OK                       6.40        3.37        None
+array-multidimensional/max-2-u.yml                                  ERROR (frontend failed)          1.78        0.74        None
+array-examples/sorting_bubblesort_ground-1.yml                      Parsing OK                       6.81        3.48        None
+array-crafted/bAnd2.yml                                             TIMEOUT                         21.44       11.02        None
+array-multidimensional/rev-2-n-u.yml                                ERROR (frontend failed)          1.80        0.74        None
+array-examples/data_structures_set_multi_proc_trivial_ground.yml    Parsing OK                       8.41        3.63        None
+array-patterns/array21_pattern.yml                                  ERROR (frontend failed)          1.93        0.78        None
+array-examples/standard_copy3_ground-2.yml                          Parsing OK                       7.86        3.37        None
+array-examples/standard_copy6_ground-2.yml                          Parsing OK                       8.36        3.55        None
+array-examples/standard_copyInit_ground.yml                         Parsing OK                       7.63        3.51        None
+array-examples/standard_init4_ground-1.yml                          Parsing OK                       7.89        3.41        None
+array-examples/standard_copy9_ground-1.yml                          Parsing OK                       8.67        3.55        None
+array-crafted/mapsum1.yml                                           Parsing OK                      12.21        4.56        None
+array-examples/standard_init7_ground-2.yml                          Parsing OK                       8.05        3.49        None
+array-cav19/array_init_var_plus_ind3.yml                            Parsing OK                       7.27        3.23        None
+array-tiling/mbpr4.yml                                              Parsing OK                       8.61        3.57        None
+reducercommutativity/sum20-2.yml                                    Parsing OK                       8.99        3.78        None
+array-programs/copysome1-1.yml                                      Parsing OK                       7.66        3.38        None
+array-tiling/pr2.yml                                                Parsing OK                       7.46        3.33        None
+array-examples/standard_copy8_ground-1.yml                          Parsing OK                       8.46        3.63        None
+array-examples/standard_init8_ground-2.yml                          Parsing OK                       8.28        3.71        None
+array-cav19/array_tiling_tcpy.yml                                   Parsing OK                       7.24        3.21        None
+reducercommutativity/max60-2.yml                                    Parsing OK                      11.28        4.16        None
+array-examples/standard_init4_ground-2.yml                          Parsing OK                       7.80        3.51        None
+array-patterns/array29_pattern.yml                                  ERROR (frontend failed)          1.83        0.76        None
+array-examples/standard_init1_ground-1.yml                          Parsing OK                       7.59        3.27        None
+reducercommutativity/max20-1.yml                                    Parsing OK                       9.18        3.72        None
+array-examples/standard_copyInitSum_ground.yml                      Parsing OK                       7.60        3.30        None
+array-examples/standard_reverse_ground.yml                          Parsing OK                       7.47        3.47        None
+array-examples/standard_find_ground-1.yml                           Parsing OK                       7.64        3.29        None
+array-examples/standard_palindrome_ground.yml                       Parsing OK                       7.58        3.29        None
+array-cav19/array_init_pair_symmetr2.yml                            Parsing OK                       8.06        3.45        None
+reducercommutativity/sum40-2.yml                                    Parsing OK                      10.40        4.07        None
+array-crafted/bor3.yml                                              Parsing OK                       8.20        3.57        None
+array-programs/copysome1-2.yml                                      Parsing OK                       7.65        3.50        None
+array-patterns/array24_pattern.yml                                  ERROR (frontend failed)          1.93        0.78        None
+array-multidimensional/min-2-u.yml                                  ERROR (frontend failed)          1.81        0.74        None
+array-crafted/mapavg1.yml                                           Parsing OK                      12.13        4.48        None
+array-patterns/array10_pattern.yml                                  Parsing OK                       7.47        3.24        None
+array-examples/standard_copy9_ground-2.yml                          Parsing OK                       8.66        3.57        None
+reducercommutativity/sum10-1.yml                                    Parsing OK                       8.10        3.45        None
+array-tiling/pr3.yml                                                Parsing OK                       7.75        3.60        None
+array-patterns/array17_pattern.yml                                  ERROR (frontend failed)          1.85        0.76        None
+array-examples/standard_seq_init_ground.yml                         Parsing OK                       7.33        3.42        None
+array-examples/standard_minInArray_ground-2.yml                     Parsing OK                       7.81        3.35        None
+array-crafted/zero_sum_m2.yml                                       Parsing OK                       7.49        3.31        None
+reducercommutativity/max05-1.yml                                    Parsing OK                       8.07        3.53        None
+---------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                           done                           355.06      170.69           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 95)

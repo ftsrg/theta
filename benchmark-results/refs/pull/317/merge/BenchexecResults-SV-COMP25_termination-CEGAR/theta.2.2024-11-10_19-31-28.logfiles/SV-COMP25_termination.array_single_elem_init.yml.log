@@ -1,0 +1,13 @@
+Theta/theta-start.sh sv-benchmarks/c/array-industry-pattern/array_single_elem_init.i --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/array-industry-pattern/array_single_elem_init.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --architecture ILP32'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_l5qcr0rj/tmp/.mount_specifbiv6Am/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_l5qcr0rj/tmp/.mount_specifbiv6Am/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_l5qcr0rj/tmp/.mount_specifbiv6Am/algorithms/instrumentation_operator.py", line 74, in transform
+Exception: The program sv-benchmarks/c/array-industry-pattern/array_single_elem_init.i has unsupported types or loop structures

@@ -1,0 +1,68 @@
+tool		Theta 6.7.2	Theta 6.7.2	Theta 6.7.2	Theta 6.7.2
+run set		SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup	SV-COMP25_valid-memcleanup.MemSafety-MemCleanup
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+list-ext-properties/simple-ext.yml	false	ERROR (frontend failed, before parsing finished)	2.268974	1.0351016480000226	247.775232
+memsafety/global-atexit-1.yml	false	ERROR (server error, after parsing finished)	10.913997	5.171858216999965	473.714688
+memsafety/global-atexit-2.yml	false	ERROR (server error, after parsing finished)	9.919855	4.779493094999964	462.602240
+memsafety/global-atexit-3.yml	false	ERROR (server error, after parsing finished)	10.262945	5.045118736000006	465.100800
+memsafety/global-atexit.yml	true	ERROR (server error, after parsing finished)	9.944245	4.942961848000039	461.377536
+memsafety-bftpd/bftpd_1.yml	true	ERROR (frontend failed, before parsing finished)	4.141723	1.480731191000018	302.612480
+memsafety-bftpd/bftpd_2.yml	false	ERROR (frontend failed, before parsing finished)	3.842956	1.4159278939999922	307.073024
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.818765	0.755102485000009	165.900288
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_calloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.864373	0.791215397999963	179.384320
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.768762	0.7442469470000219	166.023168
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.996669	0.808944586999985	188.928000
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.867749	0.7907066459999896	174.870528
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_realloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.835138	0.7463479080000184	177.500160
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.824355	0.7575315359999877	176.377856
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_calloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.773302	0.7463698260000342	166.916096
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.770962	0.7308536259999983	166.912000
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_malloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.82857	0.7394672279999668	175.226880
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.867605	0.76991332099999	175.554560
+Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int_realloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	2.047507	0.838870901000007	194.555904
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.815986	0.7481121809999536	183.341056
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_calloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.783246	0.7333725999999956	166.596608
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.847689	0.7716766599999687	178.614272
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_malloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.804795	0.7417146569999886	169.734144
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.804709	0.7455564859999981	177.680384
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.860031	0.8051062260000208	175.370240
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.852869	0.773683425999991	175.517696
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_calloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.864431	0.7762391619999676	176.230400
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.85672	0.7851630559999876	181.673984
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_malloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.775302	0.7263050290000024	167.960576
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_45_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.869068	0.7771191209999984	178.847744
+Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__twoIntsStruct_realloc_68_bad.yml	false	ERROR (frontend failed, before parsing finished)	1.845082	0.7720448119999901	173.850624
+heap-manipulation/bubble_sort_linux-2.yml	false	ERROR (frontend failed, before parsing finished)	4.975903	1.792065942000022	357.031936
+heap-manipulation/dll_of_dll-2.yml	false	ERROR (frontend failed, before parsing finished)	2.936074	1.0786615410000309	285.954048
+heap-manipulation/merge_sort-1.yml	false	ERROR (frontend failed, before parsing finished)	4.374473	1.5786251609999908	307.335168
+heap-manipulation/sll_to_dll_rev-1.yml	false				
+heap-manipulation/tree-4.yml	false				
+forester-heap/dll-01-1.yml	false				
+forester-heap/dll-circular-1.yml	false				
+forester-heap/dll-optional-2.yml	false				
+forester-heap/dll-queue-2.yml	false				
+forester-heap/dll-simple-white-blue-1.yml	false				
+forester-heap/dll-sorted-1.yml	false				
+forester-heap/dll-token-2.yml	false				
+forester-heap/sll-buckets-2.yml	false				
+forester-heap/sll-circular-2.yml	false				
+forester-heap/sll-optional-2.yml	false				
+forester-heap/sll-queue-2.yml	false				
+forester-heap/sll-rb-sentinel-2.yml	false				
+forester-heap/sll-simple-white-blue-2.yml	false				
+forester-heap/sll-sorted-1.yml	false				
+forester-heap/sll-token-1.yml	false				
+list-properties/alternating_list-2.yml	false				
+list-properties/list-2.yml	false				
+list-properties/list_flag-1.yml	false				
+list-properties/list_search-1.yml	false				
+list-properties/list_search-2.yml	false				
+list-properties/simple-1.yml	false				
+list-properties/splice-1.yml	false				
+list-ext3-properties/dll_nullified-1.yml	false				
+list-ext3-properties/sll_length_check-1.yml	false				
+list-ext3-properties/sll_nondet_insert-1.yml	false				
+list-ext3-properties/sll_of_sll_nondet_append-2.yml	false				
+verifythis/tree_del_iter.yml	false				
+verifythis/tree_del_rec.yml	false				
+verifythis/tree_max.yml	false				

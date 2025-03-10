@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-BitVectors, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:48:09 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1200-393
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3228.633 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-BitVectors
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                      status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------
+bitvector/gcd_4.yml                            true                             2.84        1.07        None
+bitvector/soft_float_1-3a.c.cil.yml            ERROR (server error)             3.15        1.19        None
+bitvector-regression/integerpromotion-3.yml    false(unreach-call)              2.74        1.08        None
+bitvector/sum02-1.yml                          TIMEOUT                        120.56      112.68        None
+bitvector-loops/diamond_2-1.yml                TIMEOUT                        120.54      112.21        None
+bitvector-regression/signextension-1.yml       false(unreach-call)              2.72        1.04        None
+bitvector/s3_srvr_3a.BV.c.cil.yml              TIMEOUT                        120.73      108.86        None
+bitvector-regression/signextension2-2.yml      false(unreach-call)              2.82        1.10        None
+bitvector/s3_clnt_2.BV.c.cil-1a.yml            true                             8.94        3.03        None
+bitvector/s3_srvr_2a.BV.c.cil.yml              true                             9.39        3.64        None
+------------------------------------------------------------------------------------------------------------
+Run set 1                                      done                            32.96      347.24           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               6
+    correct true:        3
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 9 (max: 14)

@@ -1,0 +1,49 @@
+Thorn/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_multiply_04_good.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_multiply_04_good.i' with property 'sv-benchmarks/c/properties/no-overflow.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/no-overflow.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Language C detected and set for analysis (CPAMain.detectFrontendLanguageIfNecessary, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (ResourceLimitChecker.fromConfiguration, INFO)
+
+CPAchecker 3.1-svn-c087875f13 / default (OpenJDK 64-Bit Server VM 17.0.14) started (CPAchecker.run, INFO)
+
+Parsing CFA from file(s) "formatted_files/tmp.kCTRmAoyku" (CPAchecker.parse, INFO)
+
+Using default specification, which checks for assertion failures and error labels. (CPAchecker.run, INFO)
+
+Using Restarting Algorithm (CoreComponentsFactory.createAlgorithm, INFO)
+
+The following configuration options were specified but are not used:
+ instrumentation.instrumentationProperty 
+ (CPAchecker.printConfigurationWarnings, WARNING)
+
+Starting analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Loading analysis 1 from file /home/runner/work/theta/theta/Thorn/specification-transformation/cpachecker/config/components/kInduction+Invariants/kInduction.properties ... (RestartAlgorithm.run, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (Analysis /home/runner/work/theta/theta/Thorn/specification-transformation/cpachecker/config/components/kInduction+Invariants/kInduction.properties:ResourceLimitChecker.fromConfiguration, INFO)
+
+Starting analysis 1 ... (RestartAlgorithm.run, INFO)
+
+Ignoring restart configuration '/home/runner/work/theta/theta/Thorn/specification-transformation/cpachecker/config/components/valueAnalysis-predicateAnalysis-bam-rec.properties' because condition if-recursive did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Ignoring restart configuration '/home/runner/work/theta/theta/Thorn/specification-transformation/cpachecker/config/components/bddAnalysis-concurrency.properties' because condition if-concurrent did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Analysis 3 terminated, but result is unsound. (RestartAlgorithm.run, INFO)
+
+No further configuration available. (RestartAlgorithm.run, INFO)
+
+Stopping analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Finished.
+More details about the verification run can be found in the directory "./output".
+Graphical representation included in the file "./output/Report.html".
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --architecture LP64 --input-file-for-witness sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_multiply_04_good.i --input output/transformed_program.c --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/Thorn/solvers
+line 587:66 no viable alternative at input 'typedefstruct{longlong__max_align_ll__attribute__((__aligned__(__alignof__(long'
+line 587:66 no viable alternative at input 'typedefstruct{longlong__max_align_ll__attribute__((__aligned__(__alignof__(long'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.externalDeclaration(CParser.java:8930), org.antlr.v4.runtime.misc.ParseCancellationException)
