@@ -29,10 +29,6 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -98,20 +94,7 @@ public class CfaMddCheckerTest {
             try (var solverPool = new SolverPool(solverFactory)) {
                 final MddChecker<ExprAction> checker =
                         MddChecker.create(
-                                monolithicExpr.getInitExpr(),
-                                VarIndexingFactory.indexing(0),
-                                new ExprAction() {
-                                    @Override
-                                    public Expr<BoolType> toExpr() {
-                                        return monolithicExpr.getTransExpr();
-                                    }
-
-                                    @Override
-                                    public VarIndexing nextIndexing() {
-                                        return VarIndexingFactory.indexing(1);
-                                    }
-                                },
-                                monolithicExpr.getPropExpr(),
+                                monolithicExpr,
                                 monolithicExpr.getVars(),
                                 solverPool,
                                 logger,
