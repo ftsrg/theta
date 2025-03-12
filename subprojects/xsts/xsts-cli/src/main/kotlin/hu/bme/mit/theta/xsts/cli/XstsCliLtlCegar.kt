@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.cfa.analysis.CfaState
 import hu.bme.mit.theta.common.cfa.buchi.hoa.ExternalLtl2Hoaf
 import hu.bme.mit.theta.common.cfa.buchi.hoa.Ltl2BuchiThroughHoaf
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.ltl.LtlChecker
 import hu.bme.mit.theta.common.ltl.cli.LtlCliOptions
 import hu.bme.mit.theta.solver.SolverManager
@@ -114,7 +115,10 @@ class XstsCliLtlCegar :
     xsts: XSTS,
     totalTimeMs: Long,
   ) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
     listOf(

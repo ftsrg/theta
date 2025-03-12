@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
@@ -46,7 +47,10 @@ class XstsCliIC3 :
     xsts: XSTS,
     totalTimeMs: Long,
   ) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     writer.newRow()
   }
