@@ -110,7 +110,10 @@ class XstsCliBounded :
     xsts: XSTS,
     totalTimeMs: Long,
   ) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     val stats = status.stats.orElse(BoundedStatistics(0)) as BoundedStatistics
     listOf(stats.iterations).forEach(writer::cell)

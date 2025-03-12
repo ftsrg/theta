@@ -58,6 +58,7 @@ import java.util.*
  * @param biValToAction A function mapping pairs of valuations to statements, used to construct a
  *   counterexample.
  * @param logger The logger for logging.
+ * @param reverseTrace If 'true', reverse the trace in the counterexample.
  */
 class BoundedChecker<S : ExprState, A : ExprAction>
 @JvmOverloads
@@ -74,6 +75,7 @@ constructor(
   private val valToState: (Valuation) -> S,
   private val biValToAction: (Valuation, Valuation) -> A,
   private val logger: Logger,
+  private val reverseTrace: Boolean = false,
 ) : SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
 
   private val vars = monolithicExpr.vars
@@ -117,7 +119,6 @@ constructor(
 
       if (isBmcEnabled) {
         bmc()?.let {
-          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
       }
@@ -127,7 +128,6 @@ constructor(
           error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
         }
         kind()?.let {
-          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
         kindLastIterLookup = iteration
@@ -135,7 +135,6 @@ constructor(
 
       if (imcEnabled(iteration)) {
         itp()?.let {
-          logger.write(Logger.Level.RESULT, "%s%n", it)
           return it
         }
       }
@@ -294,6 +293,13 @@ constructor(
       }
       lastValuation = valuation
     }
-    return Trace.of(stateList, actionList)
+    return if (reverseTrace) {
+      Trace.of(
+        stateList.reversed(),
+        actionList.reversed().map { if (it is ReversibleAction) it.reverse(it) else it },
+      )
+    } else {
+      Trace.of(stateList, actionList)
+    }
   }
 }

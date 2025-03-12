@@ -27,5 +27,15 @@ fun MonolithicExpr.createReversed(): MonolithicExpr {
     transOffsetIndex = transOffsetIndex,
     initOffsetIndex = VarIndexingFactory.indexing(0),
     vars = vars,
+    valToState = valToState,
+    biValToAction = { valuation1, valuation2 ->
+      val revAction = biValToAction(valuation2, valuation1)
+      if (revAction is ReversibleAction) {
+        revAction.reverse()
+      } else {
+        biValToAction(valuation1, valuation2)
+      }
+    },
+    ctrlVars = ctrlVars,
   )
 }

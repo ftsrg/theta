@@ -76,6 +76,7 @@ fun getBoundedChecker(
         valToState = monolithicExpr.valToState,
         biValToAction = monolithicExpr.biValToAction,
         logger = logger,
+        reverseTrace = boundedConfig.reversed,
       )
     }
   }
