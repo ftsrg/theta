@@ -76,15 +76,13 @@ class AbstractSummaryBuilder<S : State, A : Action> {
       }
     }
 
-    // create summary nodes
+    // create summary nodes and a map of argnodes to summary nodes
+    val argNodeSummaryNodeMap =
+      nodeGroups
+        .flatMap { AbstractSummaryNode.create(it) } // Create summary nodes for each group
+        .flatMap { summaryNode -> summaryNode.argNodes.map { node -> node to summaryNode } }
+        .toMap()
 
-    val argNodeSummaryNodeMap = mutableMapOf<ArgNode<S, A>, AbstractSummaryNode<S, A>>()
-    for (nodeGroup in nodeGroups) {
-      val summaryNode = AbstractSummaryNode.create(nodeGroup)
-      for (node in nodeGroup) {
-        argNodeSummaryNodeMap[node] = summaryNode
-      }
-    }
     val summaryNodes = argNodeSummaryNodeMap.values.toSet()
     val initSummaryNodes =
       summaryNodes.filter { summaryNode -> argTraces.get(0).node(0) in summaryNode.argNodes }
@@ -142,60 +140,99 @@ private constructor(
 
     fun <S : State, A : Action> create(
       argNodes: MutableSet<ArgNode<S, A>>
-    ): AbstractSummaryNode<S, A> {
+    ): Set<AbstractSummaryNode<S, A>> {
       // all of the nodes should be in some kind of coverage relationship with each other,
-      // otherwise, split this summary node
-      for (node in argNodes) {
-        for (node2 in argNodes) {
-          if (node != node2) {
-            // ancestors & subsumed irrelevant here
-            if (!node.inPartialOrder(node2) && !node2.inPartialOrder(node)) {
-              TODO("split summary node")
+      // so we partition them in a way that that is true
+      val partitions = partitionNodes(argNodes)
+      assert(partitions.size > 0)
+      if (partitions.size > 1) {
+        val abstractSummaryNodes = mutableSetOf<AbstractSummaryNode<S, A>>()
+        for (partition in partitions) {
+          abstractSummaryNodes.addAll(create(partition.toMutableSet()))
+        }
+        return abstractSummaryNodes
+      } else {
+        val notCoveredNodes = argNodes.filter { argNode -> argNode.coveringNode.isEmpty }
+        var leastOverApproximatedNode =
+          notCoveredNodes[0] // just get one of them, does not matter, which
+
+        for (node in notCoveredNodes) {
+          if (leastOverApproximatedNode != node) {
+            // ancestors irrelevant here, subsumed should not be checked
+            if (node.inPartialOrder(leastOverApproximatedNode)) {
+              // node can cover the so far "least over approximated" node - node is more "abstract"
+              leastOverApproximatedNode = node
+            } else if (!leastOverApproximatedNode.inPartialOrder(node)) {
+              throw RuntimeException(
+                "All nodes in summary node should be in some partial ordering!"
+              )
             }
           }
         }
-      }
 
-      val notCoveredNodes = argNodes.filter { argNode -> argNode.coveringNode.isEmpty }
-      var leastOverApproximatedNode =
-        notCoveredNodes[0] // just get one of them, does not matter, which
+        val notCoveringNodes =
+          argNodes.filter { argNode ->
+            argNode.coveredNodes.filter { node -> node in argNodes }.count() == 0L
+          }
+        var mostOverApproximatedNode = notCoveringNodes[0]
 
-      for (node in notCoveredNodes) {
-        if (leastOverApproximatedNode != node) {
-          // ancestors irrelevant here, subsumed should not be checked
-          if (node.inPartialOrder(leastOverApproximatedNode)) {
-            // node can cover the so far "least over approximated" node - node is more "abstract"
-            leastOverApproximatedNode = node
-          } else if (!leastOverApproximatedNode.inPartialOrder(node)) {
-            throw RuntimeException("All nodes in summary node should be in some partial ordering!")
+        for (node in notCoveringNodes) {
+          if (mostOverApproximatedNode != node) {
+            // ancestors irrelevant here, subsumed should not be checked
+            if (mostOverApproximatedNode.inPartialOrder(node)) {
+              // so far "most over approximated" node can cover this node - this node is more
+              // abstract
+              mostOverApproximatedNode = node
+            } else if (!node.inPartialOrder(mostOverApproximatedNode)) {
+              throw RuntimeException(
+                "All nodes in summary node should be in some partial ordering!"
+              )
+            }
           }
         }
+
+        return setOf(
+          AbstractSummaryNode(
+            counter++,
+            argNodes,
+            leastOverApproximatedNode,
+            mostOverApproximatedNode,
+          )
+        )
+      }
+    }
+
+    private fun <S : State, A : Action> partitionNodes(
+      argNodes: Set<ArgNode<S, A>>
+    ): List<Set<ArgNode<S, A>>> {
+      // Build the adjacency list
+      val graph =
+        argNodes.associateWith { node ->
+          argNodes
+            .filter { it != node && (node.inPartialOrder(it) || it.inPartialOrder(node)) }
+            .toSet()
+        }
+
+      // Find connected components using DFS
+      val visited = mutableSetOf<ArgNode<S, A>>()
+      val partitions = mutableListOf<Set<ArgNode<S, A>>>()
+
+      fun dfs(node: ArgNode<S, A>, component: MutableSet<ArgNode<S, A>>) {
+        if (node in visited) return
+        visited += node
+        component += node
+        graph[node]?.forEach { dfs(it, component) }
       }
 
-      val notCoveringNodes =
-        argNodes.filter { argNode ->
-          argNode.coveredNodes.filter { node -> node in argNodes }.count() == 0L
-        }
-      var mostOverApproximatedNode = notCoveringNodes[0]
-
-      for (node in notCoveringNodes) {
-        if (mostOverApproximatedNode != node) {
-          // ancestors irrelevant here, subsumed should not be checked
-          if (mostOverApproximatedNode.inPartialOrder(node)) {
-            // so far "most over approximated" node can cover this node - this node is more abstract
-            mostOverApproximatedNode = node
-          } else if (!node.inPartialOrder(mostOverApproximatedNode)) {
-            throw RuntimeException("All nodes in summary node should be in some partial ordering!")
-          }
+      for (node in argNodes) {
+        if (node !in visited) {
+          val component = mutableSetOf<ArgNode<S, A>>()
+          dfs(node, component)
+          partitions += component
         }
       }
 
-      return AbstractSummaryNode(
-        counter++,
-        argNodes,
-        leastOverApproximatedNode,
-        mostOverApproximatedNode,
-      )
+      return partitions
     }
   }
 
