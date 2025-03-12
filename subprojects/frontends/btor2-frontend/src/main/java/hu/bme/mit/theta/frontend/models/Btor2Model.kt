@@ -38,10 +38,8 @@ public interface Btor2NodeVisitor<R, P> {
 object Btor2Circuit {
     var nodes: MutableMap<UInt, Btor2Node> = mutableMapOf()
     var sorts: MutableMap<UInt, Btor2Sort> = mutableMapOf()
-    var inits: MutableMap<UInt, Btor2Init> = mutableMapOf()
     var ops: MutableMap<UInt, Btor2Operation> = mutableMapOf()
-    var bads : MutableMap<UInt, Btor2Bad> = mutableMapOf()
-    var nexts: MutableMap<UInt, Btor2Next> = mutableMapOf()
+    var properties : MutableMap<UInt, Btor2Bad> = mutableMapOf()
 }
 
 // sortID lookup in Btor2Sort

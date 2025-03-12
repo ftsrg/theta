@@ -49,6 +49,9 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
             Btor2UnaryOperator.INC -> TODO()
             Btor2UnaryOperator.DEC -> TODO()
             Btor2UnaryOperator.NEG -> TODO()
+            Btor2UnaryOperator.REDAND -> TODO()
+            Btor2UnaryOperator.REDOR -> TODO()
+            Btor2UnaryOperator.REDXOR -> TODO()
         }
     }
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -165,37 +168,3 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
     }
 }
 
-enum class Btor2UnaryOperator {
-    NOT,
-    INC,
-    DEC,
-    NEG
-}
-
-enum class Btor2ComparisonOperator {
-    EQ,
-    NEQ,
-    SLT,
-    SLE,
-    SGT,
-    SGTE,
-    ULT,
-    ULE,
-    UGT,
-    UGTE
-}
-
-enum class Btor2BinaryOperator {
-    AND,
-    NAND,
-    NOR,
-    OR,
-    XOR,
-    ADD,
-    MUL,
-    UDIV,
-    UREM,
-    SDIV,
-    SREM,
-    SMOD
-}

@@ -22,7 +22,8 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.models.*
 
-class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>(){
+class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
+
     private val sortVisitor = SortVisitor()
     private val constantVisitor = ConstantVisitor()
     private val operationVisitor = OperationVisitor()
@@ -44,17 +45,17 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>(){
     }
 
     override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting constant: " + constantVisitor.visit(ctx)+ "\n")
+        logger.write(Logger.Level.VERBOSE, "Visiting constant: " + constantVisitor.visit(ctx) + "\n")
         return Btor2Circuit
     }
 
     override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting operation: "+ operationVisitor.visit(ctx)+ "\n")
+        logger.write(Logger.Level.VERBOSE, "Visiting operation: " + operationVisitor.visit(ctx) + "\n")
         return Btor2Circuit
     }
 
     override fun visitStateful(ctx: Btor2Parser.StatefulContext?): Btor2Circuit {
-        logger.write(Logger.Level.VERBOSE, "Visiting stateful: "+ statefulVisitor.visit(ctx)+ "\n")
+        logger.write(Logger.Level.VERBOSE, "Visiting stateful: " + statefulVisitor.visit(ctx) + "\n")
         return Btor2Circuit
     }
 

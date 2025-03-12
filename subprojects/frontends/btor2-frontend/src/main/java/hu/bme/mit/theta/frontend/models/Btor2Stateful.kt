@@ -23,8 +23,12 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
 
+abstract class Btor2Stateful(id: UInt, sort: Btor2Sort, state: Btor2State?, value: Btor2Node?) : Btor2Node(id, sort) {
+
+}
+
 // Inputs and States
-data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid, sort)
+data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort) : Btor2Stateful(nid, sort,null,null)
 {
     val value = Decls.Var("input_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -41,7 +45,7 @@ data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort) : Bt
     }
 
 }
-data class Btor2State(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid, sort) {
+data class Btor2State(override val nid: UInt, override val sort: Btor2Sort) : Btor2Stateful(nid, sort,null,null) {
     val value = Decls.Var("state_$nid", BvExprs.BvType(sort.width.toInt()))
 
     override fun getVar(): VarDecl<BvType>? {
@@ -56,7 +60,8 @@ data class Btor2State(override val nid: UInt, override val sort: Btor2Sort) : Bt
         return visitor.visit(this, param)
     }
 }
-data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Const) : Btor2Node(nid, sort)
+// Value was Btor2Const
+data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Node) : Btor2Stateful(nid, sort, state, value)
 {
     val declsVar = Decls.Var("init_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -73,7 +78,7 @@ data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, val s
     }
 }
 
-data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Node) : Btor2Node(nid, sort)
+data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Node) : Btor2Stateful(nid, sort, state, value)
 {
     val declsVar = Decls.Var("next_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -83,20 +88,6 @@ data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, val s
 
     override fun getExpr(): Expr<*> {
         TODO("Not yet implemented")
-    }
-
-    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
-        return visitor.visit(this, param)
-    }
-}
-data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val operand: Btor2Node) : Btor2Node(nid, null)
-{
-    override fun getVar(): VarDecl<*>? {
-        return null
-    }
-
-    override fun getExpr(): Expr<*> {
-        TODO()
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
