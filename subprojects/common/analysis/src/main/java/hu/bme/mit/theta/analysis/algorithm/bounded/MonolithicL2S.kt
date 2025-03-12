@@ -85,6 +85,6 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     biValToAction = { valuation1, valuation2 ->
       biValToAction(valuation1.filterVars(vars), valuation2.filterVars(vars))
     },
-    ctrlVars = ctrlVars + ctrlVars.map { saveMap[it]!! },
+    ctrlVars = ctrlVars + ctrlVars.map { saveMap[it]!! } + saved,
   )
 }
