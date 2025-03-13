@@ -63,6 +63,7 @@ include(
     "solver/solver-smtlib",
     "solver/solver-smtlib-cli",
     "solver/graph-solver",
+    "solver/solver-meta",
 )
 
 for (project in rootProject.children) {
