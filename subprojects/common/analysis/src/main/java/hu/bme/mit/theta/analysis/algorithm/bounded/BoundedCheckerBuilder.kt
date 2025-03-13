@@ -87,7 +87,7 @@ fun <S : ExprState, A : ExprAction> buildIMC(
   biValToAction: (Valuation, Valuation) -> A,
   logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
-  bmcEnabled: () -> Boolean = { true },
+  bmcEnabled: () -> Boolean = { false },
   lfPathOnly: () -> Boolean = { true },
   imcEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {

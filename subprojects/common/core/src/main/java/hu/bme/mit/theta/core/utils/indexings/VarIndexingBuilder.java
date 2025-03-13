@@ -22,6 +22,8 @@ public interface VarIndexingBuilder {
 
     VarIndexingBuilder inc(VarDecl<?> varDecl);
 
+    VarIndexingBuilder dec(VarDecl<?> varDecl);
+
     VarIndexingBuilder incAll();
 
     VarIndexingBuilder add(VarIndexingBuilder that);

@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.bounded.createAbstract
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
@@ -59,7 +58,6 @@ fun getMddChecker(
       .let {
         if (mddConfig.cegar) {
           TODO("MDD cannot return traces, and thus, --cegar won't work yet.")
-          it.createAbstract(mddConfig.initPrec.predPrec(xcfa).p.innerPrec)
         } else it
       }
       .let { if (mddConfig.reversed) it.createReversed() else it }
