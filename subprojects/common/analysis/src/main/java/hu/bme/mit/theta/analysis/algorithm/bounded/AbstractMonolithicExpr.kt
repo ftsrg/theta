@@ -61,6 +61,10 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
   ctrlVars.forEach { decl ->
     // -1, because ctrlVars have to keep their initial index
     repeat(transOffsetIndex.get(decl) - 1) { indexingBuilder = indexingBuilder.inc(decl) }
+    // the special case where it's original index is 0
+    if (transOffsetIndex.get(decl) == 0) {
+      indexingBuilder = indexingBuilder.dec(decl)
+    }
   }
 
   return MonolithicExpr(

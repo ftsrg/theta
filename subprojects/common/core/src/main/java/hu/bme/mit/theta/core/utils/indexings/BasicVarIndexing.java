@@ -192,6 +192,18 @@ public class BasicVarIndexing implements VarIndexing {
         }
 
         @Override
+        public BasicVarIndexingBuilder dec(final VarDecl<?> varDecl) {
+            checkNotNull(varDecl);
+
+            final Integer offset = varToOffset.getOrDefault(varDecl, 0);
+            final Integer newOffset = offset - 1;
+            checkArgument(defaultIndex + newOffset >= 0, "Negative index for variable");
+            varToOffset.put(varDecl, newOffset);
+
+            return this;
+        }
+
+        @Override
         public BasicVarIndexingBuilder incAll() {
             defaultIndex = defaultIndex + 1;
             return this;
