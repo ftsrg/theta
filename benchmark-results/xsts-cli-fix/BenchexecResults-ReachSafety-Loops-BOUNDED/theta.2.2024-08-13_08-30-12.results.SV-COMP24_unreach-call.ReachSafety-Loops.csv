@@ -1,0 +1,53 @@
+tool		Theta 6.5.1	Theta 6.5.1	Theta 6.5.1	Theta 6.5.1
+run set		SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+nla-digbench/ps3-ll.yml	true	TIMEOUT	20.910411	16.445433496999954	499.462144
+loop-crafted/simple_vardep_2.yml	true	TIMEOUT	21.035691	15.96094536999999	466.804736
+nla-digbench-scaling/divbin_valuebound100.yml	true	TIMEOUT	20.108571	14.565764419999937	495.550464
+nla-digbench-scaling/mannadiv_valuebound50.yml	true	TIMEOUT	20.388001	14.059221144000048	490.467328
+nla-digbench-scaling/mannadiv_unwindbound10.yml	false	TIMEOUT	20.192547	14.408457666999993	488.607744
+loops-crafted-1/nested3-1_abstracted.yml	true	TIMEOUT	20.241272	14.28092424800002	486.838272
+nla-digbench-scaling/sqrt1-ll_valuebound2.yml	true	true	7.50683	3.2629255640000565	471.289856
+loop-acceleration/nested_1-2.yml	false	TIMEOUT	20.87331	13.469997333999913	850.042880
+nla-digbench-scaling/hard-ll_valuebound2.yml	true	true	16.36046	10.256742110999994	539.176960
+loop-invgen/down.yml	true	TIMEOUT	20.884715	16.204354695000006	474.337280
+nla-digbench-scaling/geo2-ll_valuebound2.yml	true	TIMEOUT	20.900766	16.117543433999913	468.561920
+nla-digbench-scaling/geo3-ll_valuebound1.yml	true	true	7.349726	3.1839232439999705	464.629760
+nla-digbench-scaling/ps2-ll_valuebound10.yml	true	true	8.344497	4.086968748000004	478.412800
+nla-digbench-scaling/ps2-ll_valuebound5.yml	true	true	7.38342	3.194469034000008	463.769600
+nla-digbench-scaling/prodbin-ll_unwindbound10.yml	false	TIMEOUT	20.941806	16.052004504000024	454.098944
+loop-zilu/benchmark43_conjunctive.yml	true	TIMEOUT	20.083574	14.746900245999996	523.886592
+nla-digbench-scaling/bresenham-ll_valuebound20.yml	true	TIMEOUT	20.978734	15.877304637000066	531.668992
+loops/trex03-2_abstracted.yml	true	true	6.240037	2.8709339150000233	424.308736
+loops-crafted-1/vnew2.yml	true	TIMEOUT	20.946362	16.088322311999946	457.142272
+loop-acceleration/array_2-1-simple.yml	false	Parsing OK	7.395381	3.260053943999992	450.883584
+loops-crafted-1/nested3-2_abstracted.yml	false	false(unreach-call)	6.104337	3.009748849999937	449.052672
+nla-digbench-scaling/hard-u_valuebound2.yml	true	TIMEOUT	20.162346	14.432758031999924	502.476800
+loop-lit/gj2007.yml	true	true	13.840365	7.554277526999954	678.264832
+nla-digbench-scaling/ps6-ll_unwindbound2.yml	false	false(unreach-call)	7.382558	3.3091795380000804	461.230080
+nla-digbench-scaling/divbin2_valuebound5.yml	true	TIMEOUT (true)	20.14691	15.574391764999973	474.050560
+loop-zilu/benchmark19_conjunctive.yml	true	TIMEOUT	20.087672	14.62633912900003	612.548608
+loop-acceleration/overflow_1-1.yml	true	TIMEOUT	20.825142	13.41480758399996	857.964544
+nla-digbench-scaling/knuth_valuebound100.yml	true	TIMEOUT	20.105789	14.57232672300006	885.870592
+nla-digbench-scaling/egcd2-ll_unwindbound20.yml	false	TIMEOUT	20.420524	13.820773594000002	536.858624
+nla-digbench-scaling/sqrt1-ll_unwindbound2.yml	true	true	6.90223	3.0657136120000814	457.342976
+nla-digbench/hard2.yml	true	TIMEOUT	20.294632	14.203104886000006	516.907008
+nla-digbench-scaling/lcm2_valuebound100.yml	true	TIMEOUT	20.273097	14.153205652999986	486.879232
+nla-digbench-scaling/prod4br-ll_valuebound100.yml	true	TIMEOUT	21.00177	15.76666572199997	483.356672
+nla-digbench-scaling/knuth_valuebound5.yml	true	TIMEOUT	20.118755	14.510062790999996	874.618880
+nla-digbench-scaling/lcm1_valuebound1.yml	true	true	12.611986	6.596590859000003	524.734464
+nla-digbench-scaling/cohendiv-ll_unwindbound20.yml	true	TIMEOUT	20.410307	13.918430348000015	621.064192
+loop-simple/nested_1.yml	true	true	5.819145	2.7356571919999624	450.744320
+loop-invariants/linear-inequality-inv-a.yml	true	TIMEOUT	20.932712	16.119243420999965	467.288064
+nla-digbench-scaling/egcd3-ll_unwindbound1.yml	false	false(unreach-call)	10.579272	4.612754682000059	534.839296
+loop-lit/gj2007.c.i.p+lhb-reducer.yml	true	TIMEOUT	20.236431	14.297800284999994	575.766528
+loop-zilu/benchmark02_linear_abstracted.yml	true	true	6.28258	3.021592284999997	443.641856
+nla-digbench-scaling/ps6-ll_unwindbound100.yml	false	TIMEOUT	20.421756	13.86830889600003	518.103040
+nla-digbench-scaling/geo2-ll_unwindbound20.yml	true	TIMEOUT	20.571066	13.499268619999953	590.606336
+nla-digbench-scaling/knuth_unwindbound50.yml	true	TIMEOUT	21.029519	15.73399244899997	920.195072
+nla-digbench-scaling/egcd2-ll_valuebound10.yml	true	TIMEOUT	20.322613	14.055917658999988	532.373504
+nla-digbench-scaling/prodbin-ll_unwindbound5.yml	false	TIMEOUT	20.902213	16.110582871999895	454.885376
+nla-digbench-scaling/ps4-ll_unwindbound1.yml	false	false(unreach-call)	6.525632	2.9447306700001263	447.717376
+nla-digbench-scaling/prodbin-ll_unwindbound20.yml	false	TIMEOUT	20.956912	15.951563539000063	449.863680
+nla-digbench-scaling/ps2-ll_valuebound1.yml	true	true	6.948346	3.0917428010000094	458.297344
+nla-digbench-scaling/geo2-ll_valuebound100.yml	true	TIMEOUT	20.938084	16.03581500999985	465.850368
