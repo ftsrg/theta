@@ -19,7 +19,12 @@ package hu.bme.mit.theta.frontend.models
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 
-data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val operand: Btor2Node) : Btor2Node(nid, null)
+abstract class Btor2Properties(override val nid: UInt, override val sort: Btor2Sort?, open val operand: Btor2Node) : Btor2Node(nid, null)
+{
+    abstract fun getExpr(negate: Boolean): Expr<*>?
+
+}
+data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
 {
     override fun getVar(): VarDecl<*>? {
         return null
@@ -29,7 +34,88 @@ data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val o
         TODO()
     }
 
+    override fun getExpr(negate: Boolean): Expr<*>? {
+        TODO("Not yet implemented")
+    }
+
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
     }
 }
+
+data class Btor2Constraint(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO()
+    }
+
+    override fun getExpr(negate: Boolean): Expr<*>? {
+        TODO()
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+
+data class Btor2Fair(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO()
+    }
+
+    override fun getExpr(negate: Boolean): Expr<*>? {
+        TODO()
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+
+data class Btor2Output(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        TODO()
+    }
+
+    override fun getExpr(negate: Boolean): Expr<*>? {
+        TODO()
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+// <nid> 'justice' <num> (<nid>)+ Szóval még hagyjuk <3
+// TODO: justice
+//data class Btor2Justice(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
+//{
+//    override fun getVar(): VarDecl<*>? {
+//        return null
+//    }
+//
+//    override fun getExpr(): Expr<*> {
+//        TODO()
+//    }
+//
+//    override fun getExpr(negate: Boolean): Expr<*>? {
+//        TODO()
+//    }
+//
+//   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+//        return visitor.visit(this, param)
+//    }
+//}

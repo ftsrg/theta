@@ -116,7 +116,31 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return when(operator)
         {
             Btor2BinaryOperator.ADD -> BvAddExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
-            else -> TODO()
+            Btor2BinaryOperator.AND -> TODO()
+            Btor2BinaryOperator.NAND -> TODO()
+            Btor2BinaryOperator.NOR -> TODO()
+            Btor2BinaryOperator.OR -> TODO()
+            Btor2BinaryOperator.XOR -> TODO()
+            Btor2BinaryOperator.MUL -> TODO()
+            Btor2BinaryOperator.UDIV -> TODO()
+            Btor2BinaryOperator.UREM -> TODO()
+            Btor2BinaryOperator.SDIV -> TODO()
+            Btor2BinaryOperator.SREM -> TODO()
+            Btor2BinaryOperator.SMOD -> TODO()
+            Btor2BinaryOperator.CONCAT -> TODO()
+            Btor2BinaryOperator.SADDO -> TODO()
+            Btor2BinaryOperator.SDIVO -> TODO()
+            Btor2BinaryOperator.SMULO -> TODO()
+            Btor2BinaryOperator.SSUBO -> TODO()
+            Btor2BinaryOperator.UADDO -> TODO()
+            Btor2BinaryOperator.UMULO -> TODO()
+            Btor2BinaryOperator.USUBO -> TODO()
+            Btor2BinaryOperator.ROL -> TODO()
+            Btor2BinaryOperator.ROR -> TODO()
+            Btor2BinaryOperator.SLL -> TODO()
+            Btor2BinaryOperator.SRA -> TODO()
+            Btor2BinaryOperator.SRL -> TODO()
+            Btor2BinaryOperator.READ -> TODO()
         }
     }
 
@@ -128,7 +152,31 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return when(operator)
         {
             Btor2BinaryOperator.ADD -> AssignStmt.of(value, getExpr() as Expr<BvType>)
-            else -> TODO()
+            Btor2BinaryOperator.AND -> TODO()
+            Btor2BinaryOperator.NAND -> TODO()
+            Btor2BinaryOperator.NOR -> TODO()
+            Btor2BinaryOperator.OR -> TODO()
+            Btor2BinaryOperator.XOR -> TODO()
+            Btor2BinaryOperator.MUL -> TODO()
+            Btor2BinaryOperator.UDIV -> TODO()
+            Btor2BinaryOperator.UREM -> TODO()
+            Btor2BinaryOperator.SDIV -> TODO()
+            Btor2BinaryOperator.SREM -> TODO()
+            Btor2BinaryOperator.SMOD -> TODO()
+            Btor2BinaryOperator.CONCAT -> TODO()
+            Btor2BinaryOperator.SADDO -> TODO()
+            Btor2BinaryOperator.SDIVO -> TODO()
+            Btor2BinaryOperator.SMULO -> TODO()
+            Btor2BinaryOperator.SSUBO -> TODO()
+            Btor2BinaryOperator.UADDO -> TODO()
+            Btor2BinaryOperator.UMULO -> TODO()
+            Btor2BinaryOperator.USUBO -> TODO()
+            Btor2BinaryOperator.ROL -> TODO()
+            Btor2BinaryOperator.ROR -> TODO()
+            Btor2BinaryOperator.SLL -> TODO()
+            Btor2BinaryOperator.SRA -> TODO()
+            Btor2BinaryOperator.SRL -> TODO()
+            Btor2BinaryOperator.READ -> TODO()
         }
     }
 }
@@ -145,7 +193,15 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         return when(operator)
         {
             Btor2ComparisonOperator.EQ -> BvEqExpr.of(op1.getExpr() as Expr<BvType> , op2.getExpr()as Expr<BvType>)
-            else -> TODO()
+            Btor2ComparisonOperator.NEQ -> TODO()
+            Btor2ComparisonOperator.SLT -> TODO()
+            Btor2ComparisonOperator.SLTE -> TODO()
+            Btor2ComparisonOperator.SGT -> TODO()
+            Btor2ComparisonOperator.SGTE -> TODO()
+            Btor2ComparisonOperator.ULT -> TODO()
+            Btor2ComparisonOperator.ULTE -> TODO()
+            Btor2ComparisonOperator.UGT -> TODO()
+            Btor2ComparisonOperator.UGTE -> TODO()
         }
     }
 
@@ -157,6 +213,15 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         val expr = when(operator)
         {
             Btor2ComparisonOperator.EQ -> getExpr() as Expr<BoolType>
+            Btor2ComparisonOperator.NEQ -> TODO()
+            Btor2ComparisonOperator.SLT -> TODO()
+            Btor2ComparisonOperator.SLTE -> TODO()
+            Btor2ComparisonOperator.SGT -> TODO()
+            Btor2ComparisonOperator.SGTE -> TODO()
+            Btor2ComparisonOperator.ULT -> TODO()
+            Btor2ComparisonOperator.ULTE -> TODO()
+            Btor2ComparisonOperator.UGT -> TODO()
+            Btor2ComparisonOperator.UGTE -> TODO()
             else -> TODO()
         }
         if(negate)

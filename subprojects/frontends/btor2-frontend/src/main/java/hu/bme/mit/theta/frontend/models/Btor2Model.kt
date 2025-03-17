@@ -32,13 +32,18 @@ public interface Btor2NodeVisitor<R, P> {
     fun visit(node: Btor2Init, param: P) : R
     fun visit(node: Btor2Next, param: P) : R
     fun visit(node: Btor2Bad, param: P) : R
+    fun visit(node: Btor2Constraint, param: P) : R
+    fun visit(node: Btor2Fair, param: P) : R
+    fun visit(node: Btor2Output, param: P) : R
 }
 
 
 object Btor2Circuit {
     var nodes: MutableMap<UInt, Btor2Node> = mutableMapOf()
+    var constants: MutableMap<UInt, Btor2Const> = mutableMapOf()
     var sorts: MutableMap<UInt, Btor2Sort> = mutableMapOf()
     var ops: MutableMap<UInt, Btor2Operation> = mutableMapOf()
+    var states: MutableMap<UInt, Btor2Stateful> = mutableMapOf()
     var properties : MutableMap<UInt, Btor2Bad> = mutableMapOf()
 }
 

@@ -75,11 +75,11 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "eq" -> Btor2ComparisonOperator.EQ
             "neq" -> Btor2ComparisonOperator.NEQ
             "slt" -> Btor2ComparisonOperator.SLT
-            "sle" -> Btor2ComparisonOperator.SLE
+            "slte" -> Btor2ComparisonOperator.SLTE
             "sgt" -> Btor2ComparisonOperator.SGT
             "sgte" -> Btor2ComparisonOperator.SGTE
             "ult" -> Btor2ComparisonOperator.ULT
-            "ule" -> Btor2ComparisonOperator.ULE
+            "ulte" -> Btor2ComparisonOperator.ULTE
             "ugt" -> Btor2ComparisonOperator.UGT
             "ugte" -> Btor2ComparisonOperator.UGTE
             "add" -> Btor2BinaryOperator.ADD
