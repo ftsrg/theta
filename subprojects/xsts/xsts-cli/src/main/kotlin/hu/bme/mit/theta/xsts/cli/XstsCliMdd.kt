@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
@@ -43,7 +44,10 @@ class XstsCliMdd :
       .default(MddChecker.IterationStrategy.GSAT)
 
   private fun printResult(status: SafetyResult<MddProof, MddCex>, xsts: XSTS, totalTimeMs: Long) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     val stats = status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0)) as MddAnalysisStatistics
     listOf(

@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
@@ -44,7 +45,18 @@ public class PetriNetToXSTS {
 
     private PetriNetToXSTS() {}
 
+    public enum PropType {
+        TARGET_MARKING,
+        DEADLOCK,
+        PN_SAFE
+    }
+
     public static XSTS createXSTS(final PetriNet net, final InputStream propStream) {
+        return createXSTS(net, propStream, PropType.TARGET_MARKING);
+    }
+
+    public static XSTS createXSTS(
+            final PetriNet net, final InputStream propStream, final PropType propType) {
         final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
 
         final List<Expr<BoolType>> initExprs = new ArrayList<>();
@@ -61,10 +73,14 @@ public class PetriNetToXSTS {
 
         final List<Stmt> tranStmts = new ArrayList<>();
         // Create a transition for each variable
+
+        final var transitionToGuard = new HashMap<Transition, Expr<BoolType>>();
+
         for (Transition transition : net.getTransitions()) {
             final List<Stmt> stmts = new ArrayList<>();
             final Map<VarDecl<IntType>, Long> takesPutsMap = new HashMap<>();
 
+            final var enoughTokensExprs = new ArrayList<Expr<BoolType>>();
             // Check if enough tokens are present and remove input tokens
             for (PTArc inArc : transition.getIncomingArcs()) {
                 final Place sourcePlace = inArc.getSource();
@@ -72,17 +88,18 @@ public class PetriNetToXSTS {
                 final VarDecl<IntType> placeVar = placeIdToVar.get(sourcePlace.getId());
                 final long weight = inArc.getWeight();
 
-                final Stmt enoughTokens =
-                        AssumeStmt.of(
-                                GeqExpr.create2(
-                                        placeVar.getRef(), Int(BigInteger.valueOf(weight))));
-                stmts.add(enoughTokens);
+                GeqExpr<?> enoughTokensExpr =
+                        GeqExpr.create2(placeVar.getRef(), Int(BigInteger.valueOf(weight)));
+                enoughTokensExprs.add(enoughTokensExpr);
+                final Stmt enoughTokensStmt = AssumeStmt.of(enoughTokensExpr);
+                stmts.add(enoughTokensStmt);
 
                 takesPutsMap.merge(placeVar, -weight, Long::sum);
                 //				final Stmt removeTokens =
                 // AssignStmt.of(placeVar,Sub(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
                 //				stmts.add(removeTokens);
             }
+            transitionToGuard.put(transition, SmartBoolExprs.And(enoughTokensExprs));
 
             // Place output tokens
             for (TPArc outArc : transition.getOutgoingArcs()) {
@@ -115,7 +132,15 @@ public class PetriNetToXSTS {
         final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
         final Expr<BoolType> propExpr;
-        if (propStream != null) {
+        if (propType == PropType.DEADLOCK) {
+            propExpr = SmartBoolExprs.Or(transitionToGuard.values());
+        } else if (propType == PropType.PN_SAFE) {
+            propExpr =
+                    SmartBoolExprs.And(
+                            placeIdToVar.values().stream()
+                                    .map((p) -> Leq(p.getRef(), Int(1)))
+                                    .toList());
+        } else if (propStream != null) {
             final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
             final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
             final String property = stripPropFromPropFile(propertyFile).trim();
