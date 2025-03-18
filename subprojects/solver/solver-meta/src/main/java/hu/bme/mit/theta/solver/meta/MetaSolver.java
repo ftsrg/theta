@@ -42,6 +42,9 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,49 +55,50 @@ import java.util.Optional;
 
 class MetaSolver implements  Solver {
 
+    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
     @Override
     public void add(Expr<BoolType> assertion) {
-
+        solver.add(assertion);
     }
 
     @Override
     public SolverStatus check() {
-        return null;
+        return solver.check();
     }
 
     @Override
     public void push() {
-
+        solver.push();
     }
 
     @Override
     public void pop(int n) {
-
+        solver.pop(n);
     }
 
     @Override
     public void reset() {
-
+        solver.reset();
     }
 
     @Override
     public SolverStatus getStatus() {
-        return null;
+        return solver.getStatus();
     }
 
     @Override
     public Valuation getModel() {
-        return null;
+        return solver.getModel();
     }
 
     @Override
     public Collection<Expr<BoolType>> getAssertions() {
-        return List.of();
+        return solver.getAssertions();
     }
 
     @Override
     public void close() throws Exception {
-
+        solver.close();
     }
 }
