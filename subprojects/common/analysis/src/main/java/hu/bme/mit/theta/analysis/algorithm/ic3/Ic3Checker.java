@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
@@ -269,18 +270,18 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         try (var wpp = new WithPushPop(solver)) {
             solver.track(
                     PathUtils.unfold(
-                            monolithicExpr.getInitExpr(), monolithicExpr.getInitOffsetIndex()));
+                            monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
             solver.track(
                     PathUtils.unfold(
                             Not(monolithicExpr.getPropExpr()),
-                            monolithicExpr.getInitOffsetIndex()));
+                            VarIndexingFactory.indexing(0)));
             if (solver.check().isSat()) {
                 return Trace.of(
                         List.of(
                                 valToState.apply(
                                         PathUtils.extractValuation(
                                                 solver.getModel(),
-                                                monolithicExpr.getInitOffsetIndex(),
+                                                VarIndexingFactory.indexing(0),
                                                 monolithicExpr.getVars()))),
                         List.of());
             }
@@ -289,11 +290,11 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             try (var wpp = new WithPushPop(solver)) {
                 solver.track(
                         PathUtils.unfold(
-                                monolithicExpr.getInitExpr(), monolithicExpr.getInitOffsetIndex()));
+                                monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
                 solver.track(
                         PathUtils.unfold(
                                 monolithicExpr.getTransExpr(),
-                                monolithicExpr.getInitOffsetIndex()));
+                                VarIndexingFactory.indexing(0)));
                 solver.track(
                         PathUtils.unfold(
                                 Not(monolithicExpr.getPropExpr()),
@@ -304,7 +305,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                     valToState.apply(
                                             PathUtils.extractValuation(
                                                     solver.getModel(),
-                                                    monolithicExpr.getInitOffsetIndex(),
+                                                    VarIndexingFactory.indexing(0),
                                                     monolithicExpr.getVars())),
                                     valToState.apply(
                                             PathUtils.extractValuation(
@@ -315,7 +316,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                     biValToAction.apply(
                                             PathUtils.extractValuation(
                                                     solver.getModel(),
-                                                    monolithicExpr.getInitOffsetIndex(),
+                                                    VarIndexingFactory.indexing(0),
                                                     monolithicExpr.getVars()),
                                             PathUtils.extractValuation(
                                                     solver.getModel(),

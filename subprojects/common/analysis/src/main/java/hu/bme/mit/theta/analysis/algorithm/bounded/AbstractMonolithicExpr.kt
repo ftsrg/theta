@@ -30,10 +30,8 @@ import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import java.util.HashMap
 
 fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
-  // TODO: handle initOffsetIndex in abstract initExpr
   val lambdaList = ArrayList<IffExpr>()
   val lambdaPrimeList = ArrayList<IffExpr>()
   val activationLiterals = ArrayList<VarDecl<*>>()
@@ -87,7 +85,6 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
     transExpr = transExpr,
     propExpr = Not(And(And(lambdaList), Not(propExpr))),
     transOffsetIndex = indexingBuilder.build(),
-    initOffsetIndex = VarIndexingFactory.indexing(0),
     vars = activationLiterals + ctrlVars,
     valToState = { valuation: Valuation ->
       PredState.of(

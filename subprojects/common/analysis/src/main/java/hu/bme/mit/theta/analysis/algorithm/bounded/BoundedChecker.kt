@@ -88,7 +88,7 @@ constructor(
   private val unfoldedInitExpr =
     PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
   private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
-  private val indices = mutableListOf(monolithicExpr.initOffsetIndex)
+  private val indices = mutableListOf(VarIndexingFactory.indexing(0))
   private val exprs = mutableListOf<Expr<BoolType>>()
   private var kindLastIterLookup = 0
   private var iteration = 0
