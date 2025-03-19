@@ -124,9 +124,9 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         for (var v : Lists.reverse(variableOrdering)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
-            if (domainSize > 100) {
-                domainSize = 0;
-            }
+            //     if (domainSize > 100) {
+            domainSize = 0;
+            //     }
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
