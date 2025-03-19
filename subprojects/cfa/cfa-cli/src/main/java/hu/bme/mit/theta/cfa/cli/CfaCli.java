@@ -21,6 +21,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
@@ -31,10 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaToMonolithicExprKt;
-import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
+import hu.bme.mit.theta.cfa.analysis.*;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.*;
@@ -263,8 +261,7 @@ public class CfaCli {
             } else if (algorithm == Algorithm.BMC
                     || algorithm == Algorithm.KINDUCTION
                     || algorithm == Algorithm.IMC) {
-                final BoundedChecker<?, ?> checker =
-                        buildBoundedChecker(cfa, abstractionSolverFactory);
+                final BoundedChecker checker = buildBoundedChecker(cfa, abstractionSolverFactory);
                 status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException(
@@ -331,19 +328,17 @@ public class CfaCli {
         }
     }
 
-    private BoundedChecker<?, ?> buildBoundedChecker(
+    private BoundedChecker buildBoundedChecker(
             final CFA cfa, final SolverFactory abstractionSolverFactory) {
-        final MonolithicExpr monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
-        final BoundedChecker<?, ?> checker;
+        final MonolithicExpr monolithicExpr =
+                (new CfaToMonolithicAdapter()).modelToMonolithicExpr(cfa);
+        final BoundedChecker checker;
         switch (algorithm) {
             case BMC ->
                     checker =
                             BoundedCheckerBuilderKt.buildBMC(
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
                                     logger);
             case KINDUCTION ->
                     checker =
@@ -351,9 +346,6 @@ public class CfaCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
                                     logger);
             case IMC ->
                     checker =
@@ -361,9 +353,6 @@ public class CfaCli {
                                     monolithicExpr,
                                     abstractionSolverFactory.createSolver(),
                                     abstractionSolverFactory.createItpSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
                                     logger);
             default ->
                     throw new UnsupportedOperationException(

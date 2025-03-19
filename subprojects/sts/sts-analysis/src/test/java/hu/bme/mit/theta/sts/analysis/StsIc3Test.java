@@ -36,7 +36,6 @@ import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -99,15 +98,12 @@ public class StsIc3Test {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        final MonolithicExpr monolithicExpr =
+                (new StsToMonolithicAdapter()).modelToMonolithicExpr(sts);
         var checker =
-                new Ic3Checker<>(
+                new Ic3Checker(
                         monolithicExpr,
-                        true,
                         Z3LegacySolverFactory.getInstance(),
-                        valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
-                        (Valuation v1, Valuation v2) ->
-                                StsToMonolithicExprKt.valToAction(sts, v1, v2),
                         true,
                         true,
                         true,

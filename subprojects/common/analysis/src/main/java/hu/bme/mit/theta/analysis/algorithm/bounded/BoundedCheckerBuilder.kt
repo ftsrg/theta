@@ -15,24 +15,19 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 
 @JvmOverloads
-fun <S : ExprState, A : ExprAction> buildBMC(
+fun buildBMC(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
-  valToState: (Valuation) -> S,
-  biValToAction: (Valuation, Valuation) -> A,
   logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { true },
   lfPathOnly: () -> Boolean = { true },
-): BoundedChecker<S, A> {
+): BoundedChecker {
   return BoundedChecker(
     monolithicExpr,
     shouldGiveUp,
@@ -43,25 +38,21 @@ fun <S : ExprState, A : ExprAction> buildBMC(
     { false },
     null,
     { false },
-    valToState,
-    biValToAction,
     logger,
   )
 }
 
 @JvmOverloads
-fun <S : ExprState, A : ExprAction> buildKIND(
+fun buildKIND(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
   indSolver: Solver,
-  valToState: (Valuation) -> S,
-  biValToAction: (Valuation, Valuation) -> A,
   logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { true },
   lfPathOnly: () -> Boolean = { true },
   kindEnabled: (Int) -> Boolean = { true },
-): BoundedChecker<S, A> {
+): BoundedChecker {
   return BoundedChecker(
     monolithicExpr,
     shouldGiveUp,
@@ -72,25 +63,21 @@ fun <S : ExprState, A : ExprAction> buildKIND(
     { false },
     indSolver,
     kindEnabled,
-    valToState,
-    biValToAction,
     logger,
   )
 }
 
 @JvmOverloads
-fun <S : ExprState, A : ExprAction> buildIMC(
+fun buildIMC(
   monolithicExpr: MonolithicExpr,
   bmcSolver: Solver,
   itpSolver: ItpSolver,
-  valToState: (Valuation) -> S,
-  biValToAction: (Valuation, Valuation) -> A,
   logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
   bmcEnabled: () -> Boolean = { false },
   lfPathOnly: () -> Boolean = { true },
   imcEnabled: (Int) -> Boolean = { true },
-): BoundedChecker<S, A> {
+): BoundedChecker {
   return BoundedChecker(
     monolithicExpr,
     shouldGiveUp,
@@ -101,8 +88,6 @@ fun <S : ExprState, A : ExprAction> buildIMC(
     imcEnabled,
     null,
     { false },
-    valToState,
-    biValToAction,
     logger,
   )
 }

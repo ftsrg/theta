@@ -41,14 +41,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTempl
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -57,20 +55,14 @@ import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-public class MddChecker<S extends ExprState, A extends ExprAction>
-        implements SafetyChecker<MddProof, Trace<S, A>, UnitPrec> {
+public class MddChecker implements SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
     private final MonolithicExpr monolithicExpr;
     private final List<VarDecl<?>> variableOrdering;
     private final SolverPool solverPool;
     private final Logger logger;
     private final IterationStrategy iterationStrategy;
-    private final Function<Valuation, S> valToState;
-    private final BiFunction<Valuation, Valuation, A> biValToAction;
-    private final boolean forwardTrace;
     private final long traceTimeout;
 
     public enum IterationStrategy {
@@ -85,65 +77,42 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
-            boolean forwardTrace,
             long traceTimeout) {
         this.monolithicExpr = monolithicExpr;
         this.variableOrdering = variableOrdering;
         this.solverPool = solverPool;
         this.logger = logger;
         this.iterationStrategy = iterationStrategy;
-        this.valToState = valToState;
-        this.biValToAction = biValToAction;
-        this.forwardTrace = forwardTrace;
         this.traceTimeout = traceTimeout;
     }
 
-    public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
+    public static MddChecker create(
             MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
-            Logger logger,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
-            boolean forwardTrace) {
-        return new MddChecker<S, A>(
-                monolithicExpr,
-                variableOrdering,
-                solverPool,
-                logger,
-                IterationStrategy.GSAT,
-                valToState,
-                biValToAction,
-                forwardTrace,
-                10);
+            Logger logger) {
+        return new MddChecker(
+                monolithicExpr, variableOrdering, solverPool, logger, IterationStrategy.GSAT, 10);
     }
 
-    public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
+    public static MddChecker create(
             MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
-            boolean forwardTrace,
             long traceTimeout) {
-        return new MddChecker<S, A>(
+        return new MddChecker(
                 monolithicExpr,
                 variableOrdering,
                 solverPool,
                 logger,
                 iterationStrategy,
-                valToState,
-                biValToAction,
-                forwardTrace,
                 traceTimeout);
     }
 
     @Override
-    public SafetyResult<MddProof, Trace<S, A>> check(UnitPrec prec) {
+    public SafetyResult<MddProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
@@ -165,10 +134,12 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         final var identityExprs = new ArrayList<Expr<BoolType>>();
         final var orderedVars = MonolithicExprVarOrderingKt.orderVars(monolithicExpr);
         for (var v : Lists.reverse(orderedVars)) {
-            var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
+            // TODO handle domain size properly
+            //            var domainSize =
+            // Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             //     if (domainSize > 100) {
-            domainSize = 0;
+            final int domainSize = 0;
             //     }
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
@@ -265,14 +236,11 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
 
         logger.write(Level.MAINSTEP, "%s\n", statistics);
 
-        // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
-        // transSig.getTopVariableHandle());
-
-        final SafetyResult<MddProof, Trace<S, A>> result;
+        final SafetyResult<MddProof, Trace<ExplState, ExprAction>> result;
         if (violatingSize != 0) {
 
             ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future<Trace<S, A>> future =
+            Future<Trace<ExplState, ExprAction>> future =
                     executor.submit(
                             () -> {
                                 var reversedDescriptors =
@@ -307,33 +275,22 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                                                                                 .orElseThrow(),
                                                                         0))
                                                 .toList();
-                                final List<S> states = new ArrayList<>();
-                                final List<A> actions = new ArrayList<>();
-                                for (int i = 0; i < valuations.size(); ++i) {
-                                    states.add(valToState.apply(valuations.get(i)));
-                                    if (i > 0) {
-                                        actions.add(
-                                                biValToAction.apply(
-                                                        valuations.get(i - 1), valuations.get(i)));
-                                    }
-                                }
 
-                                if (forwardTrace) {
-                                    return Trace.of(states, actions);
-                                } else {
-                                    return Trace.of(Lists.reverse(states), Lists.reverse(actions));
-                                }
+                                return Trace.of(
+                                        valuations.stream().map(ExplState::of).toList(),
+                                        MonolithicExprKt.action(monolithicExpr));
                             });
 
             try {
                 logger.mainStep("Starting trace generation.\n");
-                final Trace<S, A> trace = future.get(traceTimeout, TimeUnit.SECONDS);
+                final Trace<ExplState, ExprAction> trace =
+                        future.get(traceTimeout, TimeUnit.SECONDS);
                 return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
             } catch (TimeoutException | InterruptedException | ExecutionException e) {
                 logger.mainStep("Trace generation timed out, returning empty trace!\n");
                 future.cancel(true);
                 return SafetyResult.unsafe(
-                        Trace.of(List.of(valToState.apply(ExplState.top())), List.of()),
+                        Trace.of(List.of(ExplState.top()), List.of()),
                         MddProof.of(stateSpace),
                         statistics);
             } finally {

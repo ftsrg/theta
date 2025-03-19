@@ -19,17 +19,12 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.google.common.base.Stopwatch
-import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyProof
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
-import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.XstsAction
-import hu.bme.mit.theta.xsts.analysis.XstsState
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -42,11 +37,7 @@ class XstsCliIC3 :
   private val propagateOpt: Boolean by option().boolean().default(true)
   private val filterOpt: Boolean by option().boolean().default(true)
 
-  private fun printResult(
-    status: SafetyResult<EmptyProof, Trace<S, XstsAction>>,
-    xsts: XSTS,
-    totalTimeMs: Long,
-  ) {
+  private fun printResult(status: SafetyResult<InvariantProof, *>, xsts: XSTS, totalTimeMs: Long) {
     if (!outputOptions.benchmarkMode) {
       logger.writeln(Logger.Level.RESULT, status.toString())
       return
@@ -68,16 +59,12 @@ class XstsCliIC3 :
     registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
-    val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val checker =
-      wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
+      createChecker(xsts, solverFactory) {
         Ic3Checker(
           it,
-          !reversed,
           solverFactory,
-          it.valToState,
-          it.biValToAction,
           formerFramesOpt,
           unSatOpt,
           notBOpt,
@@ -89,11 +76,7 @@ class XstsCliIC3 :
       }
     val result = checker.check()
     sw.stop()
-    printResult(
-      result as SafetyResult<EmptyProof, Trace<XstsState<ExplState>, XstsAction>>,
-      xsts,
-      sw.elapsed(TimeUnit.MILLISECONDS),
-    )
+    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     writeCex(result, xsts)
   }
 }

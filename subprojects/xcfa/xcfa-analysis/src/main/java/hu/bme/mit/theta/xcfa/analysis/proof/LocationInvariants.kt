@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.proof
 
 import hu.bme.mit.theta.analysis.algorithm.PartitionedInvariantProof

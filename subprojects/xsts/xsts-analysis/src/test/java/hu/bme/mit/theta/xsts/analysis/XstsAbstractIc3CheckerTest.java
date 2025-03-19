@@ -17,15 +17,19 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -262,24 +266,17 @@ public class XstsAbstractIc3CheckerTest {
                         new FileInputStream(filePath), new FileInputStream(propPath))) {
             xsts = XstsDslManager.createXsts(inputStream);
         }
-
-        final var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
-        final var checker =
-                new MonolithicExprCegarChecker<>(
-                        monolithicExpr,
-                        (MonolithicExpr abstractMonolithicExpr) ->
-                                new Ic3Checker<>(
-                                        abstractMonolithicExpr,
-                                        true,
-                                        Z3LegacySolverFactory.getInstance(),
-                                        v -> abstractMonolithicExpr.getValToState().invoke(v),
-                                        (v1, v2) ->
-                                                abstractMonolithicExpr
-                                                        .getBiValToAction()
-                                                        .invoke(v1, v2),
-                                        logger),
-                        logger,
-                        Z3LegacySolverFactory.getInstance());
+        final SafetyChecker<
+                        InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>, UnitPrec>
+                checker =
+                        new XstsPipelineChecker<>(
+                                xsts,
+                                new MEPipelineCheckerConstructorArguments<>(
+                                        monolithicExpr1 ->
+                                                new Ic3Checker(
+                                                        monolithicExpr1,
+                                                        Z3LegacySolverFactory.getInstance(),
+                                                        logger)));
 
         final SafetyResult<?, ?> status = checker.check(null);
 

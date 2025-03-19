@@ -15,23 +15,34 @@
  */
 package hu.bme.mit.theta.sts.cli;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.bounded.*;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
@@ -58,15 +69,16 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import hu.bme.mit.theta.sts.analysis.StsAction;
-import hu.bme.mit.theta.sts.analysis.StsToMonolithicExprKt;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.*;
+import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -80,12 +92,115 @@ public class StsCli {
     private final TableWriter writer;
 
     enum Algorithm {
-        CEGAR,
-        BMC,
-        KINDUCTION,
-        IMC,
-        MDD,
-        IC3
+        CEGAR {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                throw new UnsupportedOperationException(
+                        "CEGAR can't provide a checker factory as it is not to be used in ME"
+                                + " pipeline");
+            }
+        },
+        BMC {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildBMC(
+                                monolithicExpr, solverFactory.createSolver(), logger));
+            }
+        },
+        KINDUCTION {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildKIND(
+                                monolithicExpr,
+                                solverFactory.createSolver(),
+                                solverFactory.createSolver(),
+                                logger));
+            }
+        },
+        IMC {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildIMC(
+                                monolithicExpr,
+                                solverFactory.createSolver(),
+                                solverFactory.createItpSolver(),
+                                logger));
+            }
+        },
+        MDD {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr2 ->
+                        MddChecker.create(
+                                monolithicExpr2,
+                                List.copyOf(monolithicExpr2.getVars()),
+                                new SolverPool(solverFactory),
+                                logger,
+                                MddChecker.IterationStrategy.GSAT,
+                                10));
+            }
+        },
+        IC3 {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new Ic3Checker(
+                                monolithicExpr,
+                                solverFactory,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                logger));
+            }
+        };
+
+        abstract Function<
+                        MonolithicExpr,
+                        SafetyChecker<
+                                ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
+                getCheckerFactory(SolverFactory solverFactory, Logger logger);
     }
 
     @Parameter(
@@ -215,41 +330,43 @@ public class StsCli {
         try {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
-            final MonolithicExpr monolithicExpr = createMonolithicExpr(sts);
 
             registerSolverManagers();
             final SolverFactory solverFactory = SolverManager.resolveSolverFactory(solver);
 
-            SafetyResult<?, ? extends Cex> status = null;
+            SafetyResult<?, ? extends Cex> status;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
-            } else if (algorithm == Algorithm.BMC
-                    || algorithm == Algorithm.KINDUCTION
-                    || algorithm == Algorithm.IMC) {
-                final var checker =
-                        wrapInCegarIfNeeded(
-                                monolithicExpr,
-                                solverFactory,
-                                abstractME -> buildBoundedChecker(monolithicExpr, solverFactory));
-                status = checker.check(null);
-            } else if (algorithm == Algorithm.MDD) {
-                final var checker =
-                        wrapInCegarIfNeeded(
-                                monolithicExpr,
-                                solverFactory,
-                                abstractME -> buildMddChecker(monolithicExpr, solverFactory));
-                status = checker.check(null);
-            } else if (algorithm == Algorithm.IC3) {
-                final var checker =
-                        wrapInCegarIfNeeded(
-                                monolithicExpr,
-                                solverFactory,
-                                abstractME -> buildIc3Checker(monolithicExpr, solverFactory));
-                status = checker.check(null);
             } else {
-                throw new UnsupportedOperationException(
-                        "Algorithm " + algorithm + " not supported");
+                List<MonolithicExprPass<InvariantProof>> passes = new ArrayList<>();
+                if (livenessToSafety) {
+                    passes.add(new L2SMEPass<>());
+                }
+                if (cegar) {
+                    passes.add(
+                            new PredicateAbstractionMEPass<>(
+                                    monolithicExpr ->
+                                            ExprTraceFwBinItpChecker.create(
+                                                    monolithicExpr.getInitExpr(),
+                                                    Not(monolithicExpr.getPropExpr()),
+                                                    solverFactory.createItpSolver())));
+                }
+                if (reversed) {
+                    passes.add(new ReverseMEPass<>());
+                }
+                final SafetyChecker<InvariantProof, Trace<ExplState, StsAction>, UnitPrec>
+                        formalismChecker =
+                                new StsPipelineChecker<>(
+                                        sts,
+                                        new MEPipelineCheckerConstructorArguments<>(
+                                                monolithicExpr ->
+                                                        algorithm
+                                                                .getCheckerFactory(
+                                                                        solverFactory, logger)
+                                                                .apply(monolithicExpr),
+                                                passes));
+                status = formalismChecker.check(null);
             }
             sw.stop();
             printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
@@ -337,110 +454,6 @@ public class StsCli {
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
-    }
-
-    private MonolithicExpr createMonolithicExpr(STS sts) {
-        var monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
-        if (livenessToSafety) {
-            monolithicExpr = MonolithicL2SKt.createMonolithicL2S(monolithicExpr);
-        }
-        if (reversed) {
-            monolithicExpr = ReversedMonolithicExprKt.createReversed(monolithicExpr);
-        }
-        return monolithicExpr;
-    }
-
-    private <W extends Proof> SafetyChecker<?, ?, ?> wrapInCegarIfNeeded(
-            MonolithicExpr monolithicExpr,
-            SolverFactory solverFactory,
-            Function<
-                            MonolithicExpr,
-                            SafetyChecker<
-                                    W,
-                                    ? extends Trace<? extends ExprState, ? extends ExprAction>,
-                                    UnitPrec>>
-                    builder) {
-        if (cegar) {
-            return new MonolithicExprCegarChecker(monolithicExpr, builder, logger, solverFactory);
-        } else {
-            return builder.apply(monolithicExpr);
-        }
-    }
-
-    private BoundedChecker<?, ?> buildBoundedChecker(
-            final MonolithicExpr monolithicExpr, final SolverFactory abstractionSolverFactory) {
-        final BoundedChecker<?, ?> checker;
-        switch (algorithm) {
-            case BMC ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildBMC(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    val -> monolithicExpr.getValToState().invoke(val),
-                                    (val1, val2) ->
-                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
-                                    logger);
-            case KINDUCTION ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildKIND(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    abstractionSolverFactory.createSolver(),
-                                    val -> monolithicExpr.getValToState().invoke(val),
-                                    (val1, val2) ->
-                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
-                                    logger);
-            case IMC ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildIMC(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    abstractionSolverFactory.createItpSolver(),
-                                    val -> monolithicExpr.getValToState().invoke(val),
-                                    (val1, val2) ->
-                                            monolithicExpr.getBiValToAction().invoke(val1, val2),
-                                    logger);
-            default ->
-                    throw new UnsupportedOperationException(
-                            "Algorithm " + algorithm + " not supported");
-        }
-        return checker;
-    }
-
-    private MddChecker<?, ?> buildMddChecker(
-            final MonolithicExpr monolithicExpr, final SolverFactory solverFactory) {
-        try (var solverPool = new SolverPool(solverFactory)) {
-            return MddChecker.create(
-                    monolithicExpr,
-                    List.copyOf(monolithicExpr.getVars()),
-                    solverPool,
-                    logger,
-                    MddChecker.IterationStrategy.GSAT,
-                    valuation -> monolithicExpr.getValToState().invoke(valuation),
-                    (Valuation v1, Valuation v2) ->
-                            monolithicExpr.getBiValToAction().invoke(v1, v2),
-                    true,
-                    10);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Ic3Checker<?, ?> buildIc3Checker(
-            final MonolithicExpr monolithicExpr, final SolverFactory solverFactory) {
-        return new Ic3Checker<>(
-                monolithicExpr,
-                true,
-                solverFactory,
-                valuation -> monolithicExpr.getValToState().invoke(valuation),
-                (Valuation v1, Valuation v2) -> monolithicExpr.getBiValToAction().invoke(v1, v2),
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                logger);
     }
 
     private void printResult(

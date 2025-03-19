@@ -16,22 +16,31 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt.buildBMC;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -220,22 +229,28 @@ public class XstsAbstractBoundedCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
-        final var checker =
-                new MonolithicExprCegarChecker<>(
-                        monolithicExpr,
-                        (MonolithicExpr abstractMonolithicExpr) ->
-                                buildBMC(
-                                        abstractMonolithicExpr,
-                                        Z3LegacySolverFactory.getInstance().createSolver(),
-                                        val -> abstractMonolithicExpr.getValToState().invoke(val),
-                                        (v1, v2) ->
-                                                abstractMonolithicExpr
-                                                        .getBiValToAction()
-                                                        .invoke(v1, v2),
-                                        logger),
-                        logger,
-                        Z3LegacySolverFactory.getInstance());
+        final List<MonolithicExprPass<InvariantProof>> passes =
+                List.of(
+                        new PredicateAbstractionMEPass<>(
+                                monolithicExpr ->
+                                        ExprTraceFwBinItpChecker.create(
+                                                monolithicExpr.getInitExpr(),
+                                                Not(monolithicExpr.getPropExpr()),
+                                                Z3LegacySolverFactory.getInstance()
+                                                        .createItpSolver())));
+        final SafetyChecker<
+                        InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>, UnitPrec>
+                checker =
+                        new XstsPipelineChecker<>(
+                                xsts,
+                                new MEPipelineCheckerConstructorArguments<>(
+                                        monolithicExpr ->
+                                                buildBMC(
+                                                        monolithicExpr,
+                                                        Z3LegacySolverFactory.getInstance()
+                                                                .createSolver(),
+                                                        logger),
+                                        passes));
 
         final SafetyResult<?, ?> status = checker.check(null);
 

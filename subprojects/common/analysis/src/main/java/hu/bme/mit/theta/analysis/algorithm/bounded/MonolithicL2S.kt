@@ -88,10 +88,6 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     transExpr = And(newTransExpr),
     propExpr = Not(And(prop, propExpr)),
     transOffsetIndex = newIndexing,
-    valToState = { valuation -> valToState(valuation.filterVars(vars)) },
-    biValToAction = { valuation1, valuation2 ->
-      biValToAction(valuation1.filterVars(vars), valuation2.filterVars(vars))
-    },
     ctrlVars = ctrlVars + ctrlVars.map { saveMap[it]!! } + saved,
   )
 }

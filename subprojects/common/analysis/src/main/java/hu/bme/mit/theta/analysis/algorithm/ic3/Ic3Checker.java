@@ -17,7 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.ic3;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -47,55 +48,29 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-public class Ic3Checker<S extends ExprState, A extends ExprAction>
-        implements SafetyChecker<EmptyProof, Trace<S, A>, UnitPrec> {
+public class Ic3Checker
+        implements SafetyChecker<EmptyProof, Trace<ExplState, ExprAction>, UnitPrec> {
     private final MonolithicExpr monolithicExpr;
     private final List<Frame> frames;
     private final SolverFactory solverFactory;
     private final UCSolver solver;
-    private final Function<Valuation, S> valToState;
-    private final BiFunction<Valuation, Valuation, A> biValToAction;
     private final boolean formerFramesOpt;
     private final boolean unSatOpt;
     private final boolean notBOpt;
     private final boolean propagateOpt;
     private final boolean filterOpt;
     private int currentFrameNumber;
-    private final boolean forwardTrace;
     private final boolean propertyOpt;
     private final Logger logger;
 
-    public Ic3Checker(
-            MonolithicExpr monolithicExpr,
-            boolean forwardTrace,
-            SolverFactory solverFactory,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
-            Logger logger) {
-        this(
-                monolithicExpr,
-                forwardTrace,
-                solverFactory,
-                valToState,
-                biValToAction,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                logger);
+    public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Logger logger) {
+        this(monolithicExpr, solverFactory, true, true, true, true, true, true, logger);
     }
 
     public Ic3Checker(
             MonolithicExpr monolithicExpr,
-            boolean forwardTrace,
             SolverFactory solverFactory,
-            Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction,
             boolean formerFramesOpt,
             boolean unSatOpt,
             boolean notBOpt,
@@ -104,14 +79,11 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
             boolean propertyOpt,
             Logger logger) {
         this.monolithicExpr = monolithicExpr;
-        this.valToState = valToState;
-        this.biValToAction = biValToAction;
         this.formerFramesOpt = formerFramesOpt;
         this.unSatOpt = unSatOpt;
         this.notBOpt = notBOpt;
         this.propagateOpt = propagateOpt;
         this.filterOpt = filterOpt;
-        this.forwardTrace = forwardTrace;
         this.propertyOpt = propertyOpt;
         this.logger = logger;
         this.solverFactory = solverFactory;
@@ -123,7 +95,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
     }
 
     @Override
-    public SafetyResult<EmptyProof, Trace<S, A>> check(UnitPrec prec) {
+    public SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
         // check if init violates prop
         var firstTrace = checkFirst();
         if (firstTrace != null) {
@@ -145,7 +117,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 }
             } else {
                 if (propagate()) {
-                    final SafetyResult<EmptyProof, Trace<S, A>> result =
+                    final SafetyResult<EmptyProof, Trace<ExplState, ExprAction>> result =
                             SafetyResult.safe(EmptyProof.getInstance());
                     return result;
                 }
@@ -266,19 +238,17 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         return null;
     }
 
-    public Trace<S, A> checkFirst() {
+    public Trace<ExplState, ExprAction> checkFirst() {
         try (var wpp = new WithPushPop(solver)) {
             solver.track(
-                    PathUtils.unfold(
-                            monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
+                    PathUtils.unfold(monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
             solver.track(
                     PathUtils.unfold(
-                            Not(monolithicExpr.getPropExpr()),
-                            VarIndexingFactory.indexing(0)));
+                            Not(monolithicExpr.getPropExpr()), VarIndexingFactory.indexing(0)));
             if (solver.check().isSat()) {
                 return Trace.of(
                         List.of(
-                                valToState.apply(
+                                ExplState.of(
                                         PathUtils.extractValuation(
                                                 solver.getModel(),
                                                 VarIndexingFactory.indexing(0),
@@ -293,8 +263,7 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                 monolithicExpr.getInitExpr(), VarIndexingFactory.indexing(0)));
                 solver.track(
                         PathUtils.unfold(
-                                monolithicExpr.getTransExpr(),
-                                VarIndexingFactory.indexing(0)));
+                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)));
                 solver.track(
                         PathUtils.unfold(
                                 Not(monolithicExpr.getPropExpr()),
@@ -302,26 +271,17 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 if (solver.check().isSat()) {
                     return Trace.of(
                             List.of(
-                                    valToState.apply(
+                                    ExplState.of(
                                             PathUtils.extractValuation(
                                                     solver.getModel(),
                                                     VarIndexingFactory.indexing(0),
                                                     monolithicExpr.getVars())),
-                                    valToState.apply(
+                                    ExplState.of(
                                             PathUtils.extractValuation(
                                                     solver.getModel(),
                                                     monolithicExpr.getTransOffsetIndex(),
                                                     monolithicExpr.getVars()))),
-                            List.of(
-                                    biValToAction.apply(
-                                            PathUtils.extractValuation(
-                                                    solver.getModel(),
-                                                    VarIndexingFactory.indexing(0),
-                                                    monolithicExpr.getVars()),
-                                            PathUtils.extractValuation(
-                                                    solver.getModel(),
-                                                    monolithicExpr.getTransOffsetIndex(),
-                                                    monolithicExpr.getVars()))));
+                            List.of(MonolithicExprKt.action(monolithicExpr)));
                 } else {
                     return null;
                 }
@@ -390,7 +350,8 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         return false;
     }
 
-    public Trace<S, A> makeTrace(LinkedList<ProofObligation> forwardProofObligations) {
+    public Trace<ExplState, ExprAction> makeTrace(
+            LinkedList<ProofObligation> forwardProofObligations) {
         var abstractStates = new ArrayList<ExprState>();
         var abstractActions = new ArrayList<ExprAction>();
         while (!forwardProofObligations.isEmpty()) {
@@ -415,7 +376,6 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         checkArgument(status.isFeasible(), "Infeasible trace.");
 
         Trace<Valuation, ? extends Action> trace = status.asFeasible().getValuations();
-        if (!forwardTrace) trace = trace.reverse();
         final List<MutableValuation> valuations =
                 trace.getStates().stream()
                         .map(
@@ -435,12 +395,12 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                                     return newValuation;
                                 })
                         .toList();
-        final List<S> states = new ArrayList<>();
-        final List<A> actions = new ArrayList<>();
+        final List<ExplState> states = new ArrayList<>();
+        final List<ExprAction> actions = new ArrayList<>();
         for (int i = 0; i < valuations.size(); ++i) {
-            states.add(valToState.apply(valuations.get(i)));
+            states.add(ExplState.of(valuations.get(i)));
             if (i > 0) {
-                actions.add(biValToAction.apply(valuations.get(i - 1), valuations.get(i)));
+                actions.add(MonolithicExprKt.action(monolithicExpr));
             }
         }
         return Trace.of(states, actions);
