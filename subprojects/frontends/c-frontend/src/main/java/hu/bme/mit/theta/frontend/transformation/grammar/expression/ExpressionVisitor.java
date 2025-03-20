@@ -67,6 +67,8 @@ import java.util.stream.Collectors;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
+// FunctionVisitor may be null, e.g., when parsing a simple C expression.
+
 public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     protected final List<CStatement> preStatements = new ArrayList<>();
     protected final List<CStatement> postStatements = new ArrayList<>();
@@ -631,8 +633,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             CExpr cexpr = new CExpr(wrappedExpr, parseContext);
             CAssignment cAssignment = new CAssignment(ret, cexpr, "=", parseContext);
             preStatements.add(cAssignment);
-            functionVisitor.recordMetadata(ctx, cAssignment);
-            functionVisitor.recordMetadata(ctx, cexpr);
+            if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+            if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
         }
         return ret;
     }
@@ -840,9 +842,23 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionBraceExpression(
             CParser.PrimaryExpressionBraceExpressionContext ctx) {
-        CStatement statement = ctx.expression().accept(functionVisitor);
-        preStatements.add(statement);
-        return statement.getExpression();
+        if (functionVisitor != null) {
+            CStatement statement = ctx.expression().accept(functionVisitor);
+            preStatements.add(statement);
+            return statement.getExpression();
+        } else {
+            return getConstExpr(ctx);
+        }
+    }
+
+    private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
+        var assignments = ctx.expression().assignmentExpression();
+        var assignment = assignments.get(assignments.size() - 1);
+        if (assignment instanceof AssignmentExpressionConditionalExpressionContext cond) {
+            return cond.conditionalExpression().logicalOrExpression().accept(this);
+        } else {
+            throw new RuntimeException("Assignments not supported without a function visitor.");
+        }
     }
 
     @Override
@@ -894,20 +910,25 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             return (expr) -> {
                 checkState(expr instanceof RefExpr<?>, "Only variables are callable now.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
-                List<CStatement> arguments =
-                        exprList == null
-                                ? List.of()
-                                : exprList.assignmentExpression().stream()
-                                        .map(
-                                                assignmentExpressionContext ->
-                                                        assignmentExpressionContext.accept(
-                                                                functionVisitor))
-                                        .collect(Collectors.toList());
+                List<CStatement> arguments;
+                if (exprList == null) arguments = List.of();
+                else {
+                    List<CStatement> list = new ArrayList<>();
+                    for (AssignmentExpressionContext assignmentExpressionContext :
+                            exprList.assignmentExpression()) {
+                        if (functionVisitor == null)
+                            throw new RuntimeException(
+                                    "Cannot parse function calls without a function visitor.");
+                        CStatement accept = assignmentExpressionContext.accept(functionVisitor);
+                        list.add(accept);
+                    }
+                    arguments = list;
+                }
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
                 if (cCall.getFunctionId().contains("pthread")) parseContext.setMultiThreading(true);
                 preStatements.add(cCall);
-                functionVisitor.recordMetadata(ctx, cCall);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
                 return cCall.getRet().getRef();
             };
         }
@@ -988,8 +1009,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                functionVisitor.recordMetadata(ctx, cAssignment);
-                functionVisitor.recordMetadata(ctx, cexpr);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return primary;
             };
         }
@@ -1009,8 +1030,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                functionVisitor.recordMetadata(ctx, cAssignment);
-                functionVisitor.recordMetadata(ctx, cexpr);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
+                if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return expr;
             };
         }

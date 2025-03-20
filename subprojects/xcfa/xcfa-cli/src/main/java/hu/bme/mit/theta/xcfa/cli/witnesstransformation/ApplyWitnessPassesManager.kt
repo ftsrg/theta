@@ -13,26 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.frontend.transformation.model.statements;
+package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
-import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 
-public class CRet extends CStatement {
-
-    private final CStatement expr;
-
-    public CRet(CStatement expr, ParseContext parseContext) {
-        super(parseContext);
-        this.expr = expr;
-        if (expr != null) expr.setParent(this);
-    }
-
-    public CStatement getExpr() {
-        return expr;
-    }
-
-    @Override
-    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-        return visitor.visit(this, param);
-    }
-}
+class ApplyWitnessPassesManager(parseContext: ParseContext, witness: YamlWitness) :
+  ProcedurePassManager(
+    listOf(
+      NormalizePass(), // needed after lbe, TODO
+      DeterministicPass(), // needed after lbe, TODO
+      EliminateSelfLoops(),
+      ApplyWitnessPass(parseContext, witness),
+      LbePass(parseContext),
+      NormalizePass(), // needed after lbe, TODO
+      DeterministicPass(), // needed after lbe, TODO
+    )
+  )

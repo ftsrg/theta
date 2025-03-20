@@ -13,26 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.frontend.transformation.model.statements;
+package hu.bme.mit.theta.frontend.transformation.model.statements
 
-import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.ParseContext
 
-public class CRet extends CStatement {
-
-    private final CStatement expr;
-
-    public CRet(CStatement expr, ParseContext parseContext) {
-        super(parseContext);
-        this.expr = expr;
-        if (expr != null) expr.setParent(this);
-    }
-
-    public CStatement getExpr() {
-        return expr;
-    }
-
-    @Override
-    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-        return visitor.visit(this, param);
-    }
+/** This statement is an empty placeholder statement */
+class CNullStatement(parseContext: ParseContext) : CStatement(parseContext) {
+  override fun <P : Any, R : Any> accept(visitor: CStatementVisitor<P, R>, param: P): R {
+    return visitor.visit(this, param)
+  }
 }

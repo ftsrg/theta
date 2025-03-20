@@ -915,6 +915,17 @@ public final class ExprSimplifier {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
 
+        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
+        if (rightOp instanceof IntLitExpr litExpr
+                && litExpr.getValue().intValue() == 0
+                && leftOp instanceof IteExpr<IntType> ite
+                && ite.getThen() instanceof IntLitExpr then
+                && then.getValue().intValue() == 1
+                && ite.getElse() instanceof IntLitExpr elze
+                && elze.getValue().intValue() == 0) {
+            return Not(ite.getCond());
+        }
+
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
@@ -929,6 +940,17 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyIntNeq(final IntNeqExpr expr, final Valuation val) {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        // special case for C: (\= (ite expr 1 0) 0) ==> expr
+        if (rightOp instanceof IntLitExpr litExpr
+                && litExpr.getValue().intValue() == 0
+                && leftOp instanceof IteExpr<IntType> ite
+                && ite.getThen() instanceof IntLitExpr then
+                && then.getValue().intValue() == 1
+                && ite.getElse() instanceof IntLitExpr elze
+                && elze.getValue().intValue() == 0) {
+            return ite.getCond();
+        }
 
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(!leftOp.equals(rightOp));
@@ -1544,6 +1566,17 @@ public final class ExprSimplifier {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
+        // special case for C: (= (ite expr 1 0) 0) ==> not(expr)
+        if (rightOp instanceof BvLitExpr litExpr
+                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
+                && leftOp instanceof IteExpr<BvType> ite
+                && ite.getThen() instanceof BvLitExpr then
+                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
+                && ite.getElse() instanceof BvLitExpr elze
+                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
+            return Not(ite.getCond());
+        }
+
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
             return Bool(leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
@@ -1558,6 +1591,17 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyBvNeq(final BvNeqExpr expr, final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        // special case for C: (\= (ite expr 1 0) 0) ==> expr
+        if (rightOp instanceof BvLitExpr litExpr
+                && BvUtils.neutralBvLitExprToBigInteger(litExpr).equals(BigInteger.ZERO)
+                && leftOp instanceof IteExpr<BvType> ite
+                && ite.getThen() instanceof BvLitExpr then
+                && BvUtils.neutralBvLitExprToBigInteger(then).equals(BigInteger.ONE)
+                && ite.getElse() instanceof BvLitExpr elze
+                && BvUtils.neutralBvLitExprToBigInteger(elze).equals(BigInteger.ZERO)) {
+            return ite.getCond();
+        }
 
         if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
             return Bool(!leftOp.equals(rightOp));
