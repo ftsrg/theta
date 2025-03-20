@@ -55,12 +55,12 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
           // edgesOfWaypoints.add(edge) // if no metadata, don't automatically keep it ?
         } else if ( // wp in first line of edge
           edgeMetadata.lineNumberStart!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStart!!+1 <= wayPoint.location.column!!
+            edgeMetadata.colNumberStart!! + 1 <= wayPoint.location.column!!
         ) {
           edgesOfWaypoints.add(edge)
         } else if ( // wp in last line of edge
           edgeMetadata.lineNumberStop!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStop!!+1 >= wayPoint.location.column!!
+            edgeMetadata.colNumberStop!! + 1 >= wayPoint.location.column!!
         ) {
           edgesOfWaypoints.add(edge)
         } else if ( // wp inbetween first and last lines of edge

@@ -130,8 +130,7 @@ fun traceToWitness(
     }
   }
 
-
-  if(trace.length()>0) {
+  if (trace.length() > 0) {
     val lastState = trace.states[trace.length()]
     val node =
       WitnessNode(
@@ -152,7 +151,9 @@ fun traceToWitness(
         xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
         cSources =
           lastState.processes
-            .map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }
+            .map {
+              Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+            }
             .toMap(),
         globalState = lastState.sGlobal,
       )

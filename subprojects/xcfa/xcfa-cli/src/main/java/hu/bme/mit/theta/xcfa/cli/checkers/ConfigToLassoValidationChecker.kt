@@ -35,7 +35,6 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
@@ -50,7 +49,6 @@ import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.witnesses.*
-import kotlin.jvm.optionals.getOrNull
 import kotlinx.serialization.builtins.ListSerializer
 
 fun getLassoValidationChecker(
@@ -200,11 +198,11 @@ private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint
       val astNodes = outEdge.getCMetaData()!!.astNodes
       for (node in astNodes) {
         if (
-              node.lineNumberStart == recurrenceSet.waypoint.location.line &&
-              node.colNumberStart + 1 == recurrenceSet.waypoint.location.column
+          node.lineNumberStart == recurrenceSet.waypoint.location.line &&
+            node.colNumberStart + 1 == recurrenceSet.waypoint.location.column
         ) {
-            results.add(loc)
-            resultStatements.add(node)
+          results.add(loc)
+          resultStatements.add(node)
         }
       }
     }

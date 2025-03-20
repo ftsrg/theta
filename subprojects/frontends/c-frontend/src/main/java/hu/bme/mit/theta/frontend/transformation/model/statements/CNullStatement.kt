@@ -13,16 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements
 
 import hu.bme.mit.theta.frontend.ParseContext
 
-/**
- * This statement is an empty placeholder statement
- */
+/** This statement is an empty placeholder statement */
 class CNullStatement(parseContext: ParseContext) : CStatement(parseContext) {
-    override fun <P : Any, R : Any> accept(visitor: CStatementVisitor<P, R>, param: P): R {
-        return visitor.visit(this, param)
-    }
+  override fun <P : Any, R : Any> accept(visitor: CStatementVisitor<P, R>, param: P): R {
+    return visitor.visit(this, param)
+  }
 }

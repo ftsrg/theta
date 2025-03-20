@@ -149,7 +149,7 @@ class YamlWitnessWriter {
                           Location(
                             fileName = inputFile.name,
                             line = it.lineNumberStart,
-                            column = it.colNumberStart+1,
+                            column = it.colNumberStart + 1,
                           )
                         },
                     constraint =
