@@ -36,9 +36,12 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.HornConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa2chc.toCHC
+import kotlin.jvm.optionals.getOrNull
 
 fun getHornChecker(
   xcfa: XCFA,
@@ -52,9 +55,16 @@ fun getHornChecker(
 
   val hornConfig = config.backendConfig.specConfig as HornConfig
 
+  val property = config.inputConfig.property
+
+  val (vars, chc) =
+    xcfa.initProcedures[0]
+      .first
+      .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
+
   val checker =
     HornChecker(
-      relations = xcfa.initProcedures[0].first.toCHC(),
+      relations = chc,
       hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
       logger = logger,
     )
@@ -63,6 +73,24 @@ fun getHornChecker(
     val result = checker.check(null)
 
     if (result.isSafe) {
+      //      if (property == ErrorDetection.TERMINATION) {
+      //        val invariant = result.asSafe().proof
+      //        val finalFunc = invariant.lookup.keys.first { it.name.contains("_final") }.constDecl
+      //        val params = vars.map { Param(it.name, it.type).ref }.toList()
+      //        val noRankFunc = params.filter { it.decl.name != "__ranking_function" }
+      //        val rankFunc = params.filter { it.decl.name == "__ranking_function" }.first()
+      //        val lhs = App(finalFunc.ref as Expr<FuncType<in Type, BoolType>>, params)
+      //        val f = Const("f", funcType(noRankFunc.map { it.type }, rankFunc.type))
+      //        val rhs = Eq(App(f.ref as Expr<FuncType<in Type, Type>>, noRankFunc), rankFunc)
+      //        val solver = Z3SolverFactory.getInstance().createSolver()
+      //        WithPushPop(solver).use {
+      //          solver.add(Eq(lhs, rhs))
+      //          val status = solver.check()
+      //          check(status.isSat)
+      //          val model = solver.model
+      //          System.err.println(model.toMap()[f])
+      //        }
+      //      }
       SafetyResult.safe(EmptyProof.getInstance())
     } else if (result.isUnsafe) {
       try {
@@ -73,7 +101,8 @@ fun getHornChecker(
             listOf(
               XcfaState(
                 xcfa,
-                xcfa.initProcedures.get(0).first.errorLoc.get(),
+                xcfa.initProcedures.get(0).first.errorLoc.getOrNull()
+                  ?: XcfaLocation("<missing!>", metadata = EmptyMetaData),
                 PtrState(PredState.of(True())),
               )
             ),
@@ -104,7 +133,9 @@ private fun getProperTrace(
         func = func.func
       }
       func as RefExpr<*>
-      xcfa.procedures.flatMap { it.locs }.first { it.name == getName(func.decl.name) }
+      val locs = xcfa.procedures.flatMap { it.locs }
+      locs.firstOrNull { it.name == getName(func.decl.name) }
+        ?: locs.firstOrNull { it.name == func.decl.name }
     } else null
   }
   val states = mutableListOf<XcfaState<PtrState<*>>>()
@@ -113,24 +144,63 @@ private fun getProperTrace(
   var lastLoc: XcfaLocation? = null
   while (proofNode != null) {
     loc(proofNode)?.also { currentLoc ->
-      states.add(XcfaState(xcfa, currentLoc, PtrState(PredState.of())))
-      lastLoc?.also {
-        actions.add(
-          XcfaAction(
-            0,
-            xcfa.procedures
-              .flatMap { it.edges }
-              .first { it.source == currentLoc && it.target == lastLoc },
-          )
-        )
+      if (lastLoc == null) {
+        states.add(XcfaState(xcfa, currentLoc, PtrState(PredState.of())))
+      } else {
+        val edge = currentLoc.outgoingEdges.firstOrNull { it.target == lastLoc }
+        if (edge != null) {
+          states.add(XcfaState(xcfa, currentLoc, PtrState(PredState.of())))
+          actions.add(XcfaAction(0, edge))
+        } else {
+          // z3 is messing with us, we need to find out what trace it optimized out.
+          val (length, edges) = getShortestPath(currentLoc, lastLoc!!)
+          checkState(length < Int.MAX_VALUE)
+          lateinit var loc: XcfaLocation
+          for (xcfaEdge in edges.reversed()) {
+            loc = xcfaEdge.source
+            states.add(XcfaState(xcfa, loc, PtrState(PredState.of())))
+            actions.add(XcfaAction(0, xcfaEdge))
+          }
+          checkState(loc == currentLoc)
+        }
       }
       lastLoc = currentLoc
     }
     proofNode = proofNode.children.getOrNull(0)
+  }
+  if (lastLoc != xcfa.initProcedures[0].first.initLoc) {
+    val (length, edges) = getShortestPath(xcfa.initProcedures[0].first.initLoc, lastLoc!!)
+    checkState(length < Int.MAX_VALUE)
+    lateinit var loc: XcfaLocation
+    for (xcfaEdge in edges.reversed()) {
+      loc = xcfaEdge.source
+      states.add(XcfaState(xcfa, loc, PtrState(PredState.of())))
+      actions.add(XcfaAction(0, xcfaEdge))
+    }
+    checkState(loc == xcfa.initProcedures[0].first.initLoc)
   }
 
   return SafetyResult.unsafe(
     Trace.of(states.reversed(), actions.reversed()),
     EmptyProof.getInstance(),
   )
+}
+
+fun getShortestPath(start: XcfaLocation, end: XcfaLocation): Pair<Int, List<XcfaEdge>> {
+  val visited = mutableSetOf(start)
+  val waitlist = mutableListOf(Pair(start, listOf<XcfaEdge>()))
+  while (waitlist.isNotEmpty()) {
+    val (loc, edges) = waitlist.removeFirst()
+    for (outgoingEdge in loc.outgoingEdges) {
+      if (outgoingEdge.target == end) {
+        return Pair(edges.size + 1, edges + outgoingEdge)
+      } else if (visited.contains(outgoingEdge.target)) {
+        // do nothing
+      } else {
+        visited.add(outgoingEdge.target)
+        waitlist.add(Pair(outgoingEdge.target, edges + outgoingEdge))
+      }
+    }
+  }
+  return Pair(Int.MAX_VALUE, emptyList())
 }
