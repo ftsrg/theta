@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.bounded.createAbstract
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
@@ -59,20 +58,10 @@ fun getMddChecker(
       .let {
         if (mddConfig.cegar) {
           TODO("MDD cannot return traces, and thus, --cegar won't work yet.")
-          it.createAbstract(mddConfig.initPrec.predPrec(xcfa).p.innerPrec)
         } else it
       }
       .let { if (mddConfig.reversed) it.createReversed() else it }
 
-  val initRel = monolithicExpr.initExpr
-  val initIndexing = monolithicExpr.initOffsetIndex
-  val transRel =
-    object : ExprAction {
-      override fun toExpr() = monolithicExpr.transExpr
-
-      override fun nextIndexing() = monolithicExpr.transOffsetIndex
-    }
-  val safetyProperty = monolithicExpr.propExpr
   val stmts =
     xcfa.procedures
       .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
@@ -81,11 +70,8 @@ fun getMddChecker(
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  return MddChecker.create(
-    initRel,
-    initIndexing,
-    transRel,
-    safetyProperty,
+  return MddChecker.create<ExprAction>(
+    monolithicExpr,
     variableOrder,
     solverPool,
     logger,
