@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager
+import hu.bme.mit.theta.solver.meta.MetaSolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
@@ -37,6 +38,8 @@ fun registerAllSolverManagers(home: String, logger: Logger) {
   // register solver managers
   SolverManager.registerSolverManager(Z3SolverManager.create())
   logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
+  SolverManager.registerSolverManager(MetaSolverManager.create())
+  logger.write(Logger.Level.INFO, "Registered Meta SolverManager\n")
   SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
   logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
   SolverManager.registerSolverManager(JavaSMTSolverManager.create())
