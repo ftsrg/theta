@@ -65,39 +65,42 @@ class HavocToUninitVar : ProcedurePass {
   private fun getNonLoopingEdges(builder: XcfaProcedureBuilder): MutableList<XcfaEdge> {
     val initLoc = builder.initLoc
 
-    val visited = mutableSetOf<XcfaLocation>()
-    val inCurrentPath = mutableSetOf<XcfaLocation>()
+    val visited = mutableSetOf<XcfaEdge>()
+    val inCurrentPath = mutableListOf<XcfaEdge>()
     val edgesInCycles = mutableSetOf<XcfaEdge>()
 
     // Depth-First Search to detect cycles and mark edges in cycles
-    fun dfs(location: XcfaLocation) {
-      if (location in inCurrentPath || location in visited) {
+    fun dfs(edge: XcfaEdge) {
+      if (edge in inCurrentPath || edge in visited) {
         return
       }
 
-      visited.add(location)
-      inCurrentPath.add(location)
+      visited.add(edge)
+      inCurrentPath.add(edge)
 
-      for (edge in location.outgoingEdges) {
-        dfs(edge.target)
-        if (edge.target in inCurrentPath) {
-          edgesInCycles.add(edge)
+      for (outEdge in edge.target.outgoingEdges) {
+        if (outEdge in inCurrentPath) {
+          var i = inCurrentPath.indexOf(outEdge)
+          while (i < inCurrentPath.size) {
+            edgesInCycles.add(inCurrentPath[i])
+            i++
+          }
         }
+        dfs(outEdge)
       }
 
-      inCurrentPath.remove(location)
+      inCurrentPath.remove(edge)
     }
 
     // Start DFS from the initial location
-    dfs(initLoc)
+    val dummyEdge = XcfaEdge(initLoc, initLoc, metadata = EmptyMetaData)
+    dfs(dummyEdge)
 
     // Collect all edges not part of cycles
     val nonLoopingEdges = mutableListOf<XcfaEdge>()
-    for (location in visited) {
-      for (edge in location.outgoingEdges) {
-        if (edge !in edgesInCycles) {
-          nonLoopingEdges.add(edge)
-        }
+    for (edge in visited) {
+      if (edge !in edgesInCycles && edge != dummyEdge) {
+        nonLoopingEdges.add(edge)
       }
     }
     return nonLoopingEdges
