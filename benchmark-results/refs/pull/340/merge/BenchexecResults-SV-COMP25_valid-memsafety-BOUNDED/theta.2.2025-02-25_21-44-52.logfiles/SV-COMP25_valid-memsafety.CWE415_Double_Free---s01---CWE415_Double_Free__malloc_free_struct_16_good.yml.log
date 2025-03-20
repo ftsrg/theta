@@ -1,0 +1,9 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_struct_16_good.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_struct_16_good.i' with property 'sv-benchmarks/c/properties/valid-memsafety.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE415_Double_Free---s01---CWE415_Double_Free__malloc_free_struct_16_good.i --property sv-benchmarks/c/properties/valid-memsafety.prp --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.castExpression(CParser.java:1449), org.antlr.v4.runtime.misc.ParseCancellationException)

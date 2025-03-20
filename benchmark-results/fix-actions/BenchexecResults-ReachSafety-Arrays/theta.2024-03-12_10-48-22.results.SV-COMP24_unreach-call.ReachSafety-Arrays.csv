@@ -1,0 +1,8 @@
+tool	Theta 5.0.3	Theta 5.0.3	Theta 5.0.3	Theta 5.0.3
+run set	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	Parsing OK	113.354159	101.14862348499992	684.589056
+array-crafted/mapavg4.yml	Parsing OK	114.93126	101.27789975400003	702.279680
+array-programs/copysome2-1.yml	Parsing OK	113.17483	101.15657535000003	761.995264
+array-examples/sanfoundry_24-1.yml	Parsing OK	9.557694	3.8581535280000026	531.841024
+array-multidimensional/max-2-u.yml	Parsing OK	118.229296	101.18678279799997	765.767680

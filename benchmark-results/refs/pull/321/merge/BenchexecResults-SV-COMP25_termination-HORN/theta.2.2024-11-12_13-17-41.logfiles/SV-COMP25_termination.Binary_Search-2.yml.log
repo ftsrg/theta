@@ -1,0 +1,46 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-crafted/Binary_Search-2.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-crafted/Binary_Search-2.c' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Language C detected and set for analysis (CPAMain.detectFrontendLanguageIfNecessary, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (ResourceLimitChecker.fromConfiguration, INFO)
+
+CPAchecker 3.1-svn-c087875f13 / default (OpenJDK 64-Bit Server VM 17.0.13) started (CPAchecker.run, INFO)
+
+Parsing CFA from file(s) "formatted_files/Binary_Search-2.c" (CPAchecker.parse, INFO)
+
+Using default specification, which checks for assertion failures and error labels. (CPAchecker.run, INFO)
+
+Using Restarting Algorithm (CoreComponentsFactory.createAlgorithm, INFO)
+
+The following configuration options were specified but are not used:
+ instrumentation.instrumentationProperty 
+ (CPAchecker.printConfigurationWarnings, WARNING)
+
+Starting analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Loading analysis 1 from file /tmp/BenchExec_run_62g45jxt/tmp/.mount_specif2MNpMC/cpachecker/config/components/kInduction+Invariants/kInduction.properties ... (RestartAlgorithm.run, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (Analysis /tmp/BenchExec_run_62g45jxt/tmp/.mount_specif2MNpMC/cpachecker/config/components/kInduction+Invariants/kInduction.properties:ResourceLimitChecker.fromConfiguration, INFO)
+
+Starting analysis 1 ... (RestartAlgorithm.run, INFO)
+
+Ignoring restart configuration '/tmp/BenchExec_run_62g45jxt/tmp/.mount_specif2MNpMC/cpachecker/config/components/valueAnalysis-predicateAnalysis-bam-rec.properties' because condition if-recursive did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Ignoring restart configuration '/tmp/BenchExec_run_62g45jxt/tmp/.mount_specif2MNpMC/cpachecker/config/components/bddAnalysis-concurrency.properties' because condition if-concurrent did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Analysis 3 terminated, but result is unsound. (RestartAlgorithm.run, INFO)
+
+No further configuration available. (RestartAlgorithm.run, INFO)
+
+Stopping analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Finished.
+More details about the verification run can be found in the directory "./output".
+Graphical representation included in the file "./output/Report.html".
+The transformed CFA does not contain any new edges !

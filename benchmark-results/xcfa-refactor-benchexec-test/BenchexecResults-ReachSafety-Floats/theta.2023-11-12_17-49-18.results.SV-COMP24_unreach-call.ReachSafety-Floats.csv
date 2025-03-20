@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+float-benchs/float_double.yml	true	true	2.27354	0.8998579689999815	184.176640
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml	true	ERROR (solver error)	23.012501	21.481889858000045	567.316480
+float-benchs/float_int_inv_square.yml	false	false(unreach-call)	6.443498	4.5553401299999905	303.366144
+floats-cdfpl/square_3.yml	false	TIMEOUT	120.181208	118.54376792300002	646.443008
+floats-cbmc-regression/float11.yml	true	true	2.680985	1.0242428410000457	181.182464
+float-benchs/nan_double.yml	false	false(unreach-call)	2.760072	1.0790346470000713	183.619584
+float-benchs/Rump_double.yml	true	true	42.444906	40.91666345699991	525.946880
+floats-cdfpl/newton_2_2.yml	true	TIMEOUT	120.215308	118.56901600399999	1214.713856
+floats-cdfpl/sine_3.yml	false	TIMEOUT	120.218374	118.58314431100007	1447.825408
+float-benchs/zonotope_3.c.v+lhb-reducer.yml	true	TIMEOUT	120.224422	117.70125947600002	481.718272
