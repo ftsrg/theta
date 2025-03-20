@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
-import com.charleskorn.kaml.YamlPathSegment.Root.location
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -53,15 +52,15 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
             edgeMetadata.lineNumberStop == null ||
             edgeMetadata.colNumberStop == null
         ) {
-          // edgesOfWaypoints.add(edge) // if no metadata, keep it ?
+          // edgesOfWaypoints.add(edge) // if no metadata, don't automatically keep it ?
         } else if ( // wp in first line of edge
           edgeMetadata.lineNumberStart!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStart!! <= wayPoint.location.column!!
+            edgeMetadata.colNumberStart!!+1 <= wayPoint.location.column!!
         ) {
           edgesOfWaypoints.add(edge)
         } else if ( // wp in last line of edge
           edgeMetadata.lineNumberStop!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStop!! >= wayPoint.location.column!!
+            edgeMetadata.colNumberStop!!+1 >= wayPoint.location.column!!
         ) {
           edgesOfWaypoints.add(edge)
         } else if ( // wp inbetween first and last lines of edge

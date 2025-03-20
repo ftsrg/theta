@@ -1108,6 +1108,10 @@ class FrontendXcfaBuilder(
       this.returnLoc = returnLoc
     }
   }
+
+  override fun visit(statement: CNullStatement, param: ParamPack): XcfaLocation {
+    return param.lastLoc
+  }
 }
 
 private fun Expr<*>.hasArithmetic(): Boolean =

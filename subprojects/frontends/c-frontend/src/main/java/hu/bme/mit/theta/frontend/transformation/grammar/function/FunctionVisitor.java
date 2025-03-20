@@ -255,7 +255,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
         CSimpleType returnType = ctx.declarationSpecifiers().accept(typeVisitor);
-        if (returnType.isTypedef()) return new CCompound(parseContext);
+        if (returnType.isTypedef()) return new CNullStatement(parseContext);
         CDeclaration funcDecl = ctx.declarator().accept(declarationVisitor);
         funcDecl.setType(returnType);
         if (!variables.peek().get2().containsKey(funcDecl.getName())) {
@@ -370,7 +370,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     public CStatement visitExpressionStatement(CParser.ExpressionStatementContext ctx) {
         CStatement statement =
                 ctx.expression() == null
-                        ? new CCompound(parseContext)
+                        ? new CNullStatement(parseContext)
                         : ctx.expression().accept(this);
         recordMetadata(ctx, statement);
         return statement;
@@ -529,7 +529,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     final var scope = currentStatementContext.peek().get2();
                     if (scope.isPresent() && scope.get().getPostStatements() instanceof CCompound) {
                         if (scope.get().getPostStatements() == null) {
-                            scope.get().setPostStatements(new CCompound(parseContext));
+                            scope.get().setPostStatements(new CNullStatement(parseContext));
                         }
                         ((CCompound) scope.get().getPostStatements()).addCStatement(free);
                     }
@@ -805,30 +805,30 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
             CCompound guardCompound = new CCompound(parseContext);
             guardCompound.addCStatement(new CExpr(expr, parseContext));
-            guardCompound.setPostStatements(new CCompound(parseContext));
-            guardCompound.setPreStatements(new CCompound(parseContext));
+            guardCompound.setPostStatements(new CNullStatement(parseContext));
+            guardCompound.setPreStatements(new CNullStatement(parseContext));
 
             CCompound ifTruePre = new CCompound(parseContext);
             List<CStatement> ifTruePreList = collectPreStatements(ifTrue);
             ifTruePreList.forEach(ifTruePre::addCStatement);
-            ifTruePre.setPostStatements(new CCompound(parseContext));
-            ifTruePre.setPreStatements(new CCompound(parseContext));
+            ifTruePre.setPostStatements(new CNullStatement(parseContext));
+            ifTruePre.setPreStatements(new CNullStatement(parseContext));
             CCompound ifFalsePre = new CCompound(parseContext);
             List<CStatement> ifFalsePreList = collectPreStatements(ifFalse);
             ifFalsePreList.forEach(ifFalsePre::addCStatement);
-            ifFalsePre.setPostStatements(new CCompound(parseContext));
-            ifFalsePre.setPreStatements(new CCompound(parseContext));
+            ifFalsePre.setPostStatements(new CNullStatement(parseContext));
+            ifFalsePre.setPreStatements(new CNullStatement(parseContext));
 
             CCompound ifTruePost = new CCompound(parseContext);
             List<CStatement> ifTruePostList = collectPostStatements(ifTrue);
             ifTruePostList.forEach(ifTruePost::addCStatement);
-            ifTruePost.setPostStatements(new CCompound(parseContext));
-            ifTruePost.setPreStatements(new CCompound(parseContext));
+            ifTruePost.setPostStatements(new CNullStatement(parseContext));
+            ifTruePost.setPreStatements(new CNullStatement(parseContext));
             CCompound ifFalsePost = new CCompound(parseContext);
             List<CStatement> ifFalsePostList = collectPostStatements(ifFalse);
             ifFalsePostList.forEach(ifFalsePost::addCStatement);
-            ifFalsePost.setPostStatements(new CCompound(parseContext));
-            ifFalsePost.setPreStatements(new CCompound(parseContext));
+            ifFalsePost.setPostStatements(new CNullStatement(parseContext));
+            ifFalsePost.setPreStatements(new CNullStatement(parseContext));
 
             if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty()) {
                 preStatements.addCStatement(

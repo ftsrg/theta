@@ -174,4 +174,8 @@ class StatisticsCollectorVisitor : CStatementVisitor<Unit, Unit> {
     statement.body?.accept(this, param)
     currentDepth--
   }
+
+  override fun visit(statement: CNullStatement?, param: Unit?) {
+    return
+  }
 }
