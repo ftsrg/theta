@@ -30,10 +30,10 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       val edge =
         builder.getEdges().find {
           it.label.isNop() &&
+            !it.metadata.isSubstantial() &&
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&
-            // !it.metadata.isSubstantial() &&
             ((it.source.outgoingEdges.size == 1 && !it.source.name.contains("__THETA_")) ||
               (it.target.incomingEdges.size == 1) && !it.target.name.contains("__THETA_"))
         } ?: return builder
@@ -43,14 +43,14 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         val incomingEdges = edge.source.incomingEdges.toList()
         incomingEdges.forEach { builder.removeEdge(it) }
         incomingEdges.forEach {
-          builder.addEdge(it.withTarget(edge.target).withMetadata(edge.metadata))
+          builder.addEdge(it.withTarget(edge.target).withMetadata(it.metadata))
         }
         builder.removeLoc(edge.source)
       } else {
         val outgoingEdges = edge.target.outgoingEdges.toList()
         outgoingEdges.forEach { builder.removeEdge(it) }
         outgoingEdges.forEach {
-          builder.addEdge(it.withSource(edge.source).withMetadata(edge.metadata))
+          builder.addEdge(it.withSource(edge.source).withMetadata(it.metadata))
         }
         builder.removeLoc(edge.target)
       }

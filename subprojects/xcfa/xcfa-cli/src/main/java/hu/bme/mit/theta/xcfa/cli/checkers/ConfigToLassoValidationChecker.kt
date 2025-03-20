@@ -199,23 +199,12 @@ private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint
     for (outEdge in loc.outgoingEdges) {
       val astNodes = outEdge.getCMetaData()!!.astNodes
       for (node in astNodes) {
-        val parent = node.parent.getOrNull()
-        if (parent != null && parent is CCompound) {
-          if (
-            parent.getcStatementList()[0] == node &&
-              parent.lineNumberStart == recurrenceSet.waypoint.location.line &&
-              parent.colNumberStart + 1 == recurrenceSet.waypoint.location.column
-          ) {
-            results.add(loc)
-            resultStatements.add(parent)
-          } else if (
-            parent.getcStatementList()[0] != node &&
+        if (
               node.lineNumberStart == recurrenceSet.waypoint.location.line &&
               node.colNumberStart + 1 == recurrenceSet.waypoint.location.column
-          ) {
+        ) {
             results.add(loc)
             resultStatements.add(node)
-          }
         }
       }
     }
