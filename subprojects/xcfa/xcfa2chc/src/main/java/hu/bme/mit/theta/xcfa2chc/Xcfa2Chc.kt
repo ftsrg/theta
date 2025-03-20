@@ -18,15 +18,19 @@ package hu.bme.mit.theta.xcfa2chc
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -40,7 +44,14 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-fun XcfaProcedure.toCHC(termination: Boolean = false): List<Relation> {
+enum class RankingFunction(val constraint: (Expr<IntType>, Expr<IntType>) -> Expr<BoolType>) {
+  ADD({ old, new -> Eq(new, Add(old, Int(1))) }) // +1
+}
+
+fun XcfaProcedure.toCHC(
+  termination: Boolean = false,
+  rankingFuncConstr: RankingFunction = RankingFunction.ADD,
+): Pair<List<VarDecl<*>>, List<Relation>> {
   val vars = edges.flatMap { it.label.collectVars() }.toSet().toMutableList()
 
   val rankingFunction = Var("__ranking_func", Int())
@@ -69,8 +80,6 @@ fun XcfaProcedure.toCHC(termination: Boolean = false): List<Relation> {
           val newLabels = ArrayList<XcfaLabel>()
           if (it.source.initial) {
             newLabels.add(AssignStmtLabel(rankingFunction, Int(0)))
-          } else {
-            newLabels.add(AssignStmtLabel(rankingFunction, Add(rankingFunction.ref, Int(1))))
           }
           for (label in labels) {
             if (label is StmtLabel && label.stmt is HavocStmt<*>) {
@@ -104,10 +113,19 @@ fun XcfaProcedure.toCHC(termination: Boolean = false): List<Relation> {
       }
     val newParamList =
       vars
-        .map { if (unfoldResult.indexing[it] == 0) oldParams[it]!!.ref else newParams[it]!!.ref }
+        .map {
+          if (unfoldResult.indexing[it] == 0 && it != rankingFunction) oldParams[it]!!.ref
+          else newParams[it]!!.ref
+        }
         .toTypedArray()
     val paramdExpr = ExprUtils.changeDecls(expr, consts)
-    (ufs[it.target]!!)(*newParamList) += (ufs[it.source]!!)(*oldParamList).expr + paramdExpr
+    (ufs[it.target]!!)(*newParamList) +=
+      (ufs[it.source]!!)(*oldParamList).expr +
+        paramdExpr +
+        rankingFuncConstr.constraint(
+          oldParams[rankingFunction]!!.ref as Expr<IntType>,
+          newParams[rankingFunction]!!.ref as Expr<IntType>,
+        )
   }
 
   if (termination) {
@@ -138,11 +156,14 @@ fun XcfaProcedure.toCHC(termination: Boolean = false): List<Relation> {
 
   ufs[initLoc]!!(*oldParamList) += True()
 
-  return ufs.values.toList()
+  return Pair(vars, ufs.values.toList())
 }
 
-fun XcfaProcedure.toSMT2CHC(termination: Boolean = false): String {
-  val chc = toCHC(termination)
+fun XcfaProcedure.toSMT2CHC(
+  termination: Boolean = false,
+  rankingFunction: RankingFunction,
+): String {
+  val chc = toCHC(termination, rankingFunction).second
   val smt2 = chc.toSMT2()
   return smt2
 }

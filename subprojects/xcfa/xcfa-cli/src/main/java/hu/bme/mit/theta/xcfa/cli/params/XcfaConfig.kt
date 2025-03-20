@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
 
@@ -287,6 +288,11 @@ data class HornConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--ranking-function-constraint"],
+    description = "What relation to use for the ranking function.",
+  )
+  var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
 ) : SpecBackendConfig
 
 data class BoundedConfig(

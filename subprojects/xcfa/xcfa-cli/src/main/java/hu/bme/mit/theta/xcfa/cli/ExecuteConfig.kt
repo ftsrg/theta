@@ -58,6 +58,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -349,7 +350,11 @@ private fun preVerificationLogging(
           try {
             val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
             chcFile.writeText(
-              it.toSMT2CHC(config.inputConfig.property == ErrorDetection.TERMINATION)
+              it.toSMT2CHC(
+                config.inputConfig.property == ErrorDetection.TERMINATION,
+                (config.backendConfig.specConfig as? HornConfig)?.rankingFuncConstr
+                  ?: RankingFunction.ADD,
+              )
             )
           } catch (e: Exception) {
             logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())

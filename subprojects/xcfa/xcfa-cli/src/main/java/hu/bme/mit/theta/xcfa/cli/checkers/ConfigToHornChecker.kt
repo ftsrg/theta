@@ -57,9 +57,14 @@ fun getHornChecker(
 
   val property = config.inputConfig.property
 
+  val (vars, chc) =
+    xcfa.initProcedures[0]
+      .first
+      .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
+
   val checker =
     HornChecker(
-      relations = xcfa.initProcedures[0].first.toCHC(property == ErrorDetection.TERMINATION),
+      relations = chc,
       hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
       logger = logger,
     )
@@ -68,6 +73,24 @@ fun getHornChecker(
     val result = checker.check(null)
 
     if (result.isSafe) {
+      //      if (property == ErrorDetection.TERMINATION) {
+      //        val invariant = result.asSafe().proof
+      //        val finalFunc = invariant.lookup.keys.first { it.name.contains("_final") }.constDecl
+      //        val params = vars.map { Param(it.name, it.type).ref }.toList()
+      //        val noRankFunc = params.filter { it.decl.name != "__ranking_function" }
+      //        val rankFunc = params.filter { it.decl.name == "__ranking_function" }.first()
+      //        val lhs = App(finalFunc.ref as Expr<FuncType<in Type, BoolType>>, params)
+      //        val f = Const("f", funcType(noRankFunc.map { it.type }, rankFunc.type))
+      //        val rhs = Eq(App(f.ref as Expr<FuncType<in Type, Type>>, noRankFunc), rankFunc)
+      //        val solver = Z3SolverFactory.getInstance().createSolver()
+      //        WithPushPop(solver).use {
+      //          solver.add(Eq(lhs, rhs))
+      //          val status = solver.check()
+      //          check(status.isSat)
+      //          val model = solver.model
+      //          System.err.println(model.toMap()[f])
+      //        }
+      //      }
       SafetyResult.safe(EmptyProof.getInstance())
     } else if (result.isUnsafe) {
       try {
