@@ -621,6 +621,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                     CComplexType.getType(varDecl.getRef(), parseContext)
                                             .limit(varDecl.getRef());
                             CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                            recordMetadata(ctx, cAssume);
                             compound.addCStatement(cAssume);
                         }
                     }
@@ -634,6 +635,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                 CComplexType.getType(varDecl.getRef(), parseContext)
                                         .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                        recordMetadata(ctx, cAssume);
                         compound.addCStatement(cAssume);
                     }
                 }

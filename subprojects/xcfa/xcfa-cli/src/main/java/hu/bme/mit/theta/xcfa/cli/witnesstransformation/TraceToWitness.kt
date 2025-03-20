@@ -130,38 +130,41 @@ fun traceToWitness(
     }
   }
 
-  val lastState = trace.states[trace.length()]
-  val node =
-    WitnessNode(
-      id = "N${newStates.size}",
-      entry = false,
-      sink = false,
-      violation =
-        isError.test( // this is a hack so that a simple explstate can become a ptrstate
-          XcfaState(
-            lastState.xcfa,
-            lastState.processes,
-            PtrState(lastState.sGlobal),
-            lastState.mutexes,
-            lastState.threadLookup,
-            lastState.bottom,
-          )
-        ),
-      xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-      cSources =
-        lastState.processes
-          .map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }
-          .toMap(),
-      globalState = lastState.sGlobal,
-    )
-  newStates.add(node)
-  val edge =
-    WitnessEdge(
-      sourceId = lastNode.id,
-      targetId = node.id,
-      edge = trace.actions[trace.length() - 1].edge,
-    )
-  newActions.add(edge)
+
+  if(trace.length()>0) {
+    val lastState = trace.states[trace.length()]
+    val node =
+      WitnessNode(
+        id = "N${newStates.size}",
+        entry = false,
+        sink = false,
+        violation =
+          isError.test( // this is a hack so that a simple explstate can become a ptrstate
+            XcfaState(
+              lastState.xcfa,
+              lastState.processes,
+              PtrState(lastState.sGlobal),
+              lastState.mutexes,
+              lastState.threadLookup,
+              lastState.bottom,
+            )
+          ),
+        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+        cSources =
+          lastState.processes
+            .map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }
+            .toMap(),
+        globalState = lastState.sGlobal,
+      )
+    newStates.add(node)
+    val edge =
+      WitnessEdge(
+        sourceId = lastNode.id,
+        targetId = node.id,
+        edge = trace.actions[trace.length() - 1].edge,
+      )
+    newActions.add(edge)
+  }
 
   return Trace.of(newStates, newActions)
 }

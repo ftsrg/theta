@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
@@ -44,7 +43,7 @@ import java.io.File
 import java.util.*
 import kotlinx.serialization.encodeToString
 
-class YmlWitnessWriter {
+class YamlWitnessWriter {
 
   fun writeWitness(
     safetyResult: SafetyResult<*, *>,
@@ -104,13 +103,13 @@ class YmlWitnessWriter {
           }
           val stem =
             Trace.of(
-              concrTrace.states.subList(0, cycleHeadFirst),
-              concrTrace.actions.subList(0, cycleHeadFirst - 1),
+              concrTrace.states.subList(0, cycleHeadFirst - 1),
+              concrTrace.actions.subList(0, cycleHeadFirst - 2),
             )
           val lasso =
             Trace.of(
-              concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
-              concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
+              concrTrace.states.subList(cycleHeadFirst - 1, concrTrace.states.size - 1),
+              concrTrace.actions.subList(cycleHeadFirst - 1, concrTrace.actions.size - 1),
             )
 
           val backEdge =
@@ -150,7 +149,7 @@ class YmlWitnessWriter {
                           Location(
                             fileName = inputFile.name,
                             line = it.lineNumberStart,
-                            column = it.colNumberStart,
+                            column = it.colNumberStart+1,
                           )
                         },
                     constraint =
