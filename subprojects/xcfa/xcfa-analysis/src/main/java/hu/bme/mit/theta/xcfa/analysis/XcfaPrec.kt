@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.utils.PrecSerializer
 import hu.bme.mit.theta.core.decl.VarDecl
 
 data class XcfaPrec<P : Prec>(val p: P, val noPop: MutableList<XcfaState<*>> = mutableListOf()) :
@@ -32,4 +33,11 @@ data class XcfaPrec<P : Prec>(val p: P, val noPop: MutableList<XcfaState<*>> = m
       XcfaPrec(runningPrec)
     }
   }
+}
+
+class XcfaPrecSerializer<P : Prec>(private val serializer: PrecSerializer<P>) : PrecSerializer<XcfaPrec<P>> {
+  override fun serialize(prec: Prec): String = serializer.serialize((prec as XcfaPrec<*>).p)
+
+  override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): XcfaPrec<P> =
+    XcfaPrec(serializer.parse(input, currentVars))
 }

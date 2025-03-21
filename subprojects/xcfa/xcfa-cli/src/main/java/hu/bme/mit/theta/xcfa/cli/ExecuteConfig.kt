@@ -31,6 +31,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.utils.PrecReuse
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -117,6 +118,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
+  }
+  (config.backendConfig.specConfig as? CegarConfig)?.let { cegarConfig ->
+    if (cegarConfig.initPrec == InitPrec.REUSE) {
+      cegarConfig.precFile?.let { precFile ->
+        PrecReuse.enable(precFile, config.outputConfig.resultFolder)
+      } ?: logger.write(Logger.Level.INFO, "Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision.")
+    }
   }
 
   LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll

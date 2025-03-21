@@ -56,6 +56,7 @@ specific_success_response
     | get_model_response
     | proof_response
     | get_interpolants_response_smtinterpol
+    | precision_response
     ;
 
 check_sat_response
@@ -122,6 +123,10 @@ proof_funs
 
 get_interpolants_response_smtinterpol
     : ParOpen term* ParClose
+    ;
+
+precision_response
+    : proof_funs* term*
     ;
 
 // Parser Rules End
