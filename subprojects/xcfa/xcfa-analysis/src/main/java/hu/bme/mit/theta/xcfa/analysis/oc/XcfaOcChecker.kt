@@ -61,6 +61,7 @@ private val Expr<*>.vars
 class XcfaOcChecker(
   xcfa: XCFA,
   decisionProcedure: OcDecisionProcedureType,
+  smtSolver: String,
   private val logger: Logger,
   conflictInput: String?,
   private val outputConflictClauses: Boolean,
@@ -87,7 +88,7 @@ class XcfaOcChecker(
   private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
   private val ocChecker: OcChecker<E> =
-    decisionProcedure.checker(memoryModel).let { ocChecker ->
+    decisionProcedure.checker(smtSolver, memoryModel).let { ocChecker ->
       if (conflictInput == null) ocChecker
       else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation, logger)
     }

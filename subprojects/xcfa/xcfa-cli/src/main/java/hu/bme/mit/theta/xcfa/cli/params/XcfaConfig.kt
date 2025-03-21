@@ -393,6 +393,8 @@ data class OcConfig(
   var autoConflictBound: Int = -1,
   @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
+  @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
+  var smtSolver: String = "Z3:4.13",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

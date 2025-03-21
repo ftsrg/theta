@@ -36,11 +36,11 @@ internal typealias E = XcfaEvent
 internal typealias R = Relation<XcfaEvent>
 
 @Suppress("unused")
-enum class OcDecisionProcedureType(internal val checker: (XcfaOcMemoryConsistencyModel) -> OcChecker<E>) {
+enum class OcDecisionProcedureType(internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>) {
 
-  IDL({ IDLOcChecker(it == XcfaOcMemoryConsistencyModel.SC) }),
-  BASIC({ BasicOcChecker() }),
-  PROPAGATOR({ UserPropagatorOcChecker() }),
+  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
+  BASIC({ solver, _ -> BasicOcChecker(solver) }),
+  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
 }
 
 /** Important! Empty collection is converted to true (not false). */

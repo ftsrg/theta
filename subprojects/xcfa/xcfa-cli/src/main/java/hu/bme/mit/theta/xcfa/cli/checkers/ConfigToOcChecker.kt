@@ -37,6 +37,7 @@ fun getOcChecker(
     XcfaOcChecker(
       xcfa = xcfa,
       decisionProcedure = ocConfig.decisionProcedure,
+      smtSolver = ocConfig.smtSolver,
       logger = logger,
       conflictInput = ocConfig.inputConflictClauseFile,
       outputConflictClauses = ocConfig.outputConflictClauses,
