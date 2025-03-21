@@ -45,6 +45,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
+import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
@@ -133,6 +134,11 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
   }
   rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
     (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
+  }
+  rule("OcPropagatorWithoutZ3") {
+    config.backendConfig.backend == Backend.OC &&
+      (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure == OcDecisionProcedureType.PROPAGATOR &&
+      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:4.13"
   }
 }
 
