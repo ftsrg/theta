@@ -43,13 +43,13 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
-import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.analysis.unit.UnitAnalysis
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.analysis.utils.ExplPrecSerializer
+import hu.bme.mit.theta.analysis.utils.PrecReuse
+import hu.bme.mit.theta.analysis.utils.PredPrecSerializer
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -769,6 +769,16 @@ enum class InitPrec(
       XcfaPrec(
         PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of(xcfa.collectAssumes())), emptySet())
       )
+    },
+  ),
+  REUSE(
+    explPrec = { xcfa ->
+      PrecReuse.configure(XcfaPrecSerializer(PtrPrecSerializer(ExplPrecSerializer())))
+      PrecReuse.load(xcfa.collectVars())
+    },
+    predPrec = { xcfa ->
+      PrecReuse.configure(XcfaPrecSerializer(PtrPrecSerializer(PredPrecSerializer())))
+      PrecReuse.load(xcfa.collectVars())
     },
   ),
 }

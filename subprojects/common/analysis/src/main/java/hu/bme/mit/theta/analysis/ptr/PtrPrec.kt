@@ -16,10 +16,18 @@
 package hu.bme.mit.theta.analysis.ptr
 
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.utils.PrecSerializer
 import hu.bme.mit.theta.core.decl.VarDecl
 
 data class PtrPrec<P : Prec>(val innerPrec: P, val set: Set<Any> = emptySet(), val smth: Int = 0) :
   Prec {
 
   override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
+}
+
+class PtrPrecSerializer<P : Prec>(private val serializer: PrecSerializer<P>) : PrecSerializer<PtrPrec<P>> {
+  override fun serialize(prec: Prec): String = serializer.serialize((prec as PtrPrec<*>).innerPrec)
+
+  override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): PtrPrec<P> =
+    PtrPrec(serializer.parse(input, currentVars))
 }

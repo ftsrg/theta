@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
+    implementation(project(":theta-solver-smtlib"))
     implementation(Deps.javasmt)
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver-z3-legacy"))
