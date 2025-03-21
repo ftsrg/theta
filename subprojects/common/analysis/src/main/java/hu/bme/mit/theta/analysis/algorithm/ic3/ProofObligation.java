@@ -13,28 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.utils.indexings;
+package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import java.util.Map;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.Set;
 
-public interface VarIndexingBuilder {
+public class ProofObligation {
+    private Set<Expr<BoolType>> expressions;
+    private int time;
 
-    VarIndexingBuilder inc(VarDecl<?> varDecl);
+    ProofObligation(Set<Expr<BoolType>> expressions, int time) {
+        this.expressions = expressions;
+        this.time = time;
+    }
 
-    VarIndexingBuilder dec(VarDecl<?> varDecl);
+    public int getTime() {
+        return time;
+    }
 
-    VarIndexingBuilder incAll();
-
-    VarIndexingBuilder add(VarIndexingBuilder that);
-
-    VarIndexingBuilder sub(VarIndexingBuilder that);
-
-    VarIndexingBuilder join(VarIndexingBuilder that);
-
-    int get(VarDecl<?> varDecl);
-
-    VarIndexingBuilder copyVars(Map<VarDecl<?>, VarDecl<?>> decls);
-
-    VarIndexing build();
+    public Set<Expr<BoolType>> getExpressions() {
+        return expressions;
+    }
 }

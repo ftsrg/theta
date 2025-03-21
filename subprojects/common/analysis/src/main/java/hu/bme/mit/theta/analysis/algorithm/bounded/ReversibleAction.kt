@@ -13,28 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.utils.indexings;
+package hu.bme.mit.theta.analysis.algorithm.bounded
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import java.util.Map;
+import hu.bme.mit.theta.analysis.expr.ExprAction
 
-public interface VarIndexingBuilder {
+interface ReversibleAction : ExprAction {
+  fun reverse(): ExprAction
 
-    VarIndexingBuilder inc(VarDecl<?> varDecl);
-
-    VarIndexingBuilder dec(VarDecl<?> varDecl);
-
-    VarIndexingBuilder incAll();
-
-    VarIndexingBuilder add(VarIndexingBuilder that);
-
-    VarIndexingBuilder sub(VarIndexingBuilder that);
-
-    VarIndexingBuilder join(VarIndexingBuilder that);
-
-    int get(VarDecl<?> varDecl);
-
-    VarIndexingBuilder copyVars(Map<VarDecl<?>, VarDecl<?>> decls);
-
-    VarIndexing build();
+  fun <T : ExprAction> reverse(blueprint: T): T = reverse() as T
 }

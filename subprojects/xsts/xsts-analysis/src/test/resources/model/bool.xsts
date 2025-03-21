@@ -1,0 +1,14 @@
+var a : boolean = false
+var b : boolean = true
+
+trans{
+    a := !a;
+    b := !b;
+} or {
+    a := a;
+    b := b;
+}
+
+init{}
+
+env{}

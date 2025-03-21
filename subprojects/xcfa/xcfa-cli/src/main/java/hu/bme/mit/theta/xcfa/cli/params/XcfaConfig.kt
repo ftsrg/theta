@@ -140,6 +140,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.JSON -> null
         InputType.DSL -> null
         InputType.LITMUS -> null
+        InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
       }
   }
@@ -199,6 +200,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.MDD -> MddConfig() as T
         Backend.NONE -> null
+        Backend.IC3 -> Ic3Config() as T
       }
   }
 }
@@ -412,6 +414,23 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class Ic3Config(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

@@ -29,6 +29,7 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
@@ -39,6 +40,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationP
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -47,18 +49,14 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, Void> {
+public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, UnitPrec> {
 
-    private final Expr<BoolType> initRel;
-    private final VarIndexing initIndexing;
-    private final A transRel;
-    private final Expr<BoolType> safetyProperty;
+    private final MonolithicExpr monolithicExpr;
     private final List<VarDecl<?>> variableOrdering;
     private final SolverPool solverPool;
     private final Logger logger;
@@ -71,65 +69,39 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
     }
 
     private MddChecker(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
+            MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy) {
-        this.initRel = initRel;
-        this.initIndexing = initIndexing;
-        this.transRel = transRel;
+        this.monolithicExpr = monolithicExpr;
         this.variableOrdering = variableOrdering;
-        this.safetyProperty = safetyProperty;
         this.solverPool = solverPool;
         this.logger = logger;
         this.iterationStrategy = iterationStrategy;
     }
 
     public static <A extends ExprAction> MddChecker<A> create(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
+            MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger) {
         return new MddChecker<A>(
-                initRel,
-                initIndexing,
-                transRel,
-                safetyProperty,
-                variableOrdering,
-                solverPool,
-                logger,
-                IterationStrategy.GSAT);
+                monolithicExpr, variableOrdering, solverPool, logger, IterationStrategy.GSAT);
     }
 
     public static <A extends ExprAction> MddChecker<A> create(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
+            MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
             IterationStrategy iterationStrategy) {
         return new MddChecker<A>(
-                initRel,
-                initIndexing,
-                transRel,
-                safetyProperty,
-                variableOrdering,
-                solverPool,
-                logger,
-                iterationStrategy);
+                monolithicExpr, variableOrdering, solverPool, logger, iterationStrategy);
     }
 
     @Override
-    public SafetyResult<MddProof, MddCex> check(Void input) {
+    public SafetyResult<MddProof, MddCex> check(UnitPrec prec) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
@@ -138,6 +110,12 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
+
+        variableOrdering.forEach(
+                v ->
+                        checkArgument(
+                                monolithicExpr.getVars().contains(v),
+                                "Variable ordering contains variable not present in vars List"));
 
         checkArgument(
                 variableOrdering.size() == Containers.createSet(variableOrdering).size(),
@@ -150,14 +128,14 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                 domainSize = 0;
             }
 
-            stateOrder.createOnTop(
-                    MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
-            final var index = transRel.nextIndexing().get(v);
+            final var index = monolithicExpr.getTransOffsetIndex().get(v);
             if (index > 0) {
                 transOrder.createOnTop(
                         MddVariableDescriptor.create(
-                                v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
+                                v.getConstDecl(monolithicExpr.getTransOffsetIndex().get(v)),
+                                domainSize));
             } else {
                 transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize));
                 identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
@@ -169,7 +147,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final var stateSig = stateOrder.getDefaultSetSignature();
         final var transSig = transOrder.getDefaultSetSignature();
 
-        final Expr<BoolType> initExpr = PathUtils.unfold(initRel, initIndexing);
+        final Expr<BoolType> initExpr = PathUtils.unfold(monolithicExpr.getInitExpr(), 0);
         final MddHandle initNode =
                 stateSig.getTopVariableHandle()
                         .checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
@@ -178,7 +156,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
 
         final Expr<BoolType> transExpr =
                 And(
-                        PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0)),
+                        PathUtils.unfold(
+                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)),
                         And(identityExprs));
         final MddHandle transitionNode =
                 transSig.getTopVariableHandle()
@@ -210,7 +189,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
 
         logger.write(Level.INFO, "Enumerated state-space");
 
-        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
+        final Expr<BoolType> negatedPropExpr =
+                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
         final MddHandle propNode =
                 stateSig.getTopVariableHandle()
                         .checkInNode(

@@ -60,6 +60,7 @@ enum class InputType {
   DSL,
   CHC,
   LITMUS,
+  CFA,
 }
 
 enum class Backend {
@@ -70,6 +71,7 @@ enum class Backend {
   LAZY,
   PORTFOLIO,
   MDD,
+  IC3,
   NONE,
 }
 

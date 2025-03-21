@@ -18,14 +18,7 @@ package hu.bme.mit.theta.sts.aiger;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 
-import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
-import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
-import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
-import hu.bme.mit.theta.sts.aiger.elements.AndGate;
-import hu.bme.mit.theta.sts.aiger.elements.FalseConst;
-import hu.bme.mit.theta.sts.aiger.elements.InputVar;
-import hu.bme.mit.theta.sts.aiger.elements.Latch;
-import hu.bme.mit.theta.sts.aiger.elements.OutputVar;
+import hu.bme.mit.theta.sts.aiger.elements.*;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -55,6 +48,10 @@ public final class AigerParser {
             int nLatches;
             int nOutputs;
             int nAndGates;
+            int nBadStates = 0;
+            int nConstraints = 0;
+            int nJusticeProps = 0;
+            int nFairnessConstraints = 0;
             // Parse header
             final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
             nNodes = parseInt(header[1]);
@@ -62,10 +59,18 @@ public final class AigerParser {
             nLatches = parseInt(header[3]);
             nOutputs = parseInt(header[4]);
             nAndGates = parseInt(header[5]);
+            if (header.length > 6) nBadStates = parseInt(header[6]);
+            if (header.length > 7) nConstraints = parseInt(header[7]);
+            if (header.length > 8) nJusticeProps = parseInt(header[8]);
+            if (header.length > 9) nFairnessConstraints = parseInt(header[9]);
 
-            if (nOutputs != 1) {
+            if (nConstraints > 0) {
                 throw new UnsupportedOperationException(
-                        "Only a single output variable is supported.");
+                        "Constraints are not yet supported, preprocess with `aigunconstraint`!");
+            }
+            if (nJusticeProps > 0 || nFairnessConstraints > 0) {
+                throw new UnsupportedOperationException(
+                        "Justice and fairness props are not yet supported!");
             }
 
             final AigerNode[] nodes = new AigerNode[nNodes + 1];

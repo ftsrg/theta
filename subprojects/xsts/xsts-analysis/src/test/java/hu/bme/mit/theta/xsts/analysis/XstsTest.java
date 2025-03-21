@@ -152,7 +152,7 @@ public class XstsTest {
                         "src/test/resources/property/cross.prop",
                         false,
                         XstsConfigBuilder.Domain.PRED_CART
-                    },
+                    }, // TODO: this might be faulty
 
                     //                { "src/test/resources/model/cross_with.xsts",
                     // "src/test/resources/property/cross.prop", false,
@@ -194,6 +194,12 @@ public class XstsTest {
                         "src/test/resources/property/choices.prop",
                         false,
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED
+                    },
+                    {
+                        "src/test/resources/model/literals_fullname.xsts",
+                        "src/test/resources/property/literals.prop",
+                        false,
+                        XstsConfigBuilder.Domain.PRED_CART
                     },
                     {
                         "src/test/resources/model/literals.xsts",

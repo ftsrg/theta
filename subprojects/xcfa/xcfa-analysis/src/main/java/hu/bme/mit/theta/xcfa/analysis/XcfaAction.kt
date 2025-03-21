@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.algorithm.bounded.ReversibleAction
 import hu.bme.mit.theta.analysis.ptr.PtrAction
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.core.stmt.Stmt
@@ -28,7 +29,7 @@ constructor(
   val edge: XcfaEdge,
   private val lastWrites: WriteTriples = emptyMap(),
   private val nextCnt: Int = 0,
-) : PtrAction(lastWrites, nextCnt) {
+) : PtrAction(lastWrites, nextCnt), ReversibleAction {
 
   val source: XcfaLocation = edge.source
   val target: XcfaLocation = edge.target
@@ -47,6 +48,10 @@ constructor(
 
   override val stmtList: List<Stmt>
     get() = stmts
+
+  override fun reverse(): ReversibleAction {
+    return XcfaAction(pid, XcfaEdge(target, source, label, edge.metadata))
+  }
 
   override fun toString(): String {
     return "$pid: $source -> $target [${getStmts()}]"

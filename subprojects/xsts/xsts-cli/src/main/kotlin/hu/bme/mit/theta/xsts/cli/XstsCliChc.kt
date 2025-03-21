@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.chc.CexTree
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
 import hu.bme.mit.theta.analysis.algorithm.chc.Invariant
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.toRelations
@@ -32,7 +33,10 @@ class XstsCliChc :
   override val defaultSolver: String = "z3:4.13.0"
 
   private fun printResult(status: SafetyResult<Invariant, CexTree>, xsts: XSTS, totalTimeMs: Long) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     writer.newRow()
   }
