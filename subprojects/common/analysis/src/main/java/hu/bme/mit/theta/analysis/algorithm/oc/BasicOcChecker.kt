@@ -63,8 +63,8 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
         when (rel.type) {
           RelationType.RF -> {
             val writes =
-              events[rel.from.const.varDecl]!!.values.flatten().filter {
-                it.type == EventType.WRITE && it.enabled == true
+              events[rel.from.const.varDecl]!!.values.flatten().filter { w ->
+                w.type == EventType.WRITE && decisionStack.any { it.event == w }
               }
             for (w in writes) {
               val reason = derive(assignment.rels, rel, w)
@@ -90,7 +90,8 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
       for (w in changedEnabledEvents) {
         val decision = OcAssignment(decisionStack.peek().rels, w)
         decisionStack.push(decision)
-        for (rf in rfs[w.const.varDecl]!!.filter { it.enabled == true }) {
+        for (rf in
+          rfs[w.const.varDecl]!!.filter { rf -> decisionStack.any { it.relation == rf } }) {
           val reason = derive(decision.rels, rf, w)
           if (propagate(reason)) continue@dpllLoop
         }

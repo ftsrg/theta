@@ -116,7 +116,6 @@ internal class XcfaEvent(
   }
 
   // A (memory) event is only considered enabled if the array and offset expressions are also known
-  // values
   override fun enabled(valuation: Valuation): Boolean? {
     when (val e = super.enabled(valuation)) {
       null,
@@ -124,13 +123,13 @@ internal class XcfaEvent(
       true -> {
         if (array != null) {
           arrayLit = tryOrNull { array.eval(valuation) }
-          if (arrayLit == null) enabled = null
+          if (arrayLit == null) return null
         }
         if (offset != null) {
           offsetLit = tryOrNull { offset.eval(valuation) }
-          if (offsetLit == null) enabled = null
+          if (offsetLit == null) return null
         }
-        return enabled
+        return true
       }
     }
   }

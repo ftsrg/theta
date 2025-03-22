@@ -63,12 +63,9 @@ abstract class Event(
     get() = guard.toAnd()
 
   var assignment: Expr<BoolType>? = null
-  var enabled: Boolean? = null
 
-  open fun enabled(valuation: Valuation): Boolean? {
-    val e = tryOrNull { (guardExpr.eval(valuation) as? BoolLitExpr)?.value }
-    enabled = e
-    return e
+  open fun enabled(valuation: Valuation): Boolean? = tryOrNull {
+    (guardExpr.eval(valuation) as? BoolLitExpr)?.value
   }
 
   open fun sameMemory(other: Event): Boolean {
@@ -104,16 +101,12 @@ data class Relation<E : Event>(val type: RelationType, val from: E, val to: E) {
       BoolExprs.Bool(),
     )
   val declRef: RefExpr<BoolType> = RefExpr.of(decl)
-  var enabled: Boolean? = null
 
   override fun toString() =
     "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
 
-  fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
-    enabled =
-      if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
-    return enabled
-  }
+  fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? =
+    if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
 }
 
 /** Reason(s) of an enabled relation. */
