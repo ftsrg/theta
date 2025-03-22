@@ -41,10 +41,7 @@ internal fun interface XcfaOcAutoConflictFinder {
 internal val NoConflictFinder = XcfaOcAutoConflictFinder { _, _, _, _ -> emptyList() }
 
 internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs, logger ->
-  val po = { from: E, to: E ->
-    if (from.clkId == to.clkId) true
-    else ppos[from.clkId, to.clkId]
-  }
+  val po = { from: E, to: E -> if (from.clkId == to.clkId) true else ppos[from.clkId, to.clkId] }
   val flatRfs = rfs.values.flatten().toMutableList()
   val conflicts = mutableListOf<Reason>()
 
@@ -103,10 +100,7 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
     logger: Logger,
   ): List<Reason> {
     val conflicts = mutableListOf<Reason>()
-    val po = { from: E, to: E ->
-      if (from.clkId == to.clkId) true
-      else ppos[from.clkId, to.clkId]
-    }
+    val po = { from: E, to: E -> if (from.clkId == to.clkId) true else ppos[from.clkId, to.clkId] }
 
     fun MutableSet<out Reason>.filterOutDirectConflicts() = removeIf {
       po(it.to, it.from).also { isPo -> if (isPo) conflicts.add(it) }

@@ -137,7 +137,8 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
   }
   rule("OcPropagatorWithoutZ3") {
     config.backendConfig.backend == Backend.OC &&
-      (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure == OcDecisionProcedureType.PROPAGATOR &&
+      (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
+        OcDecisionProcedureType.PROPAGATOR &&
       (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:4.13"
   }
 }
