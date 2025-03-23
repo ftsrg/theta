@@ -172,4 +172,6 @@ internal constructor(
   internal constructor(rels: GlobalRelation, e: E) : this(rels.copy(), event = e)
 
   internal constructor(rels: GlobalRelation, r: Relation<E>) : this(rels.copy(), relation = r)
+
+  override fun toString() = "OcAssignment(${relation ?: event})"
 }
