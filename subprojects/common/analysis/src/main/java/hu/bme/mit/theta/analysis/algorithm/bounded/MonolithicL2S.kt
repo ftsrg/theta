@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.container.Containers
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
@@ -42,6 +42,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     val newVar: VarDecl<*> = Decls.Var("_saved_" + varDecl.name, varDecl.type)
     saveMap[varDecl] = newVar
   }
+  val savedInitExpr = And(vars.map { Eq(it.ref, saveMap[it]!!.ref) }.toList())
 
   val saveList = ArrayList<Expr<BoolType>>()
   val skipList = ArrayList<Expr<BoolType>>()
@@ -49,14 +50,14 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
 
   // New transition expr
   for ((key, value) in saveMap.entries) {
-    saveList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(value.ref, indx), key.ref))
+    saveList.add(Eq(ExprUtils.applyPrimes(value.ref, indx), key.ref))
   }
   for (varDecl in saveMap.values) {
-    skipList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(varDecl.ref, indx), varDecl.ref))
+    skipList.add(Eq(ExprUtils.applyPrimes(varDecl.ref, indx), varDecl.ref))
   }
 
-  skipList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(saved.ref, indx), saved.ref))
-  saveList.add(AbstractExprs.Eq(ExprUtils.applyPrimes(saved.ref, indx), BoolExprs.True()))
+  skipList.add(Eq(ExprUtils.applyPrimes(saved.ref, indx), saved.ref))
+  saveList.add(Eq(ExprUtils.applyPrimes(saved.ref, indx), BoolExprs.True()))
   val skipOrSave = SmartBoolExprs.Or(And(skipList), And(saveList))
   val newTransExpr = ArrayList<Expr<BoolType>>(setOf(transExpr))
   newTransExpr.add(skipOrSave)
@@ -64,7 +65,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   // New prop expr
   var prop: Expr<BoolType?>? = saved.ref
   for ((key, value) in saveMap) {
-    val exp = AbstractExprs.Eq(value.ref, key.ref)
+    val exp = Eq(value.ref, key.ref)
     prop = And(exp, prop)
   }
 
@@ -76,7 +77,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   newIndexing = newIndexing.inc(saved, 1)
 
   return MonolithicExpr(
-    initExpr = And(initExpr, Not(saved.ref)),
+    initExpr = And(initExpr, Not(saved.ref), savedInitExpr),
     transExpr = And(newTransExpr),
     propExpr = Not(And(prop, propExpr)),
     transOffsetIndex = newIndexing,
