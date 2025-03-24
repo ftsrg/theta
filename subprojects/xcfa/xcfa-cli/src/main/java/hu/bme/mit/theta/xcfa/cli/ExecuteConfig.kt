@@ -50,7 +50,7 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -171,7 +171,6 @@ fun frontend(
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)
@@ -473,7 +472,7 @@ private fun postVerificationLogging(
             config.inputConfig.property,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
-        YmlWitnessWriter()
+        YamlWitnessWriter()
           .writeWitness(
             safetyResult,
             config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,

@@ -56,4 +56,6 @@ public interface CStatementVisitor<P, R> {
     R visit(CSwitch statement, P param);
 
     R visit(CWhile statement, P param);
+
+    R visit(CNullStatement statement, P param);
 }
