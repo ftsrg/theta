@@ -211,7 +211,11 @@ class YamlWitnessWriter {
 private fun Expr<BoolType>.replaceVars(parseContext: ParseContext): Expr<BoolType> {
   val vars =
     ExprUtils.getVars(this).associateWith {
-      Var(parseContext.metadata.getMetadataValue(it.name, "cName").get() as String, it.type)
+      val cname = parseContext.metadata.getMetadataValue(it.name, "cName")
+      if(cname.isPresent)
+        Var(cname.get() as String, it.type)
+      else
+        it
     }
   return this.changeVars(vars)
 }

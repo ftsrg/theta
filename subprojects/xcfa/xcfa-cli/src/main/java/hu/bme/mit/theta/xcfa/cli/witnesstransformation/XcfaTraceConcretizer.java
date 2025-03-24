@@ -96,7 +96,8 @@ public class XcfaTraceConcretizer {
                             ExplState.of(
                                     ImmutableValuation.from(
                                             valuations.getState(i).toMap().entrySet().stream()
-                                                    .filter(it -> varSoFar.contains(it.getKey()))
+                                                    .filter(it -> varSoFar.contains(it.getKey()) &&
+                                                            parseContext.getMetadata().getMetadataValue(it.getKey().getName(), "cName").isPresent())
                                                     .collect(
                                                             Collectors.toMap(
                                                                     Map.Entry<Decl<?>, LitExpr<?>>
