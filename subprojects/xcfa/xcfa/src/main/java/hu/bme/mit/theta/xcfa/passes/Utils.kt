@@ -66,7 +66,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 fun Stmt.flatten(): List<Stmt> {
   return when (this) {
     is SequenceStmt -> stmts.map { it.flatten() }.flatten()
-    is NonDetStmt -> error("Not possible")
+    is NonDetStmt -> listOf(this) // error prone because it might contain sequence stmts
     else -> listOf(this)
   }
 }

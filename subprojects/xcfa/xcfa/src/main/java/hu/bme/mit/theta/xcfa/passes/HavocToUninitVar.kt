@@ -20,15 +20,11 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 
-/**
- * Transforms havocs into uninit vars whenever possible. Requires the ProcedureBuilder be
- * `deterministic`.
- */
+/** Transforms havocs into uninit vars whenever possible. */
 class HavocToUninitVar : ProcedurePass {
   private var counter = 0
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    checkNotNull(builder.metaData["deterministic"])
     if (builder.initLoc.incomingEdges.isNotEmpty()) {
       return builder
     }

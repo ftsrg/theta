@@ -224,7 +224,7 @@ private fun labelToEdge(
 
 private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
   when (label) {
-    is NondetLabel -> error("Cannot handle nondet labels in witnesses")
+    is NondetLabel -> listOf(label)
     is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
     else -> listOf(label)
   }
