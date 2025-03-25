@@ -65,7 +65,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       HavocPromotionAndRange(parseContext),
-      HavocToUninitVar(),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
       EmptyEdgeRemovalPass(),
