@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.btor2xcfa
 
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
@@ -21,48 +22,82 @@ object Btor2XcfaBuilder{
                 procBuilder.addVar(varDecl)
             }
         }
-
+///////////////////////////////////////////////
+        // Initek
         var lastLoc = procBuilder.initLoc
+        var newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+        // initekhez
+        procBuilder.addLoc(newLoc)
+        Btor2Circuit.states.forEach {
+            it.value.getVar()?.let{varDecl ->
+                if(varDecl.name.startsWith(("init_"))){
+                    val edge = XcfaEdge(lastLoc,newLoc, StmtLabel(AssignStmt.of(it.value.state?.getVar(), it.value.value?.getExpr() as Expr<BvType>)), EmptyMetaData)
+                    procBuilder.addEdge(edge)
 
-        Btor2Circuit.inits.forEach() {
-            val loc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-
-            procBuilder.addLoc(loc)
-
-            val edge = XcfaEdge(lastLoc,loc, StmtLabel(AssignStmt.of(it.value.state.getVar(), it.value.value.getExpr() as Expr<BvType>)), EmptyMetaData)
-            procBuilder.addEdge(edge)
-            i++
-            lastLoc=loc
+                    // Amit tudunk 1 élre helyezzük, tehát az első élen vannak az initek
+                    //lastLoc=loc
+                }
+            }
         }
+        i++
+        lastLoc=newLoc
+///////////////////////////////////////////////
+        // Havoc változók
+        // Miután felvettük az initeket mehetnek a havoc változók
+        newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+        procBuilder.addLoc(newLoc)
+        Btor2Circuit.states.forEach {
+            it.value.getVar()?.let{ varDecl ->
+                if(varDecl.name.startsWith(("input_"))){
+                    val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(varDecl)), EmptyMetaData)
+                    procBuilder.addEdge(edge)
+                }
+            }
+        }
+        i++
+        lastLoc=newLoc
 
+/////////////////////////////////////////////
+        // Végigmegyünk az operationökön
+        // Check: Kigyűjtöm a feldolgozott node idkat akár itt v korábban,,
+        // Megfelelő sorrendben kell belerakni
+        // Gyors check h feldolgozotak között van e és hibával elszállunk ha nem
+        // az operandusainak a nid-jeire kell a check
         Btor2Circuit.ops.forEach() {
             val loc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
 
             procBuilder.addLoc(loc)
 
-            val edge = XcfaEdge(lastLoc,loc, StmtLabel(it.value.getStmt(false)), EmptyMetaData)
+            val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt(false)), EmptyMetaData)
             procBuilder.addEdge(edge)
             i++
             lastLoc=loc
         }
-
         procBuilder.createErrorLoc()
         // Errorkezelése
-        val bad = Btor2Circuit.bads.values.first()
+        // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
+        val bad = Btor2Circuit.properties.values.first()
         val op = bad.operand as Btor2Operation
         // We will cast for now ¯\_(ツ)_/¯
 
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(op.getStmt(false)),EmptyMetaData))
-        val newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+        newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
         procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(op.getStmt(true)),EmptyMetaData))
 
         //Circuit folytatása
-        val next = Btor2Circuit.nexts.values.first()
-        val firstLoc = procBuilder.getLocs().elementAt(1)
-        procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(AssignStmt.of(next.state.getVar(), next.value.getExpr() as Expr<BvType>)),EmptyMetaData))
+        Btor2Circuit.states.forEach {
+            it.value.getVar()?.let{varDecl ->
+                if(varDecl.name.startsWith(("next_"))){
+                    val firstLoc = procBuilder.getLocs().elementAt(1)
+                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(AssignStmt.of(it.value.getState()?.getVar(), it.value.getExpr() as Expr<BvType>)),EmptyMetaData))
+
+                }
+            }
+        }
+
+
         return xcfaBuilder.build()
     }
-
 }
 
 class Btor2Pass() : ProcedurePassManager() {

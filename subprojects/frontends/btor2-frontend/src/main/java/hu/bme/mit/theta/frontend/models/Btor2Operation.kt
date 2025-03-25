@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.bvtype.*
@@ -45,7 +46,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
     override fun getExpr(): Expr<*> {
         return when(operator)
         {
-            Btor2UnaryOperator.NOT -> TODO()
+            Btor2UnaryOperator.NOT -> BvNotExpr.of(operand.getExpr() as Expr<BvType>)
             Btor2UnaryOperator.INC -> TODO()
             Btor2UnaryOperator.DEC -> TODO()
             Btor2UnaryOperator.NEG -> TODO()
@@ -116,18 +117,18 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return when(operator)
         {
             Btor2BinaryOperator.ADD -> BvAddExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
-            Btor2BinaryOperator.AND -> TODO()
-            Btor2BinaryOperator.NAND -> TODO()
-            Btor2BinaryOperator.NOR -> TODO()
-            Btor2BinaryOperator.OR -> TODO()
-            Btor2BinaryOperator.XOR -> TODO()
-            Btor2BinaryOperator.MUL -> TODO()
-            Btor2BinaryOperator.UDIV -> TODO()
-            Btor2BinaryOperator.UREM -> TODO()
-            Btor2BinaryOperator.SDIV -> TODO()
-            Btor2BinaryOperator.SREM -> TODO()
-            Btor2BinaryOperator.SMOD -> TODO()
-            Btor2BinaryOperator.CONCAT -> TODO()
+            Btor2BinaryOperator.AND -> BvAndExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
+            Btor2BinaryOperator.NAND -> NotExpr.of(BvAndExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)) as Expr<BoolType>)
+            Btor2BinaryOperator.NOR -> NotExpr.of(BvOrExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)) as Expr<BoolType>)
+            Btor2BinaryOperator.OR -> BvOrExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
+            Btor2BinaryOperator.XOR -> BvXorExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
+            Btor2BinaryOperator.MUL -> BvMulExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
+            Btor2BinaryOperator.UDIV -> BvUDivExpr.of(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.UREM -> BvURemExpr.of(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SDIV -> BvSDivExpr.of(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SREM -> BvSRemExpr.of(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SMOD -> BvSModExpr.of(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.CONCAT -> BvConcatExpr.of(mutableListOf(op1.getExpr() as Expr<BvType>, op2.getExpr() as Expr<BvType>))
             Btor2BinaryOperator.SADDO -> TODO()
             Btor2BinaryOperator.SDIVO -> TODO()
             Btor2BinaryOperator.SMULO -> TODO()
@@ -152,18 +153,18 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return when(operator)
         {
             Btor2BinaryOperator.ADD -> AssignStmt.of(value, getExpr() as Expr<BvType>)
-            Btor2BinaryOperator.AND -> TODO()
-            Btor2BinaryOperator.NAND -> TODO()
-            Btor2BinaryOperator.NOR -> TODO()
-            Btor2BinaryOperator.OR -> TODO()
-            Btor2BinaryOperator.XOR -> TODO()
-            Btor2BinaryOperator.MUL -> TODO()
-            Btor2BinaryOperator.UDIV -> TODO()
-            Btor2BinaryOperator.UREM -> TODO()
-            Btor2BinaryOperator.SDIV -> TODO()
-            Btor2BinaryOperator.SREM -> TODO()
-            Btor2BinaryOperator.SMOD -> TODO()
-            Btor2BinaryOperator.CONCAT -> TODO()
+            Btor2BinaryOperator.AND -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.NAND -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.NOR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.OR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.XOR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.MUL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.UDIV -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.UREM -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SDIV -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SREM -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SMOD -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.CONCAT -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.SADDO -> TODO()
             Btor2BinaryOperator.SDIVO -> TODO()
             Btor2BinaryOperator.SMULO -> TODO()
@@ -193,8 +194,8 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         return when(operator)
         {
             Btor2ComparisonOperator.EQ -> BvEqExpr.of(op1.getExpr() as Expr<BvType> , op2.getExpr()as Expr<BvType>)
-            Btor2ComparisonOperator.NEQ -> TODO()
-            Btor2ComparisonOperator.SLT -> TODO()
+            Btor2ComparisonOperator.NEQ -> BvNeqExpr.of(op1.getExpr() as Expr<BvType> , op2.getExpr()as Expr<BvType>)
+            Btor2ComparisonOperator.SLT -> BvSLtExpr.of(op1.getExpr() as Expr<BvType> , op2.getExpr()as Expr<BvType>)
             Btor2ComparisonOperator.SLTE -> TODO()
             Btor2ComparisonOperator.SGT -> TODO()
             Btor2ComparisonOperator.SGTE -> TODO()
@@ -213,8 +214,8 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         val expr = when(operator)
         {
             Btor2ComparisonOperator.EQ -> getExpr() as Expr<BoolType>
-            Btor2ComparisonOperator.NEQ -> TODO()
-            Btor2ComparisonOperator.SLT -> TODO()
+            Btor2ComparisonOperator.NEQ -> getExpr() as Expr<BoolType>
+            Btor2ComparisonOperator.SLT -> getExpr() as Expr<BoolType>
             Btor2ComparisonOperator.SLTE -> TODO()
             Btor2ComparisonOperator.SGT -> TODO()
             Btor2ComparisonOperator.SGTE -> TODO()
@@ -233,3 +234,47 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
     }
 }
 
+// Ehhez a nidhez vezetünk be egy változót, bekötjük
+data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor2Sort, val operator: Btor2TernaryOperator,
+    val op1: Btor2Node, val op2: Btor2Node, val op3: Btor2Node, val negated: Boolean) : Btor2Operation(nid, sort)
+{
+    val value = Decls.Var("ternary_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<*>? {
+        return value
+    }
+
+    override fun getExpr(): Expr<*> {
+        val op1_expr : Expr<BoolType>
+        if (negated) {
+            op1_expr = NotExpr.of(op1.getExpr() as Expr<BoolType>)
+        }
+        else {
+            op1_expr = op1.getExpr() as Expr<BoolType>
+        }
+        return when(operator)
+        {
+            Btor2TernaryOperator.ITE -> IteExpr.of(op1_expr, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
+            Btor2TernaryOperator.WRITE -> TODO()
+        }
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+
+    override fun getStmt(negate: Boolean): Stmt {
+        val expr = when(operator)
+        {
+            Btor2TernaryOperator.ITE -> getExpr() as Expr<BvType>
+            Btor2TernaryOperator.WRITE -> TODO()
+        }
+        //  TODO
+        if(negated)
+        {
+            return AssignStmt.of(value, expr)
+        } else {
+            return AssignStmt.of(value, expr)
+        }
+    }
+}

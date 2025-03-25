@@ -128,4 +128,31 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         Btor2Circuit.ops[nid] = node
         return node
     }
+
+    override fun visitTerop(ctx: Btor2Parser.TeropContext): Btor2Node {
+        val nid = idVisitor.visit(ctx.id)
+        val sid = idVisitor.visit(ctx.sid())
+        val sort : Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+        val negated : Boolean
+        val op = when (ctx.TERNARYOP().text) {
+            "ite" -> Btor2TernaryOperator.ITE
+            "write" -> Btor2TernaryOperator.WRITE
+            else -> throw RuntimeException("Ternary operator unknown")
+        }
+        if (ctx.opd1.text.toInt() < 0) {
+            negated = true
+        }
+        else {
+            negated = false
+        }
+
+        val opd1 = nodes[ctx.opd1.text.toUInt()] as Btor2Node
+        val opd2 = nodes[ctx.opd2.text.toUInt()] as Btor2Node
+        val opd3 = nodes[ctx.opd3.text.toUInt()] as Btor2Node
+
+        val node =  Btor2TernaryOperation(nid, sort, op, opd1, opd2, opd3, negated)
+        Btor2Circuit.nodes[nid] = node
+        Btor2Circuit.ops[nid] = node
+        return node
+    }
 }
