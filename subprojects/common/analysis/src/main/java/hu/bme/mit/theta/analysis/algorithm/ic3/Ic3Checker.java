@@ -127,7 +127,6 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
         var firstTrace = checkFirst();
         if (firstTrace != null) {
             final var result = SafetyResult.unsafe(firstTrace, EmptyProof.getInstance());
-            logger.writeln(Logger.Level.RESULT, result.toString());
             return result;
         }
         while (true) {
@@ -141,14 +140,12 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction>
                 if (proofObligationsList != null) {
                     var trace = makeTrace(proofObligationsList);
                     final var result = SafetyResult.unsafe(trace, EmptyProof.getInstance());
-                    logger.writeln(Logger.Level.RESULT, result.toString());
                     return result;
                 }
             } else {
                 if (propagate()) {
                     final SafetyResult<EmptyProof, Trace<S, A>> result =
                             SafetyResult.safe(EmptyProof.getInstance());
-                    logger.writeln(Logger.Level.RESULT, result.toString());
                     return result;
                 }
             }
