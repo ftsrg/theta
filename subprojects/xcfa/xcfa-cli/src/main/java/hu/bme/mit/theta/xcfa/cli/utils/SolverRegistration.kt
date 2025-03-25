@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
-import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
@@ -45,5 +44,4 @@ fun registerAllSolverManagers(home: String, logger: Logger) {
   val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
   SolverManager.registerSolverManager(smtLibSolverManager)
   logger.write(Logger.Level.INFO, "Registered SMT-LIB SolverManager\n")
-
 }
