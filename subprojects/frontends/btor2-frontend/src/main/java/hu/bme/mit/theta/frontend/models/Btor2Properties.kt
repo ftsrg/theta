@@ -18,10 +18,18 @@ package hu.bme.mit.theta.frontend.models
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 
 abstract class Btor2Properties(override val nid: UInt, override val sort: Btor2Sort?, open val operand: Btor2Node) : Btor2Node(nid, null)
 {
-    abstract fun getExpr(negate: Boolean): Expr<*>?
 
 }
 data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, override val operand: Btor2Node) : Btor2Properties(nid, null, operand)
@@ -30,12 +38,8 @@ data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, overr
         return null
     }
 
-    override fun getExpr(): Expr<*> {
-        TODO()
-    }
-
-    override fun getExpr(negate: Boolean): Expr<*>? {
-        TODO("Not yet implemented")
+    override fun getExpr(): Expr<BoolType> {
+        return BvExprs.Eq(RefExpr.of(operand.getVar()) as RefExpr<VarDecl<BvType>>, Bv(BooleanArray(1, {it -> true})))
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -53,9 +57,6 @@ data class Btor2Constraint(override val nid: UInt, override val sort: Btor2Sort?
         TODO()
     }
 
-    override fun getExpr(negate: Boolean): Expr<*>? {
-        TODO()
-    }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
@@ -69,10 +70,6 @@ data class Btor2Fair(override val nid: UInt, override val sort: Btor2Sort?, over
     }
 
     override fun getExpr(): Expr<*> {
-        TODO()
-    }
-
-    override fun getExpr(negate: Boolean): Expr<*>? {
         TODO()
     }
 
@@ -91,9 +88,7 @@ data class Btor2Output(override val nid: UInt, override val sort: Btor2Sort?, ov
         TODO()
     }
 
-    override fun getExpr(negate: Boolean): Expr<*>? {
-        TODO()
-    }
+
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)

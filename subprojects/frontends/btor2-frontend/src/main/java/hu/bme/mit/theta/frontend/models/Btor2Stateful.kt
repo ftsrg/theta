@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 abstract class Btor2Stateful(id: UInt, sort: Btor2Sort, state: Btor2State?, value: Btor2Node?) : Btor2Node(id, sort) {
     abstract val state: Btor2State?
     abstract val value: Btor2Node?
-    abstract fun getState(): Btor2State?
 }
 
 // Inputs and States
@@ -35,16 +34,12 @@ data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort, over
 {
     val declsVar = Decls.Var("input_$nid", BvExprs.BvType(sort.width.toInt()))
 
-    override fun getState(): Btor2State? {
-        return null
-    }
-
     override fun getVar(): VarDecl<*>? {
         return declsVar
     }
 
     override fun getExpr(): Expr<*> {
-        return RefExpr.of(declsVar) // Valamilyen Bool type kellene?
+        return RefExpr.of(declsVar) // Valamilyen Bool type kellene? nem
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -55,9 +50,7 @@ data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort, over
 data class Btor2State(override val nid: UInt, override val sort: Btor2Sort, override val state: Btor2State?,
     override val value: Btor2Node?) : Btor2Stateful(nid, sort,null,null) {
     val declsVar = Decls.Var("state_$nid", BvExprs.BvType(sort.width.toInt()))
-    override fun getState(): Btor2State? {
-        TODO("Not yet implemented")
-    }
+
     override fun getVar(): VarDecl<BvType>? {
         return declsVar
     }
@@ -75,9 +68,7 @@ data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, overr
     override val value: Btor2Node) : Btor2Stateful(nid, sort, state, value)
 {
     val declsVar = Decls.Var("init_$nid", BvExprs.BvType(sort.width.toInt()))
-    override fun getState(): Btor2State? {
-        return state
-    }
+
     override fun getVar(): VarDecl<*>? {
         return declsVar
     }
@@ -94,15 +85,13 @@ data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, overr
 data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, override val state: Btor2State, override val value: Btor2Node) : Btor2Stateful(nid, sort, state, value)
 {
     val declsVar = Decls.Var("next_$nid", BvExprs.BvType(sort.width.toInt()))
-    override fun getState(): Btor2State? {
-        return state
-    }
+
     override fun getVar(): VarDecl<*>? {
         return declsVar
     }
 
     override fun getExpr(): Expr<*> {
-        TODO("Not yet implemented")
+        return RefExpr.of(declsVar)
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {

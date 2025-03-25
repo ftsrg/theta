@@ -1,8 +1,12 @@
 package hu.bme.mit.theta.btor2xcfa
 
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.models.Btor2Operation
@@ -44,18 +48,20 @@ object Btor2XcfaBuilder{
 ///////////////////////////////////////////////
         // Havoc változók
         // Miután felvettük az initeket mehetnek a havoc változók
-        newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-        procBuilder.addLoc(newLoc)
-        Btor2Circuit.states.forEach {
-            it.value.getVar()?.let{ varDecl ->
-                if(varDecl.name.startsWith(("input_"))){
-                    val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(varDecl)), EmptyMetaData)
-                    procBuilder.addEdge(edge)
+        if(Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("input_") == true }.isNotEmpty()){
+            newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+            procBuilder.addLoc(newLoc)
+            Btor2Circuit.states.forEach {
+                it.value.getVar()?.let{ varDecl ->
+                    if(varDecl.name.startsWith(("input_"))){
+                        val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(varDecl)), EmptyMetaData)
+                        procBuilder.addEdge(edge)
+                    }
                 }
             }
+            i++
+            lastLoc=newLoc
         }
-        i++
-        lastLoc=newLoc
 
 /////////////////////////////////////////////
         // Végigmegyünk az operationökön
@@ -77,25 +83,22 @@ object Btor2XcfaBuilder{
         // Errorkezelése
         // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
         val bad = Btor2Circuit.properties.values.first()
-        val op = bad.operand as Btor2Operation
-        // We will cast for now ¯\_(ツ)_/¯
 
-        procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(op.getStmt(false)),EmptyMetaData))
+        procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))
         newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(op.getStmt(true)),EmptyMetaData))
+        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(AssumeStmt.of(Not(bad.getExpr()))),EmptyMetaData))
 
         //Circuit folytatása
+        // ha nincsen next akkor azt el kelll havocolni
         Btor2Circuit.states.forEach {
             it.value.getVar()?.let{varDecl ->
                 if(varDecl.name.startsWith(("next_"))){
                     val firstLoc = procBuilder.getLocs().elementAt(1)
-                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(AssignStmt.of(it.value.getState()?.getVar(), it.value.getExpr() as Expr<BvType>)),EmptyMetaData))
+                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(AssignStmt.of(it.value.state?.getVar(), it.value.getExpr() as Expr<BvType>)),EmptyMetaData))
 
                 }
             }
         }
-
-
         return xcfaBuilder.build()
     }
 }

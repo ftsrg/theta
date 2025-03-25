@@ -211,11 +211,11 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
     }
 
     override fun getStmt(negate: Boolean): Stmt {
-        val expr = when(operator)
+        return when(operator)
         {
-            Btor2ComparisonOperator.EQ -> getExpr() as Expr<BoolType>
-            Btor2ComparisonOperator.NEQ -> getExpr() as Expr<BoolType>
-            Btor2ComparisonOperator.SLT -> getExpr() as Expr<BoolType>
+            Btor2ComparisonOperator.EQ -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.NEQ -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.SLT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
             Btor2ComparisonOperator.SLTE -> TODO()
             Btor2ComparisonOperator.SGT -> TODO()
             Btor2ComparisonOperator.SGTE -> TODO()
@@ -223,13 +223,6 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
             Btor2ComparisonOperator.ULTE -> TODO()
             Btor2ComparisonOperator.UGT -> TODO()
             Btor2ComparisonOperator.UGTE -> TODO()
-            else -> TODO()
-        }
-        if(negate)
-        {
-            return AssumeStmt.of(NotExpr.of(expr))
-        } else {
-            return AssumeStmt.of(expr)
         }
     }
 }
@@ -264,17 +257,11 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
     }
 
     override fun getStmt(negate: Boolean): Stmt {
-        val expr = when(operator)
+        return when(operator)
         {
-            Btor2TernaryOperator.ITE -> getExpr() as Expr<BvType>
+            Btor2TernaryOperator.ITE -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2TernaryOperator.WRITE -> TODO()
         }
-        //  TODO
-        if(negated)
-        {
-            return AssignStmt.of(value, expr)
-        } else {
-            return AssignStmt.of(value, expr)
-        }
+
     }
 }
