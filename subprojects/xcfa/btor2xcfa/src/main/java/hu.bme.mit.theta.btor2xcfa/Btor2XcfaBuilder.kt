@@ -65,6 +65,7 @@ object Btor2XcfaBuilder{
 
 /////////////////////////////////////////////
         // Végigmegyünk az operationökön
+
         // Check: Kigyűjtöm a feldolgozott node idkat akár itt v korábban,,
         // Megfelelő sorrendben kell belerakni
         // Gyors check h feldolgozotak között van e és hibával elszállunk ha nem
