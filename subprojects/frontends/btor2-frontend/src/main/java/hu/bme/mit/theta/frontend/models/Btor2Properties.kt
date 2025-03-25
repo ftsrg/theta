@@ -39,7 +39,7 @@ data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, overr
     }
 
     override fun getExpr(): Expr<BoolType> {
-        return BvExprs.Eq(RefExpr.of(operand.getVar()) as RefExpr<VarDecl<BvType>>, Bv(BooleanArray(1, {it -> true})))
+        return Eq(operand.getVar()?.ref as RefExpr<BvType>, BvExprs.Bv(BooleanArray(1, {true})))
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
