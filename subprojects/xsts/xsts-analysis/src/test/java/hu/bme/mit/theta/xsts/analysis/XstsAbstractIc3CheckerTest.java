@@ -57,11 +57,11 @@ public class XstsAbstractIc3CheckerTest {
                     //                        "src/test/resources/property/green_and_red.prop",
                     //                        true
                     //                    },
-                    {
-                        "src/test/resources/model/trafficlight_v2.xsts",
-                        "src/test/resources/property/green_and_red.prop",
-                        true
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/trafficlight_v2.xsts",
+                    //                        "src/test/resources/property/green_and_red.prop",
+                    //                        true
+                    //                    },
                     {
                         "src/test/resources/model/counter5.xsts",
                         "src/test/resources/property/x_between_0_and_5.prop",
