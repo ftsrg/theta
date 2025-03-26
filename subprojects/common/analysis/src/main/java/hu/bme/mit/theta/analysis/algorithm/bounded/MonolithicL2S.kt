@@ -25,10 +25,17 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.fptype.FpExprs
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.util.*
+
+private val reprEq = { e1: Expr<*>, e2: Expr<*> ->
+  if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
+  else Eq(e1, e2)
+}
 
 fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   val saved = Decls.Var("saved", BoolType.getInstance())
@@ -42,7 +49,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
     val newVar: VarDecl<*> = Decls.Var("_saved_" + varDecl.name, varDecl.type)
     saveMap[varDecl] = newVar
   }
-  val savedInitExpr = And(vars.map { Eq(it.ref, saveMap[it]!!.ref) }.toList())
+  val savedInitExpr = And(vars.map { reprEq(it.ref, saveMap[it]!!.ref) }.toList())
 
   val saveList = ArrayList<Expr<BoolType>>()
   val skipList = ArrayList<Expr<BoolType>>()
@@ -50,14 +57,14 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
 
   // New transition expr
   for ((key, value) in saveMap.entries) {
-    saveList.add(Eq(ExprUtils.applyPrimes(value.ref, indx), key.ref))
+    saveList.add(reprEq(ExprUtils.applyPrimes(value.ref, indx), key.ref))
   }
   for (varDecl in saveMap.values) {
-    skipList.add(Eq(ExprUtils.applyPrimes(varDecl.ref, indx), varDecl.ref))
+    skipList.add(reprEq(ExprUtils.applyPrimes(varDecl.ref, indx), varDecl.ref))
   }
 
-  skipList.add(Eq(ExprUtils.applyPrimes(saved.ref, indx), saved.ref))
-  saveList.add(Eq(ExprUtils.applyPrimes(saved.ref, indx), BoolExprs.True()))
+  skipList.add(reprEq(ExprUtils.applyPrimes(saved.ref, indx), saved.ref))
+  saveList.add(reprEq(ExprUtils.applyPrimes(saved.ref, indx), BoolExprs.True()))
   val skipOrSave = SmartBoolExprs.Or(And(skipList), And(saveList))
   val newTransExpr = ArrayList<Expr<BoolType>>(setOf(transExpr))
   newTransExpr.add(skipOrSave)
@@ -65,7 +72,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   // New prop expr
   var prop: Expr<BoolType?>? = saved.ref
   for ((key, value) in saveMap) {
-    val exp = Eq(value.ref, key.ref)
+    val exp = reprEq(value.ref, key.ref)
     prop = And(exp, prop)
   }
 
