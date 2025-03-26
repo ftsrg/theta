@@ -27,6 +27,7 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import java.io.File
@@ -385,6 +386,15 @@ data class OcConfig(
     description = "Level of manual conflict detection before verification",
   )
   var autoConflict: AutoConflictFinderConfig = AutoConflictFinderConfig.NONE,
+  @Parameter(
+    names = ["--auto-conflict-bound"],
+    description = "Number of non-trivial happens-before edges for auto conflict detection",
+  )
+  var autoConflictBound: Int = -1,
+  @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
+  var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
+  @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
+  var smtSolver: String = "Z3:4.13",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

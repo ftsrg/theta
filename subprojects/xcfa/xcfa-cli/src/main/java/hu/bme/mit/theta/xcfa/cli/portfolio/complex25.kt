@@ -27,7 +27,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
-import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.RF_WS_FR
+import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.SIMPLE
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
 import hu.bme.mit.theta.xcfa.cli.params.Backend.OC
@@ -47,7 +47,8 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import java.nio.file.Paths
 
 fun complexPortfolio25(
@@ -140,7 +141,7 @@ fun complexPortfolio25(
           solverHome = baseConfig.backendConfig.solverHome,
           timeoutMs = 500_000,
           inProcess = inProcess,
-          specConfig = OcConfig(autoConflict = RF_WS_FR),
+          specConfig = OcConfig(autoConflict = SIMPLE),
         ),
       outputConfig = baseConfig.outputConfig,
       debugConfig = baseConfig.debugConfig,

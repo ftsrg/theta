@@ -118,9 +118,9 @@ internal class XcfaOcTraceExtractor(
     val valuation = model.toMap()
     val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
-    val relations = ocChecker.getRelations()!!
+    val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
-      Array(relations.size) { i -> Array(relations.size) { j -> relations[j][i] } }
+      Array(relations.size) { i -> Array(relations.size) { j -> relations[j, i] } }
     val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
 
     val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()
