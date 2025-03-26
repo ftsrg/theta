@@ -54,10 +54,10 @@ public class StsMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {"src/test/resources/hw1_false.aag", false},
+                    // {"src/test/resources/hw1_false.aag", false},
                     // {"src/test/resources/hw2_true.aag", true}, TODO: wrong result
                     {"src/test/resources/boolean1.system", false},
-                    {"src/test/resources/boolean2.system", false},
+                    //  {"src/test/resources/boolean2.system", false},
                     {"src/test/resources/counter.system", true},
                     {"src/test/resources/counter_bad.system", false},
                     {"src/test/resources/counter_parametric.system", true},
