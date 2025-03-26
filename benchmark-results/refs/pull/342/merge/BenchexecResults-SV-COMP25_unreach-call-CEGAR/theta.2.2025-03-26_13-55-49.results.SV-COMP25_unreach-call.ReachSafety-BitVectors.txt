@@ -1,0 +1,90 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-BitVectors
+date:                    Wed, 2025-03-26 13:55:49 UTC
+tool:                    Theta 6.12.0
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1377-956
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3257.11 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-BitVectors
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                   status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------
+bitvector/byte_add-1.yml                                    false(unreach-call)             14.77        6.54        None
+bitvector/byte_add_1-1.yml                                  ERROR (generic error, after parsing finished)       26.90       10.68        None
+bitvector/byte_add_2-2.yml                                  ERROR (generic error, after parsing finished)       27.22       10.44        None
+bitvector/gcd_1.yml                                         ERROR (verification stuck, after parsing finished)       22.06       10.10        None
+bitvector/gcd_2.yml                                         ERROR (verification stuck, after parsing finished)       20.01        9.63        None
+bitvector/gcd_3.yml                                         
+bitvector/gcd_4.yml                                         
+bitvector/interleave_bits.yml                               
+bitvector/jain_1-1.yml                                      
+bitvector/jain_2-1.yml                                      
+bitvector/jain_4-2.yml                                      
+bitvector/jain_5-2.yml                                      
+bitvector/jain_6-1.yml                                      
+bitvector/jain_7-2.yml                                      
+bitvector/modulus-2.yml                                     
+bitvector/num_conversion_1.yml                              
+bitvector/num_conversion_2.yml                              
+bitvector/parity.yml                                        
+bitvector/s3_clnt_2.BV.c.cil-1a.yml                         
+bitvector/s3_clnt_2.BV.c.cil-2a.yml                         
+bitvector/s3_clnt_3.BV.c.cil-1a.yml                         
+bitvector/s3_clnt_3.BV.c.cil-2a.yml                         
+bitvector/s3_srvr_1a.BV.c.cil.yml                           
+bitvector/s3_srvr_2a.BV.c.cil.yml                           
+bitvector/s3_srvr_2a_alt.BV.c.cil.yml                       
+bitvector/s3_srvr_3a.BV.c.cil.yml                           
+bitvector/s3_srvr_3a_alt.BV.c.cil.yml                       
+bitvector/soft_float_1-2a.c.cil.yml                         
+bitvector/soft_float_1-3a.c.cil.yml                         
+bitvector/soft_float_2a.c.cil.yml                           
+bitvector/soft_float_3a.c.cil.yml                           
+bitvector/soft_float_4-2a.c.cil.yml                         
+bitvector/soft_float_4-3a.c.cil.yml                         
+bitvector/soft_float_5a.c.cil.yml                           
+bitvector/sum02-1.yml                                       
+bitvector/sum02-2.yml                                       
+bitvector-regression/implicitfloatconversion.yml            
+bitvector-regression/implicitunsignedconversion-1.yml       
+bitvector-regression/implicitunsignedconversion-2.yml       
+bitvector-regression/integerpromotion-2.yml                 
+bitvector-regression/integerpromotion-3.yml                 
+bitvector-regression/recHanoi03-1.yml                       
+bitvector-regression/signextension-1.yml                    
+bitvector-regression/signextension-2.yml                    
+bitvector-regression/signextension2-1.yml                   
+bitvector-regression/signextension2-2.yml                   
+bitvector-loops/diamond_2-1.yml                             
+bitvector-loops/overflow_1-2.yml                            
+bitvector-loops/verisec_sendmail_tTflag_arr_one_loop.yml    
+-------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                   done                           109.60       55.67           -
+
+Statistics:              5 Files
+  correct:               1
+    correct true:        0
+    correct false:       1
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 1 (max: 9)

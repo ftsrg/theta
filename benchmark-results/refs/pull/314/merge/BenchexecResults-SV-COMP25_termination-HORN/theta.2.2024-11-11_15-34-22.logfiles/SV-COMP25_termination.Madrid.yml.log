@@ -1,0 +1,52 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-crafted/Madrid.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-crafted/Madrid.c' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Language C detected and set for analysis (CPAMain.detectFrontendLanguageIfNecessary, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (ResourceLimitChecker.fromConfiguration, INFO)
+
+CPAchecker 3.1-svn-c087875f13 / default (OpenJDK 64-Bit Server VM 17.0.13) started (CPAchecker.run, INFO)
+
+Parsing CFA from file(s) "formatted_files/Madrid.c" (CPAchecker.parse, INFO)
+
+Using default specification, which checks for assertion failures and error labels. (CPAchecker.run, INFO)
+
+Using Restarting Algorithm (CoreComponentsFactory.createAlgorithm, INFO)
+
+The following configuration options were specified but are not used:
+ instrumentation.instrumentationProperty 
+ (CPAchecker.printConfigurationWarnings, WARNING)
+
+Starting analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Loading analysis 1 from file /tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/cpachecker/config/components/kInduction+Invariants/kInduction.properties ... (RestartAlgorithm.run, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (Analysis /tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/cpachecker/config/components/kInduction+Invariants/kInduction.properties:ResourceLimitChecker.fromConfiguration, INFO)
+
+Starting analysis 1 ... (RestartAlgorithm.run, INFO)
+
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "org.sosy_lab.cpachecker.cfa.ast.c.CSimpleDeclaration.getType()" because the return value of "org.sosy_lab.cpachecker.cfa.CProgramScope.lookupVariable(String)" is null
+	at org.sosy_lab.cpachecker.core.algorithm.instrumentation.LoopInfoUtils.getAllNormalLoopInfos(LoopInfoUtils.java:113)
+	at org.sosy_lab.cpachecker.core.algorithm.instrumentation.SequentializationOperatorAlgorithm.run(SequentializationOperatorAlgorithm.java:93)
+	at org.sosy_lab.cpachecker.core.algorithm.RestartAlgorithm.run(RestartAlgorithm.java:327)
+	at org.sosy_lab.cpachecker.core.CPAchecker.runAlgorithm(CPAchecker.java:489)
+	at org.sosy_lab.cpachecker.core.CPAchecker.run(CPAchecker.java:357)
+	at org.sosy_lab.cpachecker.cmdline.CPAMain.main(CPAMain.java:171)
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/algorithms/instrumentation_operator.py", line 121, in __sequentialization_operator
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/subprocess.py", line 526, in run
+subprocess.CalledProcessError: Command '['java', '-cp', '/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/cpachecker/runtime/*:/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/cpachecker/cpachecker.jar', 'org.sosy_lab.cpachecker.cmdline.CPAMain', '--preprocess', '--option', 'analysis.algorithm.instrumentation.instrumentationOperator=true', '--option', 'cfa.simplifyCfa=false', '--option', 'cfa.simplifyConstExpressions=false', '--option', 'instrumentation.instrumentationProperty=TERMINATION', 'formatted_files/Madrid.c']' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/algorithms/instrumentation_operator.py", line 79, in transform
+  File "/tmp/BenchExec_run_tkxpqnkj/tmp/.mount_specifXKERax/algorithms/instrumentation_operator.py", line 139, in __sequentialization_operator
+Exception: The creation of file newEdgeInfo.txt by CPAChecker failed!

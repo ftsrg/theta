@@ -1,0 +1,119 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ControlFlow, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2024-11-03 22:44:17 UTC
+tool:                    Theta 6.6.5
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1490-394
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3219.317 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ControlFlow
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------
+openssl-simplified/s3_srvr_1b.cil.yml                                      true                             6.10        3.13        None
+locks/test_locks_10.yml                                                    true                            10.28        5.94        None
+locks/test_locks_11.yml                                                    true                            14.01        8.38        None
+locks/test_locks_12.yml                                                    true                            14.27        8.62        None
+locks/test_locks_13.yml                                                    true                            15.47        9.89        None
+locks/test_locks_14-1.yml                                                  true                            19.62       13.71        None
+locks/test_locks_14-2.yml                                                  false(unreach-call)             10.06        4.39        None
+locks/test_locks_15-1.yml                                                  false(unreach-call)             10.36        4.32        None
+locks/test_locks_15-2.yml                                                  TIMEOUT                         20.89       14.00        None
+locks/test_locks_5.yml                                                     true                             7.46        3.53        None
+locks/test_locks_6.yml                                                     true                             8.53        4.04        None
+locks/test_locks_7.yml                                                     true                             8.75        4.25        None
+locks/test_locks_8.yml                                                     true                             9.77        5.09        None
+locks/test_locks_9.yml                                                     true                            10.02        4.98        None
+ntdrivers/cdaudio.i.cil-1.yml                                              ERROR (frontend failed)          6.85        2.33        None
+ntdrivers/diskperf.i.cil-1.yml                                             ERROR (frontend failed)          4.89        1.67        None
+ntdrivers/diskperf.i.cil-2.yml                                             ERROR (frontend failed)          5.21        1.80        None
+ntdrivers/floppy.i.cil-1.yml                                               ERROR (frontend failed)          6.22        2.13        None
+ntdrivers/floppy.i.cil-3.yml                                               ERROR (frontend failed)          6.54        2.21        None
+ntdrivers/kbfiltr.i.cil-2.yml                                              ERROR (frontend failed)          5.64        1.94        None
+ntdrivers/parport.i.cil-1.yml                                              ERROR (frontend failed)          7.94        2.71        None
+ntdrivers/parport.i.cil-2.yml                                              ERROR (frontend failed)          7.42        2.50        None
+memory-model/2SB.yml                                                       ERROR (frontend failed)          2.33        0.90        None
+memory-model/4SB.yml                                                       ERROR (frontend failed)          2.47        0.93        None
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml                   TIMEOUT                         20.94        7.73        None
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml              true                             6.68        3.14        None
+unsignedintegeroverflow-sas23/distance_through_overflow.yml                true                             6.53        2.89        None
+unsignedintegeroverflow-sas23/linear_interpolation.yml                     true                            17.42        7.20        None
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml                   TIMEOUT                         22.23       15.26        None
+longjmp/68-longjmp_04-counting-local_true.yml                              false(unreach-call)              6.63        3.15        None
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                     false(unreach-call)              6.22        3.05        None
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                     true                             6.39        3.12        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_true.yml             ERROR (frontend failed)          3.62        1.32        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_neg.yml    ERROR (frontend failed)          3.32        1.22        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_pos.yml    ERROR (frontend failed)          3.82        1.38        None
+longjmp/68-longjmp_07-returns_true.yml                                     true                             6.75        3.17        None
+longjmp/68-longjmp_11-counting-return_true.yml                             false(unreach-call)              7.23        3.32        None
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml                    false(unreach-call)              6.53        3.15        None
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml                    false(unreach-call)              6.45        3.14        None
+longjmp/68-longjmp_12-counting-global_true.yml                             false(unreach-call)              6.50        3.15        None
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml                    false(unreach-call)              6.42        3.13        None
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml                    true                             6.30        3.05        None
+longjmp/68-longjmp_13-counting-local_true.yml                              false(unreach-call)              6.32        2.86        None
+longjmp/68-longjmp_13-counting-local_unknown_1_neg.yml                     false(unreach-call)              6.05        3.02        None
+longjmp/68-longjmp_13-counting-local_unknown_1_pos.yml                     true                             6.23        3.07        None
+longjmp/68-longjmp_14-counting-return-one-method_true.yml                  false(unreach-call)              6.73        3.12        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml         false(unreach-call)              6.40        3.08        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml         false(unreach-call)              6.44        3.10        None
+longjmp/68-longjmp_15-counting-global-one-method_true.yml                  false(unreach-call)              6.22        3.04        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml         false(unreach-call)              6.24        2.98        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml         true                             6.29        2.86        None
+longjmp/68-longjmp_16-counting-local-one-method_true.yml                   false(unreach-call)              6.29        2.87        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml          false(unreach-call)              6.00        2.94        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml          true                             6.29        3.02        None
+longjmp/68-longjmp_18-simple-else_true.yml                                 false(unreach-call)              8.98        3.77        None
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                        false(unreach-call)              8.38        3.78        None
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                        true                             9.06        3.90        None
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                        true                             8.73        3.59        None
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                        false(unreach-call)              8.65        3.68        None
+longjmp/68-longjmp_19-simpler_true.yml                                     true                             8.78        3.91        None
+longjmp/68-longjmp_20-simpler-multifun_true.yml                            true                             8.69        3.79        None
+longjmp/68-longjmp_21-multifun_true.yml                                    false(unreach-call)              9.33        4.00        None
+longjmp/68-longjmp_22-multifun-arg_true.yml                                Parsing OK                      11.38        5.22        None
+longjmp/68-longjmp_42-poison-reduced_true.yml                              ERROR (frontend failed)          3.19        1.17        None
+longjmp/68-longjmp_44-simple-else-path_true.yml                            false(unreach-call)              9.03        3.67        None
+longjmp/68-longjmp_51-worries_true.yml                                     true                             8.29        3.68        None
+----------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                  done                           449.81      273.06           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             66 Files
+  correct:              31
+    correct true:       18
+    correct false:      13
+  incorrect:            17
+    incorrect true:      7
+    incorrect false:    10
+  unknown:              18
+  Score:              -335 (max: 103)

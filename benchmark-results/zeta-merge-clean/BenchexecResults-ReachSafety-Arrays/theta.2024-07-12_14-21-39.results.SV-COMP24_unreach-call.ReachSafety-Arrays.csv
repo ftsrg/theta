@@ -1,0 +1,8 @@
+tool	Theta 6.0.0	Theta 6.0.0	Theta 6.0.0	Theta 6.0.0
+run set	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	TIMEOUT	76.340166	161.00406435600001	669.921280
+array-crafted/mapavg4.yml	TIMEOUT	77.111583	161.021090297	689.143808
+array-programs/copysome2-1.yml	TIMEOUT	78.357681	161.02217303099997	2073.473024
+array-examples/sanfoundry_24-1.yml	true	12.29063	103.34115468100003	498.692096
+array-multidimensional/max-2-u.yml	ERROR (frontend failed)	1.87877	0.7804929489999495	158.695424
