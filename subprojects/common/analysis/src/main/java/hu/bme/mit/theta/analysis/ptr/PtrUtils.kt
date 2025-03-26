@@ -64,7 +64,7 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType
       is SequenceStmt -> stmts.flatMap { it.dereferencesWithAccessTypes }
       is HavocStmt<*> -> listOf()
       is SkipStmt -> listOf()
-      is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
+      is NonDetStmt -> listOf()
       is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
       is IfStmt -> error("IfStmt do not have a clearly defined sequence")
       else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
@@ -116,7 +116,7 @@ fun Stmt.uniqueDereferences(
       is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
       is HavocStmt<*> -> this
       is SkipStmt -> this
-      is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
+      is NonDetStmt -> this
       is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
       is IfStmt -> error("IfStmt do not have a clearly defined sequence")
       else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")

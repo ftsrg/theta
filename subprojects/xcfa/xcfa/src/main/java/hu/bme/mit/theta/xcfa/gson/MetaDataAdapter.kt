@@ -15,15 +15,23 @@
  */
 package hu.bme.mit.theta.xcfa.gson
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.MetaData
 
 class MetaDataAdapter : TypeAdapter<MetaData>() {
 
-  private val gson = GsonBuilder().create()
+  private val gson: Gson
+
+  init {
+    val builder = GsonBuilder()
+    builder.registerTypeHierarchyAdapter(CStatement::class.java, CStatementAdapter())
+    gson = builder.create()
+  }
 
   override fun write(writer: JsonWriter, value: MetaData) {
     writer.beginObject()
