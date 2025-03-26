@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.xcfa.model.NopLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
 
 class NoParallelEdgesPass : ProcedurePass {
 
