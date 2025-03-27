@@ -15,56 +15,53 @@
  */
 package hu.bme.mit.theta.solver.meta;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Statistics;
-import com.microsoft.z3.Status;
-import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
-import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
-import java.util.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkState;
+
 
 class MetaSolver implements  Solver {
 
-    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private Solver solver;
+    private final Solver z3 = Z3SolverFactory.getInstance().createSolver();
+    private final Solver z3Legacy = Z3LegacySolverFactory.getInstance().createSolver();
+    private final Stack<Expr<BoolType>> assertions = new StackImpl<>();
+
+    MetaSolver() {
+        solver = z3Legacy;
+    }
 
     @Override
     public void add(Expr<BoolType> assertion) {
-        solver.add(assertion);
+        assertions.add(assertion);
+        try {
+            solver.add(assertion);
+        }
+        catch (Exception e) {
+            switchSolvers();
+        }
+
     }
 
     @Override
     public SolverStatus check() {
-        return solver.check();
+        try {
+            return solver.check();
+        }
+        catch (Exception e) {
+            switchSolvers();
+            return check();
+        }
     }
 
     @Override
@@ -79,17 +76,31 @@ class MetaSolver implements  Solver {
 
     @Override
     public void reset() {
-        solver.reset();
+        z3.reset();
+        z3Legacy.reset();
+        solver = z3Legacy;
     }
 
     @Override
     public SolverStatus getStatus() {
-        return solver.getStatus();
+        try {
+            return solver.getStatus();
+        }
+        catch (Exception e) {
+            switchSolvers();
+            return getStatus();
+        }
     }
 
     @Override
     public Valuation getModel() {
-        return solver.getModel();
+        try {
+            return solver.getModel();
+        }
+        catch (Exception e) {
+            switchSolvers();
+            return getModel();
+        }
     }
 
     @Override
@@ -99,6 +110,16 @@ class MetaSolver implements  Solver {
 
     @Override
     public void close() throws Exception {
-        solver.close();
+        z3.close();
+        z3Legacy.close();
+    }
+
+    private void switchSolvers() {
+        checkState(solver != z3, "Metasolver has cycled through all of its solvers.");
+
+        solver = z3;
+        for (Expr<BoolType> assertion : assertions) {
+            solver.add(assertion);
+        }
     }
 }
