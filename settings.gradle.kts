@@ -25,6 +25,7 @@ include(
     "common/ltl-cli",
 
     "frontends/c-frontend",
+    "frontends/btor2-frontend",
     "frontends/petrinet-frontend/petrinet-model",
     "frontends/petrinet-frontend/petrinet-analysis",
     "frontends/petrinet-frontend/petrinet-xsts",
@@ -42,6 +43,7 @@ include(
     "xcfa/xcfa",
     "xcfa/cat",
     "xcfa/c2xcfa",
+    "xcfa/btor2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
     "xcfa/xcfa2chc",
