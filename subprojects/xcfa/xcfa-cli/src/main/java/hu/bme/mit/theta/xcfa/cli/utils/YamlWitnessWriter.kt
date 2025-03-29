@@ -106,7 +106,8 @@ class YamlWitnessWriter {
               concrTrace.states.subList(0, cycleHeadFirst - 1),
               concrTrace.actions.subList(0, cycleHeadFirst - 2),
             )
-          val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in case of e.g., BMC !!
+          val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
+            // case of e.g., BMC !!
             Trace.of(
               concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
               concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
