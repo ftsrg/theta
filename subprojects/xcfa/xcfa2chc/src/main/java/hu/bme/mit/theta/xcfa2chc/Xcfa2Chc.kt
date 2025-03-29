@@ -122,10 +122,12 @@ fun XcfaProcedure.toCHC(
     (ufs[it.target]!!)(*newParamList) +=
       (ufs[it.source]!!)(*oldParamList).expr +
         paramdExpr +
-        rankingFuncConstr.constraint(
-          oldParams[rankingFunction]!!.ref as Expr<IntType>,
-          newParams[rankingFunction]!!.ref as Expr<IntType>,
-        )
+        if (termination)
+          rankingFuncConstr.constraint(
+            oldParams[rankingFunction]!!.ref as Expr<IntType>,
+            newParams[rankingFunction]!!.ref as Expr<IntType>,
+          )
+        else True()
   }
 
   if (termination) {

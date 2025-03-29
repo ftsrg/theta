@@ -42,9 +42,7 @@ import hu.bme.mit.theta.xcfa.cli.params.HornConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.HavocToUninitVar
-import hu.bme.mit.theta.xcfa.passes.NoParallelEdgesPass
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa2chc.toCHC
 import kotlin.jvm.optionals.getOrNull
 
@@ -62,8 +60,12 @@ fun getHornChecker(
 
   val property = config.inputConfig.property
 
-  var xcfa =
-    xcfa.optimizeFurther(ProcedurePassManager(listOf(HavocToUninitVar(), NoParallelEdgesPass())))
+  val xcfa =
+    xcfa.optimizeFurther(
+      ProcedurePassManager(
+        listOf(NoUninitVar(), HavocToUninitVar(), NoParallelEdgesPass(), EliminateSelfLoops())
+      )
+    )
 
   val (vars, chc) =
     xcfa.initProcedures[0]
@@ -104,6 +106,7 @@ fun getHornChecker(
       try {
         getProperTrace(xcfa, result, vars)
       } catch (t: Throwable) {
+        logger.writeln(Logger.Level.INFO, "Could not get proper trace: ${t.stackTraceToString()}\n")
         SafetyResult.unsafe(
           Trace.of(
             listOf(
