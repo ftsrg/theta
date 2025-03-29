@@ -133,7 +133,8 @@ public class BvType
     public <TargetType extends Type> Expr<TargetType> Cast(Expr<BvType> op, TargetType type) {
         if (type instanceof FpType && signed != null) {
             //noinspection unchecked
-            return (Expr<TargetType>) FromBv(FpRoundingMode.RTZ, op, (FpType) type, signed);
+            return (Expr<TargetType>)
+                    FromBv(FpRoundingMode.getDefaultRoundingMode(), op, (FpType) type, signed);
         }
         throw new ClassCastException("Bv cannot be cast to " + type);
     }
