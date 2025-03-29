@@ -157,7 +157,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       Stmts.Assign(
         (expr as RefExpr<*>).decl as VarDecl<FpType>,
         FpRoundToIntegralExpr.of(
-          FpRoundingMode.RNE,
+          FpRoundingMode.getDefaultRoundingMode(),
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
