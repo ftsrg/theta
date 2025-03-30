@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -200,6 +203,7 @@
               "colNumberStop": 0,
               "offsetStart": 170,
               "offsetEnd": 459,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d 12.65f;\n    float f1 \u003d fabs(f);\n    float f2 \u003d floor(f);\n    float f3 \u003d round(f);\n    float f4 \u003d fmax(f2, f3);\n    float f5 \u003d fmin(f2, f3);\n    float f6 \u003d sqrt(f);\n    float f7 \u003d isnan(f);\n    f \u003d 0.0f;\n    float f8 \u003d isnan(0.0f/0.0f);\n    if(f8) reach_error();\n}"
             }
           }
@@ -218,6 +222,7 @@
               "colNumberStop": 0,
               "offsetStart": 170,
               "offsetEnd": 459,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d 12.65f;\n    float f1 \u003d fabs(f);\n    float f2 \u003d floor(f);\n    float f3 \u003d round(f);\n    float f4 \u003d fmax(f2, f3);\n    float f5 \u003d fmin(f2, f3);\n    float f6 \u003d sqrt(f);\n    float f7 \u003d isnan(f);\n    f \u003d 0.0f;\n    float f8 \u003d isnan(0.0f/0.0f);\n    if(f8) reach_error();\n}"
             }
           }
@@ -230,6 +235,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -267,6 +273,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 437,
                     "offsetEnd": 457,
+                    "astNodes": [],
                     "sourceText": "if(f8) reach_error();"
                   }
                 },
@@ -283,6 +290,7 @@
               "colNumberStop": 24,
               "offsetStart": 170,
               "offsetEnd": 459,
+              "astNodes": [],
               "sourceText": "if(f8) reach_error();if(f8) reach_error();int main() {\n    float f \u003d 12.65f;\n    float f1 \u003d fabs(f);\n    float f2 \u003d floor(f);\n    float f3 \u003d round(f);\n    float f4 \u003d fmax(f2, f3);\n    float f5 \u003d fmin(f2, f3);\n    float f6 \u003d sqrt(f);\n    float f7 \u003d isnan(f);\n    f \u003d 0.0f;\n    float f8 \u003d isnan(0.0f/0.0f);\n    if(f8) reach_error();\n}"
             }
           }
@@ -308,6 +316,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 187,
                     "offsetEnd": 203,
+                    "astNodes": [],
                     "sourceText": "float f \u003d 12.65f;"
                   }
                 },
@@ -324,6 +333,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 209,
                     "offsetEnd": 227,
+                    "astNodes": [],
                     "sourceText": "float f1 \u003d fabs(f);"
                   }
                 },
@@ -340,6 +350,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 209,
                     "offsetEnd": 227,
+                    "astNodes": [],
                     "sourceText": "float f1 \u003d fabs(f);"
                   }
                 },
@@ -356,6 +367,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 233,
                     "offsetEnd": 252,
+                    "astNodes": [],
                     "sourceText": "float f2 \u003d floor(f);"
                   }
                 },
@@ -372,6 +384,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 233,
                     "offsetEnd": 252,
+                    "astNodes": [],
                     "sourceText": "float f2 \u003d floor(f);"
                   }
                 },
@@ -388,6 +401,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 258,
                     "offsetEnd": 277,
+                    "astNodes": [],
                     "sourceText": "float f3 \u003d round(f);"
                   }
                 },
@@ -404,6 +418,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 258,
                     "offsetEnd": 277,
+                    "astNodes": [],
                     "sourceText": "float f3 \u003d round(f);"
                   }
                 },
@@ -420,6 +435,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 283,
                     "offsetEnd": 306,
+                    "astNodes": [],
                     "sourceText": "float f4 \u003d fmax(f2, f3);"
                   }
                 },
@@ -436,6 +452,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 283,
                     "offsetEnd": 306,
+                    "astNodes": [],
                     "sourceText": "float f4 \u003d fmax(f2, f3);"
                   }
                 },
@@ -452,6 +469,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 312,
                     "offsetEnd": 335,
+                    "astNodes": [],
                     "sourceText": "float f5 \u003d fmin(f2, f3);"
                   }
                 },
@@ -468,6 +486,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 312,
                     "offsetEnd": 335,
+                    "astNodes": [],
                     "sourceText": "float f5 \u003d fmin(f2, f3);"
                   }
                 },
@@ -484,6 +503,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 341,
                     "offsetEnd": 359,
+                    "astNodes": [],
                     "sourceText": "float f6 \u003d sqrt(f);"
                   }
                 },
@@ -500,6 +520,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 341,
                     "offsetEnd": 359,
+                    "astNodes": [],
                     "sourceText": "float f6 \u003d sqrt(f);"
                   }
                 },
@@ -516,6 +537,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 365,
                     "offsetEnd": 384,
+                    "astNodes": [],
                     "sourceText": "float f7 \u003d isnan(f);"
                   }
                 },
@@ -532,6 +554,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 365,
                     "offsetEnd": 384,
+                    "astNodes": [],
                     "sourceText": "float f7 \u003d isnan(f);"
                   }
                 },
@@ -542,6 +565,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -558,6 +582,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 404,
                     "offsetEnd": 431,
+                    "astNodes": [],
                     "sourceText": "float f8 \u003d isnan(0.0f/0.0f);"
                   }
                 },
@@ -574,6 +599,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 404,
                     "offsetEnd": 431,
+                    "astNodes": [],
                     "sourceText": "float f8 \u003d isnan(0.0f/0.0f);"
                   }
                 },
@@ -590,6 +616,7 @@
               "colNumberStop": 31,
               "offsetStart": 0,
               "offsetEnd": 459,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d 12.65f;\n    float f1 \u003d fabs(f);\n    float f2 \u003d floor(f);\n    float f3 \u003d round(f);\n    float f4 \u003d fmax(f2, f3);\n    float f5 \u003d fmin(f2, f3);\n    float f6 \u003d sqrt(f);\n    float f7 \u003d isnan(f);\n    f \u003d 0.0f;\n    float f8 \u003d isnan(0.0f/0.0f);\n    if(f8) reach_error();\n}float f \u003d 12.65f;\n    float f1 \u003d fabs(f);\n    float f2 \u003d floor(f);\n    float f3 \u003d round(f);\n    float f4 \u003d fmax(f2, f3);\n    float f5 \u003d fmin(f2, f3);\n    float f6 \u003d sqrt(f);\n    float f7 \u003d isnan(f);\n    f \u003d 0.0f;\n    float f8 \u003d isnan(0.0f/0.0f);\n    if(f8) reach_error();float f \u003d 12.65f;float f \u003d 12.65f;float f \u003d 12.65f;float f \u003d 12.65f;float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f1 \u003d fabs(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f2 \u003d floor(f);float f3 \u003d round(f);float f3 \u003d round(f);float f3 \u003d round(f);float f3 \u003d round(f);float f3 \u003d round(f);float f3 \u003d round(f);float f3 \u003d round(f);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f4 \u003d fmax(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f5 \u003d fmin(f2, f3);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f6 \u003d sqrt(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);float f7 \u003d isnan(f);f \u003d 0.0f;f \u003d 0.0f;f \u003d 0.0f;float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);float f8 \u003d isnan(0.0f/0.0f);if(f8) reach_error();if(f8) reach_error();if(f8) reach_error();"
             }
           }
@@ -615,6 +642,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 437,
                     "offsetEnd": 457,
+                    "astNodes": [],
                     "sourceText": "if(f8) reach_error();"
                   }
                 },
@@ -631,6 +659,7 @@
               "colNumberStop": 24,
               "offsetStart": 437,
               "offsetEnd": 457,
+              "astNodes": [],
               "sourceText": "if(f8) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }

@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -136,6 +139,7 @@
               "colNumberStop": 1,
               "offsetStart": 22,
               "offsetEnd": 111,
+              "astNodes": [],
               "sourceText": "int main() {\n    for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }\n }"
             }
           }
@@ -154,6 +158,7 @@
               "colNumberStop": 1,
               "offsetStart": 22,
               "offsetEnd": 111,
+              "astNodes": [],
               "sourceText": "int main() {\n    for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }\n }"
             }
           }
@@ -166,6 +171,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -178,6 +184,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -215,6 +222,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 39,
                     "offsetEnd": 108,
+                    "astNodes": [],
                     "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
                   }
                 },
@@ -231,6 +239,7 @@
               "colNumberStop": 33,
               "offsetStart": 39,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }{\n        if(i \u003d\u003d 28) reach_error();\n    }if(i \u003d\u003d 28) reach_error();if(i \u003d\u003d 28) reach_error();if(i \u003d\u003d 28) reach_error();"
             }
           }
@@ -256,6 +265,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 77,
                     "offsetEnd": 102,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 28) reach_error();"
                   }
                 },
@@ -272,6 +282,7 @@
               "colNumberStop": 33,
               "offsetStart": 77,
               "offsetEnd": 102,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 28) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -297,6 +308,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 39,
                     "offsetEnd": 108,
+                    "astNodes": [],
                     "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
                   }
                 },
@@ -313,6 +325,7 @@
               "colNumberStop": 4,
               "offsetStart": 22,
               "offsetEnd": 111,
+              "astNodes": [],
               "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }int main() {\n    for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }\n }"
             }
           }
@@ -338,6 +351,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 39,
                     "offsetEnd": 108,
+                    "astNodes": [],
                     "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
                   }
                 },
@@ -354,6 +368,7 @@
               "colNumberStop": 4,
               "offsetStart": 22,
               "offsetEnd": 111,
+              "astNodes": [],
               "sourceText": "int main() {\n    for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }\n }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
             }
           }
@@ -379,6 +394,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 77,
                     "offsetEnd": 102,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 28) reach_error();"
                   }
                 },
@@ -395,6 +411,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 39,
                     "offsetEnd": 108,
+                    "astNodes": [],
                     "sourceText": "for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
                   }
                 },
@@ -411,6 +428,7 @@
               "colNumberStop": 33,
               "offsetStart": 39,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 28) reach_error();if(i \u003d\u003d 28) reach_error();for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }for(int i \u003d 0; i \u003c 30; i++) {\n        if(i \u003d\u003d 28) reach_error();\n    }"
             }
           }

@@ -32,15 +32,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+/*
+This is a dependency of Eldarica which is not included in the binary.
+ */
+public class YicesSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private final List<SemVer.VersionDecoder> versions;
 
-    private final YicesSmtLibSolverInstaller yicesInstaller =
-            new YicesSmtLibSolverInstaller(logger);
-    private static final String YICES_VERSION = "1.0.40";
-
-    public EldaricaSmtLibSolverInstaller(final Logger logger) {
+    public YicesSmtLibSolverInstaller(final Logger logger) {
         super(logger);
 
         versions = new ArrayList<>();
@@ -52,41 +51,26 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     @Override
     protected String getSolverName() {
-        return "eldarica";
+        return "yices";
     }
 
     @Override
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
-        final var yicesPath = getInstallDir(installDir, "yices");
-        yicesInstaller.installSolver(yicesPath, "1.0.40"); // dependency
-
-        final var semVer = SemVer.of(version);
-        String archStr = null;
-
-        for (final var versionDecoder : versions) {
-            if (semVer.compareTo(versionDecoder.getVersion()) >= 0) {
-                archStr = versionDecoder.getOsArchString(OsHelper.getOs(), OsHelper.getArch());
-                break;
-            }
-        }
-        if (archStr == null) {
-            throw new SmtLibSolverInstallerException(
-                    String.format(
-                            "%s on operating system %s and architecture %s is not supported",
-                            getSolverName(), OsHelper.getOs(), OsHelper.getArch()));
-        }
-
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://github.com/uuverifiers/eldarica/releases/download/v%s/eldarica-bin-%s.%s",
-                                version, version, archStr));
+                                "https://yices.csl.sri.com/old/binaries/yices-%s-x86_64-unknown-linux-gnu-static-gmp.tar.gz",
+                                version));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
-            Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-            installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
+            Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
+            installDir
+                    .resolve("bin")
+                    .resolve(getSolverBinaryName())
+                    .toFile()
+                    .setExecutable(true, true);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -96,38 +80,30 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     @Override
     protected void uninstallSolver(Path installDir, String version) {
-        final var yicesPath = getInstallDir(installDir, "yices");
-        yicesInstaller.uninstallSolver(yicesPath, YICES_VERSION);
         // Default uninstall is suitable
     }
 
     @Override
-    protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {"-ssol", "-scex", "-portfolio"};
+    protected SolverFactory getSolverFactory(
+            Path installDir, String version, Path solverPath, String[] args)
+            throws SmtLibSolverInstallerException {
+        throw new UnsupportedOperationException("Yices cannot be started.");
     }
 
     @Override
-    public SolverFactory getSolverFactory(
-            final Path installDir,
-            final String version,
-            final Path solverPath,
-            final String[] solverArgs)
-            throws SmtLibSolverInstallerException {
-        final var solverFilePath =
-                solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
-        final var yicesPath = installDir.resolve("yices").resolve("bin");
-        return EldaricaSmtLibSolverFactory.create(solverFilePath, solverArgs, yicesPath);
+    protected String[] getDefaultSolverArgs(String version) {
+        return new String[] {};
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.1");
+        return Arrays.asList("1.0.40");
     }
 
     private String getSolverBinaryName() {
         switch (OsHelper.getOs()) {
             case LINUX:
-                return "eld";
+                return "yices";
             default:
                 throw new AssertionError();
         }

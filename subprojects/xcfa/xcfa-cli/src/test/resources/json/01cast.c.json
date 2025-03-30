@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -140,6 +143,7 @@
               "colNumberStop": 0,
               "offsetStart": 46,
               "offsetEnd": 123,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet();\n    if((char)a) reach_error();\n}"
             }
           }
@@ -158,6 +162,7 @@
               "colNumberStop": 0,
               "offsetStart": 46,
               "offsetEnd": 123,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet();\n    if((char)a) reach_error();\n}"
             }
           }
@@ -170,6 +175,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -207,6 +213,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 96,
                     "offsetEnd": 121,
+                    "astNodes": [],
                     "sourceText": "if((char)a) reach_error();"
                   }
                 },
@@ -223,6 +230,7 @@
               "colNumberStop": 29,
               "offsetStart": 46,
               "offsetEnd": 123,
+              "astNodes": [],
               "sourceText": "if((char)a) reach_error();if((char)a) reach_error();int main() {\n    int a \u003d __VERIFIER_nondet();\n    if((char)a) reach_error();\n}"
             }
           }
@@ -248,6 +256,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 96,
                     "offsetEnd": 121,
+                    "astNodes": [],
                     "sourceText": "if((char)a) reach_error();"
                   }
                 },
@@ -264,6 +273,7 @@
               "colNumberStop": 29,
               "offsetStart": 96,
               "offsetEnd": 121,
+              "astNodes": [],
               "sourceText": "if((char)a) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -289,6 +299,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "int a \u003d __VERIFIER_nondet();"
                   }
                 },
@@ -305,6 +316,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 63,
                     "offsetEnd": 90,
+                    "astNodes": [],
                     "sourceText": "int a \u003d __VERIFIER_nondet();"
                   }
                 },
@@ -321,6 +333,7 @@
               "colNumberStop": 31,
               "offsetStart": 46,
               "offsetEnd": 123,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet();\n    if((char)a) reach_error();\n}int a \u003d __VERIFIER_nondet();\n    if((char)a) reach_error();int a \u003d __VERIFIER_nondet();int a \u003d __VERIFIER_nondet();int a \u003d __VERIFIER_nondet();int a \u003d __VERIFIER_nondet();int a \u003d __VERIFIER_nondet();int a \u003d __VERIFIER_nondet();if((char)a) reach_error();if((char)a) reach_error();if((char)a) reach_error();"
             }
           }

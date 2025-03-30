@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -153,6 +156,7 @@
               "colNumberStop": 0,
               "offsetStart": 22,
               "offsetEnd": 149,
+              "astNodes": [],
               "sourceText": "int fibonacci(int i) {\n    if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);\n}"
             }
           }
@@ -171,6 +175,7 @@
               "colNumberStop": 0,
               "offsetStart": 22,
               "offsetEnd": 149,
+              "astNodes": [],
               "sourceText": "int fibonacci(int i) {\n    if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);\n}"
             }
           }
@@ -183,6 +188,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -195,6 +201,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -213,6 +220,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -225,6 +233,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -243,6 +252,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -255,6 +265,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -282,6 +293,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 109,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -298,6 +310,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -323,6 +336,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 109,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -339,6 +353,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -363,6 +378,7 @@
               "colNumberStop": 47,
               "offsetStart": 22,
               "offsetEnd": 149,
+              "astNodes": [],
               "sourceText": "int fibonacci(int i) {\n    if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);\n}if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -388,6 +404,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 49,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -404,6 +421,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 60,
                     "offsetEnd": 68,
+                    "astNodes": [],
                     "sourceText": "return 0;"
                   }
                 },
@@ -420,6 +438,7 @@
               "colNumberStop": 47,
               "offsetStart": 49,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);return 0;return 0;return 0;return 0;"
             }
           }
@@ -445,6 +464,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 49,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -461,6 +481,7 @@
               "colNumberStop": 47,
               "offsetStart": 49,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 0) return 0;\n    else if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -486,6 +507,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 79,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -502,6 +524,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 90,
                     "offsetEnd": 98,
+                    "astNodes": [],
                     "sourceText": "return 1;"
                   }
                 },
@@ -518,6 +541,7 @@
               "colNumberStop": 47,
               "offsetStart": 79,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);return 1;return 1;return 1;return 1;"
             }
           }
@@ -543,6 +567,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 79,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -559,6 +584,7 @@
               "colNumberStop": 47,
               "offsetStart": 79,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "if(i \u003d\u003d 1) return 1;\n    else return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -583,6 +609,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -608,6 +635,7 @@
                     "colNumberStop": 47,
                     "offsetStart": 109,
                     "offsetEnd": 147,
+                    "astNodes": [],
                     "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
                   }
                 },
@@ -624,6 +652,7 @@
               "colNumberStop": 47,
               "offsetStart": 109,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "return fibonacci(i-1) + fibonacci(i-2);"
             }
           }
@@ -676,6 +705,7 @@
               "colNumberStop": 0,
               "offsetStart": 152,
               "offsetEnd": 207,
+              "astNodes": [],
               "sourceText": "int main() {\n    if(fibonacci(8) !\u003d 21) reach_error();\n}"
             }
           }
@@ -694,6 +724,7 @@
               "colNumberStop": 0,
               "offsetStart": 152,
               "offsetEnd": 207,
+              "astNodes": [],
               "sourceText": "int main() {\n    if(fibonacci(8) !\u003d 21) reach_error();\n}"
             }
           }
@@ -712,6 +743,7 @@
               "colNumberStop": 40,
               "offsetStart": 169,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();"
             }
           }
@@ -724,6 +756,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -761,6 +794,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 169,
                     "offsetEnd": 205,
+                    "astNodes": [],
                     "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();"
                   }
                 },
@@ -777,6 +811,7 @@
               "colNumberStop": 40,
               "offsetStart": 169,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();"
             }
           }
@@ -802,6 +837,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 169,
                     "offsetEnd": 205,
+                    "astNodes": [],
                     "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();"
                   }
                 },
@@ -818,6 +854,7 @@
               "colNumberStop": 40,
               "offsetStart": 152,
               "offsetEnd": 207,
+              "astNodes": [],
               "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();int main() {\n    if(fibonacci(8) !\u003d 21) reach_error();\n}"
             }
           }
@@ -842,6 +879,7 @@
               "colNumberStop": 40,
               "offsetStart": 152,
               "offsetEnd": 207,
+              "astNodes": [],
               "sourceText": "int main() {\n    if(fibonacci(8) !\u003d 21) reach_error();\n}if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();if(fibonacci(8) !\u003d 21) reach_error();"
             }
           }
@@ -867,6 +905,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 169,
                     "offsetEnd": 205,
+                    "astNodes": [],
                     "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();"
                   }
                 },
@@ -883,6 +922,7 @@
               "colNumberStop": 40,
               "offsetStart": 169,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "if(fibonacci(8) !\u003d 21) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }

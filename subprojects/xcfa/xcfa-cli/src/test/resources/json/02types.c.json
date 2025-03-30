@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -176,6 +179,7 @@
               "colNumberStop": 0,
               "offsetStart": 21,
               "offsetEnd": 288,
+              "astNodes": [],
               "sourceText": "int main() {\n    _Bool a;\n    unsigned char uc;\n    signed char c;\n    unsigned short us;\n    short s;\n    unsigned int ui;\n    int i;\n    unsigned long ul;\n    long l;\n    unsigned long long ull;\n    long long ll;\n    if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();\n}"
             }
           }
@@ -194,6 +198,7 @@
               "colNumberStop": 0,
               "offsetStart": 21,
               "offsetEnd": 288,
+              "astNodes": [],
               "sourceText": "int main() {\n    _Bool a;\n    unsigned char uc;\n    signed char c;\n    unsigned short us;\n    short s;\n    unsigned int ui;\n    int i;\n    unsigned long ul;\n    long l;\n    unsigned long long ull;\n    long long ll;\n    if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();\n}"
             }
           }
@@ -206,6 +211,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -243,6 +249,7 @@
                     "colNumberStop": 50,
                     "offsetStart": 240,
                     "offsetEnd": 286,
+                    "astNodes": [],
                     "sourceText": "if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();"
                   }
                 },
@@ -259,6 +266,7 @@
               "colNumberStop": 50,
               "offsetStart": 21,
               "offsetEnd": 288,
+              "astNodes": [],
               "sourceText": "if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();int main() {\n    _Bool a;\n    unsigned char uc;\n    signed char c;\n    unsigned short us;\n    short s;\n    unsigned int ui;\n    int i;\n    unsigned long ul;\n    long l;\n    unsigned long long ull;\n    long long ll;\n    if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();\n}"
             }
           }
@@ -278,6 +286,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -288,6 +297,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -298,6 +308,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -308,6 +319,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -318,6 +330,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -328,6 +341,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -338,6 +352,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -348,6 +363,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -358,6 +374,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -368,6 +385,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -378,6 +396,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -394,6 +413,7 @@
               "colNumberStop": 50,
               "offsetStart": 21,
               "offsetEnd": 288,
+              "astNodes": [],
               "sourceText": "int main() {\n    _Bool a;\n    unsigned char uc;\n    signed char c;\n    unsigned short us;\n    short s;\n    unsigned int ui;\n    int i;\n    unsigned long ul;\n    long l;\n    unsigned long long ull;\n    long long ll;\n    if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();\n}_Bool a;\n    unsigned char uc;\n    signed char c;\n    unsigned short us;\n    short s;\n    unsigned int ui;\n    int i;\n    unsigned long ul;\n    long l;\n    unsigned long long ull;\n    long long ll;\n    if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();_Bool a;unsigned char uc;signed char c;unsigned short us;short s;unsigned int ui;int i;unsigned long ul;long l;unsigned long long ull;long long ll;if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();"
             }
           }
@@ -419,6 +439,7 @@
                     "colNumberStop": 50,
                     "offsetStart": 240,
                     "offsetEnd": 286,
+                    "astNodes": [],
                     "sourceText": "if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();"
                   }
                 },
@@ -435,6 +456,7 @@
               "colNumberStop": 50,
               "offsetStart": 240,
               "offsetEnd": 286,
+              "astNodes": [],
               "sourceText": "if(a+uc+c+us+s+ui+i+ul+l+ull+ll) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
