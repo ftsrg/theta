@@ -70,7 +70,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CReal) {
             //noinspection unchecked
             return FpExprs.ToBv(
-                    FpRoundingMode.getDefaultRoundingMode(),
+                    FpRoundingMode.RTZ, // truncate
                     (Expr<FpType>) param,
                     type.width(),
                     true);
@@ -108,7 +108,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CReal) {
             //noinspection unchecked
             return FpExprs.ToBv(
-                    FpRoundingMode.getDefaultRoundingMode(),
+                    FpRoundingMode.RTZ, // truncate()
                     (Expr<FpType>) param,
                     type.width(),
                     false);
