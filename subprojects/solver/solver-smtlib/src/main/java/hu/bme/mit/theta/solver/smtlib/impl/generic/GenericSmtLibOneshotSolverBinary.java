@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,10 +39,13 @@ public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
     private final List<String> commands;
     private final Path solverPath;
     private final String[] args;
+    private final Map<String, String> env;
 
-    public GenericSmtLibOneshotSolverBinary(Path solverPath, String[] args) {
+    public GenericSmtLibOneshotSolverBinary(
+            Path solverPath, String[] args, Map<String, String> env) {
         this.solverPath = solverPath;
         this.args = args;
+        this.env = env;
         commands = new ArrayList<>();
     }
 
@@ -68,6 +72,7 @@ public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
             processCmd.add(file.getAbsolutePath());
 
             final var solverProcessBuilder = new NuProcessBuilder(processCmd);
+            solverProcessBuilder.environment().putAll(env);
             final var handler = new ProcessHandler();
             solverProcessBuilder.setProcessListener(handler);
 
