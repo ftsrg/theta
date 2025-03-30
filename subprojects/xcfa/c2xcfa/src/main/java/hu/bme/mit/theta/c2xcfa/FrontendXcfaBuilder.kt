@@ -441,7 +441,7 @@ class FrontendXcfaBuilder(
         location,
         StmtLabel(
           statement.assumeStmt,
-          choiceType = ChoiceType.MAIN_PATH,
+          choiceType = ChoiceType.NONE,
           metadata = getMetadata(statement),
         ),
         metadata = getMetadata(statement),
