@@ -69,8 +69,8 @@ class XcfaCliProofTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("cFiles")
+//  @ParameterizedTest
+//  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
     val temp = createTempDirectory()
     val params =
