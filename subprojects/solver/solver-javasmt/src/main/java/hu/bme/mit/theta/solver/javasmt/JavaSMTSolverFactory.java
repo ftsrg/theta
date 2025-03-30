@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -195,6 +192,33 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                     context.newProverEnvironmentWithInterpolation(ProverOptions.GENERATE_MODELS);
 
             return new JavaSMTItpSolver(
+                    symbolTable, transformationManager, termTransformer, context, prover);
+        } catch (InvalidConfigurationException e) {
+            throw new JavaSMTSolverException(e);
+        }
+    }
+
+    @Override
+    public HornSolver createHornSolver() {
+        try {
+            Configuration config =
+                    Configuration.builder()
+                            .copyFrom(this.config)
+                            .setOption("solver.z3.requireProofs", "true")
+                            .build();
+            final SolverContext context =
+                    SolverContextFactory.createSolverContext(
+                            config, logger, shutdownManager.getNotifier(), solver);
+            final JavaSMTSymbolTable symbolTable = new JavaSMTSymbolTable();
+            final JavaSMTTransformationManager transformationManager =
+                    new JavaSMTTransformationManager(symbolTable, context);
+            final JavaSMTTermTransformer termTransformer =
+                    new JavaSMTTermTransformer(symbolTable, context);
+
+            final ProverEnvironment prover =
+                    context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
+
+            return new JavaSMTHornSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);
         } catch (InvalidConfigurationException e) {
             throw new JavaSMTSolverException(e);

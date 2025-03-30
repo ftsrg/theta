@@ -50,6 +50,11 @@ final class Z3HornSolver extends Z3Solver implements HornSolver {
             Context z3Context,
             Solver z3Solver) {
         super(symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
+        final var params = z3Context.mkParams();
+        params.add("fp.xform.slice", true);
+        params.add("fp.xform.inline_linear", false);
+        params.add("fp.xform.inline_eager", false);
+        z3Solver.setParameters(params);
     }
 
     ////

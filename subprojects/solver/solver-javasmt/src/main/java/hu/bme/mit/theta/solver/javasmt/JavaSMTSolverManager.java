@@ -18,12 +18,7 @@ package hu.bme.mit.theta.solver.javasmt;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverBase;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -95,6 +90,14 @@ public final class JavaSMTSolverManager extends SolverManager {
         public ItpSolver createItpSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createItpSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
+
+        @Override
+        public HornSolver createHornSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createHornSolver();
             instantiatedSolvers.add(solver);
             return solver;
         }
