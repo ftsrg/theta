@@ -23,7 +23,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
-    implementation(Deps.javasmt)
+    implementation(Deps.sosylabCommon)
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-graph-solver"))

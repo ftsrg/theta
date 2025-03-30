@@ -22,7 +22,7 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
     implementation(files(rootDir.resolve(Deps.javasmtLocal)))
-    implementation(Deps.javasmt)
+    implementation(Deps.sosylabCommon)
     implementation(files(rootDir.resolve(Deps.cvc5)))
     testImplementation(testFixtures(project(":theta-core")))
 }

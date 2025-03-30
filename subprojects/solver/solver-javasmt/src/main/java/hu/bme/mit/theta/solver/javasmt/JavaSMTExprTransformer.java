@@ -29,7 +29,6 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -795,21 +794,21 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.smod(leftOpTerm, rightOpTerm);
+        return bitvectorFormulaManager.smodulo(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvURem(final BvURemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, false);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, false);
     }
 
     private Formula transformBvSRem(final BvSRemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, true);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, true);
     }
 
     private Formula transformBvAnd(final BvAndExpr expr) {
@@ -1170,18 +1169,20 @@ final class JavaSMTExprTransformer {
 
     private <TI extends Formula, TE extends Formula> Formula transformArrayLit(
             final ArrayLitExpr<?, ?> expr) {
-        final TE elseElem = (TE) toTerm(expr.getElseElem());
-        final FormulaType<TE> elemType =
-                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
-        final FormulaType<TI> indexType =
-                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
-        for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
-            final TI index = (TI) toTerm(element.get1());
-            final TE elem = (TE) toTerm(element.get2());
-            arr = arrayFormulaManager.store(arr, index, elem);
-        }
-        return arr;
+        throw new UnsupportedOperationException();
+        //        final TE elseElem = (TE) toTerm(expr.getElseElem());
+        //        final FormulaType<TE> elemType =
+        //                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
+        //        final FormulaType<TI> indexType =
+        //                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
+        //        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        //        for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element :
+        // expr.getElements()) {
+        //            final TI index = (TI) toTerm(element.get1());
+        //            final TE elem = (TE) toTerm(element.get2());
+        //            arr = arrayFormulaManager.store(arr, index, elem);
+        //        }
+        //        return arr;
     }
 
     /*
@@ -1190,18 +1191,19 @@ final class JavaSMTExprTransformer {
 
     private <TI extends Formula, TE extends Formula> Formula transformArrayInit(
             final ArrayInitExpr<?, ?> expr) {
-        final TE elseElem = (TE) toTerm(expr.getElseElem());
-        final FormulaType<TE> elemType =
-                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
-        final FormulaType<TI> indexType =
-                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
-            final TI index = (TI) toTerm(element.get1());
-            final TE elem = (TE) toTerm(element.get2());
-            arr = arrayFormulaManager.store(arr, index, elem);
-        }
-        return arr;
+        throw new UnsupportedOperationException();
+        //        final TE elseElem = (TE) toTerm(expr.getElseElem());
+        //        final FormulaType<TE> elemType =
+        //                (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
+        //        final FormulaType<TI> indexType =
+        //                (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
+        //        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        //        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
+        //            final TI index = (TI) toTerm(element.get1());
+        //            final TE elem = (TE) toTerm(element.get2());
+        //            arr = arrayFormulaManager.store(arr, index, elem);
+        //        }
+        //        return arr;
     }
 
     private Formula transformFuncApp(final FuncAppExpr<?, ?> expr) {

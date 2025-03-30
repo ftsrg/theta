@@ -52,14 +52,14 @@ import org.sosy_lab.java_smt.api.Model.ValueAssignment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverException;
 
-final class JavaSMTSolver implements UCSolver, Solver {
+class JavaSMTSolver implements UCSolver, Solver {
 
-    private final JavaSMTSymbolTable symbolTable;
-    private final JavaSMTTransformationManager transformationManager;
-    private final JavaSMTTermTransformer termTransformer;
+    protected final JavaSMTSymbolTable symbolTable;
+    protected final JavaSMTTransformationManager transformationManager;
+    protected final JavaSMTTermTransformer termTransformer;
 
-    private final SolverContext context;
-    private final BasicProverEnvironment solver;
+    protected final SolverContext context;
+    protected final BasicProverEnvironment solver;
 
     private final Stack<Expr<BoolType>> assertions;
 
