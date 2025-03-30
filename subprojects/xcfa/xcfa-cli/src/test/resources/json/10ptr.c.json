@@ -126,6 +126,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 129,
                     "offsetEnd": 135,
+                    "astNodes": [],
                     "sourceText": "d \u003e 100"
                   }
                 },
@@ -155,6 +156,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 39,
                     "offsetEnd": 50,
+                    "astNodes": [],
                     "sourceText": "int a \u003d 110;"
                   }
                 },
@@ -171,6 +173,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
+                    "astNodes": [],
                     "sourceText": "int *b \u003d \u0026a;"
                   }
                 },
@@ -187,6 +190,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 73,
                     "offsetEnd": 91,
+                    "astNodes": [],
                     "sourceText": "char *c \u003d (char*)b;"
                   }
                 },
@@ -203,6 +207,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -219,6 +224,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 109,
                     "offsetEnd": 120,
+                    "astNodes": [],
                     "sourceText": "char d \u003d *c;"
                   }
                 },
@@ -248,6 +254,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 129,
                     "offsetEnd": 135,
+                    "astNodes": [],
                     "sourceText": "d \u003e 100"
                   }
                 },
@@ -277,6 +284,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -293,6 +301,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -322,6 +331,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 186,
                     "offsetEnd": 192,
+                    "astNodes": [],
                     "sourceText": "d \u003e 100"
                   }
                 },
@@ -351,6 +361,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 186,
                     "offsetEnd": 192,
+                    "astNodes": [],
                     "sourceText": "d \u003e 100"
                   }
                 },

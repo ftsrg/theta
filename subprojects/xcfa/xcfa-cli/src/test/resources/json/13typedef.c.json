@@ -49,6 +49,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -67,6 +68,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -93,6 +95,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -145,6 +148,7 @@
               "colNumberStop": 1,
               "offsetStart": 35,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "int main() {\n    char char2;\n    if(char1 + char2 \u003e 256) reach_error();\n }"
             }
           }
@@ -163,6 +167,7 @@
               "colNumberStop": 1,
               "offsetStart": 35,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "int main() {\n    char char2;\n    if(char1 + char2 \u003e 256) reach_error();\n }"
             }
           }
@@ -175,6 +180,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -212,6 +218,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 68,
                     "offsetEnd": 105,
+                    "astNodes": [],
                     "sourceText": "if(char1 + char2 \u003e 256) reach_error();"
                   }
                 },
@@ -228,6 +235,7 @@
               "colNumberStop": 41,
               "offsetStart": 35,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "if(char1 + char2 \u003e 256) reach_error();if(char1 + char2 \u003e 256) reach_error();int main() {\n    char char2;\n    if(char1 + char2 \u003e 256) reach_error();\n }"
             }
           }
@@ -255,6 +263,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -271,6 +280,7 @@
               "colNumberStop": 41,
               "offsetStart": 35,
               "offsetEnd": 108,
+              "astNodes": [],
               "sourceText": "int main() {\n    char char2;\n    if(char1 + char2 \u003e 256) reach_error();\n }char char2;\n    if(char1 + char2 \u003e 256) reach_error();char char2;if(char1 + char2 \u003e 256) reach_error();if(char1 + char2 \u003e 256) reach_error();if(char1 + char2 \u003e 256) reach_error();"
             }
           }
@@ -296,6 +306,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 68,
                     "offsetEnd": 105,
+                    "astNodes": [],
                     "sourceText": "if(char1 + char2 \u003e 256) reach_error();"
                   }
                 },
@@ -312,6 +323,7 @@
               "colNumberStop": 41,
               "offsetStart": 68,
               "offsetEnd": 105,
+              "astNodes": [],
               "sourceText": "if(char1 + char2 \u003e 256) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }

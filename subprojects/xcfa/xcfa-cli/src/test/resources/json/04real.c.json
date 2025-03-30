@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -148,6 +151,7 @@
               "colNumberStop": 0,
               "offsetStart": 61,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
             }
           }
@@ -166,6 +170,7 @@
               "colNumberStop": 0,
               "offsetStart": 61,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
             }
           }
@@ -178,6 +183,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -215,6 +221,7 @@
                     "colNumberStop": 46,
                     "offsetStart": 161,
                     "offsetEnd": 203,
+                    "astNodes": [],
                     "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
                   }
                 },
@@ -231,6 +238,7 @@
               "colNumberStop": 46,
               "offsetStart": 61,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
             }
           }
@@ -256,6 +264,7 @@
                     "colNumberStop": 46,
                     "offsetStart": 161,
                     "offsetEnd": 203,
+                    "astNodes": [],
                     "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
                   }
                 },
@@ -272,6 +281,7 @@
               "colNumberStop": 46,
               "offsetStart": 161,
               "offsetEnd": 203,
+              "astNodes": [],
               "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -297,6 +307,7 @@
                     "colNumberStop": 39,
                     "offsetStart": 78,
                     "offsetEnd": 113,
+                    "astNodes": [],
                     "sourceText": "float f \u003d __VERIFIER_nondet_float();"
                   }
                 },
@@ -313,6 +324,7 @@
                     "colNumberStop": 39,
                     "offsetStart": 78,
                     "offsetEnd": 113,
+                    "astNodes": [],
                     "sourceText": "float f \u003d __VERIFIER_nondet_float();"
                   }
                 },
@@ -329,6 +341,7 @@
                     "colNumberStop": 16,
                     "offsetStart": 119,
                     "offsetEnd": 131,
+                    "astNodes": [],
                     "sourceText": "double d \u003d f;"
                   }
                 },
@@ -345,6 +358,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 137,
                     "offsetEnd": 155,
+                    "astNodes": [],
                     "sourceText": "long double ld \u003d d;"
                   }
                 },
@@ -361,6 +375,7 @@
               "colNumberStop": 46,
               "offsetStart": 61,
               "offsetEnd": 205,
+              "astNodes": [],
               "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();double d \u003d f;double d \u003d f;double d \u003d f;double d \u003d f;long double ld \u003d d;long double ld \u003d d;long double ld \u003d d;long double ld \u003d d;if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
             }
           }

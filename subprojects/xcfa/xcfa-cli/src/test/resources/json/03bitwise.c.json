@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -140,6 +143,7 @@
               "colNumberStop": 0,
               "offsetStart": 50,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet_int();\n    a \u003d a | 0;\n    if(a \u003d\u003d -10) reach_error();\n}"
             }
           }
@@ -158,6 +162,7 @@
               "colNumberStop": 0,
               "offsetStart": 50,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet_int();\n    a \u003d a | 0;\n    if(a \u003d\u003d -10) reach_error();\n}"
             }
           }
@@ -170,6 +175,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -207,6 +213,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 119,
                     "offsetEnd": 145,
+                    "astNodes": [],
                     "sourceText": "if(a \u003d\u003d -10) reach_error();"
                   }
                 },
@@ -223,6 +230,7 @@
               "colNumberStop": 30,
               "offsetStart": 50,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "if(a \u003d\u003d -10) reach_error();if(a \u003d\u003d -10) reach_error();int main() {\n    int a \u003d __VERIFIER_nondet_int();\n    a \u003d a | 0;\n    if(a \u003d\u003d -10) reach_error();\n}"
             }
           }
@@ -248,6 +256,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 119,
                     "offsetEnd": 145,
+                    "astNodes": [],
                     "sourceText": "if(a \u003d\u003d -10) reach_error();"
                   }
                 },
@@ -264,6 +273,7 @@
               "colNumberStop": 30,
               "offsetStart": 119,
               "offsetEnd": 145,
+              "astNodes": [],
               "sourceText": "if(a \u003d\u003d -10) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -289,6 +299,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 67,
                     "offsetEnd": 98,
+                    "astNodes": [],
                     "sourceText": "int a \u003d __VERIFIER_nondet_int();"
                   }
                 },
@@ -305,6 +316,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 67,
                     "offsetEnd": 98,
+                    "astNodes": [],
                     "sourceText": "int a \u003d __VERIFIER_nondet_int();"
                   }
                 },
@@ -315,6 +327,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -331,6 +344,7 @@
               "colNumberStop": 35,
               "offsetStart": 0,
               "offsetEnd": 147,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d __VERIFIER_nondet_int();\n    a \u003d a | 0;\n    if(a \u003d\u003d -10) reach_error();\n}int a \u003d __VERIFIER_nondet_int();\n    a \u003d a | 0;\n    if(a \u003d\u003d -10) reach_error();int a \u003d __VERIFIER_nondet_int();int a \u003d __VERIFIER_nondet_int();int a \u003d __VERIFIER_nondet_int();int a \u003d __VERIFIER_nondet_int();int a \u003d __VERIFIER_nondet_int();int a \u003d __VERIFIER_nondet_int();a \u003d a | 0;a \u003d a | 0;a \u003d a | 0;if(a \u003d\u003d -10) reach_error();if(a \u003d\u003d -10) reach_error();if(a \u003d\u003d -10) reach_error();"
             }
           }

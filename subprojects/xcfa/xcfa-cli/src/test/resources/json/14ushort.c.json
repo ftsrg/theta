@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -144,6 +147,7 @@
               "colNumberStop": 1,
               "offsetStart": 73,
               "offsetEnd": 179,
+              "astNodes": [],
               "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
             }
           }
@@ -162,6 +166,7 @@
               "colNumberStop": 1,
               "offsetStart": 73,
               "offsetEnd": 179,
+              "astNodes": [],
               "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
             }
           }
@@ -174,6 +179,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -211,6 +217,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 155,
                     "offsetEnd": 176,
+                    "astNodes": [],
                     "sourceText": "if(ush) reach_error();"
                   }
                 },
@@ -227,6 +234,7 @@
               "colNumberStop": 25,
               "offsetStart": 73,
               "offsetEnd": 179,
+              "astNodes": [],
               "sourceText": "if(ush) reach_error();if(ush) reach_error();int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
             }
           }
@@ -252,6 +260,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 155,
                     "offsetEnd": 176,
+                    "astNodes": [],
                     "sourceText": "if(ush) reach_error();"
                   }
                 },
@@ -268,6 +277,7 @@
               "colNumberStop": 25,
               "offsetStart": 155,
               "offsetEnd": 176,
+              "astNodes": [],
               "sourceText": "if(ush) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -287,6 +297,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -297,6 +308,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -313,6 +325,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 117,
                     "offsetEnd": 149,
+                    "astNodes": [],
                     "sourceText": "ush \u003d __VERIFIER_nondet_ushort();"
                   }
                 },
@@ -329,6 +342,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 117,
                     "offsetEnd": 149,
+                    "astNodes": [],
                     "sourceText": "ush \u003d __VERIFIER_nondet_ushort();"
                   }
                 },
@@ -339,6 +353,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -355,6 +370,7 @@
               "colNumberStop": 36,
               "offsetStart": 0,
               "offsetEnd": 179,
+              "astNodes": [],
               "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();short ush;long c;ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();if(ush) reach_error();if(ush) reach_error();if(ush) reach_error();"
             }
           }

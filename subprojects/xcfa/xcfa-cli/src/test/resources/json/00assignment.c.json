@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -136,6 +139,7 @@
               "colNumberStop": 0,
               "offsetStart": 21,
               "offsetEnd": 74,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d 1;\n    if(a) reach_error();\n}"
             }
           }
@@ -154,6 +158,7 @@
               "colNumberStop": 0,
               "offsetStart": 21,
               "offsetEnd": 74,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d 1;\n    if(a) reach_error();\n}"
             }
           }
@@ -191,6 +196,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 38,
                     "offsetEnd": 47,
+                    "astNodes": [],
                     "sourceText": "int a \u003d 1;"
                   }
                 },
@@ -207,6 +213,7 @@
               "colNumberStop": 23,
               "offsetStart": 21,
               "offsetEnd": 74,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a \u003d 1;\n    if(a) reach_error();\n}int a \u003d 1;\n    if(a) reach_error();int a \u003d 1;int a \u003d 1;int a \u003d 1;int a \u003d 1;if(a) reach_error();if(a) reach_error();if(a) reach_error();if(a) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
