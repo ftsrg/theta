@@ -94,6 +94,10 @@ fun getLassoValidationChecker(
   val recurrenceSetLocation = recurrenceWaypoint.waypoint.location
   val waypoints = witness.content.flatMap { it.segment ?: emptyList() }
 
+  val recurrenceStemVisits = waypoints.filter { w ->
+    w.waypoint.location == recurrenceSetLocation && w.waypoint.action != Action.CYCLE
+  }.toList()
+  val recurrenceStemVisitNum = recurrenceStemVisits.size
   check(
     waypoints.find { w ->
       w.waypoint.location == recurrenceSetLocation && w.waypoint.action != Action.CYCLE
@@ -216,6 +220,11 @@ private fun findRecurrenceLocation(lasso: XcfaProcedure, recurrenceSet: Waypoint
   return results.iterator().next()
 }
 
+/**
+ * Finds and merges all the different paths inbetween the two locations.
+ * For non-fully unrolled lassos (i.e., there is a smaller loop inside the lasso),
+ * this will result in an infinite loop.
+ */
 private fun getNondetPath(current: XcfaLocation, final: XcfaLocation): Stmt {
   val outEdgeStmts =
     current.outgoingEdges.map {
