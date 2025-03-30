@@ -51,13 +51,14 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -177,7 +178,6 @@ fun frontend(
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)
@@ -348,7 +348,13 @@ private fun preVerificationLogging(
         xcfa.procedures.forEach {
           try {
             val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-            chcFile.writeText(it.toSMT2CHC())
+            chcFile.writeText(
+              it.toSMT2CHC(
+                config.inputConfig.property == ErrorDetection.TERMINATION,
+                (config.backendConfig.specConfig as? HornConfig)?.rankingFuncConstr
+                  ?: RankingFunction.ADD,
+              )
+            )
           } catch (e: Exception) {
             logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
           }
@@ -473,7 +479,7 @@ private fun postVerificationLogging(
             config.inputConfig.property,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
-        YmlWitnessWriter()
+        YamlWitnessWriter()
           .writeWitness(
             safetyResult,
             config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,

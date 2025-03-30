@@ -94,7 +94,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {"-ssol", "-scex"};
+        return new String[] {"-ssol", "-scex", "-portfolio"};
     }
 
     @Override

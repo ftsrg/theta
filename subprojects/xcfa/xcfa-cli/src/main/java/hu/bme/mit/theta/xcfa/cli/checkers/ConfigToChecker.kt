@@ -43,6 +43,10 @@ fun getChecker(
   } else {
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.BMC,
+      Backend.KIND,
+      Backend.IMC,
+      Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
@@ -59,5 +63,7 @@ fun getChecker(
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
+      Backend.LASSO_VALIDATION ->
+        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     }
   }

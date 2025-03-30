@@ -13,26 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.frontend.transformation.model.statements;
+package hu.bme.mit.theta.xcfa.gson
 
-import hu.bme.mit.theta.frontend.ParseContext;
+import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 
-public class CRet extends CStatement {
+class CStatementAdapter : TypeAdapter<CStatement>() {
 
-    private final CStatement expr;
+  private val gson = GsonBuilder().create()
 
-    public CRet(CStatement expr, ParseContext parseContext) {
-        super(parseContext);
-        this.expr = expr;
-        if (expr != null) expr.setParent(this);
-    }
+  override fun write(writer: JsonWriter, value: CStatement) {
+    writer.beginObject()
 
-    public CStatement getExpr() {
-        return expr;
-    }
+    writer.endObject()
+  }
 
-    @Override
-    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-        return visitor.visit(this, param);
-    }
+  override fun read(reader: JsonReader): CStatement? {
+    reader.beginObject()
+
+    reader.endObject()
+    return null
+  }
 }

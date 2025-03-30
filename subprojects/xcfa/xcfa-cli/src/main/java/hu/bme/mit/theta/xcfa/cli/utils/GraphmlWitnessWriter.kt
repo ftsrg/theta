@@ -24,9 +24,9 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.witnesses.GraphmlWitness
-import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.cli.witnesses.traceToWitness
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
+import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter

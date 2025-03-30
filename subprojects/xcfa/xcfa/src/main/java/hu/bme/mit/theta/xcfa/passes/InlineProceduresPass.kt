@@ -145,7 +145,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
   private fun XcfaLocation.inlinedCopy(): XcfaLocation {
     return copy(
-      name = name + "_" + XcfaLocation.uniqueCounter(),
+      name = name + XcfaLocation.uniqueCounter(),
       initial = false,
       final = false,
       error = false,

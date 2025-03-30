@@ -39,6 +39,7 @@ public class CAssignment extends CStatement {
         checkNotNull(rValue.getExpression());
         this.lValue = lValue;
         this.rValue = rValue;
+        rValue.setParent(this);
         this.operator = operator;
     }
 
