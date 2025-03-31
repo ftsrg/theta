@@ -69,7 +69,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         }
         if (that instanceof CReal) {
             //noinspection unchecked
-            return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), true);
+            return FpExprs.ToBv(
+                    FpRoundingMode.RTZ, // truncate
+                    (Expr<FpType>) param,
+                    type.width(),
+                    true);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
                 if (that instanceof Unsigned) {
@@ -103,7 +107,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         }
         if (that instanceof CReal) {
             //noinspection unchecked
-            return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
+            return FpExprs.ToBv(
+                    FpRoundingMode.RTZ, // truncate()
+                    (Expr<FpType>) param,
+                    type.width(),
+                    false);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
                 if (that instanceof Signed) {
@@ -136,7 +144,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             FpType fpType = (FpType) type.getSmtType();
             //noinspection unchecked
             return ToFp(
-                    FpRoundingMode.RTZ,
+                    FpRoundingMode.getDefaultRoundingMode(),
                     (Expr<FpType>) param,
                     fpType.getExponent(),
                     fpType.getSignificand());
@@ -144,7 +152,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             boolean signed = that instanceof Signed;
             //noinspection unchecked
             return FromBv(
-                    FpRoundingMode.RTZ, (Expr<BvType>) param, (FpType) type.getSmtType(), signed);
+                    FpRoundingMode.getDefaultRoundingMode(),
+                    (Expr<BvType>) param,
+                    (FpType) type.getSmtType(),
+                    signed);
         } else {
             throw new UnsupportedOperationException("Bad type!");
         }
