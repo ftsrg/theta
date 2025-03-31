@@ -111,6 +111,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -127,6 +128,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -143,6 +145,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -159,6 +162,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -175,6 +179,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -204,6 +209,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 158,
                     "offsetEnd": 178,
+                    "astNodes": [],
                     "sourceText": "a.a + a.c + a.b.a \u003c 4"
                   }
                 },
@@ -233,6 +239,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 158,
                     "offsetEnd": 178,
+                    "astNodes": [],
                     "sourceText": "a.a + a.c + a.b.a \u003c 4"
                   }
                 },

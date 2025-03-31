@@ -69,7 +69,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
     }
 
     public static GenericSmtLibSolverFactory create(
-            Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy) {
+            Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy, Path yicesPath) {
         return new GenericSmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 

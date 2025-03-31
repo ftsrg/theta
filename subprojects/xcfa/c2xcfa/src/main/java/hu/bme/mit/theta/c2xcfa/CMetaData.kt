@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.math.max
 import kotlin.math.min
@@ -27,8 +28,10 @@ data class CMetaData(
   val offsetStart: Int?,
   val offsetEnd: Int?,
   val sourceText: String?,
+  val astNodes: List<CStatement>,
 ) : MetaData() {
 
+  // AST nodes must be in order of combination!
   override fun combine(other: MetaData): MetaData {
     if (other is CMetaData) {
       return CMetaData(
@@ -64,12 +67,32 @@ data class CMetaData(
             it > 0
           } ?: 0,
         sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
+        astNodes = astNodes + other.astNodes,
       )
     } else if (other is EmptyMetaData) {
       return this
     } else {
       error("Cannot combine metadata of different types: $this vs $other")
     }
+  }
+
+  override fun isSubstantial(): Boolean {
+    if (astNodes.isEmpty()) {
+      return false
+    }
+    if (lineNumberStart == null || lineNumberStop == null) {
+      return false
+    }
+    if (lineNumberStart < 0 || lineNumberStop < 0) {
+      return false
+    }
+    if (colNumberStart == null || colNumberStop == null) {
+      return false
+    }
+    if (colNumberStart < 0 || colNumberStop < 0) {
+      return false
+    }
+    return true
   }
 }
 

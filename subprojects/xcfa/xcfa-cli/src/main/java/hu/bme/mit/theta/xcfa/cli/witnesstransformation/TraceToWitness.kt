@@ -13,11 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.witnesses
+package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.core.model.Valuation
@@ -31,7 +32,10 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
+import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
+import java.util.function.Predicate
 
 enum class Verbosity {
   NECESSARY,
@@ -49,7 +53,10 @@ fun traceToWitness(
   val newStates = ArrayList<WitnessNode>()
   val newActions = ArrayList<WitnessEdge>()
 
-  val isError = getXcfaErrorPredicate(property)
+  val isError =
+    if (property == ErrorDetection.TERMINATION) {
+      Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+    } else getXcfaErrorPredicate(property)
 
   var lastNode =
     WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
@@ -123,38 +130,42 @@ fun traceToWitness(
     }
   }
 
-  val lastState = trace.states[trace.length()]
-  val node =
-    WitnessNode(
-      id = "N${newStates.size}",
-      entry = false,
-      sink = false,
-      violation =
-        isError.test( // this is a hack so that a simple explstate can become a ptrstate
-          XcfaState(
-            lastState.xcfa,
-            lastState.processes,
-            PtrState(lastState.sGlobal),
-            lastState.mutexes,
-            lastState.threadLookup,
-            lastState.bottom,
-          )
-        ),
-      xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-      cSources =
-        lastState.processes
-          .map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }
-          .toMap(),
-      globalState = lastState.sGlobal,
-    )
-  newStates.add(node)
-  val edge =
-    WitnessEdge(
-      sourceId = lastNode.id,
-      targetId = node.id,
-      edge = trace.actions[trace.length() - 1].edge,
-    )
-  newActions.add(edge)
+  if (trace.length() > 0) {
+    val lastState = trace.states[trace.length()]
+    val node =
+      WitnessNode(
+        id = "N${newStates.size}",
+        entry = false,
+        sink = false,
+        violation =
+          isError.test( // this is a hack so that a simple explstate can become a ptrstate
+            XcfaState(
+              lastState.xcfa,
+              lastState.processes,
+              PtrState(lastState.sGlobal),
+              lastState.mutexes,
+              lastState.threadLookup,
+              lastState.bottom,
+            )
+          ),
+        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+        cSources =
+          lastState.processes
+            .map {
+              Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+            }
+            .toMap(),
+        globalState = lastState.sGlobal,
+      )
+    newStates.add(node)
+    val edge =
+      WitnessEdge(
+        sourceId = lastNode.id,
+        targetId = node.id,
+        edge = trace.actions[trace.length() - 1].edge,
+      )
+    newActions.add(edge)
+  }
 
   return Trace.of(newStates, newActions)
 }
@@ -213,7 +224,7 @@ private fun labelToEdge(
 
 private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
   when (label) {
-    is NondetLabel -> error("Cannot handle nondet labels in witnesses")
+    is NondetLabel -> listOf(label)
     is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
     else -> listOf(label)
   }

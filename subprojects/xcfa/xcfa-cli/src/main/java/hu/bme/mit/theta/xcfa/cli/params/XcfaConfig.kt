@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
 
@@ -193,12 +194,27 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
+        Backend.BMC ->
+          BoundedConfig(
+            indConfig = InductionConfig(disable = true),
+            itpConfig = InterpolationConfig(disable = true),
+          )
+            as T
+        Backend.KIND -> BoundedConfig(itpConfig = InterpolationConfig(disable = true)) as T
+        Backend.IMC ->
+          BoundedConfig(
+            bmcConfig = BMCConfig(disable = true),
+            itpConfig = InterpolationConfig(disable = true),
+          )
+            as T
+        Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.MDD -> MddConfig() as T
+        Backend.LASSO_VALIDATION -> LassoValidationConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
       }
@@ -287,6 +303,23 @@ data class HornConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--ranking-function-constraint"],
+    description = "What relation to use for the ranking function.",
+  )
+  var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
+) : SpecBackendConfig
+
+data class LassoValidationConfig(
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
+  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(

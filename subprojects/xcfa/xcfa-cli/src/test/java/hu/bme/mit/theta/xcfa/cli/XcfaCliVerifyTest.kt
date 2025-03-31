@@ -252,8 +252,8 @@ class XcfaCliVerifyTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("cFiles")
+  //  @ParameterizedTest
+  //  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
     val params =

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.witnesses
+package hu.bme.mit.theta.xcfa.witnesses
 
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.SerialName
@@ -157,6 +157,7 @@ enum class Language {
  */
 @Serializable
 data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null) {
+
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
 }
 
@@ -241,6 +242,7 @@ enum class WaypointType {
   @SerialName("function_enter") FUNCTION_ENTER,
   @SerialName("function_return") FUNCTION_RETURN,
   @SerialName("branching") BRANCHING,
+  @SerialName("recurrence_condition") RECURRENCE_CONDITION,
 }
 
 /**
@@ -288,6 +290,7 @@ data class Location(
 enum class Action {
   @SerialName("follow") FOLLOW,
   @SerialName("avoid") AVOID,
+  @SerialName("cycle") CYCLE,
 }
 
 @Serializable
