@@ -65,9 +65,11 @@ class AbstractSummaryBuilder<S : State, A : Action> {
             )
             .toList()
 
-        if (nodeGroup.size>1) { // this node covers nodes from more than one group - we should merge them
-          val newGroup : MutableSet<ArgNode<S, A>> = mutableSetOf(node)
-          for(group in nodeGroup) {
+        if (
+          nodeGroup.size > 1
+        ) { // this node covers nodes from more than one group - we should merge them
+          val newGroup: MutableSet<ArgNode<S, A>> = mutableSetOf(node)
+          for (group in nodeGroup) {
             newGroup.addAll(group)
             nodeGroups.remove(group)
           }
