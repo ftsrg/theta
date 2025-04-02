@@ -65,13 +65,17 @@ class AbstractSummaryBuilder<S : State, A : Action> {
             )
             .toList()
 
-        checkState(
-          nodeGroup.size <= 1
-        ) // either found one where node would fit OR found none and will create new one
-        if (nodeGroup.size > 0) {
+        if (nodeGroup.size>1) { // this node covers nodes from more than one group - we should merge them
+          val newGroup : MutableSet<ArgNode<S, A>> = mutableSetOf(node)
+          for(group in nodeGroup) {
+            newGroup.addAll(group)
+            nodeGroups.remove(group)
+          }
+          nodeGroups.add(newGroup)
+        } else if (nodeGroup.size == 1) { // we found it's (single) group, add it
           nodeGroup[0].add(node)
         } else {
-          nodeGroups.add(mutableSetOf(node))
+          nodeGroups.add(mutableSetOf(node)) // it has no group yet, make a new one
         }
       }
     }

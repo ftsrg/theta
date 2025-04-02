@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerati
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 
+
 class TraceGenerationChecker<S : State, A : Action, P : Prec>(
   private val logger: Logger,
   private val abstractor: BasicArgAbstractor<S, A, P>,
@@ -78,14 +79,6 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     argTraces.forEach { trace -> summaryBuilder.addTrace(trace) }
     val traceSetSummary = summaryBuilder.build()
 
-    // filter 2, optional, to get full traces even where there is coverage
-    // why?: otherwise we stop at the leaf, which is covered in many traces by other nodes
-    traces = ArrayList(argTraces.stream().map { obj: ArgTrace<S, A> -> obj.toTrace() }.toList())
-
-    Preconditions.checkState(
-      traces.isNotEmpty(),
-      "Generated 0 traces, configuration should probably be adjusted",
-    )
     logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
     return TraceGenerationResult(traceSetSummary)
