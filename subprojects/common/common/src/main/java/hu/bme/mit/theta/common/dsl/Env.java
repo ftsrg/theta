@@ -94,7 +94,8 @@ public final class Env {
 
         public void define(final Symbol symbol, final Object value) {
             checkArgument(
-                    symbolToValue.get(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
+                    symbolToValue.get(symbol) == null,
+                    "Symbol " + symbol.getName() + " is already defined");
             symbolToValue.put(symbol, value);
         }
 
