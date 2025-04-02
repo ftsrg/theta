@@ -1111,7 +1111,7 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
         final FloatingPointType fpSort =
                 FloatingPointType.getFloatingPointType(
-                        expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
+                        expr.getFpType().getExponent(), expr.getFpType().getSignificand());
         return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
 

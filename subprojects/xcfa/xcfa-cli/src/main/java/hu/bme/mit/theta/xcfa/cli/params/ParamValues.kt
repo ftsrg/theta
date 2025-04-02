@@ -28,15 +28,13 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
+import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
-import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -126,6 +124,16 @@ enum class Domain(
         out Prec,
         out Refutation,
       >,
+  val varPrecRefiner:
+    (exprSplitter: ExprSplitter) -> PrecRefiner<
+        out ExprState,
+        out ExprAction,
+        out Prec,
+        out Refutation,
+      >? =
+    {
+      null
+    },
   val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
   val partialOrd: (Solver) -> PartialOrd<out PtrState<out ExprState>>,
   val nodePruner: NodePruner<out ExprState, out ExprAction>,
@@ -146,6 +154,11 @@ enum class Domain(
     itpPrecRefiner = {
       XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToExplPrec())
+      )
+    },
+    varPrecRefiner = {
+      XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, VarsRefutation>(
+        VarRefToPtrPrec(VarsRefToExplPrec())
       )
     },
     initPrec = { x, ip -> ip.explPrec(x) },
@@ -272,6 +285,12 @@ enum class Refinement(
   UNSAT_CORE(
     refiner = { s, _ ->
       ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
+    },
+    stopCriterion = StopCriterions.firstCex(),
+  ),
+  PROOF(
+    refiner = { s, _ ->
+      ExprTraceProofChecker.create(BoolExprs.True(), BoolExprs.True(), s.createSolver())
     },
     stopCriterion = StopCriterions.firstCex(),
   ),

@@ -115,7 +115,8 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                     new JavaSMTTermTransformer(symbolTable, context);
 
             final ProverEnvironment prover =
-                    context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
+                    context.newProverEnvironment(
+                            ProverOptions.GENERATE_MODELS, ProverOptions.GENERATE_PROOFS);
 
             return new JavaSMTSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);
@@ -216,7 +217,8 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                     new JavaSMTTermTransformer(symbolTable, context);
 
             final ProverEnvironment prover =
-                    context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
+                    context.newProverEnvironment(
+                            ProverOptions.GENERATE_MODELS, ProverOptions.GENERATE_PROOFS);
 
             return new JavaSMTHornSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);

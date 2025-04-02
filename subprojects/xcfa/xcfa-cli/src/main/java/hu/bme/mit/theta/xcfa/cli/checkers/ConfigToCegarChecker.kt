@@ -39,6 +39,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.params.Refinement.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -112,13 +113,22 @@ fun getCegarChecker(
     cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
       as ExprTraceChecker<Refutation>
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
-    cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter
-    ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+    when (cegarConfig.refinerConfig.refinement) {
+      UNSAT_CORE,
+      PROOF ->
+        cegarConfig.abstractorConfig.domain.varPrecRefiner(
+          cegarConfig.refinerConfig.exprSplitter.exprSplitter
+        )
+      else ->
+        cegarConfig.abstractorConfig.domain.itpPrecRefiner(
+          cegarConfig.refinerConfig.exprSplitter.exprSplitter
+        )
+    }
+      as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
   val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
-    if (cegarConfig.refinerConfig.refinement == Refinement.MULTI_SEQ)
+    if (cegarConfig.refinerConfig.refinement == MULTI_SEQ)
       if (cegarConfig.porLevel == POR.AASPOR)
         MultiExprTraceRefiner.create(
           ref,

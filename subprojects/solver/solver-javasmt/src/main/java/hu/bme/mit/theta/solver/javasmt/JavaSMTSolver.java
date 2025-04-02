@@ -17,6 +17,9 @@ package hu.bme.mit.theta.solver.javasmt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -33,10 +36,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import java.util.Collection;
 import java.util.Collections;
@@ -233,6 +233,34 @@ class JavaSMTSolver implements UCSolver, Solver {
     @Override
     public ImmutableMap<String, String> getStatistics() {
         return solver.getStatistics();
+    }
+
+    private Expr<BoolType> toExpr(Formula f) {
+        if (f.toString().matches("query!([0-9]+)")) { // z3 query![0-9]+
+            return False();
+        }
+        final var e = termTransformer.toExpr(f);
+        return cast(e, Bool());
+    }
+
+    @Override
+    public ProofNode getProof() {
+        try {
+            var proof = solver.getProof();
+
+            return toProof(proof).build();
+
+        } catch (SolverException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ProofNode.Builder toProof(org.sosy_lab.java_smt.api.proofs.ProofNode proof) {
+        var builder = new ProofNode.Builder(toExpr(proof.getFormula()));
+        for (org.sosy_lab.java_smt.api.proofs.ProofNode child : proof.getChildren()) {
+            builder.addChild(toProof(child));
+        }
+        return builder;
     }
 
     ////

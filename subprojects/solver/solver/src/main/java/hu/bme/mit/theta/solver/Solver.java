@@ -46,4 +46,8 @@ public interface Solver extends SolverBase {
             add(assertion);
         }
     }
+
+    default ProofNode getProof() {
+        throw new UnsupportedOperationException("Cannot get proof");
+    }
 }
