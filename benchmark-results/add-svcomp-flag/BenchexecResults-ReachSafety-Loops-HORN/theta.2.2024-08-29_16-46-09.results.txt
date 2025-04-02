@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Loops, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-08-29 16:46:09 UTC
+tool:                    Theta 6.5.2
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az573-274
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3280.136 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Loops
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                             status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------
+nla-digbench/ps3-ll.yml                               TIMEOUT                         20.59       17.07        None
+loop-crafted/simple_vardep_2.yml                      true                             7.38        4.40        None
+nla-digbench-scaling/divbin_valuebound100.yml         TIMEOUT                         20.92       16.02        None
+nla-digbench-scaling/mannadiv_valuebound50.yml        TIMEOUT                         20.86       16.20        None
+nla-digbench-scaling/mannadiv_unwindbound10.yml       TIMEOUT                         20.75       16.59        None
+loops-crafted-1/nested3-1_abstracted.yml              TIMEOUT                         20.88       16.16        None
+nla-digbench-scaling/sqrt1-ll_valuebound2.yml         TIMEOUT                         20.90       16.10        None
+loop-acceleration/nested_1-2.yml                      TIMEOUT                         20.69       16.78        None
+nla-digbench-scaling/hard-ll_valuebound2.yml          TIMEOUT                         20.79       16.47        None
+loop-invgen/down.yml                                  TIMEOUT                         20.68       16.81        None
+nla-digbench-scaling/geo2-ll_valuebound2.yml          TIMEOUT                         20.82       16.36        None
+nla-digbench-scaling/geo3-ll_valuebound1.yml          TIMEOUT                         20.80       16.44        None
+nla-digbench-scaling/ps2-ll_valuebound10.yml          TIMEOUT                         20.77       16.52        None
+nla-digbench-scaling/ps2-ll_valuebound5.yml           TIMEOUT                         20.69       16.77        None
+nla-digbench-scaling/prodbin-ll_unwindbound10.yml     TIMEOUT                         20.81       16.40        None
+loop-zilu/benchmark43_conjunctive.yml                 true                             6.14        2.95        None
+nla-digbench-scaling/bresenham-ll_valuebound20.yml    TIMEOUT                         20.79       16.47        None
+loops/trex03-2_abstracted.yml                         TIMEOUT                         22.47       10.41        None
+loops-crafted-1/vnew2.yml                             TIMEOUT                         20.67       16.82        None
+loop-acceleration/array_2-1-simple.yml                Parsing OK                      11.29        5.35        None
+loops-crafted-1/nested3-2_abstracted.yml              false(unreach-call)              6.05        2.97        None
+nla-digbench-scaling/hard-u_valuebound2.yml           TIMEOUT                         20.98       15.84        None
+loop-lit/gj2007.yml                                   TIMEOUT                         20.66       16.89        None
+nla-digbench-scaling/ps6-ll_unwindbound2.yml          TIMEOUT                         20.78       16.48        None
+nla-digbench-scaling/divbin2_valuebound5.yml          TIMEOUT                         20.80       16.40        None
+loop-zilu/benchmark19_conjunctive.yml                 true                             6.32        2.98        None
+loop-acceleration/overflow_1-1.yml                    true                             8.56        5.60        None
+nla-digbench-scaling/knuth_valuebound100.yml          TIMEOUT (Parsing OK)            20.18        9.55        None
+nla-digbench-scaling/egcd2-ll_unwindbound20.yml       TIMEOUT                         20.35       14.00        None
+nla-digbench-scaling/sqrt1-ll_unwindbound2.yml        true                            14.88        6.71        None
+nla-digbench/hard2.yml                                TIMEOUT                         20.82       16.37        None
+nla-digbench-scaling/lcm2_valuebound100.yml           TIMEOUT                         20.05       14.64        None
+nla-digbench-scaling/prod4br-ll_valuebound100.yml     TIMEOUT                         20.99       15.80        None
+nla-digbench-scaling/knuth_valuebound5.yml            TIMEOUT (Parsing OK)            20.42       10.03        None
+nla-digbench-scaling/lcm1_valuebound1.yml             true                             9.53        4.17        None
+nla-digbench-scaling/cohendiv-ll_unwindbound20.yml    TIMEOUT                         20.07       14.60        None
+loop-simple/nested_1.yml                              true                             5.42        2.79        None
+loop-invariants/linear-inequality-inv-a.yml           TIMEOUT                         20.86       16.24        None
+nla-digbench-scaling/egcd3-ll_unwindbound1.yml        false(unreach-call)             10.31        4.57        None
+loop-lit/gj2007.c.i.p+lhb-reducer.yml                 true                            17.57       13.76        None
+loop-zilu/benchmark02_linear_abstracted.yml           true                             6.23        2.80        None
+nla-digbench-scaling/ps6-ll_unwindbound100.yml        TIMEOUT                         20.79       16.45        None
+nla-digbench-scaling/geo2-ll_unwindbound20.yml        TIMEOUT                         20.57       13.53        None
+nla-digbench-scaling/knuth_unwindbound50.yml          Parsing OK                      19.51        9.54        None
+nla-digbench-scaling/egcd2-ll_valuebound10.yml        TIMEOUT                         20.26       14.18        None
+nla-digbench-scaling/prodbin-ll_unwindbound5.yml      TIMEOUT                         20.78       16.48        None
+nla-digbench-scaling/ps4-ll_unwindbound1.yml          false(unreach-call)              6.55        3.06        None
+nla-digbench-scaling/prodbin-ll_unwindbound20.yml     TIMEOUT                         20.75       16.58        None
+nla-digbench-scaling/ps2-ll_valuebound1.yml           TIMEOUT                         20.71       16.70        None
+nla-digbench-scaling/geo2-ll_valuebound100.yml        TIMEOUT                         20.77       16.49        None
+-------------------------------------------------------------------------------------------------------------------
+Run set 1                                             done                           164.59      655.12           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:              12
+    correct true:        9
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              38
+  Score:                21 (max: 88)

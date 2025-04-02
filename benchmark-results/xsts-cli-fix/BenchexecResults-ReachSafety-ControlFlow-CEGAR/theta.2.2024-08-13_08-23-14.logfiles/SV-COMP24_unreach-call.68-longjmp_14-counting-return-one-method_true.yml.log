@@ -1,0 +1,14 @@
+Theta/theta-start.sh sv-benchmarks/c/longjmp/68-longjmp_14-counting-return-one-method_true.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64 --portfolio CEGAR --input sv-benchmarks/c/longjmp/68-longjmp_14-counting-return-one-method_true.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/longjmp/68-longjmp_14-counting-return-one-method_true.i as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+Frontend failed! (hu.bme.mit.theta.c2xcfa.FrontendXcfaBuilder.buildXcfa(FrontendXcfaBuilder.kt:97), java.lang.IllegalStateException: Not handling init expression of struct array struct *my_jump_buffer)

@@ -1,0 +1,17 @@
+theta/theta-start.sh sv-benchmarks/c/array-crafted/mapavg4.i --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/theta/theta.jar --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --input sv-benchmarks/c/array-crafted/mapavg4.i --smt-home /home/runner/work/theta/theta/theta/solvers
+Arithmetic: [NONLIN_INT, ARR]
+Portfolio 'COMPLEX' could not be executed.
+java.lang.IllegalStateException: Unknown trait!
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt.complexPortfolio24$getStm(complex24.kt:369)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt.complexPortfolio24(complex24.kt:379)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.runPortfolio(XcfaCli.kt:372)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:262)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:82)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:609)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)

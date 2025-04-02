@@ -1,0 +1,76 @@
+Theta/theta-start.sh sv-benchmarks/c/ldv-regression/test09.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --input sv-benchmarks/c/ldv-regression/test09.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/ldv-regression/test09.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: []
+Frontend finished:   (in 267 ms)
+ParsingResult Success
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio LIN_INT
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, loopUnroll=50, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using CEGAR
+server: line 1:12 token recognition error at: '&'
+server: Could not parse (assign p1 (& a))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@76a4d6c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@41d477ed, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@3590fc5b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@397fbdb, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@36fc695d, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@1fc32e4f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@6cce16f4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@42f22995, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@693e4d19, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@7d9ba6c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x000013d9fc097a48@8deb645) }
+server: env: Env( (Frame a <- (var a Int) b <- (var b Int) p1 <- (var p1 Int) p2 <- (var p2 Int) memory_Int <- (var memory_Int (Array ([Int] -> Int))) reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) f_ret <- (var f_ret Int) f::v <- (var f::v Int) main_ret <- (var main_ret Int) call_f_ret1 <- (var call_f_ret1 Int)) )
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException: line 1:12 token recognition error at: '&'
+server: 	at hu.bme.mit.theta.grammar.ThrowingErrorListener.syntaxError(Utils.kt:38)
+server: 	at org.antlr.v4.runtime.ProxyErrorListener.syntaxError(ProxyErrorListener.java:41)
+server: 	at org.antlr.v4.runtime.Lexer.notifyListeners(Lexer.java:364)
+server: 	at org.antlr.v4.runtime.Lexer.nextToken(Lexer.java:144)
+server: 	at org.antlr.v4.runtime.BufferedTokenStream.fetch(BufferedTokenStream.java:169)
+server: 	at org.antlr.v4.runtime.BufferedTokenStream.sync(BufferedTokenStream.java:152)
+server: 	at org.antlr.v4.runtime.BufferedTokenStream.consume(BufferedTokenStream.java:136)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:537)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.funcLitExpr(StmtParser.java:665)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.expr(StmtParser.java:537)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.assignStmt(StmtParser.java:385)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.StmtParser.stmt(StmtParser.java:205)
+server: 	at hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper.<init>(StmtParser.kt:52)
+server: 	at hu.bme.mit.theta.xcfa.model.StmtLabel$Companion.fromString(XcfaLabel.kt:153)
+server: 	... 28 more
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115), ErrorCodeException(code=1))

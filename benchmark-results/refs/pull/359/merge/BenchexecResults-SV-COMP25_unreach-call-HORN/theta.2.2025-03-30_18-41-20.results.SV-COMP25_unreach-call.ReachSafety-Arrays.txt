@@ -1,0 +1,35 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Arrays
+date:                    Sun, 2025-03-30 18:41:20 UTC
+tool:                    Theta 6.12.1
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1278-715
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3238.22 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Arrays
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                            status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------
+array-examples/data_structures_set_multi_proc_ground-1.yml           ERROR (server error, after parsing finished)       16.95        8.11        None
+array-examples/data_structures_set_multi_proc_ground-2.yml           ERROR (server error, after parsing finished)       15.72        7.79        None
+array-examples/data_structures_set_multi_proc_trivial_ground.yml     ERROR (server error, after parsing finished)       16.52        8.46        None
+array-examples/relax-2-2.yml                                         ERROR (server error, after parsing finished)       24.10       10.24        None
+array-examples/sanfoundry_02_ground.yml                              ERROR (server error, after parsing finished)       17.86        8.02        None
+array-examples/sanfoundry_10_ground.yml                              ERROR (server error, after parsing finished)       15.86        7.62        None
