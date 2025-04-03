@@ -131,7 +131,7 @@ class MetaSolver implements  Solver {
 
         int i = 0;
         for (Expr<BoolType> assertion : assertions) {
-            if (pushes.contains(i)) solver.push();
+            if (pushes.contains(i++)) solver.push();
             solver.add(assertion);
         }
     }
