@@ -25,7 +25,9 @@ import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -36,6 +38,7 @@ class MetaSolver implements  Solver {
     private final Solver z3 = Z3SolverFactory.getInstance().createSolver();
     private final Solver z3Legacy = Z3LegacySolverFactory.getInstance().createSolver();
     private final Stack<Expr<BoolType>> assertions = new StackImpl<>();
+    private final List<Integer> pushes = new ArrayList<>();
 
     MetaSolver() {
         solver = z3Legacy;
@@ -47,7 +50,7 @@ class MetaSolver implements  Solver {
         try {
             solver.add(assertion);
         }
-        catch (Exception e) {
+        catch (Exception|Error e) {
             switchSolvers();
         }
 
@@ -58,7 +61,7 @@ class MetaSolver implements  Solver {
         try {
             return solver.check();
         }
-        catch (Exception e) {
+        catch (Exception|Error e) {
             switchSolvers();
             return check();
         }
@@ -66,12 +69,18 @@ class MetaSolver implements  Solver {
 
     @Override
     public void push() {
+        assertions.push();
+        pushes.add(assertions.toCollection().size());
         solver.push();
     }
 
     @Override
     public void pop(int n) {
+        assertions.pop(n);
         solver.pop(n);
+        for (int i = 0; i < n; i++) {
+            pushes.remove(pushes.size() - 1);
+        }
     }
 
     @Override
@@ -86,8 +95,9 @@ class MetaSolver implements  Solver {
         try {
             return solver.getStatus();
         }
-        catch (Exception e) {
+        catch (Exception|Error e) {
             switchSolvers();
+            check();
             return getStatus();
         }
     }
@@ -97,7 +107,7 @@ class MetaSolver implements  Solver {
         try {
             return solver.getModel();
         }
-        catch (Exception e) {
+        catch (Exception|Error e) {
             switchSolvers();
             return getModel();
         }
@@ -118,7 +128,10 @@ class MetaSolver implements  Solver {
         checkState(solver != z3, "Metasolver has cycled through all of its solvers.");
 
         solver = z3;
+
+        int i = 0;
         for (Expr<BoolType> assertion : assertions) {
+            if (pushes.contains(i)) solver.push();
             solver.add(assertion);
         }
     }
