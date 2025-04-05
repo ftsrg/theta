@@ -54,8 +54,9 @@ class DoubleEndNodeRemover<S : State, A : Action> {
         var line: String? = null
         try {
           while ((bufReader.readLine().also { line = it }) != null) {
-            if (line!!.trim { it <= ' ' }.matches("^.*\\(__id_.*__.*\\strue\\).*$".toRegex()))
+            if (line!!.trim { it <= ' ' }.matches("^.*\\(__id_.*__.*\\strue\\).*$".toRegex())) {
               transitionFired = true
+            }
           }
         } catch (e: IOException) {
           e.printStackTrace()
@@ -72,7 +73,7 @@ class DoubleEndNodeRemover<S : State, A : Action> {
 
     /**
      * Mainly of use for XSTS! Collecting nodes that look like there should be traces to it, but
-     * shouldn't ("not firing anything" nodes) This should most likely note come up with other
+     * shouldn't ("not firing anything" nodes) This should most likely not come up with other
      * formalisms. This removal is executed on them anyways.
      */
     fun <S : State, A : Action> collectBadLeaves(arg: ARG<S, A>): List<ArgNode<S, A>> {

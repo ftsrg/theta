@@ -88,7 +88,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     badNodes: List<ArgNode<S, A>>,
   ): List<ArgNode<S, A>> {
     val filteredEndNodes: MutableList<ArgNode<S, A>> =
-      ArrayList() // leaves that are not "bad nodes" or bad nodes' grandparents
+      ArrayList() // leaves that are not "bad nodes" or that are bad nodes' grandparents
     endNodes.forEach(
       Consumer { endNode: ArgNode<S, A> ->
         if (badNodes.contains(endNode)) {
@@ -97,8 +97,15 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
             val grandParent = endNode.parent.get().parent.get()
             // If the parent & grandparent (same state as the bad node) has no other successors,
             // the grandparent is the "new leaf"
-            // if there are successors, there is no real leaf here
-            if (grandParent.outEdges.count() == 1L && parent.outEdges.count() == 1L) {
+            // if there are other successors, there is no real leaf here
+            val goodGrandparentSuccessors =
+              grandParent.outEdges
+                .flatMap { it.target.outEdges }
+                .filter { !badNodes.contains(it.target) }
+                .count()
+            val goodParentSuccessors =
+              parent.outEdges.filter { !badNodes.contains(it.target) }.count()
+            if (goodGrandparentSuccessors == 0L && goodParentSuccessors == 0L) {
               filteredEndNodes.add(grandParent)
             }
           } else {
