@@ -50,4 +50,13 @@ public interface SolverFactory {
     default HornSolver createHornSolver() {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * Create a solver that is capable of horn solving (CHC).
+     *
+     * @return Solver instance
+     */
+    default HornItpSolver createHornItpSolver() {
+        return new HornItpSolver(createSolver(), createHornSolver());
+    }
 }

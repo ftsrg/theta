@@ -29,6 +29,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.solver.HornItpSolver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
@@ -66,8 +67,22 @@ fun getBoundedChecker(
         bmcEnabled = { !boundedConfig.bmcConfig.disable },
         lfPathOnly = { !nonlfPath },
         itpSolver =
-          tryGetSolver(boundedConfig.itpConfig.itpSolver, boundedConfig.itpConfig.validateItpSolver)
-            ?.createItpSolver(),
+          if (boundedConfig.itpConfig.horn)
+            HornItpSolver(
+              /* solver = */ tryGetSolver(
+                  boundedConfig.itpConfig.itpSolver,
+                  boundedConfig.itpConfig.validateItpSolver,
+                )
+                ?.createSolver(),
+              /* hornSolver = */ tryGetSolver(boundedConfig.itpConfig.hornSolver, false)
+                ?.createHornSolver(),
+            )
+          else
+            tryGetSolver(
+                boundedConfig.itpConfig.itpSolver,
+                boundedConfig.itpConfig.validateItpSolver,
+              )
+              ?.createItpSolver(),
         imcEnabled = { !boundedConfig.itpConfig.disable },
         indSolver =
           tryGetSolver(boundedConfig.indConfig.indSolver, boundedConfig.indConfig.validateIndSolver)

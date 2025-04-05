@@ -392,6 +392,13 @@ data class InterpolationConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateItpSolver: Boolean = false,
+  @Parameter(names = ["--horn"], description = "Use a CHC solver for the interpolation")
+  var horn: Boolean = false,
+  @Parameter(
+    names = ["--chc-solver", "--horn-solver"],
+    description = "Horn solver name for interpolation",
+  )
+  var hornSolver: String = "Z3:4.13",
 ) : Config
 
 data class OcConfig(
