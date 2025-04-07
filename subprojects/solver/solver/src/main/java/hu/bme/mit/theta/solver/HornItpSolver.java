@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import com.google.common.collect.Sets;
@@ -39,12 +40,12 @@ import java.util.*;
 public class HornItpSolver implements ItpSolver {
 
     private final Solver solver;
-    private final HornSolver hornSolver;
+    private final SolverFactory hornSolverFactory;
     private final Stack<HornItpMarker> markers;
 
-    public HornItpSolver(Solver solver, HornSolver hornSolver) {
+    public HornItpSolver(Solver solver, SolverFactory hornSolver) {
         this.solver = solver;
-        this.hornSolver = hornSolver;
+        this.hornSolverFactory = hornSolver;
         markers = new StackImpl<>();
     }
 
@@ -61,7 +62,9 @@ public class HornItpSolver implements ItpSolver {
 
     @Override
     public ItpMarker createMarker() {
-        return new HornItpMarker();
+        final var marker = new HornItpMarker();
+        markers.add(marker);
+        return marker;
     }
 
     @Override
@@ -158,25 +161,29 @@ public class HornItpSolver implements ItpSolver {
                                                 .getExpr()))
                         .not();
 
-                hornSolver.push();
-                hornSolver.add(a.get1());
-                hornSolver.add(b.get1());
-                hornSolver.add(itp);
-                final var status = hornSolver.check();
-                checkState(status.isSat(), "ITP task should be SAT");
-                Expr<?> itpSolution = hornSolver.getModel().toMap().get(itp.getConstDecl());
-                final var params = new ArrayList<ParamDecl<?>>();
-                while (itpSolution instanceof FuncLitExpr<?, ?> funcLitExpr) {
-                    params.add(funcLitExpr.getParam());
-                    itpSolution = funcLitExpr.getResult();
+                try (final var hornSolver = hornSolverFactory.createHornSolver()) {
+                    hornSolver.add(a.get1());
+                    hornSolver.add(b.get1());
+                    hornSolver.add(itp);
+                    final var status = hornSolver.check();
+                    checkState(
+                            status.isSat(),
+                            "ITP task should be SAT: " + List.of(a.get1(), b.get1(), itp));
+                    Expr<?> itpSolution = hornSolver.getModel().toMap().get(itp.getConstDecl());
+                    final var params = new ArrayList<ParamDecl<?>>();
+                    while (itpSolution instanceof FuncLitExpr<?, ?> funcLitExpr) {
+                        params.add(funcLitExpr.getParam());
+                        itpSolution = funcLitExpr.getResult();
+                    }
+                    final var declMap = new LinkedHashMap<Decl<?>, Decl<?>>();
+                    for (int i = 0; i < params.size(); i++) {
+                        declMap.put(params.get(i), commonSymbols[i]);
+                    }
+                    itpSolution = ExprUtils.changeDecls(itpSolution, declMap);
+                    return new HornInterpolant(Map.of(A, (Expr<BoolType>) itpSolution, B, False()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-                final var declMap = new LinkedHashMap<Decl<?>, Decl<?>>();
-                for (int i = 0; i < params.size(); i++) {
-                    declMap.put(params.get(i), commonSymbols[i]);
-                }
-                itpSolution = ExprUtils.changeDecls(itpSolution, declMap);
-                hornSolver.pop();
-                return new HornInterpolant(Map.of(A, (Expr<BoolType>) itpSolution, B, False()));
             }
 
             throw new UnsupportedOperationException(
@@ -200,7 +207,6 @@ public class HornItpSolver implements ItpSolver {
     @Override
     public void push() {
         solver.push();
-        hornSolver.push();
         markers.toCollection().forEach(HornItpMarker::push);
         markers.push();
     }
@@ -208,15 +214,13 @@ public class HornItpSolver implements ItpSolver {
     @Override
     public void pop(int n) {
         solver.pop(n);
-        hornSolver.pop(n);
-        markers.toCollection().forEach(it -> it.pop(n));
         markers.pop(n);
+        markers.toCollection().forEach(it -> it.pop(n));
     }
 
     @Override
     public void reset() {
         solver.reset();
-        hornSolver.reset();
         markers.clear();
     }
 
@@ -238,7 +242,6 @@ public class HornItpSolver implements ItpSolver {
     @Override
     public void close() throws Exception {
         solver.close();
-        hornSolver.close();
     }
 
     static final class HornItpMarker implements ItpMarker {
@@ -280,13 +283,8 @@ public class HornItpSolver implements ItpSolver {
                 declMap.put(symbols.get(i), params[i]);
             }
             Relation rel = new Relation(prefix, types);
-            currentTerms.forEach(
-                    it ->
-                            rel.invoke(
-                                            Arrays.stream(params)
-                                                    .map(Decl::getRef)
-                                                    .toArray(RefExpr[]::new))
-                                    .plusAssign(ExprUtils.changeDecls(it, declMap)));
+            rel.invoke(Arrays.stream(params).map(Decl::getRef).toArray(RefExpr[]::new))
+                    .plusAssign(ExprUtils.changeDecls(And(currentTerms), declMap));
 
             return Tuple2.of(rel, params);
         }

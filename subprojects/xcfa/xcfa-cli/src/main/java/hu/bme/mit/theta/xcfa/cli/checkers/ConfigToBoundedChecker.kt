@@ -74,8 +74,7 @@ fun getBoundedChecker(
                   boundedConfig.itpConfig.validateItpSolver,
                 )
                 ?.createSolver(),
-              /* hornSolver = */ tryGetSolver(boundedConfig.itpConfig.hornSolver, false)
-                ?.createHornSolver(),
+              /* hornSolver = */ tryGetSolver(boundedConfig.itpConfig.hornSolver, false),
             )
           else
             tryGetSolver(

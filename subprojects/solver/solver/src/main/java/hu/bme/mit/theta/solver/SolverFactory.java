@@ -57,6 +57,6 @@ public interface SolverFactory {
      * @return Solver instance
      */
     default HornItpSolver createHornItpSolver() {
-        return new HornItpSolver(createSolver(), createHornSolver());
+        return new HornItpSolver(createSolver(), this);
     }
 }
