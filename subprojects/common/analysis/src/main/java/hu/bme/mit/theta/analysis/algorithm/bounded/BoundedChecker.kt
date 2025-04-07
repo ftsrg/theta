@@ -98,7 +98,9 @@ constructor(
     iteration = 0
 
     val isBmcEnabled = bmcEnabled() // we don't allow per-iteration setting of bmc enabledness
-    bmcSolver?.add(unfoldedInitExpr)
+    if (isBmcEnabled) {
+      bmcSolver?.add(unfoldedInitExpr)
+    }
 
     while (!shouldGiveUp(iteration)) {
       iteration++
