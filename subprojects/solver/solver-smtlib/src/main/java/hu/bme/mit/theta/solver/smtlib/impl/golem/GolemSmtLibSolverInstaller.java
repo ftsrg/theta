@@ -73,8 +73,8 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://github.com/usi-verification-and-security/golem/releases/download/v%s/golem-%s-%s",
-                                version, version, archStr));
+                                "https://github.com/usi-verification-and-security/golem/releases/download/v%s/golem%s-%s",
+                                version, (version.equals("0.5.0") ? "-" + version : ""), archStr));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
@@ -94,7 +94,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {"--print-witness"};
+        return new String[] {"--print-witness", "--logic", "QF_LIA", "--engine=spacer"};
     }
 
     @Override
@@ -111,7 +111,7 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("0.5.0");
+        return Arrays.asList("0.5.0", "0.6.5");
     }
 
     private String getSolverBinaryName() {
