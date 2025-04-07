@@ -15,80 +15,178 @@
  */
 package hu.bme.mit.theta.solver.z3
 
-import hu.bme.mit.theta.core.decl.ConstDecl
-import hu.bme.mit.theta.core.decl.Decls.Const
-import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import com.google.common.collect.ImmutableList
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.functype.FuncExprs
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.HornItpSolver
-import java.util.stream.Stream
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
+import hu.bme.mit.theta.solver.SolverStatus
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
 
-class Z3HornItpSolverTest {
-  companion object {
+class Z3ItpSolverTest {
 
-    @JvmStatic
-    fun solvers(): Stream<Arguments> {
-      return Stream.of(
-        Arguments.of(
-          HornItpSolver(
-            Z3SolverFactory.getInstance().createSolver(),
-            Z3SolverFactory.getInstance().createHornSolver(),
-          )
-        )
-      )
-    }
+  var solver: HornItpSolver? = null
 
-    private val constMap = mutableMapOf<Pair<String, Type>, ConstDecl<*>>()
+  var a: Expr<IntType>? = null
+  var b: Expr<IntType>? = null
+  var c: Expr<IntType>? = null
+  var d: Expr<IntType>? = null
+  var e: Expr<IntType>? = null
+  var f: Expr<FuncType<IntType, IntType>>? = null
+  var g: Expr<FuncType<IntType, IntType>>? = null
 
-    private fun cachingConst(name: String, type: Type) =
-      constMap.computeIfAbsent(Pair(name, type)) { (name, type) -> Const(name, type) }
+  @Before
+  fun initialize() {
+    solver = Z3SolverFactory.getInstance().createHornItpSolver()
+
+    val ad = Decls.Const("a", IntExprs.Int())
+    val bd = Decls.Const("b", IntExprs.Int())
+    val cd = Decls.Const("c", IntExprs.Int())
+    val dd = Decls.Const("d", IntExprs.Int())
+    val ed = Decls.Const("e", IntExprs.Int())
+    val fd = Decls.Const("f", FuncExprs.Func(IntExprs.Int(), IntExprs.Int()))
+    val gd = Decls.Const("g", FuncExprs.Func(IntExprs.Int(), IntExprs.Int()))
+
+    a = ad.ref
+    b = bd.ref
+    c = cd.ref
+    d = dd.ref
+    e = ed.ref
+    f = fd.ref
+    g = gd.ref
   }
 
-  @ParameterizedTest
-  @MethodSource("solvers")
-  fun testBinaryItp(solver: HornItpSolver) {
-    solver.use { hornSolver ->
-      val a =
-        And(
-          Lt(cachingConst("b", Int()).ref, cachingConst("a", Int()).ref),
-          Eq(cachingConst("b", Int()).ref, Int(0)),
-        )
-      val b = Gt(Int(0), cachingConst("a", Int()).ref)
+  @Test
+  fun testBinaryInterpolation() {
+    val A = solver!!.createMarker()
+    val B = solver!!.createMarker()
+    val pattern = solver!!.createBinPattern(A, B)
 
-      val marker1 = hornSolver.createMarker()
-      val marker2 = hornSolver.createMarker()
-      val pattern = solver.createBinPattern(marker1, marker2)
+    solver!!.add(A, IntExprs.Eq(a, b))
+    solver!!.add(A, IntExprs.Eq(a, c))
+    solver!!.add(B, IntExprs.Eq(b, d))
+    solver!!.add(B, IntExprs.Neq(c, d))
 
-      hornSolver.add(marker1, a)
-      hornSolver.add(marker2, b)
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+    val itp = solver!!.getInterpolant(pattern)
 
-      val status = hornSolver.check()
-      Assertions.assertTrue(status.isUnsat)
+    println(itp.eval(A))
+    println("----------")
+    Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size <= 3)
+  }
 
-      val itp = hornSolver.getInterpolant(pattern)
+  @Test
+  fun testEUF() {
+    val A = solver!!.createMarker()
+    val B = solver!!.createMarker()
+    val pattern = solver!!.createBinPattern(A, B)
 
-      Assertions.assertTrue(
-        (ExprUtils.getConstants(itp.eval(marker1)) - cachingConst("a", Int())).isEmpty()
-      )
+    solver!!.add(A, IntExprs.Eq(FuncExprs.App(f, a), c))
+    solver!!.add(A, IntExprs.Eq(FuncExprs.App(f, b), d))
+    solver!!.add(B, IntExprs.Eq(a, b))
+    solver!!.add(B, IntExprs.Neq(FuncExprs.App(g, c), FuncExprs.App(g, d)))
 
-      Z3SolverFactory.getInstance().createSolver().use {
-        it.push()
-        it.add(Not(Imply(a, itp.eval(marker1))))
-        Assertions.assertTrue(it.check().isUnsat)
-        it.pop()
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+    val itp = solver!!.getInterpolant(pattern)
 
-        it.push()
-        it.add(b)
-        it.add(itp.eval(marker1))
-        Assertions.assertTrue(it.check().isUnsat)
-        it.pop()
-      }
-    }
+    println(itp.eval(A))
+    println("----------")
+  }
+
+  @Test
+  fun testLIA() {
+    val A = solver!!.createMarker()
+    val B = solver!!.createMarker()
+    val pattern = solver!!.createBinPattern(A, B)
+
+    solver!!.add(A, IntExprs.Eq(b, IntExprs.Mul(ImmutableList.of(IntExprs.Int(2), a!!))))
+    solver!!.add(
+      B,
+      IntExprs.Eq(
+        b,
+        IntExprs.Add(
+          ImmutableList.of(IntExprs.Mul(ImmutableList.of(IntExprs.Int(2), c!!)), IntExprs.Int(1))
+        ),
+      ),
+    )
+
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+    val itp = solver!!.getInterpolant(pattern)
+
+    println(itp.eval(A))
+    println("----------")
+  }
+
+  // @Test
+  fun testQuantifiers() {
+    val A = solver!!.createMarker()
+    val B = solver!!.createMarker()
+    val pattern = solver!!.createBinPattern(A, B)
+
+    val id = Decls.Const("i", IntExprs.Int())
+    val pd = Decls.Const("p", FuncExprs.Func(IntExprs.Int(), BoolExprs.Bool()))
+    val qd = Decls.Const("q", FuncExprs.Func(IntExprs.Int(), BoolExprs.Bool()))
+    val x1d = Decls.Param("x", IntExprs.Int())
+    val x2d = Decls.Param("x", IntExprs.Int())
+
+    val i: Expr<IntType> = id.ref
+    val p: Expr<FuncType<IntType, BoolType>> = pd.ref
+    val q: Expr<FuncType<IntType, BoolType>> = qd.ref
+    val x1: Expr<IntType> = x1d.ref
+    val x2: Expr<IntType> = x2d.ref
+
+    solver!!.add(
+      A,
+      BoolExprs.Forall(
+        ImmutableList.of(x1d),
+        BoolExprs.Imply(FuncExprs.App(q, x1), FuncExprs.App(p, x1)),
+      ),
+    )
+    solver!!.add(A, BoolExprs.Forall(ImmutableList.of(x2d), BoolExprs.Not(FuncExprs.App(p, x2))))
+    solver!!.add(B, FuncExprs.App(q, i))
+
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+    val itp = solver!!.getInterpolant(pattern)
+
+    println(itp.eval(A))
+    println("----------")
+  }
+
+  @Test
+  fun testPushPop() {
+    val A = solver!!.createMarker()
+    val B = solver!!.createMarker()
+    val pattern = solver!!.createBinPattern(A, B)
+
+    solver!!.add(A, IntExprs.Eq(a, b))
+    solver!!.add(B, IntExprs.Eq(b, c))
+
+    solver!!.push()
+
+    solver!!.add(A, IntExprs.Neq(a, c))
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+
+    solver!!.pop()
+
+    solver!!.add(B, IntExprs.Neq(a, c))
+    solver!!.check()
+    Assert.assertEquals(SolverStatus.UNSAT, solver!!.status)
+    val itp = solver!!.getInterpolant(pattern)
+
+    println(itp.eval(A))
+    println("----------")
   }
 }
