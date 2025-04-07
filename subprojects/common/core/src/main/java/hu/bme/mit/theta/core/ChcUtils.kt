@@ -58,6 +58,10 @@ open class Relation(val name: String, vararg paramTypes: Type) {
   open operator fun invoke(params: List<Expr<*>>) = RelationApp(this, params)
 
   open operator fun invoke(vararg params: Expr<*>) = RelationApp(this, params.toList())
+
+  override fun toString(): String {
+    return rules.joinToString("\n")
+  }
 }
 
 data class RelationApp(
@@ -121,6 +125,10 @@ data class Rule(val head: Expr<BoolType>, val constraints: List<Expr<BoolType>>)
     } else {
       head
     }
+  }
+
+  override fun toString(): String {
+    return constraints.joinToString("\n\n") { "$head :- \n\t$it" }
   }
 }
 
