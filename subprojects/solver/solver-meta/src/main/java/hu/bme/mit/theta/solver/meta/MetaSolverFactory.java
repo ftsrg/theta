@@ -51,7 +51,7 @@ public final class MetaSolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        throw new UnsupportedOperationException();
+        return new MetaItpSolver();
     }
 
     public HornSolver createHornSolver() {
