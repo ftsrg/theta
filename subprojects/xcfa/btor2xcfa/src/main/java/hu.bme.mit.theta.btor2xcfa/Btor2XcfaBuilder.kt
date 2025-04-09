@@ -83,6 +83,7 @@ object Btor2XcfaBuilder{
         procBuilder.createErrorLoc()
         // Errorkezelése
         // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
+        //Több bad? Megkeressük az utolsó opeationt a bad előtt ás ha van Locja akkor abba belekötjük?
         val bad = Btor2Circuit.properties.values.first()
 
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))

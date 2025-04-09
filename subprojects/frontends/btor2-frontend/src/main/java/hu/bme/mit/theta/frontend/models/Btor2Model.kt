@@ -33,9 +33,6 @@ public interface Btor2NodeVisitor<R, P> {
     fun visit(node: Btor2Init, param: P) : R
     fun visit(node: Btor2Next, param: P) : R
     fun visit(node: Btor2Bad, param: P) : R
-    fun visit(node: Btor2Constraint, param: P) : R
-    fun visit(node: Btor2Fair, param: P) : R
-    fun visit(node: Btor2Output, param: P) : R
 }
 
 
