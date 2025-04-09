@@ -34,7 +34,10 @@ import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,7 +63,10 @@ public class MetaSolverTest {
 
     @Before
     public void setup() {
-        solver = MetaSolverFactory.getInstance().createSolver();
+        solver = new MetaSolverFactory(List.of(
+                    Z3SolverFactory.getInstance(),
+                    Z3LegacySolverFactory.getInstance()))
+                .createSolver();
     }
 
     @Test

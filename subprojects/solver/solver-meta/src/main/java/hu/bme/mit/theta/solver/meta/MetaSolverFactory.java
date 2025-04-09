@@ -22,26 +22,26 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class MetaSolverFactory implements SolverFactory {
 
-    private static final MetaSolverFactory INSTANCE;
+    private final List<SolverFactory> solverFactories;
 
-    static {
-
-        INSTANCE = new MetaSolverFactory();
+    public MetaSolverFactory(List<SolverFactory > solverFactories) {
+        this.solverFactories = solverFactories;
     }
 
-    private MetaSolverFactory() {}
-
-    public static MetaSolverFactory getInstance() {
-        return INSTANCE;
-    }
 
 
     @Override
     public Solver createSolver() {
-
-        return new MetaSolver();
+        List<Solver> solvers = new ArrayList<>(solverFactories.size());
+        for (SolverFactory solverFactory : solverFactories) {
+            solvers.add(solverFactory.createSolver());
+        }
+        return new MetaSolver(solvers);
     }
 
     @Override

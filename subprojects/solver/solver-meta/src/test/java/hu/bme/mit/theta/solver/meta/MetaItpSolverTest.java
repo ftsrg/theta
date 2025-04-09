@@ -24,9 +24,13 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
@@ -50,7 +54,10 @@ public final class MetaItpSolverTest {
 
     @Before
     public void initialize() {
-        solver = MetaSolverFactory.getInstance().createItpSolver();
+        solver = new MetaSolverFactory(List.of(
+                    Z3SolverFactory.getInstance(),
+                    Z3LegacySolverFactory.getInstance()))
+                .createItpSolver();
 
         final ConstDecl<IntType> ad = Const("a", Int());
         final ConstDecl<IntType> bd = Const("b", Int());

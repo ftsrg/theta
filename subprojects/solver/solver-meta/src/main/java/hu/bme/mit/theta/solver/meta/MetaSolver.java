@@ -22,8 +22,6 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,13 +33,14 @@ import static com.google.common.base.Preconditions.checkState;
 class MetaSolver implements  Solver {
 
     private Solver solver;
-    private final Solver z3 = Z3SolverFactory.getInstance().createSolver();
-    private final Solver z3Legacy = Z3LegacySolverFactory.getInstance().createSolver();
+    private final List<Solver> solvers;
+    private int currentSolverIndex = 0;
     private final Stack<Expr<BoolType>> assertions = new StackImpl<>();
     private final List<Integer> pushes = new ArrayList<>();
 
-    MetaSolver() {
-        solver = z3Legacy;
+    MetaSolver(List<Solver> solvers) {
+        this.solvers = solvers;
+        solver = solvers.get(currentSolverIndex);
     }
 
     @Override
@@ -85,9 +84,11 @@ class MetaSolver implements  Solver {
 
     @Override
     public void reset() {
-        z3.reset();
-        z3Legacy.reset();
-        solver = z3Legacy;
+        for (Solver s : solvers) {
+            s.reset();
+        }
+        currentSolverIndex = 0;
+        solver = solvers.get(currentSolverIndex);
     }
 
     @Override
@@ -120,14 +121,15 @@ class MetaSolver implements  Solver {
 
     @Override
     public void close() throws Exception {
-        z3.close();
-        z3Legacy.close();
+        for (Solver s : solvers) {
+            s.close();
+        }
     }
 
     private void switchSolvers() {
-        checkState(solver != z3, "Metasolver has cycled through all of its solvers.");
+        checkState(currentSolverIndex != solvers.size(), "Metasolver has cycled through all of its solvers.");
 
-        solver = z3;
+        solver = solvers.get(++currentSolverIndex);
 
         int i = 0;
         for (Expr<BoolType> assertion : assertions) {
