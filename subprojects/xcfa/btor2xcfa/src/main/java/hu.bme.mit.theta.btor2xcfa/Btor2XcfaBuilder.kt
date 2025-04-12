@@ -12,7 +12,7 @@ import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.models.Btor2Operation
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-
+// TODO: check h növekvő sorrendben jöjjenek, főleg az opsban
 object Btor2XcfaBuilder{
     fun btor2xcfa(circuit: Btor2Circuit) : XCFA {
         var i : Int = 1
@@ -83,7 +83,8 @@ object Btor2XcfaBuilder{
         procBuilder.createErrorLoc()
         // Errorkezelése
         // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
-        //Több bad? Megkeressük az utolsó opeationt a bad előtt ás ha van Locja akkor abba belekötjük?
+        // Több bad? Megkeressük az utolsó opeationt a bad előtt ás ha van Locja akkor abba belekötjük?
+        // CSak egy lesz -> Legyen hiba ha több a bad
         val bad = Btor2Circuit.properties.values.first()
 
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))

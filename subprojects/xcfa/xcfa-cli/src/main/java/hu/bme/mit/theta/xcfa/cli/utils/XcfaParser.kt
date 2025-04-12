@@ -95,6 +95,10 @@ fun getXcfa(
           }
         }
       }
+
+      InputType.BTOR2 -> {
+        TODO("Not yet implemented")
+      }
     }
   } catch (e: Exception) {
     if (config.debugConfig.stacktrace) e.printStackTrace()
@@ -220,4 +224,8 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun parseBTOR2(input: File) : XCFA {
+  TODO("Not yet implemented")
 }
