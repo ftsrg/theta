@@ -50,6 +50,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
             }
         }
         var node = Btor2Const(nid, value, sort)
+        Btor2Circuit.constants[nid] = node
         Btor2Circuit.nodes[nid] = node
         return node
     }

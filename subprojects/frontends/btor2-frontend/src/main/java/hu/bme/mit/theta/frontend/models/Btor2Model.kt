@@ -19,7 +19,7 @@ package hu.bme.mit.theta.frontend.models
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 
-public interface Btor2NodeVisitor<R, P> {
+interface Btor2NodeVisitor<R, P> {
     fun visit(node: Btor2UnaryOperation, param: P) : R
     fun visit(node: Btor2BinaryOperation, param: P) : R
     fun visit(node: Btor2TernaryOperation, param: P) : R

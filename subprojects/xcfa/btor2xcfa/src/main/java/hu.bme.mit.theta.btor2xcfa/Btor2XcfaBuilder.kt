@@ -12,9 +12,19 @@ import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.models.Btor2Operation
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-// TODO: check h növekvő sorrendben jöjjenek, főleg az opsban
 object Btor2XcfaBuilder{
     fun btor2xcfa(circuit: Btor2Circuit) : XCFA {
+    // checks fontos: nodes, ops, properties csak 1 legyen
+        check(Btor2Circuit.properties.size == 1, { "More than 1 bad isn't allowed" })
+        val ops = Btor2Circuit.ops.values.toList()
+        for(i in 1 until ops.size) {
+            check(ops[i].nid > ops[i - 1].nid, { "Ops are not in increasing order" })
+        }
+        val nodes = Btor2Circuit.nodes.values.toList()
+        for(i in 1 until nodes.size) {
+            check(nodes[i].nid > nodes[i - 1].nid, { "Nodes are not in increasing order" })
+        }
+
         var i : Int = 1
         val xcfaBuilder = XcfaBuilder("Btor2XCFA")
         val procBuilder = XcfaProcedureBuilder("main", Btor2Pass())
@@ -37,9 +47,7 @@ object Btor2XcfaBuilder{
                 if(varDecl.name.startsWith(("init_"))){
                     val edge = XcfaEdge(lastLoc,newLoc, StmtLabel(AssignStmt.of(it.value.state?.getVar(), it.value.value?.getExpr() as Expr<BvType>)), EmptyMetaData)
                     procBuilder.addEdge(edge)
-
                     // Amit tudunk 1 élre helyezzük, tehát az első élen vannak az initek
-                    //lastLoc=loc
                 }
             }
         }
@@ -66,10 +74,6 @@ object Btor2XcfaBuilder{
 /////////////////////////////////////////////
         // Végigmegyünk az operationökön
 
-        // Check: Kigyűjtöm a feldolgozott node idkat akár itt v korábban,,
-        // Megfelelő sorrendben kell belerakni
-        // Gyors check h feldolgozotak között van e és hibával elszállunk ha nem
-        // az operandusainak a nid-jeire kell a check
         Btor2Circuit.ops.forEach() {
             val loc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
 
@@ -83,7 +87,6 @@ object Btor2XcfaBuilder{
         procBuilder.createErrorLoc()
         // Errorkezelése
         // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
-        // Több bad? Megkeressük az utolsó opeationt a bad előtt ás ha van Locja akkor abba belekötjük?
         // CSak egy lesz -> Legyen hiba ha több a bad
         val bad = Btor2Circuit.properties.values.first()
 
