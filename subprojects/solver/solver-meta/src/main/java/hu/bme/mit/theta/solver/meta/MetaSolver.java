@@ -128,7 +128,11 @@ class MetaSolver implements  Solver {
 
     private void switchSolvers() {
         checkState(currentSolverIndex != solvers.size(), "Metasolver has cycled through all of its solvers.");
-
+        try {
+            solver.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         solver = solvers.get(++currentSolverIndex);
 
         int i = 0;
