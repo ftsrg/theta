@@ -15,15 +15,21 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
+import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
+import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
+import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -34,6 +40,7 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import org.antlr.v4.runtime.BailErrorStrategy
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -42,6 +49,7 @@ import javax.script.ScriptEngineManager
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
 fun getXcfa(
   config: XcfaConfig<*, *>,
@@ -97,7 +105,11 @@ fun getXcfa(
       }
 
       InputType.BTOR2 -> {
-        TODO("Not yet implemented")
+        parseBTOR2(
+            config.inputConfig.input!!,
+            logger,
+            uniqueWarningLogger,
+        )
       }
     }
   } catch (e: Exception) {
@@ -226,6 +238,25 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseBTOR2(input: File) : XCFA {
-  TODO("Not yet implemented")
+private fun parseBTOR2(
+    input: File,
+    logger: Logger,
+    uniqueWarningLogger: Logger
+) : XCFA {
+  val visitor = Btor2Visitor()
+  val btor2File = input
+
+  val input = btor2File.readLines().joinToString("\n")
+  val cinput = CharStreams.fromString(input)
+  val lexer = Btor2Lexer(cinput)
+  val tokens = CommonTokenStream(lexer)
+  val parser = Btor2Parser(tokens)
+  parser.errorHandler = BailErrorStrategy()
+  val context = parser.btor2()
+
+  context.accept(visitor)
+
+  val xcfa = Btor2XcfaBuilder.btor2xcfa(Btor2Circuit)
+  logger.write( Logger.Level.VERBOSE, "XCFA built, result: " + xcfa.toDot() + "\n")
+  return xcfa
 }

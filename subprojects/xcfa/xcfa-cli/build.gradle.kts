@@ -46,6 +46,8 @@ dependencies {
     implementation(files(rootDir.resolve(Deps.z3legacy)))
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
+    implementation(project(mapOf("path" to ":theta-btor2-frontend")))
+    implementation(project(mapOf("path" to ":theta-btor2xcfa")))
     testImplementation(kotlin("script-runtime"))
 }
 
