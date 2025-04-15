@@ -28,7 +28,7 @@ object Btor2XcfaBuilder{
         var i : Int = 1
         val xcfaBuilder = XcfaBuilder("Btor2XCFA")
         val procBuilder = XcfaProcedureBuilder("main", Btor2Pass())
-        xcfaBuilder.addProcedure(procBuilder)
+        xcfaBuilder.addEntryPoint(procBuilder, emptyList())
         procBuilder.createInitLoc()
 
         Btor2Circuit.nodes.forEach() {
