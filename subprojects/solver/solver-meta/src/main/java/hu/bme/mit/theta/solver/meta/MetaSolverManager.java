@@ -19,7 +19,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class MetaSolverManager extends SolverManager {
@@ -43,7 +47,9 @@ public final class MetaSolverManager extends SolverManager {
     @Override
     public SolverFactory getSolverFactory(final String name) {
         checkArgument(NAME.equals(name));
-        return new ManagedFactory(MetaSolverFactory.getInstance());
+        return new ManagedFactory(new MetaSolverFactory(List.of(
+                Z3LegacySolverFactory.getInstance(),
+                Z3SolverFactory.getInstance())));
     }
 
     @Override
