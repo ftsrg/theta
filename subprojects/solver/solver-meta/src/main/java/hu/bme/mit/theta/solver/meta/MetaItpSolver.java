@@ -21,25 +21,30 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 final class MetaItpSolver implements ItpSolver, Solver {
     private ItpSolver solver;
-    private final ItpSolver z3Legacy = Z3LegacySolverFactory.getInstance().createItpSolver();
-    private final ItpSolver z3 = Z3SolverFactory.getInstance().createItpSolver();
+    private final List<ItpSolver> solvers;
+    private int currentSolverIndex = 0;
     private final Stack<Expr<BoolType>> assertions = new StackImpl<>();
+    private final Stack<ItpMarker> markers = new StackImpl<>();
 
-    MetaItpSolver() {
-        solver = z3Legacy;
+    MetaItpSolver(List<ItpSolver> solvers) {
+        this.solvers = solvers;
+        solver = solvers.get(0);
     }
 
     @Override
     public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
+
         try {
             return solver.createTreePattern(root);
         } catch (Exception e) {
@@ -50,14 +55,22 @@ final class MetaItpSolver implements ItpSolver, Solver {
 
     @Override
     public ItpMarker createMarker() {
-        return solver.createMarker();
+        Map<ItpSolver, ItpMarker> markersMap = new HashMap<>();
+        for (ItpSolver solver : solvers) {
+            markersMap.put(solver, solver.createMarker());
+        }
+        ItpMarker marker = new  MetaItpMarker(markersMap);
+        markers.add(marker);
+        return marker;
     }
 
     @Override
     public void add(ItpMarker marker, Expr<BoolType> assertion) {
+        checkArgument(marker instanceof MetaItpMarker);
+
         assertions.add(assertion);
         try {
-            solver.add(marker, assertion);
+            solver.add(((MetaItpMarker) marker).getMarker(solver), assertion);
         } catch (Exception e) {
             switchSolvers();
         }
@@ -102,9 +115,10 @@ final class MetaItpSolver implements ItpSolver, Solver {
 
     @Override
     public void reset() {
-        z3.reset();
-        z3Legacy.reset();
-        solver = z3Legacy;
+        for (ItpSolver itpSolver : solvers) {
+            itpSolver.reset();
+        }
+        solver = solvers.get(0);
     }
 
     @Override
@@ -137,8 +151,9 @@ final class MetaItpSolver implements ItpSolver, Solver {
 
     @Override
     public void close() throws Exception {
-        z3.close();
-        z3Legacy.close();
+        for (ItpSolver itpSolver : solvers) {
+            itpSolver.close();
+        }
     }
 
     @Override
@@ -152,9 +167,14 @@ final class MetaItpSolver implements ItpSolver, Solver {
     }
 
     private void switchSolvers() {
-        checkState(solver != z3Legacy, "Metasolver has cycled through all of its solvers.");
+        checkState(currentSolverIndex != solvers.size(), "Meta ITP solver has cycled through all of its solvers.");
+        try {
+            solver.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        solver = solvers.get(++currentSolverIndex);
 
-        solver = z3Legacy;
         for (Expr<BoolType> assertion : assertions) {
             solver.add(createMarker(), assertion);
         }
