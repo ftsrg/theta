@@ -773,11 +773,11 @@ enum class InitPrec(
   ),
   REUSE(
     explPrec = { xcfa ->
-      PrecReuse.configure(XcfaPrecSerializer(PtrPrecSerializer(ExplPrecSerializer())))
+      PrecReuse.enable(XcfaPrecSerializer(PtrPrecSerializer(ExplPrecSerializer())))
       PrecReuse.load(xcfa.collectVars())
     },
     predPrec = { xcfa ->
-      PrecReuse.configure(XcfaPrecSerializer(PtrPrecSerializer(PredPrecSerializer())))
+      PrecReuse.enable(XcfaPrecSerializer(PtrPrecSerializer(PredPrecSerializer())))
       PrecReuse.load(xcfa.collectVars())
     },
   ),

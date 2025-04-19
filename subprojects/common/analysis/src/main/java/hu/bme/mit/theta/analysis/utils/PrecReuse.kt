@@ -48,38 +48,39 @@ import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 
 object PrecReuse {
-    var isEnabled = false
-        private set
-    private var inputFilename: String? = null
-    private var outputFolder: File? = null
+    private var isEnabled = false
+    private var inputFile: File? = null
     private var serializer: PrecSerializer<Prec>? = null
+    private var toSave: Prec? = null
 
-    fun enable(precFile: String, resultFolder: File) {
+    fun enable(precSerializer: PrecSerializer<*>) {
         isEnabled = true
-        inputFilename = precFile
-        outputFolder = resultFolder
+        serializer = precSerializer
     }
 
-    fun configure(precSerializer: PrecSerializer<*>) {
-        serializer = precSerializer
+    fun setInput(precFile: File) {
+        inputFile = precFile
     }
 
     fun <P : Prec> load(currentVars: Iterable<VarDecl<*>> = listOf()): P {
         assert(isEnabled)
-        assert(inputFilename != null)
+        assert(inputFile != null)
         assert(serializer != null)
 
-        val savedPrec = File(inputFilename!!).readText()
-        return serializer!!.parse(savedPrec, currentVars) as? P ?: throw RuntimeException("Misconfigured PrecSerializer")
+        val savedPrec = (if (isEnabled) inputFile?.readText() else null) ?: ""
+        return serializer?.parse(savedPrec, currentVars) as? P ?: throw RuntimeException("Misconfigured PrecSerializer")
     }
 
-    fun <P : Prec> save(prec: P) {
-        assert(isEnabled)
-        assert(outputFolder != null)
+    fun <P : Prec> store(prec: P) {
+        toSave = prec
+    }
+
+    fun writeTo(outputFolder: File) {
         assert(serializer != null)
+        if (!isEnabled) return
 
         val outputFile = File(outputFolder, "prec.txt")
-        outputFile.writeText(serializer!!.serialize(prec))
+        outputFile.writeText(toSave?.let{ serializer!!.serialize(it) } ?: "")
     }
 
 }

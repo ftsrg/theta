@@ -30,9 +30,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
-import hu.bme.mit.theta.core.decl.VarDecl;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -161,12 +159,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         logger.write(Level.MAINSTEP, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
 
-        if (PrecReuse.INSTANCE.isEnabled())
-            PrecReuse.INSTANCE.save(prec);
-
-        System.out.println(prec);
-        Collection<VarDecl<?>> precVars = prec.getUsedVars();
-        System.out.println(precVars);
+        PrecReuse.INSTANCE.store(prec);
 
         return cegarResult;
     }
