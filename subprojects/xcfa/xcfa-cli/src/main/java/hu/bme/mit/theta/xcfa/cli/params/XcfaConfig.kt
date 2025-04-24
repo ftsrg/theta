@@ -183,6 +183,11 @@ data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
   @Parameter(
+    names = ["--parse-in-process"],
+    description = "Parse input in process instead of passing intermediate",
+  )
+  var parseInProcess: Boolean = false,
+  @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
   )

@@ -103,11 +103,17 @@ jobs:
         tool: [Theta, EmergenTheta, Thorn]
         include:
           - tool: Theta
+            script: theta-start.sh
             portfolio: STABLE
           - tool: EmergenTheta
+            script: theta-start.sh
             portfolio: EMERGENT
           - tool: Thorn
+            script: theta-start.sh
             portfolio: HORN
+          - tool: ThetaCHC
+            script: chc
+            portfolio: CHC-COMP
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -115,6 +121,7 @@ jobs:
         uses: ./.github/actions/build-archive
         with:
           name: ${{matrix.tool}}
+          script: ${{matrix.script}}
           inputflag: "--portfolio ${{matrix.portfolio}}"
 
 

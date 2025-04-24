@@ -4,6 +4,8 @@ inputs:
         required: true
     inputflag:
         required: true
+    script:
+        required: true
 runs:
   using: "composite"
   steps:
@@ -29,13 +31,14 @@ runs:
         cp lib/README.md ${{ inputs.name }}/${{ inputs.name }}/LIB_LICENSES.md
         cp LICENSE ${{ inputs.name }}/${{ inputs.name }}/
         cp README.md ${{ inputs.name }}/${{ inputs.name }}/GENERAL_README.md
-        cp scripts/theta-start.sh ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
-        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
-        sed -i 's/TOOL_VERSION/${{ steps.version.outputs.version }}/g' ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
-        chmod +x ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
+        cp scripts/${{ inputs.script }} ${{ inputs.name }}/${{ inputs.name }}/${{ inputs.script }}
+        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/${{ inputs.name }}/${{ inputs.script }}
+        sed -i 's/TOOL_VERSION/${{ steps.version.outputs.version }}/g' ${{ inputs.name }}/${{ inputs.name }}/${{ inputs.script }}
+        chmod +x ${{ inputs.name }}/${{ inputs.name }}/${{ inputs.script }}
         sed "s/COMMIT_ID/$GITHUB_SHA/g" $GITHUB_ACTION_PATH/README.md > ${{ inputs.name }}/${{ inputs.name }}/README.md 
         sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/${{ inputs.name }}/README.md
         sed -i 's/INPUT_FLAG/${{ inputs.inputflag }}/g' ${{ inputs.name }}/${{ inputs.name }}/README.md
+        sed -i 's/SCRIPTNAME/${{ inputs.script }}/g' ${{ inputs.name }}/${{ inputs.name }}/README.md
     - name: Extract theta-xcfa-cli and theta-smtlib-cli
       shell: bash
       run: |
@@ -49,7 +52,7 @@ runs:
     - name: Install solvers
       shell: bash
       run: |
-        for i in $(cat $GITHUB_ACTION_PATH/necessary-solvers.txt)
+        for i in $(cat $GITHUB_ACTION_PATH/necessary-solvers-${{ inputs.name }}.txt)
         do
           java -jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar --home ${{ inputs.name }}/${{ inputs.name }}/solvers install $i
         done
