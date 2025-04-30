@@ -363,12 +363,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
 
         public MddExpressionRepresentation moveUp() {
-            throw new UnsupportedOperationException();
-            //            Preconditions.checkState(stack.size() > 0);
-            //            popNegatedAssignments();
-            //            solver.pop(); // pop assignment that brought us here
-            //            setCurrentRepresentation(stack.pop());
-            //            return currentRepresentation;
+            //            throw new UnsupportedOperationException();
+            Preconditions.checkState(stack.size() > 0);
+            setCurrentRepresentation(stack.pop());
+            return currentRepresentation;
         }
 
         public boolean queryEdge(int assignment) {
@@ -508,6 +506,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         currentRepresentation.explicitRepresentation.getCacheView().get(assignment);
                 Preconditions.checkArgument(
                         childNode.getRepresentation() instanceof MddExpressionRepresentation);
+                stack.push(currentRepresentation);
                 setCurrentRepresentation(
                         (MddExpressionRepresentation) childNode.getRepresentation());
                 return childNode;
