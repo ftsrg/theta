@@ -116,15 +116,21 @@ public class XstsMddCheckerTest {
                     //                        false
                     //                    },
 
-                                    {"src/test/resources/model/counter50.xsts",
-                     "src/test/resources/property/x_eq_5.prop", false},
-
-                                    {"src/test/resources/model/counter50.xsts",
-                     "src/test/resources/property/x_eq_50.prop", false},
-
-                                    {"src/test/resources/model/counter50.xsts",
-                     "src/test/resources/property/x_eq_51.prop", true},
-
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_5.prop",
+                        false
+                    },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_50.prop",
+                        false
+                    },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_51.prop",
+                        true
+                    },
                     {
                         "src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down.prop",
@@ -140,12 +146,16 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/count_up_down2.prop",
                         true
                     },
-
-                                    {"src/test/resources/model/bhmr2007.xsts",
-                     "src/test/resources/property/bhmr2007.prop", true},
-
-                                    {"src/test/resources/model/css2003.xsts",
-                     "src/test/resources/property/css2003.prop", true},
+                    {
+                        "src/test/resources/model/bhmr2007.xsts",
+                        "src/test/resources/property/bhmr2007.prop",
+                        true
+                    },
+                    {
+                        "src/test/resources/model/css2003.xsts",
+                        "src/test/resources/property/css2003.prop",
+                        true
+                    },
                     //
                     //                { "src/test/resources/model/array_counter.xsts",
                     // "src/test/resources/property/array_10.prop", false},

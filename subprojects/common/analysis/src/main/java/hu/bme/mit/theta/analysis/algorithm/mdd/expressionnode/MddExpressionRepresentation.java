@@ -364,11 +364,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         public MddExpressionRepresentation moveUp() {
             throw new UnsupportedOperationException();
-//            Preconditions.checkState(stack.size() > 0);
-//            popNegatedAssignments();
-//            solver.pop(); // pop assignment that brought us here
-//            setCurrentRepresentation(stack.pop());
-//            return currentRepresentation;
+            //            Preconditions.checkState(stack.size() > 0);
+            //            popNegatedAssignments();
+            //            solver.pop(); // pop assignment that brought us here
+            //            setCurrentRepresentation(stack.pop());
+            //            return currentRepresentation;
         }
 
         public boolean queryEdge(int assignment) {
@@ -381,7 +381,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             != null) return true;
             else if (!currentRepresentation.explicitRepresentation.isComplete()) {
 
-                if(solver == null) solver = solverPool.requestSolver();
+                if (solver == null) solver = solverPool.requestSolver();
 
                 final SolverStatus status;
                 final Valuation model;
@@ -413,7 +413,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public QueryResult queryEdge() {
             if (!currentRepresentation.explicitRepresentation.isComplete()) {
 
-                if(solver == null) solver = solverPool.requestSolver();
+                if (solver == null) solver = solverPool.requestSolver();
 
                 final Valuation model;
                 final SolverStatus status;
@@ -422,8 +422,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     solver.add(currentRepresentation.expr);
                     solver.add(constraint);
                     final var negatedAssignments = new ArrayList<Expr<BoolType>>();
-                    for (var cur = currentRepresentation.explicitRepresentation.getCacheView().cursor();
-                         cur.moveNext(); ) {
+                    for (var cur =
+                                    currentRepresentation
+                                            .explicitRepresentation
+                                            .getCacheView()
+                                            .cursor();
+                            cur.moveNext(); ) {
                         negatedAssignments.add(
                                 Neq(
                                         currentRepresentation.decl.getRef(),
@@ -436,7 +440,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     status = solver.getStatus();
                     model = status.isSat() ? solver.getModel() : null;
                 }
-
 
                 if (status.isSat()) {
                     final Decl<?> decl = currentRepresentation.decl;
@@ -488,7 +491,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     cacheModel(modelToCache);
                     return QueryResult.singleEdge(LitExprConverter.toInt(literal));
                 } else {
-                    if (!Objects.equals(constraint,True())) {
+                    if (!Objects.equals(constraint, True())) {
                         return QueryResult.constrainedFailed();
                     } else {
                         currentRepresentation.explicitRepresentation.setComplete();
@@ -511,25 +514,27 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             } else return null;
         }
 
-//        private void pushNegatedAssignments() {
-//            solver.push();
-//            final var negatedAssignments = new ArrayList<Expr<BoolType>>();
-//            for (var cur = currentRepresentation.explicitRepresentation.getCacheView().cursor();
-//                    cur.moveNext(); ) {
-//                negatedAssignments.add(
-//                        Neq(
-//                                currentRepresentation.decl.getRef(),
-//                                LitExprConverter.toLitExpr(
-//                                        cur.key(), currentRepresentation.decl.getType())));
-//                pushedNegatedAssignments++;
-//            }
-//            solver.add(And(negatedAssignments));
-//        }
+        //        private void pushNegatedAssignments() {
+        //            solver.push();
+        //            final var negatedAssignments = new ArrayList<Expr<BoolType>>();
+        //            for (var cur =
+        // currentRepresentation.explicitRepresentation.getCacheView().cursor();
+        //                    cur.moveNext(); ) {
+        //                negatedAssignments.add(
+        //                        Neq(
+        //                                currentRepresentation.decl.getRef(),
+        //                                LitExprConverter.toLitExpr(
+        //                                        cur.key(),
+        // currentRepresentation.decl.getType())));
+        //                pushedNegatedAssignments++;
+        //            }
+        //            solver.add(And(negatedAssignments));
+        //        }
 
-//        private void popNegatedAssignments() {
-//            solver.pop();
-//            pushedNegatedAssignments = 0;
-//        }
+        //        private void popNegatedAssignments() {
+        //            solver.pop();
+        //            pushedNegatedAssignments = 0;
+        //        }
 
         private void cacheModel(Valuation valuation) {
             MddExpressionRepresentation representation = currentRepresentation;
@@ -612,11 +617,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         @Override
         public void close() {
-            if(solver != null) {
+            if (solver != null) {
                 solverPool.returnSolver(this.solver);
                 this.solver = null;
             }
-
         }
 
         private static class QueryResult {

@@ -65,12 +65,14 @@ public class XMLPnmlToPetrinet {
         checkArgument(netList.getLength() == 1, "Pnml model contains multiple nets");
         final Element netElement = (Element) netList.item(0);
 
-        //Contents are optionally wrapped in pages, currently supporting 0 or 1 pages
+        // Contents are optionally wrapped in pages, currently supporting 0 or 1 pages
         final XPathExpression childPagesExpr = xPath.compile("./page");
-        final NodeList pageList = (NodeList) childPagesExpr.evaluate(netElement, XPathConstants.NODESET);
+        final NodeList pageList =
+                (NodeList) childPagesExpr.evaluate(netElement, XPathConstants.NODESET);
 
         checkArgument(pageList.getLength() <= 1, "Pnml model contains multiple pages");
-        final Element pageElement = pageList.getLength() == 1 ? (Element) pageList.item(0) : netElement;
+        final Element pageElement =
+                pageList.getLength() == 1 ? (Element) pageList.item(0) : netElement;
 
         final Map<String, Identified> idMap = Containers.createMap();
         final List<Place> places = new ArrayList<>();
