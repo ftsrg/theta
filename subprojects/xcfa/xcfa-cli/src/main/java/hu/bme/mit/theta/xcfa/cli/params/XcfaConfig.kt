@@ -143,6 +143,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
+        InputType.BTOR2 -> BTOR2FrontendConfig as T
       }
   }
 }
@@ -167,6 +168,8 @@ data class CHCFrontendConfig(
   )
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO
 ) : SpecFrontendConfig
+
+object BTOR2FrontendConfig : SpecFrontendConfig
 
 interface SpecBackendConfig : Config
 
