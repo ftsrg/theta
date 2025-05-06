@@ -105,6 +105,11 @@ public final class JavaSMTSolverFactory implements SolverFactory {
     @Override
     public Solver createSolver() {
         try {
+            Configuration config =
+                    Configuration.builder()
+                            .copyFrom(this.config)
+                            .setOption("solver.z3.requireProofs", "true")
+                            .build();
             final SolverContext context =
                     SolverContextFactory.createSolverContext(
                             config, logger, shutdownManager.getNotifier(), solver);
@@ -115,8 +120,7 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                     new JavaSMTTermTransformer(symbolTable, context);
 
             final ProverEnvironment prover =
-                    context.newProverEnvironment(
-                            ProverOptions.GENERATE_MODELS, ProverOptions.GENERATE_PROOFS);
+                    context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
 
             return new JavaSMTSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);
