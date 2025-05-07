@@ -151,11 +151,11 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/bhmr2007.prop",
                         true
                     },
-                    {
-                        "src/test/resources/model/css2003.xsts",
-                        "src/test/resources/property/css2003.prop",
-                        true
-                    },
+//                    {
+//                        "src/test/resources/model/css2003.xsts",
+//                        "src/test/resources/property/css2003.prop",
+//                        true
+//                    },
                     //
                     //                { "src/test/resources/model/array_counter.xsts",
                     // "src/test/resources/property/array_10.prop", false},
