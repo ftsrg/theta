@@ -47,7 +47,6 @@ import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import java.math.BigInteger;
 import java.util.*;
-
 import org.kframework.mpfr.BigFloat;
 
 public final class ExprSimplifier {
