@@ -46,10 +46,8 @@ import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 import org.kframework.mpfr.BigFloat;
 
 public final class ExprSimplifier {
@@ -418,7 +416,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
-        final List<Expr<BoolType>> ops = new ArrayList<>();
+        final Set<Expr<BoolType>> ops = new HashSet<>();
 
         if (expr.getOps().isEmpty()) {
             return True();
@@ -448,7 +446,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
-        final List<Expr<BoolType>> ops = new ArrayList<>();
+        final Set<Expr<BoolType>> ops = new HashSet<>();
 
         if (expr.getOps().isEmpty()) {
             return True();
