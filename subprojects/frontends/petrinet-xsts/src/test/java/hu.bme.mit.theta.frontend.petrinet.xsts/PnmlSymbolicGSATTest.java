@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.petrinet.xsts;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
@@ -38,7 +39,7 @@ public class PnmlSymbolicGSATTest {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
-                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-5.pnml", "");
+                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-10.pnml", "");
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
@@ -47,7 +48,9 @@ public class PnmlSymbolicGSATTest {
 
         final SafetyResult<?, ?> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final SafetyChecker<?, ?, ?> checker = XstsMddChecker.create(xsts, solverPool, logger);
+            final SafetyChecker<?, ?, ?> checker =
+                    XstsMddChecker.create(
+                            xsts, solverPool, logger, MddChecker.IterationStrategy.GSAT);
             status = checker.check();
             logger.mainStep(
                     "State space size: "

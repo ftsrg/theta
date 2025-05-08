@@ -25,9 +25,9 @@ include(
     "common/ltl-cli",
 
     "frontends/c-frontend",
-    "frontends/petrinet-frontend/petrinet-model",
-    "frontends/petrinet-frontend/petrinet-analysis",
-    "frontends/petrinet-frontend/petrinet-xsts",
+    "frontends/petrinet-model",
+    "frontends/petrinet-analysis",
+    "frontends/petrinet-xsts",
     "frontends/chc-frontend",
     "frontends/llvm",
 
