@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-XCSP	SV-COMP24_unreach-call.ReachSafety-XCSP	SV-COMP24_unreach-call.ReachSafety-XCSP	SV-COMP24_unreach-call.ReachSafety-XCSP
+../sv-benchmarks/c/xcsp/		status	cputime (s)	walltime (s)	memory (MB)
+CostasArray-14.yml	false	TIMEOUT	120.300969	93.78059969100002	1114.517504
+Dubois-025.yml	true	ERROR (portfolio error)	18.666108	7.634071957999993	616.079360
+aim-100-2-0-unsat-4.yml	true	ERROR (portfolio error)	22.395066	8.766572447999977	737.939456
+AllInterval-014.yml	false	TIMEOUT	121.701597	104.78801814500002	670.998528
+AllInterval-005.yml	false	false(unreach-call)	11.447258	4.373593072999938	487.575552
+aim-100-1-6-unsat-4.yml	true	ERROR (portfolio error)	22.470941	8.801574284999901	654.237696
+AllInterval-012.yml	false	TIMEOUT	121.790337	104.97535626800004	692.506624
+Dubois-100.yml	true	ERROR (portfolio error)	34.18845	12.822681215999978	914.452480
+AllInterval-009.yml	false	false(unreach-call)	19.444838	9.351976476000004	533.348352
+aim-200-1-6-unsat-2.yml	true	ERROR (portfolio error)	30.014747	11.334789559	765.169664
