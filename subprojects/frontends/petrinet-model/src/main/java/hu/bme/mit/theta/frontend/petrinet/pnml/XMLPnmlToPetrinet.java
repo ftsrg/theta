@@ -65,6 +65,15 @@ public class XMLPnmlToPetrinet {
         checkArgument(netList.getLength() == 1, "Pnml model contains multiple nets");
         final Element netElement = (Element) netList.item(0);
 
+        // Contents are optionally wrapped in pages, currently supporting 0 or 1 pages
+        final XPathExpression childPagesExpr = xPath.compile("./page");
+        final NodeList pageList =
+                (NodeList) childPagesExpr.evaluate(netElement, XPathConstants.NODESET);
+
+        checkArgument(pageList.getLength() <= 1, "Pnml model contains multiple pages");
+        final Element pageElement =
+                pageList.getLength() == 1 ? (Element) pageList.item(0) : netElement;
+
         final Map<String, Identified> idMap = Containers.createMap();
         final List<Place> places = new ArrayList<>();
         final List<Transition> transitions = new ArrayList<>();
@@ -72,7 +81,7 @@ public class XMLPnmlToPetrinet {
         // Find all places
         final XPathExpression childPlacesExpr = xPath.compile("./place");
         final NodeList placeList =
-                (NodeList) childPlacesExpr.evaluate(netElement, XPathConstants.NODESET);
+                (NodeList) childPlacesExpr.evaluate(pageElement, XPathConstants.NODESET);
         for (int i = 0; i < placeList.getLength(); i++) {
             final Element placeElement = (Element) placeList.item(i);
             final String id = placeElement.getAttribute("id");
@@ -110,7 +119,7 @@ public class XMLPnmlToPetrinet {
         // Find all transitions
         final XPathExpression childTransitionsExpr = xPath.compile("./transition");
         final NodeList transitionList =
-                (NodeList) childTransitionsExpr.evaluate(netElement, XPathConstants.NODESET);
+                (NodeList) childTransitionsExpr.evaluate(pageElement, XPathConstants.NODESET);
         for (int i = 0; i < transitionList.getLength(); i++) {
             final Element transitionElement = (Element) transitionList.item(i);
             final String id = transitionElement.getAttribute("id");
@@ -134,7 +143,9 @@ public class XMLPnmlToPetrinet {
         // Find all arcs
         final XPathExpression childArcsExpr = xPath.compile("./arc");
         final NodeList arcList =
-                (NodeList) childArcsExpr.evaluate(netElement, XPathConstants.NODESET);
+                (NodeList) childArcsExpr.evaluate(pageElement, XPathConstants.NODESET);
+        final ArrayList<PTArc> ptArcs = new ArrayList<>();
+        final ArrayList<TPArc> tpArcs = new ArrayList<>();
         for (int i = 0; i < arcList.getLength(); i++) {
             final Element arcElement = (Element) arcList.item(i);
             final String id = arcElement.getAttribute("id");
@@ -160,18 +171,22 @@ public class XMLPnmlToPetrinet {
                 arc.setWeight(weight);
                 arc.setSource((Place) source);
                 arc.setTarget((Transition) target);
+                ptArcs.add(arc);
             } else {
                 checkArgument(source instanceof Transition && target instanceof Place);
                 final TPArc arc = new TPArc(id);
                 arc.setWeight(weight);
                 arc.setSource((Transition) source);
                 arc.setTarget((Place) target);
+                tpArcs.add(arc);
             }
         }
 
         final PetriNet ptNet = new PetriNet("0");
         ptNet.getPlaces().addAll(places);
         ptNet.getTransitions().addAll(transitions);
+        ptNet.getPtArcs().addAll(ptArcs);
+        ptNet.getTpArcs().addAll(tpArcs);
 
         return ptNet;
     }
