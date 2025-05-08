@@ -33,7 +33,7 @@ class TestBtor2Xcfa {
     fun testBtor2Xcfa() {
         val logger = ConsoleLogger(Logger.Level.VERBOSE)
         val visitor = Btor2Visitor()
-        val btor2File = File("src/test/resources/count4.btor2")
+        val btor2File = File("src/test/resources/twocount2.btor2")
 
         val input = btor2File.readLines().joinToString("\n")
         val cinput = CharStreams.fromString(input)

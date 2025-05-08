@@ -63,8 +63,14 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         val sid = idVisitor.visit(ctx.sid())
         val sort : Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
 
-        val opd1 = nodes[ctx.opd1.text.toUInt()] as Btor2Node
-        val opd2 = nodes[ctx.opd2.text.toUInt()] as Btor2Node
+        val opd1_id = ctx.opd1.text.toInt()
+        val opd2_id = ctx.opd2.text.toInt()
+
+        val opd1_negated = opd1_id < 0
+        val opd2_negated = opd2_id < 0
+
+        val opd1 = nodes[opd1_id.toUInt()] as Btor2Node
+        val opd2 = nodes[opd2_id.toUInt()] as Btor2Node
 
         val op = when (ctx.BINOP().text) {
             "and" -> Btor2BinaryOperator.AND
@@ -92,12 +98,12 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             else -> throw RuntimeException("Binary operator unknown")
         }
         if (op is Btor2ComparisonOperator) {
-            val node =  Btor2Comparison(nid, sort, op, opd1, opd2)
+            val node =  Btor2Comparison(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
             Btor2Circuit.nodes[nid] = node
             return node
         }
         else if (op is Btor2BinaryOperator) {
-            val node =  Btor2BinaryOperation(nid, sort, op, opd1, opd2)
+            val node =  Btor2BinaryOperation(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
             Btor2Circuit.nodes[nid] = node
             Btor2Circuit.ops[nid] = node
             return node
@@ -133,18 +139,12 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         val nid = idVisitor.visit(ctx.id)
         val sid = idVisitor.visit(ctx.sid())
         val sort : Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
-        val negated : Boolean
         val op = when (ctx.TERNARYOP().text) {
             "ite" -> Btor2TernaryOperator.ITE
             "write" -> Btor2TernaryOperator.WRITE
             else -> throw RuntimeException("Ternary operator unknown")
         }
-        if (ctx.opd1.text.toInt() < 0) {
-            negated = true
-        }
-        else {
-            negated = false
-        }
+        val negated = ctx.opd1.text.toInt() < 0
 
         val opd1 = nodes[ctx.opd1.text.toUInt()] as Btor2Node
         val opd2 = nodes[ctx.opd2.text.toUInt()] as Btor2Node

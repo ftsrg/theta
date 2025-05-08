@@ -246,8 +246,8 @@ private fun parseBTOR2(
   val visitor = Btor2Visitor()
   val btor2File = input
 
-  val input = btor2File.readLines().joinToString("\n")
-  val cinput = CharStreams.fromString(input)
+  val inputBTOR2 = btor2File.readLines().joinToString("\n")
+  val cinput = CharStreams.fromString(inputBTOR2)
   val lexer = Btor2Lexer(cinput)
   val tokens = CommonTokenStream(lexer)
   val parser = Btor2Parser(tokens)
@@ -257,6 +257,6 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder.btor2xcfa(Btor2Circuit)
-  logger.write( Logger.Level.VERBOSE, "XCFA built, result: " + xcfa.toDot() + "\n")
+  logger.write( Logger.Level.MAINSTEP, "XCFA built, result: " + xcfa.toDot() + "\n")
   return xcfa
 }
