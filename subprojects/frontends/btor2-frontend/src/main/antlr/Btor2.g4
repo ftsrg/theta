@@ -33,6 +33,7 @@ comment: COMMENT;
 
 nid: NUM;
 sid: NUM;
+negNid: (MINUS)? value=nid;
 
 node: ( array_sort | bitvec_sort ) #sort // sort declaration
     | (input | state | init | next | property) #stateful
@@ -46,9 +47,9 @@ slice: id=nid 'slice' sid opd1=nid u=NUM l=NUM;
 
 op: binop | unop | terop;
 
-binop: id=nid BINOP sid (MINUS)? opd1=nid (MINUS)? opd2=nid;
+binop: id=nid BINOP sid opd1=negNid opd2=negNid;
 unop: id=nid UNARYOP sid opd1=nid;
-terop: id=nid TERNARYOP sid (MINUS)? opd1=nid opd2=nid opd3=nid;
+terop: id=nid TERNARYOP sid opd1=negNid opd2=nid opd3=nid;
 
 input: id=nid ('input') sid;
 
