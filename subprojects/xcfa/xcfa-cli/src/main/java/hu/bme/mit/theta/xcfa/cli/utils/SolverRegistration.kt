@@ -19,14 +19,25 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager
+import hu.bme.mit.theta.solver.logger.SolverLoggerWrapper
+import hu.bme.mit.theta.solver.logger.SolverLoggerWrapperFactory
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.smtlib.utils.SmtLibTermLogger
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
 import java.nio.file.Path
 
-fun getSolver(name: String, validate: Boolean): SolverFactory =
+var idx = 0
+
+fun getSolver(name: String, validate: Boolean, log: Boolean = true): SolverFactory =
   if (validate) {
     SolverValidatorWrapperFactory.create(name)
+  } else if (log) {
+    SolverLoggerWrapperFactory(
+      name,
+      SmtLibTermLogger("smtlib_${idx++}_"),
+      setOf(SolverLoggerWrapper.SaveStrategy.ON_RESET),
+    )
   } else {
     SolverManager.resolveSolverFactory(name)
   }

@@ -15,28 +15,19 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.solver.HornUtils.proofFromExpr;
 
 import com.google.common.collect.Lists;
-import com.microsoft.z3.Z3Exception;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ProofNode;
-import hu.bme.mit.theta.solver.ProofNode.Builder;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
@@ -116,62 +107,5 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
         } else {
             throw new AssertionError();
         }
-    }
-
-    private ProofNode proofFromExpr(Expr<BoolType> proof) {
-        checkState(proof instanceof FuncAppExpr<?, ?>, "Proof must be a function application.");
-        int id = 0;
-        final Map<Expr<?>, Integer> lookup = new LinkedHashMap<>();
-
-        final var args = extractFuncAndArgs((FuncAppExpr<?, ?>) proof).get2();
-
-        Deque<Expr<?>> proofStack = new LinkedList<>();
-        proofStack.push(args.get(0));
-        lookup.put(args.get(0), id++);
-
-        Expr<BoolType> root = cast(False(), Bool());
-        final var rootBuilder = new ProofNode.Builder(root);
-
-        Map<Integer, ProofNode.Builder> visited = new LinkedHashMap<>();
-        visited.put(lookup.get(args.get(0)), rootBuilder);
-
-        while (!proofStack.isEmpty()) {
-            final var proofNodeExpr = proofStack.pop();
-            if (!visited.containsKey(lookup.getOrDefault(proofNodeExpr, -1))) {
-                throw new Z3Exception("Node should exist in the graph nodes");
-            }
-            final var proofNode = visited.get(lookup.get(proofNodeExpr));
-
-            if (proofNodeExpr instanceof FuncAppExpr<?, ?> funcAppExpr) {
-                final var nameAndArgs = extractFuncAndArgs(funcAppExpr);
-                if (nameAndArgs.get1() instanceof RefExpr<?> refName
-                        && refName.getDecl().getName().startsWith("hyper-res")) {
-                    if (!nameAndArgs.get2().isEmpty()) {
-                        for (int i = 1; i < nameAndArgs.get2().size() - 1; ++i) {
-                            final var child = nameAndArgs.get2().get(i);
-                            if (!visited.containsKey(lookup.getOrDefault(child, -1))) {
-                                if (!lookup.containsKey(child)) {
-                                    lookup.put(child, id++);
-                                }
-                                visited.put(
-                                        lookup.get(child), new Builder(extractProofExpr(child)));
-                                proofStack.push(child);
-                            }
-                            proofNode.addChild(visited.get(lookup.get(child)));
-                        }
-                    }
-                }
-            }
-        }
-        return rootBuilder.build();
-    }
-
-    private Expr<BoolType> extractProofExpr(Expr<?> expr) {
-        checkState(expr instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
-        final var nameAndArgs = extractFuncAndArgs((FuncAppExpr<?, ?>) expr);
-        final var args = nameAndArgs.get2();
-        final var lastArg = args.get(args.size() - 1);
-        checkState(lastArg instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
-        return (Expr<BoolType>) lastArg;
     }
 }

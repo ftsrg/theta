@@ -16,29 +16,31 @@
 package hu.bme.mit.theta.solver.smtlib.solver;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.solver.HornUtils.proofFromExpr;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.GetModelResponse;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.GetUnsatCoreResponse;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.*;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -191,6 +193,55 @@ public class SmtLibSolver implements UCSolver, Solver {
                         label));
 
         clearState();
+    }
+
+    private static Type transformSort(final SMTLIBv2Parser.SortContext ctx) {
+        final String name = ctx.identifier().symbol().getText();
+        return switch (name) {
+            case "Int" -> Int();
+            case "Bool" -> Bool();
+            case "Real" -> Rat();
+            case "BitVec" -> {
+                assert ctx.identifier().index().size() == 1;
+                yield BvExprs.BvType(Integer.parseInt(ctx.identifier().index().get(0).getText()));
+            }
+            case "Array" -> {
+                assert ctx.sort().size() == 2;
+                yield Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
+            }
+            default -> throw new UnsupportedOperationException();
+        };
+    }
+
+    @Override
+    public ProofNode getProof() {
+
+        solverBinary.issueCommand("(get-proof)");
+        var response = solverBinary.readResponse();
+        final var res = parseResponse(response);
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
+            getModelResponse
+                    .getFunDeclarations()
+                    .forEach(
+                            (name, def) -> {
+                                var type = transformSort(def.get2());
+                                for (SMTLIBv2Parser.SortContext s : Lists.reverse(def.get1())) {
+                                    type = FuncType.of(transformSort(s), type);
+                                }
+                                symbolTable.put(Const(name, type), name, def.get3());
+                            });
+            final var proof =
+                    termTransformer.toExpr(
+                            getModelResponse.getProof(),
+                            Bool(),
+                            new SmtLibModel(Collections.emptyMap()));
+            return proofFromExpr(proof);
+        } else {
+            throw new AssertionError();
+        }
     }
 
     @Override
