@@ -24,9 +24,12 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.bvtype.*
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
+import hu.bme.mit.theta.core.utils.TypeUtils.castBv
 
 
 abstract class Btor2Operation(id: UInt, sort: Btor2Sort) : Btor2Node(id, sort)
@@ -114,23 +117,24 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
     }
 
     override fun getExpr(): Expr<*> {
-        val op1_expr = if (opd1_negated) BvNegExpr.of(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
-        val op2_expr = if (opd2_negated) BvNegExpr.of(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
+        val op1_expr = if (opd1_negated) castBv(Neg(op1.getExpr() as Expr<BvType>)) else castBv(op1.getExpr())
+        val op2_expr = if (opd2_negated) castBv(Neg(op2.getExpr() as Expr<BvType>)) else castBv(op2.getExpr())
+
         return when(operator)
         {
-            Btor2BinaryOperator.ADD -> BvAddExpr.of(mutableListOf(op1_expr, op2_expr))
-            Btor2BinaryOperator.AND -> BvAndExpr.of(mutableListOf(op1_expr, op2_expr))
-            Btor2BinaryOperator.NAND -> NotExpr.of(BvAndExpr.of(mutableListOf(op1_expr, op2_expr)) as Expr<BoolType>)
-            Btor2BinaryOperator.NOR -> NotExpr.of(BvOrExpr.of(mutableListOf(op1_expr, op2_expr)) as Expr<BoolType>)
-            Btor2BinaryOperator.OR -> BvOrExpr.of(mutableListOf(op1_expr, op2_expr))
-            Btor2BinaryOperator.XOR -> BvXorExpr.of(mutableListOf(op1_expr, op2_expr))
-            Btor2BinaryOperator.MUL -> BvMulExpr.of(mutableListOf(op1_expr, op2_expr))
-            Btor2BinaryOperator.UDIV -> BvUDivExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.UREM -> BvURemExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SDIV -> BvSDivExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SREM -> BvSRemExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SMOD -> BvSModExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.CONCAT -> BvConcatExpr.of(mutableListOf(op1_expr, op2_expr))
+            Btor2BinaryOperator.ADD -> BvAddExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.AND -> BvAndExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.NAND -> NotExpr.of(BvAndExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)) as Expr<BoolType>)
+            Btor2BinaryOperator.NOR -> NotExpr.of(BvOrExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)) as Expr<BoolType>)
+            Btor2BinaryOperator.OR -> BvOrExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.XOR -> BvXorExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.MUL -> BvMulExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.UDIV -> BvUDivExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.UREM -> BvURemExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SDIV -> BvSDivExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SREM -> BvSRemExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SMOD -> BvSModExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.CONCAT -> BvConcatExpr.of(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.SADDO -> TODO()
             Btor2BinaryOperator.SDIVO -> TODO()
             Btor2BinaryOperator.SMULO -> TODO()
@@ -138,11 +142,11 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.UADDO -> TODO()
             Btor2BinaryOperator.UMULO -> TODO()
             Btor2BinaryOperator.USUBO -> TODO()
-            Btor2BinaryOperator.ROL -> BvRotateLeftExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.ROR -> BvRotateRightExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SLL -> BvLogicShiftRightExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr, op2_expr)
-            Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.of(op1_expr, op2_expr)
+            Btor2BinaryOperator.ROL -> BvRotateLeftExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.ROR -> BvRotateRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SLL -> BvLogicShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.READ -> TODO()
         }
     }
@@ -193,19 +197,19 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
     }
 
     override fun getExpr(): Expr<*> {
-        val op1_expr = if (opd1_negated) BvNegExpr.of(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
-        val op2_expr = if (opd2_negated) BvNegExpr.of(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
+        val op1_expr = if (opd1_negated) castBv(Neg(op1.getExpr() as Expr<BvType>)) else op1.getExpr() as Expr<BvType>
+        val op2_expr = if (opd2_negated) castBv(Neg(op2.getExpr() as Expr<BvType>)) else op2.getExpr() as Expr<BvType>
         return when(operator)
         {
-            Btor2ComparisonOperator.EQ -> BvEqExpr.of(op1_expr , op2_expr)
-            Btor2ComparisonOperator.NEQ -> BvNeqExpr.of(op1_expr , op2_expr)
-            Btor2ComparisonOperator.SLT -> BvSLtExpr.of(op1_expr , op2_expr)
+            Btor2ComparisonOperator.EQ -> BvEqExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2ComparisonOperator.NEQ -> BvNeqExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2ComparisonOperator.SLT -> BvSLtExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.SLTE -> TODO()
-            Btor2ComparisonOperator.SGT -> TODO()
+            Btor2ComparisonOperator.SGT -> BvSGtExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.SGTE -> TODO()
-            Btor2ComparisonOperator.ULT -> TODO()
+            Btor2ComparisonOperator.ULT -> BvULtExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.ULTE -> TODO()
-            Btor2ComparisonOperator.UGT -> TODO()
+            Btor2ComparisonOperator.UGT -> BvUGtExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.UGTE -> TODO()
         }
     }
