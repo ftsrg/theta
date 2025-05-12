@@ -18,16 +18,68 @@ package hu.bme.mit.theta.frontend.models
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 
-data class Btor2Const(override val nid: UInt, val value: BooleanArray, override val sort: Btor2Sort) : Btor2Node(nid, sort)
-{
+
+abstract class Btor2Const<T>(
+    override val nid: UInt,
+    open val value: T,
+    override val sort: Btor2Sort
+) : Btor2Node(nid, sort)
+
+data class Btor2Const_b(
+    override val nid: UInt,
+    override val value: BooleanArray,
+    override val sort: Btor2Sort
+) : Btor2Const<BooleanArray>(nid, value, sort) {
     override fun getVar(): VarDecl<*>? {
         return null
     }
 
     override fun getExpr(): Expr<*> {
         return BvLitExpr.of(value)
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+
+data class Btor2Const_d(
+    override val nid: UInt,
+    override val value: Int,
+    override val sort: Btor2Sort
+) : Btor2Const<Int>(nid, value, sort)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        return IntLitExpr.of(value.toBigInteger())
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
+    }
+}
+
+data class Btor2Const_h(
+    override val nid: UInt,
+    override val value: String,
+    override val sort: Btor2Sort
+) : Btor2Const<String>(nid, value, sort)
+{
+    override fun getVar(): VarDecl<*>? {
+        return null
+    }
+
+    override fun getExpr(): Expr<*> {
+        // return BvLitExpr.of(value)
+        TODO("Hexadecimal literal parsing not implemented")
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {

@@ -138,11 +138,11 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.UADDO -> TODO()
             Btor2BinaryOperator.UMULO -> TODO()
             Btor2BinaryOperator.USUBO -> TODO()
-            Btor2BinaryOperator.ROL -> TODO()
-            Btor2BinaryOperator.ROR -> TODO()
-            Btor2BinaryOperator.SLL -> TODO()
-            Btor2BinaryOperator.SRA -> TODO()
-            Btor2BinaryOperator.SRL -> TODO()
+            Btor2BinaryOperator.ROL -> BvRotateLeftExpr.of(op1_expr, op2_expr)
+            Btor2BinaryOperator.ROR -> BvRotateRightExpr.of(op1_expr, op2_expr)
+            Btor2BinaryOperator.SLL -> BvLogicShiftRightExpr.of(op1_expr, op2_expr)
+            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr, op2_expr)
+            Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.of(op1_expr, op2_expr)
             Btor2BinaryOperator.READ -> TODO()
         }
     }
@@ -174,11 +174,11 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.UADDO -> TODO()
             Btor2BinaryOperator.UMULO -> TODO()
             Btor2BinaryOperator.USUBO -> TODO()
-            Btor2BinaryOperator.ROL -> TODO()
-            Btor2BinaryOperator.ROR -> TODO()
-            Btor2BinaryOperator.SLL -> TODO()
-            Btor2BinaryOperator.SRA -> TODO()
-            Btor2BinaryOperator.SRL -> TODO()
+            Btor2BinaryOperator.ROL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.ROR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SLL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SRA -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.SRL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.READ -> TODO()
         }
     }

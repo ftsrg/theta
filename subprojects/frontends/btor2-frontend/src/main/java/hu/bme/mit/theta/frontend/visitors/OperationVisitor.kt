@@ -20,6 +20,7 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 import hu.bme.mit.theta.frontend.models.Btor2Circuit.nodes
+import kotlin.math.abs
 
 class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val idVisitor = IdVisitor()
@@ -69,8 +70,8 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         val opd1_negated = opd1_id < 0
         val opd2_negated = opd2_id < 0
 
-        val opd1 = nodes[opd1_id.toUInt()] as Btor2Node
-        val opd2 = nodes[opd2_id.toUInt()] as Btor2Node
+        val opd1 = nodes[abs(opd1_id).toUInt()] as Btor2Node
+        val opd2 = nodes[abs(opd2_id).toUInt()] as Btor2Node
 
         val op = when (ctx.BINOP().text) {
             "and" -> Btor2BinaryOperator.AND
@@ -78,6 +79,26 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "nor" -> Btor2BinaryOperator.NOR
             "or" -> Btor2BinaryOperator.OR
             "xor" -> Btor2BinaryOperator.XOR
+            "add" -> Btor2BinaryOperator.ADD
+            "mul" -> Btor2BinaryOperator.MUL
+            "udiv" -> Btor2BinaryOperator.UDIV
+            "urem" -> Btor2BinaryOperator.UREM
+            "sdiv" -> Btor2BinaryOperator.SDIV
+            "srem" -> Btor2BinaryOperator.SREM
+            "smod" -> Btor2BinaryOperator.SMOD
+            "concat" -> Btor2BinaryOperator.CONCAT
+            "saddo" -> Btor2BinaryOperator.SADDO
+            "sdivo" -> Btor2BinaryOperator.SDIVO
+            "smulo" -> Btor2BinaryOperator.SMULO
+            "ssubo" -> Btor2BinaryOperator.SSUBO
+            "uaddo" -> Btor2BinaryOperator.UADDO
+            "umulo" -> Btor2BinaryOperator.UMULO
+            "usubo" -> Btor2BinaryOperator.USUBO
+            "rol" -> Btor2BinaryOperator.ROL
+            "ror" -> Btor2BinaryOperator.ROR
+            "sll" -> Btor2BinaryOperator.SLL
+            "sra" -> Btor2BinaryOperator.SRA
+            "srl" -> Btor2BinaryOperator.SRL
             "eq" -> Btor2ComparisonOperator.EQ
             "neq" -> Btor2ComparisonOperator.NEQ
             "slt" -> Btor2ComparisonOperator.SLT
@@ -88,13 +109,6 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "ulte" -> Btor2ComparisonOperator.ULTE
             "ugt" -> Btor2ComparisonOperator.UGT
             "ugte" -> Btor2ComparisonOperator.UGTE
-            "add" -> Btor2BinaryOperator.ADD
-            "mul" -> Btor2BinaryOperator.MUL
-            "udiv" -> Btor2BinaryOperator.UDIV
-            "urem" -> Btor2BinaryOperator.UREM
-            "sdiv" -> Btor2BinaryOperator.SDIV
-            "srem" -> Btor2BinaryOperator.SREM
-            "smod" -> Btor2BinaryOperator.SMOD
             else -> throw RuntimeException("Binary operator unknown")
         }
         if (op is Btor2ComparisonOperator) {

@@ -28,7 +28,4 @@ class IdVisitor : Btor2BaseVisitor<UInt>() {
         return ctx.NUM().text.toUInt()
     }
 
-    override fun visitNegNid(ctx: Btor2Parser.NegNidContext): UInt {
-        return ctx.value.NUM().text.toUInt()
-    }
 }
