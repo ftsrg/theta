@@ -23,67 +23,17 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 
-
-abstract class Btor2Const<T>(
+data class Btor2Const(
     override val nid: UInt,
-    open val value: T,
+    val value: BooleanArray,
     override val sort: Btor2Sort
-) : Btor2Node(nid, sort)
-
-data class Btor2Const_b(
-    override val nid: UInt,
-    override val value: BooleanArray,
-    override val sort: Btor2Sort
-) : Btor2Const<BooleanArray>(nid, value, sort) {
+) : Btor2Node(nid, sort){
     override fun getVar(): VarDecl<*>? {
         return null
     }
 
     override fun getExpr(): Expr<*> {
         return BvLitExpr.of(value)
-    }
-
-    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
-        return visitor.visit(this, param)
-    }
-}
-
-data class Btor2Const_d(
-    override val nid: UInt,
-    override val value: Int,
-    override val sort: Btor2Sort
-) : Btor2Const<Int>(nid, value, sort)
-{
-    override fun getVar(): VarDecl<*>? {
-        return null
-    }
-
-    override fun getExpr(): Expr<*> {
-        val size = sort.width.toInt()
-        val bin_array = BooleanArray(size) { index ->
-            (value shr (size - 1 - index)) and 1 == 1
-        }
-        return BvLitExpr.of(bin_array)
-    }
-
-    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
-        return visitor.visit(this, param)
-    }
-}
-
-data class Btor2Const_h(
-    override val nid: UInt,
-    override val value: String,
-    override val sort: Btor2Sort
-) : Btor2Const<String>(nid, value, sort)
-{
-    override fun getVar(): VarDecl<*>? {
-        return null
-    }
-
-    override fun getExpr(): Expr<*> {
-        // return BvLitExpr.of(value)
-        TODO("Hexadecimal literal parsing not implemented")
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
