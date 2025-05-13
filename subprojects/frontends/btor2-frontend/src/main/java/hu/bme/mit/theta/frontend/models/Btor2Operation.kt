@@ -25,8 +25,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
@@ -125,8 +123,8 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         {
             Btor2BinaryOperator.ADD -> BvAddExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.AND -> BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.NAND -> NotExpr.create(BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)) as Expr<BoolType>)
-            Btor2BinaryOperator.NOR -> NotExpr.create(BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)) as Expr<BoolType>)
+            Btor2BinaryOperator.NAND -> BvNotExpr.create(BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
+            Btor2BinaryOperator.NOR -> BvNotExpr.create(BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
             Btor2BinaryOperator.OR -> BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.XOR -> BvXorExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.MUL -> BvMulExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
@@ -247,12 +245,12 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
         return value
     }
 
-    override fun getExpr(): Expr<*> {
-        val op1_expr = if (negated) NotExpr.of(op1.getExpr() as Expr<BoolType>) else op1.getExpr() as Expr<BoolType>
+    override fun getExpr(): Expr<BvType> {
+        val op1Expr = if (negated) BvNotExpr.of(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
 
         return when(operator)
         {
-            Btor2TernaryOperator.ITE -> IteExpr.of(op1_expr, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
+            Btor2TernaryOperator.ITE -> TODO() // IteExpr.of(op1Expr, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
             Btor2TernaryOperator.WRITE -> TODO()
         }
     }
