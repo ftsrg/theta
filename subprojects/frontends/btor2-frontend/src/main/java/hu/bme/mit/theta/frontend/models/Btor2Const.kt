@@ -59,7 +59,11 @@ data class Btor2Const_d(
     }
 
     override fun getExpr(): Expr<*> {
-        return IntLitExpr.of(value.toBigInteger())
+        val size = sort.width.toInt()
+        val bin_array = BooleanArray(size) { index ->
+            (value shr (size - 1 - index)) and 1 == 1
+        }
+        return BvLitExpr.of(bin_array)
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {

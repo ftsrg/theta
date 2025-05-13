@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.bvtype.*
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
 
@@ -117,8 +118,8 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
     }
 
     override fun getExpr(): Expr<*> {
-        val op1_expr = if (opd1_negated) castBv(Neg(op1.getExpr() as Expr<BvType>)) else castBv(op1.getExpr())
-        val op2_expr = if (opd2_negated) castBv(Neg(op2.getExpr() as Expr<BvType>)) else castBv(op2.getExpr())
+        val op1_expr = if (opd1_negated) castBv(Neg(op1.getExpr() as Expr<BvType>)) else op1.getExpr() as Expr<BvType>
+        val op2_expr = if (opd2_negated) castBv(Neg(op2.getExpr() as Expr<BvType>)) else op2.getExpr() as Expr<BvType>
 
         return when(operator)
         {
@@ -202,6 +203,7 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         return when(operator)
         {
             Btor2ComparisonOperator.EQ -> BvEqExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+                //Eq(op1_expr as RefExpr<BvType>, op2_expr as RefExpr<BvType>)
             Btor2ComparisonOperator.NEQ -> BvNeqExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.SLT -> BvSLtExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2ComparisonOperator.SLTE -> TODO()
