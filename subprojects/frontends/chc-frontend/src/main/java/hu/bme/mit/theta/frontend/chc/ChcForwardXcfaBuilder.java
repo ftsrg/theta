@@ -130,6 +130,9 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         UPred from = locations.get(getTailFrom(tail).getName());
+        if (tail.u_pred_atom().isEmpty()) {
+            localVars.values().forEach(var -> labels.add(new StmtLabel(HavocStmt.of(var))));
+        }
         tail.u_pred_atom()
                 .forEach(
                         u_pred -> {
