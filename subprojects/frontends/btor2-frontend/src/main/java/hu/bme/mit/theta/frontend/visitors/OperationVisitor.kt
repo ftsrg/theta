@@ -50,8 +50,8 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         val sort : Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
 
         val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
-        val u = ctx.u.text.toUInt()
-        val l = ctx.l.text.toUInt()
+        val u = ctx.u.text.toBigInteger()
+        val l = ctx.l.text.toBigInteger()
 
         val node =  Btor2SliceOperation(nid, sort, opd, u, l)
         Btor2Circuit.nodes[nid] = node

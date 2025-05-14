@@ -29,7 +29,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import java.math.BigInteger
 
 
 abstract class Btor2Operation(id: UInt, sort: Btor2Sort) : Btor2Node(id, sort)
@@ -76,7 +78,8 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
     }
 
     override fun getExpr(): Expr<*> {
-        TODO("Not yet implemented")
+        //return BvExt
+        TODO()
     }
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
@@ -87,7 +90,7 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
     }
 }
 
-data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val u : UInt, val l : UInt) : Btor2Operation(nid, sort)
+data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val u : BigInteger, val l : BigInteger) : Btor2Operation(nid, sort)
 {
     val value = Decls.Var("slice_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -96,7 +99,7 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
     }
 
     override fun getExpr(): Expr<*> {
-        TODO("Not yet implemented")
+        return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(u))
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -104,7 +107,7 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
     }
 
     override fun getStmt(negate: Boolean): Stmt {
-        TODO("Not yet implemented")
+        return AssignStmt.of(value, getExpr() as Expr<BvType>)
     }
 }
 
@@ -144,7 +147,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.USUBO -> TODO()
             Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SLL -> BvLogicShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.READ -> TODO()
@@ -205,15 +208,33 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
                 BvExprs.Bv(BooleanArray(1) { true }),
                 BvExprs.Bv(BooleanArray(1) { false }))
                 //Eq(op1_expr as RefExpr<BvType>, op2_expr as RefExpr<BvType>)
-            Btor2ComparisonOperator.NEQ -> BvNeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.SLT -> BvSLtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.SLTE -> BvSLeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.SGT -> BvSGtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.SGTE -> BvSGeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.ULT -> BvULtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.ULTE -> BvULeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.UGT -> BvUGtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2ComparisonOperator.UGTE -> BvUGeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2ComparisonOperator.NEQ -> IteExpr.of(BvNeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.SLT -> IteExpr.of(BvSLtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.SLTE -> IteExpr.of(BvSLeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.SGT -> IteExpr.of(BvSGtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.SGTE -> IteExpr.of(BvSGeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.ULT -> IteExpr.of(BvULtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+                BvExprs.Bv(BooleanArray(1) { true }),
+                BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.ULTE -> IteExpr.of(BvULeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.UGT -> IteExpr.of(BvUGtExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
+            Btor2ComparisonOperator.UGTE -> IteExpr.of(BvUGeqExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>),
+            BvExprs.Bv(BooleanArray(1) { true }),
+            BvExprs.Bv(BooleanArray(1) { false }))
         }
     }
 
