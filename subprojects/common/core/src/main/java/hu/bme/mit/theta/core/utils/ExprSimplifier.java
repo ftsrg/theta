@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -415,7 +416,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
-        final Set<Expr<BoolType>> ops = new HashSet<>();
+        final Set<Expr<BoolType>> ops = Containers.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();
@@ -445,7 +446,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
-        final Set<Expr<BoolType>> ops = new HashSet<>();
+        final Set<Expr<BoolType>> ops = Containers.createSet();
 
         if (expr.getOps().isEmpty()) {
             return True();
