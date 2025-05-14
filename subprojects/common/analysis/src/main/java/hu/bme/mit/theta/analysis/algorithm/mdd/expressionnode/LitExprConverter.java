@@ -56,7 +56,9 @@ public class LitExprConverter {
             var ret = BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue();
             return ret;
         }
-        if (litExpr instanceof ArrayLitExpr<?, ?> || litExpr instanceof FpLitExpr || litExpr instanceof RatLitExpr) {
+        if (litExpr instanceof ArrayLitExpr<?, ?>
+                || litExpr instanceof FpLitExpr
+                || litExpr instanceof RatLitExpr) {
             if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
