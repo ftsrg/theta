@@ -100,15 +100,16 @@ public class ChcUtils {
     private static final Map<Tuple2<String, Type>, VarDecl<?>> cache = new LinkedHashMap<>();
 
     private static VarDecl<?> createVar(XcfaProcedureBuilder builder, String name, Type type) {
-        return cache.computeIfAbsent(
-                Tuple2.of(name, type),
-                objects -> {
-                    var v = Decls.Var(name, type);
-                    builder.addVar(v);
-                    builder.addVar(v);
-                    transformConst(Decls.Const(name, type), false);
-                    return v;
-                });
+        var ret =
+                cache.computeIfAbsent(
+                        Tuple2.of(name, type),
+                        objects -> {
+                            var v = Decls.Var(name, type);
+                            builder.addVar(v);
+                            return v;
+                        });
+        transformConst(Decls.Const(name, type), false);
+        return ret;
     }
 
     public static Map<String, VarDecl<?>> createVars(
@@ -117,9 +118,8 @@ public class ChcUtils {
         Map<String, VarDecl<?>> vars = new HashMap<>();
         for (CHCParser.Var_declContext var_decl : var_decls) {
             String name = var_decl.symbol().getText();
-            String varName = name + "_" + builder.getEdges().size();
             Type type = transformSort(var_decl.sort());
-            VarDecl<?> var = createVar(builder, varName, type);
+            VarDecl<?> var = createVar(builder, name, type);
             vars.put(name, var);
         }
         return vars;
