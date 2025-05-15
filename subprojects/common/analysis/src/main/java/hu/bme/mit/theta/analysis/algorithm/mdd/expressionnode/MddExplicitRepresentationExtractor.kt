@@ -22,8 +22,11 @@ import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
+import hu.bme.mit.theta.core.utils.ExprUtils
 
 object MddExplicitRepresentationExtractor {
+
+  val structToSym: MutableMap<MddHandle, MddHandle> = mutableMapOf()
 
   fun transform(node: MddHandle, variable: MddVariableHandle): MddHandle =
     transform(node, variable, UnaryOperationCache())
@@ -64,6 +67,18 @@ object MddExplicitRepresentationExtractor {
       }
 
       result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
+      if (structToSym.get(result) != null && (node.node.representation as MddExpressionRepresentation).explicitRepresentation.size!=0) {
+        println("Collision:")
+        val expr1 = (structToSym.get(result)!!.node.representation as MddExpressionRepresentation).expr
+        val expr2 = (node.node.representation as MddExpressionRepresentation).expr
+
+        val expr1Canonized = ExprUtils.canonize(expr1)
+        val expr2Canonized = ExprUtils.canonize(expr2)
+        println(expr2Canonized.equals(expr1Canonized))
+        println("expr1:" + expr1)
+        println("expr2:" + expr2)
+      }
+      structToSym.put(result, node);
     }
     cache.addToCache(node, result)
     return result
