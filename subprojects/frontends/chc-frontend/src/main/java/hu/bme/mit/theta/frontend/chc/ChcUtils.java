@@ -45,11 +45,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -101,6 +97,20 @@ public class ChcUtils {
         return charStream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 
+    private static final Map<Tuple2<String, Type>, VarDecl<?>> cache = new LinkedHashMap<>();
+
+    private static VarDecl<?> createVar(XcfaProcedureBuilder builder, String name, Type type) {
+        return cache.computeIfAbsent(
+                Tuple2.of(name, type),
+                objects -> {
+                    var v = Decls.Var(name, type);
+                    builder.addVar(v);
+                    builder.addVar(v);
+                    transformConst(Decls.Const(name, type), false);
+                    return v;
+                });
+    }
+
     public static Map<String, VarDecl<?>> createVars(
             XcfaProcedureBuilder builder, List<CHCParser.Var_declContext> var_decls) {
         resetSymbolTable();
@@ -109,9 +119,7 @@ public class ChcUtils {
             String name = var_decl.symbol().getText();
             String varName = name + "_" + builder.getEdges().size();
             Type type = transformSort(var_decl.sort());
-            VarDecl<?> var = Decls.Var(varName, type);
-            builder.addVar(var);
-            transformConst(Decls.Const(name, type), false);
+            VarDecl<?> var = createVar(builder, varName, type);
             vars.put(name, var);
         }
         return vars;
