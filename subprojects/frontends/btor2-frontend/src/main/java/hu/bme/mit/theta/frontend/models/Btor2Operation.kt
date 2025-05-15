@@ -99,7 +99,8 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
     }
 
     override fun getExpr(): Expr<*> {
-        return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(u))
+        val newU : BigInteger = u + BigInteger.valueOf(1)
+        return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(newU))
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -148,7 +149,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.READ -> TODO()
         }
