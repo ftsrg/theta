@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.List;
 
-public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
+    public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
     private static final int HASH_SEED = 181;
     private static final String OPERATOR_LABEL = "ite";

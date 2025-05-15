@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import java.math.BigInteger
 
 
@@ -271,11 +272,13 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
     }
 
     override fun getExpr(): Expr<BvType> {
-        val op1Expr = if (negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
+        //checkAllTypesEqual(op1.getExpr(), BvExprs.Bv(BooleanArray(1) { true }))
 
+        val op1Expr = if (negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
+        val op1ExprBool = Eq(op1Expr, BvExprs.Bv(BooleanArray(1) { true }))
         return when(operator)
         {
-            Btor2TernaryOperator.ITE -> IteExpr.of(op1Expr as Expr<BoolType>, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
+            Btor2TernaryOperator.ITE -> IteExpr.of(op1ExprBool as Expr<BoolType>, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
             Btor2TernaryOperator.WRITE -> TODO()
         }
     }
