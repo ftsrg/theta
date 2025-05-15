@@ -27,7 +27,10 @@ class EliminateSelfLoops : ProcedurePass {
         builder.removeEdge(selfLoop)
         val source = selfLoop.source
         val target =
-          XcfaLocation(source.name + "_selfloop_" + XcfaLocation.uniqueCounter(), metadata = source.metadata)
+          XcfaLocation(
+            source.name + "_selfloop_" + XcfaLocation.uniqueCounter(),
+            metadata = source.metadata,
+          )
         builder.addLoc(target)
         builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))
         builder.addEdge(
