@@ -74,44 +74,47 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
         }
     }
 
-    private static AbstractNextStateDescriptor of(AbstractNextStateDescriptor wrapped, MddHandle target, KillSwitch killSwitch) {
+    private static AbstractNextStateDescriptor of(
+            AbstractNextStateDescriptor wrapped, MddHandle target, KillSwitch killSwitch) {
         return (wrapped == AbstractNextStateDescriptor.terminalEmpty())
                 ? AbstractNextStateDescriptor.terminalEmpty()
                 : new OnTheFlyReachabilityNextStateDescriptor(wrapped, target, killSwitch);
     }
 
-    public static AbstractNextStateDescriptor of(AbstractNextStateDescriptor wrapped, MddHandle target) {
+    public static AbstractNextStateDescriptor of(
+            AbstractNextStateDescriptor wrapped, MddHandle target) {
         return of(wrapped, target, new KillSwitch());
     }
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        return killSwitch.isKilled() ?
-            IntObjMapView.empty(EmptyNextStateDescriptor.INSTANCE) :
-                new IntObjMapViews.Transforming<>(
-                    wrapped.getDiagonal(localStateSpace),
-                    (descriptor, key) -> {
-                        if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
-                        return OnTheFlyReachabilityNextStateDescriptor.of(
-                                descriptor, target.get(key), killSwitch);
-                    });
+        return killSwitch.isKilled()
+                ? IntObjMapView.empty(EmptyNextStateDescriptor.INSTANCE)
+                : new IntObjMapViews.Transforming<>(
+                        wrapped.getDiagonal(localStateSpace),
+                        (descriptor, key) -> {
+                            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
+                            return OnTheFlyReachabilityNextStateDescriptor.of(
+                                    descriptor, target.get(key), killSwitch);
+                        });
     }
 
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
-        return killSwitch.isKilled() ?
-                IntObjMapView.empty(IntObjMapView.empty(EmptyNextStateDescriptor.INSTANCE)) :
-                new IntObjMapViews.Transforming<>(
-                    wrapped.getOffDiagonal(localStateSpace),
-                    it ->
-                            new IntObjMapViews.Transforming<>(
-                                    it,
-                                    (descriptor, key) -> {
-                                            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
+        return killSwitch.isKilled()
+                ? IntObjMapView.empty(IntObjMapView.empty(EmptyNextStateDescriptor.INSTANCE))
+                : new IntObjMapViews.Transforming<>(
+                        wrapped.getOffDiagonal(localStateSpace),
+                        it ->
+                                new IntObjMapViews.Transforming<>(
+                                        it,
+                                        (descriptor, key) -> {
+                                            if (key == null)
+                                                return AbstractNextStateDescriptor.terminalEmpty();
                                             return OnTheFlyReachabilityNextStateDescriptor.of(
                                                     descriptor, target.get(key), killSwitch);
-                                    }));
+                                        }));
     }
 
     @Override

@@ -175,10 +175,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                                 MddExpressionTemplate.of(
                                         negatedPropExpr, o -> (Decl) o, solverPool));
         final AbstractNextStateDescriptor targetedNextStates =
-                OnTheFlyReachabilityNextStateDescriptor.of(
-                        nextStates,
-                        propNode
-                );
+                OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
 
         logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
