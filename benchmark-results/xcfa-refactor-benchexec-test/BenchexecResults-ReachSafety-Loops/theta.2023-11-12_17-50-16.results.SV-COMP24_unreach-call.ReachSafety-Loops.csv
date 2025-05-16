@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+nla-digbench/ps3-ll.yml	true	TIMEOUT	120.451527	114.40982599200004	328.945664
+loop-crafted/simple_vardep_2.yml	true	TIMEOUT	120.39736	115.14597370700005	334.082048
+nla-digbench-scaling/divbin_valuebound100.yml	true	ERROR (server error)	7.795523	3.7497242780000306	271.814656
+nla-digbench-scaling/mannadiv_valuebound50.yml	true	TIMEOUT	120.710823	109.70221065100009	343.621632
+nla-digbench-scaling/mannadiv_unwindbound10.yml	false	TIMEOUT	120.786306	108.49862538899993	404.672512
+loops-crafted-1/nested3-1_abstracted.yml	true	ERROR (server error)	8.931336	4.804123749999917	276.373504
+nla-digbench-scaling/sqrt1-ll_valuebound2.yml	true	TIMEOUT	120.36864	114.42476215799991	342.667264
+loop-acceleration/nested_1-2.yml	false	TIMEOUT	120.573535	113.28613158900009	2004.946944
+nla-digbench-scaling/hard-ll_valuebound2.yml	true	TIMEOUT	120.771287	108.87266808100003	395.268096
+loop-invgen/down.yml	true	TIMEOUT	120.718376	109.6071959819999	343.977984

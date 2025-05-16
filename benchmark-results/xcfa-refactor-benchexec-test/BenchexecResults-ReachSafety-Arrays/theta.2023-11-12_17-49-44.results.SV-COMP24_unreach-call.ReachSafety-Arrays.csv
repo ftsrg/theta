@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	true	TIMEOUT	120.405424	113.90481379099998	1537.798144
+array-programs/copysome2-1.yml	true	TIMEOUT	120.458019	113.51410437700008	1926.914048
+array-examples/sanfoundry_24-1.yml	true	TIMEOUT	120.600446	109.25195450400008	615.682048
+array-multidimensional/max-2-u.yml	true	ERROR (server error)	1.95571	1.1691995050000514	138.330112
+array-examples/sorting_bubblesort_ground-1.yml	true	TIMEOUT	120.373895	113.70439291100001	1747.750912
+array-multidimensional/rev-2-n-u.yml	true	ERROR (server error)	2.008514	1.1841973580000058	148.000768
+array-examples/data_structures_set_multi_proc_trivial_ground.yml	true	TIMEOUT	120.351045	114.03205926200008	1561.104384
+array-patterns/array21_pattern.yml	true	ERROR (server error)	1.979093	1.1938849169998775	143.781888
+array-examples/standard_copy3_ground-2.yml	false	TIMEOUT	120.359537	113.80945724799994	1694.449664
+array-examples/standard_copy6_ground-2.yml	true	TIMEOUT	120.383635	113.12938426400001	1679.671296

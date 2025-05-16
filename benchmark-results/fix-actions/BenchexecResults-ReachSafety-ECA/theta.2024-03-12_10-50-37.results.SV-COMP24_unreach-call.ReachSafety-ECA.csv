@@ -1,0 +1,8 @@
+tool		Theta 5.0.3	Theta 5.0.3	Theta 5.0.3	Theta 5.0.3
+run set		SV-COMP24_unreach-call.ReachSafety-ECA	SV-COMP24_unreach-call.ReachSafety-ECA	SV-COMP24_unreach-call.ReachSafety-ECA	SV-COMP24_unreach-call.ReachSafety-ECA
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+eca-rers2012/Problem06_label18.yml	true	TIMEOUT (Parsing OK)	121.194045	82.40482397400001	8415.518720
+eca-rers2012/Problem06_label11.yml	false	TIMEOUT (Parsing OK)	120.451017	75.94735727500006	7962.812416
+eca-programs/Problem101_label07.yml	false	TIMEOUT	121.757419	68.83084164599995	13202.202624
+eca-rers2012/Problem05_label44.yml	false	TIMEOUT (Parsing OK)	120.84102	72.40491542900008	9126.952960
+eca-rers2012/Problem04_label05.yml	true	TIMEOUT (Parsing OK)	120.537676	78.407060301	4666.785792

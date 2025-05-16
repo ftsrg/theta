@@ -1,0 +1,53 @@
+tool		Theta 6.3.4	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4
+run set		SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	true	TIMEOUT	6.223316	61.00408978299998	449.843200
+array-crafted/mapavg4.yml	true	TIMEOUT	6.755632	61.018942398000036	465.436672
+array-programs/copysome2-1.yml	true	TIMEOUT	7.560346	61.02243963699999	487.800832
+array-examples/sanfoundry_24-1.yml	true	TIMEOUT	8.861914	61.02633712499994	469.790720
+array-multidimensional/max-2-u.yml	true	ERROR (frontend failed)	1.796859	0.7464292749999686	159.498240
+array-examples/sorting_bubblesort_ground-1.yml	true	TIMEOUT	6.239289	61.019701887	450.977792
+array-crafted/bAnd2.yml	true	TIMEOUT	21.346922	10.943084917999954	1154.404352
+array-multidimensional/rev-2-n-u.yml	true	ERROR (frontend failed)	1.862664	0.79136055999993	160.727040
+array-examples/data_structures_set_multi_proc_trivial_ground.yml	true	TIMEOUT	7.792089	61.026997181999945	484.741120
+array-patterns/array21_pattern.yml	true	ERROR (frontend failed)	1.987244	0.8048576520000097	175.075328
+array-examples/standard_copy3_ground-2.yml	false	TIMEOUT	7.613785	61.02921783599993	489.725952
+array-examples/standard_copy6_ground-2.yml	true	TIMEOUT	11.100041	61.02205439399995	509.829120
+array-examples/standard_copyInit_ground.yml	true	TIMEOUT	7.185413	60.90226758699998	472.375296
+array-examples/standard_init4_ground-1.yml	false	TIMEOUT	7.459988	61.03354419599998	485.249024
+array-examples/standard_copy9_ground-1.yml	false	TIMEOUT	8.153214	61.03444294500002	520.966144
+array-crafted/mapsum1.yml	true	TIMEOUT	21.872161	8.087733254	873.574400
+array-examples/standard_init7_ground-2.yml	true	TIMEOUT	7.373282	60.30500137699994	494.706688
+array-cav19/array_init_var_plus_ind3.yml	true	TIMEOUT	6.924611	61.02227813499985	460.591104
+array-tiling/mbpr4.yml	true	TIMEOUT	12.900982	61.021870332999924	495.570944
+reducercommutativity/sum20-2.yml	true	TIMEOUT	14.804145	61.02616245000013	539.611136
+array-programs/copysome1-1.yml	true	TIMEOUT	7.313439	60.50037018699982	467.968000
+array-tiling/pr2.yml	true	TIMEOUT	11.04309	61.02235981900003	470.802432
+array-examples/standard_copy8_ground-1.yml	true	TIMEOUT	8.020774	61.02561552399993	521.342976
+array-examples/standard_init8_ground-2.yml	true	TIMEOUT	7.870874	61.021882572000095	512.847872
+array-cav19/array_tiling_tcpy.yml	true	TIMEOUT	7.40893	60.18101319699986	477.855744
+reducercommutativity/max60-2.yml	true	TIMEOUT	21.019978	7.74366739900006	747.560960
+array-examples/standard_init4_ground-2.yml	true	TIMEOUT	7.269711	60.659020994	485.171200
+array-patterns/array29_pattern.yml	true	ERROR (frontend failed)	1.902276	0.7926628359998631	166.555648
+array-examples/standard_init1_ground-1.yml	false	TIMEOUT	7.093478	61.02001800599987	471.429120
+reducercommutativity/max20-1.yml	true	TIMEOUT	9.042432	61.029656899999964	557.342720
+array-examples/standard_copyInitSum_ground.yml	true	TIMEOUT	7.441321	60.0919582680001	470.618112
+array-examples/standard_reverse_ground.yml	true	TIMEOUT	6.902927	61.01889056599998	474.161152
+array-examples/standard_find_ground-1.yml	true	TIMEOUT	7.260271	60.655725673999996	473.022464
+array-examples/standard_palindrome_ground.yml	true	TIMEOUT	7.320908	60.48777003499981	482.992128
+array-cav19/array_init_pair_symmetr2.yml	true	TIMEOUT	7.542979	61.02005197099993	479.735808
+reducercommutativity/sum40-2.yml	true	TIMEOUT	18.359399	60.41705138899988	633.417728
+array-crafted/bor3.yml	true	TIMEOUT	7.541803	61.02078861700011	509.276160
+array-programs/copysome1-2.yml	false	TIMEOUT	7.422936	60.13046193400032	474.836992
+array-patterns/array24_pattern.yml	true	ERROR (frontend failed)	1.871981	0.74552384899971	172.707840
+array-multidimensional/min-2-u.yml	true	ERROR (frontend failed)	1.853849	0.7625625590003438	157.196288
+array-crafted/mapavg1.yml	true	TIMEOUT	14.98204	60.552703011000176	766.439424
+array-patterns/array10_pattern.yml	true	TIMEOUT	7.297897	60.53396868100026	474.431488
+array-examples/standard_copy9_ground-2.yml	true	TIMEOUT	8.062687	61.018307639999875	515.223552
+reducercommutativity/sum10-1.yml	true	TIMEOUT	7.694645	61.021283866999966	487.989248
+array-tiling/pr3.yml	true	TIMEOUT	7.504961	61.02070135199983	476.045312
+array-patterns/array17_pattern.yml	true	ERROR (frontend failed)	1.87621	0.7732339830004094	172.924928
+array-examples/standard_seq_init_ground.yml	true	TIMEOUT	7.060222	61.02344046600001	484.564992
+array-examples/standard_minInArray_ground-2.yml	true	TIMEOUT	7.314311	60.502169546999994	473.042944
+array-crafted/zero_sum_m2.yml	true	TIMEOUT	7.509333	61.01938483799995	477.097984
+reducercommutativity/max05-1.yml	true	TIMEOUT	7.871776	61.028863019000255	489.336832
