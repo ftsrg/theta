@@ -155,7 +155,7 @@ class XcfaCliVerifyTest {
           "/chc/chc-LIA-Lin_000.smt2",
           ChcFrontend.ChcTransformation.FORWARD,
           "--domain PRED_CART",
-        ),
+        )
       )
     }
   }
