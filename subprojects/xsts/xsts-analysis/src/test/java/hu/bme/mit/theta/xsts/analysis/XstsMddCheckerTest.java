@@ -39,6 +39,12 @@ public class XstsMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
+                    //                    {
+                    //                        "src/test/resources/model/spacecraft.xsts",
+                    //
+                    // "src/test/resources/property/transmitting_battery_40.prop",
+                    //                        false
+                    //                    },
 
                     //                { "src/test/resources/model/trafficlight.xsts",
                     // "src/test/resources/property/green_and_red.prop", true},
@@ -69,11 +75,13 @@ public class XstsMddCheckerTest {
                         true
                     },
 
-                    //                { "src/test/resources/model/cross_with.xsts",
-                    // "src/test/resources/property/cross.prop", false},
-
-                    //                { "src/test/resources/model/cross_without.xsts",
-                    // "src/test/resources/property/cross.prop", false},
+                    //                                    {
+                    // "src/test/resources/model/cross_with.xsts",
+                    //                     "src/test/resources/property/cross.prop", false},
+                    //
+                    //                                    {
+                    // "src/test/resources/model/cross_without.xsts",
+                    //                     "src/test/resources/property/cross.prop", false},
 
                     {
                         "src/test/resources/model/choices.xsts",
@@ -97,18 +105,20 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/sequential2.prop",
                         false
                     },
-                    //                    {
-                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //                                        {
                     //
-                    // "src/test/resources/property/on_off_statemachine.prop",
-                    //                        false
-                    //                    },
-                    //                    {
-                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    // "src/test/resources/model/on_off_statemachine.xsts",
                     //
-                    // "src/test/resources/property/on_off_statemachine2.prop",
-                    //                        true
-                    //                    },
+                    //                     "src/test/resources/property/on_off_statemachine.prop",
+                    //                                            false
+                    //                                        },
+                    //                                        {
+                    //
+                    // "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    //                     "src/test/resources/property/on_off_statemachine2.prop",
+                    //                                            true
+                    //                                        },
                     //                    {
                     //                        "src/test/resources/model/on_off_statemachine.xsts",
                     //
