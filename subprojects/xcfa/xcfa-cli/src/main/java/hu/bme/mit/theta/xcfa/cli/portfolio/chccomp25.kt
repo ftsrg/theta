@@ -87,6 +87,7 @@ fun chcCompPortfolio25(
           ConfigNode(
             "Bounded-BMC-$inProcess",
             baseBoundedConfig.adaptConfig(
+              inProcess = inProcess,
               bmcEnabled = true,
               indEnabled = false,
               itpEnabled = false,
@@ -99,6 +100,7 @@ fun chcCompPortfolio25(
           ConfigNode(
             "Bounded-KIND-$inProcess",
             baseBoundedConfig.adaptConfig(
+              inProcess = inProcess,
               bmcEnabled = true,
               indEnabled = true,
               itpEnabled = false,
@@ -113,6 +115,7 @@ fun chcCompPortfolio25(
           ConfigNode(
             "Bounded-IMC-$inProcess",
             baseBoundedConfig.adaptConfig(
+              inProcess = inProcess,
               bmcEnabled = false,
               indEnabled = false,
               itpEnabled = true,
