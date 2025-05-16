@@ -67,9 +67,13 @@ object MddExplicitRepresentationExtractor {
       }
 
       result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
-      if (structToSym.get(result) != null && (node.node.representation as MddExpressionRepresentation).explicitRepresentation.size!=0) {
+      if (
+        structToSym.get(result) != null &&
+          (node.node.representation as MddExpressionRepresentation).explicitRepresentation.size != 0
+      ) {
         println("Collision:")
-        val expr1 = (structToSym.get(result)!!.node.representation as MddExpressionRepresentation).expr
+        val expr1 =
+          (structToSym.get(result)!!.node.representation as MddExpressionRepresentation).expr
         val expr2 = (node.node.representation as MddExpressionRepresentation).expr
 
         val expr1Canonized = ExprUtils.canonize(expr1)
@@ -78,7 +82,7 @@ object MddExplicitRepresentationExtractor {
         println("expr1:" + expr1)
         println("expr2:" + expr2)
       }
-      structToSym.put(result, node);
+      structToSym.put(result, node)
     }
     cache.addToCache(node, result)
     return result
