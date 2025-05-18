@@ -95,7 +95,7 @@ class YamlWitnessWriter {
           // last state is cycle_head, find its earliest occurrence
           // stem is everything beforehand
           // cycle's segments are everything in-between
-          
+
           val cycleHead = concrTrace.states.last()
           val cycleHeadFirst =
             concrTrace.states.indexOfFirst {
@@ -155,18 +155,20 @@ class YamlWitnessWriter {
                   WaypointContent(
                     type = WaypointType.ASSUMPTION,
                     location =
-                      ((lasso.actions.first().label.getFlatLabels().first().metadata as? CMetaData)?.astNodes?.first()
-                          ?: error("Cycle's metadata is missing."))
+                      ((lasso.actions.first().label.getFlatLabels().first().metadata as? CMetaData)
+                          ?.astNodes
+                          ?.first() ?: error("Cycle's metadata is missing."))
                         .let {
-                          val astNode = if(it is CWhile) {
-                            it.body
-                          } else if(it is CFor) {
-                            it.body
-                          } else if(it is CDoWhile) {
-                            it.body
-                          } else {
-                            it
-                          }
+                          val astNode =
+                            if (it is CWhile) {
+                              it.body
+                            } else if (it is CFor) {
+                              it.body
+                            } else if (it is CDoWhile) {
+                              it.body
+                            } else {
+                              it
+                            }
                           Location(
                             fileName = inputFile.name,
                             line = astNode.lineNumberStart,
