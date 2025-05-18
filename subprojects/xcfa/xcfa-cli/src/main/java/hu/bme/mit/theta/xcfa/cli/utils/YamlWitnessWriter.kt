@@ -30,11 +30,15 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile
+import hu.bme.mit.theta.frontend.transformation.model.statements.CFor
+import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
@@ -91,7 +95,7 @@ class YamlWitnessWriter {
           // last state is cycle_head, find its earliest occurrence
           // stem is everything beforehand
           // cycle's segments are everything in-between
-
+          
           val cycleHead = concrTrace.states.last()
           val cycleHeadFirst =
             concrTrace.states.indexOfFirst {
@@ -109,6 +113,13 @@ class YamlWitnessWriter {
           val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
             // case of e.g., BMC !!
             Trace.of(
+              concrTrace.states.subList(cycleHeadFirst - 1, concrTrace.states.size - 1),
+              concrTrace.actions.subList(cycleHeadFirst - 1, concrTrace.actions.size - 1),
+            )
+
+          val lasso2 = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
+            // case of e.g., BMC !!
+            Trace.of(
               concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
               concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
             )
@@ -122,7 +133,7 @@ class YamlWitnessWriter {
           val stemTrace =
             traceToWitness(trace = stem, parseContext = parseContext, property = property)
           val lassoTrace =
-            traceToWitness(trace = lasso, parseContext = parseContext, property = property)
+            traceToWitness(trace = lasso2, parseContext = parseContext, property = property)
           val backEdgeTrace =
             traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
 
@@ -142,15 +153,24 @@ class YamlWitnessWriter {
                 .map { ContentItem(it) } +
                 ContentItem(
                   WaypointContent(
-                    type = WaypointType.RECURRENCE_CONDITION,
+                    type = WaypointType.ASSUMPTION,
                     location =
-                      ((lasso.actions.first().edge.metadata as? CMetaData)?.astNodes?.first()
+                      ((lasso.actions.first().label.getFlatLabels().first().metadata as? CMetaData)?.astNodes?.first()
                           ?: error("Cycle's metadata is missing."))
                         .let {
+                          val astNode = if(it is CWhile) {
+                            it.body
+                          } else if(it is CFor) {
+                            it.body
+                          } else if(it is CDoWhile) {
+                            it.body
+                          } else {
+                            it
+                          }
                           Location(
                             fileName = inputFile.name,
-                            line = it.lineNumberStart,
-                            column = it.colNumberStart + 1,
+                            line = astNode.lineNumberStart,
+                            column = astNode.colNumberStart + 1,
                           )
                         },
                     constraint =

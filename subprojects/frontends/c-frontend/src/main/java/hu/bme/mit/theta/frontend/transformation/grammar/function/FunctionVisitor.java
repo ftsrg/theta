@@ -684,6 +684,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         }
         CAssignment cAssignment =
                 new CAssignment(ret, rhs, ctx.assignmentOperator().getText(), parseContext);
+        recordMetadata(ctx, cAssignment);
         compound.addCStatement(cAssignment);
         expressionVisitor.getPreStatements().forEach(compound::addCStatement);
         compound.setPreStatements(preStatements);

@@ -603,7 +603,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(statement),
       )
     xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -616,7 +616,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(statement),
       )
     xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -679,7 +679,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = if (guard == null) getMetadata(statement) else getMetadata(body),
+        metadata = getMetadata(statement),
       )
     check(lastTest != null)
     xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = assume.metadata)
@@ -695,7 +695,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = if (guard == null) getMetadata(statement) else getMetadata(body),
+        metadata = getMetadata(statement),
       )
     xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = assume1.metadata)
     builder.addEdge(xcfaEdge)
@@ -785,7 +785,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(statement),
       )
     xcfaEdge = XcfaEdge(endGuard, mainBranch, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -798,7 +798,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(statement),
       )
     xcfaEdge = XcfaEdge(endGuard, elseBranch, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -990,7 +990,7 @@ class FrontendXcfaBuilder(
             )
           ),
           choiceType = ChoiceType.MAIN_PATH,
-          metadata = getMetadata(body),
+          metadata = getMetadata(statement),
         )
       xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(body))
       builder.addEdge(xcfaEdge)
@@ -1003,7 +1003,7 @@ class FrontendXcfaBuilder(
             )
           ),
           choiceType = ChoiceType.ALTERNATIVE_PATH,
-          metadata = getMetadata(body),
+          metadata = getMetadata(statement),
         )
       xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(body))
       builder.addEdge(xcfaEdge)

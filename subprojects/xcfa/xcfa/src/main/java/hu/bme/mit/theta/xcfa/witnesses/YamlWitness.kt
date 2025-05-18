@@ -242,7 +242,6 @@ enum class WaypointType {
   @SerialName("function_enter") FUNCTION_ENTER,
   @SerialName("function_return") FUNCTION_RETURN,
   @SerialName("branching") BRANCHING,
-  @SerialName("recurrence_condition") RECURRENCE_CONDITION,
 }
 
 /**

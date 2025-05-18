@@ -37,7 +37,7 @@ class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : P
         .filterNotNull()
         .map { w -> w.waypoint }
     val recurrentSet =
-      cycleWaypoints.find { waypoint -> waypoint.type == WaypointType.RECURRENCE_CONDITION }!!
+      cycleWaypoints.find { waypoint -> waypoint.type == WaypointType.ASSUMPTION }!!
     val allWaypoints = cycleWaypoints + followWaypoints
 
     // collect edges corresponding to recurrence location, cycle and follow waypoints

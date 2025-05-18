@@ -71,7 +71,7 @@ fun getLassoValidationChecker(
 
   val recurrenceSets =
     witness.content.filter {
-      it.segment?.get(0)?.waypoint?.type == WaypointType.RECURRENCE_CONDITION
+      it.segment?.get(0)?.waypoint?.type == WaypointType.ASSUMPTION
     }
   check(recurrenceSets.size == 1) { "Single recurrence set not found." }
   val recurrenceSet = recurrenceSets.first()
