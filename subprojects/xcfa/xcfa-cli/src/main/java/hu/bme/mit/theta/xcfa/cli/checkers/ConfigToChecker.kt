@@ -31,16 +31,19 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getChecker(
-  xcfa: XCFA,
-  mcm: MCM,
+  xcfa: XCFA?,
+  mcm: MCM?,
   config: XcfaConfig<*, *>,
-  parseContext: ParseContext,
+  parseContext: ParseContext?,
   logger: Logger,
   uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
+    xcfa!!
+    mcm!!
+    parseContext!!
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,

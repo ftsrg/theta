@@ -26,22 +26,18 @@ import java.io.File
 import kotlin.time.measureTime
 
 internal class XcfaOcCorrectnessValidator(
-  decisionProcedure: OcDecisionProcedureType,
+  private val ocChecker: OcChecker<E>,
   private val inputConflictClauseFile: String,
-  private val threads: Set<Thread>,
   private val permissive: Boolean = true,
   private val logger: Logger,
-) : OcChecker<E> {
+) : OcChecker<E>() {
 
   private var clauseValidationTime = 0L
-  private lateinit var exactPo: XcfaExactPo
-  private lateinit var ocChecker: OcChecker<E>
   private lateinit var nonOcSolver: Solver
+  private lateinit var ppos: BooleanGlobalRelation
 
   init {
-    if (permissive) {
-      ocChecker = decisionProcedure.checker()
-    } else {
+    if (!permissive) {
       nonOcSolver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
     }
   }
@@ -49,7 +45,7 @@ internal class XcfaOcCorrectnessValidator(
   override val solver
     get() = if (permissive) ocChecker.solver else nonOcSolver
 
-  override fun getRelations() = if (permissive) ocChecker.getRelations() else null
+  override fun getHappensBefore() = if (permissive) ocChecker.getHappensBefore() else null
 
   override fun getPropagatedClauses(): List<Reason> =
     if (permissive) ocChecker.getPropagatedClauses() else listOf()
@@ -57,16 +53,18 @@ internal class XcfaOcCorrectnessValidator(
   override fun check(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
     pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     val flatRfs = rfs.values.flatten()
+    val flatWss = wss.values.flatten()
     val flatEvents = events.values.flatMap { it.values.flatten() }
-    val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
+    this.ppos = ppos
+    val parser = XcfaOcReasonParser(flatRfs union flatWss, flatEvents.toSet())
     var parseFailure = 0
     val propagatedClauses: List<Reason>
-    logger.writeln(
-      Logger.Level.INFO,
+    logger.info(
       "Parse time (ms): " +
         measureTime {
             propagatedClauses =
@@ -79,38 +77,50 @@ internal class XcfaOcCorrectnessValidator(
                 }
               }
           }
-          .inWholeMilliseconds,
+          .inWholeMilliseconds
     )
-
-    clauseValidationTime += measureTime { exactPo = XcfaExactPo(threads) }.inWholeMilliseconds
 
     val validConflicts: List<Reason>
     clauseValidationTime +=
-      measureTime { validConflicts = propagatedClauses.filter { clause -> checkPath(clause) } }
+      measureTime {
+          validConflicts =
+            propagatedClauses.filter { clause ->
+              checkPath(clause).also { if (!it) System.err.println(clause) }
+            }
+        }
         .inWholeMilliseconds
-    logger.writeln(Logger.Level.INFO, "Conflict clause parse failures: $parseFailure")
-    logger.writeln(Logger.Level.INFO, "Parsed conflict clauses: ${propagatedClauses.size}")
-    logger.writeln(Logger.Level.INFO, "Validated conflict clauses: ${validConflicts.size}")
-    logger.writeln(Logger.Level.INFO, "Clause validation time (ms): $clauseValidationTime")
+    logger.info("Conflict clause parse failures: $parseFailure")
+    logger.info("Parsed conflict clauses: ${propagatedClauses.size}")
+    logger.info("Validated conflict clauses: ${validConflicts.size}")
+    logger.info("Clause validation time (ms): $clauseValidationTime")
 
+    wss.forEach { (_, vWss) ->
+      val wsList = vWss.toList()
+      for ((index, ws1) in wsList.withIndex()) {
+        for (ws2 in wsList.subList(index + 1, wsList.size)) {
+          if (ws1.from == ws2.to && ws1.to == ws2.from) {
+            addWsCond(ws1, ws2)
+          }
+        }
+      }
+    }
     if (permissive) {
       ocChecker.solver.add(validConflicts.map { Not(it.expr) })
     } else {
       nonOcSolver.add(validConflicts.map { Not(it.expr) })
     }
     val result: SolverStatus?
-    logger.writeln(
-      Logger.Level.INFO,
+    logger.info(
       "Solver time (ms): " +
         measureTime {
             result =
               if (permissive) {
-                ocChecker.check(events, pos, rfs, wss)
+                ocChecker.check(events, pos, ppos, rfs, wss)
               } else {
                 nonOcSolver.check()
               }
           }
-          .inWholeMilliseconds,
+          .inWholeMilliseconds
     )
     return result
   }
@@ -153,7 +163,10 @@ internal class XcfaOcCorrectnessValidator(
     return possibleOrders.any { isPo(it.first.last().to, it.first.first().from) } // check cylce
   }
 
-  private fun isPo(from: E, to: E): Boolean = exactPo.isPo(from, to)
+  private fun isPo(from: E, to: E): Boolean {
+    if (from.clkId == to.clkId) return true
+    return ppos[from.clkId, to.clkId]
+  }
 
   private fun isRf(rf: Relation<*>): Boolean =
     rf.from.const.varDecl == rf.to.const.varDecl &&
@@ -177,23 +190,7 @@ internal class XcfaOcCorrectnessValidator(
         this as FromReadReason<E>
         if (!derivable(rf, w)) false else checkPath(wAfterRf, rf.from, w)
       }
+
+      else -> error("Unsupported reason type.")
     }
-
-  private val Reason.from: E
-    get() =
-      when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.from
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
-        is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
-        else -> error("Unsupported reason type.")
-      }
-
-  private val Reason.to: E
-    get() =
-      when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.to
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
-        is FromReadReason<*> -> (this as FromReadReason<E>).w
-        else -> error("Unsupported reason type.")
-      }
 }

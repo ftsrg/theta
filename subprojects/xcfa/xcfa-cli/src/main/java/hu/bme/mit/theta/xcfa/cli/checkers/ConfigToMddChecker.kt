@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
+import kotlin.jvm.optionals.getOrNull
 
 fun getMddChecker(
   xcfa: XCFA,
@@ -70,11 +71,18 @@ fun getMddChecker(
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  return MddChecker.create<ExprAction>(
-    monolithicExpr,
-    variableOrder,
-    solverPool,
-    logger,
-    iterationStrategy,
-  )
+  val checker =
+    MddChecker.create<ExprAction>(
+      monolithicExpr,
+      variableOrder,
+      solverPool,
+      logger,
+      iterationStrategy,
+    )
+  return SafetyChecker<MddProof, MddCex, UnitPrec> { input ->
+    val result = checker.check(input)
+    val stats = result.stats.getOrNull()
+    stats?.keySet()?.forEach { key -> logger.writeln(Logger.Level.INFO, "$key: ${stats[key]}") }
+    result
+  }
 }

@@ -94,6 +94,7 @@
               "colNumberStop": 0,
               "offsetStart": 25,
               "offsetEnd": 85,
+              "astNodes": [],
               "sourceText": "void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}"
             }
           }
@@ -112,6 +113,7 @@
               "colNumberStop": 0,
               "offsetStart": 25,
               "offsetEnd": 85,
+              "astNodes": [],
               "sourceText": "void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}"
             }
           }
@@ -124,6 +126,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -142,6 +145,7 @@
               "colNumberStop": 20,
               "offsetStart": 75,
               "offsetEnd": 82,
+              "astNodes": [],
               "sourceText": "abort();"
             }
           }
@@ -169,6 +173,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 75,
                     "offsetEnd": 82,
+                    "astNodes": [],
                     "sourceText": "abort();"
                   }
                 },
@@ -185,6 +190,7 @@
               "colNumberStop": 20,
               "offsetStart": 75,
               "offsetEnd": 82,
+              "astNodes": [],
               "sourceText": "abort();"
             }
           }
@@ -210,6 +216,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 64,
                     "offsetEnd": 83,
+                    "astNodes": [],
                     "sourceText": "if(!cond) {abort();}"
                   }
                 },
@@ -226,6 +233,7 @@
               "colNumberStop": 21,
               "offsetStart": 25,
               "offsetEnd": 85,
+              "astNodes": [],
               "sourceText": "if(!cond) {abort();}if(!cond) {abort();}void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}"
             }
           }
@@ -250,6 +258,7 @@
               "colNumberStop": 21,
               "offsetStart": 25,
               "offsetEnd": 85,
+              "astNodes": [],
               "sourceText": "void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}if(!cond) {abort();}if(!cond) {abort();}if(!cond) {abort();}if(!cond) {abort();}"
             }
           }
@@ -275,6 +284,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 64,
                     "offsetEnd": 83,
+                    "astNodes": [],
                     "sourceText": "if(!cond) {abort();}"
                   }
                 },
@@ -291,6 +301,7 @@
               "colNumberStop": 21,
               "offsetStart": 64,
               "offsetEnd": 83,
+              "astNodes": [],
               "sourceText": "if(!cond) {abort();}{abort();}abort();abort();abort();"
             }
           }
@@ -335,6 +346,7 @@
               "colNumberStop": 158,
               "offsetStart": 669,
               "offsetEnd": 827,
+              "astNodes": [],
               "sourceText": "void reach_error() { ((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); })); }"
             }
           }
@@ -353,6 +365,7 @@
               "colNumberStop": 158,
               "offsetStart": 669,
               "offsetEnd": 827,
+              "astNodes": [],
               "sourceText": "void reach_error() { ((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); })); }"
             }
           }
@@ -379,6 +392,7 @@
               "colNumberStop": 158,
               "offsetStart": 669,
               "offsetEnd": 827,
+              "astNodes": [],
               "sourceText": "void reach_error() { ((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); })); }((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); }));void reach_error() { ((void) sizeof ((0) ? 1 : 0), __extension__ ({ if (0) ; else __assert_fail (\"0\", \"dekker.c\", 7, __extension__ __PRETTY_FUNCTION__); })); }"
             }
           }
@@ -532,6 +546,7 @@
               "colNumberStop": 0,
               "offsetStart": 30501,
               "offsetEnd": 31579,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f2 \u003d flag2;\n    __VERIFIER_atomic_end();\n    while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 0;\n    if (!(x\u003c\u003d0)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}"
             }
           }
@@ -550,6 +565,7 @@
               "colNumberStop": 0,
               "offsetStart": 30501,
               "offsetEnd": 31579,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f2 \u003d flag2;\n    __VERIFIER_atomic_end();\n    while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 0;\n    if (!(x\u003c\u003d0)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}"
             }
           }
@@ -568,6 +584,7 @@
               "colNumberStop": 29,
               "offsetStart": 30527,
               "offsetEnd": 30552,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -586,6 +603,7 @@
               "colNumberStop": 29,
               "offsetStart": 30602,
               "offsetEnd": 30627,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -598,6 +616,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -616,6 +635,7 @@
               "colNumberStop": 33,
               "offsetStart": 30708,
               "offsetEnd": 30733,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -628,6 +648,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -646,6 +667,7 @@
               "colNumberStop": 37,
               "offsetStart": 30824,
               "offsetEnd": 30849,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -664,6 +686,7 @@
               "colNumberStop": 37,
               "offsetStart": 30923,
               "offsetEnd": 30948,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -676,6 +699,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -694,6 +718,7 @@
               "colNumberStop": 41,
               "offsetStart": 31054,
               "offsetEnd": 31079,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -712,6 +737,7 @@
               "colNumberStop": 37,
               "offsetStart": 31175,
               "offsetEnd": 31200,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -730,6 +756,7 @@
               "colNumberStop": 33,
               "offsetStart": 31280,
               "offsetEnd": 31305,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -748,6 +775,7 @@
               "colNumberStop": 9,
               "offsetStart": 31370,
               "offsetEnd": 31375,
+              "astNodes": [],
               "sourceText": "x \u003d 0;"
             }
           }
@@ -760,6 +788,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -778,6 +807,7 @@
               "colNumberStop": 29,
               "offsetStart": 31420,
               "offsetEnd": 31445,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -796,6 +826,7 @@
               "colNumberStop": 29,
               "offsetStart": 31494,
               "offsetEnd": 31519,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -832,6 +863,7 @@
               "colNumberStop": 29,
               "offsetStart": 30501,
               "offsetEnd": 31579,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f2 \u003d flag2;\n    __VERIFIER_atomic_end();\n    while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 0;\n    if (!(x\u003c\u003d0)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}__VERIFIER_atomic_begin();\n    flag1 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f2 \u003d flag2;\n    __VERIFIER_atomic_end();\n    while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 0;\n    if (!(x\u003c\u003d0)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag1 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -857,6 +889,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 30527,
                     "offsetEnd": 30552,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -867,6 +900,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -883,6 +917,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 30573,
                     "offsetEnd": 30596,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -899,6 +934,7 @@
               "colNumberStop": 29,
               "offsetStart": 30527,
               "offsetEnd": 30627,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag1 \u003d 1;flag1 \u003d 1;flag1 \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -924,6 +960,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 30682,
                     "offsetEnd": 31364,
+                    "astNodes": [],
                     "sourceText": "while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"
                   }
                 },
@@ -940,6 +977,7 @@
               "colNumberStop": 33,
               "offsetStart": 30682,
               "offsetEnd": 31364,
+              "astNodes": [],
               "sourceText": "while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }{\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -965,6 +1003,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 30708,
                     "offsetEnd": 30733,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -981,6 +1020,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 30743,
                     "offsetEnd": 30755,
+                    "astNodes": [],
                     "sourceText": "int t \u003d turn;"
                   }
                 },
@@ -997,6 +1037,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 30765,
                     "offsetEnd": 30788,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1013,6 +1054,7 @@
               "colNumberStop": 33,
               "offsetStart": 30708,
               "offsetEnd": 31270,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();int t \u003d turn;int t \u003d turn;int t \u003d turn;int t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
             }
           }
@@ -1038,6 +1080,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 30798,
                     "offsetEnd": 31270,
+                    "astNodes": [],
                     "sourceText": "if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
                   }
                 },
@@ -1054,6 +1097,7 @@
               "colNumberStop": 37,
               "offsetStart": 30798,
               "offsetEnd": 31270,
+              "astNodes": [],
               "sourceText": "if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }{\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1079,6 +1123,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 30824,
                     "offsetEnd": 30849,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1089,6 +1134,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1105,6 +1151,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 30886,
                     "offsetEnd": 30909,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1121,6 +1168,7 @@
               "colNumberStop": 37,
               "offsetStart": 30824,
               "offsetEnd": 30948,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag1 \u003d 0;flag1 \u003d 0;flag1 \u003d 0;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1146,6 +1194,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 31021,
                     "offsetEnd": 31160,
+                    "astNodes": [],
                     "sourceText": "while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
                   }
                 },
@@ -1162,6 +1211,7 @@
               "colNumberStop": 41,
               "offsetStart": 31021,
               "offsetEnd": 31160,
+              "astNodes": [],
               "sourceText": "while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }{\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1187,6 +1237,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 31021,
                     "offsetEnd": 31160,
+                    "astNodes": [],
                     "sourceText": "while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
                   }
                 },
@@ -1203,6 +1254,7 @@
               "colNumberStop": 37,
               "offsetStart": 31021,
               "offsetEnd": 31200,
+              "astNodes": [],
               "sourceText": "while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1228,6 +1280,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 30682,
                     "offsetEnd": 31364,
+                    "astNodes": [],
                     "sourceText": "while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"
                   }
                 },
@@ -1244,6 +1297,7 @@
               "colNumberStop": 9,
               "offsetStart": 30682,
               "offsetEnd": 31375,
+              "astNodes": [],
               "sourceText": "while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }x \u003d 0;x \u003d 0;x \u003d 0;"
             }
           }
@@ -1263,6 +1317,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1279,6 +1334,7 @@
               "colNumberStop": 37,
               "offsetStart": 0,
               "offsetEnd": 31414,
+              "astNodes": [],
               "sourceText": "if (!(x\u003c\u003d0)) ERROR: reach_error();if (!(x\u003c\u003d0)) ERROR: reach_error();if (!(x\u003c\u003d0)) ERROR: reach_error();if (!(x\u003c\u003d0)) ERROR: reach_error();if (!(x\u003c\u003d0)) ERROR: reach_error();"
             }
           }
@@ -1304,6 +1360,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 31381,
                     "offsetEnd": 31414,
+                    "astNodes": [],
                     "sourceText": "if (!(x\u003c\u003d0)) ERROR: reach_error();"
                   }
                 },
@@ -1320,6 +1377,7 @@
               "colNumberStop": 37,
               "offsetStart": 31381,
               "offsetEnd": 31414,
+              "astNodes": [],
               "sourceText": "if (!(x\u003c\u003d0)) ERROR: reach_error();ERROR: reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -1345,6 +1403,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 31381,
                     "offsetEnd": 31414,
+                    "astNodes": [],
                     "sourceText": "if (!(x\u003c\u003d0)) ERROR: reach_error();"
                   }
                 },
@@ -1361,6 +1420,7 @@
               "colNumberStop": 37,
               "offsetStart": 31381,
               "offsetEnd": 31445,
+              "astNodes": [],
               "sourceText": "if (!(x\u003c\u003d0)) ERROR: reach_error();if (!(x\u003c\u003d0)) ERROR: reach_error();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1386,6 +1446,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 31420,
                     "offsetEnd": 31445,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1396,6 +1457,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1412,6 +1474,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 31465,
                     "offsetEnd": 31488,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1428,6 +1491,7 @@
               "colNumberStop": 29,
               "offsetStart": 31420,
               "offsetEnd": 31519,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();turn \u003d 1;turn \u003d 1;turn \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1453,6 +1517,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 31494,
                     "offsetEnd": 31519,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1463,6 +1528,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1479,6 +1545,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 31540,
                     "offsetEnd": 31563,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1495,6 +1562,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 31569,
                     "offsetEnd": 31577,
+                    "astNodes": [],
                     "sourceText": "return 0;"
                   }
                 },
@@ -1511,6 +1579,7 @@
               "colNumberStop": 29,
               "offsetStart": 31494,
               "offsetEnd": 31577,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag1 \u003d 0;flag1 \u003d 0;flag1 \u003d 0;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();return 0;return 0;return 0;return 0;"
             }
           }
@@ -1536,6 +1605,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 30602,
                     "offsetEnd": 30627,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1552,6 +1622,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 30633,
                     "offsetEnd": 30647,
+                    "astNodes": [],
                     "sourceText": "int f2 \u003d flag2;"
                   }
                 },
@@ -1568,6 +1639,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 30653,
                     "offsetEnd": 30676,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1584,6 +1656,7 @@
               "colNumberStop": 29,
               "offsetStart": 30602,
               "offsetEnd": 31364,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();int f2 \u003d flag2;int f2 \u003d flag2;int f2 \u003d flag2;int f2 \u003d flag2;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"
             }
           }
@@ -1609,6 +1682,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 31280,
                     "offsetEnd": 31305,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1619,6 +1693,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1635,6 +1710,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 31335,
                     "offsetEnd": 31358,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1651,6 +1727,7 @@
               "colNumberStop": 33,
               "offsetStart": 30682,
               "offsetEnd": 31364,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();f2 \u003d flag2;f2 \u003d flag2;f2 \u003d flag2;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"
             }
           }
@@ -1676,6 +1753,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 30798,
                     "offsetEnd": 31270,
+                    "astNodes": [],
                     "sourceText": "if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
                   }
                 },
@@ -1692,6 +1770,7 @@
               "colNumberStop": 33,
               "offsetStart": 30798,
               "offsetEnd": 31305,
+              "astNodes": [],
               "sourceText": "if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1717,6 +1796,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 31175,
                     "offsetEnd": 31200,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1727,6 +1807,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1743,6 +1824,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 31237,
                     "offsetEnd": 31260,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1759,6 +1841,7 @@
               "colNumberStop": 37,
               "offsetStart": 30798,
               "offsetEnd": 31305,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag1 \u003d 1;flag1 \u003d 1;flag1 \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -1784,6 +1867,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 30923,
                     "offsetEnd": 30948,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1794,6 +1878,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1810,6 +1895,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 30984,
                     "offsetEnd": 31007,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1826,6 +1912,7 @@
               "colNumberStop": 37,
               "offsetStart": 30923,
               "offsetEnd": 31160,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();t \u003d turn;t \u003d turn;t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
             }
           }
@@ -1851,6 +1938,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 31054,
                     "offsetEnd": 31079,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -1861,6 +1949,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1877,6 +1966,7 @@
                     "colNumberStop": 39,
                     "offsetStart": 31123,
                     "offsetEnd": 31146,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -1893,6 +1983,7 @@
               "colNumberStop": 41,
               "offsetStart": 31021,
               "offsetEnd": 31160,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();t \u003d turn;t \u003d turn;t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
             }
           }
@@ -2046,6 +2137,7 @@
               "colNumberStop": 0,
               "offsetStart": 31581,
               "offsetEnd": 32659,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f1 \u003d flag1;\n    __VERIFIER_atomic_end();\n    while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 1;\n    if (!(x\u003e\u003d1)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}"
             }
           }
@@ -2064,6 +2156,7 @@
               "colNumberStop": 0,
               "offsetStart": 31581,
               "offsetEnd": 32659,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f1 \u003d flag1;\n    __VERIFIER_atomic_end();\n    while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 1;\n    if (!(x\u003e\u003d1)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}"
             }
           }
@@ -2082,6 +2175,7 @@
               "colNumberStop": 29,
               "offsetStart": 31607,
               "offsetEnd": 31632,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2100,6 +2194,7 @@
               "colNumberStop": 29,
               "offsetStart": 31682,
               "offsetEnd": 31707,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2112,6 +2207,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -2130,6 +2226,7 @@
               "colNumberStop": 33,
               "offsetStart": 31788,
               "offsetEnd": 31813,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2142,6 +2239,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -2160,6 +2258,7 @@
               "colNumberStop": 37,
               "offsetStart": 31904,
               "offsetEnd": 31929,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2178,6 +2277,7 @@
               "colNumberStop": 37,
               "offsetStart": 32003,
               "offsetEnd": 32028,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2190,6 +2290,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -2208,6 +2309,7 @@
               "colNumberStop": 41,
               "offsetStart": 32134,
               "offsetEnd": 32159,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2226,6 +2328,7 @@
               "colNumberStop": 37,
               "offsetStart": 32255,
               "offsetEnd": 32280,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2244,6 +2347,7 @@
               "colNumberStop": 33,
               "offsetStart": 32360,
               "offsetEnd": 32385,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2262,6 +2366,7 @@
               "colNumberStop": 9,
               "offsetStart": 32450,
               "offsetEnd": 32455,
+              "astNodes": [],
               "sourceText": "x \u003d 1;"
             }
           }
@@ -2274,6 +2379,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -2292,6 +2398,7 @@
               "colNumberStop": 29,
               "offsetStart": 32500,
               "offsetEnd": 32525,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2310,6 +2417,7 @@
               "colNumberStop": 29,
               "offsetStart": 32574,
               "offsetEnd": 32599,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();"
             }
           }
@@ -2346,6 +2454,7 @@
               "colNumberStop": 29,
               "offsetStart": 31581,
               "offsetEnd": 32659,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f1 \u003d flag1;\n    __VERIFIER_atomic_end();\n    while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 1;\n    if (!(x\u003e\u003d1)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;\n}__VERIFIER_atomic_begin();\n    flag2 \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    int f1 \u003d flag1;\n    __VERIFIER_atomic_end();\n    while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }\n    x \u003d 1;\n    if (!(x\u003e\u003d1)) ERROR: reach_error();\n    __VERIFIER_atomic_begin();\n    turn \u003d 1;\n    __VERIFIER_atomic_end();\n    __VERIFIER_atomic_begin();\n    flag2 \u003d 0;\n    __VERIFIER_atomic_end();\n    return 0;__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2371,6 +2480,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 31607,
                     "offsetEnd": 31632,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -2381,6 +2491,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -2397,6 +2508,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 31653,
                     "offsetEnd": 31676,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -2413,6 +2525,7 @@
               "colNumberStop": 29,
               "offsetStart": 31607,
               "offsetEnd": 31707,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag2 \u003d 1;flag2 \u003d 1;flag2 \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2438,6 +2551,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 31762,
                     "offsetEnd": 32444,
+                    "astNodes": [],
                     "sourceText": "while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"
                   }
                 },
@@ -2454,6 +2568,7 @@
               "colNumberStop": 33,
               "offsetStart": 31762,
               "offsetEnd": 32444,
+              "astNodes": [],
               "sourceText": "while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }{\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2479,6 +2594,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 31788,
                     "offsetEnd": 31813,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -2495,6 +2611,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 31823,
                     "offsetEnd": 31835,
+                    "astNodes": [],
                     "sourceText": "int t \u003d turn;"
                   }
                 },
@@ -2511,6 +2628,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 31845,
                     "offsetEnd": 31868,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -2527,6 +2645,7 @@
               "colNumberStop": 33,
               "offsetStart": 31788,
               "offsetEnd": 32350,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();int t \u003d turn;int t \u003d turn;int t \u003d turn;int t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
             }
           }
@@ -2552,6 +2671,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 31878,
                     "offsetEnd": 32350,
+                    "astNodes": [],
                     "sourceText": "if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
                   }
                 },
@@ -2568,6 +2688,7 @@
               "colNumberStop": 37,
               "offsetStart": 31878,
               "offsetEnd": 32350,
+              "astNodes": [],
               "sourceText": "if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }{\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2593,6 +2714,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 31904,
                     "offsetEnd": 31929,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -2603,6 +2725,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -2619,6 +2742,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 31966,
                     "offsetEnd": 31989,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -2635,6 +2759,7 @@
               "colNumberStop": 37,
               "offsetStart": 31904,
               "offsetEnd": 32028,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag2 \u003d 0;flag2 \u003d 0;flag2 \u003d 0;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2660,6 +2785,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 32101,
                     "offsetEnd": 32240,
+                    "astNodes": [],
                     "sourceText": "while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
                   }
                 },
@@ -2676,6 +2802,7 @@
               "colNumberStop": 41,
               "offsetStart": 32101,
               "offsetEnd": 32240,
+              "astNodes": [],
               "sourceText": "while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }{\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2701,6 +2828,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 32101,
                     "offsetEnd": 32240,
+                    "astNodes": [],
                     "sourceText": "while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
                   }
                 },
@@ -2717,6 +2845,7 @@
               "colNumberStop": 37,
               "offsetStart": 32101,
               "offsetEnd": 32280,
+              "astNodes": [],
               "sourceText": "while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2742,6 +2871,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 31762,
                     "offsetEnd": 32444,
+                    "astNodes": [],
                     "sourceText": "while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"
                   }
                 },
@@ -2758,6 +2888,7 @@
               "colNumberStop": 9,
               "offsetStart": 31762,
               "offsetEnd": 32455,
+              "astNodes": [],
               "sourceText": "while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }x \u003d 1;x \u003d 1;x \u003d 1;"
             }
           }
@@ -2777,6 +2908,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -2793,6 +2925,7 @@
               "colNumberStop": 37,
               "offsetStart": 0,
               "offsetEnd": 32494,
+              "astNodes": [],
               "sourceText": "if (!(x\u003e\u003d1)) ERROR: reach_error();if (!(x\u003e\u003d1)) ERROR: reach_error();if (!(x\u003e\u003d1)) ERROR: reach_error();if (!(x\u003e\u003d1)) ERROR: reach_error();if (!(x\u003e\u003d1)) ERROR: reach_error();"
             }
           }
@@ -2818,6 +2951,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 32461,
                     "offsetEnd": 32494,
+                    "astNodes": [],
                     "sourceText": "if (!(x\u003e\u003d1)) ERROR: reach_error();"
                   }
                 },
@@ -2834,6 +2968,7 @@
               "colNumberStop": 37,
               "offsetStart": 32461,
               "offsetEnd": 32494,
+              "astNodes": [],
               "sourceText": "if (!(x\u003e\u003d1)) ERROR: reach_error();ERROR: reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -2859,6 +2994,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 32461,
                     "offsetEnd": 32494,
+                    "astNodes": [],
                     "sourceText": "if (!(x\u003e\u003d1)) ERROR: reach_error();"
                   }
                 },
@@ -2875,6 +3011,7 @@
               "colNumberStop": 37,
               "offsetStart": 32461,
               "offsetEnd": 32525,
+              "astNodes": [],
               "sourceText": "if (!(x\u003e\u003d1)) ERROR: reach_error();if (!(x\u003e\u003d1)) ERROR: reach_error();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2900,6 +3037,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 32500,
                     "offsetEnd": 32525,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -2910,6 +3048,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -2926,6 +3065,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 32545,
                     "offsetEnd": 32568,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -2942,6 +3082,7 @@
               "colNumberStop": 29,
               "offsetStart": 32500,
               "offsetEnd": 32599,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();turn \u003d 1;turn \u003d 1;turn \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -2967,6 +3108,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 32574,
                     "offsetEnd": 32599,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -2977,6 +3119,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -2993,6 +3136,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 32620,
                     "offsetEnd": 32643,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3009,6 +3153,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 32649,
                     "offsetEnd": 32657,
+                    "astNodes": [],
                     "sourceText": "return 0;"
                   }
                 },
@@ -3025,6 +3170,7 @@
               "colNumberStop": 29,
               "offsetStart": 32574,
               "offsetEnd": 32657,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag2 \u003d 0;flag2 \u003d 0;flag2 \u003d 0;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();return 0;return 0;return 0;return 0;"
             }
           }
@@ -3050,6 +3196,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 31682,
                     "offsetEnd": 31707,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -3066,6 +3213,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 31713,
                     "offsetEnd": 31727,
+                    "astNodes": [],
                     "sourceText": "int f1 \u003d flag1;"
                   }
                 },
@@ -3082,6 +3230,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 31733,
                     "offsetEnd": 31756,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3098,6 +3247,7 @@
               "colNumberStop": 29,
               "offsetStart": 31682,
               "offsetEnd": 32444,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();int f1 \u003d flag1;int f1 \u003d flag1;int f1 \u003d flag1;int f1 \u003d flag1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"
             }
           }
@@ -3123,6 +3273,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 32360,
                     "offsetEnd": 32385,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -3133,6 +3284,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3149,6 +3301,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 32415,
                     "offsetEnd": 32438,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3165,6 +3318,7 @@
               "colNumberStop": 33,
               "offsetStart": 31762,
               "offsetEnd": 32444,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();f1 \u003d flag1;f1 \u003d flag1;f1 \u003d flag1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"
             }
           }
@@ -3190,6 +3344,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 31878,
                     "offsetEnd": 32350,
+                    "astNodes": [],
                     "sourceText": "if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }"
                   }
                 },
@@ -3206,6 +3361,7 @@
               "colNumberStop": 33,
               "offsetStart": 31878,
               "offsetEnd": 32385,
+              "astNodes": [],
               "sourceText": "if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -3231,6 +3387,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 32255,
                     "offsetEnd": 32280,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -3241,6 +3398,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3257,6 +3415,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 32317,
                     "offsetEnd": 32340,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3273,6 +3432,7 @@
               "colNumberStop": 37,
               "offsetStart": 31878,
               "offsetEnd": 32385,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();flag2 \u003d 1;flag2 \u003d 1;flag2 \u003d 1;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();__VERIFIER_atomic_begin();"
             }
           }
@@ -3298,6 +3458,7 @@
                     "colNumberStop": 37,
                     "offsetStart": 32003,
                     "offsetEnd": 32028,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -3308,6 +3469,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3324,6 +3486,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 32064,
                     "offsetEnd": 32087,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3340,6 +3503,7 @@
               "colNumberStop": 37,
               "offsetStart": 32003,
               "offsetEnd": 32240,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();t \u003d turn;t \u003d turn;t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
             }
           }
@@ -3365,6 +3529,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 32134,
                     "offsetEnd": 32159,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_begin();"
                   }
                 },
@@ -3375,6 +3540,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3391,6 +3557,7 @@
                     "colNumberStop": 39,
                     "offsetStart": 32203,
                     "offsetEnd": 32226,
+                    "astNodes": [],
                     "sourceText": "__VERIFIER_atomic_end();"
                   }
                 },
@@ -3407,6 +3574,7 @@
               "colNumberStop": 41,
               "offsetStart": 32101,
               "offsetEnd": 32240,
+              "astNodes": [],
               "sourceText": "__VERIFIER_atomic_begin();t \u003d turn;t \u003d turn;t \u003d turn;__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();__VERIFIER_atomic_end();while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
             }
           }
@@ -3491,6 +3659,7 @@
               "colNumberStop": 0,
               "offsetStart": 32661,
               "offsetEnd": 32865,
+              "astNodes": [],
               "sourceText": "int main() {\n  pthread_t t1, t2;\n  assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);\n  pthread_create(\u0026t1, 0, thr1, 0);\n  pthread_create(\u0026t2, 0, thr2, 0);\n  pthread_join(t1, 0);\n  pthread_join(t2, 0);\n  return 0;\n}"
             }
           }
@@ -3509,6 +3678,7 @@
               "colNumberStop": 0,
               "offsetStart": 32661,
               "offsetEnd": 32865,
+              "astNodes": [],
               "sourceText": "int main() {\n  pthread_t t1, t2;\n  assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);\n  pthread_create(\u0026t1, 0, thr1, 0);\n  pthread_create(\u0026t2, 0, thr2, 0);\n  pthread_join(t1, 0);\n  pthread_join(t2, 0);\n  return 0;\n}"
             }
           }
@@ -3521,6 +3691,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3533,6 +3704,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3545,6 +3717,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3557,6 +3730,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3569,6 +3743,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3581,6 +3756,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -3599,6 +3775,7 @@
               "colNumberStop": 20,
               "offsetStart": 75,
               "offsetEnd": 82,
+              "astNodes": [],
               "sourceText": "abort();"
             }
           }
@@ -3652,6 +3829,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3662,6 +3840,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -3678,6 +3857,7 @@
               "colNumberStop": 41,
               "offsetStart": 32661,
               "offsetEnd": 32865,
+              "astNodes": [],
               "sourceText": "int main() {\n  pthread_t t1, t2;\n  assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);\n  pthread_create(\u0026t1, 0, thr1, 0);\n  pthread_create(\u0026t2, 0, thr2, 0);\n  pthread_join(t1, 0);\n  pthread_join(t2, 0);\n  return 0;\n}pthread_t t1, t2;\n  assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);\n  pthread_create(\u0026t1, 0, thr1, 0);\n  pthread_create(\u0026t2, 0, thr2, 0);\n  pthread_join(t1, 0);\n  pthread_join(t2, 0);\n  return 0;pthread_t t1, t2;assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);"
             }
           }
@@ -3703,6 +3883,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 32739,
                     "offsetEnd": 32770,
+                    "astNodes": [],
                     "sourceText": "pthread_create(\u0026t1, 0, thr1, 0);"
                   }
                 },
@@ -3719,6 +3900,7 @@
               "colNumberStop": 33,
               "offsetStart": 32739,
               "offsetEnd": 32805,
+              "astNodes": [],
               "sourceText": "pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);"
             }
           }
@@ -3744,6 +3926,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 32774,
                     "offsetEnd": 32805,
+                    "astNodes": [],
                     "sourceText": "pthread_create(\u0026t2, 0, thr2, 0);"
                   }
                 },
@@ -3760,6 +3943,7 @@
               "colNumberStop": 33,
               "offsetStart": 32774,
               "offsetEnd": 32828,
+              "astNodes": [],
               "sourceText": "pthread_create(\u0026t2, 0, thr2, 0);pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);"
             }
           }
@@ -3785,6 +3969,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 32809,
                     "offsetEnd": 32828,
+                    "astNodes": [],
                     "sourceText": "pthread_join(t1, 0);"
                   }
                 },
@@ -3801,6 +3986,7 @@
               "colNumberStop": 21,
               "offsetStart": 32809,
               "offsetEnd": 32851,
+              "astNodes": [],
               "sourceText": "pthread_join(t1, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);"
             }
           }
@@ -3826,6 +4012,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 32832,
                     "offsetEnd": 32851,
+                    "astNodes": [],
                     "sourceText": "pthread_join(t2, 0);"
                   }
                 },
@@ -3842,6 +4029,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 32855,
                     "offsetEnd": 32863,
+                    "astNodes": [],
                     "sourceText": "return 0;"
                   }
                 },
@@ -3858,6 +4046,7 @@
               "colNumberStop": 21,
               "offsetStart": 32832,
               "offsetEnd": 32863,
+              "astNodes": [],
               "sourceText": "pthread_join(t2, 0);return 0;return 0;return 0;return 0;"
             }
           }
@@ -3883,6 +4072,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 32696,
                     "offsetEnd": 32735,
+                    "astNodes": [],
                     "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);"
                   }
                 },
@@ -3899,6 +4089,7 @@
               "colNumberStop": 41,
               "offsetStart": 25,
               "offsetEnd": 32735,
+              "astNodes": [],
               "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}if(!cond) {abort();}if(!cond) {abort();}if(!cond) {abort();}if(!cond) {abort();}"
             }
           }
@@ -3924,6 +4115,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 64,
                     "offsetEnd": 83,
+                    "astNodes": [],
                     "sourceText": "if(!cond) {abort();}"
                   }
                 },
@@ -3940,6 +4132,7 @@
               "colNumberStop": 21,
               "offsetStart": 64,
               "offsetEnd": 83,
+              "astNodes": [],
               "sourceText": "if(!cond) {abort();}{abort();}abort();abort();abort();"
             }
           }
@@ -3965,6 +4158,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 75,
                     "offsetEnd": 82,
+                    "astNodes": [],
                     "sourceText": "abort();"
                   }
                 },
@@ -3981,6 +4175,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 32696,
                     "offsetEnd": 32735,
+                    "astNodes": [],
                     "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);"
                   }
                 },
@@ -3997,6 +4192,7 @@
               "colNumberStop": 33,
               "offsetStart": 75,
               "offsetEnd": 32770,
+              "astNodes": [],
               "sourceText": "abort();pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);"
             }
           }
@@ -4022,6 +4218,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 64,
                     "offsetEnd": 83,
+                    "astNodes": [],
                     "sourceText": "if(!cond) {abort();}"
                   }
                 },
@@ -4038,6 +4235,7 @@
                     "colNumberStop": 41,
                     "offsetStart": 32696,
                     "offsetEnd": 32735,
+                    "astNodes": [],
                     "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1);"
                   }
                 },
@@ -4054,6 +4252,7 @@
               "colNumberStop": 33,
               "offsetStart": 25,
               "offsetEnd": 32770,
+              "astNodes": [],
               "sourceText": "if(!cond) {abort();}if(!cond) {abort();}void assume_abort_if_not(int cond) {\n  if(!cond) {abort();}\n}pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);"
             }
           }

@@ -39,6 +39,8 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -119,6 +121,7 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
                 it.ref,
                 BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
               )
+            is RatType -> Eq(it.ref, Rat(0, 1))
             is FpType ->
               FpAssign(
                 it.ref as Expr<FpType>,

@@ -27,8 +27,10 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
 
@@ -181,6 +183,11 @@ data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
   @Parameter(
+    names = ["--parse-in-process"],
+    description = "Parse input in process instead of passing intermediate",
+  )
+  var parseInProcess: Boolean = false,
+  @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
   )
@@ -301,6 +308,23 @@ data class HornConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--ranking-function-constraint"],
+    description = "What relation to use for the ranking function.",
+  )
+  var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
+) : SpecBackendConfig
+
+data class LassoValidationConfig(
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
+  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class LassoValidationConfig(
@@ -412,6 +436,15 @@ data class OcConfig(
     description = "Level of manual conflict detection before verification",
   )
   var autoConflict: AutoConflictFinderConfig = AutoConflictFinderConfig.NONE,
+  @Parameter(
+    names = ["--auto-conflict-bound"],
+    description = "Number of non-trivial happens-before edges for auto conflict detection",
+  )
+  var autoConflictBound: Int = -1,
+  @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
+  var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
+  @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
+  var smtSolver: String = "Z3:4.13",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

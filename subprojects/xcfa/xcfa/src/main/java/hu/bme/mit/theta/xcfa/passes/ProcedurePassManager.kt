@@ -129,7 +129,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass(parseContext),
+      //      InlineProceduresPass(parseContext),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
       // handling remaining function calls

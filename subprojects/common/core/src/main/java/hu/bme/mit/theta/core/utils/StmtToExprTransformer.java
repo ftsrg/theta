@@ -44,12 +44,14 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 final class StmtToExprTransformer {
 
@@ -166,14 +168,20 @@ final class StmtToExprTransformer {
                 for (VarDecl<?> decl : vars) {
                     int currentBranchIndex = indexings.get(i).get(decl);
                     int jointIndex = jointIndexing.get(decl);
+                    final BiFunction<Expr<?>, Expr<?>, Expr<BoolType>> assign =
+                            decl.getType() instanceof FpType
+                                    ? (Expr<?> e1, Expr<?> e2) ->
+                                            FpExprs.FpAssign((Expr<FpType>) e1, (Expr<FpType>) e2)
+                                    : (Expr<?> e1, Expr<?> e2) -> Eq(e1, e2);
                     if (currentBranchIndex < jointIndex) {
                         if (currentBranchIndex > 0) {
                             exprs.add(
-                                    Eq(
+                                    assign.apply(
                                             Prime(decl.getRef(), currentBranchIndex),
                                             Prime(decl.getRef(), jointIndex)));
                         } else {
-                            exprs.add(Eq(decl.getRef(), Prime(decl.getRef(), jointIndex)));
+                            exprs.add(
+                                    assign.apply(decl.getRef(), Prime(decl.getRef(), jointIndex)));
                         }
                     }
                 }

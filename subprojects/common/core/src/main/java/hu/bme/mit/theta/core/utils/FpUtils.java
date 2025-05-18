@@ -73,7 +73,8 @@ public final class FpUtils {
         } else {
             final var minExponent = -(1L << (type.getExponent() - 1)) + 2;
             final var maxExponent = (1L << (type.getExponent() - 1)) - 1;
-            final var round = bigFloat.round(getMathContext(type, FpRoundingMode.RNE));
+            final var round =
+                    bigFloat.round(getMathContext(type, FpRoundingMode.getDefaultRoundingMode()));
 
             final var exponent =
                     BigInteger.valueOf(round.exponent(minExponent, maxExponent))

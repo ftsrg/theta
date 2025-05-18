@@ -50,9 +50,49 @@ import kotlin.Triple;
  */
 public class XcfaTraceConcretizer {
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
-            final Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext) {
+
+        trace =
+                Trace.of(
+                        trace.getStates().stream()
+                                .map(
+                                        ptrStateXcfaState ->
+                                                ptrStateXcfaState.getSGlobal().getInnerState()
+                                                                instanceof ExplState explState
+                                                        ? ptrStateXcfaState.withState(
+                                                                new PtrState(
+                                                                        ExplState.of(
+                                                                                ImmutableValuation
+                                                                                        .from(
+                                                                                                explState
+                                                                                                        .toMap()
+                                                                                                        .entrySet()
+                                                                                                        .stream()
+                                                                                                        .filter(
+                                                                                                                declLitExprEntry ->
+                                                                                                                        parseContext
+                                                                                                                                .getMetadata()
+                                                                                                                                .getMetadataValue(
+                                                                                                                                        declLitExprEntry
+                                                                                                                                                .getKey()
+                                                                                                                                                .getName(),
+                                                                                                                                        "cName")
+                                                                                                                                .isPresent())
+                                                                                                        .collect(
+                                                                                                                Collectors
+                                                                                                                        .toMap(
+                                                                                                                                Map
+                                                                                                                                                .Entry
+                                                                                                                                        ::getKey,
+                                                                                                                                Map
+                                                                                                                                                .Entry
+                                                                                                                                        ::getValue))))))
+                                                        : ptrStateXcfaState)
+                                .toList(),
+                        trace.getActions());
+
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
@@ -96,7 +136,16 @@ public class XcfaTraceConcretizer {
                             ExplState.of(
                                     ImmutableValuation.from(
                                             valuations.getState(i).toMap().entrySet().stream()
-                                                    .filter(it -> varSoFar.contains(it.getKey()))
+                                                    .filter(
+                                                            it ->
+                                                                    varSoFar.contains(it.getKey())
+                                                                            && parseContext
+                                                                                    .getMetadata()
+                                                                                    .getMetadataValue(
+                                                                                            it.getKey()
+                                                                                                    .getName(),
+                                                                                            "cName")
+                                                                                    .isPresent())
                                                     .collect(
                                                             Collectors.toMap(
                                                                     Map.Entry<Decl<?>, LitExpr<?>>

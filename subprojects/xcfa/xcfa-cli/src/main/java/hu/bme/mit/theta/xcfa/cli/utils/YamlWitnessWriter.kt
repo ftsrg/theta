@@ -106,10 +106,11 @@ class YamlWitnessWriter {
               concrTrace.states.subList(0, cycleHeadFirst - 1),
               concrTrace.actions.subList(0, cycleHeadFirst - 2),
             )
-          val lasso =
+          val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
+            // case of e.g., BMC !!
             Trace.of(
-              concrTrace.states.subList(cycleHeadFirst - 1, concrTrace.states.size - 1),
-              concrTrace.actions.subList(cycleHeadFirst - 1, concrTrace.actions.size - 1),
+              concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
+              concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
             )
 
           val backEdge =
@@ -211,7 +212,8 @@ class YamlWitnessWriter {
 private fun Expr<BoolType>.replaceVars(parseContext: ParseContext): Expr<BoolType> {
   val vars =
     ExprUtils.getVars(this).associateWith {
-      Var(parseContext.metadata.getMetadataValue(it.name, "cName").get() as String, it.type)
+      val cname = parseContext.metadata.getMetadataValue(it.name, "cName")
+      if (cname.isPresent) Var(cname.get() as String, it.type) else it
     }
   return this.changeVars(vars)
 }

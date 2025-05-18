@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
@@ -124,9 +125,9 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         for (var v : Lists.reverse(variableOrdering)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
-            if (domainSize > 100) {
-                domainSize = 0;
-            }
+            //     if (domainSize > 100) {
+            domainSize = 0;
+            //     }
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
@@ -166,6 +167,16 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final AbstractNextStateDescriptor nextStates =
                 MddNodeNextStateDescriptor.of(transitionNode);
 
+        final Expr<BoolType> negatedPropExpr =
+                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
+        final MddHandle propNode =
+                stateSig.getTopVariableHandle()
+                        .checkInNode(
+                                MddExpressionTemplate.of(
+                                        negatedPropExpr, o -> (Decl) o, solverPool));
+        final AbstractNextStateDescriptor targetedNextStates =
+                OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
+
         logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
         final StateSpaceEnumerationProvider stateSpaceProvider;
@@ -184,18 +195,10 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddHandle stateSpace =
                 stateSpaceProvider.compute(
                         MddNodeInitializer.of(initNode),
-                        nextStates,
+                        targetedNextStates,
                         stateSig.getTopVariableHandle());
 
         logger.write(Level.INFO, "Enumerated state-space");
-
-        final Expr<BoolType> negatedPropExpr =
-                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
-        final MddHandle propNode =
-                stateSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(
-                                        negatedPropExpr, o -> (Decl) o, solverPool));
 
         final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
 
@@ -216,6 +219,9 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
                         stateSpaceProvider.getCacheSize());
 
         logger.write(Level.MAINSTEP, "%s\n", statistics);
+
+        // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
+        // transSig.getTopVariableHandle());
 
         final SafetyResult<MddProof, MddCex> result;
         if (violatingSize != 0) {

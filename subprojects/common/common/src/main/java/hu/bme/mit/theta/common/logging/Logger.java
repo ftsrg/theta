@@ -19,7 +19,7 @@ package hu.bme.mit.theta.common.logging;
 public interface Logger {
 
     /** Detailedness of logging in order. */
-    public enum Level {
+    enum Level {
         RESULT,
         MAINSTEP,
         SUBSTEP,
@@ -40,5 +40,29 @@ public interface Logger {
 
     default Logger writeln(Level level, String pattern, Object... objects) {
         return write(level, pattern + "%n", objects);
+    }
+
+    default Logger result(String pattern, Object... objects) {
+        return writeln(Level.RESULT, pattern, objects);
+    }
+
+    default Logger mainStep(String pattern, Object... objects) {
+        return writeln(Level.MAINSTEP, pattern, objects);
+    }
+
+    default Logger subStep(String pattern, Object... objects) {
+        return writeln(Level.SUBSTEP, pattern, objects);
+    }
+
+    default Logger info(String pattern, Object... objects) {
+        return writeln(Level.INFO, pattern, objects);
+    }
+
+    default Logger detail(String pattern, Object... objects) {
+        return writeln(Level.DETAIL, pattern, objects);
+    }
+
+    default Logger verbose(String pattern, Object... objects) {
+        return writeln(Level.VERBOSE, pattern, objects);
     }
 }

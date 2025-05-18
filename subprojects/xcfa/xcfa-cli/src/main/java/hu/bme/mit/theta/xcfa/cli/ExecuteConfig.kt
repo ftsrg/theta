@@ -45,6 +45,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
+import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
@@ -57,6 +58,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -74,9 +76,18 @@ fun runConfig(
 
   validateInputOptions(config, logger, uniqueLogger)
 
-  val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+  val (xcfa, mcm, parseContext) =
+    if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+      logger.writeln(INFO, "Not parsing input because a worker process will handle it later.")
+      Triple(null, null, null)
+    } else {
 
-  preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+
+      preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      Triple(xcfa, mcm, parseContext)
+    }
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
@@ -133,6 +144,12 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
   }
   rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
     (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
+  }
+  rule("OcPropagatorWithoutZ3") {
+    config.backendConfig.backend == Backend.OC &&
+      (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
+        OcDecisionProcedureType.PROPAGATOR &&
+      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:4.13"
   }
 }
 
@@ -208,9 +225,9 @@ fun frontend(
 }
 
 private fun backend(
-  xcfa: XCFA,
-  mcm: MCM,
-  parseContext: ParseContext,
+  xcfa: XCFA?,
+  mcm: MCM?,
+  parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
@@ -220,12 +237,12 @@ private fun backend(
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
     if (
-      xcfa.procedures.all {
+      xcfa?.procedures?.all {
         it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
-      }
+      } ?: false
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-      logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+      logger.write(Logger.Level.RESULT, "Input is trivially safe\n")
 
       logger.write(RESULT, result.toString() + "\n")
       result
@@ -234,7 +251,7 @@ private fun backend(
 
       logger.write(
         Logger.Level.INFO,
-        "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
+        "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}\n",
       )
 
       val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
@@ -244,7 +261,7 @@ private fun backend(
           }
           .let ResultMapper@{ result ->
             when {
-              result.isSafe && xcfa.unsafeUnrollUsed -> {
+              result.isSafe && xcfa?.unsafeUnrollUsed ?: false -> {
                 // cannot report safe if force unroll was used
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                 if (config.outputConfig.acceptUnreliableSafe)
@@ -340,7 +357,13 @@ private fun preVerificationLogging(
         xcfa.procedures.forEach {
           try {
             val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-            chcFile.writeText(it.toSMT2CHC())
+            chcFile.writeText(
+              it.toSMT2CHC(
+                config.inputConfig.property == ErrorDetection.TERMINATION,
+                (config.backendConfig.specConfig as? HornConfig)?.rankingFuncConstr
+                  ?: RankingFunction.ADD,
+              )
+            )
           } catch (e: Exception) {
             logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
           }
@@ -380,13 +403,13 @@ private fun preVerificationLogging(
 
 private fun postVerificationLogging(
   safetyResult: SafetyResult<*, *>,
-  mcm: MCM,
-  parseContext: ParseContext,
+  mcm: MCM?,
+  parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
 ) {
-  if (config.outputConfig.enableOutput) {
+  if (config.outputConfig.enableOutput && mcm != null && parseContext != null) {
     try {
       // we only want to log the files if the current configuration is not --in-process or portfolio
       if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
