@@ -95,6 +95,8 @@ data class InputConfig(
   var propertyFile: File? = null,
   @Parameter(names = ["--property-value"], description = "Property")
   var property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+  @Parameter(names = ["--witness"], description = "Witness file (optional)")
+  var witness: File? = null,
 ) : Config {
 
   override fun toString(): String {

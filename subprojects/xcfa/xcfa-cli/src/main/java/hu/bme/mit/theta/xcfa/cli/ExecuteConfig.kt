@@ -51,18 +51,23 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPassesManager
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+import kotlinx.serialization.builtins.ListSerializer
 
 fun runConfig(
   config: XcfaConfig<*, *>,
@@ -82,7 +87,17 @@ fun runConfig(
       Triple(null, null, null)
     } else {
 
-      val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+      var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+
+      config.inputConfig.witness?.also {
+        logger.writeln(INFO, "Applying witness $it")
+        val witness =
+          WitnessYamlConfig.decodeFromString(
+              ListSerializer(YamlWitness.serializer()),
+              it.readText(),
+            )[0]
+        xcfa = xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
+      }
 
       preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 

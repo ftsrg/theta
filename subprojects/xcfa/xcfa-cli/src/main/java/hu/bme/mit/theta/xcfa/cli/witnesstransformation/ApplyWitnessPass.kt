@@ -16,156 +16,132 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getExpressionFromC
+import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile
+import hu.bme.mit.theta.frontend.transformation.model.statements.CFor
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
+import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.witnesses.*
+import java.util.LinkedList
 
-class ApplyWitnessPass(parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
+class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val segments = witness.content.map { c -> c.segment }.filterNotNull()
-    val cycleWaypoints =
-      segments
-        .map { segment -> segment.find { waypoint -> waypoint.waypoint.action == Action.CYCLE } }
-        .filterNotNull()
-        .map { w -> w.waypoint }
-    val followWaypoints =
-      segments
-        .map { segment -> segment.find { waypoint -> waypoint.waypoint.action == Action.FOLLOW } }
-        .filterNotNull()
-        .map { w -> w.waypoint }
-    val recurrentSet =
-      cycleWaypoints.find { waypoint -> waypoint.type == WaypointType.ASSUMPTION }!!
-    val allWaypoints = cycleWaypoints + followWaypoints
+    val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
 
-    // collect edges corresponding to recurrence location, cycle and follow waypoints
-    val edgesOfWaypoints = mutableSetOf<XcfaEdge>()
-    for (wayPoint in allWaypoints) {
-      for (edge in builder.getEdges()) {
-        val edgeMetadata = (edge.metadata as? CMetaData)
-        if (
-          edgeMetadata == null ||
-            edgeMetadata.lineNumberStart == null ||
-            edgeMetadata.colNumberStart == null ||
-            edgeMetadata.lineNumberStop == null ||
-            edgeMetadata.colNumberStop == null
-        ) {
-          // edgesOfWaypoints.add(edge) // if no metadata, don't automatically keep it ?
-        } else if ( // wp in first line of edge
-          edgeMetadata.lineNumberStart!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStart!! + 1 <= wayPoint.location.column!!
-        ) {
-          edgesOfWaypoints.add(edge)
-        } else if ( // wp in last line of edge
-          edgeMetadata.lineNumberStop!! == wayPoint.location.line &&
-            edgeMetadata.colNumberStop!! + 1 >= wayPoint.location.column!!
-        ) {
-          edgesOfWaypoints.add(edge)
-        } else if ( // wp inbetween first and last lines of edge
-          edgeMetadata.lineNumberStart!! > wayPoint.location.line &&
-            edgeMetadata.lineNumberStop!! < wayPoint.location.line
-        ) {
-          edgesOfWaypoints.add(edge)
-        }
-      }
-    }
-
-    // all edges, from which the waypoint edges are not reachable, should be removed
-    val edgesToKeep = mutableSetOf<XcfaEdge>()
-    val dist = floydWarshall(builder.getEdges())
-    for (edgeToKeep in edgesOfWaypoints) {
-      for (edge in builder.getEdges()) {
-        if (dist[edge to edgeToKeep] != -1) {
-          edgesToKeep.add(edge)
-        }
-      }
-    }
-    edgesToKeep.addAll(edgesOfWaypoints)
-
-    val edgesToDelete = builder.getEdges().filter { edge -> edge !in edgesToKeep }.toMutableSet()
-
-    for (edge in edgesToDelete) {
-      builder.removeEdge(edge)
-    }
-
-    val locsToDelete = mutableSetOf<XcfaLocation>()
-
-    // Removing unnecessary locations below
-
-    // In a lasso, the initial location is the only location, which does not have an incoming edge
-    // every other loc should have both incoming and outgoing edges
-
-    // Also, we need to search and remove iteratively:
-    // if we find a loc that should not be in the lasso, remove it first and then start searching
-    // for the next
-    // removing the location might uncover more locations that will have to be removed
-    // e.g., if they have formed a chain and we want to remove the whole chain, not just the last
-    // location
-    var foundOne = true
-    while (foundOne) {
-      foundOne = false
-      for (location in builder.getLocs()) {
-        if (
-          !location.initial &&
-            (location.incomingEdges.isEmpty() || location.outgoingEdges.isEmpty())
-        ) {
-          foundOne = true
-          locsToDelete.add(location)
-          break
-        }
-      }
-      for (loc in locsToDelete) {
-        for (edge in loc.incomingEdges) {
-          builder.removeEdge(edge)
-        }
-        for (edge in loc.outgoingEdges) {
-          builder.removeEdge(edge)
-        }
-        builder.removeLoc(loc)
-      }
-    }
-
-    return builder
-  }
-
-  private val inf = -1
-
-  private fun floydWarshall(edges: Set<XcfaEdge>): Map<Pair<XcfaEdge, XcfaEdge>, Int> {
-    // Initialize distance map for edges
-    val dist = mutableMapOf<Pair<XcfaEdge, XcfaEdge>, Int>()
-
-    for (edge1 in edges) {
-      for (edge2 in edges) {
-        dist[edge1 to edge2] = if (edge1 == edge2) 0 else inf
-      }
-    }
-
-    // Set initial distances based on connectivity
-    for (edge1 in edges) {
-      for (edge2 in edges) {
-        if (edge1.target == edge2.source) { // Can transition from edge1 to edge2
-          dist[edge1 to edge2] = 1 // Assuming unit weight
-        }
-      }
-    }
-
-    // Floyd-Warshall Algorithm for edge connectivity
-    for (k in edges) {
-      for (i in edges) {
-        for (j in edges) {
-          if (dist[i to k]!! != inf && dist[k to j]!! != inf) {
-            if (dist[i to j]!! == inf) {
-              dist[i to j] = dist[i to k]!! + dist[k to j]!!
-            } else {
-              dist[i to j] = minOf(dist[i to j]!!, dist[i to k]!! + dist[k to j]!!)
+    val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
+    for (edge in builder.getEdges()) {
+      for (flatLabel in edge.label.getFlatLabels()) {
+        (flatLabel.metadata as? CMetaData)?.also {
+          for (astNode in it.astNodes) {
+            statementToEdge.add(Triple(astNode, flatLabel, edge))
+            // for termination, we also need iteration statements' bodies
+            if (astNode is CWhile) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+            } else if (astNode is CFor) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+            } else if (astNode is CDoWhile) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
             }
           }
         }
       }
     }
 
-    return dist
+    val segmentCounter = Var("__THETA__segment__counter__", Int())
+    builder.addVar(segmentCounter)
+
+    for (outgoingEdge in builder.initLoc.outgoingEdges) {
+      builder.removeEdge(outgoingEdge)
+      builder.addEdge(
+        outgoingEdge.withLabel(
+          SequenceLabel(
+            listOf(AssignStmtLabel(segmentCounter, Int(0))) + outgoingEdge.getFlatLabels()
+          )
+        )
+      )
+    }
+
+    var i = 0
+    var firstCycle = -1
+    while (segments.hasNext()) {
+      val nextSegment = segments.next()
+      val wp = nextSegment.first { waypoint -> waypoint.waypoint.action != Action.AVOID }
+      val loc = wp.waypoint.location
+      val currentSegmentPred = Eq(segmentCounter.ref, Int(i))
+      if (wp.waypoint.action == Action.CYCLE && firstCycle == -1) {
+        firstCycle = i
+      }
+      i++
+      val expr =
+        Imply(
+          currentSegmentPred,
+          when (wp.waypoint.type) {
+            WaypointType.ASSUMPTION -> {
+              val constraint = wp.waypoint.constraint!!
+              check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+              getExpressionFromC(
+                constraint.value,
+                parseContext,
+                false,
+                false,
+                NullLogger.getInstance(),
+                builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+              )
+            }
+            WaypointType.BRANCHING -> {
+              // no-op now
+              True()
+            }
+            WaypointType.TARGET -> {
+              // no-op now
+              True()
+            }
+            else -> {
+              error("Not handled: ${wp.waypoint.type}")
+            }
+          },
+        )
+
+      val segmentUpdate =
+        if (!segments.hasNext() && firstCycle != 1) {
+          AssignStmtLabel(segmentCounter, Int(firstCycle))
+        } else {
+          AssignStmtLabel(
+            segmentCounter,
+            Ite<IntType>(currentSegmentPred, Add(segmentCounter.ref, Int(1)), segmentCounter.ref),
+          )
+        }
+
+      val labelsOnEdges =
+        statementToEdge
+          .filter { (statement, _, _) ->
+            statement.lineNumberStart == loc.line && statement.colNumberStart + 1 == loc.column
+          }
+          .map { (_, label, edge) -> Pair(label, edge) }
+
+      for ((label, edge) in labelsOnEdges) {
+        builder.removeEdge(edge)
+        val newLabels = LinkedList(edge.getFlatLabels())
+        val index = newLabels.indexOf(label)
+        newLabels.add(index, StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
+        newLabels.add(index + 1, segmentUpdate)
+        builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
+      }
+    }
+
+    return builder
   }
 }
