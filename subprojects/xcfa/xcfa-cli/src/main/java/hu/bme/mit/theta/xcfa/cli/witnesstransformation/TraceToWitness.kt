@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
@@ -95,11 +96,14 @@ fun traceToWitness(
     if (node != WitnessNode(id = "N${newStates.size}")) {
       newStates.add(node)
       val edge =
-        WitnessEdge(
-          sourceId = lastNode.id,
-          targetId = node.id,
-          threadId = trace.actions[i].pid.toString(),
-          edge = action.edge,
+        labelToEdge(
+          lastNode,
+          node,
+          action.edge.label,
+          trace.actions[i].pid,
+          ImmutableValuation.empty(),
+          parseContext,
+          action.edge,
         )
       newActions.add(edge)
       lastNode = node
@@ -158,11 +162,16 @@ fun traceToWitness(
         globalState = lastState.sGlobal,
       )
     newStates.add(node)
+    val xcfaEdge = trace.actions[trace.length() - 1].edge
     val edge =
-      WitnessEdge(
-        sourceId = lastNode.id,
-        targetId = node.id,
-        edge = trace.actions[trace.length() - 1].edge,
+      labelToEdge(
+        lastNode,
+        node,
+        xcfaEdge.label,
+        0,
+        ImmutableValuation.empty(),
+        parseContext,
+        xcfaEdge,
       )
     newActions.add(edge)
   }
@@ -187,8 +196,23 @@ private fun labelToEdge(
   valuation: Valuation,
   parseContext: ParseContext,
   edge: XcfaEdge,
-): WitnessEdge =
-  WitnessEdge(
+): WitnessEdge {
+  //  val nextAstNode =
+  //    xcfaLabel.getCMetaData()?.astNodes?.first()?.let {
+  //      var block = it
+  //      var parent = it.parent.getOrNull() as? CCompound
+  //      while (parent != null) {
+  //        val idx = parent.getcStatementList().indexOf(block)
+  //        if (idx < parent.getcStatementList().size - 1) {
+  //          return@let parent.getcStatementList()[idx + 1]
+  //        }
+  //        block = parent
+  //        parent = parent.parent.getOrNull() as? CCompound
+  //      }
+  //      null
+  //    }
+
+  return WitnessEdge(
     sourceId = lastNode.id,
     targetId = node.id,
     assumption =
@@ -216,11 +240,15 @@ private fun labelToEdge(
     endoffset = xcfaLabel.getCMetaData()?.offsetEnd,
     startcol = xcfaLabel.getCMetaData()?.colNumberStart,
     endcol = xcfaLabel.getCMetaData()?.colNumberStop,
+    //    nextStatementStartLine = nextAstNode?.lineNumberStart,
+    //    nextStatementStartCol = nextAstNode?.colNumberStart,
+    //    nextStatementStartOffset = nextAstNode?.offsetStart,
     threadId = if (pid != null) "$pid" else null,
     stmt = if (xcfaLabel is StmtLabel) xcfaLabel.stmt.toString() else null,
     cSource = xcfaLabel.getCMetaData()?.sourceText,
     edge = edge,
   )
+}
 
 private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
   when (label) {
@@ -229,7 +257,7 @@ private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
     else -> listOf(label)
   }
 
-private fun printLit(litExpr: LitExpr<*>): String? {
+fun printLit(litExpr: LitExpr<*>): String? {
   return if (litExpr is BvLitExpr) {
     val value = litExpr.value
     var intValue = BigInteger.ZERO
