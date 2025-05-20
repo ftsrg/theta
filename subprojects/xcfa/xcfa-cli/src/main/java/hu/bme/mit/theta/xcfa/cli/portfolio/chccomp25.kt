@@ -178,7 +178,7 @@ fun chcCompPortfolio25(
     val types = xcfa.collectVars().map { it.type }.toSet()
 
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
-      edges.add(Edge(this, node, anythingButServerError))
+      edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
     }
 

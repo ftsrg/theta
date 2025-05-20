@@ -88,7 +88,7 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
     exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
   } catch (e: RuntimeException) {
     e.printCauseAndTrace(stacktrace)
-    if (e.message?.contains("Solver problem") == true || e.message?.contains("Z3") == true) {
+    if (e.message?.contains("Solver problem") == true || e.message?.contains("z3") == true) {
       exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
     } else {
       exitProcess(throwDontExit, e, ExitCodes.SERVER_ERROR.code)
