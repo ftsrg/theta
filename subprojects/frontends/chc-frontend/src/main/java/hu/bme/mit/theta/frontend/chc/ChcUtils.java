@@ -99,27 +99,37 @@ public class ChcUtils {
 
     private static final Map<Tuple2<String, Type>, VarDecl<?>> cache = new LinkedHashMap<>();
 
-    private static VarDecl<?> createVar(XcfaProcedureBuilder builder, String name, Type type) {
-        var ret =
-                cache.computeIfAbsent(
-                        Tuple2.of(name, type),
-                        objects -> {
-                            var v = Decls.Var(name, type);
-                            builder.addVar(v);
-                            return v;
-                        });
-        transformConst(Decls.Const(name, type), false);
-        return ret;
+    private static VarDecl<?> createVar(
+            XcfaProcedureBuilder builder, String name, Type type, boolean useCache) {
+        if (useCache) {
+            var ret =
+                    cache.computeIfAbsent(
+                            Tuple2.of(name, type),
+                            objects -> {
+                                var v = Decls.Var(name, type);
+                                builder.addVar(v);
+                                return v;
+                            });
+            transformConst(Decls.Const(name, type), false);
+            return ret;
+        } else {
+            VarDecl<?> var = Decls.Var(name + "_" + builder.getEdges().size(), type);
+            builder.addVar(var);
+            transformConst(Decls.Const(name, type), false);
+            return var;
+        }
     }
 
     public static Map<String, VarDecl<?>> createVars(
-            XcfaProcedureBuilder builder, List<CHCParser.Var_declContext> var_decls) {
+            XcfaProcedureBuilder builder,
+            List<CHCParser.Var_declContext> var_decls,
+            boolean useCache) {
         resetSymbolTable();
         Map<String, VarDecl<?>> vars = new HashMap<>();
         for (CHCParser.Var_declContext var_decl : var_decls) {
             String name = var_decl.symbol().getText();
             Type type = transformSort(var_decl.sort());
-            VarDecl<?> var = createVar(builder, name, type);
+            VarDecl<?> var = createVar(builder, name, type, useCache);
             vars.put(name, var);
         }
         return vars;

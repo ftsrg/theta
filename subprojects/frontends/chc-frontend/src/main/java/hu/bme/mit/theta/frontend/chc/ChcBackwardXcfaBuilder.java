@@ -95,7 +95,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
         XcfaProcedureBuilder procedure;
         if (ctx.chc_tail() != null) {
             procedure = procedures.get(ctx.chc_head().u_pred_atom().u_predicate().getText());
-            Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl());
+            Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl(), false);
             int i = 0;
             for (Pair<VarDecl<?>, ParamDirection> param : procedure.getParams()) {
                 if (param.getSecond() != ParamDirection.OUT)
@@ -140,7 +140,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
         XcfaProcedureBuilder mainProcedure = createProcedure("query");
         xcfaBuilder.addEntryPoint(mainProcedure, new ArrayList<>());
 
-        Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl());
+        Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl(), false);
         XcfaLocation middle = createLocation(mainProcedure);
         XcfaEdge edge =
                 new XcfaEdge(
