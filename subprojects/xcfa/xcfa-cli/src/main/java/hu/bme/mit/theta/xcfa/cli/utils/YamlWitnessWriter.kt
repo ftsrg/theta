@@ -87,7 +87,7 @@ class YamlWitnessWriter {
         )
 
       val witness =
-        if (property == ErrorDetection.TERMINATION && false) {
+        if (property == ErrorDetection.TERMINATION) {
           // last state is cycle_head, find its earliest occurrence
           // stem is everything beforehand
           // cycle's segments are everything in-between
@@ -362,9 +362,11 @@ private fun WitnessEdge.toSegment(
       //      )
       return null
     } else if (control != null) {
-      Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
+      // Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
+      return null
     } else if (enterLoopHead) {
-      Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
+      // Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
+      return null
     } else if (enterFunction != null) {
       Triple(startLoc, Constraint(value = enterFunction!!), WaypointType.FUNCTION_ENTER)
     } else if (returnFromFunction != null) {

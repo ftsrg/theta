@@ -142,6 +142,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
     }
 
+    builder.prop = Eq(segmentCounter.ref, Int(i))
     return builder
   }
 }

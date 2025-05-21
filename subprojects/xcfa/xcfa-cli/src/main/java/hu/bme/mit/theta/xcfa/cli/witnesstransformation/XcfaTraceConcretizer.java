@@ -135,7 +135,7 @@ public class XcfaTraceConcretizer {
             }
             if (currentList.size() == 1) {
                 groupedLabels.add(currentList.get(0));
-            } else if (groupedLabels.size() > 1) {
+            } else if (currentList.size() > 1) {
                 groupedLabels.add(
                         new SequenceLabel(
                                 List.copyOf(currentList), currentList.get(0).getMetadata()));

@@ -221,7 +221,6 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.MDD -> MddConfig() as T
-        Backend.LASSO_VALIDATION -> LassoValidationConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
       }
@@ -315,18 +314,6 @@ data class HornConfig(
     description = "What relation to use for the ranking function.",
   )
   var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
-) : SpecBackendConfig
-
-data class LassoValidationConfig(
-  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
-  @Parameter(
-    names = ["--validate-solver"],
-    description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
-  )
-  var validateSolver: Boolean = false,
-  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
-  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(
