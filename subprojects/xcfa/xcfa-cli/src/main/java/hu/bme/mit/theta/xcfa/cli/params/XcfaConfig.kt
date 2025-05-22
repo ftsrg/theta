@@ -211,7 +211,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.IMC ->
           BoundedConfig(
             bmcConfig = BMCConfig(disable = true),
-            itpConfig = InterpolationConfig(disable = true),
+            indConfig = InductionConfig(disable = true),
           )
             as T
         Backend.KINDIMC -> BoundedConfig() as T
