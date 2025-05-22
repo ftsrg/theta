@@ -105,10 +105,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
               )
             }
-            WaypointType.BRANCHING -> {
-              // no-op now
-              True()
-            }
+            WaypointType.BRANCHING,
+            WaypointType.FUNCTION_ENTER,
+            WaypointType.FUNCTION_RETURN,
             WaypointType.TARGET -> {
               // no-op now
               True()
