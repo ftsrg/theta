@@ -141,6 +141,10 @@ public class XcfaTraceConcretizer {
                                 List.copyOf(currentList), currentList.get(0).getMetadata()));
             }
             labels = groupedLabels;
+            if (labels.isEmpty()) {
+                labels = List.of(NopLabel.INSTANCE);
+            }
+
             for (int j = 0; j < labels.size(); j++) {
                 final XcfaLocation source = j == 0 ? action.getSource() : placeholder;
                 final XcfaLocation target =

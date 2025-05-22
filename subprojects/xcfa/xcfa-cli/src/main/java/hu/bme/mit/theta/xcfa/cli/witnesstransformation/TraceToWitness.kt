@@ -59,15 +59,13 @@ fun traceToWitness(
       Predicate<XcfaState<out PtrState<out ExprState>>> { false }
     } else getXcfaErrorPredicate(property)
 
-  var lastNode =
-    WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
-  newStates.add(lastNode)
+  var lastNode: WitnessNode? = null
+  //    WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
+  //  newStates.add(lastNode)
 
-  for (i in 0 until trace.length()) {
+  for (i in 0 until trace.length() + 1) {
     val state = trace.states[i]
-    val action = trace.actions[i]
-    val nextState = trace.states[i + 1]
-    val newThreads = nextState.processes.keys - state.processes.keys
+    val action = trace.actions.getOrNull(i - 1)
     val node =
       WitnessNode(
         id = "N${newStates.size}",
@@ -95,86 +93,88 @@ fun traceToWitness(
       )
     if (node != WitnessNode(id = "N${newStates.size}")) {
       newStates.add(node)
-      val edge =
-        labelToEdge(
-          lastNode,
-          node,
-          action.edge.label,
-          trace.actions[i].pid,
-          ImmutableValuation.empty(),
-          parseContext,
-          action.edge,
-        )
-      newActions.add(edge)
+      if (lastNode != null && action != null) {
+        val edge =
+          labelToEdge(
+            lastNode,
+            node,
+            action.edge.label,
+            action.pid,
+            ImmutableValuation.empty(),
+            parseContext,
+            action.edge,
+          )
+        newActions.add(edge)
+      }
       lastNode = node
     }
 
-    val flattenedSequence = flattenSequence(action.edge.label)
-    for (xcfaLabel in flattenedSequence) {
-      val node =
-        WitnessNode(id = "N${newStates.size}", entry = false, sink = false, violation = false)
-      var edge =
-        labelToEdge(
-          lastNode,
-          node,
-          xcfaLabel,
-          action.pid,
-          nextState.sGlobal.getVal(),
-          parseContext,
-          action.edge,
-        )
-      if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
-        edge = edge.copy(createThread = newThreads.joinToString(","))
-      }
-      if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
-        newStates.add(node)
-        newActions.add(edge)
-        lastNode = node
-      }
-    }
+    //    val flattenedSequence = flattenSequence(action.edge.label)
+    //    for (xcfaLabel in flattenedSequence) {
+    //      val node =
+    //        WitnessNode(id = "N${newStates.size}", entry = false, sink = false, violation = false)
+    //      var edge =
+    //        labelToEdge(
+    //          lastNode,
+    //          node,
+    //          xcfaLabel,
+    //          action.pid,
+    //          nextState.sGlobal.getVal(),
+    //          parseContext,
+    //          action.edge,
+    //        )
+    //      if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
+    //        edge = edge.copy(createThread = newThreads.joinToString(","))
+    //      }
+    //      if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
+    //        newStates.add(node)
+    //        newActions.add(edge)
+    //        lastNode = node
+    //      }
+    //    }
   }
 
-  if (trace.length() > 0) {
-    val lastState = trace.states[trace.length()]
-    val node =
-      WitnessNode(
-        id = "N${newStates.size}",
-        entry = false,
-        sink = false,
-        violation =
-          isError.test( // this is a hack so that a simple explstate can become a ptrstate
-            XcfaState(
-              lastState.xcfa,
-              lastState.processes,
-              PtrState(lastState.sGlobal),
-              lastState.mutexes,
-              lastState.threadLookup,
-              lastState.bottom,
-            )
-          ),
-        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-        cSources =
-          lastState.processes
-            .map {
-              Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
-            }
-            .toMap(),
-        globalState = lastState.sGlobal,
-      )
-    newStates.add(node)
-    val xcfaEdge = trace.actions[trace.length() - 1].edge
-    val edge =
-      labelToEdge(
-        lastNode,
-        node,
-        xcfaEdge.label,
-        0,
-        ImmutableValuation.empty(),
-        parseContext,
-        xcfaEdge,
-      )
-    newActions.add(edge)
-  }
+  //  if (trace.length() > 0) {
+  //    val lastState = trace.states[trace.length()]
+  //    val node =
+  //      WitnessNode(
+  //        id = "N${newStates.size}",
+  //        entry = false,
+  //        sink = false,
+  //        violation =
+  //          isError.test( // this is a hack so that a simple explstate can become a ptrstate
+  //            XcfaState(
+  //              lastState.xcfa,
+  //              lastState.processes,
+  //              PtrState(lastState.sGlobal),
+  //              lastState.mutexes,
+  //              lastState.threadLookup,
+  //              lastState.bottom,
+  //            )
+  //          ),
+  //        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+  //        cSources =
+  //          lastState.processes
+  //            .map {
+  //              Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+  //            }
+  //            .toMap(),
+  //        globalState = lastState.sGlobal,
+  //      )
+  //    newStates.add(node)
+  //    val xcfaEdge = trace.actions[trace.length() - 1].edge
+  //    val edge =
+  //      labelToEdge(
+  //        lastNode,
+  //        node,
+  //        xcfaEdge.label,
+  //        0,
+  //        ImmutableValuation.empty(),
+  //        parseContext,
+  //        xcfaEdge,
+  //      )
+  //    newActions.add(edge)
+  //  }
 
   return Trace.of(newStates, newActions)
 }
@@ -250,12 +250,12 @@ private fun labelToEdge(
   )
 }
 
-private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
-  when (label) {
-    is NondetLabel -> listOf(label)
-    is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
-    else -> listOf(label)
-  }
+// private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
+//  when (label) {
+//    is NondetLabel -> listOf(label)
+//    is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
+//    else -> listOf(label)
+//  }
 
 fun printLit(litExpr: LitExpr<*>): String? {
   return if (litExpr is BvLitExpr) {

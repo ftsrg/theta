@@ -103,22 +103,23 @@ class YamlWitnessWriter {
           }
           val stem =
             Trace.of(
-              concrTrace.states.subList(0, cycleHeadFirst),
-              concrTrace.actions.subList(0, cycleHeadFirst - 1),
+              concrTrace.states.subList(0, cycleHeadFirst + 1),
+              concrTrace.actions.subList(0, cycleHeadFirst),
             )
           val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
-            // case of e.g., BMC !!
-            Trace.of(
-              concrTrace.states.subList(cycleHeadFirst - 1, concrTrace.states.size - 1),
-              concrTrace.actions.subList(cycleHeadFirst - 1, concrTrace.actions.size - 1),
-            )
-
-          val lasso2 = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
             // case of e.g., BMC !!
             Trace.of(
               concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
               concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
             )
+
+          //          val lasso2 = // TODO this works for CHCs, with the CHC backend, but adds wrong
+          // location in
+          //            // case of e.g., BMC !!
+          //            Trace.of(
+          //              concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
+          //              concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
+          //            )
 
           val backEdge =
             Trace.of(
@@ -129,7 +130,7 @@ class YamlWitnessWriter {
           val stemTrace =
             traceToWitness(trace = stem, parseContext = parseContext, property = property)
           val lassoTrace =
-            traceToWitness(trace = lasso2, parseContext = parseContext, property = property)
+            traceToWitness(trace = lasso, parseContext = parseContext, property = property)
           val backEdgeTrace =
             traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
 
@@ -137,7 +138,7 @@ class YamlWitnessWriter {
             entryType = EntryType.VIOLATION,
             metadata = metadata,
             content =
-              (0..(stemTrace.length()))
+              (0..(stemTrace.length() - 1))
                 .flatMap {
                   listOfNotNull(
                     stemTrace.states
