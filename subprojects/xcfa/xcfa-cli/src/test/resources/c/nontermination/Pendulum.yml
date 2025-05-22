@@ -1,0 +1,83 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "c77c0851-7d8a-4f6b-a435-7043a4f7d155"
+    creation_time: "2025-05-22T09:26:48Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+      - "Pendulum.c"
+      input_file_hashes:
+        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/Pendulum.c": "8e9ee3ead67a4075a27be431b00d828a1096e178db271a4f6036c79ad90bf4c4"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 14)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 3
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 6
+          column: 9
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 7
+          column: 13
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 5
+          column: 5
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 6
+          column: 9
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(p == 31)"
+          format: "c_expression"
+        location:
+          file_name: "Pendulum.c"
+          line: 9
+          column: 13
+        action: "cycle"

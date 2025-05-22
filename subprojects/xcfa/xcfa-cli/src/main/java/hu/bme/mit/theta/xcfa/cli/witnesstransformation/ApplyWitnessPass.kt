@@ -21,8 +21,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
@@ -40,6 +39,7 @@ import java.util.LinkedList
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
+    val segmentCount = witness.content.map { c -> c.segment }.filterNotNull().count()
 
     val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
     for (edge in builder.getEdges()) {
@@ -63,12 +63,16 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val segmentCounter = Var("__THETA__segment__counter__", Int())
     builder.addVar(segmentCounter)
 
+    val segmentFlag = Var("__THETA__last__segment__passed__", Bool())
+    builder.addVar(segmentFlag)
+
     for (outgoingEdge in builder.initLoc.outgoingEdges) {
       builder.removeEdge(outgoingEdge)
       builder.addEdge(
         outgoingEdge.withLabel(
           SequenceLabel(
-            listOf(AssignStmtLabel(segmentCounter, Int(0))) + outgoingEdge.getFlatLabels()
+            listOf(AssignStmtLabel(segmentCounter, Int(0)), AssignStmtLabel(segmentFlag, False())) +
+              outgoingEdge.getFlatLabels()
           )
         )
       )
@@ -125,6 +129,11 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           )
         }
 
+      val segmentFlagUpdate =
+        if (i == segmentCount) {
+          AssignStmtLabel(segmentFlag, True())
+        } else null
+
       val labelsOnEdges =
         statementToEdge
           .filter { (statement, _, _) ->
@@ -138,11 +147,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         val index = newLabels.indexOf(label)
         newLabels.add(index, StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
         newLabels.add(index + 1, segmentUpdate)
+        segmentFlagUpdate?.also { newLabels.add(it) }
         builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
       }
     }
 
-    builder.prop = Eq(segmentCounter.ref, Int(i))
+    builder.prop = segmentFlag.ref
     return builder
   }
 }
