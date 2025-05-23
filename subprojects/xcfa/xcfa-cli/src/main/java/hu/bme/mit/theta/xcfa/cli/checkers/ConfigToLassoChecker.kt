@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing
@@ -82,9 +83,10 @@ fun getLassoChecker(
     proc.initLoc.outgoingEdges.map { Pair(it.getFlatLabels()[0], it) }.toSet()
   var lastAction = Action.FOLLOW
 
-  val content =
-    witness.content +
-      witness.content.first { it.segment!!.any { it.waypoint.action == Action.CYCLE } }
+  val firstCycle =
+    witness.content.indexOfFirst { it.segment!!.any { it.waypoint.action == Action.CYCLE } }
+
+  val content = witness.content + witness.content[firstCycle]
 
   for (item in content) {
     val wp = item.segment?.first { it.waypoint.action != Action.AVOID }?.waypoint!!
@@ -146,13 +148,18 @@ fun getLassoChecker(
     val cycleUnfoldResult = StmtUtils.toExpr(SequenceStmt.of(cycle), indexing(0))
     val unfoldedCycle = PathUtils.unfold(And(cycleUnfoldResult.exprs), indexing(0))
 
-    val vars = xcfa.collectVars()
+    var vars = xcfa.collectVars()
+
+    val segmentCounter = vars.first { it.name == "__THETA__segment__counter__" }
+    val segmentPassed = vars.first { it.name == "__THETA__last__segment__passed__" }
+
+    vars = vars - setOf(segmentPassed, segmentCounter)
 
     val cycleExpr =
       And(
         vars.map {
           Eq(it.getConstDecl(0).ref, it.getConstDecl(cycleUnfoldResult.indexing.get(it)).ref)
-        } + unfoldedCycle
+        } + Eq(segmentCounter.getConstDecl(0).ref, Int(firstCycle)) + unfoldedCycle
       )
 
     WithPushPop(solver).use {
@@ -178,7 +185,16 @@ fun getLassoChecker(
       if (solver.status.isUnsat) {
         logger.writeln(Logger.Level.INFO, "Recurrence location re-reachability failed.")
       } else {
-        logger.writeln(Logger.Level.INFO, "Recurrence location re-reachability successful.")
+        val model = solver.model.toMap()
+        logger.writeln(
+          Logger.Level.INFO,
+          "Recurrence location re-reachability successful. A recurrence set: ${vars
+            .filter { parseContext.metadata.getMetadataValue(it.name, "cName").isPresent }
+            .associateWith {model[it.getConstDecl(0)]}
+            .map { "${parseContext.metadata.getMetadataValue(it.key.name, "cName").get()} == ${it.value}" }
+            .joinToString(" && ")
+          } at ${witness.content[firstCycle].segment!!.first{ it.waypoint.action == Action.CYCLE }.waypoint.location}",
+        )
         return@SafetyChecker SafetyResult.unsafe(
           Trace.of(listOf(XcfaState(xcfa, proc.initLoc, PtrState(ExplState.top()))), listOf()),
           EmptyProof.getInstance(),
