@@ -210,29 +210,46 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     builder.prop = segmentFlag.ref
     return builder
   }
+}
 
-  private fun getStatementToEdge(
-    builder: XcfaProcedureBuilder
-  ): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
-    val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
-    for (edge in builder.getEdges()) {
-      for (flatLabel in edge.label.getFlatLabels()) {
-        (flatLabel.metadata as? CMetaData)?.also {
-          for (astNode in it.astNodes) {
-            statementToEdge.add(Triple(astNode, flatLabel, edge))
-            // for termination, we also need iteration statements' bodies
-            if (astNode is CWhile) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            } else if (astNode is CFor) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            } else if (astNode is CDoWhile) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            }
-          }
+fun getStatementToEdge(
+  builder: XcfaProcedureBuilder
+): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
+  val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
+  for (edge in builder.getEdges()) {
+    extractEdge(edge, statementToEdge)
+  }
+  return statementToEdge
+}
+
+fun getStatementToEdge(
+  proc: XcfaProcedure
+): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
+  val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
+  for (edge in proc.edges) {
+    extractEdge(edge, statementToEdge)
+  }
+  return statementToEdge
+}
+
+private fun extractEdge(
+  edge: XcfaEdge,
+  statementToEdge: LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>,
+) {
+  for (flatLabel in edge.label.getFlatLabels()) {
+    (flatLabel.metadata as? CMetaData)?.also {
+      for (astNode in it.astNodes) {
+        statementToEdge.add(Triple(astNode, flatLabel, edge))
+        // for termination, we also need iteration statements' bodies
+        if (astNode is CWhile) {
+          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+        } else if (astNode is CFor) {
+          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+        } else if (astNode is CDoWhile) {
+          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
         }
       }
     }
-    return statementToEdge
   }
 }
 

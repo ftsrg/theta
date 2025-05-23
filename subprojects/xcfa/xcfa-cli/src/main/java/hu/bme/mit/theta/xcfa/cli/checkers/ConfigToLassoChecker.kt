@@ -19,44 +19,40 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.bounded.*
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decls.Param
-import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
-import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.LassoCheckerConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.getStatementToEdge
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.witnesses.Action
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.util.LinkedList
+import kotlinx.serialization.builtins.ListSerializer
 
 fun getLassoChecker(
   xcfa: XCFA,
@@ -71,43 +67,71 @@ fun getLassoChecker(
 
   val proc = xcfa.initProcedures.first().first
 
-  val selfLoops =
-    proc.edges
-      .filter { it.target == it.source }
-      .map {
-        var indexing: VarIndexing = VarIndexingFactory.basicVarIndexing(0)
-        val assumptions = LinkedList<Expr<BoolType>>()
-        val elze = LinkedList<Expr<BoolType>>()
-        for (label in it.getFlatLabels()) {
-          label as StmtLabel
+  val stmtToEdge = getStatementToEdge(proc)
 
-          val result = StmtUtils.toExpr(label.stmt, indexing)
-          val expr = PathUtils.unfold(And(result.exprs), indexing)
-          indexing = result.indexing
+  val witness =
+    WitnessYamlConfig.decodeFromString(
+        ListSerializer(YamlWitness.serializer()),
+        config.inputConfig.witness?.readText() ?: error("No witness in config!"),
+      )[0]
 
-          if (label.stmt is AssumeStmt) {
-            assumptions.add(expr)
-          }
-          elze.add(expr)
+  val stem = LinkedList<Stmt>()
+  val cycle = LinkedList<Stmt>()
+
+  var lastSet: Set<Pair<XcfaLabel?, XcfaEdge>> =
+    proc.initLoc.outgoingEdges.map { Pair(it.getFlatLabels()[0], it) }.toSet()
+  var lastAction = Action.FOLLOW
+
+  val content =
+    witness.content +
+      witness.content.first { it.segment!!.any { it.waypoint.action == Action.CYCLE } }
+
+  for (item in content) {
+    val wp = item.segment?.first { it.waypoint.action != Action.AVOID }?.waypoint!!
+
+    val relevantStmts =
+      stmtToEdge
+        .filter {
+          it.first.lineNumberStart <= wp.location.line &&
+            wp.location.line <= it.first.lineNumberStop &&
+            ((it.first.lineNumberStart < wp.location.line &&
+              wp.location.line < it.first.lineNumberStop) ||
+              (it.first.lineNumberStart == wp.location.line &&
+                (wp.location.column ?: 0) >= it.first.colNumberStart + 1) ||
+              (it.first.lineNumberStop == wp.location.line &&
+                (wp.location.column ?: 0) <= it.first.colNumberStop + 1))
         }
+        .let { stmts ->
+          if (stmts.map { it.third }.toSet().size == 1) {
+            val label =
+              stmts.first().third.getFlatLabels().first { stmts.map { it.second }.contains(it) }
+            stmts.filter { it.second == label }
+          } else {
+            stmts
+          }
+        }
+        .map { Pair(it.second, it.third) }
 
-        val recCondition = And(assumptions)
-        val transferRel = And(elze)
-        val stem = getNondetPath(proc.initLoc, it.source)
-
-        val stemExpr =
-          PathUtils.unfold(
-            And(
-              StmtUtils.toExpr(
-                  SequenceStmt.of(listOf(stem, Assume(recCondition))),
-                  VarIndexingFactory.basicVarIndexing(0),
-                )
-                .exprs
-            ),
-            VarIndexingFactory.basicVarIndexing(0),
-          )
-        LassoExprs(stemExpr, recCondition, transferRel)
+    val tuples = lastSet * relevantStmts
+    val stmt =
+      if (tuples.size == 1) {
+        val (from, to) = tuples[0]
+        getNondetPath(from.first, from.second, to.first, to.second)
+      } else {
+        NonDetStmt.of(
+          tuples.map { (from, to) -> getNondetPath(from.first, from.second, to.first, to.second) }
+        )
       }
+
+    if (lastAction == Action.FOLLOW) {
+      stem.add(stmt)
+    } else {
+      cycle.add(stmt)
+    }
+
+    lastSet = relevantStmts.toSet()
+    lastAction = wp.action
+  }
 
   return SafetyChecker<
     EmptyProof,
@@ -115,59 +139,84 @@ fun getLassoChecker(
     XcfaPrec<PtrPrec<ExplPrec>>,
   > {
     val solver = solverFactory.createSolver()
-    for ((stem, rec, trans) in selfLoops) {
-      val success =
-        WithPushPop(solver).use {
-          logger.writeln(Logger.Level.INFO, "Checking recurrence location reachability..")
-          solver.add(stem)
-          solver.check()
-          if (solver.status.isUnsat) {
-            logger.writeln(Logger.Level.INFO, "Recurrence location reachability failed.")
-            false
-          } else {
-            logger.writeln(Logger.Level.INFO, "Recurrence location reachability successful.")
-            true
-          }
-        }
-      if (success) {
-        WithPushPop(solver).use {
-          logger.writeln(Logger.Level.INFO, "Checking recurrence set re-reachability..")
-          val consts =
-            ExprUtils.getIndexedConstants(trans).associateWith {
-              Param(it.varDecl.name, it.varDecl.type)
-            }
-          val forall =
-            ExprUtils.simplify(
-              Forall(
-                consts.values,
-                Imply(ExprUtils.changeDecls(rec, consts), ExprUtils.changeDecls(trans, consts)),
-              )
-            )
-          solver.add(forall)
-          solver.check()
-          if (solver.status.isUnsat) {
-            logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability failed.")
-            val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
-            solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
-          } else {
-            logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability successful.")
-            return@SafetyChecker SafetyResult.unsafe(
-              Trace.of(listOf(XcfaState(xcfa, proc.initLoc, PtrState(ExplState.top()))), listOf()),
-              EmptyProof.getInstance(),
-            )
-          }
-        }
+
+    val stemExpr =
+      PathUtils.unfold(And(StmtUtils.toExpr(SequenceStmt.of(stem), indexing(0)).exprs), indexing(0))
+
+    val cycleUnfoldResult = StmtUtils.toExpr(SequenceStmt.of(cycle), indexing(0))
+    val unfoldedCycle = PathUtils.unfold(And(cycleUnfoldResult.exprs), indexing(0))
+
+    val vars = xcfa.collectVars()
+
+    val cycleExpr =
+      And(
+        vars.map {
+          Eq(it.getConstDecl(0).ref, it.getConstDecl(cycleUnfoldResult.indexing.get(it)).ref)
+        } + unfoldedCycle
+      )
+
+    WithPushPop(solver).use {
+      logger.writeln(Logger.Level.INFO, "Checking recurrence location reachability..")
+      solver.add(stemExpr)
+      //      val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
+      //      solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
+      solver.check()
+      if (solver.status.isUnsat) {
+        logger.writeln(Logger.Level.INFO, "Recurrence location reachability failed.")
+        return@SafetyChecker SafetyResult.unknown()
+      } else {
+        logger.writeln(Logger.Level.INFO, "Recurrence location reachability successful.")
       }
     }
+
+    WithPushPop(solver).use {
+      logger.writeln(Logger.Level.INFO, "Checking recurrence location re-reachability..")
+      solver.add(cycleExpr)
+      //      val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
+      //      solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
+      solver.check()
+      if (solver.status.isUnsat) {
+        logger.writeln(Logger.Level.INFO, "Recurrence location re-reachability failed.")
+      } else {
+        logger.writeln(Logger.Level.INFO, "Recurrence location re-reachability successful.")
+        return@SafetyChecker SafetyResult.unsafe(
+          Trace.of(listOf(XcfaState(xcfa, proc.initLoc, PtrState(ExplState.top()))), listOf()),
+          EmptyProof.getInstance(),
+        )
+      }
+    }
+
     SafetyResult.unknown()
   }
     as SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 }
 
-/**
- * Finds and merges all the different paths inbetween the two locations. For non-fully unrolled
- * lassos (i.e., there is a smaller loop inside the lasso), this will result in an infinite loop.
- */
+private fun getNondetPath(
+  label1: XcfaLabel?,
+  edge1: XcfaEdge,
+  label2: XcfaLabel,
+  edge2: XcfaEdge,
+): Stmt {
+  val edge1labels = edge1.getFlatLabels()
+  val edge2labels = edge2.getFlatLabels()
+  val idx1 = if (label1 == null) 0 else edge1labels.indexOf(label1)
+  val idx2 = edge2labels.indexOf(label2)
+
+  if (edge1 == edge2 && idx1 < idx2) {
+    return SequenceStmt.of(edge1labels.subList(idx1, idx2).map { it.toStmt() })
+  }
+
+  // adding initial labels
+  val labels = LinkedList(edge1labels.subList(idx1, edge1labels.size).map { it.toStmt() })
+
+  // adding paths in-between
+  labels.add(getNondetPath(edge1.target, edge2.source))
+
+  // adding final labels, up to (but not including) label2
+  labels.addAll(edge2labels.subList(0, idx2).map { it.toStmt() })
+  return SequenceStmt.of(labels)
+}
+
 private fun getNondetPath(current: XcfaLocation, final: XcfaLocation): Stmt {
   val outEdgeStmts =
     current.outgoingEdges.map {
@@ -175,12 +224,8 @@ private fun getNondetPath(current: XcfaLocation, final: XcfaLocation): Stmt {
       else getNondetPath(it.target, final)
     }
   return if (outEdgeStmts.size == 1) outEdgeStmts.first()
-  else if (outEdgeStmts.size > 1) NonDetStmt.of(outEdgeStmts)
-  else error("Discontinuity in path @$current")
+  else if (outEdgeStmts.size > 1) NonDetStmt.of(outEdgeStmts) else SkipStmt.getInstance()
 }
 
-private data class LassoExprs(
-  val stemExpr: Expr<BoolType>,
-  val recCond: Expr<BoolType>,
-  val transRel: Expr<BoolType>,
-)
+operator fun <T1, T2> Iterable<T1>.times(other: Iterable<T2>) =
+  this.flatMap { a -> other.map { b -> a to b } }
