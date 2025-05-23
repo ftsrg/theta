@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
@@ -41,25 +42,6 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
     val segmentCount = witness.content.map { c -> c.segment }.filterNotNull().count()
-
-    val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
-    for (edge in builder.getEdges()) {
-      for (flatLabel in edge.label.getFlatLabels()) {
-        (flatLabel.metadata as? CMetaData)?.also {
-          for (astNode in it.astNodes) {
-            statementToEdge.add(Triple(astNode, flatLabel, edge))
-            // for termination, we also need iteration statements' bodies
-            if (astNode is CWhile) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            } else if (astNode is CFor) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            } else if (astNode is CDoWhile) {
-              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-            }
-          }
-        }
-      }
-    }
 
     val segmentCounter = Var("__THETA__segment__counter__", Int())
     builder.addVar(segmentCounter)
@@ -82,6 +64,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     var i = 0
     var firstCycle = -1
     while (segments.hasNext()) {
+      val statementToEdge = getStatementToEdge(builder)
+
       val nextSegment = segments.next()
       val wp = nextSegment.first { waypoint -> waypoint.waypoint.action != Action.AVOID }
       val loc = wp.waypoint.location
@@ -154,7 +138,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
       val segmentUpdate =
         if (!segments.hasNext() && firstCycle != 1) {
-          AssignStmtLabel(segmentCounter, Int(firstCycle))
+          AssignStmtLabel(
+            segmentCounter,
+            Ite<IntType>(currentSegmentPred, Int(firstCycle), segmentCounter.ref),
+          )
         } else {
           AssignStmtLabel(
             segmentCounter,
@@ -164,7 +151,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
       val segmentFlagUpdate =
         if (i == segmentCount) {
-          AssignStmtLabel(segmentFlag, True())
+          AssignStmtLabel(
+            segmentFlag,
+            Ite<BoolType>(currentSegmentPred, currentSegmentPred, segmentFlag.ref),
+          )
         } else null
 
       val labelsOnEdges =
@@ -182,15 +172,36 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           }
           .map { (_, label, edge) -> Pair(label, edge) }
 
+      val edgeLabels = LinkedHashMap<XcfaEdge, MutableList<XcfaLabel>>()
       for ((label, edge) in labelsOnEdges) {
+        edgeLabels.computeIfAbsent(edge) { LinkedList() }.add(label)
+      }
+
+      for ((edge, labels) in edgeLabels) {
         builder.removeEdge(edge)
-        val newLabels = LinkedList(edge.getFlatLabels())
-        val index =
-          newLabels.indexOf(label) +
-            if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1
-            else 0 // for function_return, we want to add it next.
-        newLabels.add(index, StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
-        newLabels.add(index + 1, segmentUpdate)
+        val oldLabels = edge.getFlatLabels()
+        val newLabels = LinkedList<XcfaLabel>()
+        val indices =
+          labels
+            .map { label ->
+              oldLabels.indexOf(label) +
+                if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1
+                else 0 // for function_return, we want to add it next.
+            }
+            .sorted()
+        var i = 0
+        for (n in indices) {
+          while (i < n) {
+            newLabels.add(oldLabels[i])
+            i++
+          }
+          newLabels.add(StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
+          newLabels.add(segmentUpdate)
+        }
+        while (i < oldLabels.size) {
+          newLabels.add(oldLabels[i])
+          i++
+        }
         segmentFlagUpdate?.also { newLabels.add(it) }
         builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
       }
@@ -198,5 +209,44 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
     builder.prop = segmentFlag.ref
     return builder
+  }
+
+  private fun getStatementToEdge(
+    builder: XcfaProcedureBuilder
+  ): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
+    val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
+    for (edge in builder.getEdges()) {
+      for (flatLabel in edge.label.getFlatLabels()) {
+        (flatLabel.metadata as? CMetaData)?.also {
+          for (astNode in it.astNodes) {
+            statementToEdge.add(Triple(astNode, flatLabel, edge))
+            // for termination, we also need iteration statements' bodies
+            if (astNode is CWhile) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+            } else if (astNode is CFor) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+            } else if (astNode is CDoWhile) {
+              statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+            }
+          }
+        }
+      }
+    }
+    return statementToEdge
+  }
+}
+
+data class LassoMetaData(val loc: XcfaLocation) : MetaData() {
+
+  override fun combine(other: MetaData): MetaData {
+    if (other is LassoMetaData) {
+      return this
+    } else {
+      error("Cannot combine ${this} and ${other}")
+    }
+  }
+
+  override fun isSubstantial(): Boolean {
+    return true
   }
 }

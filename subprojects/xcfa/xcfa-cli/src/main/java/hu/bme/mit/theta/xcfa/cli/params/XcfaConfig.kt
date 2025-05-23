@@ -223,6 +223,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.MDD -> MddConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
+        Backend.LASSO_VALIDATOR -> LassoCheckerConfig() as T
       }
   }
 }
@@ -466,6 +467,16 @@ data class Ic3Config(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class LassoCheckerConfig(
+  @Parameter(names = ["--solver"], description = "Solver name") var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
 ) : SpecBackendConfig
 
 data class OutputConfig(

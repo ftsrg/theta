@@ -77,6 +77,7 @@ enum class Backend {
   MDD,
   IC3,
   NONE,
+  LASSO_VALIDATOR,
 }
 
 enum class POR(
