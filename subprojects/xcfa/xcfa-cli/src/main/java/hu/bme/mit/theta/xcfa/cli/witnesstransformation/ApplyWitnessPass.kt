@@ -20,6 +20,7 @@ import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
@@ -105,9 +106,42 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
               )
             }
+            WaypointType
+              .FUNCTION_RETURN -> { // TODO: deduplicate with below code for statement search
+              val vars =
+                statementToEdge
+                  .filter { (statement, label, _) ->
+                    statement.lineNumberStart == loc.line &&
+                      (statement.colNumberStop + 1 - 1 == loc.column ||
+                        statement.colNumberStop + 1 == loc.column) &&
+                      label is StmtLabel &&
+                      label.stmt is HavocStmt<*>
+                  }
+                  .map { (_, label, _) -> ((label as StmtLabel).stmt as HavocStmt<*>).varDecl }
+
+              if (vars.size != 1) {
+                True() // no or multiple vars
+              } else {
+                val v = vars.first()
+                val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
+                if (cNameOpt.isPresent) {
+                  val constraint = wp.waypoint.constraint!!
+                  check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+                  getExpressionFromC(
+                    constraint.value.replace("\\result", cNameOpt.get() as String),
+                    parseContext,
+                    false,
+                    false,
+                    NullLogger.getInstance(),
+                    builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+                  )
+                } else {
+                  True() // no cname
+                }
+              }
+            }
             WaypointType.BRANCHING,
             WaypointType.FUNCTION_ENTER,
-            WaypointType.FUNCTION_RETURN,
             WaypointType.TARGET -> {
               // no-op now
               True()
@@ -135,15 +169,26 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
       val labelsOnEdges =
         statementToEdge
-          .filter { (statement, _, _) ->
-            statement.lineNumberStart == loc.line && statement.colNumberStart + 1 == loc.column
+          .filter { (statement, label, _) ->
+            if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) {
+              statement.lineNumberStart == loc.line &&
+                (statement.colNumberStop + 1 - 1 == loc.column ||
+                  statement.colNumberStop + 1 == loc.column) &&
+                label is StmtLabel &&
+                label.stmt is HavocStmt<*>
+            } else {
+              statement.lineNumberStart == loc.line && statement.colNumberStart + 1 == loc.column
+            }
           }
           .map { (_, label, edge) -> Pair(label, edge) }
 
       for ((label, edge) in labelsOnEdges) {
         builder.removeEdge(edge)
         val newLabels = LinkedList(edge.getFlatLabels())
-        val index = newLabels.indexOf(label)
+        val index =
+          newLabels.indexOf(label) +
+            if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1
+            else 0 // for function_return, we want to add it next.
         newLabels.add(index, StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
         newLabels.add(index + 1, segmentUpdate)
         segmentFlagUpdate?.also { newLabels.add(it) }
