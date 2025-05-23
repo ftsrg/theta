@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.c2xcfa.CMetaDataKt.getCMetaData;
-import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
+import static hu.bme.mit.theta.xcfa.UtilsKt.*;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
@@ -36,7 +36,6 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
@@ -202,7 +201,12 @@ public class XcfaTraceConcretizer {
                                                                             ::getKey,
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
-                varSoFar.addAll(ExprUtils.getVars(sbeTrace.getAction(i).toExpr()));
+                var accesses = collectVarsWithAccessType(sbeTrace.getAction(i).getLabel());
+                varSoFar.addAll(
+                        accesses.entrySet().stream()
+                                .filter(it -> isWritten(it.getValue()))
+                                .map(it -> it.getKey())
+                                .toList());
             }
         }
 
