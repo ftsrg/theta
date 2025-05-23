@@ -149,7 +149,6 @@ fun getLassoChecker(
             logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability failed.")
             val manager = GenericSmtLibTransformationManager(GenericSmtLibSymbolTable())
             solver.assertions.forEach { logger.writeln(Logger.Level.INFO, manager.toTerm(it)) }
-            return@SafetyChecker SafetyResult.safe(EmptyProof.getInstance())
           } else {
             logger.writeln(Logger.Level.INFO, "Recurrence set re-reachability successful.")
             return@SafetyChecker SafetyResult.unsafe(
