@@ -46,9 +46,9 @@ fun getBoundedChecker(
 
   val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
+  val monExprResult = xcfa.toMonolithicExpr(parseContext)
   val monolithicExpr =
-    xcfa
-      .toMonolithicExpr(parseContext)
+    monExprResult.monolithicExpr
       .let {
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
           it.copy(propExpr = True()).createMonolithicL2S()
