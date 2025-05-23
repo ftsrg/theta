@@ -324,7 +324,7 @@ private fun backend(
           }
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
             } ms)\n",
@@ -414,6 +414,10 @@ private fun postVerificationLogging(
       // we only want to log the files if the current configuration is not --in-process or portfolio
       if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
         return
+      }
+
+      if (config.frontendConfig.inputType == InputType.CHC) {
+        writeModel(safetyResult)
       }
 
       val resultFolder = config.outputConfig.resultFolder

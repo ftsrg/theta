@@ -49,9 +49,9 @@ fun getIc3Checker(
   val ic3Config = config.backendConfig.specConfig as Ic3Config
   val solverFactory: SolverFactory = getSolver(ic3Config.solver, ic3Config.validateSolver)
 
+  val monExprResult = xcfa.toMonolithicExpr(parseContext)
   val monolithicExpr =
-    xcfa
-      .toMonolithicExpr(parseContext)
+    monExprResult.monolithicExpr
       .let {
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
           it.copy(propExpr = True()).createMonolithicL2S()

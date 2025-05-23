@@ -15,15 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
-import hu.bme.mit.delta.java.mdd.MddNode;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.LitExpr;
 import java.util.Set;
 import java.util.Stack;
 
@@ -34,11 +32,11 @@ import java.util.Stack;
 public class MddValuationCollector {
 
     private static class Assignment {
-        final Decl<?> decl;
-        final LitExpr<?> value;
+        final MddVariable variable;
+        final Integer value;
 
-        private Assignment(Decl<?> decl, LitExpr<?> value) {
-            this.decl = decl;
+        private Assignment(MddVariable variable, Integer value) {
+            this.variable = variable;
             this.value = value;
         }
     }
@@ -49,52 +47,35 @@ public class MddValuationCollector {
      * @param node the node
      * @return the set of vectors represented by the node
      */
-    public static Set<Valuation> collect(MddNode node) {
+    public static Set<Valuation> collect(MddHandle node) {
         final Stack<Assignment> assignments = new Stack<>();
         final Set<Valuation> valuations = Containers.createSet();
 
-        try (var cursor = node.cursor()) {
-            collect(node, cursor, assignments, valuations);
-        }
+        collect(node, assignments, valuations);
 
         return valuations;
     }
 
     private static void collect(
-            MddNode node,
-            RecursiveIntObjCursor<? extends MddNode> cursor,
-            Stack<Assignment> assignments,
-            Set<Valuation> valuations) {
+            MddHandle node, Stack<Assignment> assignments, Set<Valuation> valuations) {
         if (node.isTerminal()) {
             valuations.add(toValuation(assignments));
         } else {
-            if (node.defaultValue() != null) {
-                cursor.moveNext();
+            if (!node.defaultValue().isTerminalZero()) {
 
-                try (var valueCursor = cursor.valueCursor()) {
-                    collect(node.defaultValue(), valueCursor, assignments, valuations);
-                }
+                collect(node.defaultValue(), assignments, valuations);
 
             } else {
-                while (cursor.moveNext()) {
-                    assert cursor.value() != null;
+                for (var cursor = node.cursor(); cursor.moveNext(); ) {
 
-                    if (node.getRepresentation() instanceof MddExpressionRepresentation) {
-                        final MddExpressionRepresentation representation =
-                                (MddExpressionRepresentation) node.getRepresentation();
-                        assignments.push(
-                                new Assignment(
-                                        representation.getDecl(),
-                                        LitExprConverter.toLitExpr(
-                                                cursor.key(), representation.getDecl().getType())));
-                    }
+                    assignments.push(
+                            new Assignment(
+                                    node.getVariableHandle().getVariable().orElseThrow(),
+                                    cursor.key()));
 
-                    try (var valueCursor = cursor.valueCursor()) {
-                        collect(cursor.value(), valueCursor, assignments, valuations);
-                    }
+                    collect(cursor.value(), assignments, valuations);
 
-                    if (node.getRepresentation() instanceof MddExpressionRepresentation)
-                        assignments.pop();
+                    assignments.pop();
                 }
             }
         }
@@ -102,7 +83,11 @@ public class MddValuationCollector {
 
     private static Valuation toValuation(Stack<Assignment> assignments) {
         final var builder = ImmutableValuation.builder();
-        assignments.stream().forEach(ass -> builder.put(ass.decl, ass.value));
+        assignments.forEach(
+                ass -> {
+                    var decl = ass.variable.getTraceInfo(Decl.class);
+                    builder.put(decl, LitExprConverter.toLitExpr(ass.value, decl.getType()));
+                });
         return builder.build();
     }
 }
