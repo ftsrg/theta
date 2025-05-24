@@ -67,6 +67,7 @@ import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+import kotlin.system.exitProcess
 import kotlinx.serialization.builtins.ListSerializer
 
 fun runConfig(
@@ -91,6 +92,9 @@ fun runConfig(
 
       config.inputConfig.witness?.also {
         logger.writeln(INFO, "Applying witness $it")
+        if (!it.exists()) {
+          exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
         val witness =
           WitnessYamlConfig.decodeFromString(
               ListSerializer(YamlWitness.serializer()),
