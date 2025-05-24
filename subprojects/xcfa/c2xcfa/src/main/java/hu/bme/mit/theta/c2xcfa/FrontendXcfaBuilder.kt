@@ -997,7 +997,9 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(body),
+        metadata =
+          EmptyMetaData, // TODO: if body metadata, exiting loop points to beginning of body, which
+        // is wrong
       )
     xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)

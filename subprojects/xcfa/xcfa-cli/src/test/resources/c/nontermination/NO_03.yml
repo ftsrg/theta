@@ -1,0 +1,105 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "54cf9edd-3259-4809-9d9e-04dcfb2c8dfd"
+    creation_time: "2025-05-24T19:59:49Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+        - "NO_03.c"
+      input_file_hashes:
+        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/NO_03.c": "57953bf177b77bdcba210d5dce369395d242a617ef951a05d4a0af10ca288ca4"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 10
+              column: 21
+            action: "follow"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 11
+              column: 9
+            action: "follow"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 0)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 13
+              column: 13
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 0)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 12
+              column: 23
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 1)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 12
+              column: 23
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 1)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 15
+              column: 9
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 1)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 10
+              column: 21
+            action: "cycle"
+    - segment:
+        - waypoint:
+            type: "assumption"
+            constraint:
+              value: "(j == 1)&&(i == 0)"
+              format: "c_expression"
+            location:
+              file_name: "NO_03.c"
+              line: 11
+              column: 9
+            action: "cycle"
