@@ -21,7 +21,9 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
+import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
@@ -60,6 +62,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         )
       )
     }
+
+    val modifications = LinkedHashMap<XcfaEdge, MutableList<Annotation>>()
 
     var i = 0
     var firstCycle = -1
@@ -137,16 +141,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         )
 
       val segmentUpdate =
-        if (!segments.hasNext() && firstCycle != 1) {
-          AssignStmtLabel(
-            segmentCounter,
-            Ite<IntType>(currentSegmentPred, Int(firstCycle), segmentCounter.ref),
-          )
+        if (!segments.hasNext()) {
+          Pair(currentSegmentPred, Int(firstCycle))
         } else {
-          AssignStmtLabel(
-            segmentCounter,
-            Ite<IntType>(currentSegmentPred, Add(segmentCounter.ref, Int(1)), segmentCounter.ref),
-          )
+          Pair(currentSegmentPred, Int(i)) // here i was already incremented
         }
 
       val segmentFlagUpdate =
@@ -178,10 +176,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
 
       for ((edge, labels) in edgeLabels) {
-        builder.removeEdge(edge)
         val oldLabels = edge.getFlatLabels()
-        val newLabels = LinkedList<XcfaLabel>()
-        val indices =
+        val labels =
           labels
             .map { label ->
               oldLabels.indexOf(label) +
@@ -189,22 +185,45 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 else 0 // for function_return, we want to add it next.
             }
             .sorted()
-        var i = 0
-        for (n in indices) {
-          while (i < n) {
-            newLabels.add(oldLabels[i])
-            i++
-          }
-          newLabels.add(StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData))
-          newLabels.add(segmentUpdate)
+            .map { oldLabels[it] }
+        for (label in labels) {
+          modifications
+            .computeIfAbsent(edge) { LinkedList() }
+            .add(
+              Annotation(
+                edge,
+                label,
+                StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData),
+                segmentUpdate,
+                segmentFlagUpdate,
+              )
+            )
         }
-        while (i < oldLabels.size) {
-          newLabels.add(oldLabels[i])
-          i++
-        }
-        segmentFlagUpdate?.also { newLabels.add(it) }
-        builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
       }
+    }
+
+    modifications.forEach { (edge, allAnnots) ->
+      builder.removeEdge(edge)
+      val oldLabels = edge.getFlatLabels()
+      val newLabels = LinkedList<XcfaLabel>()
+      val indexToAnnots = allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }
+      var i = 0
+      for ((index, annots) in indexToAnnots) {
+        while (i < index) {
+          newLabels.add(oldLabels[i++])
+        }
+        newLabels.addAll(annots.map { it.assumption })
+        newLabels.addAll(annots.mapNotNull { it.flagUpdate })
+        var expr = segmentCounter.ref as Expr<IntType>
+        for ((cond, then) in annots.map { it.segmentUpdate }) {
+          expr = Ite(cond, then, expr)
+        }
+        newLabels.add(AssignStmtLabel(segmentCounter, expr))
+      }
+      while (i < oldLabels.size) {
+        newLabels.add(oldLabels[i++])
+      }
+      builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
     }
 
     builder.prop = segmentFlag.ref
@@ -253,17 +272,10 @@ private fun extractEdge(
   }
 }
 
-data class LassoMetaData(val loc: XcfaLocation) : MetaData() {
-
-  override fun combine(other: MetaData): MetaData {
-    if (other is LassoMetaData) {
-      return this
-    } else {
-      error("Cannot combine ${this} and ${other}")
-    }
-  }
-
-  override fun isSubstantial(): Boolean {
-    return true
-  }
-}
+private data class Annotation(
+  val edge: XcfaEdge,
+  val beforeLabel: XcfaLabel,
+  val assumption: XcfaLabel,
+  val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>,
+  val flagUpdate: XcfaLabel?,
+) {}
