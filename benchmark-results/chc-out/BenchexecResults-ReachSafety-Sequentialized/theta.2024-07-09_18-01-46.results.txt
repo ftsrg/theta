@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Sequentialized, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Tue, 2024-07-09 18:01:46 UTC
+tool:                    Theta 5.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az915-519
+os:                      Linux-6.5.0-1023-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3055.505 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Sequentialized
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                         status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------------
+systemc/transmitter.12.cil.yml                                    TIMEOUT                        120.20      108.34        None
+seq-mthreaded/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.yml        TIMEOUT                        120.38       93.93        None
+systemc/pipeline.cil-1.yml                                        TIMEOUT                        120.23      104.96        None
+seq-mthreaded/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.yml    TIMEOUT                        120.59       93.62        None
+seq-mthreaded/pals_floodmax.3.2.ufo.BOUNDED-6.pals.yml            false(unreach-call)            104.06       67.91        None
+-------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                         done                           102.72      470.19           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               1
+    correct true:        0
+    correct false:       1
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 1 (max: 6)

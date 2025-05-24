@@ -1,0 +1,13 @@
+theta/theta-start.sh sv-benchmarks/c/xcsp/AllInterval-009.c --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/theta/theta.jar --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --input sv-benchmarks/c/xcsp/AllInterval-009.c --smt-home /home/runner/work/theta/theta/theta/solvers
+Arithmetic: [NONLIN_INT]
+Current configuration: XcfaCegarConfig(errorDetectionType=ERROR_LOCATION, abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR, initPrec=EMPTY, porLevel=NOPOR, coi=COI, refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL, cexMonitor=CHECK, timeoutMs=100000) (inProcess=true)
+Serialized Config, XCFA and ParseContext in 151ms
+(SafetyResult Unsafe Trace length: 108)
+(SafetyResult Unsafe Trace length: 108)
+Config successful, exiting: XcfaCegarConfig(errorDetectionType=ERROR_LOCATION, abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR, initPrec=EMPTY, porLevel=NOPOR, coi=COI, refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL, cexMonitor=CHECK, timeoutMs=100000)

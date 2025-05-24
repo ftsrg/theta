@@ -1,0 +1,31 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Recursive
+date:                    Sat, 2025-05-24 19:08:47 UTC
+tool:                    Theta 6.16.1
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmf6wy0o8zjz
+os:                      Linux-6.11.0-1014-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.914 MHz
+ram:                     16772.685824 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Recursive
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------
+recursive/Ackermann01-2.yml                                                            TIMEOUT                         40.08       22.29        None
+recursive/Ackermann02.yml                                                              TIMEOUT                         40.03       22.11        None

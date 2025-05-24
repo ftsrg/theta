@@ -1,0 +1,18 @@
+Thorn/theta-start.sh sv-benchmarks/c/locks/test_locks_11.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/locks/test_locks_11.c' with property 'sv-benchmarks/c/properties/valid-memsafety.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --architecture ILP32 --input sv-benchmarks/c/locks/test_locks_11.c --property sv-benchmarks/c/properties/valid-memsafety.prp --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Arithmetic: []
+ParsingResult Success
+Alias graph size: 0 -> []
+Using CHC portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/locks/test_locks_11.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: (SafetyResult Safe)
+(SafetyResult Safe)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=MEMSAFETY, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/locks/test_locks_11.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false)) succeeded in 4400 ms
+success-result: Z3-true
+(SafetyResult Safe)
