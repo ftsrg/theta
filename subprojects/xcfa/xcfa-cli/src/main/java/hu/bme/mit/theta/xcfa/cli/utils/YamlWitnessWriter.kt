@@ -172,7 +172,7 @@ class YamlWitnessWriter {
                 //                    action = Action.CYCLE,
                 //                  )
                 //                ) +
-                (1..<(lassoTrace.length()))
+                (0..<(lassoTrace.length()))
                   .flatMap {
                     listOfNotNull(
                       lassoTrace.states

@@ -1,8 +1,8 @@
 - entry_type: "violation_sequence"
   metadata:
     format_version: "2.0"
-    uuid: "54cf9edd-3259-4809-9d9e-04dcfb2c8dfd"
-    creation_time: "2025-05-24T19:59:49Z"
+    uuid: "4e749f4c-1e02-4253-b49f-6bcacc67a81a"
+    creation_time: "2025-05-25T10:28:37Z"
     producer:
       name: "Theta"
       version: "no version found"
@@ -45,8 +45,8 @@
               format: "c_expression"
             location:
               file_name: "NO_03.c"
-              line: 13
-              column: 13
+              line: 12
+              column: 23
             action: "cycle"
     - segment:
         - waypoint:
@@ -56,8 +56,8 @@
               format: "c_expression"
             location:
               file_name: "NO_03.c"
-              line: 12
-              column: 23
+              line: 13
+              column: 13
             action: "cycle"
     - segment:
         - waypoint:
