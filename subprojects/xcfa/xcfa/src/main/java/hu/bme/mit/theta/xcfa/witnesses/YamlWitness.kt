@@ -20,7 +20,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 val WitnessYamlConfig =
-  Yaml(configuration = Yaml.default.configuration.copy(encodeDefaults = false))
+  Yaml(configuration = Yaml.default.configuration.copy(encodeDefaults = false, strictMode = false))
 
 // https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/8f5dc4bf00c01bc6d5636d7993e164d181e19204/violation-witness-schema.yml
 // https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/8f5dc4bf00c01bc6d5636d7993e164d181e19204/correctness-witness-schema.yml
