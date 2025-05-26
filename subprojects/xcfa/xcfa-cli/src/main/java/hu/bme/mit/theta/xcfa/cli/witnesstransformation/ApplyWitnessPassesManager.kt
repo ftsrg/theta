@@ -26,9 +26,9 @@ class ApplyWitnessPassesManager(parseContext: ParseContext, witness: YamlWitness
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),
       ApplyWitnessPass(parseContext, witness),
-      LbePass(parseContext),
-      NormalizePass(), // needed after lbe, TODO
-      DeterministicPass(), // needed after lbe, TODO
-      SimplifyExprsPass(parseContext),
+      //      LbePass(parseContext),
+      //      NormalizePass(), // needed after lbe, TODO
+      //      DeterministicPass(), // needed after lbe, TODO
+      //      SimplifyExprsPass(parseContext),
     )
   )

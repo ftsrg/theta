@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
@@ -965,7 +966,13 @@ class FrontendXcfaBuilder(
     val body = statement.body
     var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge: XcfaEdge =
+      XcfaEdge(
+        lastLoc,
+        initLoc,
+        label = StmtLabel(SkipStmt.getInstance(), metadata = getMetadata(statement)),
+        metadata = getMetadata(statement),
+      )
     builder.addEdge(xcfaEdge)
     val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(endLoc)

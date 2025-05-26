@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile
 import hu.bme.mit.theta.frontend.transformation.model.statements.CFor
+import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
@@ -67,12 +68,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
     var i = 0
     var firstCycle = -1
+    val statementToEdge = getStatementToEdge(builder)
     while (segments.hasNext()) {
-      val statementToEdge = getStatementToEdge(builder)
 
       val nextSegment = segments.next()
       val wp = nextSegment.first { waypoint -> waypoint.waypoint.action != Action.AVOID }
-      val loc = wp.waypoint.location
+      var loc = wp.waypoint.location
       val currentSegmentPred = Eq(segmentCounter.ref, Int(i))
       if (wp.waypoint.action == Action.CYCLE && firstCycle == -1) {
         firstCycle = i
@@ -128,7 +129,63 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 }
               }
             }
-            WaypointType.BRANCHING,
+            WaypointType.BRANCHING -> {
+              // we handle branching not at the 'w' of 'while' (and similar), but at its body.
+              // therefore, we need to query the ast node here.
+              val (guard, body) =
+                statementToEdge
+                  .mapNotNull { (statement, _, _) ->
+                    if (
+                      statement.lineNumberStart == loc.line &&
+                        statement.colNumberStart + 1 == loc.column
+                    )
+                      statement
+                    else null
+                  }
+                  .map {
+                    when (it) {
+                      is CWhile -> Pair(it.guard, it.body)
+                      is CFor -> Pair(it.guard, it.body)
+                      is CIf -> Pair(it.guard, it.body)
+                      is CDoWhile -> Pair(it.guard, it.body)
+                      else -> error("Branching not on iteration/branching statement.")
+                    }
+                  }
+                  .first() // we hope it's a single ast node..
+
+              loc =
+                wp.waypoint.location.copy(
+                  line = body.lineNumberStart,
+                  column = body.colNumberStart + 1,
+                )
+
+              val guardAssume =
+                statementToEdge.mapNotNull {
+                  if (
+                    it.first == body /* now assumes are body-labelled */ &&
+                      it.second is StmtLabel &&
+                      (it.second as StmtLabel).stmt is AssumeStmt &&
+                      (it.second as StmtLabel).choiceType != ChoiceType.NONE
+                  )
+                    Pair(
+                      (it.second as StmtLabel).choiceType,
+                      (it.second as StmtLabel).stmt as AssumeStmt,
+                    )
+                  else null
+                }
+
+              when (wp.waypoint.constraint?.value) {
+                "true" -> {
+                  guardAssume.first { it.first == ChoiceType.MAIN_PATH }.second.cond
+                }
+                "false" -> {
+                  guardAssume.first { it.first == ChoiceType.ALTERNATIVE_PATH }.second.cond
+                }
+                else -> {
+                  error("Unknown value for branching: ${wp.waypoint.constraint?.value}")
+                }
+              }
+            }
             WaypointType.FUNCTION_ENTER,
             WaypointType.TARGET -> {
               // no-op now
@@ -260,13 +317,13 @@ private fun extractEdge(
       for (astNode in it.astNodes) {
         statementToEdge.add(Triple(astNode, flatLabel, edge))
         // for termination, we also need iteration statements' bodies
-        if (astNode is CWhile) {
-          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-        } else if (astNode is CFor) {
-          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-        } else if (astNode is CDoWhile) {
-          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
-        }
+        //        if (astNode is CWhile) {
+        //          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+        //        } else if (astNode is CFor) {
+        //          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+        //        } else if (astNode is CDoWhile) {
+        //          statementToEdge.add(Triple(astNode.body, flatLabel, edge))
+        //        }
       }
     }
   }
