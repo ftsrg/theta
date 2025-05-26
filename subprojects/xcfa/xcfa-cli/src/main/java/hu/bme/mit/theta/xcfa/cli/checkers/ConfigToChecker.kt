@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -45,7 +46,10 @@ fun getChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getCegarLassoChecker(xcfa, mcm, config, logger)
+        else getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,

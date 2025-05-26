@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
@@ -459,9 +460,15 @@ private fun postVerificationLogging(
             safetyResult.asUnsafe().cex != null &&
             !config.outputConfig.witnessConfig.svcomp
         ) {
+          val trace =
+            if (safetyResult.asUnsafe().cex is ASGTrace<*, *>) {
+              (safetyResult.asUnsafe().cex as ASGTrace<*, *>).toTrace()
+            } else {
+              safetyResult.asUnsafe().cex
+            }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             XcfaTraceConcretizer.concretize(
-              safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
               getSolver(
                 config.outputConfig.witnessConfig.concretizerSolver,
                 config.outputConfig.witnessConfig.validateConcretizerSolver,
@@ -474,10 +481,8 @@ private fun postVerificationLogging(
           traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
 
           val sequenceFile = File(resultFolder, "trace.plantuml")
-          writeSequenceTrace(
-            sequenceFile,
-            safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>,
-          ) { (_, act) ->
+          writeSequenceTrace(sequenceFile, trace as Trace<XcfaState<ExplState>, XcfaAction>) {
+            (_, act) ->
             act.label.getFlatLabels().map(XcfaLabel::toString)
           }
 

@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner
+import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -34,7 +34,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 class SingleASGTraceRefiner<S : ExprState, A : ExprAction, P : Prec>(
   private val strategy: ASGTraceCheckerStrategy,
   private val solverFactory: SolverFactory,
-  private val refiner: JoiningPrecRefiner<S, A, P, ItpRefutation>,
+  private val refiner: PrecRefiner<S, A, P, ItpRefutation>,
   private val logger: Logger,
   private val init: Expr<BoolType> = True(),
 ) : ASGTraceRefiner<S, A, P> {
