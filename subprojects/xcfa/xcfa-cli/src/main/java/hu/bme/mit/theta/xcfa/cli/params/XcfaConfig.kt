@@ -95,6 +95,8 @@ data class InputConfig(
   var propertyFile: File? = null,
   @Parameter(names = ["--property-value"], description = "Property")
   var property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+  @Parameter(names = ["--witness"], description = "Witness file (optional)")
+  var witness: File? = null,
 ) : Config {
 
   override fun toString(): String {
@@ -219,9 +221,9 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.MDD -> MddConfig() as T
-        Backend.LASSO_VALIDATION -> LassoValidationConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
+        Backend.LASSO_VALIDATOR -> LassoCheckerConfig() as T
       }
   }
 }
@@ -313,18 +315,6 @@ data class HornConfig(
     description = "What relation to use for the ranking function.",
   )
   var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
-) : SpecBackendConfig
-
-data class LassoValidationConfig(
-  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
-  @Parameter(
-    names = ["--validate-solver"],
-    description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
-  )
-  var validateSolver: Boolean = false,
-  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
-  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(
@@ -477,6 +467,16 @@ data class Ic3Config(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class LassoCheckerConfig(
+  @Parameter(names = ["--solver"], description = "Solver name") var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
 ) : SpecBackendConfig
 
 data class OutputConfig(

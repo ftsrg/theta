@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
@@ -54,7 +53,7 @@ fun getIc3Checker(
       .toMonolithicExpr(parseContext)
       .let {
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
-          it.copy(propExpr = True()).createMonolithicL2S()
+          it.copy(propExpr = xcfa.initProcedures[0].first.prop).createMonolithicL2S()
         else it
       }
       .let { if (ic3Config.reversed) it.createReversed() else it }
