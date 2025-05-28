@@ -207,6 +207,7 @@ jobs:
         with:
           tool: ${{matrix.tool}}
           precrecord: ${{matrix.record}}
+          token: ${{secrets.zenodo_token}}
 
   deploy-maven:
     # needs: test-linux

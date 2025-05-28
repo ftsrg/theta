@@ -5,6 +5,8 @@ inputs:
         required: true
     prevrecord:
         required: true
+    token:
+        required: true
 runs:
   using: "composite"
   steps:
@@ -22,7 +24,7 @@ runs:
 
     - run: |
         url='https://zenodo.org/records/${{inputs.prevrecord}}'
-        token='${{secrets.zenodo_token}}'
+        token='${{inputs.token}}'
         file='${{inputs.tool}}'
         RECORD_ID=$(basename "$url")
         echo "Creating new version for record $RECORD_ID"
