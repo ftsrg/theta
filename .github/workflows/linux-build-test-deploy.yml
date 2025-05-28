@@ -206,7 +206,7 @@ jobs:
         uses: ./.github/actions/zenodo-release
         with:
           tool: ${{matrix.tool}}
-          precrecord: ${{matrix.record}}
+          prevrecord: ${{matrix.record}}
           token: ${{secrets.zenodo_token}}
 
   deploy-maven:
