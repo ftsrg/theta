@@ -206,7 +206,7 @@ fun getCegarLassoChecker(
 
     override fun check():
       SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
-      return check(Domain.EXPL.initPrec(xcfa, InitPrec.ALLVARS) as XcfaPrec<PtrPrec<ExplPrec>>)
+      return check(Domain.EXPL.initPrec(xcfa, cegarConfig.initPrec) as XcfaPrec<PtrPrec<ExplPrec>>)
     }
   }
 }

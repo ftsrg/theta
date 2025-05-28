@@ -178,6 +178,14 @@ public class XcfaTraceConcretizer {
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         final Set<VarDecl<?>> varSoFar = new LinkedHashSet<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
+            final var revLookup = new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
+            sbeTrace.getState(i).getProcesses().values().stream()
+                    .flatMap(
+                            it ->
+                                    it.getVarLookup().stream()
+                                            .flatMap(lookup -> lookup.entrySet().stream()))
+                    .forEach(entry -> revLookup.put(entry.getValue(), entry.getKey()));
+
             cfaStates.add(
                     new XcfaState<>(
                             sbeTrace.getState(i).getXcfa(),
@@ -188,13 +196,29 @@ public class XcfaTraceConcretizer {
                                                     .filter(
                                                             it ->
                                                                     varSoFar.contains(it.getKey())
-                                                                            && parseContext
-                                                                                    .getMetadata()
-                                                                                    .getMetadataValue(
-                                                                                            it.getKey()
-                                                                                                    .getName(),
-                                                                                            "cName")
-                                                                                    .isPresent())
+                                                                            && (parseContext
+                                                                                            .getMetadata()
+                                                                                            .getMetadataValue(
+                                                                                                    it.getKey()
+                                                                                                            .getName(),
+                                                                                                    "cName")
+                                                                                            .isPresent()
+                                                                                    || parseContext
+                                                                                            .getMetadata()
+                                                                                            .getMetadataValue(
+                                                                                                    revLookup
+                                                                                                            .getOrDefault(
+                                                                                                                    (VarDecl<
+                                                                                                                                    ?>)
+                                                                                                                            it
+                                                                                                                                    .getKey(),
+                                                                                                                    (VarDecl<
+                                                                                                                                    ?>)
+                                                                                                                            it
+                                                                                                                                    .getKey())
+                                                                                                            .getName(),
+                                                                                                    "cName")
+                                                                                            .isPresent()))
                                                     .collect(
                                                             Collectors.toMap(
                                                                     Map.Entry<Decl<?>, LitExpr<?>>

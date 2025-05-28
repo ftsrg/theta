@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
@@ -78,10 +79,19 @@ class YamlWitnessWriter {
           ),
       )
 
-    if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
+    val trace =
+      safetyResult.asUnsafe().cex.let {
+        if (it is ASGTrace<*, *>) {
+          it.toTrace()
+        } else {
+          it
+        }
+      }
+
+    if (safetyResult.isUnsafe && trace is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
         XcfaTraceConcretizer.concretize(
-          safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
           cexSolverFactory,
           parseContext,
         )
