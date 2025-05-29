@@ -21,11 +21,14 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
+import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -81,8 +84,18 @@ class YamlWitnessWriter {
 
     val trace =
       safetyResult.asUnsafe().cex.let {
-        if (it is ASGTrace<*, *>) {
-          it.toTrace()
+        if (it is HackyAsgTrace<*>) {
+          val actions = (it as HackyAsgTrace<*>).trace.actions
+          val explStates = (it as HackyAsgTrace<*>).trace.states
+          val states =
+            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+              state as XcfaState<PtrState<*>>
+              state.withState(PtrState(explStates[i]))
+            }
+
+          Trace.of(states, actions)
+        } else if (it is ASGTrace<*, *>) {
+          (it as ASGTrace<*, *>).toTrace()
         } else {
           it
         }
@@ -104,10 +117,31 @@ class YamlWitnessWriter {
 
           val cycleHead = concrTrace.states.last()
           val cycleHeadFirst =
-            concrTrace.states.indexOfFirst {
-              it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-                it.sGlobal == cycleHead.sGlobal
-            }
+            concrTrace.states
+              .indexOfFirst {
+                it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+                  it.sGlobal == cycleHead.sGlobal
+              }
+              .let { index ->
+                if (index == concrTrace.states.size - 1) {
+                  // we go backwards, and find a candidate.
+                  val revIdx =
+                    1 +
+                      concrTrace.states
+                        .subList(0, concrTrace.states.size - 1)
+                        .reversed()
+                        .indexOfFirst {
+                          it.processes.values.map { it.locs } ==
+                            cycleHead.processes.values.map { it.locs } &&
+                            it.sGlobal.toMap().all { (key, value) ->
+                              cycleHead.sGlobal.toMap()[key] == value
+                            }
+                        }
+                  concrTrace.states.size - 1 - revIdx
+                } else {
+                  index
+                }
+              }
           if (cycleHeadFirst == -1) {
             error("Lasso not found")
           }
@@ -269,6 +303,8 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   return endLoc
 }
 
+var prevVal: Map<Decl<*>, LitExpr<*>> = emptyMap()
+
 private fun WitnessNode.toSegment(
   incomingEdge: WitnessEdge?,
   outgoingEdge: WitnessEdge?,
@@ -294,6 +330,7 @@ private fun WitnessNode.toSegment(
     val constraint =
       globalState
         ?.toMap()
+        ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
         ?.mapNotNull { (varDecl, value) ->
           val splitName = varDecl.name.split("::")
           val rootName =
@@ -309,6 +346,8 @@ private fun WitnessNode.toSegment(
           }
         }
         ?.joinToString("&&")
+        ?.let { if (it.isEmpty()) "1" else it }
+    prevVal = globalState?.toMap() ?: prevVal
 
     return if (constraint != null && constraint.isNotEmpty())
       WaypointContent(

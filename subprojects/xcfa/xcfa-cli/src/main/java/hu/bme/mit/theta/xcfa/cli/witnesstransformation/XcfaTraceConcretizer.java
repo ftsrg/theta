@@ -59,38 +59,62 @@ public class XcfaTraceConcretizer {
                 Trace.of(
                         trace.getStates().stream()
                                 .map(
-                                        ptrStateXcfaState ->
-                                                ptrStateXcfaState.getSGlobal().getInnerState()
-                                                                instanceof ExplState explState
-                                                        ? ptrStateXcfaState.withState(
-                                                                new PtrState(
-                                                                        ExplState.of(
-                                                                                ImmutableValuation
-                                                                                        .from(
-                                                                                                explState
-                                                                                                        .toMap()
-                                                                                                        .entrySet()
-                                                                                                        .stream()
-                                                                                                        .filter(
-                                                                                                                declLitExprEntry ->
-                                                                                                                        parseContext
-                                                                                                                                .getMetadata()
-                                                                                                                                .getMetadataValue(
-                                                                                                                                        declLitExprEntry
-                                                                                                                                                .getKey()
-                                                                                                                                                .getName(),
-                                                                                                                                        "cName")
-                                                                                                                                .isPresent())
-                                                                                                        .collect(
-                                                                                                                Collectors
-                                                                                                                        .toMap(
-                                                                                                                                Map
-                                                                                                                                                .Entry
-                                                                                                                                        ::getKey,
-                                                                                                                                Map
-                                                                                                                                                .Entry
-                                                                                                                                        ::getValue))))))
-                                                        : ptrStateXcfaState)
+                                        ptrStateXcfaState -> {
+                                            final var revLookup =
+                                                    new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
+                                            ptrStateXcfaState.getProcesses().values().stream()
+                                                    .flatMap(
+                                                            it ->
+                                                                    it.getVarLookup().stream()
+                                                                            .flatMap(
+                                                                                    lookup ->
+                                                                                            lookup
+                                                                                                    .entrySet()
+                                                                                                    .stream()))
+                                                    .forEach(
+                                                            entry ->
+                                                                    revLookup.put(
+                                                                            entry.getValue(),
+                                                                            entry.getKey()));
+                                            return ptrStateXcfaState.getSGlobal().getInnerState()
+                                                            instanceof ExplState explState
+                                                    ? ptrStateXcfaState.withState(
+                                                            new PtrState(
+                                                                    ExplState.of(
+                                                                            ImmutableValuation.from(
+                                                                                    explState
+                                                                                            .toMap()
+                                                                                            .entrySet()
+                                                                                            .stream()
+                                                                                            .filter(
+                                                                                                    declLitExprEntry ->
+                                                                                                            parseContext
+                                                                                                                    .getMetadata()
+                                                                                                                    .getMetadataValue(
+                                                                                                                            revLookup
+                                                                                                                                    .getOrDefault(
+                                                                                                                                            (VarDecl<
+                                                                                                                                                            ?>)
+                                                                                                                                                    declLitExprEntry
+                                                                                                                                                            .getKey(),
+                                                                                                                                            (VarDecl<
+                                                                                                                                                            ?>)
+                                                                                                                                                    declLitExprEntry
+                                                                                                                                                            .getKey())
+                                                                                                                                    .getName(),
+                                                                                                                            "cName")
+                                                                                                                    .isPresent())
+                                                                                            .collect(
+                                                                                                    Collectors
+                                                                                                            .toMap(
+                                                                                                                    Map
+                                                                                                                                    .Entry
+                                                                                                                            ::getKey,
+                                                                                                                    Map
+                                                                                                                                    .Entry
+                                                                                                                            ::getValue))))))
+                                                    : ptrStateXcfaState;
+                                        })
                                 .toList(),
                         trace.getActions());
 
@@ -225,12 +249,16 @@ public class XcfaTraceConcretizer {
                                                                             ::getKey,
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
-                var accesses = collectVarsWithAccessType(sbeTrace.getAction(i).getLabel());
-                varSoFar.addAll(
-                        accesses.entrySet().stream()
-                                .filter(it -> isWritten(it.getValue()))
-                                .map(it -> it.getKey())
-                                .toList());
+                for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
+                    if (flatLabel.getMetadata().isSubstantial()) {
+                        var accesses = collectVarsWithAccessType(sbeTrace.getAction(i).getLabel());
+                        varSoFar.addAll(
+                                accesses.entrySet().stream()
+                                        .filter(it -> isWritten(it.getValue()))
+                                        .map(it -> it.getKey())
+                                        .toList());
+                    }
+                }
             }
         }
 

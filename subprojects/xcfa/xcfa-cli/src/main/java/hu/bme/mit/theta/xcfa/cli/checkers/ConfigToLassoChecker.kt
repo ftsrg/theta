@@ -94,14 +94,8 @@ fun getLassoChecker(
     val relevantStmts =
       stmtToEdge
         .filter {
-          it.first.lineNumberStart <= wp.location.line &&
-            wp.location.line <= it.first.lineNumberStop &&
-            ((it.first.lineNumberStart < wp.location.line &&
-              wp.location.line < it.first.lineNumberStop) ||
-              (it.first.lineNumberStart == wp.location.line &&
-                (wp.location.column ?: 0) >= it.first.colNumberStart + 1) ||
-              (it.first.lineNumberStop == wp.location.line &&
-                (wp.location.column ?: 0) <= it.first.colNumberStop + 1))
+          it.first.lineNumberStart == wp.location.line &&
+            it.first.colNumberStart + 1 == wp.location.column
         }
         .let { stmts ->
           if (stmts.map { it.third }.toSet().size == 1) {

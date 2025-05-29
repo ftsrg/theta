@@ -43,6 +43,9 @@ import java.util.LinkedList
 
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (builder.parent.getInitProcedures().none { it.first.equals(builder) }) {
+      return builder
+    }
     val segments = witness.content.map { c -> c.segment }.filterNotNull().iterator()
     val segmentCount = witness.content.map { c -> c.segment }.filterNotNull().count()
 
@@ -283,7 +286,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
     }
 
-    builder.prop = segmentFlag.ref
+    // builder.prop = segmentFlag.ref
     return builder
   }
 }

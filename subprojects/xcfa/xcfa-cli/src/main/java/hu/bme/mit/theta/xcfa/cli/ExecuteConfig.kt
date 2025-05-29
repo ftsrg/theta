@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
+import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
@@ -461,7 +462,19 @@ private fun postVerificationLogging(
             !config.outputConfig.witnessConfig.svcomp
         ) {
           val trace =
-            if (safetyResult.asUnsafe().cex is ASGTrace<*, *>) {
+            if (safetyResult.asUnsafe().cex is HackyAsgTrace<*>) {
+              val actions = (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).trace.actions
+              val explStates = (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).trace.states
+              val states =
+                (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).originalStates.mapIndexed {
+                  i,
+                  state ->
+                  state as XcfaState<PtrState<*>>
+                  state.withState(PtrState(explStates[i]))
+                }
+
+              Trace.of(states, actions)
+            } else if (safetyResult.asUnsafe().cex is ASGTrace<*, *>) {
               (safetyResult.asUnsafe().cex as ASGTrace<*, *>).toTrace()
             } else {
               safetyResult.asUnsafe().cex
