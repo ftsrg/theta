@@ -1,0 +1,53 @@
+tool		Theta 6.5.2	Theta 6.5.2	Theta 6.5.2	Theta 6.5.2
+run set		SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+recursive-simple/id_o100.yml	false	Parsing OK	2.194891	0.8793752369999766	199.942144
+recursive-simple/id2_i5_o5-2.yml	true	Parsing OK	2.16673	0.8781907649999994	200.544256
+recursified_nla-digbench/recursified_geo2-ll.yml	true	Parsing OK	2.460453	0.9526474109999867	214.740992
+recursive/recHanoi03-2.yml	true	Parsing OK	2.199272	0.8860685649999596	198.955008
+recursified_nla-digbench/recursified_lcm2.yml	true	Parsing OK	2.510708	0.9536375490000069	215.232512
+recursive-simple/id_b3_o2-2.yml	false	Parsing OK	2.114335	0.8678911060000019	191.864832
+recursified_nla-digbench/recursified_ps3-ll.yml	true	Parsing OK	2.48424	0.956814761999965	211.718144
+recursive-simple/afterrec-2.yml	true	Parsing OK	2.081936	0.8472619890000033	185.184256
+recursive-simple/id_i10_o10-2.yml	true	Parsing OK	2.140541	0.8696492509999985	200.241152
+recursified_loop-crafted/recursified_simple_array_index_value_1-2.yml	false	ERROR (frontend failed)	1.852605	0.7524477300000285	167.084032
+recursified_loop-simple/recursified_nested_1b.yml	false	Parsing OK	2.148765	0.8474630830000365	196.931584
+recursive/EvenOdd03.yml	false	Parsing OK	2.232346	0.8730645649999929	196.743168
+recursified_nla-digbench/recursified_egcd2-ll.yml	true	ERROR (frontend failed)	2.067849	0.8284023820000357	197.365760
+recursive-simple/id_o200.yml	false	Parsing OK	2.145518	0.8738712570000189	200.712192
+recursified_nla-digbench/recursified_geo1-u.yml	false	Parsing OK	2.525065	0.9613035580000542	213.987328
+recursive/BallRajamani-SPIN2000-Fig1.yml	false	Parsing OK	2.208534	0.8821676260000118	201.351168
+recursive-simple/id2_b3_o5.yml	true	Parsing OK	2.188887	0.8804589770000462	194.269184
+recursified_loop-invariants/recursified_eq2.yml	true	Parsing OK	2.269844	0.8987229940000248	199.143424
+recursified_loop-simple/recursified_nested_6.yml	true	ERROR (frontend failed)	1.811682	0.7514327869999988	174.333952
+recursified_nla-digbench/recursified_ps6-ll.yml	true	Parsing OK	2.68654	1.0053339960000471	226.951168
+recursified_nla-digbench/recursified_ps5-ll.yml	true	Parsing OK	2.588232	0.983218069999964	216.993792
+recursified_nla-digbench/recursified_divbin.yml	false	Parsing OK	2.627908	0.9963609129999895	219.901952
+recursive-simple/id_i25_o25-2.yml	false	Parsing OK	2.250762	0.9245879119999927	201.560064
+recursified_loop-simple/recursified_nested_2.yml	true	ERROR (frontend failed)	1.734216	0.734244450999995	156.418048
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+lhb-reducer.yml	true	ERROR (frontend failed)	1.775995	0.7305535160000431	156.069888
+recursive-simple/fibo_2calls_5-2.yml	false	Parsing OK	2.310494	0.9304567979999661	207.757312
+recursive-simple/fibo_15-2.yml	false	Parsing OK	2.162098	0.8721429220000232	200.118272
+recursive/Addition02.yml	false	Parsing OK	2.194469	0.8527204570000322	196.317184
+recursive/Fibonacci03.yml	true	Parsing OK	2.201386	0.8688110589999951	199.073792
+recursive/Fibonacci05.yml	false	Parsing OK	2.242851	0.8747858119999705	200.966144
+recursive-simple/id_b5_o10-2.yml	true	Parsing OK	2.211602	0.9037865839999881	198.348800
+recursive-simple/sum_15x0-2.yml	false	Parsing OK	2.150135	0.8772041220000233	187.809792
+recursive-simple/id2_b2_o3.yml	true	Parsing OK	2.297046	0.9407263009999838	206.118912
+recursified_loop-simple/recursified_deep-nested.yml	false	ERROR (frontend failed)	1.955517	0.7886994630000004	186.892288
+recursified_loop-invariants/recursified_linear-inequality-inv-a.yml	true	Parsing OK	2.373415	0.9279464910000002	204.103680
+recursified_nla-digbench/recursified_hard-ll.yml	true	Parsing OK	2.611549	0.9978621690000296	218.787840
+recursified_nla-digbench/recursified_mannadiv.yml	true	Parsing OK	2.571054	0.9887488919999896	216.690688
+recursified_nla-digbench/recursified_ps2-ll.yml	true	Parsing OK	2.451771	0.9596143649999931	214.986752
+recursified_loop-crafted/recursified_simple_vardep_1.yml	true	Parsing OK	2.298835	0.9022874940000065	205.168640
+recursive-simple/fibo_25-1.yml	false	Parsing OK	2.189698	0.8776515229999973	193.638400
+recursive-simple/fibo_2calls_5-1.yml	true	Parsing OK	2.279887	0.9107614519999743	198.774784
+recursive-simple/id2_b5_o10.yml	true	Parsing OK	2.317219	0.9267505380000216	199.909376
+recursive-simple/fibo_5-2.yml	false	Parsing OK	2.189863	0.8708641509999779	195.567616
+recursified_loop-invariants/recursified_mod4.yml	true	Parsing OK	2.257177	0.8966449879999914	194.592768
+recursive/McCarthy91-2.yml	true	Parsing OK	2.183854	0.877489464000007	194.019328
+recursive-simple/fibo_20-1.yml	false	Parsing OK	2.220562	0.9033625309999707	200.740864
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+nlh-reducer.yml	true	ERROR (frontend failed)	1.717536	0.7170236329999966	157.573120
+recursified_loop-simple/recursified_nested_4.yml	true	ERROR (frontend failed)	1.745918	0.7359741450000001	161.042432
+recursive-simple/afterrec-1.yml	false	Parsing OK	2.137685	0.8846004689999631	201.920512
+recursive-simple/id_b3_o5-2.yml	true	Parsing OK	2.173746	0.8776873230000319	196.337664

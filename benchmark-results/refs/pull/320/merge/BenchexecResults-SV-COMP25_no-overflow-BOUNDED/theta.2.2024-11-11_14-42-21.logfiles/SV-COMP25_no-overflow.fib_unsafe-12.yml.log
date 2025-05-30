@@ -1,0 +1,8 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/pthread/fib_unsafe-12.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/pthread/fib_unsafe-12.i' with property 'sv-benchmarks/c/properties/no-overflow.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32'
+Mapping property 'sv-benchmarks/c/properties/no-overflow.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'

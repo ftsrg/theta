@@ -1,0 +1,56 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Fuzzle
+date:                    Thu, 2024-11-14 13:22:05 UTC
+tool:                    Theta 6.8.5
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1334-958
+os:                      Linux-6.8.0-1017-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3285.868 MHz
+ram:                     16766.775296 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Fuzzle
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------
+01_fuzzle_30x30.yml                    TIMEOUT                         41.60       22.87        None
+02_fuzzle_40x40.yml                    TIMEOUT                         40.93       25.84        None
+03_fuzzle_50x50.yml                    
+04_fuzzle_60x60.yml                    
+05_fuzzle_70x70.yml                    
+06_fuzzle_50x50_0-cycle.yml            
+07_fuzzle_50x50_25-cycle.yml           
+08_fuzzle_50x50_50-cycle.yml           
+09_fuzzle_50x50_75-cycle.yml           
+10_fuzzle_50x50_CVE-2016-4487.yml      
+11_fuzzle_50x50_CVE-2016-4489.yml      
+12_fuzzle_50x50_CVE-2016-4492.yml      
+13_fuzzle_50x50_CVE-2016-4493.yml      
+14_fuzzle_50x50_CVE-2016-6131.yml      
+15_fuzzle_50x50_equality-checks.yml    
+----------------------------------------------------------------------------------------------------
+Run set 1                              done                             0.24       56.12           -
+
+Statistics:              2 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               2
+  Score:                 0 (max: 2)

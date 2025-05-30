@@ -1,0 +1,68 @@
+Theta/theta-start.sh sv-benchmarks/c/pthread/lazy01.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --input sv-benchmarks/c/pthread/lazy01.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/pthread/lazy01.i as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: CompoundDefinitions are not yet implemented!
+WARNING: self-embedded structs! Using long as a placeholder
+WARNING: Unknown simple type union pthread_attr_t
+WARNING: enums are not yet supported! Using int instead.
+Arithmetic: []
+Frontend finished:   (in 662 ms)
+ParsingResult Success
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio MULTITHREAD
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, loopUnroll=50, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=150000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Z3 SolverManager
+Registered SMT-LIB SolverManager
+Writing pre-verification artifacts to directory /home/runner/work/theta/theta/.
+Starting verification of UnnamedXcfa using CEGAR
+server: Registered Z3 SolverManager
+server: Registered SMT-LIB SolverManager
+server: Writing pre-verification artifacts to directory /home/runner/work/theta/theta/./6448043691093461422
+server: Starting verification of UnnamedXcfa using CEGAR
+server: Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist (Combinator TargetFirst (Combinator (Inverter DepthOrder) CreationOrder)))) hu.bme.mit.theta.analysis.expr.refinement.AasporRefiner@10afe71a)
+server: Iteration 1
+server: | Checking abstraction...
+server: |  |  (Re)initializing ARG...done
+server: |  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+server: |  |  Building ARG...done
+server: |  |  Finished ARG: 15 nodes, 2 incomplete, 1 unsafe
+server: | Checking abstraction done, result: (AbstractorResult Unsafe)
+server: | Refining abstraction...
+server: |  |  Trace length: 13
+server: |  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+server: |  |  Pruning whole ARGdone
+server: Refining abstraction done, result: (RefinerResult Spurious)
+server: ! Precision DID change in this iteration
+server: Iteration 2
+server: | Checking abstraction...
+server: |  |  (Re)initializing ARG...done
+server: |  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+server: |  |  Building ARG...done
+server: |  |  Finished ARG: 35 nodes, 3 incomplete, 1 unsafe
+server: | Checking abstraction done, result: (AbstractorResult Unsafe)
+server: | Refining abstraction...
+server: |  |  Trace length: 21
+server: |  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+server: Refining abstraction done, result: (RefinerResult Unsafe)
+server: ! Precision did NOT change in this iteration
+server: (SafetyResult Unsafe Trace length: 21)
+server: AlgorithmTimeMs: 197
+server: Iterations: 2
+server: 
+server: Backend finished (in 231 ms)
+server: (SafetyResult Unsafe Trace length: 21)
+server: Writing post-verification artifacts to directory /home/runner/work/theta/theta/./6448043691093461422
+Backend finished (in 1943 ms)
+(SafetyResult Unsafe Trace length: -1)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, loopUnroll=50, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=150000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false)) succeeded in 2066 ms
+Backend finished (in 2069 ms)
+(SafetyResult Unsafe Trace length: -1)

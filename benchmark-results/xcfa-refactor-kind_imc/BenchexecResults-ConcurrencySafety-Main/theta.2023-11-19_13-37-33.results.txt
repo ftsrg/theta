@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ConcurrencySafety-Main, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-19 13:37:33 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az585-782
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3230.371 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ConcurrencySafety-Main
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                            status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------
+pthread-ext/18_read_write_lock-pthread.yml                           ERROR (frontend failed)          3.77        1.42        None
+pthread-atomic/read_write_lock-1.yml                                 true                            13.84        5.43        None
+pthread-wmm/rfi003_tso.yml                                           true                            33.72       14.62        None
+pthread/lazy01.yml                                                   false(unreach-call)              9.71        4.37        None
+pthread-wmm/mix000.oepc.yml                                          false(unreach-call)             15.32        5.77        None
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml    false(unreach-call)             10.83        4.69        None
+pthread-wmm/safe032_tso.yml                                          true                            12.10        5.06        None
+goblint-regression/13-privatized_37-traces-ex-4_true.yml             true                             9.80        4.39        None
+pthread-C-DAC/pthread-demo-datarace-3.yml                            ERROR (frontend failed)          5.31        1.95        None
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml    true                             9.57        4.33        None
+----------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                            done                           123.98       53.06           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               8
+    correct true:        5
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               2
+  Score:                13 (max: 16)

@@ -1,0 +1,300 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-Heap
+date:                    Thu, 2025-02-27 09:45:45 UTC
+tool:                    Theta 6.11.1
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1931-720
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3318.027 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-Heap
+Run set 4 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                 status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------------------
+ldv-regression/alias_of_return.c_1.yml                    ERROR (server error, after parsing finished)       11.45        5.67        None
+ldv-regression/alias_of_return.yml                        ERROR (server error, after parsing finished)       12.31        5.85        None
+ldv-regression/alias_of_return_2.c_1.yml                  ERROR (server error, after parsing finished)       11.47        5.65        None
+ldv-regression/alias_of_return_2.yml                      ERROR (server error, after parsing finished)       12.39        5.85        None
+ldv-regression/mutex_lock_int.c_1.yml                     ERROR (server error, after parsing finished)       12.76        5.97        None
+ldv-regression/mutex_lock_struct.c_1.yml                  ERROR (frontend failed, before parsing finished)        1.60        0.66        None
+ldv-regression/nested_structure-1.yml                     ERROR (frontend failed, before parsing finished)        1.72        0.70        None
+ldv-regression/nested_structure-2.yml                     ERROR (frontend failed, before parsing finished)        1.85        0.73        None
+ldv-regression/nested_structure_noptr-1.yml               ERROR (frontend failed, before parsing finished)        1.79        0.71        None
+ldv-regression/nested_structure_noptr-2.yml               ERROR (frontend failed, before parsing finished)        1.61        0.65        None
+ldv-regression/nested_structure_ptr-1.yml                 ERROR (frontend failed, before parsing finished)        1.65        0.67        None
+ldv-regression/nested_structure_ptr-2.yml                 ERROR (frontend failed, before parsing finished)        1.79        0.71        None
+ldv-regression/structure_assignment.yml                   ERROR (server error, after parsing finished)       11.04        5.56        None
+ldv-regression/test03.yml                                 ERROR (server error, after parsing finished)       12.29        5.85        None
+ldv-regression/test04.yml                                 ERROR (server error, after parsing finished)       12.07        5.90        None
+ldv-regression/test05.yml                                 ERROR (server error, after parsing finished)       14.45        6.35        None
+ldv-regression/test07.yml                                 ERROR (server error, after parsing finished)       12.72        5.94        None
+ldv-regression/test09.yml                                 ERROR (server error, after parsing finished)       13.11        6.07        None
+ldv-regression/test10.yml                                 ERROR (server error, after parsing finished)       13.87        6.22        None
+ldv-regression/test11.yml                                 ERROR (server error, after parsing finished)       12.75        5.89        None
+ldv-regression/test14.yml                                 ERROR (server error, after parsing finished)       12.11        5.91        None
+ldv-regression/test15.yml                                 ERROR (server error, after parsing finished)       12.00        5.78        None
+ldv-regression/test16.yml                                 ERROR (server error, after parsing finished)       12.03        5.80        None
+ldv-regression/test18.yml                                 ERROR (server error, after parsing finished)       12.96        6.02        None
+ldv-regression/test19.yml                                 ERROR (server error, after parsing finished)       12.58        5.88        None
+ldv-regression/test21-1.yml                               ERROR (frontend failed, before parsing finished)        1.69        0.69        None
+ldv-regression/test22-1.yml                               ERROR (frontend failed, before parsing finished)        1.67        0.67        None
+ldv-regression/test23-2.yml                               ERROR (frontend failed, before parsing finished)        1.67        0.67        None
+ldv-regression/test24-1.yml                               ERROR (frontend failed, before parsing finished)        1.69        0.70        None
+ldv-regression/test25-2.yml                               ERROR (frontend failed, before parsing finished)        1.67        0.68        None
+ldv-regression/test26-1.yml                               ERROR (frontend failed, before parsing finished)        1.63        0.66        None
+ldv-regression/test27-1.yml                               ERROR (frontend failed, before parsing finished)        1.72        0.68        None
+ldv-regression/test27-2.yml                               ERROR (frontend failed, before parsing finished)        1.64        0.65        None
+ldv-regression/test28-2.yml                               ERROR (frontend failed, before parsing finished)        1.60        0.65        None
+ldv-regression/test29-2.yml                               ERROR (frontend failed, before parsing finished)        1.63        0.67        None
+ldv-regression/test30-1.yml                               ERROR (frontend failed, before parsing finished)        1.68        0.68        None
+ldv-regression/test_union.c_1.yml                         ERROR (frontend failed, before parsing finished)        1.61        0.66        None
+ldv-regression/test_union.yml                             ERROR (frontend failed, before parsing finished)        1.60        0.66        None
+ldv-regression/test_union_cast-1.yml                      ERROR (frontend failed, before parsing finished)        1.77        0.70        None
+ldv-regression/test_union_cast-2.yml                      ERROR (frontend failed, before parsing finished)        1.74        0.69        None
+ldv-regression/test_union_cast.c_1.yml                    ERROR (frontend failed, before parsing finished)        1.59        0.66        None
+ldv-regression/test_union_cast.yml                        ERROR (frontend failed, before parsing finished)        1.63        0.66        None
+ldv-regression/volatile_alias.c_1.yml                     ERROR (server error, after parsing finished)       11.15        5.53        None
+ldv-regression/volatile_alias.yml                         ERROR (server error, after parsing finished)       11.09        5.53        None
+list-ext-properties/960521-1_1-1.yml                      ERROR (frontend failed, before parsing finished)        3.16        1.13        None
+list-ext-properties/960521-1_1-2.yml                      ERROR (frontend failed, before parsing finished)        2.90        1.06        None
+list-ext-properties/960521-1_1-3.yml                      ERROR (frontend failed, before parsing finished)        3.16        1.13        None
+list-ext-properties/list-ext.yml                          ERROR (frontend failed, before parsing finished)        2.92        1.05        None
+list-ext-properties/list-ext_1.yml                        ERROR (frontend failed, before parsing finished)        2.96        1.07        None
+list-ext-properties/list-ext_2.yml                        ERROR (frontend failed, before parsing finished)        2.66        0.96        None
+list-ext-properties/list-ext_flag.yml                     ERROR (frontend failed, before parsing finished)        2.93        1.06        None
+list-ext-properties/list-ext_flag_1.yml                   ERROR (frontend failed, before parsing finished)        2.73        0.99        None
+list-ext-properties/simple-ext_1.yml                      ERROR (frontend failed, before parsing finished)        3.00        1.11        None
+list-ext-properties/test-0019_1-1.yml                     
+list-ext-properties/test-0019_1-2.yml                     
+list-ext-properties/test-0158_1-1.yml                     
+list-ext-properties/test-0158_1-2.yml                     
+list-ext-properties/test-0158_1-3.yml                     
+list-ext-properties/test-0214_1.yml                       
+list-ext-properties/test-0217_1.yml                       
+list-ext-properties/test-0232_1-1.yml                     
+list-ext-properties/test-0232_1-2.yml                     
+list-ext-properties/test-0504_1.yml                       
+list-ext-properties/test-0513_1.yml                       
+memsafety/20020406-1.yml                                  
+memsafety/20051113-1.yml                                  
+memsafety/960521-1-1.yml                                  
+memsafety/960521-1-2.yml                                  
+memsafety/960521-1-3.yml                                  
+memsafety/cmp-freed-ptr.yml                               
+memsafety/global-atexit-2.yml                             
+memsafety/global-atexit-5.yml                             
+memsafety/lockfree-3.0.yml                                
+memsafety/lockfree-3.1.yml                                
+memsafety/lockfree-3.2.yml                                
+memsafety/lockfree-3.3.yml                                
+memsafety/test-0019-1.yml                                 
+memsafety/test-0019-2.yml                                 
+memsafety/test-0102-1.yml                                 
+memsafety/test-0102-2.yml                                 
+memsafety/test-0134.yml                                   
+memsafety/test-0137.yml                                   
+memsafety/test-0158-1.yml                                 
+memsafety/test-0158-2.yml                                 
+memsafety/test-0158-3.yml                                 
+memsafety/test-0214.yml                                   
+memsafety/test-0217.yml                                   
+memsafety/test-0218.yml                                   
+memsafety/test-0219.yml                                   
+memsafety/test-0220.yml                                   
+memsafety/test-0232-1.yml                                 
+memsafety/test-0232-2.yml                                 
+memsafety/test-0232-3.yml                                 
+memsafety/test-0234-1.yml                                 
+memsafety/test-0234-2.yml                                 
+memsafety/test-0235-1.yml                                 
+memsafety/test-0235-2.yml                                 
+memsafety/test-0235-3.yml                                 
+memsafety/test-0236.yml                                   
+memsafety/test-0237.yml                                   
+memsafety/test-0504.yml                                   
+memsafety/test-0513.yml                                   
+memsafety/test-0521.yml                                   
+memsafety/test-memleak_nexttime.yml                       
+memsafety-ext/dll_extends_pointer.yml                     
+memsafety-ext/skiplist_2lvl.yml                           
+memsafety-ext/skiplist_3lvl.yml                           
+memsafety-ext/tree_cnstr.yml                              
+memsafety-ext/tree_dsw.yml                                
+memsafety-ext/tree_of_cslls.yml                           
+memsafety-ext/tree_parent_ptr.yml                         
+memsafety-ext/tree_stack.yml                              
+memsafety-ext2/complex_data_creation_test01-1.yml         
+memsafety-ext2/complex_data_creation_test02-2.yml         
+memsafety-ext2/length_test03-1.yml                        
+memsafety-ext2/length_test03-2.yml                        
+memsafety-ext2/optional_data_creation_test04-1.yml        
+memsafety-ext2/optional_data_creation_test04-2.yml        
+memsafety-ext2/split_list_test05-1.yml                    
+memsafety-ext2/split_list_test05-2.yml                    
+memsafety-ext3/derefAfterFree1.yml                        
+memsafety-ext3/derefAfterFree2.yml                        
+memsafety-ext3/derefInLoop1.yml                           
+memsafety-ext3/freeAlloca.yml                             
+memsafety-ext3/getNumbers1-1.yml                          
+memsafety-ext3/getNumbers1-2.yml                          
+memsafety-ext3/getNumbers2.yml                            
+memsafety-ext3/getNumbers3.yml                            
+memsafety-ext3/getNumbers4-1.yml                          
+memsafety-ext3/getNumbers4-2.yml                          
+memsafety-ext3/naturalNumbers1.yml                        
+memsafety-ext3/realloc1.yml                               
+memsafety-ext3/scopes1.yml                                
+memsafety-ext3/scopes2.yml                                
+memsafety-ext3/scopes3.yml                                
+memsafety-ext3/scopes4-1.yml                              
+memsafety-ext3/scopes4-2.yml                              
+memsafety-ext3/scopes5.yml                                
+memsafety-bftpd/bftpd_1.yml                               
+memsafety-bftpd/bftpd_2.yml                               
+memsafety-bftpd/bftpd_3.yml                               
+memory-alloca/c.03-alloca-2.yml                           
+ldv-memsafety/ArraysOfVariableLength.yml                  
+ldv-memsafety/ArraysOfVariableLength2.yml                 
+ldv-memsafety/ArraysOfVariableLength2_-read.yml           
+ldv-memsafety/ArraysOfVariableLength2_-write.yml          
+ldv-memsafety/ArraysOfVariableLength4.yml                 
+ldv-memsafety/ArraysOfVariableLength5.yml                 
+ldv-memsafety/ArraysOfVariableLength6.yml                 
+ldv-memsafety/ArraysOfVariableLength_-read.yml            
+ldv-memsafety/ArraysOfVariableLength_-write.yml           
+ldv-memsafety/ArraysWithLenghtAtDeclaration.yml           
+ldv-memsafety/ArraysWithLenghtAtDeclaration_-read.yml     
+ldv-memsafety/ArraysWithLenghtAtDeclaration_-write.yml    
+ldv-memsafety/StructInitialization.yml                    
+ldv-memsafety/StructInitialization1.yml                   
+ldv-memsafety/StructInitialization2.yml                   
+ldv-memsafety/memleaks_test1-1.yml                        
+ldv-memsafety/memleaks_test1-2.yml                        
+ldv-memsafety/memleaks_test1-3.yml                        
+ldv-memsafety/memleaks_test10-1.yml                       
+ldv-memsafety/memleaks_test10-2.yml                       
+ldv-memsafety/memleaks_test11.yml                         
+ldv-memsafety/memleaks_test11_1.yml                       
+ldv-memsafety/memleaks_test11_2.yml                       
+ldv-memsafety/memleaks_test12-1.yml                       
+ldv-memsafety/memleaks_test12-2.yml                       
+ldv-memsafety/memleaks_test13.yml                         
+ldv-memsafety/memleaks_test13_1.yml                       
+ldv-memsafety/memleaks_test13_2.yml                       
+ldv-memsafety/memleaks_test14.yml                         
+ldv-memsafety/memleaks_test14_1.yml                       
+ldv-memsafety/memleaks_test14_2.yml                       
+ldv-memsafety/memleaks_test14_3.yml                       
+ldv-memsafety/memleaks_test15-1.yml                       
+ldv-memsafety/memleaks_test15-2.yml                       
+ldv-memsafety/memleaks_test16.yml                         
+ldv-memsafety/memleaks_test16_1.yml                       
+ldv-memsafety/memleaks_test16_2.yml                       
+ldv-memsafety/memleaks_test17_1-1.yml                     
+ldv-memsafety/memleaks_test17_1-2.yml                     
+ldv-memsafety/memleaks_test17_2-1.yml                     
+ldv-memsafety/memleaks_test17_2-2.yml                     
+ldv-memsafety/memleaks_test17_3.yml                       
+ldv-memsafety/memleaks_test18.yml                         
+ldv-memsafety/memleaks_test18_1.yml                       
+ldv-memsafety/memleaks_test18_2.yml                       
+ldv-memsafety/memleaks_test18_3.yml                       
+ldv-memsafety/memleaks_test19-1.yml                       
+ldv-memsafety/memleaks_test19-2.yml                       
+ldv-memsafety/memleaks_test20-1.yml                       
+ldv-memsafety/memleaks_test20-2.yml                       
+ldv-memsafety/memleaks_test21-1.yml                       
+ldv-memsafety/memleaks_test21-2.yml                       
+ldv-memsafety/memleaks_test22_1-1.yml                     
+ldv-memsafety/memleaks_test22_1-2.yml                     
+ldv-memsafety/memleaks_test22_2-1.yml                     
+ldv-memsafety/memleaks_test22_2-2.yml                     
+ldv-memsafety/memleaks_test22_3-1.yml                     
+ldv-memsafety/memleaks_test22_3-2.yml                     
+ldv-memsafety/memleaks_test22_4.yml                       
+ldv-memsafety/memleaks_test22_5.yml                       
+ldv-memsafety/memleaks_test23_1.yml                       
+ldv-memsafety/memleaks_test23_2.yml                       
+ldv-memsafety/memleaks_test23_3.yml                       
+ldv-memsafety/memleaks_test23_4.yml                       
+ldv-memsafety/memleaks_test3-1.yml                        
+ldv-memsafety/memleaks_test3-2.yml                        
+ldv-memsafety/memleaks_test4-1.yml                        
+ldv-memsafety/memleaks_test4-2.yml                        
+ldv-memsafety/memleaks_test5.yml                          
+ldv-memsafety/memleaks_test5_1.yml                        
+ldv-memsafety/memleaks_test5_2.yml                        
+ldv-memsafety/memleaks_test6.yml                          
+ldv-memsafety/memleaks_test6_1.yml                        
+ldv-memsafety/memleaks_test6_2.yml                        
+ldv-memsafety/memleaks_test6_3.yml                        
+ldv-memsafety/memleaks_test7-1.yml                        
+ldv-memsafety/memleaks_test7-2.yml                        
+ldv-memsafety/memleaks_test8.yml                          
+ldv-memsafety/memleaks_test8_1.yml                        
+ldv-memsafety/memleaks_test8_2.yml                        
+ldv-memsafety/memleaks_test9.yml                          
+ldv-memsafety/memleaks_test9_1.yml                        
+ldv-memsafety/memleaks_test9_2.yml                        
+ldv-memsafety/memset.yml                                  
+ldv-memsafety/memset2.yml                                 
+ldv-memsafety/memset2_-write.yml                          
+ldv-memsafety/memset3.yml                                 
+ldv-memsafety/memset3_-write.yml                          
+ldv-memsafety/memsetNonZero.yml                           
+ldv-memsafety/memsetNonZero2.yml                          
+ldv-memsafety/memsetNonZero2_-write.yml                   
+ldv-memsafety/memsetNonZero3.yml                          
+ldv-memsafety/memsetNonZero3_-write.yml                   
+ldv-memsafety/memsetNonZero_-write.yml                    
+ldv-memsafety/memset_-write.yml                           
+ldv-memsafety-bitfields/test-bitfields-1-1.yml            
+ldv-memsafety-bitfields/test-bitfields-1-2.yml            
+ldv-memsafety-bitfields/test-bitfields-2-1.yml            
+ldv-memsafety-bitfields/test-bitfields-2-2.yml            
+ldv-memsafety-bitfields/test-bitfields-2.1-1.yml          
+ldv-memsafety-bitfields/test-bitfields-2.1-2.yml          
+ldv-memsafety-bitfields/test-bitfields-3-1.yml            
+ldv-memsafety-bitfields/test-bitfields-3-2.yml            
+ldv-memsafety-bitfields/test-bitfields-3.1-1.yml          
+ldv-memsafety-bitfields/test-bitfields-3.1-2.yml          
+-----------------------------------------------------------------------------------------------------------------------
+Run set 4                                                 done                           313.75      149.50           -
+
+Statistics:             53 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              53
+  Score:                 0 (max: 101)

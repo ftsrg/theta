@@ -1,0 +1,8 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_06_bad.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_add_06_bad.i' with property 'sv-benchmarks/c/properties/no-overflow.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/no-overflow.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'

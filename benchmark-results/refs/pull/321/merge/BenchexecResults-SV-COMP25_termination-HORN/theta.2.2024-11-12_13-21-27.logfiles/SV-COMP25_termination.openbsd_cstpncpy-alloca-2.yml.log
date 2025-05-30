@@ -1,0 +1,13 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-memory-alloca/openbsd_cstpncpy-alloca-2.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-memory-alloca/openbsd_cstpncpy-alloca-2.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_parqt0an/tmp/.mount_specifTEXsdp/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_parqt0an/tmp/.mount_specifTEXsdp/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_parqt0an/tmp/.mount_specifTEXsdp/algorithms/instrumentation_operator.py", line 74, in transform
+Exception: The program sv-benchmarks/c/termination-memory-alloca/openbsd_cstpncpy-alloca-2.i has unsupported types or loop structures

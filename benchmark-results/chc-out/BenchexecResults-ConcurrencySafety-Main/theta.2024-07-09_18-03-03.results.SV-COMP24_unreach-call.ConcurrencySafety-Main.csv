@@ -1,0 +1,8 @@
+tool		Theta 5.4.0	Theta 5.4.0	Theta 5.4.0	Theta 5.4.0
+run set		SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	true	Parsing OK	10.327978	5.053910599000005	422.404096
+pthread-atomic/read_write_lock-1.yml	true	true	11.510787	4.324441770000021	633.323520
+pthread-wmm/rfi003_tso.yml	true	TIMEOUT	120.778794	88.6298092909999	3327.275008
+pthread/lazy01.yml	false	false(unreach-call)	7.112268	3.1047212480000326	518.184960
+pthread-wmm/mix000.oepc.yml	false	false(unreach-call)	19.540054	7.406961566999939	512.249856
