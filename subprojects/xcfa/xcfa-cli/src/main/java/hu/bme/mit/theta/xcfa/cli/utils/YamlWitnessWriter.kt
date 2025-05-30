@@ -60,7 +60,7 @@ class YamlWitnessWriter {
   ) {
     val metadata =
       Metadata(
-        formatVersion = "2.0",
+        formatVersion = "2.1",
         uuid = UUID.randomUUID().toString(),
         creationTime = getIsoDate(),
         producer =
