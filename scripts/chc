@@ -24,5 +24,9 @@ args="--backend PORTFOLIO --portfolio CHC-COMP --loglevel RESULT --input-type CH
 
 echo LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers >&2
 LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers | tee "$(basename "$1")".log >&2
-grep -q "(SafetyResult Unsafe" "$(basename "$1")".log -l && echo "unsat"
-grep -q "(SafetyResult Safe" "$(basename "$1")".log -l && echo "sat"
+if [[ -f "chc-answer.smt2" ]]; then
+  cat "chc-answer.smt2"
+else
+  grep -q "(SafetyResult Unsafe" "$(basename "$1")".log -l && echo "unsat"
+  grep -q "(SafetyResult Safe" "$(basename "$1")".log -l && echo "sat"
+fi

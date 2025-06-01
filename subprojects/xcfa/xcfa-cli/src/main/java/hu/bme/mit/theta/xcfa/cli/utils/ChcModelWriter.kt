@@ -35,16 +35,17 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 
-fun writeModel(safetyResult: SafetyResult<*, *>) {
+fun writeModel(safetyResult: SafetyResult<*, *>): String {
   // we write sat/unsat first, then the model, if applicable
+  val sb = StringBuilder()
   if (safetyResult.isUnsafe) {
-    println("unsat")
+    sb.appendLine("unsat")
   } else {
-    println("sat")
+    sb.appendLine("sat")
     val solver = Z3SolverFactory.getInstance().createSolver()
     val proof = safetyResult.asSafe().proof
     if (proof is LocationInvariants) {
-      println("(")
+      sb.appendLine("(")
       for ((loc, inv) in proof.partitions) {
         if (loc.metadata is ChcMetadata) {
 
@@ -71,12 +72,13 @@ fun writeModel(safetyResult: SafetyResult<*, *>) {
               .map { "(${manager.toSymbol(it)} ${manager.toSort(it.type)})" }
               .joinToString(" ")
 
-          println("   (define-fun ${metadata.name} (${decls}) Bool ${manager.toTerm(expr)})")
+          sb.appendLine("   (define-fun ${metadata.name} (${decls}) Bool ${manager.toTerm(expr)})")
         }
       }
-      println(")")
+      sb.appendLine(")")
     }
   }
+  return sb.toString()
 }
 
 fun getDef(inv: ExplState, params: Map<VarDecl<*>, ConstDecl<*>>): Expr<BoolType> {

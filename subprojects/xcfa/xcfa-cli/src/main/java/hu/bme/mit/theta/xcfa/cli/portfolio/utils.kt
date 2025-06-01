@@ -241,6 +241,8 @@ fun baseBoundedConfig(
         versionInfo = false,
         resultFolder = Paths.get("./").toFile(), // cwd
         cOutputConfig = COutputConfig(disable = true),
+        xcfaOutputConfig = XcfaOutputConfig(disable = true),
+        chcOutputConfig = ChcOutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
             disable = false,
@@ -304,6 +306,8 @@ fun baseMddConfig(
         versionInfo = false,
         resultFolder = Paths.get("./").toFile(), // cwd
         cOutputConfig = COutputConfig(disable = true),
+        xcfaOutputConfig = XcfaOutputConfig(disable = true),
+        chcOutputConfig = ChcOutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
             disable = false,

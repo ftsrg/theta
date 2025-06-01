@@ -72,6 +72,8 @@ fun getPortfolioChecker(
       "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "CHC-COMP" -> chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "CHC-COMP-MODELS" ->
+        chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",

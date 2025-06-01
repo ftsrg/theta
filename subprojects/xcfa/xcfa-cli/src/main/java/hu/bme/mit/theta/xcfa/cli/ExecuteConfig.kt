@@ -350,7 +350,7 @@ private fun preVerificationLogging(
 
       logger.write(
         Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
       )
 
       if (!config.outputConfig.chcOutputConfig.disable) {
@@ -416,10 +416,6 @@ private fun postVerificationLogging(
         return
       }
 
-      if (config.frontendConfig.inputType == InputType.CHC) {
-        writeModel(safetyResult)
-      }
-
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
 
@@ -427,6 +423,12 @@ private fun postVerificationLogging(
         Logger.Level.INFO,
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
       )
+
+      if (config.frontendConfig.inputType == InputType.CHC) {
+        val chcAnswer = writeModel(safetyResult)
+        val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
+        chcAnswerFile.writeText(chcAnswer)
+      }
 
       // TODO eliminate the need for the instanceof check
       if (
