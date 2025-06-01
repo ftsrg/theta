@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -79,12 +80,14 @@ fun writeModel(safetyResult: SafetyResult<*, *>) {
 }
 
 fun getDef(inv: ExplState, params: Map<VarDecl<*>, ConstDecl<*>>): Expr<BoolType> {
+  if (inv.isBottom) return False()
   val expr =
     And(inv.toMap().filter { params[it.key] != null }.map { Eq(params[it.key]!!.ref, it.value) })
   return expr
 }
 
 fun getDef(inv: PredState, params: Map<VarDecl<*>, ConstDecl<*>>): Expr<BoolType> {
+  if (inv.isBottom) return False()
   val expr = ExprUtils.changeDecls(inv.toExpr(), params)
   val varsNotParams = ExprUtils.getVars(expr).associateWith { Param(it.name, it.type) }
 
