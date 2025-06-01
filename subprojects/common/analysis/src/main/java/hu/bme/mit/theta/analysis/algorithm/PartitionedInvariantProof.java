@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -25,5 +25,5 @@ import java.util.Map;
  */
 public interface PartitionedInvariantProof<T> extends Proof {
 
-    Map<T, Expr<BoolType>> getPartitions();
+    Map<T, Collection<ExprState>> getPartitions();
 }

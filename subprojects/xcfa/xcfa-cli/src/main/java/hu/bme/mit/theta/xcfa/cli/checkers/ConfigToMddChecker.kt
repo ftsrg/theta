@@ -23,17 +23,13 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -101,7 +97,7 @@ fun getMddChecker(
 
     val reverseLocMap = monExprResult.locMap.reverseMapping()
 
-    val locInvariants = LinkedHashMap<XcfaLocation, MutableSet<Expr<BoolType>>>()
+    val locInvariants = LinkedHashMap<XcfaLocation, MutableSet<ImmutableValuation>>()
 
     val locVar = monolithicExpr.ctrlVars.first { it.name == "__loc_" }
     vals.map { constValuation ->
@@ -140,20 +136,15 @@ fun getMddChecker(
       val location =
         reverseLocMap[value.toInt()] ?: error("Location not found for literal: ${value.toInt()}")
 
-      locInvariants
-        .computeIfAbsent(location) { LinkedHashSet() }
-        .add(
-          And(
-            valuation
-              .toMap()
-              .filter { !monolithicExpr.ctrlVars.contains(it.key) }
-              .map { Eq(it.key.ref, it.value) }
-          )
-        )
+      locInvariants.computeIfAbsent(location) { LinkedHashSet() }.add(valuation)
     }
 
     val stats = result.stats.getOrNull()
     stats?.keySet()?.forEach { key -> logger.writeln(Logger.Level.INFO, "$key: ${stats[key]}") }
-    SafetyResult.safe(LocationInvariants(locInvariants.map { Pair(it.key, Or(it.value)) }.toMap()))
+    SafetyResult.safe(
+      LocationInvariants(
+        locInvariants.map { Pair(it.key, it.value.map { ExplState.of(it) }) }.toMap()
+      )
+    )
   }
 }

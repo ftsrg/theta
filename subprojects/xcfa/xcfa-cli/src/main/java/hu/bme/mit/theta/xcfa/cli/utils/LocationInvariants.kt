@@ -16,12 +16,12 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.analysis.algorithm.PartitionedInvariantProof
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-data class LocationInvariants(private val locationInvariants: Map<XcfaLocation, Expr<BoolType>>) :
-  PartitionedInvariantProof<XcfaLocation> {
+data class LocationInvariants(
+  private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>
+) : PartitionedInvariantProof<XcfaLocation> {
 
-  override fun getPartitions(): Map<XcfaLocation, Expr<BoolType>> = locationInvariants
+  override fun getPartitions(): Map<XcfaLocation, Collection<ExprState>> = locationInvariants
 }

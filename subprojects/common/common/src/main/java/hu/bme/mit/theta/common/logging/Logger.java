@@ -20,12 +20,13 @@ public interface Logger {
 
     /** Detailedness of logging in order. */
     enum Level {
+        DISABLE,
         RESULT,
         MAINSTEP,
         SUBSTEP,
         INFO,
         DETAIL,
-        VERBOSE
+        VERBOSE,
     }
 
     /**
