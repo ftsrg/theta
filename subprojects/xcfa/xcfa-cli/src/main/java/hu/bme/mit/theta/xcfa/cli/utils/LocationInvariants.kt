@@ -23,5 +23,7 @@ data class LocationInvariants(
   private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>
 ) : PartitionedInvariantProof<XcfaLocation> {
 
+  constructor() : this(emptyMap())
+
   override fun getPartitions(): Map<XcfaLocation, Collection<ExprState>> = locationInvariants
 }

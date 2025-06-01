@@ -92,59 +92,63 @@ fun getMddChecker(
     )
   return SafetyChecker<LocationInvariants, MddCex, UnitPrec> { input ->
     val result = checker.check(input)
-    val stateSpace = result.proof.mdd
-    val vals = MddValuationCollector.collect(stateSpace)
+    if (result.isUnsafe) {
+      SafetyResult.unsafe(result.asUnsafe().cex, LocationInvariants())
+    } else {
+      val stateSpace = result.proof.mdd
+      val vals = MddValuationCollector.collect(stateSpace)
 
-    val reverseLocMap = monExprResult.locMap.reverseMapping()
+      val reverseLocMap = monExprResult.locMap.reverseMapping()
 
-    val locInvariants = LinkedHashMap<XcfaLocation, MutableSet<ImmutableValuation>>()
+      val locInvariants = LinkedHashMap<XcfaLocation, MutableSet<ImmutableValuation>>()
 
-    val locVar = monolithicExpr.ctrlVars.first { it.name == "__loc_" }
-    vals.map { constValuation ->
-      val valuation =
-        ImmutableValuation.from(
-          constValuation
-            .toMap()
-            .mapNotNull {
-              val const = it.key as IndexedConstDecl<*>
-              if (const.index == 0) {
-                Pair(const.varDecl, it.value)
-              } else {
-                null
+      val locVar = monolithicExpr.ctrlVars.first { it.name == "__loc_" }
+      vals.map { constValuation ->
+        val valuation =
+          ImmutableValuation.from(
+            constValuation
+              .toMap()
+              .mapNotNull {
+                val const = it.key as IndexedConstDecl<*>
+                if (const.index == 0) {
+                  Pair(const.varDecl, it.value)
+                } else {
+                  null
+                }
               }
+              .toMap()
+          )
+        val locLit =
+          valuation.toMap()[locVar] ?: error("Location var not found in valuation: $locVar")
+        val value =
+          when (locLit.type) {
+            is BvType -> {
+              locLit as BvLitExpr
+              BvUtils.neutralBvLitExprToBigInteger(locLit)
             }
-            .toMap()
+
+            is IntType -> {
+              locLit as IntLitExpr
+              locLit.value
+            }
+
+            else -> {
+              error("Value type unexpected: $locVar")
+            }
+          }
+        val location =
+          reverseLocMap[value.toInt()] ?: error("Location not found for literal: ${value.toInt()}")
+
+        locInvariants.computeIfAbsent(location) { LinkedHashSet() }.add(valuation)
+      }
+
+      val stats = result.stats.getOrNull()
+      stats?.keySet()?.forEach { key -> logger.writeln(Logger.Level.INFO, "$key: ${stats[key]}") }
+      SafetyResult.safe(
+        LocationInvariants(
+          locInvariants.map { Pair(it.key, it.value.map { ExplState.of(it) }) }.toMap()
         )
-      val locLit =
-        valuation.toMap()[locVar] ?: error("Location var not found in valuation: $locVar")
-      val value =
-        when (locLit.type) {
-          is BvType -> {
-            locLit as BvLitExpr
-            BvUtils.neutralBvLitExprToBigInteger(locLit)
-          }
-
-          is IntType -> {
-            locLit as IntLitExpr
-            locLit.value
-          }
-
-          else -> {
-            error("Value type unexpected: $locVar")
-          }
-        }
-      val location =
-        reverseLocMap[value.toInt()] ?: error("Location not found for literal: ${value.toInt()}")
-
-      locInvariants.computeIfAbsent(location) { LinkedHashSet() }.add(valuation)
-    }
-
-    val stats = result.stats.getOrNull()
-    stats?.keySet()?.forEach { key -> logger.writeln(Logger.Level.INFO, "$key: ${stats[key]}") }
-    SafetyResult.safe(
-      LocationInvariants(
-        locInvariants.map { Pair(it.key, it.value.map { ExplState.of(it) }) }.toMap()
       )
-    )
+    }
   }
 }

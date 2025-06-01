@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.chc.ChcMetadata
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 
 fun writeModel(safetyResult: SafetyResult<*, *>) {
   // we write sat/unsat first, then the model, if applicable
@@ -39,6 +40,7 @@ fun writeModel(safetyResult: SafetyResult<*, *>) {
     println("unsat")
   } else {
     println("sat")
+    val solver = Z3SolverFactory.getInstance().createSolver()
     val proof = safetyResult.asSafe().proof
     if (proof is LocationInvariants) {
       println("(")
@@ -51,14 +53,16 @@ fun writeModel(safetyResult: SafetyResult<*, *>) {
           val params = metadata.varDecls.associateWith { Const(it.name, it.type) }
 
           val expr =
-            Or(
-              inv.map {
-                when (it) {
-                  is ExplState -> getDef(it, params)
-                  is PredState -> getDef(it, params)
-                  else -> error("Unknown state type: $it")
+            solver.simplify(
+              Or(
+                inv.map {
+                  when (it) {
+                    is ExplState -> getDef(it, params)
+                    is PredState -> getDef(it, params)
+                    else -> error("Unknown state type: $it")
+                  }
                 }
-              }
+              )
             )
 
           val decls =

@@ -30,8 +30,8 @@ import java.util.Map;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
-    private static final String problematicCharactersRegex = "[:#]";
-    private static final String problematicCharactersReplacement = "\\$";
+    static final String problematicCharactersRegex = "[:#]";
+    static final String problematicCharactersReplacement = "\\$";
 
     private final BiMap<ConstDecl<?>, String> constToSymbol;
     private final BiMap<ConstDecl<?>, String> constToDeclaration;

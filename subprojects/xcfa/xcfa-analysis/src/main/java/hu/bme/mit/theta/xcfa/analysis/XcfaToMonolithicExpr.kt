@@ -116,7 +116,13 @@ fun XCFA.toMonolithicExpr(
           )
         )
       }
-      .toList()
+      .toList() +
+      SequenceStmt.of(
+        listOf(
+          AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
+          AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
+        )
+      )
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
