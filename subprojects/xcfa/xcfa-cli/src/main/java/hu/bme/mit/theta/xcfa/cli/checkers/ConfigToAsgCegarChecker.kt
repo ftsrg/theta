@@ -34,6 +34,8 @@ import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -79,13 +81,25 @@ fun getAsgCegarChecker(
   val statePredicate =
     if (loopCegarConfig.abstractorConfig.domain == Domain.EXPL) {
       Predicate { xcfaState: XcfaState<PtrState<ExplState>>? ->
-        ExprStatePredicate(xcfa.initProcedures[0].first.prop, abstractionSolverInstance)
-          .test(xcfaState!!.sGlobal.innerState)
+        if (xcfa.initProcedures[0].first.prop.equals(True())) {
+          true
+        } else if (xcfa.initProcedures[0].first.prop.equals(False())) {
+          false
+        } else {
+          ExprStatePredicate(xcfa.initProcedures[0].first.prop, abstractionSolverInstance)
+            .test(xcfaState!!.sGlobal.innerState)
+        }
       }
     } else {
       Predicate { xcfaState: XcfaState<PtrState<PredState>>? ->
-        ExprStatePredicate(xcfa.initProcedures[0].first.prop, abstractionSolverInstance)
-          .test(xcfaState!!.sGlobal.innerState)
+        if (xcfa.initProcedures[0].first.prop.equals(True())) {
+          true
+        } else if (xcfa.initProcedures[0].first.prop.equals(False())) {
+          false
+        } else {
+          ExprStatePredicate(xcfa.initProcedures[0].first.prop, abstractionSolverInstance)
+            .test(xcfaState!!.sGlobal.innerState)
+        }
       }
     }
 
