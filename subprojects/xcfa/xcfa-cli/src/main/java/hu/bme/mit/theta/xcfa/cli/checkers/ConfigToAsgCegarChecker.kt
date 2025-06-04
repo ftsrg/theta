@@ -42,7 +42,6 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
-import java.util.*
 import java.util.function.Predicate
 
 fun getAsgCegarChecker(
@@ -60,16 +59,16 @@ fun getAsgCegarChecker(
     "Lasso checker should be used for checking termination!",
   )
 
-  val loopCegarConfig = config.backendConfig.specConfig as LoopCegarConfig
+  val asgCegarConfig = config.backendConfig.specConfig as AsgCegarConfig
   val abstractionSolverFactory: SolverFactory =
     getSolver(
-      loopCegarConfig.abstractorConfig.abstractionSolver,
-      loopCegarConfig.abstractorConfig.validateAbstractionSolver,
+      asgCegarConfig.abstractorConfig.abstractionSolver,
+      asgCegarConfig.abstractorConfig.validateAbstractionSolver,
     )
   val refinementSolverFactory: SolverFactory =
     getSolver(
-      loopCegarConfig.refinerConfig.refinementSolver,
-      loopCegarConfig.refinerConfig.validateRefinementSolver,
+      asgCegarConfig.refinerConfig.refinementSolver,
+      asgCegarConfig.refinerConfig.validateRefinementSolver,
     )
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
@@ -79,7 +78,7 @@ fun getAsgCegarChecker(
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
 
   val statePredicate =
-    if (loopCegarConfig.abstractorConfig.domain == Domain.EXPL) {
+    if (asgCegarConfig.abstractorConfig.domain == Domain.EXPL) {
       Predicate { xcfaState: XcfaState<PtrState<ExplState>>? ->
         if (xcfa.initProcedures[0].first.prop.equals(True())) {
           true
@@ -124,15 +123,15 @@ fun getAsgCegarChecker(
   //    }
 
   val abstractor =
-    loopCegarConfig.abstractorConfig.domain.asgAbstractor(
+    asgCegarConfig.abstractorConfig.domain.asgAbstractor(
       xcfa,
       abstractionSolverInstance,
-      loopCegarConfig.abstractorConfig.maxEnum,
+      asgCegarConfig.abstractorConfig.maxEnum,
       logger,
       lts,
-      loopCegarConfig.abstractorConfig.search,
+      asgCegarConfig.abstractorConfig.search,
       getPartialOrder(
-        loopCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
+        asgCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
           as PartialOrd<PtrState<ExprState>>
       ),
       statePredicate as Predicate<XcfaState<PtrState<ExprState>>?>,
@@ -142,16 +141,16 @@ fun getAsgCegarChecker(
   val asg = abstractor.createProof()
 
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
-    loopCegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
+    asgCegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
 
   val precRefiner =
-    loopCegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      loopCegarConfig.refinerConfig.exprSplitter.exprSplitter
+    asgCegarConfig.abstractorConfig.domain.itpPrecRefiner(
+      asgCegarConfig.refinerConfig.exprSplitter.exprSplitter
     ) as PrecRefiner<ExprState, ExprAction, Prec, ItpRefutation>
 
   val refiner =
     SingleASGTraceRefiner(
-      loopCegarConfig.refinerConfig.refinement,
+      asgCegarConfig.refinerConfig.refinement,
       refinementSolverFactory,
       precRefiner,
       logger,
@@ -189,7 +188,7 @@ fun getAsgCegarChecker(
         ASG<XcfaState<PtrState<*>>, XcfaAction>,
         ASGTrace<XcfaState<PtrState<*>>, XcfaAction>,
       > {
-      return check(loopCegarConfig.abstractorConfig.domain.initPrec(xcfa, loopCegarConfig.initPrec))
+      return check(asgCegarConfig.abstractorConfig.domain.initPrec(xcfa, asgCegarConfig.initPrec))
     }
   }
 }

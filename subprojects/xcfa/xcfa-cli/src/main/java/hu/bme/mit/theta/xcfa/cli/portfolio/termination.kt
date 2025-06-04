@@ -38,10 +38,54 @@ fun termination(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
+  val baseAsgCegarConfig = baseAsgCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
   val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
+
+    val expl = { timeout: Long, solver: String ->
+      ConfigNode(
+        "ASGCEGAR-EXPL-$inProcess",
+        baseAsgCegarConfig.adaptConfig(
+          refinementSolver = solver,
+          abstractionSolver = solver,
+          domain = EXPL,
+          inProcess = inProcess,
+          timeoutMs = timeout,
+          initPrec = InitPrec.ALLVARS,
+        ),
+        checker,
+      )
+    }
+
+    val predcart = { timeout: Long, solver: String ->
+      ConfigNode(
+        "ASGCEGAR-PREDCART-$inProcess",
+        baseAsgCegarConfig.adaptConfig(
+          refinementSolver = solver,
+          abstractionSolver = solver,
+          domain = PRED_CART,
+          inProcess = inProcess,
+          timeoutMs = timeout,
+        ),
+        checker,
+      )
+    }
+
+    val predbool = { timeout: Long, solver: String ->
+      ConfigNode(
+        "ASGCEGAR-PREDBOOL-$inProcess",
+        baseAsgCegarConfig.adaptConfig(
+          refinementSolver = solver,
+          abstractionSolver = solver,
+          domain = PRED_BOOL,
+          inProcess = inProcess,
+          timeoutMs = timeout,
+        ),
+        checker,
+      )
+    }
 
     val bmc = { timeout: Long, solver: String ->
       ConfigNode(
@@ -109,26 +153,49 @@ fun termination(
     val (startingConfig: ConfigNode, endConfig: ConfigNode) =
       if (xcfa.isInlined) {
         if (types.any { it is BvType }) {
+          val expl = expl(100_000, "cvc5:1.0.8")
+          val predcart = predcart(100_000, "cvc5:1.0.8")
+          val predbool = predbool(100_000, "cvc5:1.0.8")
           val bmc = bmc(100_000, "Z3:4.13")
           val kind = kind(300_000, "Z3:4.13")
           val imcCVC5 = imc(300_000, "cvc5:1.0.8")
           val imcMathSAT = imc(300_000, "mathsat:5.6.10")
           val kindMathSAT = kind(300_000, "mathsat:5.6.10")
 
-          bmc then kind then imcCVC5 then imcMathSAT then kindMathSAT
+          expl then
+            predcart then
+            predbool then
+            bmc then
+            kind then
+            imcCVC5 then
+            imcMathSAT then
+            kindMathSAT
 
-          Pair(bmc, kindMathSAT)
+          Pair(expl, kindMathSAT)
         } else if (types.any { it is FpType }) {
+          val expl = expl(100_000, "cvc5:1.0.8")
+          val predcart = predcart(100_000, "cvc5:1.0.8")
+          val predbool = predbool(100_000, "cvc5:1.0.8")
           val bmcCVC5 = bmc(100_000, "cvc5:1.0.8")
           val kindCVC5 = kind(300_000, "cvc5:1.0.8")
           val imcCVC5 = imc(300_000, "cvc5:1.0.8")
           val imcMathSAT = imc(300_000, "mathsat:5.6.10")
           val kindMathSAT = kind(300_000, "mathsat:5.6.10")
 
-          bmcCVC5 then kindCVC5 then imcCVC5 then imcMathSAT then kindMathSAT
+          expl then
+            predcart then
+            predbool then
+            bmcCVC5 then
+            kindCVC5 then
+            imcCVC5 then
+            imcMathSAT then
+            kindMathSAT
 
-          Pair(bmcCVC5, kindMathSAT)
+          Pair(expl, kindMathSAT)
         } else if (types.any { it is ArrayType<*, *> }) {
+          val expl = expl(100_000, "Z3:4.13")
+          val predcart = predcart(100_000, "Z3:4.13")
+          val predbool = predbool(100_000, "Z3:4.13")
           val bmc = bmc(100_000, "Z3:4.13")
           val bmcLegacy = bmc(100_000, "Z3")
           val kind = kind(300_000, "Z3:4.13")
@@ -139,21 +206,27 @@ fun termination(
 
           (bmc or bmcLegacy) then
             (kind or kindLegacy).first() then
+            expl then
+            predcart then
+            predbool then
             imcCVC5 then
             imcMathSAT then
             kindMathSAT
 
           Pair(bmc, kindMathSAT)
         } else {
+          val expl = expl(100_000, "Z3:4.13")
+          val predcart = predcart(100_000, "Z3:4.13")
+          val predbool = predbool(100_000, "Z3:4.13")
           val bmc = bmc(100_000, "Z3:4.13")
           val kind = kind(300_000, "Z3:4.13")
           val imcCVC5 = imc(300_000, "cvc5:1.0.8")
           val imcMathSAT = imc(300_000, "mathsat:5.6.10")
           val imc = kind(300_000, "Z3")
 
-          bmc then kind then imcCVC5 then imcMathSAT then imc
+          expl then predcart then predbool then bmc then kind then imcCVC5 then imcMathSAT then imc
 
-          Pair(bmc, imc)
+          Pair(expl, imc)
         }
       } else {
         error("Only single-procedure or inlineable programs are supported right now.")

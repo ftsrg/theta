@@ -203,7 +203,7 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
-        Backend.ASGCEGAR -> LoopCegarConfig() as T
+        Backend.ASGCEGAR -> AsgCegarConfig() as T
         Backend.BMC ->
           BoundedConfig(
             indConfig = InductionConfig(disable = true),
@@ -257,7 +257,7 @@ data class CegarConfig(
     listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
 }
 
-data class LoopCegarConfig(
+data class AsgCegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
   @Parameter(

@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
@@ -134,6 +136,126 @@ fun baseCegarConfig(
   return baseConfig
 }
 
+fun XcfaConfig<*, CegarConfig>.adaptConfig(
+  initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
+  timeoutMs: Long = this.backendConfig.timeoutMs,
+  domain: Domain = this.backendConfig.specConfig!!.abstractorConfig.domain,
+  refinement: Refinement = this.backendConfig.specConfig!!.refinerConfig.refinement,
+  exprSplitter: ExprSplitterOptions = this.backendConfig.specConfig!!.refinerConfig.exprSplitter,
+  abstractionSolver: String = this.backendConfig.specConfig!!.abstractorConfig.abstractionSolver,
+  validateAbstractionSolver: Boolean =
+    this.backendConfig.specConfig!!.abstractorConfig.validateAbstractionSolver,
+  refinementSolver: String = this.backendConfig.specConfig!!.refinerConfig.refinementSolver,
+  validateRefinementSolver: Boolean =
+    this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
+  inProcess: Boolean = this.backendConfig.inProcess,
+): XcfaConfig<*, CegarConfig> {
+  return copy(
+    backendConfig =
+      backendConfig.copy(
+        timeoutMs = timeoutMs,
+        inProcess = inProcess,
+        specConfig =
+          backendConfig.specConfig!!.copy(
+            initPrec = initPrec,
+            abstractorConfig =
+              backendConfig.specConfig!!
+                .abstractorConfig
+                .copy(
+                  abstractionSolver = abstractionSolver,
+                  validateAbstractionSolver = validateAbstractionSolver,
+                  domain = domain,
+                ),
+            refinerConfig =
+              backendConfig.specConfig!!
+                .refinerConfig
+                .copy(
+                  refinementSolver = refinementSolver,
+                  validateRefinementSolver = validateRefinementSolver,
+                  refinement = refinement,
+                  exprSplitter = exprSplitter,
+                ),
+          ),
+      )
+  )
+}
+
+fun baseAsgCegarConfig(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  serialize: Boolean,
+): XcfaConfig<SpecFrontendConfig, AsgCegarConfig> =
+  XcfaConfig(
+    inputConfig =
+      if (serialize)
+        InputConfig(
+          input = null,
+          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          propertyFile = null,
+          property = portfolioConfig.inputConfig.property,
+        )
+      else portfolioConfig.inputConfig,
+    frontendConfig =
+      if (serialize)
+        FrontendConfig(
+          lbeLevel = LbePass.level,
+          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          inputType = InputType.C,
+          specConfig = CFrontendConfig(arithmetic = efficient),
+        )
+      else (portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>),
+    backendConfig =
+      BackendConfig(
+        backend = Backend.ASGCEGAR,
+        solverHome = portfolioConfig.backendConfig.solverHome,
+        timeoutMs = 0,
+        parseInProcess = !serialize,
+        specConfig =
+          AsgCegarConfig(
+            initPrec = EMPTY,
+            cexMonitor = CHECK,
+            abstractorConfig =
+              AsgCegarAbstractorConfig(
+                abstractionSolver = "Z3",
+                validateAbstractionSolver = false,
+                domain = EXPL,
+                maxEnum = 1,
+                search = LoopCheckerSearchStrategy.NDFS,
+              ),
+            refinerConfig =
+              AsgCegarRefinerConfig(
+                refinementSolver = "Z3",
+                validateRefinementSolver = false,
+                refinement = ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
+                exprSplitter = WHOLE,
+              ),
+          ),
+      ),
+    outputConfig =
+      OutputConfig(
+        versionInfo = false,
+        resultFolder = Paths.get("./").toFile(), // cwd
+        cOutputConfig = COutputConfig(disable = true),
+        witnessConfig =
+          WitnessConfig(
+            disable = false,
+            concretizerSolver = "Z3",
+            validateConcretizerSolver = false,
+            inputFileForWitness =
+              portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
+                ?: portfolioConfig.inputConfig.input,
+          ),
+        argConfig = ArgConfig(disable = true),
+        enableOutput = portfolioConfig.outputConfig.enableOutput,
+        acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
+        xcfaOutputConfig = XcfaOutputConfig(disable = true),
+        chcOutputConfig = ChcOutputConfig(disable = true),
+      ),
+    debugConfig = portfolioConfig.debugConfig,
+  )
+
 val timeoutOrNotSolvableError =
   ExceptionTrigger(
     fallthroughExceptions =
@@ -151,11 +273,11 @@ val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label 
 
 val anyError = ExceptionTrigger(label = "Anything")
 
-fun XcfaConfig<*, CegarConfig>.adaptConfig(
+fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
   initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
   timeoutMs: Long = this.backendConfig.timeoutMs,
   domain: Domain = this.backendConfig.specConfig!!.abstractorConfig.domain,
-  refinement: Refinement = this.backendConfig.specConfig!!.refinerConfig.refinement,
+  refinement: ASGTraceCheckerStrategy = this.backendConfig.specConfig!!.refinerConfig.refinement,
   exprSplitter: ExprSplitterOptions = this.backendConfig.specConfig!!.refinerConfig.exprSplitter,
   abstractionSolver: String = this.backendConfig.specConfig!!.abstractorConfig.abstractionSolver,
   validateAbstractionSolver: Boolean =
@@ -164,7 +286,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   inProcess: Boolean = this.backendConfig.inProcess,
-): XcfaConfig<*, CegarConfig> {
+): XcfaConfig<*, AsgCegarConfig> {
   return copy(
     backendConfig =
       backendConfig.copy(
