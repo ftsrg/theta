@@ -21,7 +21,6 @@ import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
@@ -36,13 +35,17 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibDeclTransformer
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse
 import hu.bme.mit.theta.solver.smtlib.solver.parser.PrecisionResponse
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
@@ -101,14 +104,18 @@ class ExplPrecSerializer : PrecSerializer<ExplPrec> {
 
 class PredPrecSerializer : PrecSerializer<PredPrec> {
     override fun serialize(prec: Prec): String {
-        val varDecls = prec.usedVars.joinToString(separator = "\n") { "(declare-fun ${it.toSymbol()} () ${it.type})" }
+        val symbolTable = PrecSmtLibSymbolTable()
+        val transformationManager = GenericSmtLibTransformationManager(symbolTable)
+        val declTransformer = PrecSmtLibDeclTransformer(transformationManager, symbolTable)
+
         val quotedVarLookup = prec.usedVars
-            .filter { it.toSymbol() != it.name }
-            .associateWith { Decls.Var(it.toSymbol(), it.type) }
+            .associateWith { Decls.Const(it.toSymbol(), it.type) }
+
+        val varDecls = quotedVarLookup.values.joinToString(separator = "\n") { declTransformer.toDeclaration(it) }
 
         val predicates = (prec as PredPrec).preds
             .map { pred -> ExprUtils.changeDecls(pred, quotedVarLookup) }
-            .let { quotedPreds -> Utils.lispStringBuilder().addAll(quotedPreds).toString() }
+            .joinToString(separator = "\n", prefix = "(", postfix = ")", transform = transformationManager::toTerm)
             .let { it.slice(1..(it.length - 2)) }
 
         return "$varDecls\n$predicates"
@@ -149,6 +156,14 @@ class PrecSmtLibSymbolTable : GenericSmtLibSymbolTable() {
     }
 
     override fun definesSymbol(symbol: String) = constToSymbol.inverse().containsKey(symbol)
+}
+
+class PrecSmtLibDeclTransformer(transformer: SmtLibTransformationManager, symbolTable: SmtLibSymbolTable)
+    : GenericSmtLibDeclTransformer(transformer, symbolTable) {
+
+    override fun symbolNameFor(decl: Decl<*>): String {
+        return decl.name
+    }
 }
 
 private fun Decl<*>.toSymbol() = GenericSmtLibSymbolTable.encodeSymbol(name)
