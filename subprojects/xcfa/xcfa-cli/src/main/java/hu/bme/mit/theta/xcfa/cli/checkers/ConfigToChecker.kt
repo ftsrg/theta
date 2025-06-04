@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -45,7 +46,10 @@ fun getChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
+        else getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
@@ -66,7 +70,10 @@ fun getChecker(
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
-      Backend.LASSO_VALIDATION ->
-        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
     }
   }
