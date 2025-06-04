@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
@@ -201,6 +203,7 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
+        Backend.ASGCEGAR -> LoopCegarConfig() as T
         Backend.BMC ->
           BoundedConfig(
             indConfig = InductionConfig(disable = true),
@@ -244,6 +247,26 @@ data class CegarConfig(
   var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
   val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
   val refinerConfig: CegarRefinerConfig = CegarRefinerConfig(),
+) : SpecBackendConfig {
+
+  override fun getObjects(): Set<Config> {
+    return super.getObjects() union abstractorConfig.getObjects() union refinerConfig.getObjects()
+  }
+
+  override fun update(): Boolean =
+    listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
+}
+
+data class LoopCegarConfig(
+  @Parameter(names = ["--initprec"], description = "Initial precision")
+  var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--cex-monitor"],
+    description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor",
+  )
+  var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
+  val abstractorConfig: AsgCegarAbstractorConfig = AsgCegarAbstractorConfig(),
+  val refinerConfig: AsgCegarRefinerConfig = AsgCegarRefinerConfig(),
 ) : SpecBackendConfig {
 
   override fun getObjects(): Set<Config> {
@@ -300,6 +323,45 @@ data class CegarRefinerConfig(
     description = "Strategy for pruning the ARG after refinement",
   )
   var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
+) : Config
+
+data class AsgCegarAbstractorConfig(
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.EXPL,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(names = ["--search"], description = "Search strategy")
+  var search: LoopCheckerSearchStrategy = LoopCheckerSearchStrategy.NDFS,
+) : Config
+
+data class AsgCegarRefinerConfig(
+  @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
+  var refinementSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-refinement-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateRefinementSolver: Boolean = false,
+  @Parameter(names = ["--refinement"], description = "Refinement strategy")
+  var refinement: ASGTraceCheckerStrategy = ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
+  @Parameter(
+    names = ["--predsplit"],
+    description = "Predicate splitting (for predicate abstraction)",
+  )
+  var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
 ) : Config
 
 data class HornConfig(

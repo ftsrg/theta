@@ -48,7 +48,7 @@ fun getChecker(
     when (config.backendConfig.backend) {
       Backend.CEGAR ->
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
-          getCegarLassoChecker(xcfa, mcm, config, logger)
+          error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
         else getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,
       Backend.KIND,
@@ -71,5 +71,9 @@ fun getChecker(
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
       Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
     }
   }

@@ -61,7 +61,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
-import kotlin.Unit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -138,7 +137,7 @@ public class ASGCegarVerifierTest {
         final Predicate<XstsState<PredState>> statePredicate =
                 new XstsStatePredicate<>(new ExprStatePredicate(xsts.getProp(), abstractionSolver));
         final AcceptancePredicate<XstsState<PredState>, XstsAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<>(statePredicate::test);
         logger.write(Logger.Level.MAINSTEP, "Verifying %s%n", xsts.getProp());
         LoopCheckerSearchStrategy.getEntries()
                 .forEach(
@@ -207,7 +206,7 @@ public class ASGCegarVerifierTest {
         final Predicate<CfaState<PredState>> statePredicate =
                 cfaState -> cfaState.getLoc().getName().equals(acceptingLocationName);
         final AcceptancePredicate<CfaState<PredState>, CfaAction> target =
-                new AcceptancePredicate<>(statePredicate::test, Unit.INSTANCE);
+                new AcceptancePredicate<CfaState<PredState>, CfaAction>(statePredicate::test);
         final RefutationToPrec<PredPrec, ItpRefutation> refToPrec =
                 new ItpRefToPredPrec(ExprSplitters.atoms());
         final RefutationToGlobalCfaPrec<PredPrec, ItpRefutation> cfaRefToPrec =

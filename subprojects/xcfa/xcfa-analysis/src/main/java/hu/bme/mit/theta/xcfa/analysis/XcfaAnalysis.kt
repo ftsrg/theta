@@ -316,6 +316,15 @@ fun getExplXcfaASGAbstractor(
 ): ASGAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>> =
   ASGAbstractor(analysis, lts, acceptancePredicate, searchStrategy, logger)
 
+fun getPredXcfaASGAbstractor(
+  analysis: Analysis<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>,
+  logger: Logger,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  searchStrategy: LoopCheckerSearchStrategy,
+  acceptancePredicate: AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+): ASGAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>> =
+  ASGAbstractor(analysis, lts, acceptancePredicate, searchStrategy, logger)
+
 /// EXPL
 
 private fun getExplXcfaInitFunc(
