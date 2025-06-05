@@ -188,31 +188,31 @@ fun chcCompPortfolioModel25(
           // BV-Lin
           val bmc = bmc(450_000, "Z3")
           val kind = kind(20_000, "Z3")
-          val expl = expl(650_000, "Z3")
+          val expl = expl(650_000, "mathsat:5.6.10")
           val bmcCVC5 = bmc(550_000, "cvc5:1.0.8")
-          val imc = imc(10_000, "Z3")
-          val bool = bool(15_000, "Z3")
-          val cart = cart(15_000, "Z3")
+          val imcCVC5 = imc(10_000, "cvc5:1.0.8")
+          val bool = bool(15_000, "mathsat:5.6.10")
+          val cart = cart(15_000, "mathsat:5.6.10")
           val kindCVC5 = kind(70_000, "cvc5:1.0.8")
           val boolCVC5 = bool(70_000, "cvc5:1.0.8")
           val cartCVC5 = cart(500_000, "cvc5:1.0.8")
           val explCVC5 = expl(125_000, "cvc5:1.0.8")
           val mdd = mdd(100_000)
 
-          mdd then
+          explCVC5 then
+            boolCVC5 then
+            cartCVC5 then
+            imcCVC5 then
+            mdd then
             expl then
             bool then
             cart then
-            imc then
             bmc then
             kind then
-            explCVC5 then
-            boolCVC5 then
-            cartCVC5 then
             bmcCVC5 then
             kindCVC5
 
-          Pair(mdd, kindCVC5)
+          Pair(expl, kindCVC5)
         } else if (types.any { it is RatType }) {
           // LRA-Lin
           val bmc = bmc(150_000, "Z3")
