@@ -72,7 +72,9 @@ fun writeModel(safetyResult: SafetyResult<*, *>): String {
               .map { "(${manager.toSymbol(it)} ${manager.toSort(it.type)})" }
               .joinToString(" ")
 
-          sb.appendLine("   (define-fun ${metadata.name} (${decls}) Bool ${manager.toTerm(expr)})")
+          sb.appendLine(
+            "   (define-fun |${metadata.name}| (${decls}) Bool ${manager.toTerm(expr)})"
+          )
         }
       }
       sb.appendLine(")")
