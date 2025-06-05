@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.generic;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -440,13 +441,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                                 Map.entry(
                                         paramDecl,
                                         Param(
-                                                paramDecl
-                                                        .getName()
-                                                        .replaceAll(
-                                                                GenericSmtLibSymbolTable
-                                                                        .problematicCharactersRegex,
-                                                                GenericSmtLibSymbolTable
-                                                                        .problematicCharactersReplacement),
+                                                encodeSymbol(paramDecl.getName()),
                                                 paramDecl.getType())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
