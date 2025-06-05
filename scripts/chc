@@ -20,13 +20,18 @@ grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {
     exit 1
 }
 
-args="--backend PORTFOLIO --portfolio CHC-COMP --loglevel RESULT --input-type CHC --parse-in-process"
+args="--backend BMC --loglevel RESULT --input-type CHC --parse-in-process --svcomp"
 
-echo LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers >&2
-LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers | tee "$(basename "$1")".log >&2
+echo "; LD_LIBRARY_PATH=\"$scriptdir\"/lib java -Xss120m -Xmx14210m -jar \"$scriptdir\"/theta.jar $args --input \"$IN\" --smt-home \"$scriptdir\"/solvers"
+LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers 2>&1 | tee "$(basename "$1")".log >/dev/null
 if [[ -f "chc-answer.smt2" ]]; then
   cat "chc-answer.smt2"
 else
   grep -q "(SafetyResult Unsafe" "$(basename "$1")".log -l && echo "unsat"
   grep -q "(SafetyResult Safe" "$(basename "$1")".log -l && echo "sat"
 fi
+
+echo "; ======================== EXECUTION LOGS ========================"
+while read -r line; do
+  echo "; $line"
+done < "$(basename "$1")".log
