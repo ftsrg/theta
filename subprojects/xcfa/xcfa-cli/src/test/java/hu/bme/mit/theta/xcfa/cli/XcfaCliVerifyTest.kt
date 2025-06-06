@@ -88,14 +88,12 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/16loop.c", null),
         Arguments.of("/c/litmustest/singlethread/17recursive.c", null),
-        //        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS
-        // --por-level SPOR"),
-        //        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por-level
-        // SPOR"),
-        //        Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
-        //        Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
-        //        Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
-        //        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
+        Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
+        Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
       )
     }
 
