@@ -33,7 +33,7 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     static final Pattern problematicCharactersRegex = Pattern.compile("[:#]");
 
-    static String encodeSymbol(String name) {
+    public static String encodeSymbol(String name) {
         if (problematicCharactersRegex.matcher(name).find()) {
             return "|%s|".formatted(name);
         } else {

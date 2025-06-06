@@ -44,6 +44,7 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Spec_constantContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SymbolContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.TermContext;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
@@ -424,7 +425,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         final List<ParamDecl<? extends Type>> paramDecls =
                 ctx.sorted_var().stream()
-                        .map(sv -> Param(getSymbol(sv.symbol()), transformSort(sv.sort())))
+                        .map(
+                                sv ->
+                                        Param(
+                                                encodeSymbol(getSymbol(sv.symbol())),
+                                                transformSort(sv.sort())))
                         .collect(toList());
 
         pushParams(paramDecls, vars);
@@ -661,7 +666,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var value = ctx.getText();
+        final var value = encodeSymbol(getSymbol(ctx));
         switch (value) {
             case "true":
                 return BoolExprs.True();
@@ -772,7 +777,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     private OperatorCreatorFunction expectedFunc(String funcName) {
         return (params, ops, model, vars) -> {
             var opCnt = ops.size();
-            var name = funcName + opCnt;
+            var name = encodeSymbol(funcName + opCnt);
             if (!symbolTable.definesSymbol(name)) {
                 Type type = Bool();
                 var prefix = "(declare-fun " + name + " (";

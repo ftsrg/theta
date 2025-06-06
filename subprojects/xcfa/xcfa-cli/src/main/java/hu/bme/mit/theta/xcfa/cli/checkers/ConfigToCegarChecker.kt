@@ -188,7 +188,9 @@ fun getCegarChecker(
                     val declMap =
                       (it.state as XcfaState<PtrState<*>>)
                         .processes
-                        .flatMap { it.value.varLookup.map { it.reverseMapping() } }
+                        .map {
+                          it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
+                        }
                         .reduce { a, b -> a + b }
                     when (s) {
                       is ExplState -> {
