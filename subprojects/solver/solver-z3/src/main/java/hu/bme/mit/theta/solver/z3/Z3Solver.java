@@ -252,20 +252,25 @@ class Z3Solver implements UCSolver, Solver {
 
     @Override
     public Expr<BoolType> simplify(Expr<BoolType> expr) {
-        Tactic t =
-                z3Context.then(
-                        z3Context.mkTactic("simplify"), // Always start with basic simplification
-                        z3Context.mkTactic("propagate-values"), // Propagate known constants
-                        z3Context.mkTactic("ctx-simplify"), // Contextual simplification
-                        z3Context.mkTactic(
-                                "ctx-solver-simplify") // Uses solver context for even more
-                        // simplification
-                        );
-        Goal g = z3Context.mkGoal(true, false, false);
-        g.add(transformationManager.toTerm(expr));
-        ApplyResult ar = t.apply(g);
-        BoolExpr result = ar.getSubgoals()[0].AsBoolExpr();
-        return (Expr<BoolType>) termTransformer.toExpr(result);
+        try {
+            Tactic t =
+                    z3Context.then(
+                            z3Context.mkTactic(
+                                    "simplify"), // Always start with basic simplification
+                            z3Context.mkTactic("propagate-values"), // Propagate known constants
+                            z3Context.mkTactic("ctx-simplify"), // Contextual simplification
+                            z3Context.mkTactic(
+                                    "ctx-solver-simplify") // Uses solver context for even more
+                            // simplification
+                            );
+            Goal g = z3Context.mkGoal(true, false, false);
+            g.add(transformationManager.toTerm(expr));
+            ApplyResult ar = t.apply(g);
+            BoolExpr result = ar.getSubgoals()[0].AsBoolExpr();
+            return (Expr<BoolType>) termTransformer.toExpr(result);
+        } catch (Throwable t) {
+            return expr;
+        }
     }
 
     ////
