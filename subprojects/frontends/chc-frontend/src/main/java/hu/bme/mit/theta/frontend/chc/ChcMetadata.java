@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public class ChcMetadata extends MetaData {
     private final String name;
     private final List<VarDecl<?>> varDecls;
+    private final boolean backwards;
 
-    public ChcMetadata(String name, List<VarDecl<?>> varDecls) {
+    public ChcMetadata(String name, List<VarDecl<?>> varDecls, boolean backwards) {
         this.name = name;
         this.varDecls = varDecls;
+        this.backwards = backwards;
     }
 
     @Override
@@ -45,5 +47,9 @@ public class ChcMetadata extends MetaData {
 
     public List<VarDecl<?>> getVarDecls() {
         return varDecls;
+    }
+
+    public boolean isBackwards() {
+        return backwards;
     }
 }

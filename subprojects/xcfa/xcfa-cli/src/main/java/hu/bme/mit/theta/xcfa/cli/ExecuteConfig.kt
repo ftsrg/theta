@@ -91,7 +91,7 @@ fun runConfig(
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-  postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postVerificationLogging(xcfa, result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
 }
@@ -402,6 +402,7 @@ private fun preVerificationLogging(
 }
 
 private fun postVerificationLogging(
+  xcfa: XCFA?,
   safetyResult: SafetyResult<*, *>,
   mcm: MCM?,
   parseContext: ParseContext?,
@@ -424,8 +425,8 @@ private fun postVerificationLogging(
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
       )
 
-      if (config.frontendConfig.inputType == InputType.CHC) {
-        val chcAnswer = writeModel(safetyResult)
+      if (config.frontendConfig.inputType == InputType.CHC && xcfa != null) {
+        val chcAnswer = writeModel(xcfa, safetyResult)
         val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
         chcAnswerFile.writeText(chcAnswer)
       }
