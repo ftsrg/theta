@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware
+../sv-benchmarks/c/hardware-verification-bv/		status	cputime (s)	walltime (s)	memory (MB)
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml	false	TIMEOUT	120.31559	115.69602196599999	1297.027072
+btor2c-lazyMod.lup.2.prop1-func-interl.yml	true	ERROR (solver error)	16.441165	8.870343631000082	1213.603840
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml	true	ERROR (solver error)	16.468766	9.563795293999988	1105.051648
+btor2c-lazyMod.msmie.4.prop1-func-interl.yml	true	ERROR (solver error)	98.119762	81.07004231300004	2707.349504
+btor2c-lazyMod.brp.1.prop1-func-interl.yml	true	ERROR (solver error)	9.23433	3.5250288600000204	663.347200
+btor2c-lazyMod.brp2.5.prop3-back-serstep.yml	true	ERROR (solver error)	12.300584	5.8404175189999705	773.533696
+btor2c-lazyMod.shift_register_top_w64_d8_e0.yml	false	TIMEOUT	120.23611	117.7047429459999	886.001664
+btor2c-lazyMod.sw_ball2004_1.yml	true	ERROR (solver error)	3.198793	1.2247014399999898	212.656128
+btor2c-lazyMod.at.7.prop1-back-serstep.yml	true	ERROR (solver error)	17.8714	10.001048056000059	1603.846144
+btor2c-lazyMod.peterson.7.prop1-func-interl.yml	true	ERROR (solver error)	10.461574	4.540503733000037	664.731648
