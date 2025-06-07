@@ -286,7 +286,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
     }
 
-    // builder.prop = segmentFlag.ref
+    builder.prop = segmentFlag.ref
     return builder
   }
 }

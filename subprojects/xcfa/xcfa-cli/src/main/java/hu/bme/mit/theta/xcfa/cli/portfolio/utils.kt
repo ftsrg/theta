@@ -40,7 +40,6 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import java.nio.file.Paths
 
 fun baseCegarConfig(
   xcfa: XCFA,
@@ -103,7 +102,7 @@ fun baseCegarConfig(
       outputConfig =
         OutputConfig(
           versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
+          resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
           cOutputConfig = COutputConfig(disable = true),
           witnessConfig =
             WitnessConfig(
@@ -236,7 +235,7 @@ fun baseAsgCegarConfig(
     outputConfig =
       OutputConfig(
         versionInfo = false,
-        resultFolder = Paths.get("./").toFile(), // cwd
+        resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
         cOutputConfig = COutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
@@ -361,7 +360,7 @@ fun baseBoundedConfig(
     outputConfig =
       OutputConfig(
         versionInfo = false,
-        resultFolder = Paths.get("./").toFile(), // cwd
+        resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
         cOutputConfig = COutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
@@ -424,7 +423,7 @@ fun baseMddConfig(
     outputConfig =
       OutputConfig(
         versionInfo = false,
-        resultFolder = Paths.get("./").toFile(), // cwd
+        resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
         cOutputConfig = COutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
