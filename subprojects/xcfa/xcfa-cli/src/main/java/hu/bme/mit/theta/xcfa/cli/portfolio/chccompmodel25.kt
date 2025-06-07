@@ -29,7 +29,7 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun chcCompPortfolio25(
+fun chcCompPortfolioModel25(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -188,31 +188,31 @@ fun chcCompPortfolio25(
           // BV-Lin
           val bmc = bmc(450_000, "Z3")
           val kind = kind(20_000, "Z3")
-          val expl = expl(650_000, "Z3")
+          val expl = expl(650_000, "mathsat:5.6.10")
           val bmcCVC5 = bmc(550_000, "cvc5:1.0.8")
-          val imc = imc(10_000, "Z3")
-          val bool = bool(15_000, "Z3")
-          val cart = cart(15_000, "Z3")
+          val imcCVC5 = imc(10_000, "cvc5:1.0.8")
+          val bool = bool(15_000, "mathsat:5.6.10")
+          val cart = cart(15_000, "mathsat:5.6.10")
           val kindCVC5 = kind(70_000, "cvc5:1.0.8")
           val boolCVC5 = bool(70_000, "cvc5:1.0.8")
           val cartCVC5 = cart(500_000, "cvc5:1.0.8")
           val explCVC5 = expl(125_000, "cvc5:1.0.8")
           val mdd = mdd(100_000)
 
-          kind then
-            imc then
+          explCVC5 then
+            boolCVC5 then
+            cartCVC5 then
+            imcCVC5 then
+            mdd then
+            expl then
             bool then
             cart then
-            kindCVC5 then
-            boolCVC5 then
             bmc then
-            explCVC5 then
+            kind then
             bmcCVC5 then
-            expl then
-            cartCVC5 then
-            mdd
+            kindCVC5
 
-          Pair(kind, mdd)
+          Pair(expl, kindCVC5)
         } else if (types.any { it is RatType }) {
           // LRA-Lin
           val bmc = bmc(150_000, "Z3")
@@ -224,9 +224,9 @@ fun chcCompPortfolio25(
           val expl = expl(10_000, "Z3")
           val mdd = mdd(50_000)
 
-          bmc then kind then bool then cart then imc then cartCVC5 then expl then mdd
+          mdd then expl then bool then cart then imc then bmc then kind then cartCVC5
 
-          Pair(bmc, mdd)
+          Pair(mdd, cartCVC5)
         } else if (types.any { it is ArrayType<*, *> }) {
           // LIA-Arrays-Lin
           val cart = cart(25_000, "Z3")
@@ -237,9 +237,9 @@ fun chcCompPortfolio25(
           val bmc = bmc(400_000, "Z3")
           val mdd = mdd(50_000)
 
-          cart then bool then expl then imc then kind then bmc then mdd
+          mdd then expl then bool then cart then imc then bmc then kind
 
-          Pair(cart, mdd)
+          Pair(mdd, kind)
         } else {
           // LIA-Lin
           val cart = cart(500_000, "Z3")
@@ -255,20 +255,20 @@ fun chcCompPortfolio25(
           val explCVC5 = expl(50_000, "cvc5:1.0.8")
           val bmcCVC5 = bmc(100_000, "cvc5:1.0.8")
 
-          bmc then
-            imc then
-            kind then
+          mdd then
             expl then
-            mdd then
-            imcCVC5 then
-            explCVC5 then
-            cart then
             bool then
+            cart then
+            imc then
+            bmc then
+            kind then
+            explCVC5 then
             boolCVC5 then
             cartCVC5 then
+            imcCVC5 then
             bmcCVC5
 
-          Pair(bmc, bmcCVC5)
+          Pair(mdd, bmcCVC5)
         }
       } else {
         val expl = expl(600_000, "Z3")
@@ -298,4 +298,11 @@ fun chcCompPortfolio25(
 
   return if (portfolioConfig.debugConfig.debug) getStm(false)
   else STM(inProcess, setOf(fallbackEdge))
+}
+
+enum class Arithmetic {
+  LIA,
+  ARRAYS,
+  LRA,
+  BV,
 }

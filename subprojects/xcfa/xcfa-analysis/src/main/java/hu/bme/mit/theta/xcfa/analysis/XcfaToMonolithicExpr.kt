@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -62,7 +63,18 @@ private val LitExpr<*>.value: Int
       else -> error("Unknown integer type: $type")
     }
 
-fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = false): MonolithicExpr {
+data class XcfaToMonolithicExprResult(
+  val monolithicExpr: MonolithicExpr,
+  val locVar: VarDecl<*>,
+  val edgeVar: VarDecl<*>,
+  val locMap: Map<XcfaLocation, Int>,
+  val edgeMap: Map<XcfaEdge, Int>,
+)
+
+fun XCFA.toMonolithicExpr(
+  parseContext: ParseContext,
+  initValues: Boolean = false,
+): XcfaToMonolithicExprResult {
   val intType = CInt.getUnsignedInt(parseContext).smtType
 
   fun int(value: Int): Expr<*> =
@@ -104,7 +116,13 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
           )
         )
       }
-      .toList()
+      .toList() +
+      SequenceStmt.of(
+        listOf(
+          AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
+          AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
+        )
+      )
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
@@ -137,21 +155,24 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
         .let { And(it) }
     else True()
 
-  return MonolithicExpr(
-    initExpr =
-      And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
-    transExpr = And(transUnfold.exprs),
-    propExpr =
-      if (proc.errorLoc.isPresent) Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)) else True(),
-    transOffsetIndex = transUnfold.indexing,
-    vars =
-      StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
-        edgeVar +
-        locVar,
-    valToState = { valToState(it) },
-    biValToAction = { val1, val2 -> valToAction(val1, val2) },
-    ctrlVars = listOf(locVar, edgeVar),
-  )
+  val monExpr =
+    MonolithicExpr(
+      initExpr =
+        And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
+      transExpr = And(transUnfold.exprs),
+      propExpr =
+        if (proc.errorLoc.isPresent) Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))
+        else True(),
+      transOffsetIndex = transUnfold.indexing,
+      vars =
+        StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
+          edgeVar +
+          locVar,
+      valToState = { valToState(it) },
+      biValToAction = { val1, val2 -> valToAction(val1, val2) },
+      ctrlVars = listOf(locVar, edgeVar),
+    )
+  return XcfaToMonolithicExprResult(monExpr, locVar, edgeVar, locMap, edgeMap)
 }
 
 fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {

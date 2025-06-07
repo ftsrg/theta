@@ -24,6 +24,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer.getSymbol;
 
 import com.google.common.collect.Lists;
 import com.microsoft.z3.Z3Exception;
@@ -71,7 +73,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
     }
 
     public static Type transformSort(final SortContext ctx) {
-        final String name = ctx.identifier().symbol().getText();
+        final String name = getSymbol(ctx.identifier().symbol());
         return switch (name) {
             case "Int" -> Int();
             case "Bool" -> Bool();
@@ -105,7 +107,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
                                 for (SortContext s : Lists.reverse(def.get1())) {
                                     type = FuncType.of(transformSort(s), type);
                                 }
-                                symbolTable.put(Const(name, type), name, def.get3());
+                                symbolTable.put(Const(name, type), encodeSymbol(name), def.get3());
                             });
             final var proof =
                     termTransformer.toExpr(

@@ -13,14 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.xcfa.cli.utils
 
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.Proof;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.analysis.algorithm.PartitionedInvariantProof
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-public interface ExprState extends State, Proof {
+data class LocationInvariants(
+  private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>
+) : PartitionedInvariantProof<XcfaLocation> {
 
-    Expr<BoolType> toExpr();
+  constructor() : this(emptyMap())
+
+  override fun getPartitions(): Map<XcfaLocation, Collection<ExprState>> = locationInvariants
 }

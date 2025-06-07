@@ -31,11 +31,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
-import hu.bme.mit.theta.core.type.booltype.ForallExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
@@ -99,6 +95,15 @@ public final class ExprUtils {
      */
     public static Expr<BoolType> transformEquiSatCnf(final Expr<BoolType> expr) {
         return new ExprCnfTransformer().transformEquiSat(expr);
+    }
+
+    public static OrExpr toDnf(final Expr<BoolType> expr) {
+        if (expr instanceof OrExpr) {
+            var ops = expr.getOps().stream().map(it -> toDnf((Expr<BoolType>) it)).toList();
+            return OrExpr.of(ops.stream().flatMap(or -> or.getOps().stream()).toList());
+        } else {
+            return OrExpr.of(List.of(expr));
+        }
     }
 
     /**

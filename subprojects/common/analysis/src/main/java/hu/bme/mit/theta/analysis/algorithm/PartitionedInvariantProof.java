@@ -13,14 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.Proof;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import java.util.Collection;
+import java.util.Map;
 
-public interface ExprState extends State, Proof {
+/**
+ * Maps some control structure (or anything else) to an expression Example: XCFA locations to
+ * expressions characterizing location invariants
+ */
+public interface PartitionedInvariantProof<T> extends Proof {
 
-    Expr<BoolType> toExpr();
+    Map<T, Collection<ExprState>> getPartitions();
 }

@@ -91,7 +91,7 @@ fun runConfig(
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-  postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postVerificationLogging(xcfa, result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
 }
@@ -324,7 +324,7 @@ private fun backend(
           }
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
             } ms)\n",
@@ -350,7 +350,7 @@ private fun preVerificationLogging(
 
       logger.write(
         Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
       )
 
       if (!config.outputConfig.chcOutputConfig.disable) {
@@ -402,6 +402,7 @@ private fun preVerificationLogging(
 }
 
 private fun postVerificationLogging(
+  xcfa: XCFA?,
   safetyResult: SafetyResult<*, *>,
   mcm: MCM?,
   parseContext: ParseContext?,
@@ -423,6 +424,12 @@ private fun postVerificationLogging(
         Logger.Level.INFO,
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
       )
+
+      if (config.frontendConfig.inputType == InputType.CHC && xcfa != null) {
+        val chcAnswer = writeModel(xcfa, safetyResult)
+        val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
+        chcAnswerFile.writeText(chcAnswer)
+      }
 
       // TODO eliminate the need for the instanceof check
       if (

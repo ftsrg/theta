@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -152,9 +154,12 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -419,29 +424,44 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformExists(final ExistsExpr expr) {
         env.push();
-        final String[] paramTerms = transformParamDecls(expr.getParamDecls());
-        final String opTerm = toTerm(expr.getOp());
+        final var newParams = escapeParams(expr.getParamDecls());
+        final String[] paramTerms = transformParamDecls(newParams.values().stream().toList());
+        final String opTerm = toTerm(ExprUtils.changeDecls(expr.getOp(), newParams));
         final String result =
                 String.format("(exists (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
 
+    @NotNull private static Map<? extends ParamDecl<?>, ? extends ParamDecl<?>> escapeParams(
+            Collection<ParamDecl<?>> paramDecls) {
+        return paramDecls.stream()
+                .map(
+                        paramDecl ->
+                                Map.entry(
+                                        paramDecl,
+                                        Param(
+                                                encodeSymbol(paramDecl.getName()),
+                                                paramDecl.getType())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     protected String transformForall(final ForallExpr expr) {
         env.push();
-        final String[] paramTerms = transformParamDecls(expr.getParamDecls());
-        final String opTerm = toTerm(expr.getOp());
+        final var newParams = escapeParams(expr.getParamDecls());
+        final String[] paramTerms = transformParamDecls(newParams.values().stream().toList());
+        final String opTerm = toTerm(ExprUtils.changeDecls(expr.getOp(), newParams));
         final String result =
                 String.format("(forall (%s) %s)", String.join(" ", paramTerms), opTerm);
         env.pop();
         return result;
     }
 
-    private String[] transformParamDecls(final List<ParamDecl<?>> paramDecls) {
+    private String[] transformParamDecls(final List<? extends ParamDecl<?>> paramDecls) {
         final String[] paramTerms = new String[paramDecls.size()];
         int i = 0;
         for (final ParamDecl<?> paramDecl : paramDecls) {
-            final String paramSymbol = transformParamDecl(paramDecl);
+            String paramSymbol = transformParamDecl(paramDecl);
             paramTerms[i] = paramSymbol;
             env.define(DeclSymbol.of(paramDecl), paramDecl.getName());
             i++;
