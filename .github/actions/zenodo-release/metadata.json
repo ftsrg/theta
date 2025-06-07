@@ -23,7 +23,7 @@
                 "name": "Moln\u00e1r, Vince",
                 "affiliation": "Budapest University of Technology and Economics",
                 "orcid": "0000-0002-8204-7595"
-            }
+            },
             {
                 "name": "Mondok, Mil\u00e1n",
                 "affiliation": "Budapest University of Technology and Economics",
@@ -43,7 +43,7 @@
                 "name": "Telbisz, Csan\u00e1d",
                 "affiliation": "Budapest University of Technology and Economics",
                 "orcid": "0000-0002-6260-5908"
-            },
+            }
         ],
         "custom": {
             "code:codeRepository": "https://github.com/ftsrg/theta",
