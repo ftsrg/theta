@@ -20,7 +20,7 @@ grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {
     exit 1
 }
 
-args="--backend BMC --loglevel RESULT --input-type CHC --parse-in-process --svcomp"
+args="--portfolio CHC-COMP --loglevel RESULT --input-type CHC --parse-in-process --svcomp"
 
 echo "; LD_LIBRARY_PATH=\"$scriptdir\"/lib java -Xss120m -Xmx14210m -jar \"$scriptdir\"/theta.jar $args --input \"$IN\" --smt-home \"$scriptdir\"/solvers"
 LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers 2>&1 | tee "$(basename "$1")".log >/dev/null
