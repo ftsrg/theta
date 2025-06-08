@@ -266,7 +266,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       builder.removeEdge(edge)
       val oldLabels = edge.getFlatLabels()
       val newLabels = LinkedList<XcfaLabel>()
-      val indexToAnnots = allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }
+      val indexToAnnots =
+        allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }.toList().sortedBy { it.first }
       var i = 0
       for ((index, annots) in indexToAnnots) {
         while (i < index) {
