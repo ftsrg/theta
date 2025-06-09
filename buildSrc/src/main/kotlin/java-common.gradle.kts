@@ -18,7 +18,6 @@ plugins {
     id("jacoco-common")
     id("maven-artifact")
     id("com.diffplug.spotless")
-    id("javasmt-common")
 }
 
 dependencies {
@@ -53,7 +52,6 @@ tasks {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
         enableAssertions = true
-        dependsOn(named("downloadJavaSmtLibs"))
     }
 
     named("jacocoTestReport") {
