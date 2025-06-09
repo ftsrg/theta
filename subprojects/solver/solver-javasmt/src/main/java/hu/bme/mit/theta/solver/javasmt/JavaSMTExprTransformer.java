@@ -154,28 +154,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.sosy_lab.java_smt.api.ArrayFormula;
-import org.sosy_lab.java_smt.api.ArrayFormulaManager;
-import org.sosy_lab.java_smt.api.BitvectorFormula;
-import org.sosy_lab.java_smt.api.BitvectorFormulaManager;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.BooleanFormulaManager;
-import org.sosy_lab.java_smt.api.EnumerationFormula;
-import org.sosy_lab.java_smt.api.EnumerationFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointFormula;
-import org.sosy_lab.java_smt.api.FloatingPointFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointRoundingMode;
-import org.sosy_lab.java_smt.api.Formula;
-import org.sosy_lab.java_smt.api.FormulaType;
+import org.sosy_lab.java_smt.api.*;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
-import org.sosy_lab.java_smt.api.FunctionDeclaration;
-import org.sosy_lab.java_smt.api.IntegerFormulaManager;
-import org.sosy_lab.java_smt.api.NumeralFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
-import org.sosy_lab.java_smt.api.QuantifiedFormulaManager;
-import org.sosy_lab.java_smt.api.RationalFormulaManager;
-import org.sosy_lab.java_smt.api.SolverContext;
 
 final class JavaSMTExprTransformer {
 
@@ -795,21 +777,21 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.smod(leftOpTerm, rightOpTerm);
+        return bitvectorFormulaManager.smodulo(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvURem(final BvURemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, false);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, false);
     }
 
     private Formula transformBvSRem(final BvSRemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, true);
+        return bitvectorFormulaManager.remainder(leftOpTerm, rightOpTerm, true);
     }
 
     private Formula transformBvAnd(final BvAndExpr expr) {
@@ -944,7 +926,7 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.makeNumber(
                 BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
                 BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
-                expr.getHidden(),
+                FloatingPointNumber.Sign.of(expr.getHidden()),
                 FloatingPointType.getFloatingPointType(
                         expr.getType().getExponent(), expr.getType().getSignificand() - 1));
     }
@@ -1175,7 +1157,7 @@ final class JavaSMTExprTransformer {
                 (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        var arr = arrayFormulaManager.makeArray(indexType, elemType, elseElem);
         for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());
@@ -1195,7 +1177,7 @@ final class JavaSMTExprTransformer {
                 (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
-        var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
+        var arr = arrayFormulaManager.makeArray(indexType, elemType, elseElem);
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
             final TI index = (TI) toTerm(element.get1());
             final TE elem = (TE) toTerm(element.get2());

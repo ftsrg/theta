@@ -28,11 +28,16 @@ object Deps {
     val z3 = "lib/com.microsoft.z3.jar"
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
-    val cvc5 = "lib/cvc5.jar"
-
-    val javasmt = "org.sosy-lab:java-smt:${Versions.javasmt}"
-    val javasmtLocal = "lib/javasmt.jar"
-    val sosylabCommon = "org.sosy-lab:common:${Versions.sosylab}"
+    val javasmt = "org.sosy-lab:java-smt:5.0.1-523-g9001c0ea4" // hardcoded because deps also hardcoded
+    val javasmtDeps = listOf(
+        "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1",
+        "org.sosy-lab:javasmt-solver-z3:4.14.0",
+        "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c",
+        "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4",
+        "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc",
+        "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae",
+        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08"
+    )
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 
