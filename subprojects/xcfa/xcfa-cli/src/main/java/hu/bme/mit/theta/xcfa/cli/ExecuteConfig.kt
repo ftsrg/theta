@@ -149,7 +149,7 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     config.backendConfig.backend == Backend.OC &&
       (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
         OcDecisionProcedureType.PROPAGATOR &&
-      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:4.13"
+      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:new"
   }
 }
 
