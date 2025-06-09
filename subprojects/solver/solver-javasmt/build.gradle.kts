@@ -15,7 +15,6 @@
  */
 plugins {
     id("java-common")
-    id("javasmt-common")
 }
 
 dependencies {

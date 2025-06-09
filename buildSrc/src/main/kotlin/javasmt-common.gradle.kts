@@ -18,9 +18,9 @@ import java.net.URL
 import java.nio.file.Files
 import java.security.MessageDigest
 
-fun sha256(file: File): String {
+fun md5(file: File): String {
     val buffer = ByteArray(8192)
-    val digest = MessageDigest.getInstance("SHA-256")
+    val digest = MessageDigest.getInstance("MD5")
     file.inputStream().use { fis ->
         var read = fis.read(buffer)
         while (read != -1) {
@@ -73,6 +73,8 @@ tasks.register("downloadJavaSmtLibs") {
             matches.forEach { fileName ->
                 val fileUrl = URL("$artifactUrl$fileName")
 
+                val md5url = URL("$artifactUrl$fileName.md5")
+
                 // Strip prefix and -arch suffix
                 val cleanName = fileName
                     .removePrefix("$artifact-$version-")
@@ -80,27 +82,28 @@ tasks.register("downloadJavaSmtLibs") {
 
                 val targetFile = outputDir.asFile.resolve(cleanName)
 
+                val md5 = md5url.openStream().readAllBytes().decodeToString()
+
+                // Compare hash if file exists
+                if (targetFile.exists()) {
+                    val existingHash = md5(targetFile)
+                    val newHash = md5
+                    if (existingHash == newHash) {
+                        println(" Skipping (same hash): $cleanName ($existingHash)")
+                        return@forEach
+                    } else {
+                        println("  Overwriting (hash changed): $cleanName ($existingHash vs. $newHash)")
+                    }
+                } else {
+                    println("  Downloading new: $cleanName ($md5)")
+                }
+
                 // Download to temp file
                 val tmpFile = Files.createTempFile("download-", null).toFile()
                 fileUrl.openStream().use { input ->
                     tmpFile.outputStream().use { output ->
                         input.copyTo(output)
                     }
-                }
-
-                // Compare hash if file exists
-                if (targetFile.exists()) {
-                    val existingHash = sha256(targetFile)
-                    val newHash = sha256(tmpFile)
-                    if (existingHash == newHash) {
-                        println(" Skipping (same hash): $cleanName")
-                        tmpFile.delete()
-                        return@forEach
-                    } else {
-                        println("  Overwriting (hash changed): $cleanName")
-                    }
-                } else {
-                    println("  Downloading new: $cleanName")
                 }
 
                 tmpFile.copyTo(targetFile, overwrite = true)
