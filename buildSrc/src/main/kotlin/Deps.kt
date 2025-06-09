@@ -25,13 +25,13 @@ object Deps {
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
     }
 
-    val z3 = "lib/com.microsoft.z3.jar"
+    val z3 = "org.sosy-lab:javasmt-solver-z3:4.14.0"
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
     val javasmt = "org.sosy-lab:java-smt:5.0.1-523-g9001c0ea4" // hardcoded because deps also hardcoded
     val javasmtDeps = listOf(
         "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1",
-        "org.sosy-lab:javasmt-solver-z3:4.14.0",
+        z3,
         "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c",
         "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4",
         "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc",
