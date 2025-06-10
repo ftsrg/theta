@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.core.Relation;
 import hu.bme.mit.theta.core.Rule;
-import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -28,9 +28,9 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 import java.util.stream.Collectors;
+import kotlin.Pair;
 
 /** The HornSolver can provide proofs, and accept Relations */
 public interface HornSolver extends Solver {
@@ -49,83 +49,56 @@ public interface HornSolver extends Solver {
     }
 
     default Expr<BoolType> interpolate(List<Expr<BoolType>> a, List<Expr<BoolType>> b) {
-        final var constToParam = new LinkedHashMap<ConstDecl<?>, ParamDecl<?>>();
-        final var aSymbols =
-                a.stream()
-                        .flatMap(
-                                term ->
-                                        ExprUtils.getConstants(term).stream()
-                                                .map(
-                                                        (ConstDecl<?> constDecl) ->
-                                                                constToParam
-                                                                        .computeIfAbsent(
-                                                                                constDecl,
-                                                                                it ->
-                                                                                        Param(
-                                                                                                it
-                                                                                                        .getName(),
-                                                                                                it
-                                                                                                        .getType()))
-                                                                        .getRef()))
-                        .collect(Collectors.toSet());
-        final var bSymbols =
-                b.stream()
-                        .flatMap(
-                                term ->
-                                        ExprUtils.getConstants(term).stream()
-                                                .map(
-                                                        (ConstDecl<?> constDecl) ->
-                                                                constToParam
-                                                                        .computeIfAbsent(
-                                                                                constDecl,
-                                                                                it ->
-                                                                                        Param(
-                                                                                                it
-                                                                                                        .getName(),
-                                                                                                it
-                                                                                                        .getType()))
-                                                                        .getRef()))
-                        .collect(Collectors.toSet());
+        final var aConstants = ExprUtils.getConstants(a);
+        final var bConstants = ExprUtils.getConstants(b);
+        final var commonConstants = Sets.intersection(aConstants, bConstants).stream().toList();
 
-        final var commonSymbols = Sets.intersection(aSymbols, bSymbols).toArray(RefExpr[]::new);
-        final var aSymbolList = aSymbols.toArray(RefExpr[]::new);
-        final var bSymbolList = bSymbols.toArray(RefExpr[]::new);
+        final var constToParam =
+                Sets.union(aConstants, bConstants).stream()
+                        .map(it -> new Pair<>(it, Param(it.getName(), it.getType())))
+                        .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
 
-        Relation A =
-                new Relation(
-                        "A", Arrays.stream(aSymbolList).map(RefExpr::getType).toArray(Type[]::new));
-        Relation B =
-                new Relation(
-                        "B", Arrays.stream(bSymbolList).map(RefExpr::getType).toArray(Type[]::new));
-        Relation itp =
-                new Relation(
-                        "itp",
-                        Arrays.stream(commonSymbols).map(RefExpr::getType).toArray(Type[]::new));
+        final var aParamArr = aConstants.stream().map(constToParam::get).toArray(ParamDecl[]::new);
+        final var bParamArr = bConstants.stream().map(constToParam::get).toArray(ParamDecl[]::new);
+        final var commonParamArr =
+                commonConstants.stream().map(constToParam::get).toArray(ParamDecl[]::new);
 
-        A.invoke(aSymbolList)
+        final var aRefArr = Arrays.stream(aParamArr).map(Decl::getRef).toArray(RefExpr[]::new);
+        final var bRefArr = Arrays.stream(bParamArr).map(Decl::getRef).toArray(RefExpr[]::new);
+        final var commonRefArr =
+                Arrays.stream(commonParamArr).map(Decl::getRef).toArray(RefExpr[]::new);
+
+        final var aTypeArr = Arrays.stream(aParamArr).map(Decl::getType).toArray(Type[]::new);
+        final var bTypeArr = Arrays.stream(bParamArr).map(Decl::getType).toArray(Type[]::new);
+        final var commonTypeArr =
+                Arrays.stream(commonParamArr).map(Decl::getType).toArray(Type[]::new);
+
+        Relation A = new Relation("A", aTypeArr);
+        Relation B = new Relation("B", bTypeArr);
+        Relation itp = new Relation("itp", commonTypeArr);
+
+        A.invoke(aRefArr)
                 .plusAssign(a.stream().map(it -> ExprUtils.changeDecls(it, constToParam)).toList());
-        B.invoke(bSymbolList)
+        B.invoke(bRefArr)
                 .plusAssign(b.stream().map(it -> ExprUtils.changeDecls(it, constToParam)).toList());
-        itp.invoke(commonSymbols).plusAssign(A.invoke(aSymbolList).getExpr());
-        itp.invoke(commonSymbols).with(B.invoke(bSymbolList).getExpr()).not();
+        itp.invoke(commonRefArr).plusAssign(A.invoke(aRefArr).getExpr());
+        itp.invoke(commonRefArr).with(B.invoke(bRefArr).getExpr()).not();
 
-        try (var wpp = new WithPushPop(this)) {
-            add(A);
-            add(B);
-            add(itp);
-            var result = check();
-            if (result.isSat()) {
-                Expr<?> func = getModel().toMap().get(itp.getConstDecl());
-                while (func instanceof FuncLitExpr<?, ?> funcLit) {
-                    func = funcLit.getResult();
-                }
-                return (Expr<BoolType>) func;
-            } else {
-                throw new RuntimeException(
-                        "Something went wrong! Interpolation was not successful.");
+        add(A);
+        add(B);
+        add(itp);
+        var result = check();
+        if (result.isSat()) {
+            Expr<?> func = getModel().toMap().get(itp.getConstDecl());
+            final var revMap = new LinkedHashMap<Decl<?>, Decl<?>>();
+            int i = 0;
+            while (func instanceof FuncLitExpr<?, ?> funcLit) {
+                revMap.put(((FuncLitExpr<?, ?>) func).getParam(), commonConstants.get(i++));
+                func = funcLit.getResult();
             }
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+            return (Expr<BoolType>) ExprUtils.changeDecls(func, revMap);
+        } else {
+            throw new RuntimeException("Something went wrong! Interpolation was not successful.");
         }
     }
 }
