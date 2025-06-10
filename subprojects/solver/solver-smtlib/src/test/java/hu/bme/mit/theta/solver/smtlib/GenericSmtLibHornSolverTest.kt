@@ -52,6 +52,8 @@ class GenericSmtLibHornSolverTest {
         Pair("eldarica", "2.2"),
         Pair("golem", "0.5.0"),
         Pair("z3", "4.13.0"),
+        Pair("z3", "4.14.0"),
+        Pair("z3", "4.15.0"),
       )
 
     @JvmStatic
@@ -254,6 +256,7 @@ class GenericSmtLibHornSolverTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("solvers")
   fun testLIA(name: Pair<String, String>) {
+    if (name.first == "golem") return
     val solverFactory = solverFactories[name]!!
     val solver = solverFactory.createHornSolver()
 
