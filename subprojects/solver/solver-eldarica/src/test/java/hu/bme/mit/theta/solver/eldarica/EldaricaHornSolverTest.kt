@@ -17,12 +17,24 @@ package hu.bme.mit.theta.solver.eldarica
 
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
+import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
+import hu.bme.mit.theta.core.type.BinaryExpr
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.solver.utils.WithPushPop
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import java.math.BigInteger
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -36,6 +48,7 @@ class EldaricaHornSolverTest {
     val transformationManager = EldaricaTransformationManager(symbolTable)
     val termTransformer = EldaricaTermTransformer(symbolTable)
     val hornSolver = EldaricaHornSolver(transformationManager, termTransformer)
+    val helperSolver = Z3SolverFactory.getInstance().createSolver()
   }
 
   @BeforeEach
@@ -162,5 +175,60 @@ class EldaricaHornSolverTest {
     val proof = hornSolver.proof
     System.err.println(proof.toString())
     Assertions.assertTrue(proof != null)
+  }
+
+  @Test
+  fun testInterpolationInt() {
+    val x = Const("x", Int())
+    val y = Const("y", Int())
+    val z = Const("z", Int())
+    val tasks =
+      listOf(
+        Pair(And(Eq(x.ref, y.ref), Eq(y.ref, z.ref)), Neq(x.ref, z.ref)),
+        Pair(Eq(Add(x.ref, Int(2)), y.ref), Lt(y.ref, x.ref)),
+      )
+
+    testItp(tasks)
+  }
+
+  @Test
+  fun testInterpolationBv() {
+    val x = Const("x", BvType.of(32))
+    val y = Const("y", BvType.of(32))
+    val z = Const("z", BvType.of(32))
+
+    val one = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, 32)
+    val two = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.TWO, 32)
+
+    val tasks =
+      listOf(
+        Pair(And(Eq(x.ref, y.ref), Eq(y.ref, z.ref)), Neq(x.ref, z.ref)),
+        Pair(
+          And(Eq(Add(x.ref, two), y.ref), Eq(Sub(y.ref, x.ref), z.ref)),
+          Eq(BvURemExpr.create(z.ref, two), one),
+        ),
+      )
+
+    testItp(tasks)
+  }
+
+  private fun testItp(tasks: List<Pair<Expr<BoolType>, BinaryExpr<out Type, BoolType>>>) {
+    for ((a, b) in tasks) {
+      hornSolver.push()
+      val itp = hornSolver.interpolate(a, b)
+      System.err.println("itp($a, $b)\n\t= $itp")
+      val consts = ExprUtils.getConstants(itp)
+      val allowedConsts = ExprUtils.getConstants(a) intersect ExprUtils.getConstants(b)
+      Assertions.assertTrue { allowedConsts.containsAll(consts) }
+      WithPushPop(helperSolver).use {
+        helperSolver.add(Not(Imply(a, itp)))
+        Assertions.assertTrue { helperSolver.check().isUnsat }
+      }
+      WithPushPop(helperSolver).use {
+        helperSolver.add(And(b, itp))
+        Assertions.assertTrue { helperSolver.check().isUnsat }
+      }
+      hornSolver.pop()
+    }
   }
 }

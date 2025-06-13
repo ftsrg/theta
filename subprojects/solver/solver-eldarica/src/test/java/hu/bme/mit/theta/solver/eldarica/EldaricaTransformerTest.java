@@ -23,7 +23,6 @@ import static org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -74,8 +73,7 @@ public class EldaricaTransformerTest {
                 hasExpr(
                         expr,
                         expr ->
-                                expr instanceof QuantifiedExpr
-                                        || expr instanceof BvRotateLeftExpr
+                                expr instanceof BvRotateLeftExpr
                                         || expr instanceof BvRotateRightExpr));
 
         final EldaricaSymbolTable javaSMTSymbolTable = new EldaricaSymbolTable();

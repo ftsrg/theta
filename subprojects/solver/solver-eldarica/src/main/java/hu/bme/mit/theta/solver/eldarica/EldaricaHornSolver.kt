@@ -103,7 +103,7 @@ class EldaricaHornSolver(
               val decl = termTransformer.toDecl(pred) as ConstDecl<FuncType<*, *>>
               val params = extractParamTypes(decl.type).first.mapIndexed { i, t -> Param("P$i", t) }
               var expr = termTransformer.toExpr(formula, params)
-              for (paramDecl in params) {
+              for (paramDecl in params.reversed()) {
                 expr = FuncLitExpr.of(paramDecl, expr)
               }
               Pair(decl, expr as FuncLitExpr<*, *>)

@@ -26,6 +26,8 @@ import static hu.bme.mit.theta.solver.eldarica.Utils.toSeq;
 
 import ap.basetypes.IdealInt;
 import ap.parser.*;
+import ap.terfor.ConstantTerm;
+import ap.terfor.conjunctions.Quantifier;
 import ap.terfor.preds.Predicate;
 import ap.theories.arrays.ExtArray;
 import ap.theories.bitvectors.ModuloArithmetic$;
@@ -50,6 +52,7 @@ import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import scala.collection.immutable.Seq;
@@ -308,11 +311,39 @@ final class EldaricaExprTransformer {
     }
 
     private Utils.PredTermFormula transformExists(final ExistsExpr expr) {
-        throw new UnsupportedOperationException("Exists not yet supported for Princess/Eldarica.");
+        final List<ParamDecl<?>> params = expr.getParamDecls();
+        env.push();
+        final IFormula body;
+        final List<ConstantTerm> consts = new LinkedList<>();
+        try {
+            for (final ParamDecl<?> param : params) {
+                final var c = transformer.toSort(param.getType()).newConstant(param.getName());
+                env.define(DeclSymbol.of(param), wrap(ConstantTerm2ITerm(c)));
+                consts.add(c);
+            }
+            body = toTerm(expr.getOp()).asFormula();
+        } finally {
+            env.pop();
+        }
+        return wrap(IExpression.quanConsts(Quantifier.EX$.MODULE$, getIterable(consts), body));
     }
 
     private Utils.PredTermFormula transformForall(final ForallExpr expr) {
-        throw new UnsupportedOperationException("Forall not yet supported for Princess/Eldarica.");
+        final List<ParamDecl<?>> params = expr.getParamDecls();
+        env.push();
+        final IFormula body;
+        final List<ConstantTerm> consts = new LinkedList<>();
+        try {
+            for (final ParamDecl<?> param : params) {
+                final var c = transformer.toSort(param.getType()).newConstant(param.getName());
+                env.define(DeclSymbol.of(param), wrap(ConstantTerm2ITerm(c)));
+                consts.add(c);
+            }
+            body = toTerm(expr.getOp()).asFormula();
+        } finally {
+            env.pop();
+        }
+        return wrap(IExpression.quanConsts(Quantifier.ALL$.MODULE$, getIterable(consts), body));
     }
 
     // INTEGERS

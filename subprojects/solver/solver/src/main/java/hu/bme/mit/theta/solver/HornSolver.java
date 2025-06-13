@@ -48,6 +48,10 @@ public interface HornSolver extends Solver {
         throw new UnsupportedOperationException("Cannot get proof.");
     }
 
+    default Expr<BoolType> interpolate(Expr<BoolType> a, Expr<BoolType> b) {
+        return interpolate(List.of(a), List.of(b));
+    }
+
     default Expr<BoolType> interpolate(List<Expr<BoolType>> a, List<Expr<BoolType>> b) {
         final var aConstants = ExprUtils.getConstants(a);
         final var bConstants = ExprUtils.getConstants(b);

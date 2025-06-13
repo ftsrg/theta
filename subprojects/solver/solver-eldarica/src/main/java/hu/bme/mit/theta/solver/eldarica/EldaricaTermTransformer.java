@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.eldarica;
 
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
@@ -142,6 +143,31 @@ public final class EldaricaTermTransformer {
             return Int(((IIntLit) expr).value().bigIntValue());
         } else if (expr instanceof IBoolLit) {
             return Bool(((IBoolLit) expr).value());
+        } else if (expr instanceof ISortedQuantified quantified) {
+            final var newParamList = new LinkedList<>(params);
+            final Type paramType;
+            String name = quantified.sort().name();
+            if (name.equals("int")) {
+                paramType = Int();
+            } else if (name.startsWith("bv[")) {
+                var size = Integer.parseInt(name.substring("bv[".length(), name.length() - 1));
+                paramType = BvType.of(size);
+            } else {
+                throw new UnsupportedOperationException("Unknown type: %s".formatted(name));
+            }
+            final var param = Param("P" + newParamList.size(), paramType);
+            newParamList.add(0, param);
+            return switch (quantified.quan().toString()) {
+                case "ALL" ->
+                        Forall(
+                                List.of(param),
+                                (Expr<BoolType>) toExpr(quantified.subformula(), newParamList));
+                case "EX" ->
+                        Exists(
+                                List.of(param),
+                                (Expr<BoolType>) toExpr(quantified.subformula(), newParamList));
+                default -> throw new UnsupportedOperationException("");
+            };
         } else {
             throw new UnsupportedOperationException(
                     "Expression %s of type %s not supported in backtransformation"
