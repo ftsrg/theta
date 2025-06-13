@@ -52,7 +52,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                         .build());
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("4.14.0"))
-                        .addString(LINUX, X64, "x64-glibc-2.39")
+                        .addString(LINUX, X64, "x64-glibc-2.35")
                         .addString(WINDOWS, X64, "x64-win")
                         .addString(WINDOWS, X86, "x86-win")
                         .addString(MAC, X64, "x64-osx-13.7.2")

@@ -38,6 +38,7 @@ object Deps {
         "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae",
         "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08"
     )
+    val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 

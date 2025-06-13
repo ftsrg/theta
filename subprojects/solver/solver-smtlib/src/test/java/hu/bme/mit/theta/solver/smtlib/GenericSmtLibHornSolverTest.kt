@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.*
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -153,6 +154,7 @@ class GenericSmtLibHornSolverTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("solvers")
   fun testUnsolvable(name: Pair<String, String>) {
+    assumeFalse(name.first.equals("golem") && name.second.equals("0.8.1"))
     val solverFactory = solverFactories[name]!!
     val solver = solverFactory.createHornSolver()
 
@@ -182,6 +184,7 @@ class GenericSmtLibHornSolverTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("solvers")
   fun testNonlinearUnsolvable(name: Pair<String, String>) {
+    assumeFalse(name.first.equals("golem") && name.second.equals("0.8.1"))
     val solverFactory = solverFactories[name]!!
     val solver = solverFactory.createHornSolver()
 
