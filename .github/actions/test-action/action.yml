@@ -10,10 +10,10 @@ runs:
       shell: bash
       run: |
         cp lib/*dylib ./
-#        cp lib/*jnilib ./
-#        cp libmpfr.dylib libmpfr.4.dylib
-#        cp libmpfr_java-1.4.jnilib libmpfr_java.jnilib
-#        sudo ln -sf $PWD/libmpfr.4.dylib /usr/local/lib/
+        # cp lib/*jnilib ./
+        # cp libmpfr.dylib libmpfr.4.dylib
+        # cp libmpfr_java-1.4.jnilib libmpfr_java.jnilib
+        # sudo ln -sf $PWD/libmpfr.4.dylib /usr/local/lib/
         for i in subprojects/*/*; do cp *dylib $i/; done
         for i in subprojects/*/*; do cp *jnilib $i/; done
     - name: Setup java 17
