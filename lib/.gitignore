@@ -4,9 +4,6 @@
 !/com.microsoft.z3legacy.jar
 !/hu.bme.mit.delta-0.0.1-all.jar
 !/jhoafparser-1.1.1.jar
-!/libmpfr.dylib
-!/libmpfr_java-1.0.so
-!/libmpfr_java-1.4.jnilib
 !/libtheta-llvm.so
 !/libz3javalegacy.dll
 !/libz3javalegacy.dylib
@@ -15,9 +12,10 @@
 !/libz3legacy.dylib
 !/libz3legacy.so
 !/mpfr64.dll
-!/mpfr_java-1.0-linux64.jar
-!/mpfr_java-1.0-windows64.jar
 !/mpfr_java-1.0.jar
-!/mpfr_java.dll
+!/mpfr_java-1.0-windows64.jar
+!/mpfr_java-1.4.jar
+!/mpfr_java-1.4-linux64.jar
+!/mpfr_java-1.4-osx64.jar
 !/mpir64.dll
 !/refinery-store-0.1.jar

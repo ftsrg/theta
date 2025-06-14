@@ -14,6 +14,19 @@
  *  limitations under the License.
  */
 
+import java.util.Locale
+
+private fun getOs(): String {
+    val os: String = System.getProperty("os.name")
+
+    return when {
+        os.lowercase(Locale.getDefault()).startsWith("linux") -> "linux"
+        os.lowercase(Locale.getDefault()).startsWith("windows") -> "windows"
+        os.lowercase(Locale.getDefault()).contains("mac") || os.lowercase(Locale.getDefault()).contains("darwin") -> "macos"
+        else -> error("Operating system \"$os\" not supported.")
+    }
+}
+
 object Deps {
 
     val guava = "com.google.guava:guava:${Versions.guava}"
@@ -23,6 +36,13 @@ object Deps {
 
         val antlr = "org.antlr:antlr4:${Versions.antlr}"
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
+    }
+
+    val mpfr_java = when(getOs()) {
+        "windows" -> listOf("lib/mpfr_java-1.0.jar", "lib/mpfr_java-1.0-windows64.jar")
+        "linux" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-linux64.jar")
+        "macos" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-osx64.jar")
+        else -> error("Operating system not supported")
     }
 
     val z3 = "org.sosy-lab:javasmt-solver-z3:4.14.0"
