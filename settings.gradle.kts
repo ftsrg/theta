@@ -57,6 +57,7 @@ include(
     "xsts/xsts-cli",
 
     "solver/solver",
+    "solver/solver-eldarica",
     "solver/solver-z3",
     "solver/solver-z3-legacy",
     "solver/solver-javasmt",

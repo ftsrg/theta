@@ -81,16 +81,8 @@ public final class Z3SolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
-        final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
-
-        final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager =
-                new Z3TransformationManager(symbolTable, z3Context);
-        final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
-
-        return new Z3ItpSolver(
-                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
+        throw new UnsupportedOperationException(
+                "Z3 solver is not supported for interpolation. Use legacy z3 for better results.");
     }
 
     public HornSolver createHornSolver() {
