@@ -80,8 +80,10 @@ object Deps {
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
     val jing = "com.thaiopensource:jing:${Versions.jing}"
 
-    val delta = "lib/hu.bme.mit.delta"
+    val delta = "lib/hu.bme.mit.delta-0.0.1-all.jar"
     val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
+
+    val hoaf = "lib/jhoafparser-1.1.1.jar"
 
     val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
 

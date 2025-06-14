@@ -21,6 +21,7 @@ plugins {
 }
 
 dependencies {
+    implementation(files(rootDir.resolve(Deps.delta)))
     implementation(project(":theta-common"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
