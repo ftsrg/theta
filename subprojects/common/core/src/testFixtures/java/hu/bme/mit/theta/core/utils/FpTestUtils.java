@@ -144,34 +144,9 @@ public class FpTestUtils {
                     {FpRemExpr.class, Fp16("-0.1"), Rem(Fp16("-4.3"), Fp16("2.1"))},
                     {FpRemExpr.class, Fp16("0.1"), Rem(Fp16("4.3"), Fp16("-2.1"))},
                     {FpRemExpr.class, Fp16("-0.1"), Rem(Fp16("-4.3"), Fp16("-2.1"))},
-                    {FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("2.49"))},
-                    {
-                        FpRoundToIntegralExpr.class,
-                        Fp16("-10.0"),
-                        RoundToIntegral(RNE, Fp16("-10.49"))
-                    },
                     {FpSqrtExpr.class, Fp16("2.1"), Sqrt(RNE, Fp16("4.41"))},
                     {FpSqrtExpr.class, Fp16("3.0"), Sqrt(RNE, Fp16("9.0"))},
                     {FpSqrtExpr.class, Fp16("0.1"), Sqrt(RNE, Fp16("0.01"))},
-                    {
-                        FpToBvExpr.class,
-                        BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16),
-                        ToBv(RTZ, Fp16("10.9"), 16, false)
-                    },
-                    // {FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 3),
-                    //         ToBv(RTZ, Fp16("10.9"), 3, false)},
-                    {
-                        FpToBvExpr.class,
-                        BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16),
-                        ToBv(RTZ, Fp16("10.9"), 16, true)
-                    },
-                    // {FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 4),
-                    //         ToBv(RTZ, Fp16("10.9"), 4, true)},
-                    {
-                        FpToBvExpr.class,
-                        BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16),
-                        ToBv(RTZ, Fp16("-10.9"), 16, true)
-                    },
                     // {FpToBvExpr.class,
                     // BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 4),
                     //         ToBv(RTZ, Fp16("-10.9"), 4, true)},
@@ -269,6 +244,31 @@ public class FpTestUtils {
         return Arrays.asList(
                 new Object[][] {
                     {FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("1.5"))},
+                    {
+                        FpToBvExpr.class,
+                        BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 16),
+                        ToBv(RTZ, Fp16("10.9"), 16, false)
+                    },
+                    // {FpToBvExpr.class, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TEN, 3),
+                    //         ToBv(RTZ, Fp16("10.9"), 3, false)},
+                    {
+                        FpToBvExpr.class,
+                        BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 16),
+                        ToBv(RTZ, Fp16("10.9"), 16, true)
+                    },
+                    // {FpToBvExpr.class, BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN, 4),
+                    //         ToBv(RTZ, Fp16("10.9"), 4, true)},
+                    {
+                        FpToBvExpr.class,
+                        BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.TEN.negate(), 16),
+                        ToBv(RTZ, Fp16("-10.9"), 16, true)
+                    },
+                    {FpRoundToIntegralExpr.class, Fp16("2.0"), RoundToIntegral(RNE, Fp16("2.49"))},
+                    {
+                        FpRoundToIntegralExpr.class,
+                        Fp16("-10.0"),
+                        RoundToIntegral(RNE, Fp16("-10.49"))
+                    },
                 });
     }
 
