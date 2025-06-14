@@ -1,0 +1,13 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-15/cstrcmp_malloc.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-15/cstrcmp_malloc.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_e3_u175b/tmp/.mount_specifmSM9hp/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_e3_u175b/tmp/.mount_specifmSM9hp/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_e3_u175b/tmp/.mount_specifmSM9hp/algorithms/instrumentation_operator.py", line 74, in transform
+Exception: The program sv-benchmarks/c/termination-15/cstrcmp_malloc.i has unsupported types or loop structures

@@ -1,0 +1,669 @@
+Theta/theta-start.sh sv-benchmarks/c/recursified_nla-digbench/recursified_geo2-ll.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio CEGAR --input sv-benchmarks/c/recursified_nla-digbench/recursified_geo2-ll.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/recursified_nla-digbench/recursified_geo2-ll.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: [NONLIN_INT]
+Frontend finished:   (in 369 ms)
+ParsingResult Success
+Alias graph size: 8 -> [1, 1, 1, 0, 1, 2, 3, 4]
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio NONLIN_INT
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret2, (ite
+server:   (=
+server:     (mod
+server:       (mod
+server:         (+
+server:           (mod
+server:             (mod
+server:               (+
+server:                 (mod
+server:                   (mod
+server:                     (+
+server:                       (mod 1 18446744073709551616)
+server:                       (mod
+server:                         (mod
+server:                           (*
+server:                             (mod
+server:                               (deref
+server:                                 func_to_recursive_line_30_to_38_0::x
+server:                                 (mod 0 18446744073709551616)
+server:                                 Int)
+server:                               18446744073709551616)
+server:                             (mod
+server:                               (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                               18446744073709551616))
+server:                           18446744073709551616)
+server:                         18446744073709551616))
+server:                     18446744073709551616)
+server:                   18446744073709551616)
+server:                 (-
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::x
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616)))
+server:               18446744073709551616)
+server:             18446744073709551616)
+server:           (-
+server:             (mod
+server:               (mod
+server:                 (*
+server:                   (mod
+server:                     (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                     18446744073709551616)
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::y
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616))
+server:                 18446744073709551616)
+server:               18446744073709551616)))
+server:         18446744073709551616)
+server:       18446744073709551616)
+server:     (mod 0 18446744073709551616))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@303a5119, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@75b3673, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@1bcb79c2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@d1a10ac, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@6fca2a8f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@31fc71ab, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fcc0a8200@2cfbeac4) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) func_to_recursive_line_30_to_38_0_ret <- (var func_to_recursive_line_30_to_38_0_ret Int) func_to_recursive_line_30_to_38_0::k <- (var func_to_recursive_line_30_to_38_0::k Int) func_to_recursive_line_30_to_38_0::c <- (var func_to_recursive_line_30_to_38_0::c Int) func_to_recursive_line_30_to_38_0::x <- (var func_to_recursive_line_30_to_38_0::x Int) func_to_recursive_line_30_to_38_0::y <- (var func_to_recursive_line_30_to_38_0::y Int) func_to_recursive_line_30_to_38_0::z <- (var func_to_recursive_line_30_to_38_0::z Int) call___VERIFIER_assert_ret2 <- (var call___VERIFIER_assert_ret2 Int) call_func_to_recursive_line_30_to_38_0_ret3 <- (var call_func_to_recursive_line_30_to_38_0_ret3 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret2, (ite
+server:   (=
+server:     (mod
+server:       (mod
+server:         (+
+server:           (mod
+server:             (mod
+server:               (+
+server:                 (mod
+server:                   (mod
+server:                     (+
+server:                       (mod 1 18446744073709551616)
+server:                       (mod
+server:                         (mod
+server:                           (*
+server:                             (mod
+server:                               (deref
+server:                                 func_to_recursive_line_30_to_38_0::x
+server:                                 (mod 0 18446744073709551616)
+server:                                 Int)
+server:                               18446744073709551616)
+server:                             (mod
+server:                               (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                               18446744073709551616))
+server:                           18446744073709551616)
+server:                         18446744073709551616))
+server:                     18446744073709551616)
+server:                   18446744073709551616)
+server:                 (-
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::x
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616)))
+server:               18446744073709551616)
+server:             18446744073709551616)
+server:           (-
+server:             (mod
+server:               (mod
+server:                 (*
+server:                   (mod
+server:                     (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                     18446744073709551616)
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::y
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616))
+server:                 18446744073709551616)
+server:               18446744073709551616)))
+server:         18446744073709551616)
+server:       18446744073709551616)
+server:     (mod 0 18446744073709551616))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@303a5119, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@75b3673, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@1bcb79c2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@d1a10ac, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@6fca2a8f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@31fc71ab, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc09c0a8200@2cfbeac4) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) func_to_recursive_line_30_to_38_0_ret <- (var func_to_recursive_line_30_to_38_0_ret Int) func_to_recursive_line_30_to_38_0::k <- (var func_to_recursive_line_30_to_38_0::k Int) func_to_recursive_line_30_to_38_0::c <- (var func_to_recursive_line_30_to_38_0::c Int) func_to_recursive_line_30_to_38_0::x <- (var func_to_recursive_line_30_to_38_0::x Int) func_to_recursive_line_30_to_38_0::y <- (var func_to_recursive_line_30_to_38_0::y Int) func_to_recursive_line_30_to_38_0::z <- (var func_to_recursive_line_30_to_38_0::z Int) call___VERIFIER_assert_ret2 <- (var call___VERIFIER_assert_ret2 Int) call_func_to_recursive_line_30_to_38_0_ret3 <- (var call_func_to_recursive_line_30_to_38_0_ret3 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=200000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret2, (ite
+server:   (=
+server:     (mod
+server:       (mod
+server:         (+
+server:           (mod
+server:             (mod
+server:               (+
+server:                 (mod
+server:                   (mod
+server:                     (+
+server:                       (mod 1 18446744073709551616)
+server:                       (mod
+server:                         (mod
+server:                           (*
+server:                             (mod
+server:                               (deref
+server:                                 func_to_recursive_line_30_to_38_0::x
+server:                                 (mod 0 18446744073709551616)
+server:                                 Int)
+server:                               18446744073709551616)
+server:                             (mod
+server:                               (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                               18446744073709551616))
+server:                           18446744073709551616)
+server:                         18446744073709551616))
+server:                     18446744073709551616)
+server:                   18446744073709551616)
+server:                 (-
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::x
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616)))
+server:               18446744073709551616)
+server:             18446744073709551616)
+server:           (-
+server:             (mod
+server:               (mod
+server:                 (*
+server:                   (mod
+server:                     (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                     18446744073709551616)
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::y
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616))
+server:                 18446744073709551616)
+server:               18446744073709551616)))
+server:         18446744073709551616)
+server:       18446744073709551616)
+server:     (mod 0 18446744073709551616))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@303a5119, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@75b3673, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@1bcb79c2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@d1a10ac, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@6fca2a8f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@31fc71ab, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f5f180a8200@2cfbeac4) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) func_to_recursive_line_30_to_38_0_ret <- (var func_to_recursive_line_30_to_38_0_ret Int) func_to_recursive_line_30_to_38_0::k <- (var func_to_recursive_line_30_to_38_0::k Int) func_to_recursive_line_30_to_38_0::c <- (var func_to_recursive_line_30_to_38_0::c Int) func_to_recursive_line_30_to_38_0::x <- (var func_to_recursive_line_30_to_38_0::x Int) func_to_recursive_line_30_to_38_0::y <- (var func_to_recursive_line_30_to_38_0::y Int) func_to_recursive_line_30_to_38_0::z <- (var func_to_recursive_line_30_to_38_0::z Int) call___VERIFIER_assert_ret2 <- (var call___VERIFIER_assert_ret2 Int) call_func_to_recursive_line_30_to_38_0_ret3 <- (var call_func_to_recursive_line_30_to_38_0_ret3 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrSolverError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret2, (ite
+server:   (=
+server:     (mod
+server:       (mod
+server:         (+
+server:           (mod
+server:             (mod
+server:               (+
+server:                 (mod
+server:                   (mod
+server:                     (+
+server:                       (mod 1 18446744073709551616)
+server:                       (mod
+server:                         (mod
+server:                           (*
+server:                             (mod
+server:                               (deref
+server:                                 func_to_recursive_line_30_to_38_0::x
+server:                                 (mod 0 18446744073709551616)
+server:                                 Int)
+server:                               18446744073709551616)
+server:                             (mod
+server:                               (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                               18446744073709551616))
+server:                           18446744073709551616)
+server:                         18446744073709551616))
+server:                     18446744073709551616)
+server:                   18446744073709551616)
+server:                 (-
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::x
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616)))
+server:               18446744073709551616)
+server:             18446744073709551616)
+server:           (-
+server:             (mod
+server:               (mod
+server:                 (*
+server:                   (mod
+server:                     (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                     18446744073709551616)
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::y
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616))
+server:                 18446744073709551616)
+server:               18446744073709551616)))
+server:         18446744073709551616)
+server:       18446744073709551616)
+server:     (mod 0 18446744073709551616))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@303a5119, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@75b3673, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@1bcb79c2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@d1a10ac, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@6fca2a8f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@31fc71ab, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fa1480a8200@2cfbeac4) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) func_to_recursive_line_30_to_38_0_ret <- (var func_to_recursive_line_30_to_38_0_ret Int) func_to_recursive_line_30_to_38_0::k <- (var func_to_recursive_line_30_to_38_0::k Int) func_to_recursive_line_30_to_38_0::c <- (var func_to_recursive_line_30_to_38_0::c Int) func_to_recursive_line_30_to_38_0::x <- (var func_to_recursive_line_30_to_38_0::x Int) func_to_recursive_line_30_to_38_0::y <- (var func_to_recursive_line_30_to_38_0::y Int) func_to_recursive_line_30_to_38_0::z <- (var func_to_recursive_line_30_to_38_0::z Int) call___VERIFIER_assert_ret2 <- (var call___VERIFIER_assert_ret2 Int) call_func_to_recursive_line_30_to_38_0_ret3 <- (var call_func_to_recursive_line_30_to_38_0_ret3 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=cvc5:1.0.8, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=cvc5:1.0.8, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret2, (ite
+server:   (=
+server:     (mod
+server:       (mod
+server:         (+
+server:           (mod
+server:             (mod
+server:               (+
+server:                 (mod
+server:                   (mod
+server:                     (+
+server:                       (mod 1 18446744073709551616)
+server:                       (mod
+server:                         (mod
+server:                           (*
+server:                             (mod
+server:                               (deref
+server:                                 func_to_recursive_line_30_to_38_0::x
+server:                                 (mod 0 18446744073709551616)
+server:                                 Int)
+server:                               18446744073709551616)
+server:                             (mod
+server:                               (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                               18446744073709551616))
+server:                           18446744073709551616)
+server:                         18446744073709551616))
+server:                     18446744073709551616)
+server:                   18446744073709551616)
+server:                 (-
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::x
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616)))
+server:               18446744073709551616)
+server:             18446744073709551616)
+server:           (-
+server:             (mod
+server:               (mod
+server:                 (*
+server:                   (mod
+server:                     (deref func_to_recursive_line_30_to_38_0::z (mod 0 4294967296) Int)
+server:                     18446744073709551616)
+server:                   (mod
+server:                     (deref
+server:                       func_to_recursive_line_30_to_38_0::y
+server:                       (mod 0 18446744073709551616)
+server:                       Int)
+server:                     18446744073709551616))
+server:                 18446744073709551616)
+server:               18446744073709551616)))
+server:         18446744073709551616)
+server:       18446744073709551616)
+server:     (mod 0 18446744073709551616))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@303a5119, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@75b3673, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@1bcb79c2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@d1a10ac, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@6fca2a8f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@31fc71ab, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f66300a8200@2cfbeac4) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) func_to_recursive_line_30_to_38_0_ret <- (var func_to_recursive_line_30_to_38_0_ret Int) func_to_recursive_line_30_to_38_0::k <- (var func_to_recursive_line_30_to_38_0::k Int) func_to_recursive_line_30_to_38_0::c <- (var func_to_recursive_line_30_to_38_0::c Int) func_to_recursive_line_30_to_38_0::x <- (var func_to_recursive_line_30_to_38_0::x Int) func_to_recursive_line_30_to_38_0::y <- (var func_to_recursive_line_30_to_38_0::y Int) func_to_recursive_line_30_to_38_0::z <- (var func_to_recursive_line_30_to_38_0::z Int) call___VERIFIER_assert_ret2 <- (var call___VERIFIER_assert_ret2 Int) call_func_to_recursive_line_30_to_38_0_ret3 <- (var call_func_to_recursive_line_30_to_38_0_ret3 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=false, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist (Combinator TargetFirst (Combinator DepthOrder CreationOrder)))) (XcfaSingleExprTraceRefiner ExprTraceNewtonChecker XcfaPrecRefiner))
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 11 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 9
+|  |  Checking trace...
