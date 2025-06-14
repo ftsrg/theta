@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import java.math.BigInteger;
 import org.kframework.mpfr.BigFloat;
-import org.kframework.mpfr.BinaryMathContext;
 
 public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round to integral
 
@@ -61,14 +60,10 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
     public FpLitExpr eval(Valuation val) {
         final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
         BigFloat value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal);
-        BigInteger bigInteger = value.toBigInteger();
+        BigInteger bigInteger =
+                value.toBigInteger(FpUtils.getMathContextRoundingMode(roundingMode));
         BigFloat round =
-                value.round(
-                        new BinaryMathContext(
-                                bigInteger.bitLength(),
-                                opVal.getType().getExponent(),
-                                FpUtils.getMathContextRoundingMode(roundingMode)));
-        round = round.round(FpUtils.getMathContext(getType(), roundingMode));
+                new BigFloat(bigInteger, FpUtils.getMathContext(opVal.getType(), roundingMode));
         FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.getType());
         return fpLitExpr;
     }
