@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import org.kframework.mpfr.BigFloat;
@@ -122,5 +123,17 @@ public final class FpUtils {
                 new BigFloat(
                         value, new BinaryMathContext(type.getSignificand(), type.getExponent())),
                 type);
+    }
+
+    public static BigInteger round(final BigFloat value, final FpRoundingMode roundingMode) {
+        RoundingMode r = FpUtils.getMathContextRoundingMode(roundingMode);
+        try {
+            Method method = value.getClass().getMethod("toBigInteger", RoundingMode.class);
+            return (BigInteger) method.invoke(value, r);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("No suitable toBigInteger method found on BigFloat.", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invoke toBigInteger method on BigFloat.", e);
+        }
     }
 }

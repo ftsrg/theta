@@ -97,8 +97,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
         final FpLitExpr op = (FpLitExpr) this.op.eval(val);
 
         BigInteger bigIntegerValue =
-                FpUtils.fpLitExprToBigFloat(roundingMode, op)
-                        .toBigInteger(FpUtils.getMathContextRoundingMode(roundingMode));
+                FpUtils.round(FpUtils.fpLitExprToBigFloat(roundingMode, op), roundingMode);
         if (sgn) {
             return BvUtils.bigIntegerToSignedBvLitExpr(bigIntegerValue, size);
         } else {
