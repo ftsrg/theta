@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Recursive, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sat, 2024-08-03 11:33:03 UTC
+tool:                    Theta 6.3.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az585-844
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3227.615 MHz
+ram:                     16757.334016 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Recursive
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------
+recursive-simple/id_o100.yml                                                           Parsing OK                       2.14        0.84        None
+recursive-simple/id2_i5_o5-2.yml                                                       Parsing OK                       2.17        0.86        None
+recursified_nla-digbench/recursified_geo2-ll.yml                                       Parsing OK                       2.43        0.94        None
+recursive/recHanoi03-2.yml                                                             Parsing OK                       2.11        0.84        None
+recursified_nla-digbench/recursified_lcm2.yml                                          Parsing OK                       2.51        0.97        None
+recursive-simple/id_b3_o2-2.yml                                                        Parsing OK                       2.19        0.87        None
+recursified_nla-digbench/recursified_ps3-ll.yml                                        Parsing OK                       2.43        0.94        None
+recursive-simple/afterrec-2.yml                                                        Parsing OK                       2.11        0.88        None
+recursive-simple/id_i10_o10-2.yml                                                      Parsing OK                       2.12        0.86        None
+recursified_loop-crafted/recursified_simple_array_index_value_1-2.yml                  ERROR (frontend failed)          1.78        0.73        None
+recursified_loop-simple/recursified_nested_1b.yml                                      Parsing OK                       2.17        0.88        None
+recursive/EvenOdd03.yml                                                                Parsing OK                       2.18        0.86        None
+recursified_nla-digbench/recursified_egcd2-ll.yml                                      ERROR (frontend failed)          2.15        0.93        None
+recursive-simple/id_o200.yml                                                           Parsing OK                       2.14        0.87        None
+recursified_nla-digbench/recursified_geo1-u.yml                                        Parsing OK                       2.46        0.96        None
+recursive/BallRajamani-SPIN2000-Fig1.yml                                               Parsing OK                       2.12        0.83        None
+recursive-simple/id2_b3_o5.yml                                                         Parsing OK                       2.21        0.87        None
+recursified_loop-invariants/recursified_eq2.yml                                        Parsing OK                       2.19        0.87        None
+recursified_loop-simple/recursified_nested_6.yml                                       ERROR (frontend failed)          1.77        0.74        None
+recursified_nla-digbench/recursified_ps6-ll.yml                                        Parsing OK                       2.63        0.98        None
+recursified_nla-digbench/recursified_ps5-ll.yml                                        Parsing OK                       2.60        1.01        None
+recursified_nla-digbench/recursified_divbin.yml                                        Parsing OK                       2.49        0.95        None
+recursive-simple/id_i25_o25-2.yml                                                      Parsing OK                       2.09        0.84        None
+recursified_loop-simple/recursified_nested_2.yml                                       ERROR (frontend failed)          1.68        0.70        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+lhb-reducer.yml    ERROR (frontend failed)          1.77        0.74        None
+recursive-simple/fibo_2calls_5-2.yml                                                   Parsing OK                       2.14        0.84        None
+recursive-simple/fibo_15-2.yml                                                         Parsing OK                       2.13        0.87        None
+recursive/Addition02.yml                                                               Parsing OK                       2.26        0.89        None
+recursive/Fibonacci03.yml                                                              Parsing OK                       2.16        0.86        None
+recursive/Fibonacci05.yml                                                              Parsing OK                       2.15        0.87        None
+recursive-simple/id_b5_o10-2.yml                                                       Parsing OK                       2.16        0.87        None
+recursive-simple/sum_15x0-2.yml                                                        Parsing OK                       2.15        0.85        None
+recursive-simple/id2_b2_o3.yml                                                         Parsing OK                       2.17        0.84        None
+recursified_loop-simple/recursified_deep-nested.yml                                    ERROR (frontend failed)          2.01        0.80        None
+recursified_loop-invariants/recursified_linear-inequality-inv-a.yml                    Parsing OK                       2.33        0.91        None
+recursified_nla-digbench/recursified_hard-ll.yml                                       Parsing OK                       2.53        0.95        None
+recursified_nla-digbench/recursified_mannadiv.yml                                      Parsing OK                       2.48        0.95        None
+recursified_nla-digbench/recursified_ps2-ll.yml                                        Parsing OK                       2.42        0.93        None
+recursified_loop-crafted/recursified_simple_vardep_1.yml                               Parsing OK                       2.23        0.88        None
+recursive-simple/fibo_25-1.yml                                                         Parsing OK                       2.17        0.87        None
+recursive-simple/fibo_2calls_5-1.yml                                                   Parsing OK                       2.21        0.87        None
+recursive-simple/id2_b5_o10.yml                                                        Parsing OK                       2.23        0.90        None
+recursive-simple/fibo_5-2.yml                                                          Parsing OK                       2.10        0.86        None
+recursified_loop-invariants/recursified_mod4.yml                                       Parsing OK                       2.10        0.86        None
+recursive/McCarthy91-2.yml                                                             Parsing OK                       2.21        0.90        None
+recursive-simple/fibo_20-1.yml                                                         Parsing OK                       2.15        0.87        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+nlh-reducer.yml    ERROR (frontend failed)          1.75        0.72        None
+recursified_loop-simple/recursified_nested_4.yml                                       ERROR (frontend failed)          1.79        0.73        None
+recursive-simple/afterrec-1.yml                                                        Parsing OK                       2.09        0.87        None
+recursive-simple/id_b3_o5-2.yml                                                        Parsing OK                       2.11        0.86        None
+----------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                              done                           108.86       48.57           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 80)

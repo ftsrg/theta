@@ -1,0 +1,31 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ECA
+date:                    Sun, 2025-06-15 10:27:54 UTC
+tool:                    Theta 6.16.2
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmxyh4eaekms
+os:                      Linux-6.11.0-1015-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3249.852 MHz
+ram:                     16772.673536000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ECA
+Run set 1 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------
+eca-rers2012/Problem01_label00.yml     TIMEOUT                         40.33       24.37        None
+eca-rers2012/Problem01_label01.yml     TIMEOUT                         40.69       22.79        None

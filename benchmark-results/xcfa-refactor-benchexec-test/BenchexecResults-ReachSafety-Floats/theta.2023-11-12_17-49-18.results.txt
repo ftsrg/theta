@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Floats, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:49:18 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1245-552
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3116.984 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Floats
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                          status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------
+float-benchs/float_double.yml                      true                             2.27        0.90        None
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml    ERROR (solver error)            23.01       21.48        None
+float-benchs/float_int_inv_square.yml              false(unreach-call)              6.44        4.56        None
+floats-cdfpl/square_3.yml                          TIMEOUT                        120.18      118.54        None
+floats-cbmc-regression/float11.yml                 true                             2.68        1.02        None
+float-benchs/nan_double.yml                        false(unreach-call)              2.76        1.08        None
+float-benchs/Rump_double.yml                       true                            42.44       40.92        None
+floats-cdfpl/newton_2_2.yml                        TIMEOUT                        120.22      118.57        None
+floats-cdfpl/sine_3.yml                            TIMEOUT                        120.22      118.58        None
+float-benchs/zonotope_3.c.v+lhb-reducer.yml        TIMEOUT                        120.22      117.70        None
+----------------------------------------------------------------------------------------------------------------
+Run set 1                                          done                            80.11      544.80           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               5
+    correct true:        3
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               5
+  Score:                 8 (max: 16)

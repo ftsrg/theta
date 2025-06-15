@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call, SV-COMP24_no-data-race.NoDataRace-Main, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:51:55 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az470-368
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     Intel Xeon Platinum 8171M CPU @ 2.60GHz
+- cores:                 2
+- max frequency:         2095.078 MHz
+ram:                     7258.226688 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call
+Run set 1 of 4: skipped because it has no files
+
+
+SV-COMP24_no-data-race.NoDataRace-Main
+Run set 2 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                               status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------
+pthread-atomic/read_write_lock-1.yml    ERROR (server error)             3.43        2.00        None
+pthread-wmm/rfi003_tso.yml              ERROR (server error)             3.65        2.09        None
+pthread/lazy01.yml                      ERROR (server error)             3.24        1.89        None
+pthread-wmm/mix000.oepc.yml             ERROR (server error)             3.36        1.88        None
+pthread-wmm/safe032_tso.yml             ERROR (server error)             3.43        1.91        None
+pthread-wmm/safe030_tso.yml             ERROR (server error)             3.48        1.96        None
+pthread-wmm/safe018_power.opt.yml       ERROR (server error)             3.43        1.90        None
+pthread-wmm/safe026_tso.yml             ERROR (server error)             3.24        1.80        None
+pthread/fib_safe-11.yml                 ERROR (server error)             3.04        1.72        None
+pthread-wmm/safe024_tso.yml             ERROR (server error)             3.45        1.94        None
+-----------------------------------------------------------------------------------------------------
+Run set 2                               done                            33.79       20.15           -
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              10
+  Score:                 0 (max: 20)
