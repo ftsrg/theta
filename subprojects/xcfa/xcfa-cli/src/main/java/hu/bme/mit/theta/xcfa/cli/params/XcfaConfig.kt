@@ -301,7 +301,7 @@ data class CegarRefinerConfig(
 ) : Config
 
 data class HornConfig(
-  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
   @Parameter(
     names = ["--validate-solver"],
     description =
@@ -316,7 +316,7 @@ data class HornConfig(
 ) : SpecBackendConfig
 
 data class LassoValidationConfig(
-  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
   @Parameter(
     names = ["--validate-solver"],
     description =
@@ -432,7 +432,7 @@ data class OcConfig(
   @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
-  var smtSolver: String = "Z3:4.13",
+  var smtSolver: String = "Z3:new",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

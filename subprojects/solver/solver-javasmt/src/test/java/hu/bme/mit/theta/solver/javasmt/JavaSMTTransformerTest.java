@@ -23,6 +23,7 @@ import static org.junit.runners.Parameterized.Parameters;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
@@ -94,6 +95,19 @@ public class JavaSMTTransformerTest {
     public void testRoundtripTransformer() throws Exception {
         // Sanity check
         assertNotNull(expr);
+
+        assumeFalse(
+                solver == Solvers.CVC5
+                        && hasExpr(
+                                expr,
+                                e ->
+                                        e instanceof QuantifiedExpr
+                                                && ((QuantifiedExpr) e)
+                                                                .getParamDecls().stream()
+                                                                        .map(Decl::getType)
+                                                                        .collect(Collectors.toSet())
+                                                                        .size()
+                                                        > 1));
         assumeFalse(
                 solver == Solvers.CVC5
                         && hasType(

@@ -28,6 +28,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ToInt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
@@ -37,6 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.ForallExpr;
 import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,6 +51,7 @@ public class BoolTestUtils {
         final var p1 = Param("x", Int());
         final var p2 = Param("y", Int());
         final var p3 = Param("z", Int());
+        final var p4 = Param("w", BvType.of(32));
         final var c1 = Const("c", Int());
 
         return Arrays.asList(
@@ -85,6 +88,19 @@ public class BoolTestUtils {
                                                 List.of(
                                                         Lt(p1.getRef(), p2.getRef()),
                                                         Lt(p2.getRef(), p3.getRef()),
+                                                        Lt(p3.getRef(), p1.getRef())))))
+                    },
+                    {
+                        ExistsExpr.class,
+                        False(),
+                        Exists(
+                                List.of(p1, p4),
+                                Exists(
+                                        List.of(p3),
+                                        And(
+                                                List.of(
+                                                        Lt(p1.getRef(), ToInt(p4.getRef())),
+                                                        Lt(ToInt(p4.getRef()), p3.getRef()),
                                                         Lt(p3.getRef(), p1.getRef())))))
                     },
                 });
