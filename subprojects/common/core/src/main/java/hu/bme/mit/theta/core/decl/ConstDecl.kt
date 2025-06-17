@@ -13,28 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl;
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.core.decl
+
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.Serializable
 
 /**
- * Abstract base class for constants. Use {@link BasicConstDecl} for a basic constant, or {@link
- * IndexedConstDecl} if the constant belongs to a variable for some index (e.g., during unfolding
+ * Abstract base class for constants. Use [BasicConstDecl] for a basic constant, or
+ * [IndexedConstDecl] if the constant belongs to a variable for some index (e.g., during unfolding
  * paths).
  *
  * @param <DeclType>
  */
-public abstract class ConstDecl<DeclType extends Type> extends Decl<DeclType> {
-
-    private static final String DECL_LABEL = "Const";
-
-    ConstDecl(final String name, final DeclType type) {
-        super(name, type);
+@Serializable
+abstract class ConstDecl<DeclType : Type> : Decl<DeclType>() {
+    companion object {
+        private const val DECL_LABEL = "Const"
     }
 
-    @Override
-    public final String toString() {
-        return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
-    }
+    override fun toString(): String =
+        Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 }

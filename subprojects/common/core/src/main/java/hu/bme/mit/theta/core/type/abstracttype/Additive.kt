@@ -13,18 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.core.type.abstracttype
 
-public interface Additive<ExprType extends Additive<ExprType>> extends Type {
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 
-    AddExpr<ExprType> Add(Iterable<? extends Expr<ExprType>> ops);
+abstract class Additive<ExprType : Additive<ExprType>> : Type() {
 
-    SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
+    abstract fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
 
-    PosExpr<ExprType> Pos(Expr<ExprType> op);
+    abstract fun Sub(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>): SubExpr<ExprType>
 
-    NegExpr<ExprType> Neg(Expr<ExprType> op);
+    abstract fun Pos(op: Expr<ExprType>): PosExpr<ExprType>
+
+    abstract fun Neg(op: Expr<ExprType>): NegExpr<ExprType>
 }

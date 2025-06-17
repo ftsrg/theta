@@ -13,69 +13,38 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.Serializable
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import java.util.List;
+/**
+ * Base class for expressions with a single operand (unary expressions).
+ *
+ * @param ExprType The type of the expression, must be a subtype of [Type]
+ * @param OpType The type of the operand
+ */
+@Serializable
+abstract class UnaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-public abstract class UnaryExpr<OpType extends Type, ExprType extends Type>
-        implements Expr<ExprType> {
+    abstract val op: Expr<OpType>
 
-    private final Expr<OpType> op;
+    override val arity: Int get() = 1
 
-    private volatile int hashCode = 0;
+    override val ops: List<Expr<*>>
+        get() = listOf(op)
 
-    public UnaryExpr(final Expr<OpType> op) {
-        this.op = checkNotNull(op);
+    override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
+        require(ops.size == 1) { "Operands must have size 1 for unary expression" }
+        val opType = op.type
+        val newOp = TypeUtils.cast(ops[0], opType)
+        return with(newOp)
     }
 
-    public final Expr<OpType> getOp() {
-        return op;
-    }
+    override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().add(op).toString()
 
-    @Override
-    public final List<Expr<OpType>> getOps() {
-        return ImmutableList.of(op);
-    }
+    abstract fun with(op: Expr<OpType>): UnaryExpr<OpType, ExprType>
 
-    @Override
-    public final UnaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
-        checkNotNull(ops);
-        checkArgument(ops.size() == 1);
-        final OpType opType = op.getType();
-        final Expr<OpType> newOp = TypeUtils.cast(ops.get(0), opType);
-        return with(newOp);
-    }
-
-    @Override
-    public int getArity() {
-        return 1;
-    }
-
-    @Override
-    public final int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = getHashSeed();
-            result = 37 * result + getOp().hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public final String toString() {
-        return Utils.lispStringBuilder(getOperatorLabel()).body().add(op).toString();
-    }
-
-    public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);
-
-    protected abstract int getHashSeed();
-
-    public abstract String getOperatorLabel();
+    protected abstract val operatorLabel: String
 }

@@ -13,70 +13,39 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.Serializable
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import java.util.List;
+/**
+ * Base class for expressions with multiple operands of the same type.
+ *
+ * @param OpType The type of the operands
+ * @param ExprType The type of the expression
+ */
+@Serializable
+abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type>
-        implements Expr<ExprType> {
+    abstract override val ops: List<Expr<OpType>>
 
-    private final List<Expr<OpType>> ops;
+    override val arity: Int
+        get() = ops.size
 
-    private volatile int hashCode = 0;
-
-    protected MultiaryExpr(final Iterable<? extends Expr<OpType>> ops) {
-        checkNotNull(ops);
-        this.ops = ImmutableList.copyOf(ops);
-    }
-
-    @Override
-    public final int getArity() {
-        return ops.size();
-    }
-
-    @Override
-    public final List<Expr<OpType>> getOps() {
-        return ops;
-    }
-
-    @Override
-    public MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
-        checkNotNull(ops);
+    override fun withOps(ops: List<Expr<*>>): MultiaryExpr<OpType, ExprType> {
         if (ops.isEmpty()) {
-            return with(ImmutableList.of());
+            return with(listOf())
         } else {
-            final OpType opType = getOps().get(0).getType();
-            final List<Expr<OpType>> newOps =
-                    ops.stream().map(op -> TypeUtils.cast(op, opType)).collect(toImmutableList());
-            return with(newOps);
+            val opType: OpType = this.ops[0].type
+            val newOps: List<Expr<OpType>> = ops.map { op: Expr<*> -> TypeUtils.cast(op, opType) }
+            return with(newOps)
         }
     }
 
-    @Override
-    public final int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = getHashSeed();
-            result = 31 * result + getOps().hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
+    override fun toString(): String = Utils.lispStringBuilder(getOperatorLabel()).body().addAll(ops).toString()
 
-    @Override
-    public final String toString() {
-        return Utils.lispStringBuilder(getOperatorLabel()).body().addAll(ops).toString();
-    }
+    abstract fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
 
-    public abstract MultiaryExpr<OpType, ExprType> with(final Iterable<? extends Expr<OpType>> ops);
-
-    protected abstract int getHashSeed();
-
-    public abstract String getOperatorLabel();
+    abstract fun getOperatorLabel(): String
 }

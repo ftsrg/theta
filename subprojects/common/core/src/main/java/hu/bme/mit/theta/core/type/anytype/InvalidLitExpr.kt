@@ -13,40 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.anytype;
+package hu.bme.mit.theta.core.type.anytype
 
-import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public class InvalidLitExpr<ExprType extends Type> extends NullaryExpr<ExprType>
-        implements LitExpr<ExprType> {
+/**
+ * Represents an invalid literal expression.
+ *
+ * @param ExprType The type of the expression
+ */
+@Serializable
+@SerialName("InvalidLit")
+data class InvalidLitExpr<ExprType : Type>(
+    override val type: ExprType
+) : NullaryExpr<ExprType>(), LitExpr<ExprType> {
 
-    private final ExprType type;
+    override fun eval(`val`: Valuation): LitExpr<ExprType> = this
 
-    public InvalidLitExpr(ExprType type) {
-        this.type = Preconditions.checkNotNull(type);
-    }
+    override val isInvalid: Boolean = true
 
-    @Override
-    public ExprType getType() {
-        return type;
-    }
-
-    @Override
-    public LitExpr<ExprType> eval(Valuation val) {
-        return this;
-    }
-
-    @Override
-    public boolean isInvalid() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return false;
-    }
+    override fun equals(other: Any?): Boolean = false
 }

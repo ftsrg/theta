@@ -18,6 +18,7 @@ plugins {
     id("antlr-grammar")
     id("java-test-fixtures")
     id("kotlin-common")
+    id("kaml-serialization")
 }
 
 dependencies {

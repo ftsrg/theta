@@ -13,18 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl;
 
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.core.decl
+
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * A basic constant declaration that can be directly passed to the SMT solver.
  *
  * @param <DeclType>
  */
-public final class BasicConstDecl<DeclType extends Type> extends ConstDecl<DeclType> {
-
-    BasicConstDecl(final String name, final DeclType type) {
-        super(name, type);
-    }
-}
+@Serializable
+@SerialName("BasicConstDecl")
+data class BasicConstDecl<DeclType : Type>(
+    override val name: String,
+    override val type: DeclType
+) : ConstDecl<DeclType>()

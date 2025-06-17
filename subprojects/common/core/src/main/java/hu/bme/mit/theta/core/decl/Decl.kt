@@ -13,58 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
+package hu.bme.mit.theta.core.decl
 
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Exprs.Ref
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import kotlinx.serialization.Serializable
 
-public abstract class Decl<DeclType extends Type> {
+@Serializable
+abstract class Decl<DeclType : Type> {
 
-    private static final int HASH_SEED = 5351;
-    private volatile int hashCode = 0;
+    abstract val name: String
+    abstract val type: DeclType
 
-    private final String name;
-    private final DeclType type;
-    private final RefExpr<DeclType> ref;
-
-    public Decl(final String name, final DeclType type) {
-        checkNotNull(name);
-        checkArgument(!name.isEmpty());
-        this.name = name;
-        this.type = checkNotNull(type);
-        this.ref = Ref(this);
-    }
-
-    public final String getName() {
-        return name;
-    }
-
-    public final DeclType getType() {
-        return type;
-    }
-
-    public final RefExpr<DeclType> getRef() {
-        return ref;
-    }
-
-    @Override
-    public final int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + getName().hashCode();
-            result = 31 * result + getType().hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public final boolean equals(final Object obj) {
-        return this == obj;
-    }
+    val ref: RefExpr<DeclType> by lazy { Ref(this) }
 }

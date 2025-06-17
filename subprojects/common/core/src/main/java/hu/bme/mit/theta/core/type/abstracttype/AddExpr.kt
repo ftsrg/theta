@@ -13,28 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.abstracttype;
+package hu.bme.mit.theta.core.type.abstracttype
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.MultiaryExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
-import java.util.List;
+/**
+ * Abstract class for additive expressions with multiple operands.
+ */
+@Serializable
+abstract class AddExpr<ExprType : Additive<ExprType>> : MultiaryExpr<ExprType, ExprType>() {
 
-public abstract class AddExpr<ExprType extends Additive<ExprType>>
-        extends MultiaryExpr<ExprType, ExprType> {
+    companion object {
 
-    protected AddExpr(final Iterable<? extends Expr<ExprType>> ops) {
-        super(ops);
-    }
-
-    public static <ExprType extends Additive<ExprType>> AddExpr<?> create2(
-            final List<? extends Expr<?>> ops) {
-        checkArgument(!ops.isEmpty());
-        @SuppressWarnings("unchecked")
-        final ExprType type = (ExprType) ops.get(0).getType();
-        return type.Add(ops.stream().map(op -> cast(op, type)).collect(toImmutableList()));
+        fun <ExprType : Additive<ExprType>> create2(ops: List<Expr<*>>): AddExpr<*> {
+            require(ops.isNotEmpty())
+            @Suppress("UNCHECKED_CAST")
+            val type = ops[0].type as ExprType
+            return type.Add(ops.map { cast(it, type) })
+        }
     }
 }

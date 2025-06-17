@@ -13,84 +13,54 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.anytype;
+package hu.bme.mit.theta.core.type.anytype
 
-import static com.google.common.base.Preconditions.checkState;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import java.util.List;
-import java.util.Objects;
+/**
+ * Represents a reference to an expression.
+ *
+ * @param A The type of the reference
+ * @param T The type of the expression
+ * @property expr The referenced expression
+ * @property type The type of the reference
+ */
+@Serializable
+@SerialName(Reference.OPERATOR_LABEL)
+data class Reference<A : Type, T : Type>(
+    val expr: Expr<T>,
+    override val type: A
+) : Expr<A> {
 
-public final class Reference<A extends Type, T extends Type> implements Expr<A> {
+    companion object {
+        internal const val OPERATOR_LABEL = "ref"
 
-    private static final String OPERATOR_LABEL = "ref";
-    private final Expr<T> expr;
-    private final A type;
-
-    private Reference(Expr<T> expr, A type) {
-        this.expr = expr;
-        this.type = type;
+        fun <A : Type, T : Type> of(expr: Expr<T>, type: A): Reference<A, T> = Reference(expr, type)
     }
 
-    public Expr<T> getExpr() {
-        return expr;
-    }
+    override val arity: Int = 1
 
-    public static <A extends Type, T extends Type> Reference<A, T> of(Expr<T> expr, A type) {
-        return new Reference<>(expr, type);
-    }
+    override val ops: List<Expr<*>> = listOf(expr)
 
-    @Override
-    public int getArity() {
-        return 1;
-    }
+    override fun eval(`val`: Valuation): LitExpr<A> =
+        throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
 
-    @Override
-    public A getType() {
-        return type;
-    }
-
-    @Override
-    public LitExpr<A> eval(Valuation val) {
-        throw new IllegalStateException(
-                "Reference/Dereference expressions are not meant to be evaluated!");
-    }
-
-    @Override
-    public List<? extends Expr<?>> getOps() {
-        return List.of(expr);
-    }
-
-    @Override
-    public Expr<A> withOps(List<? extends Expr<?>> ops) {
-        checkState(ops.size() == 1);
-        checkState(
-                ops.get(0) instanceof RefExpr<?>
-                        && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>,
-                "Don't transform references to constants.");
-        return Reference.of((Expr<T>) ops.get(0), type);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(expr, type);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Reference<?, ?> that) {
-            return Objects.equals(this.expr, that.expr) && Objects.equals(this.type, that.type);
+    override fun withOps(ops: List<Expr<*>>): Expr<A> {
+        require(ops.size == 1) { "Reference must have exactly one operand" }
+        require(ops[0] is RefExpr<*> && (ops[0] as RefExpr<*>).decl is VarDecl<*>) {
+            "Don't transform references to constants."
         }
-        return false;
+        @Suppress("UNCHECKED_CAST")
+        return Reference(ops[0] as Expr<T>, type)
     }
 
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getExpr()).add(type).toString();
-    }
+    override fun toString(): String =
+        Utils.lispStringBuilder(OPERATOR_LABEL).body().add(expr).add(type).toString()
 }

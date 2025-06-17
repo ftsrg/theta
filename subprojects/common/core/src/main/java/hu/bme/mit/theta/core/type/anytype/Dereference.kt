@@ -13,122 +13,80 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.anytype;
+package hu.bme.mit.theta.core.type.anytype
 
-import static com.google.common.base.Preconditions.checkState;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.inttype.IntType
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+/**
+ * Represents a dereference expression for array access.
+ *
+ * @param A The array type
+ * @param O The offset type
+ * @param T The element type
+ * @property array The array expression
+ * @property offset The offset expression
+ * @property type The type of the dereferenced element
+ * @property uniquenessIdx Optional uniqueness index for SMT encoding
+ */
+@Serializable
+@SerialName(Dereference.OPERATOR_LABEL)
+data class Dereference<A : Type, O : Type, T : Type>(
+    val array: Expr<A>,
+    val offset: Expr<O>,
+    override val type: T,
+    val uniquenessIdx: Expr<IntType>? = null
+) : Expr<T> {
 
-public final class Dereference<A extends Type, O extends Type, T extends Type> implements Expr<T> {
+    companion object {
 
-    private static final String OPERATOR_LABEL = "deref";
-    private final Expr<A> array;
-    private final Expr<O> offset;
-    private final T type;
+        internal const val OPERATOR_LABEL = "deref"
 
-    private final Optional<Expr<IntType>> uniquenessIdx;
+        fun <A : Type, O : Type, T : Type> of(
+            array: Expr<A>,
+            offset: Expr<O>,
+            type: T
+        ): Dereference<A, O, T> = Dereference(array, offset, type)
 
-    private Dereference(Expr<A> array, Expr<O> offset, T type) {
-        this.array = array;
-        this.offset = offset;
-        this.type = type;
-        uniquenessIdx = Optional.empty();
+        private fun <A : Type, O : Type, T : Type> of(
+            array: Expr<A>,
+            offset: Expr<O>,
+            uniqueness: Expr<IntType>,
+            type: T
+        ): Dereference<A, O, T> = Dereference(array, offset, type, uniqueness)
     }
 
-    private Dereference(Expr<A> array, Expr<O> offset, Expr<IntType> uniqueness, T type) {
-        this.array = array;
-        this.offset = offset;
-        this.type = type;
-        this.uniquenessIdx = Optional.ofNullable(uniqueness);
-    }
+    fun withUniquenessExpr(expr: Expr<IntType>): Dereference<A, O, T> =
+        of(array, offset, expr, type)
 
-    public Expr<A> getArray() {
-        return array;
-    }
+    override val arity: Int = 3
 
-    public Expr<O> getOffset() {
-        return offset;
-    }
+    override val ops: List<Expr<*>> =
+        if (uniquenessIdx != null) listOf(array, offset, uniquenessIdx)
+        else listOf(array, offset)
 
-    public static <A extends Type, O extends Type, T extends Type> Dereference<A, O, T> of(
-            Expr<A> array, Expr<O> offset, T type) {
-        return new Dereference<>(array, offset, type);
-    }
+    override fun eval(`val` : Valuation): LitExpr<T> =
+        throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
 
-    private static <A extends Type, O extends Type, T extends Type> Dereference<A, O, T> of(
-            Expr<A> array, Expr<O> offset, Expr<IntType> uniqueness, T type) {
-        return new Dereference<>(array, offset, uniqueness, type);
-    }
-
-    public Dereference<A, O, T> withUniquenessExpr(Expr<IntType> expr) {
-        return Dereference.of(array, offset, expr, type); // TODO: this kills the stuck check
-    }
-
-    @Override
-    public int getArity() {
-        return 3;
-    }
-
-    @Override
-    public T getType() {
-        return type;
-    }
-
-    @Override
-    public LitExpr<T> eval(Valuation val) {
-        throw new IllegalStateException(
-                "Reference/Dereference expressions are not meant to be evaluated!");
-    }
-
-    @Override
-    public List<? extends Expr<?>> getOps() {
-        return uniquenessIdx.isPresent()
-                ? List.of(array, offset, uniquenessIdx.get())
-                : List.of(array, offset);
-    }
-
-    @Override
-    public Expr<T> withOps(List<? extends Expr<?>> ops) {
-        checkState(ops.size() == 3 || ops.size() == 2);
-        if (ops.size() == 3) {
-            return Dereference.of(ops.get(0), ops.get(1), (Expr<IntType>) ops.get(2), type);
-        } else {
-            return Dereference.of(ops.get(0), ops.get(1), type);
+    @Suppress("UNCHECKED_CAST")
+    override fun withOps(ops: List<Expr<*>>): Expr<T> {
+        require(ops.size == 2 || ops.size == 3) { "Dereference must have 2 or 3 operands" }
+        return when (ops.size) {
+            2 -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, type)
+            else -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, ops[2] as Expr<IntType>, type)
         }
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(array, offset, uniquenessIdx, type);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Dereference<?, ?, ?> that) {
-            return Objects.equals(this.array, that.array)
-                    && Objects.equals(this.offset, that.offset)
-                    && Objects.equals(this.uniquenessIdx, that.uniquenessIdx)
-                    && Objects.equals(this.type, that.type);
-        }
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        var base = Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getArray()).add(getOffset());
-        uniquenessIdx.ifPresent(base::add);
-        return base.add(type).toString();
-    }
-
-    public Optional<Expr<IntType>> getUniquenessIdx() {
-        return uniquenessIdx;
-    }
+    override fun toString(): String =
+        Utils.lispStringBuilder(OPERATOR_LABEL)
+            .body()
+            .addAll(ops)
+            .add(type)
+            .toString()
 }

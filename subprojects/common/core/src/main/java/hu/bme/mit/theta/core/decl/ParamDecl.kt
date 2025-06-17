@@ -13,21 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl;
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.core.decl
 
-public final class ParamDecl<DeclType extends Type> extends Decl<DeclType> {
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-    private static final String DECL_LABEL = "Param";
+@Serializable
+@SerialName(ParamDecl.DECL_LABEL)
+data class ParamDecl<DeclType : Type>(
+    override val name: String,
+    override val type: DeclType
+) : Decl<DeclType>() {
 
-    ParamDecl(final String name, final DeclType type) {
-        super(name, type);
+    companion object {
+
+        internal const val DECL_LABEL: String = "Param"
     }
 
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
-    }
+    override fun toString(): String =
+        Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 }

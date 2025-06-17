@@ -13,16 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.abstracttype;
+package hu.bme.mit.theta.core.type.abstracttype
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.UnaryExpr
+import kotlinx.serialization.Serializable
 
-public abstract class CastExpr<SourceType extends Castable<SourceType>, TargetType extends Type>
-        extends UnaryExpr<SourceType, TargetType> {
+/**
+ * Abstract class for cast expressions with a single operand.
+ */
+@Serializable
+abstract class CastExpr<SourceType : Castable<SourceType>, TargetType : Type> : UnaryExpr<SourceType, TargetType>()
 
-    public CastExpr(final Expr<SourceType> op) {
-        super(op);
-    }
-}

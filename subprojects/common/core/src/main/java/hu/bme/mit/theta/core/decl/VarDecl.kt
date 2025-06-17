@@ -13,49 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+package hu.bme.mit.theta.core.decl
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
-import hu.bme.mit.theta.core.type.Type;
-import java.util.Map;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Represents a variable declaration. Variables cannot be directly passed to the SMT solver, they
- * must be replaced with constants for a given index ({@link IndexedConstDecl}). See also {@link
- * hu.bme.mit.theta.core.utils.PathUtils}.
+ * must be replaced with constants for a given index ([IndexedConstDecl]). See also [hu.bme.mit.theta.core.utils.PathUtils].
  *
  * @param <DeclType>
  */
-public class VarDecl<DeclType extends Type> extends Decl<DeclType> {
+@Serializable
+@SerialName(VarDecl.DECL_LABEL)
+data class VarDecl<DeclType : Type>(
+    override val name: String,
+    override val type: DeclType
+) : Decl<DeclType>() {
 
-    private static final String DECL_LABEL = "var";
+    companion object {
 
-    private final Map<Integer, IndexedConstDecl<DeclType>> indexToConst;
+        internal const val DECL_LABEL: String = "var"
 
-    VarDecl(final String name, final DeclType type) {
-        super(name, type);
-        indexToConst = Containers.createMap();
+        fun <T : Type> copyOf(from: VarDecl<T>): VarDecl<T> = VarDecl(from.name, from.type)
     }
 
-    public static <DeclType extends Type> VarDecl<DeclType> copyOf(VarDecl<DeclType> from) {
-        return new VarDecl<>(from.getName(), from.getType());
+    @Transient
+    private val indexToConst = mutableMapOf<Int, IndexedConstDecl<DeclType>>()
+
+    fun getConstDecl(index: Int): IndexedConstDecl<DeclType> {
+        require(index >= 0) { "Index must be non-negative" }
+        return indexToConst.getOrPut(index) { IndexedConstDecl(this, index) }
     }
 
-    public IndexedConstDecl<DeclType> getConstDecl(final int index) {
-        checkArgument(index >= 0);
-        IndexedConstDecl<DeclType> constDecl = indexToConst.get(index);
-        if (constDecl == null) {
-            constDecl = new IndexedConstDecl<>(this, index);
-            indexToConst.put(index, constDecl);
-        }
-        return constDecl;
-    }
-
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
-    }
+    override fun toString(): String =
+        Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 }

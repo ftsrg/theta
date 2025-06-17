@@ -13,6 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-public interface LitExpr<ExprType extends Type> extends Expr<ExprType> {}
+import hu.bme.mit.theta.core.model.Valuation
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+
+/**
+ * Interface for literal expressions (constants).
+ *
+ * @param ExprType The type of the literal, must be a subtype of [Type]
+ */
+@Polymorphic
+interface LitExpr<ExprType : Type> : Expr<ExprType>

@@ -13,36 +13,61 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import hu.bme.mit.theta.core.model.Valuation
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
-import hu.bme.mit.theta.core.model.Valuation;
-import java.util.List;
-import java.util.function.Function;
+/**
+ * Base class for all expressions in the Theta framework.
+ *
+ * @param ExprType The type of the expression, must be a subtype of [Type]
+ */
+@Polymorphic
+interface Expr<ExprType : Type> {
 
-public interface Expr<ExprType extends Type> {
+    /**
+     * Returns the arity (number of operands) of this expression.
+     */
+    val arity: Int
 
-    int getArity();
+    /**
+     * Returns the type of this expression.
+     */
+    val type: ExprType
 
-    ExprType getType();
+    /**
+     * Returns the list of operands of this expression.
+     */
+    val ops: List<Expr<*>>
 
-    LitExpr<ExprType> eval(Valuation val);
+    /**
+     * Evaluates this expression with the given valuation.
+     * @param val The valuation to use for evaluation
+     * @return The result of the evaluation as a literal expression
+     */
+    fun eval(`val`: Valuation): LitExpr<ExprType>
 
-    List<? extends Expr<?>> getOps();
+    /**
+     * Checks if this expression is invalid.
+     * An expression is invalid if any of its operands are invalid.
+     */
+    val isInvalid: Boolean
+        get() = ops.any { it.isInvalid }
 
-    default boolean isInvalid() {
-        for (var op : getOps()) {
-            if (op.isInvalid()) {
-                return true;
-            }
-        }
-        return false;
-    }
+    /**
+     * Creates a new expression of the same type with the given operands.
+     * @param ops The new operands
+     * @return A new expression with the given operands
+     */
+    fun withOps(ops: List<Expr<*>>): Expr<ExprType>
 
-    Expr<ExprType> withOps(List<? extends Expr<?>> ops);
-
-    default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
-        return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
-    }
+    /**
+     * Applies the given function to each operand of this expression and returns a new expression
+     * with the results.
+     * @param function The function to apply to each operand
+     * @return A new expression with the transformed operands
+     */
+    fun map(function: (Expr<*>) -> Expr<*>): Expr<ExprType> = withOps(ops.map(function))
 }

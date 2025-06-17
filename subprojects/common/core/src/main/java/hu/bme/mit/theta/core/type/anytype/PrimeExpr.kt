@@ -13,66 +13,41 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.anytype;
+package hu.bme.mit.theta.core.type.anytype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.UnaryExpr
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
+/**
+ * Represents a prime expression (next state).
+ *
+ * @param ExprType The type of the expression
+ */
+@Serializable
+@SerialName(PrimeExpr.OPERATOR_LABEL)
+data class PrimeExpr<ExprType : Type>(
+    override val op: Expr<ExprType>
+) : UnaryExpr<ExprType, ExprType>() {
 
-    private static final int HASH_SEED = 4561;
+    companion object {
 
-    private static final String OPERATOR_LABEL = "prime";
+        internal const val OPERATOR_LABEL = "prime"
 
-    private PrimeExpr(final Expr<ExprType> op) {
-        super(op);
+        fun <T : Type> of(op: Expr<T>): PrimeExpr<T> = PrimeExpr(op)
     }
 
-    public static <ExprType extends Type> PrimeExpr<ExprType> of(final Expr<ExprType> op) {
-        return new PrimeExpr<>(op);
+    override val type: ExprType = op.type
+
+    override fun eval(`val`: Valuation): LitExpr<ExprType> {
+        throw UnsupportedOperationException("Prime expressions cannot be evaluated")
     }
 
-    @Override
-    public final ExprType getType() {
-        return getOp().getType();
-    }
+    override fun with(op: Expr<ExprType>): PrimeExpr<ExprType> = if (op == this.op) this else of(op)
 
-    @Override
-    public LitExpr<ExprType> eval(final Valuation val) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public final UnaryExpr<ExprType, ExprType> with(final Expr<ExprType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return PrimeExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final PrimeExpr<?> that = (PrimeExpr<?>) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected final int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public final String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String = OPERATOR_LABEL
 }

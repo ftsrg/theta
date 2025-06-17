@@ -13,8 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-public interface Type {
-    DomainSize getDomainSize();
+import kotlinx.serialization.Polymorphic
+
+/**
+ * Base class for all types in the Theta framework.
+ * Represents the type of expressions and variables.
+ */
+@Polymorphic
+interface Type {
+    /**
+     * Returns the size of the domain of this type.
+     * @return The domain size of this type
+     */
+    val domainSize: DomainSize
 }

@@ -13,30 +13,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import kotlinx.serialization.Serializable
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
+/**
+ * Base class for expressions with no operands (nullary expressions).
+ *
+ * @param ExprType The type of the expression, must be a subtype of [Type]
+ */
+@Serializable
+abstract class NullaryExpr<ExprType : Type> : Expr<ExprType> {
+    override val arity: Int get() = 0
+    
+    override val ops: List<Expr<*>>
+        get() = emptyList()
 
-public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprType> {
-
-    @Override
-    public final List<Expr<?>> getOps() {
-        return ImmutableList.of();
-    }
-
-    @Override
-    public final NullaryExpr<ExprType> withOps(final List<? extends Expr<?>> ops) {
-        checkNotNull(ops);
-        checkArgument(ops.isEmpty());
-        return this;
-    }
-
-    @Override
-    public final int getArity() {
-        return 0;
+    override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
+        require(ops.isEmpty()) { "Operands must be empty for nullary expression" }
+        return this
     }
 }
