@@ -1,323 +1,213 @@
-/*
- *  Copyright 2025 Budapest University of Technology and Economics
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+package hu.bme.mit.theta.core.type.abstracttype
+
+import hu.bme.mit.theta.common.Try
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Exprs
+import hu.bme.mit.theta.core.type.anytype.IteExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+
+/**
+ * Factory and utility methods for abstract expressions over multiple types.
  */
-package hu.bme.mit.theta.core.type.abstracttype;
+object AbstractExprs {
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Try;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import java.util.List;
-
-public final class AbstractExprs {
-
-    private AbstractExprs() {}
-
-    /*
-     * General
-     */
-
-    public static <T extends Type> IteExpr<?> Ite(
-            final Expr<BoolType> cond, final Expr<?> then, final Expr<?> elze) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(then, elze);
-        final Expr<T> newThen = newOps.get1();
-        final Expr<T> newElse = newOps.get2();
-        return Exprs.Ite(cond, newThen, newElse);
+    // General
+    fun <T : Type> Ite(cond: Expr<BoolType>, then: Expr<*>, elze: Expr<*>): IteExpr<*> {
+        val newOps: Pair<Expr<T>, Expr<T>> = unify(then, elze)
+        val newThen = newOps.first
+        val newElse = newOps.second
+        return Exprs.Ite(cond, newThen, newElse)
     }
 
-    /*
-     * Additive
-     */
-
-    public static <T extends Additive<T>> AddExpr<?> Add(final Iterable<? extends Expr<?>> ops) {
-        final List<Expr<?>> opList = ImmutableList.copyOf(ops);
-        checkArgument(!opList.isEmpty());
-        final Expr<?> head = Utils.head(opList);
-        final List<Expr<?>> tail = Utils.tail(opList);
-        return combineAdd(head, tail);
+    // Additive
+    fun <T : Additive<T>> Add(ops: Iterable<Expr<*>>): AddExpr<T> {
+        val opList = ops.toList()
+        require(opList.isNotEmpty())
+        val head = Utils.head(opList)
+        val tail = Utils.tail(opList)
+        return combineAdd(head, tail)
     }
 
-    private static <T extends Additive<T>> AddExpr<?> combineAdd(
-            final Expr<?> head, final List<Expr<?>> tail) {
+    private fun <T : Additive<T>> combineAdd(head: Expr<*>, tail: List<Expr<*>>): AddExpr<T> =
         if (tail.isEmpty()) {
-            final Expr<T> newOp = bind(head);
-            final List<Expr<T>> newOps = getAddOps(newOp);
-            final T type = newOp.getType();
-            return type.Add(newOps);
-
+            val newOp: Expr<T> = bind(head)
+            val newOps = getAddOps(newOp)
+            val type = newOp.type
+            type.Add(newOps)
         } else {
-            final Expr<?> newHead = Utils.head(tail);
-            final List<Expr<?>> newTail = Utils.tail(tail);
-
-            final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
-            final Expr<T> newLeftOp = unifiedOps.get1();
-            final Expr<T> newRightOp = unifiedOps.get2();
-            final T type = newLeftOp.getType();
-
-            final List<Expr<T>> newLeftOps = getAddOps(newLeftOp);
-            final List<Expr<T>> newOps =
-                    ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
-            final AddExpr<T> newAddExpr = type.Add(newOps);
-            return combineAdd(newAddExpr, newTail);
+            val newHead = Utils.head(tail)
+            val newTail = Utils.tail(tail)
+            val unifiedOps: Pair<Expr<T>, Expr<T>> = unify(head, newHead)
+            val newLeftOp = unifiedOps.first
+            val newRightOp = unifiedOps.second
+            val type = newLeftOp.type
+            val newLeftOps = getAddOps(newLeftOp)
+            val newOps = newLeftOps + newRightOp
+            val newAddExpr = type.Add(newOps)
+            combineAdd(newAddExpr, newTail)
         }
-    }
 
-    private static <T extends Additive<T>> List<Expr<T>> getAddOps(final Expr<T> expr) {
-        if (expr instanceof AddExpr) {
-            final AddExpr<T> addExpr = (AddExpr<T>) expr;
-            return addExpr.getOps();
-        } else {
-            return ImmutableList.of(expr);
+    private fun <T : Additive<T>> getAddOps(expr: Expr<T>): List<Expr<T>> =
+        if (expr is AddExpr<*>) (expr as AddExpr<T>).ops else listOf(expr)
+
+    fun <T : Additive<T>> Sub(leftOp: Expr<*>, rightOp: Expr<*>): SubExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Sub(l, r)
         }
+
+    fun <T : Additive<T>> Pos(op: Expr<*>): PosExpr<*> {
+        val tOp: Expr<T> = bind(op)
+        val type = tOp.type
+        return type.Pos(tOp)
     }
 
-    public static <T extends Additive<T>> SubExpr<?> Sub(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Sub(newLeftOp, newRightOp);
+    fun <T : Additive<T>> Neg(op: Expr<*>): NegExpr<*> {
+        val tOp: Expr<T> = bind(op)
+        val type = tOp.type
+        return type.Neg(tOp)
     }
 
-    public static <T extends Additive<T>> PosExpr<?> Pos(final Expr<?> op) {
-        final Expr<T> tOp = bind(op);
-        final T type = tOp.getType();
-        return type.Pos(tOp);
+    // Multiplicative
+    fun <T : Multiplicative<T>> Mul(ops: Iterable<Expr<*>>): MulExpr<*> {
+        val opList = ops.toList()
+        require(opList.isNotEmpty())
+        val head = Utils.head(opList)
+        val tail = Utils.tail(opList)
+        return combineMul<T>(head, tail)
     }
 
-    public static <T extends Additive<T>> NegExpr<?> Neg(final Expr<?> op) {
-        final Expr<T> tOp = bind(op);
-        final T type = tOp.getType();
-        return type.Neg(tOp);
-    }
-
-    /*
-     * Multiplicative
-     */
-
-    public static <T extends Multiplicative<T>> MulExpr<?> Mul(
-            final Iterable<? extends Expr<?>> ops) {
-        final List<Expr<?>> opList = ImmutableList.copyOf(ops);
-        checkArgument(!opList.isEmpty());
-        final Expr<?> head = Utils.head(opList);
-        final List<Expr<?>> tail = Utils.tail(opList);
-        return combineMul(head, tail);
-    }
-
-    private static <T extends Multiplicative<T>> MulExpr<?> combineMul(
-            final Expr<?> head, final List<Expr<?>> tail) {
+    private fun <T : Multiplicative<T>> combineMul(head: Expr<*>, tail: List<Expr<*>>): MulExpr<T> =
         if (tail.isEmpty()) {
-            final Expr<T> newOp = bind(head);
-            final List<Expr<T>> newOps = getMulOps(newOp);
-            final T type = newOp.getType();
-            return type.Mul(newOps);
-
+            val newOp: Expr<T> = bind(head)
+            val newOps = getMulOps(newOp)
+            val type = newOp.type
+            type.Mul(newOps)
         } else {
-            final Expr<?> newHead = Utils.head(tail);
-            final List<Expr<?>> newTail = Utils.tail(tail);
-
-            final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
-            final Expr<T> newLeftOp = unifiedOps.get1();
-            final Expr<T> newRightOp = unifiedOps.get2();
-            final T type = newLeftOp.getType();
-
-            final List<Expr<T>> newLeftOps = getMulOps(newLeftOp);
-            final List<Expr<T>> newOps =
-                    ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
-            final MulExpr<T> newMulExpr = type.Mul(newOps);
-            return combineMul(newMulExpr, newTail);
-        }
-    }
-
-    private static <T extends Multiplicative<T>> List<Expr<T>> getMulOps(final Expr<T> expr) {
-        if (expr instanceof MulExpr) {
-            final MulExpr<T> mulExpr = (MulExpr<T>) expr;
-            return mulExpr.getOps();
-        } else {
-            return ImmutableList.of(expr);
-        }
-    }
-
-    public static <T extends Multiplicative<T>> DivExpr<?> Div(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Div(newLeftOp, newRightOp);
-    }
-
-    /*
-     * Divisible
-     */
-
-    public static <T extends Divisible<T>> ModExpr<?> Mod(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Mod(newLeftOp, newRightOp);
-    }
-
-    public static <T extends Divisible<T>> RemExpr<?> Rem(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Rem(newLeftOp, newRightOp);
-    }
-
-    /*
-     * Equational
-     */
-
-    public static <T extends Equational<T>> EqExpr<?> Eq(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Eq(newLeftOp, newRightOp);
-    }
-
-    public static <T extends Equational<T>> NeqExpr<?> Neq(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Neq(newLeftOp, newRightOp);
-    }
-
-    /*
-     * Ordered
-     */
-
-    public static <T extends Ordered<T>> LtExpr<?> Lt(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Lt(newLeftOp, newRightOp);
-    }
-
-    public static <T extends Ordered<T>> LeqExpr<?> Leq(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Leq(newLeftOp, newRightOp);
-    }
-
-    public static <T extends Ordered<T>> GtExpr<?> Gt(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Gt(newLeftOp, newRightOp);
-    }
-
-    public static <T extends Ordered<T>> GeqExpr<?> Geq(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-        final Expr<T> newLeftOp = newOps.get1();
-        final Expr<T> newRightOp = newOps.get2();
-        final T type = newLeftOp.getType();
-        return type.Geq(newLeftOp, newRightOp);
-    }
-
-    /*
-     * Convenience methods
-     */
-
-    public static <T extends Additive<T>> AddExpr<?> Add(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        return Add(ImmutableList.of(leftOp, rightOp));
-    }
-
-    public static <T extends Multiplicative<T>> MulExpr<?> Mul(
-            final Expr<?> leftOp, final Expr<?> rightOp) {
-        return Mul(ImmutableList.of(leftOp, rightOp));
-    }
-
-    /*
-     * Helper methods
-     */
-
-    private static <T extends Type, T1 extends Type, T2 extends Type, C extends Castable<C>>
-            Tuple2<Expr<T>, Expr<T>> unify(final Expr<T1> expr1, final Expr<T2> expr2) {
-        final T1 type1 = expr1.getType();
-        final T2 type2 = expr2.getType();
-
-        if (expr1.getType().equals(expr2.getType())) {
-            @SuppressWarnings("unchecked")
-            final Expr<T1> t1Expr2 = (Expr<T1>) expr2;
-            return bind(expr1, t1Expr2);
+            val newHead = Utils.head(tail)
+            val newTail = Utils.tail(tail)
+            val unifiedOps: Pair<Expr<T>, Expr<T>> = unify(head, newHead)
+            val newLeftOp = unifiedOps.first
+            val newRightOp = unifiedOps.second
+            val type = newLeftOp.type
+            val newLeftOps = getMulOps(newLeftOp)
+            val newOps = newLeftOps + newRightOp
+            val newMulExpr = type.Mul(newOps)
+            combineMul(newMulExpr, newTail)
         }
 
-        if (type1 instanceof Castable) {
-            @SuppressWarnings("unchecked")
-            final C cType1 = (C) type1;
-            @SuppressWarnings("unchecked")
-            final Expr<C> cExpr1 = (Expr<C>) expr1;
-            final Try<Expr<T2>> tryToCast = Try.attempt(() -> cType1.Cast(cExpr1, type2));
-            if (tryToCast.isSuccess()) {
-                final Expr<T2> t2Expr1 = tryToCast.asSuccess().getValue();
-                return bind(t2Expr1, expr2);
+    private fun <T : Multiplicative<T>> getMulOps(expr: Expr<T>): List<Expr<T>> =
+        if (expr is MulExpr<*>) (expr as MulExpr<T>).ops else listOf(expr)
+
+    fun <T : Multiplicative<T>> Div(leftOp: Expr<*>, rightOp: Expr<*>): DivExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Div(l, r)
+        }
+
+    // Divisible
+    fun <T : Divisible<T>> Mod(leftOp: Expr<*>, rightOp: Expr<*>): ModExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Mod(l, r)
+        }
+
+    fun <T : Divisible<T>> Rem(leftOp: Expr<*>, rightOp: Expr<*>): RemExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Rem(l, r)
+        }
+
+    // Equational
+    fun <T : Equational<T>> Eq(leftOp: Expr<*>, rightOp: Expr<*>): EqExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Eq(l, r)
+        }
+
+    fun <T : Equational<T>> Neq(leftOp: Expr<*>, rightOp: Expr<*>): NeqExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Neq(l, r)
+        }
+
+    // Ordered
+    fun <T : Ordered<T>> Lt(leftOp: Expr<*>, rightOp: Expr<*>): LtExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Lt(l, r)
+        }
+
+    fun <T : Ordered<T>> Leq(leftOp: Expr<*>, rightOp: Expr<*>): LeqExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Leq(l, r)
+        }
+
+    fun <T : Ordered<T>> Gt(leftOp: Expr<*>, rightOp: Expr<*>): GtExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Gt(l, r)
+        }
+
+    fun <T : Ordered<T>> Geq(leftOp: Expr<*>, rightOp: Expr<*>): GeqExpr<*> =
+        create(leftOp, rightOp) { type: T, l, r ->
+            type.Geq(l, r)
+        }
+
+    // Convenience methods
+    fun <T : Additive<T>> Add(leftOp: Expr<*>, rightOp: Expr<*>): AddExpr<*> =
+        Add<T>(listOf(leftOp, rightOp))
+
+    fun <T : Multiplicative<T>> Mul(leftOp: Expr<*>, rightOp: Expr<*>): MulExpr<*> =
+        Mul<T>(listOf(leftOp, rightOp))
+
+    // Helper methods
+
+    private fun <T : Type, R : Expr<*>> create(
+        leftOp: Expr<*>, rightOp: Expr<*>, create: (T, Expr<T>, Expr<T>) -> R
+    ): R {
+        val newOps: Pair<Expr<T>, Expr<T>> = unify(leftOp, rightOp)
+        val newLeftOp = newOps.first
+        val newRightOp = newOps.second
+        val type = newLeftOp.type
+        return create(type, newLeftOp, newRightOp)
+    }
+
+    private fun <T : Type, T1 : Type, T2 : Type, C : Castable<C>> unify(
+        expr1: Expr<T1>, expr2: Expr<T2>
+    ): Pair<Expr<T>, Expr<T>> {
+        val type1 = expr1.type
+        val type2 = expr2.type
+        if (type1 == type2) {
+            @Suppress("UNCHECKED_CAST")
+            return bind(expr1, expr2 as Expr<T1>)
+        }
+        if (type1 is Castable<*>) {
+            @Suppress("UNCHECKED_CAST")
+            val cType1 = type1 as C
+
+            @Suppress("UNCHECKED_CAST")
+            val cExpr1 = expr1 as Expr<C>
+            val tryToCast = Try.attempt { cType1.Cast(cExpr1, type2) }
+            if (tryToCast.isSuccess) {
+                val t2Expr1 = tryToCast.asSuccess().value
+                return bind(t2Expr1, expr2)
             }
         }
+        if (type2 is Castable<*>) {
+            @Suppress("UNCHECKED_CAST")
+            val cType2 = type2 as C
 
-        if (type2 instanceof Castable) {
-            @SuppressWarnings("unchecked")
-            final C cType2 = (C) type2;
-            @SuppressWarnings("unchecked")
-            final Expr<C> cExpr2 = (Expr<C>) expr2;
-            final Try<Expr<T1>> tryToCast = Try.attempt(() -> cType2.Cast(cExpr2, type1));
-            if (tryToCast.isSuccess()) {
-                final Expr<T1> t1Expr2 = tryToCast.asSuccess().getValue();
-                return bind(expr1, t1Expr2);
+            @Suppress("UNCHECKED_CAST")
+            val cExpr2 = expr2 as Expr<C>
+            val tryToCast = Try.attempt { cType2.Cast(cExpr2, type1) }
+            if (tryToCast.isSuccess) {
+                val t1Expr2 = tryToCast.asSuccess().value
+                return bind(expr1, t1Expr2)
             }
         }
-
-        throw new ClassCastException(
-                "Types " + expr1.getType() + " and " + expr2.getType() + " can not be unified");
+        throw ClassCastException("Types $type1 and $type2 can not be unified")
     }
 
-    private static <TR extends Type, TP extends Type> Expr<TR> bind(final Expr<TP> expr) {
-        @SuppressWarnings("unchecked")
-        final Expr<TR> trExpr = (Expr<TR>) expr;
-        return trExpr;
-    }
+    @Suppress("UNCHECKED_CAST")
+    private fun <TR : Type, TP : Type> bind(expr: Expr<TP>): Expr<TR> = expr as Expr<TR>
 
-    private static <TR extends Type, TP extends Type> Tuple2<Expr<TR>, Expr<TR>> bind(
-            final Expr<TP> expr1, final Expr<TP> expr2) {
-        @SuppressWarnings("unchecked")
-        final Expr<TR> trExpr1 = (Expr<TR>) expr1;
-        @SuppressWarnings("unchecked")
-        final Expr<TR> trExpr2 = (Expr<TR>) expr2;
-        return Tuple2.of(trExpr1, trExpr2);
-    }
+    @Suppress("UNCHECKED_CAST")
+    private fun <TR : Type, TP : Type> bind(expr1: Expr<TP>, expr2: Expr<TP>): Pair<Expr<TR>, Expr<TR>> =
+        Pair(expr1 as Expr<TR>, expr2 as Expr<TR>)
 }
+

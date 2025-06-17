@@ -18,8 +18,10 @@ package hu.bme.mit.theta.core.type.abstracttype
 
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.Polymorphic
 
-abstract class Additive<ExprType : Additive<ExprType>> : Type() {
+@Polymorphic
+abstract class Additive<ExprType : Additive<ExprType>> : Type {
 
     abstract fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
 

@@ -19,6 +19,7 @@ plugins {
     id("java-test-fixtures")
     id("kotlin-common")
     id("kaml-serialization")
+    id("kotlinx-serialization")
 }
 
 dependencies {

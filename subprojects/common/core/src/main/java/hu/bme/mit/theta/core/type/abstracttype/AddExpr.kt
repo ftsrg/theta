@@ -28,6 +28,7 @@ abstract class AddExpr<ExprType : Additive<ExprType>> : MultiaryExpr<ExprType, E
 
     companion object {
 
+        @JvmStatic
         fun <ExprType : Additive<ExprType>> create2(ops: List<Expr<*>>): AddExpr<*> {
             require(ops.isNotEmpty())
             @Suppress("UNCHECKED_CAST")
