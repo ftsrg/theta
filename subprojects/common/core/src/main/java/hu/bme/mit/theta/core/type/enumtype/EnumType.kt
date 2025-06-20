@@ -1,139 +1,72 @@
-/*
- *  Copyright 2025 Budapest University of Technology and Economics
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-package hu.bme.mit.theta.core.type.enumtype;
+package hu.bme.mit.theta.core.type.enumtype
 
-import static com.google.common.base.Preconditions.checkArgument;
+import hu.bme.mit.theta.core.type.DomainSize
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.Equational
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+@Serializable
+@SerialName(EnumType.TYPE_LABEL)
+data class EnumType(
+    val name: String,
+    private val literals: Map<String, Int>,
+) : Equational<EnumType>, Type {
 
-public final class EnumType implements Equational<EnumType>, Type {
+    companion object {
 
-    public static final String FULLY_QUALIFIED_NAME_SEPARATOR = ".";
-    private final Map<String, Integer> literals;
-    private final String name;
-    private int counter = 0;
+        internal const val TYPE_LABEL = "Enum"
+        const val FULLY_QUALIFIED_NAME_SEPARATOR = "."
+        fun of(name: String, values: Collection<String>) =
+            EnumType(name, values.withIndex().associate { it.value to it.index }.toMap(LinkedHashMap()))
 
-    private EnumType(String name, Collection<String> values) {
-        this.name = name;
-        this.literals = new LinkedHashMap<>();
-        values.forEach(value -> literals.put(value, counter++));
+        fun makeLongName(typeName: String, literal: String) = "$typeName$FULLY_QUALIFIED_NAME_SEPARATOR$literal"
+        fun makeLongName(type: EnumType, literal: String) = makeLongName(type.name, literal)
+        fun getShortName(longName: String): String =
+            if (FULLY_QUALIFIED_NAME_SEPARATOR !in longName) longName
+            else longName.substring(
+                longName.indexOf(FULLY_QUALIFIED_NAME_SEPARATOR) + FULLY_QUALIFIED_NAME_SEPARATOR.length
+            )
     }
 
-    public static EnumType of(String name, Collection<String> values) {
-        return new EnumType(name, values);
-    }
+    override val domainSize: DomainSize get() = DomainSize.of(literals.size.toLong())
 
-    public static String makeLongName(String typeName, String literal) {
-        return String.format("%s%s%s", typeName, FULLY_QUALIFIED_NAME_SEPARATOR, literal);
-    }
+    override fun Eq(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EqExpr<EnumType> = EnumEqExpr.of(leftOp, rightOp)
+    override fun Neq(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): NeqExpr<EnumType> =
+        EnumNeqExpr.of(leftOp, rightOp)
 
-    public static String makeLongName(EnumType type, String literal) {
-        return makeLongName(type.getName(), literal);
-    }
+    val values: Set<String> get() = literals.keys
+    val longValues: Set<String> get() = literals.keys.map { makeLongName(this, it) }.toSet()
 
-    public static String getShortName(String longName) {
-        if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR)) return longName;
-        return longName.substring(
-                longName.indexOf(FULLY_QUALIFIED_NAME_SEPARATOR)
-                        + FULLY_QUALIFIED_NAME_SEPARATOR.length());
-    }
+    fun getIntValue(literal: EnumLitExpr): Int = getIntValue(literal.value)
+    fun getIntValue(literal: String): Int = literals[literal]
+        ?: throw IllegalArgumentException("Enum type $name does not contain literal '$literal'")
 
-    @Override
-    public DomainSize getDomainSize() {
-        return DomainSize.of(literals.size());
-    }
-
-    @Override
-    public EqExpr<EnumType> Eq(Expr<EnumType> leftOp, Expr<EnumType> rightOp) {
-        return EnumEqExpr.of(leftOp, rightOp);
-    }
-
-    @Override
-    public NeqExpr<EnumType> Neq(Expr<EnumType> leftOp, Expr<EnumType> rightOp) {
-        return EnumNeqExpr.of(leftOp, rightOp);
-    }
-
-    public Set<String> getValues() {
-        return literals.keySet();
-    }
-
-    public Set<String> getLongValues() {
-        return literals.keySet().stream()
-                .map(val -> makeLongName(this, val))
-                .collect(Collectors.toSet());
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getIntValue(EnumLitExpr literal) {
-        return getIntValue(literal.getValue());
-    }
-
-    public int getIntValue(String literal) {
-        checkArgument(
-                literals.containsKey(literal),
-                String.format("Enum type %s does not contain literal '%s'", name, literal));
-        return literals.get(literal);
-    }
-
-    public LitExpr<EnumType> litFromShortName(String shortName) {
+    fun litFromShortName(shortName: String): LitExpr<EnumType> =
         try {
-            return EnumLitExpr.of(this, shortName);
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    String.format("%s is not valid for type %s", shortName, name), e);
+            EnumLitExpr.of(this, shortName)
+        } catch (e: Exception) {
+            throw RuntimeException("$shortName is not valid for type $name", e)
         }
+
+    fun litFromLongName(longName: String): LitExpr<EnumType> {
+        if (FULLY_QUALIFIED_NAME_SEPARATOR !in longName)
+            throw RuntimeException("$longName is an invalid enum longname")
+        val parts = longName.split(FULLY_QUALIFIED_NAME_SEPARATOR)
+        val type = parts[0]
+        require(name == type) { "$type does not belong to type $name" }
+        return litFromShortName(parts[1])
     }
 
-    public LitExpr<EnumType> litFromLongName(String longName) {
-        if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR))
-            throw new RuntimeException(String.format("%s is an invalid enum longname"));
-        String[] parts = longName.split(Pattern.quote(FULLY_QUALIFIED_NAME_SEPARATOR));
-        String type = parts[0];
-        checkArgument(
-                name.equals(type), String.format("%s does not belong to type %s", type, name));
-        return litFromShortName(parts[1]);
-    }
+    fun litFromIntValue(value: Int): LitExpr<EnumType> =
+        literals.entries.find { it.value == value }?.let { EnumLitExpr.of(this, it.key) }
+            ?: InvalidLitExpr(this)
 
-    public LitExpr<EnumType> litFromIntValue(int value) {
-        for (Map.Entry<String, Integer> entry : literals.entrySet()) {
-            if (entry.getValue() == value) {
-                return EnumLitExpr.of(this, entry.getKey());
-            }
-        }
-        return new InvalidLitExpr<>(this);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("EnumType{%s}", name);
-    }
+    override fun toString(): String = "EnumType{$name}"
 }
+
