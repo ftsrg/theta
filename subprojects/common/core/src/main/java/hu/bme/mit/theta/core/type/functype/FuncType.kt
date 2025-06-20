@@ -1,87 +1,31 @@
-/*
- *  Copyright 2025 Budapest University of Technology and Economics
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+package hu.bme.mit.theta.core.type.functype
+
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.DomainSize
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * Represents a function type from ParamType to ResultType.
  */
-package hu.bme.mit.theta.core.type.functype;
+@Serializable
+@SerialName(FuncType.TYPE_LABEL)
+data class FuncType<ParamType : Type, ResultType : Type>(
+    val paramType: ParamType,
+    val resultType: ResultType
+) : Type {
 
-import static com.google.common.base.Preconditions.checkNotNull;
+    companion object {
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Type;
+        internal const val TYPE_LABEL = "Func"
 
-public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
-
-    private static final int HASH_SEED = 3931;
-    private static final String TYPE_LABEL = "Func";
-
-    private final ParamType paramType;
-    private final ResultType resultType;
-
-    private volatile int hashCode = 0;
-
-    private FuncType(final ParamType paramType, final ResultType resultType) {
-        this.paramType = checkNotNull(paramType);
-        this.resultType = checkNotNull(resultType);
+        @JvmStatic
+        fun <ParamType : Type, ResultType : Type> of(paramType: ParamType, resultType: ResultType) =
+            FuncType(paramType, resultType)
     }
 
-    public static <ParamType extends Type, ResultType extends Type>
-            FuncType<ParamType, ResultType> of(
-                    final ParamType paramType, final ResultType resultType) {
-        return new FuncType<>(paramType, resultType);
-    }
-
-    public ParamType getParamType() {
-        return paramType;
-    }
-
-    public ResultType getResultType() {
-        return resultType;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + paramType.hashCode();
-            result = 31 * result + resultType.hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FuncType<?, ?> that = (FuncType<?, ?>) obj;
-            return this.getParamType().equals(that.getParamType())
-                    && this.getResultType().equals(that.getResultType());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(TYPE_LABEL).add(paramType).add(resultType).toString();
-    }
-
-    @Override
-    public DomainSize getDomainSize() {
-        throw new UnsupportedOperationException();
-    }
+    override fun toString(): String = Utils.lispStringBuilder(TYPE_LABEL).add(paramType).add(resultType).toString()
+    override val domainSize: DomainSize get() = throw UnsupportedOperationException()
 }
+
