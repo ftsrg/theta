@@ -13,56 +13,51 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.anytype;
+package hu.bme.mit.theta.core.type.anytype
 
-import static com.google.common.base.Preconditions.checkArgument;
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolType
 
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+/**
+ * Factory and utility methods for any-type expressions.
+ */
+object Exprs {
+    fun <DeclType : Type> Ref(decl: Decl<DeclType>): RefExpr<DeclType> =
+        RefExpr(decl)
 
-public final class Exprs {
+    fun <ExprType : Type> Ite(
+        cond: Expr<BoolType>,
+        then: Expr<ExprType>,
+        elze: Expr<ExprType>
+    ): IteExpr<ExprType> =
+        IteExpr(cond, then, elze)
 
-    private Exprs() {}
+    fun <ExprType : Type> Prime(op: Expr<ExprType>): PrimeExpr<ExprType> =
+        PrimeExpr(op)
 
-    public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
-        return RefExpr.of(decl);
-    }
+    fun <ArrType : Type, OffsetType : Type, ExprType : Type> Dereference(
+        arr: Expr<ArrType>,
+        offset: Expr<OffsetType>,
+        type: ExprType
+    ): Dereference<ArrType, OffsetType, ExprType> =
+        Dereference(arr, offset, type)
 
-    public static <ExprType extends Type> IteExpr<ExprType> Ite(
-            final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
-        return IteExpr.of(cond, then, elze);
-    }
+    fun <ArrType : Type, ExprType : Type> Reference(
+        expr: Expr<ExprType>,
+        type: ArrType
+    ): Reference<ArrType, ExprType> =
+        Reference(expr, type)
 
-    public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op) {
-        return PrimeExpr.of(op);
-    }
-
-    public static <ArrType extends Type, OffsetType extends Type, ExprType extends Type>
-            Dereference<ArrType, OffsetType, ExprType> Dereference(
-                    final Expr<ArrType> arr, final Expr<OffsetType> offset, final ExprType type) {
-        return Dereference.of(arr, offset, type);
-    }
-
-    public static <ArrType extends Type, ExprType extends Type>
-            Reference<ArrType, ExprType> Reference(final Expr<ExprType> expr, final ArrType type) {
-        return Reference.of(expr, type);
-    }
-
-    /*
-     * Convenience methods
-     */
-
-    public static <ExprType extends Type> Expr<ExprType> Prime(
-            final Expr<ExprType> op, final int i) {
-        checkArgument(i >= 0);
-        if (i == 0) {
-            return op;
-        } else if (i == 1) {
-            return Prime(op);
-        } else {
-            return Prime(Prime(op, i - 1));
+    // Convenience methods
+    fun <ExprType : Type> Prime(op: Expr<ExprType>, i: Int): Expr<ExprType> {
+        require(i >= 0)
+        return when (i) {
+            0 -> op
+            1 -> Prime(op)
+            else -> Prime(Prime(op, i - 1))
         }
     }
 }
+

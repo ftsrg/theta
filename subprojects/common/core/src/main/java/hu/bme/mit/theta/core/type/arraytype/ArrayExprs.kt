@@ -1,76 +1,58 @@
-/*
- *  Copyright 2025 Budapest University of Technology and Economics
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+package hu.bme.mit.theta.core.type.arraytype
+
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.Serializable
+
+/**
+ * Factory and utility methods for array-type expressions.
  */
-package hu.bme.mit.theta.core.type.arraytype;
+@Serializable
+object ArrayExprs {
 
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import java.util.List;
+    fun <IndexType : Type, ElemType : Type> Array(
+        indexType: IndexType,
+        elemType: ElemType
+    ): ArrayType<IndexType, ElemType> =
+        ArrayType(indexType, elemType)
 
-public final class ArrayExprs {
+    fun <IndexType : Type, ElemType : Type> Array(
+        elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+        elseElem: Expr<ElemType>,
+        type: ArrayType<IndexType, ElemType>
+    ): ArrayLitExpr<IndexType, ElemType> =
+        ArrayLitExpr.of(elements, elseElem, type)
 
-    private ArrayExprs() {}
+    fun <IndexType : Type, ElemType : Type> ArrayInit(
+        elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+        elseElem: Expr<ElemType>,
+        type: ArrayType<IndexType, ElemType>
+    ): ArrayInitExpr<IndexType, ElemType> =
+        ArrayInitExpr(elements, elseElem, type)
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayType<IndexType, ElemType> Array(
-                    final IndexType indexType, final ElemType elemType) {
-        return ArrayType.of(indexType, elemType);
-    }
+    fun <IndexType : Type, ElemType : Type> Read(
+        array: Expr<ArrayType<IndexType, ElemType>>,
+        index: Expr<IndexType>
+    ): ArrayReadExpr<IndexType, ElemType> =
+        ArrayReadExpr(array, index)
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayLitExpr<IndexType, ElemType> Array(
-                    final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
-                    final Expr<ElemType> elseElem,
-                    final ArrayType<IndexType, ElemType> type) {
-        return ArrayLitExpr.of(elems, elseElem, type);
-    }
+    fun <IndexType : Type, ElemType : Type> Write(
+        array: Expr<ArrayType<IndexType, ElemType>>,
+        index: Expr<IndexType>,
+        elem: Expr<ElemType>
+    ): ArrayWriteExpr<IndexType, ElemType> =
+        ArrayWriteExpr(array, index, elem)
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayInitExpr<IndexType, ElemType> ArrayInit(
-                    final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
-                    final Expr<ElemType> elseElem,
-                    final ArrayType<IndexType, ElemType> type) {
-        return ArrayInitExpr.of(elems, elseElem, type);
-    }
+    fun <IndexType : Type, ElemType : Type> Eq(
+        leftOp: Expr<ArrayType<IndexType, ElemType>>,
+        rightOp: Expr<ArrayType<IndexType, ElemType>>
+    ): ArrayEqExpr<IndexType, ElemType> =
+        ArrayEqExpr(leftOp, rightOp)
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayReadExpr<IndexType, ElemType> Read(
-                    final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
-        return ArrayReadExpr.of(array, index);
-    }
-
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayWriteExpr<IndexType, ElemType> Write(
-                    final Expr<ArrayType<IndexType, ElemType>> array,
-                    final Expr<IndexType> index,
-                    final Expr<ElemType> elem) {
-        return ArrayWriteExpr.of(array, index, elem);
-    }
-
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayEqExpr<IndexType, ElemType> Eq(
-                    final Expr<ArrayType<IndexType, ElemType>> leftOp,
-                    final Expr<ArrayType<IndexType, ElemType>> rightOp) {
-        return ArrayEqExpr.of(leftOp, rightOp);
-    }
-
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayNeqExpr<IndexType, ElemType> Neq(
-                    final Expr<ArrayType<IndexType, ElemType>> leftOp,
-                    final Expr<ArrayType<IndexType, ElemType>> rightOp) {
-        return ArrayNeqExpr.of(leftOp, rightOp);
-    }
+    fun <IndexType : Type, ElemType : Type> Neq(
+        leftOp: Expr<ArrayType<IndexType, ElemType>>,
+        rightOp: Expr<ArrayType<IndexType, ElemType>>
+    ): ArrayNeqExpr<IndexType, ElemType> =
+        ArrayNeqExpr(leftOp, rightOp)
 }
+

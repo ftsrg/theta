@@ -31,9 +31,9 @@ abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
     protected abstract val leftOp: Expr<OpType>
     protected abstract val rightOp: Expr<OpType>
 
-    override val arity: Int get() = 2
-
     override val ops: List<Expr<OpType>> get() = listOf(leftOp, rightOp)
+
+    abstract val operatorLabel: String
 
     override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
         require(ops.size == 2) { "Operands must have size 2 for binary expression" }
@@ -43,19 +43,22 @@ abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
         return with(newLeftOp, newRightOp)
     }
 
-    override fun toString(): String {
-        return Utils.lispStringBuilder(getOperatorLabel())
-            .body()
-            .add(leftOp)
-            .add(rightOp)
-            .toString()
-    }
+    fun with(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType> =
+        if (leftOp == this.leftOp && rightOp == this.rightOp) {
+            this
+        } else {
+            of(leftOp, rightOp)
+        }
 
-    abstract fun with(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
+    protected abstract fun of(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
 
-    abstract fun withLeftOp(leftOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
+    open fun withLeftOp(leftOp: Expr<OpType>): BinaryExpr<OpType, ExprType> = with(leftOp, rightOp)
 
-    abstract fun withRightOp(rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
+    open fun withRightOp(rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType> = with(leftOp, rightOp)
 
-    abstract fun getOperatorLabel(): String
+    override fun toString(): String = Utils.lispStringBuilder(operatorLabel)
+        .body()
+        .add(leftOp)
+        .add(rightOp)
+        .toString()
 }

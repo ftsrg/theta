@@ -30,8 +30,7 @@ abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
     abstract override val ops: List<Expr<OpType>>
 
-    override val arity: Int
-        get() = ops.size
+    abstract val operatorLabel: String
 
     override fun withOps(ops: List<Expr<*>>): MultiaryExpr<OpType, ExprType> {
         if (ops.isEmpty()) {
@@ -43,9 +42,7 @@ abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
         }
     }
 
-    override fun toString(): String = Utils.lispStringBuilder(getOperatorLabel()).body().addAll(ops).toString()
+    override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().addAll(ops).toString()
 
     abstract fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
-
-    abstract fun getOperatorLabel(): String
 }

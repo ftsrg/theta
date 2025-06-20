@@ -1,35 +1,12 @@
-/*
- *  Copyright 2025 Budapest University of Technology and Economics
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-package hu.bme.mit.theta.core.type.arraytype;
+package hu.bme.mit.theta.core.type.arraytype
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
-import hu.bme.mit.theta.core.type.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.MultiaryExpr
+import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * ArrayInitExpr is a way to specify arbitrary array 'literals' that may contain non-literal
@@ -39,132 +16,77 @@ import java.util.stream.StreamSupport;
  * `elseElem` are mapped to `ops` by first placing the `elseElem`, then all indices, then all
  * elements.
  */
-public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type>
-        extends MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
+@Serializable
+@SerialName(ArrayInitExpr.OPERATOR_LABEL)
+data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
+    val elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+    val elseElem: Expr<ElemType>,
+    override val type: ArrayType<IndexType, ElemType>
+) : MultiaryExpr<Type, ArrayType<IndexType, ElemType>>() {
 
-    private static final int HASH_SEED = 241;
-    private static final String OPERATOR_LABEL = "arrayinit";
+    @Suppress("UNCHECKED_CAST")
+    override val ops: List<Expr<Type>> =
+        listOf(elseElem as Expr<Type>) +
+            elements.map { it.first as Expr<Type> } +
+            elements.map { it.second as Expr<Type> }
 
-    private final ArrayType<IndexType, ElemType> type;
+    companion object {
 
-    private final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems;
+        internal const val OPERATOR_LABEL = "arrayinit"
 
-    private final Expr<ElemType> elseElem;
+        fun <IndexType : Type, ElemType : Type> of(
+            elems: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+            elseElem: Expr<ElemType>,
+            type: ArrayType<IndexType, ElemType>
+        ) = ArrayInitExpr(elems, elseElem, type)
 
-    private ArrayInitExpr(
-            final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
-            final Expr<ElemType> elseElem,
-            final ArrayType<IndexType, ElemType> type) {
-        //noinspection unchecked
-        super(
-                Stream.concat(
-                                List.of((Expr<Type>) elseElem).stream(),
-                                Stream.concat(
-                                        elems.stream().map(objects -> (Expr<Type>) objects.get1()),
-                                        elems.stream().map(objects -> (Expr<Type>) objects.get2())))
-                        .collect(Collectors.toList()));
-        this.type = checkNotNull(type);
-        this.elseElem = checkNotNull(elseElem);
-        this.elems = checkNotNull(elems);
+        @Suppress("UNCHECKED_CAST")
+        fun <IndexType : Type, ElemType : Type> create(
+            elems: List<Pair<Expr<out Type>, Expr<out Type>>>,
+            elseElem: Expr<*>,
+            type: ArrayType<*, *>
+        ): ArrayInitExpr<IndexType, ElemType> =
+            of(
+                elems.map { Pair(it.first as Expr<IndexType>, it.second as Expr<ElemType>) },
+                elseElem as Expr<ElemType>,
+                type as ArrayType<IndexType, ElemType>
+            )
     }
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayInitExpr<IndexType, ElemType> of(
-                    final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
-                    final Expr<ElemType> elseElem,
-                    final ArrayType<IndexType, ElemType> type) {
-        return new ArrayInitExpr<>(elems, elseElem, type);
-    }
+    override fun eval(`val`: Valuation): LitExpr<ArrayType<IndexType, ElemType>> =
+        ArrayLitExpr.of(
+            elements.map { Pair(it.first.eval(`val`), it.second.eval(`val`)) },
+            elseElem,
+            type
+        )
 
-    public static <IndexType extends Type, ElemType extends Type>
-            ArrayInitExpr<IndexType, ElemType> create(
-                    final List<Tuple2<Expr<? extends Type>, Expr<? extends Type>>> elems,
-                    final Expr<?> elseElem,
-                    final ArrayType<?, ?> type) {
-        final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> typedElems =
-                elems.stream()
-                        .map(i -> Tuple2.of((Expr<IndexType>) i.get1(), (Expr<ElemType>) i.get2()))
-                        .collect(Collectors.toList());
-        final Expr<ElemType> typedElseElem = (Expr<ElemType>) elseElem;
-        final ArrayType<IndexType, ElemType> typedType = (ArrayType<IndexType, ElemType>) type;
-        return of(typedElems, typedElseElem, typedType);
-    }
-
-    public List<Tuple2<Expr<IndexType>, Expr<ElemType>>> getElements() {
-        return ImmutableList.copyOf(elems);
-    }
-
-    public Expr<ElemType> getElseElem() {
-        return elseElem;
-    }
-
-    @Override
-    public ArrayType<IndexType, ElemType> getType() {
-        return type;
-    }
-
-    @Override
-    public LitExpr<ArrayType<IndexType, ElemType>> eval(final Valuation val) {
-        return ArrayLitExpr.of(
-                elems.stream()
-                        .map(
-                                objects ->
-                                        Tuple2.of(
-                                                objects.get1().eval(val), objects.get2().eval(val)))
-                        .collect(Collectors.toList()),
-                elseElem,
-                type);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final ArrayInitExpr<?, ?> that = (ArrayInitExpr<?, ?>) obj;
-            return this.type.equals(that.type)
-                    && this.elems.equals(that.elems)
-                    && elseElem.equals(that.elseElem);
-        } else {
-            return false;
+    @Suppress("UNCHECKED_CAST")
+    override fun with(ops: Iterable<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
+        val size = ops.count()
+        require(size % 2 == 1) { "Ops must be odd long!" }
+        val elseElem: Expr<ElemType> = ops.first() as Expr<ElemType>
+        val indices = mutableListOf<Expr<IndexType>>()
+        val elems = mutableListOf<Expr<ElemType>>()
+        ops.forEachIndexed { counter, op ->
+            when {
+                counter == 0 -> {}
+                counter <= (size - 1) / 2 -> indices.add(op as Expr<IndexType>)
+                else -> elems.add(op as Expr<ElemType>)
+            }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> with(
-            Iterable<? extends Expr<Type>> ops) {
-        long size = StreamSupport.stream(ops.spliterator(), false).count();
-        checkState(size % 2 == 1, "Ops must be odd long!");
-        long counter = 0;
-        Expr<ElemType> elseElem = null;
-        List<Expr<IndexType>> indices = new ArrayList<>();
-        List<Expr<ElemType>> elems = new ArrayList<>();
-        for (Expr<Type> op : ops) {
-            if (counter == 0) elseElem = (Expr<ElemType>) op;
-            else if (counter <= (size - 1) / 2) indices.add((Expr<IndexType>) op);
-            else elems.add((Expr<ElemType>) op);
-            ++counter;
+        val newOps = indices.indices.map { i ->
+            indices[i] to elems[i]
         }
-        List<Tuple2<Expr<IndexType>, Expr<ElemType>>> newOps = new ArrayList<>();
-        for (int i = 0; i < indices.size(); i++) {
-            newOps.add(Tuple2.of(indices.get(i), elems.get(i)));
-        }
-        return ArrayInitExpr.of(newOps, elseElem, type);
+        return of(newOps, elseElem, type)
     }
 
-    @Override
-    public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> withOps(List<? extends Expr<?>> ops) {
-        return with(ops.stream().map(op -> (Expr<Type>) op).collect(Collectors.toList()));
-    }
+    @Suppress("UNCHECKED_CAST")
+    override fun withOps(ops: List<Expr<*>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =
+        with(ops.map { it as Expr<Type> })
 
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
+    override val operatorLabel: String = OPERATOR_LABEL
 
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String =
+        "arrayinit($elements, $elseElem, $type)"
 }
+

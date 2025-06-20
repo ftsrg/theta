@@ -31,6 +31,7 @@ interface Expr<ExprType : Type> {
      * Returns the arity (number of operands) of this expression.
      */
     val arity: Int
+        get() = ops.size
 
     /**
      * Returns the type of this expression.
