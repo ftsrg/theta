@@ -13,163 +13,69 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.core.type.Expr;
-import java.math.BigInteger;
+package hu.bme.mit.theta.core.type.rattype
 
-public final class RatExprs {
+import hu.bme.mit.theta.core.type.Expr
+import java.math.BigInteger
 
-    private RatExprs() {}
+/**
+ * Factory for rational expressions.
+ */
+@Suppress("FunctionName")
+object RatExprs {
+    @JvmStatic
+    fun Rat() = RatType
+    @JvmStatic
+    fun Rat(num: Int, denom: Int) = RatLitExpr(BigInteger.valueOf(num.toLong()), BigInteger.valueOf(denom.toLong()))
+    @JvmStatic
+    fun Rat(num: Int, denom: String) = RatLitExpr(BigInteger.valueOf(num.toLong()), BigInteger(denom))
+    @JvmStatic
+    fun Rat(num: Int, denom: BigInteger) = RatLitExpr(BigInteger.valueOf(num.toLong()), denom)
+    @JvmStatic
+    fun Rat(num: String, denom: Int) = RatLitExpr(BigInteger(num), BigInteger.valueOf(denom.toLong()))
+    @JvmStatic
+    fun Rat(num: String, denom: String) = RatLitExpr(BigInteger(num), BigInteger(denom))
+    @JvmStatic
+    fun Rat(num: String, denom: BigInteger) = RatLitExpr(BigInteger(num), denom)
+    @JvmStatic
+    fun Rat(num: BigInteger, denom: Int) = RatLitExpr(num, BigInteger.valueOf(denom.toLong()))
+    @JvmStatic
+    fun Rat(num: BigInteger, denom: String) = RatLitExpr(num, BigInteger(denom))
+    @JvmStatic
+    fun Rat(num: BigInteger, denom: BigInteger) = RatLitExpr(num, denom)
 
-    public static RatType Rat() {
-        return RatType.getInstance();
-    }
+    @JvmStatic
+    fun Add(ops: Iterable<Expr<RatType>>) = RatAddExpr.of(ops)
+    @JvmStatic
+    fun Sub(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatSubExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Pos(op: Expr<RatType>) = RatPosExpr(op)
+    @JvmStatic
+    fun Neg(op: Expr<RatType>) = RatNegExpr(op)
+    @JvmStatic
+    fun Mul(ops: Iterable<Expr<RatType>>) = RatMulExpr.of(ops)
+    @JvmStatic
+    fun Div(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatDivExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Eq(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatEqExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Neq(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatNeqExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Lt(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatLtExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Leq(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatLeqExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Gt(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatGtExpr(leftOp, rightOp)
+    @JvmStatic
+    fun Geq(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatGeqExpr(leftOp, rightOp)
 
-    public static RatLitExpr Rat(final int num, final int denom) {
-        return RatLitExpr.of(BigInteger.valueOf(num), BigInteger.valueOf(denom));
-    }
+    @JvmStatic
+    fun Add(vararg ops: Expr<RatType>) = RatAddExpr(ops.asList())
 
-    public static RatLitExpr Rat(final int num, final String denom) {
-        return RatLitExpr.of(BigInteger.valueOf(num), new BigInteger(denom));
-    }
+    @JvmStatic
+    fun Mul(vararg ops: Expr<RatType>) = RatMulExpr(ops.asList())
 
-    public static RatLitExpr Rat(final int num, final BigInteger denom) {
-        return RatLitExpr.of(BigInteger.valueOf(num), denom);
-    }
-
-    public static RatLitExpr Rat(final String num, final int denom) {
-        return RatLitExpr.of(new BigInteger(num), BigInteger.valueOf(denom));
-    }
-
-    public static RatLitExpr Rat(final String num, final String denom) {
-        return RatLitExpr.of(new BigInteger(num), new BigInteger(denom));
-    }
-
-    public static RatLitExpr Rat(final String num, final BigInteger denom) {
-        return RatLitExpr.of(new BigInteger(num), denom);
-    }
-
-    public static RatLitExpr Rat(final BigInteger num, final int denom) {
-        return RatLitExpr.of(num, BigInteger.valueOf(denom));
-    }
-
-    public static RatLitExpr Rat(final BigInteger num, final String denom) {
-        return RatLitExpr.of(num, new BigInteger(denom));
-    }
-
-    public static RatLitExpr Rat(final BigInteger num, final BigInteger denom) {
-        return RatLitExpr.of(num, denom);
-    }
-
-    public static RatAddExpr Add(final Iterable<? extends Expr<RatType>> ops) {
-        return RatAddExpr.of(ops);
-    }
-
-    public static RatSubExpr Sub(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatSubExpr.of(leftOp, rightOp);
-    }
-
-    public static RatPosExpr Pos(final Expr<RatType> op) {
-        return RatPosExpr.of(op);
-    }
-
-    public static RatNegExpr Neg(final Expr<RatType> op) {
-        return RatNegExpr.of(op);
-    }
-
-    public static RatMulExpr Mul(final Iterable<? extends Expr<RatType>> ops) {
-        return RatMulExpr.of(ops);
-    }
-
-    public static RatDivExpr Div(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatDivExpr.of(leftOp, rightOp);
-    }
-
-    public static RatEqExpr Eq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatEqExpr.of(leftOp, rightOp);
-    }
-
-    public static RatNeqExpr Neq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatNeqExpr.of(leftOp, rightOp);
-    }
-
-    public static RatLtExpr Lt(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatLtExpr.of(leftOp, rightOp);
-    }
-
-    public static RatLeqExpr Leq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatLeqExpr.of(leftOp, rightOp);
-    }
-
-    public static RatGtExpr Gt(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatGtExpr.of(leftOp, rightOp);
-    }
-
-    public static RatGeqExpr Geq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return RatGeqExpr.of(leftOp, rightOp);
-    }
-
-    /*
-     * Convenience methods
-     */
-
-    public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2) {
-        return RatAddExpr.of(ImmutableList.of(op1, op2));
-    }
-
-    public static RatAddExpr Add(
-            final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
-        return RatAddExpr.of(ImmutableList.of(op1, op2, op3));
-    }
-
-    public static RatAddExpr Add(
-            final Expr<RatType> op1,
-            final Expr<RatType> op2,
-            final Expr<RatType> op3,
-            final Expr<RatType> op4) {
-        return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4));
-    }
-
-    public static RatAddExpr Add(
-            final Expr<RatType> op1,
-            final Expr<RatType> op2,
-            final Expr<RatType> op3,
-            final Expr<RatType> op4,
-            final Expr<RatType> op5) {
-        return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
-    }
-
-    ////
-
-    public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2) {
-        return RatMulExpr.of(ImmutableList.of(op1, op2));
-    }
-
-    public static RatMulExpr Mul(
-            final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
-        return RatMulExpr.of(ImmutableList.of(op1, op2, op3));
-    }
-
-    public static RatMulExpr Mul(
-            final Expr<RatType> op1,
-            final Expr<RatType> op2,
-            final Expr<RatType> op3,
-            final Expr<RatType> op4) {
-        return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4));
-    }
-
-    public static RatMulExpr Mul(
-            final Expr<RatType> op1,
-            final Expr<RatType> op2,
-            final Expr<RatType> op3,
-            final Expr<RatType> op4,
-            final Expr<RatType> op5) {
-        return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
-    }
-
-    public static RatToIntExpr ToInt(Expr<RatType> op) {
-        return RatToIntExpr.of(op);
-    }
+    @JvmStatic
+    fun ToInt(op: Expr<RatType>) = RatToIntExpr.of(op)
 }

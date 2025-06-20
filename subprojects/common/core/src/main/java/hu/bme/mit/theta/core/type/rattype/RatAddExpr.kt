@@ -13,84 +13,55 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.rattype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import java.math.BigInteger;
-import java.util.List;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public final class RatAddExpr extends AddExpr<RatType> {
+@Serializable
+@SerialName("RatAdd")
+class RatAddExpr(
+    override val ops: List<Expr<RatType>>
+) : AddExpr<RatType>() {
 
-    private static final int HASH_SEED = 4909;
-    private static final String OPERATOR_LABEL = "+";
+    companion object {
 
-    private RatAddExpr(final Iterable<? extends Expr<RatType>> ops) {
-        super(ops);
+        private const val OPERATOR_LABEL = "+"
+
+        @JvmStatic
+        fun of(ops: Iterable<Expr<RatType>>): RatAddExpr = RatAddExpr(ops.toList())
+
+        @Suppress("UNCHECKED_CAST")
+        @JvmStatic
+        fun create(ops: Iterable<Expr<*>>): RatAddExpr =
+            RatAddExpr(ops.map { it as Expr<RatType> })
     }
 
-    public static RatAddExpr of(final Iterable<? extends Expr<RatType>> ops) {
-        return new RatAddExpr(ops);
-    }
+    override val type: RatType = Rat()
 
-    public static RatAddExpr create(final List<? extends Expr<?>> ops) {
-        return RatAddExpr.of(ops.stream().map(op -> cast(op, Rat())).collect(toImmutableList()));
-    }
-
-    @Override
-    public RatType getType() {
-        return Rat();
-    }
-
-    @Override
-    public RatLitExpr eval(final Valuation val) {
-        var sumNum = BigInteger.ZERO;
-        var sumDenom = BigInteger.ONE;
-        for (final Expr<RatType> op : getOps()) {
-            final RatLitExpr opLit = (RatLitExpr) op.eval(val);
-            final var leftNum = sumNum;
-            final var leftDenom = sumDenom;
-            final var rightNum = opLit.getNum();
-            final var rightDenom = opLit.getDenom();
-            sumNum = leftNum.multiply(rightDenom).add(leftDenom.multiply(rightNum));
-            sumDenom = leftDenom.multiply(rightDenom);
+    override fun eval(`val`: Valuation): RatLitExpr {
+        var sumNum = BigInteger.ZERO
+        var sumDenom = BigInteger.ONE
+        ops.forEach { op ->
+            val opLit = op.eval(`val`) as RatLitExpr
+            val leftNum = sumNum
+            val leftDenom = sumDenom
+            val rightNum = opLit.num
+            val rightDenom = opLit.denom
+            sumNum = leftNum.multiply(rightDenom).add(leftDenom.multiply(rightNum))
+            sumDenom = leftDenom.multiply(rightDenom)
         }
-        return Rat(sumNum, sumDenom);
+        return Rat(sumNum, sumDenom)
     }
 
-    @Override
-    public RatAddExpr with(final Iterable<? extends Expr<RatType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return RatAddExpr.of(ops);
-        }
-    }
+    override fun of(ops: List<Expr<RatType>>): RatAddExpr = of(ops)
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final RatAddExpr that = (RatAddExpr) obj;
-            return this.getOps().equals(that.getOps());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String = OPERATOR_LABEL
 }
+

@@ -13,104 +13,56 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.rattype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class RatDivExpr extends DivExpr<RatType> {
+@Serializable
+@SerialName("RatDiv")
+data class RatDivExpr(
+    override val leftOp: Expr<RatType>,
+    override val rightOp: Expr<RatType>
+) : DivExpr<RatType>() {
 
-    private static final int HASH_SEED = 139;
-
-    private static final String OPERATOR_LABEL = "/";
-
-    private RatDivExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        super(leftOp, rightOp);
-    }
-
-    public static RatDivExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return new RatDivExpr(leftOp, rightOp);
-    }
-
-    public static RatDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<RatType> newLeftOp;
-        if (leftOp.getType() instanceof RatType) {
-            newLeftOp = cast(leftOp, Rat());
-        } else if (leftOp.getType() instanceof IntType) {
-            newLeftOp = IntToRatExpr.create(leftOp);
-        } else {
-            throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
-        }
-
-        final Expr<RatType> newRightOp;
-        if (rightOp.getType() instanceof RatType) {
-            newRightOp = cast(rightOp, Rat());
-        } else if (rightOp.getType() instanceof IntType) {
-            newRightOp = IntToRatExpr.create(rightOp);
-        } else {
-            throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
-        }
-
-        return RatDivExpr.of(newLeftOp, newRightOp);
-    }
-
-    @Override
-    public RatType getType() {
-        return Rat();
-    }
-
-    @Override
-    public RatLitExpr eval(final Valuation val) {
-        final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
-        final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
-        return leftOpVal.div(rightOpVal);
-    }
-
-    @Override
-    public RatDivExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return RatDivExpr.of(leftOp, rightOp);
+    companion object {
+        internal const val OPERATOR_LABEL = "/"
+        @JvmStatic
+        fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatDivExpr(leftOp, rightOp)
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) : RatDivExpr {
+            val newLeftOp = when (leftOp.type) {
+                is RatType -> cast(leftOp, Rat())
+                is IntType -> IntToRatExpr.create(leftOp)
+                else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${leftOp.type}")
+            }
+            val newRightOp = when (rightOp.type) {
+                is RatType -> cast(rightOp, Rat())
+                is IntType -> IntToRatExpr.create(rightOp)
+                else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${rightOp.type}")
+            }
+            return RatDivExpr(newLeftOp, newRightOp)
         }
     }
 
-    @Override
-    public RatDivExpr withLeftOp(final Expr<RatType> leftOp) {
-        return with(leftOp, getRightOp());
+    override val type: RatType = Rat()
+    override fun eval(`val`: Valuation): RatLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as RatLitExpr
+        val rightOpVal = rightOp.eval(`val`) as RatLitExpr
+        return leftOpVal.div(rightOpVal)
     }
 
-    @Override
-    public RatDivExpr withRightOp(final Expr<RatType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
+    override fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final RatDivExpr that = (RatDivExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

@@ -56,9 +56,5 @@ abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
     open fun withRightOp(rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType> = with(leftOp, rightOp)
 
-    override fun toString(): String = Utils.lispStringBuilder(operatorLabel)
-        .body()
-        .add(leftOp)
-        .add(rightOp)
-        .toString()
+    override fun toString(): String = Utils.lispStringBuilder(operatorLabel).add(leftOp).add(rightOp).toString()
 }

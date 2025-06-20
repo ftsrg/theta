@@ -13,80 +13,50 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.rattype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import java.math.BigInteger;
-import java.util.List;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public final class RatMulExpr extends MulExpr<RatType> {
+@Serializable
+@SerialName("RatMul")
+data class RatMulExpr(
+    override val ops: List<Expr<RatType>>
+) : MulExpr<RatType>() {
 
-    private static final int HASH_SEED = 9479;
-    private static final String OPERATOR_LABEL = "*";
+    companion object {
 
-    private RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
-        super(ops);
+        internal const val OPERATOR_LABEL = "*"
+
+        @JvmStatic
+        fun of(ops: Iterable<Expr<RatType>>) = RatMulExpr(ops.toList())
+
+        @JvmStatic
+        fun create(ops: List<Expr<*>>) = RatMulExpr(ops.map { cast(it, Rat()) })
     }
 
-    public static RatMulExpr of(final Iterable<? extends Expr<RatType>> ops) {
-        return new RatMulExpr(ops);
-    }
-
-    public static RatMulExpr create(final List<? extends Expr<?>> ops) {
-        return RatMulExpr.of(ops.stream().map(op -> cast(op, Rat())).collect(toImmutableList()));
-    }
-
-    @Override
-    public RatType getType() {
-        return Rat();
-    }
-
-    @Override
-    public RatLitExpr eval(final Valuation val) {
-        var prodNum = BigInteger.ONE;
-        var prodDenom = BigInteger.ONE;
-        for (final Expr<RatType> op : getOps()) {
-            final RatLitExpr opLit = (RatLitExpr) op.eval(val);
-            prodNum = prodNum.multiply(opLit.getNum());
-            prodDenom = prodDenom.multiply(opLit.getDenom());
+    override val type: RatType = Rat()
+    override fun eval(`val`: Valuation): RatLitExpr {
+        var prodNum = BigInteger.ONE
+        var prodDenom = BigInteger.ONE
+        ops.forEach { op ->
+            val opVal = op.eval(`val`) as RatLitExpr
+            prodNum *= opVal.num
+            prodDenom *= opVal.denom
         }
-        return Rat(prodNum, prodDenom);
+        return Rat(prodNum, prodDenom)
     }
 
-    @Override
-    public RatMulExpr with(final Iterable<? extends Expr<RatType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return new RatMulExpr(ops);
-        }
-    }
+    override fun of(ops: List<Expr<RatType>>): RatMulExpr =
+        Companion.of(ops)
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final RatMulExpr that = (RatMulExpr) obj;
-            return this.getOps().equals(that.getOps());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

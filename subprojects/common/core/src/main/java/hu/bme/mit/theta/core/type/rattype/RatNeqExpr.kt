@@ -13,88 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.rattype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class RatNeqExpr extends NeqExpr<RatType> {
+@Serializable
+@SerialName("RatNeq")
+data class RatNeqExpr(
+    override val leftOp: Expr<RatType>,
+    override val rightOp: Expr<RatType>
+) : NeqExpr<RatType>() {
 
-    private static final int HASH_SEED = 1997;
-    private static final String OPERATOR_LABEL = "/=";
+    companion object {
 
-    private RatNeqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        super(leftOp, rightOp);
+        @JvmStatic
+        fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatNeqExpr(leftOp, rightOp)
+
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = RatNeqExpr(cast(leftOp, Rat()), cast(rightOp, Rat()))
     }
 
-    public static RatNeqExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        return new RatNeqExpr(leftOp, rightOp);
+    override fun eval(`val`: Valuation): BoolLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as RatLitExpr
+        val rightOpVal = rightOp.eval(`val`) as RatLitExpr
+        return leftOpVal.neq(rightOpVal)
     }
 
-    public static RatNeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<RatType> newLeftOp = cast(leftOp, Rat());
-        final Expr<RatType> newRightOp = cast(rightOp, Rat());
-        return RatNeqExpr.of(newLeftOp, newRightOp);
-    }
+    override fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatNeqExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public BoolType getType() {
-        return Bool();
-    }
-
-    @Override
-    public BoolLitExpr eval(final Valuation val) {
-        final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
-        final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
-        return leftOpVal.neq(rightOpVal);
-    }
-
-    @Override
-    public RatNeqExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return RatNeqExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public RatNeqExpr withLeftOp(final Expr<RatType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public RatNeqExpr withRightOp(final Expr<RatType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final RatNeqExpr that = (RatNeqExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

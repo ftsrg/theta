@@ -1,14 +1,10 @@
 package hu.bme.mit.theta.core.type.arraytype
 
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.type.BinaryExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr.Companion
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import kotlinx.serialization.SerialName
@@ -25,7 +21,6 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
 ) : NeqExpr<ArrayType<IndexType, ElemType>>() {
 
     companion object {
-        private const val OPERATOR_LABEL = "/="
         @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             leftOp: Expr<ArrayType<IndexType, ElemType>>,
@@ -43,9 +38,6 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
         }
     }
 
-    override val type: BoolType
-        get() = Bool()
-
     override fun eval(`val`: Valuation): LitExpr<BoolType> = throw UnsupportedOperationException()
 
     override fun of(
@@ -54,13 +46,5 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
     ): ArrayNeqExpr<IndexType, ElemType> =
         Companion.of(leftOp, rightOp)
 
-    override val operatorLabel: String = OPERATOR_LABEL
-
-    override fun toString(): String {
-        return Utils.lispStringBuilder(operatorLabel)
-            .body()
-            .add(leftOp)
-            .add(rightOp)
-            .toString()
-    }
+    override fun toString(): String = super.toString()
 }

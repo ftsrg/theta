@@ -20,8 +20,6 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import kotlinx.serialization.SerialName
@@ -36,14 +34,12 @@ data class IntNeqExpr(
 
     companion object {
 
-        private const val OPERATOR_LABEL = "/="
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntNeqExpr(leftOp, rightOp)
         @JvmStatic
         fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntNeqExpr(cast(leftOp, Int()), cast(rightOp, Int()))
     }
 
-    override val type: BoolType = Bool()
     override fun eval(`val`: Valuation): BoolLitExpr {
         val leftOpVal = leftOp.eval(`val`) as IntLitExpr
         val rightOpVal = rightOp.eval(`val`) as IntLitExpr
@@ -53,6 +49,6 @@ data class IntNeqExpr(
     override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntNeqExpr =
         Companion.of(leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
 

@@ -13,212 +13,89 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.rattype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+package hu.bme.mit.theta.core.type.rattype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import java.math.BigInteger;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.BigIntegerSerializer
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public final class RatLitExpr extends NullaryExpr<RatType>
-        implements LitExpr<RatType>, Comparable<RatLitExpr> {
+@Serializable
+@SerialName("RatLit")
+data class RatLitExpr(
+    @Serializable(with = BigIntegerSerializer::class)
+    val num: BigInteger,
+    @Serializable(with = BigIntegerSerializer::class)
+    val denom: BigInteger
+) : NullaryExpr<RatType>(), LitExpr<RatType>, Comparable<RatLitExpr> {
 
-    private static final int HASH_SEED = 149;
+    init {
+        require(denom != BigInteger.ZERO)
+    }
 
-    private final BigInteger num;
-    private final BigInteger denom;
+    companion object {
 
-    private volatile int hashCode = 0;
+        @JvmStatic
+        fun of(num: BigInteger, denom: BigInteger): RatLitExpr {
+            require(denom != BigInteger.ZERO) { "Denominator cannot be zero" }
 
-    private RatLitExpr(final BigInteger num, final BigInteger denom) {
-        checkArgument(denom.compareTo(BigInteger.ZERO) != 0);
-
-        final var gcd = num.abs().gcd(denom.abs());
-        if (denom.compareTo(BigInteger.ZERO) >= 0) {
-            this.num = num.divide(gcd);
-            this.denom = denom.divide(gcd);
-        } else {
-            this.num = num.divide(gcd).negate();
-            this.denom = denom.divide(gcd).negate();
+            val gcd = num.abs().gcd(denom.abs())
+            val (simplifiedNum, simplifiedDenom) = if (denom >= BigInteger.ZERO) {
+                num.divide(gcd) to denom.divide(gcd)
+            } else {
+                num.divide(gcd).negate() to denom.divide(gcd).negate()
+            }
+            return RatLitExpr(simplifiedNum, simplifiedDenom)
         }
     }
 
-    public static RatLitExpr of(final BigInteger num, final BigInteger denom) {
-        return new RatLitExpr(num, denom);
-    }
+    override val type: RatType = Rat()
+    override fun eval(`val`: Valuation): RatLitExpr = this
 
-    @Override
-    public RatType getType() {
-        return Rat();
-    }
+    fun sign(): Int = num.signum()
+    fun floor(): BigInteger =
+        if (num >= BigInteger.ZERO || num.mod(denom) == BigInteger.ZERO) num / denom
+        else num / denom - BigInteger.ONE
 
-    @Override
-    public LitExpr<RatType> eval(final Valuation val) {
-        return this;
-    }
+    fun ceil(): BigInteger =
+        if (num <= BigInteger.ZERO || num.mod(denom) == BigInteger.ZERO) num / denom
+        else num / denom + BigInteger.ONE
 
-    public BigInteger getNum() {
-        return num;
-    }
+    fun add(that: RatLitExpr) =
+        of(this.num * that.denom + this.denom * that.num, this.denom * that.denom)
 
-    public BigInteger getDenom() {
-        return denom;
-    }
+    fun sub(that: RatLitExpr) =
+        of(this.num * that.denom - this.denom * that.num, this.denom * that.denom)
 
-    public int sign() {
-        return num.signum();
-    }
+    fun pos() = of(this.num, this.denom)
+    fun neg() = of(this.num.negate(), this.denom)
+    fun mul(that: RatLitExpr) =
+        of(this.num * that.num, this.denom * that.denom)
 
-    public BigInteger floor() {
-        if (num.compareTo(BigInteger.ZERO) >= 0 || num.mod(denom).compareTo(BigInteger.ZERO) == 0) {
-            return num.divide(denom);
-        } else {
-            return num.divide(denom).subtract(BigInteger.ONE);
-        }
-    }
+    fun div(that: RatLitExpr) =
+        of(this.num * that.denom, this.denom * that.num)
 
-    public BigInteger ceil() {
-        if (num.compareTo(BigInteger.ZERO) <= 0 || num.mod(denom).compareTo(BigInteger.ZERO) == 0) {
-            return num.divide(denom);
-        } else {
-            return num.divide(denom).add(BigInteger.ONE);
-        }
-    }
+    fun eq(that: RatLitExpr) = Bool(this.num == that.num && this.denom == that.denom)
+    fun neq(that: RatLitExpr) = Bool(this.num != that.num || this.denom != that.denom)
+    fun lt(that: RatLitExpr) = Bool(this.num * that.denom < this.denom * that.num)
+    fun leq(that: RatLitExpr) = Bool(this.num * that.denom <= this.denom * that.num)
+    fun gt(that: RatLitExpr) = Bool(this.num * that.denom > this.denom * that.num)
+    fun geq(that: RatLitExpr) = Bool(this.num * that.denom >= this.denom * that.num)
+    fun abs(): RatLitExpr = of(num.abs(), denom)
+    fun frac(): RatLitExpr = sub(of(floor(), BigInteger.ONE))
 
-    public RatLitExpr add(final RatLitExpr that) {
-        return RatLitExpr.of(
-                this.getNum()
-                        .multiply(that.getDenom())
-                        .add(this.getDenom().multiply(that.getNum())),
-                this.getDenom().multiply(that.getDenom()));
-    }
+    override fun compareTo(other: RatLitExpr): Int =
+        (this.num * other.denom).compareTo(this.denom * other.num)
 
-    public RatLitExpr sub(final RatLitExpr that) {
-        return RatLitExpr.of(
-                this.getNum()
-                        .multiply(that.getDenom())
-                        .subtract(this.getDenom().multiply(that.getNum())),
-                this.getDenom().multiply(that.getDenom()));
-    }
+    fun toInt(): IntLitExpr = IntLitExpr(num.divide(denom))
 
-    public RatLitExpr pos() {
-        return RatLitExpr.of(this.getNum(), this.getDenom());
-    }
-
-    public RatLitExpr neg() {
-        return RatLitExpr.of(this.getNum().negate(), this.getDenom());
-    }
-
-    public RatLitExpr mul(final RatLitExpr that) {
-        return RatLitExpr.of(
-                this.getNum().multiply(that.getNum()), this.getDenom().multiply(that.getDenom()));
-    }
-
-    public RatLitExpr div(final RatLitExpr that) {
-        return RatLitExpr.of(
-                this.getNum().multiply(that.getDenom()), this.getDenom().multiply(that.getNum()));
-    }
-
-    public BoolLitExpr eq(final RatLitExpr that) {
-        return Bool(
-                this.getNum().compareTo(that.getNum()) == 0
-                        && this.getDenom().compareTo(that.getDenom()) == 0);
-    }
-
-    public BoolLitExpr neq(final RatLitExpr that) {
-        return Bool(
-                this.getNum().compareTo(that.getNum()) != 0
-                        || this.getDenom().compareTo(that.getDenom()) != 0);
-    }
-
-    public BoolLitExpr lt(final RatLitExpr that) {
-        return Bool(
-                this.getNum()
-                                .multiply(that.getDenom())
-                                .compareTo(this.getDenom().multiply(that.getNum()))
-                        < 0);
-    }
-
-    public BoolLitExpr leq(final RatLitExpr that) {
-        return Bool(
-                this.getNum()
-                                .multiply(that.getDenom())
-                                .compareTo(this.getDenom().multiply(that.getNum()))
-                        <= 0);
-    }
-
-    public BoolLitExpr gt(final RatLitExpr that) {
-        return Bool(
-                this.getNum()
-                                .multiply(that.getDenom())
-                                .compareTo(this.getDenom().multiply(that.getNum()))
-                        > 0);
-    }
-
-    public BoolLitExpr geq(final RatLitExpr that) {
-        return Bool(
-                this.getNum()
-                                .multiply(that.getDenom())
-                                .compareTo(this.getDenom().multiply(that.getNum()))
-                        >= 0);
-    }
-
-    public RatLitExpr abs() {
-        return RatLitExpr.of(num.abs(), denom);
-    }
-
-    public RatLitExpr frac() {
-        return sub(of(floor(), BigInteger.ONE));
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + num.hashCode();
-            result = 31 * result + denom.hashCode();
-            hashCode = result;
-        }
-        return hashCode;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final RatLitExpr that = (RatLitExpr) obj;
-            return (this.getNum().compareTo(that.getNum()) == 0
-                    && this.getDenom().compareTo(that.getDenom()) == 0);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(getNum());
-        sb.append('%');
-        sb.append(getDenom());
-        return sb.toString();
-    }
-
-    @Override
-    public int compareTo(final RatLitExpr that) {
-        return this.getNum()
-                .multiply(that.getDenom())
-                .compareTo(this.getDenom().multiply(that.getNum()));
-    }
-
-    public IntLitExpr toInt() {
-        return IntLitExpr.of(num.divide(denom));
-    }
+    override fun toString(): String = "$num%$denom"
 }
+
