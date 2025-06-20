@@ -13,181 +13,102 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import java.math.BigInteger;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.BigIntegerSerializer
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public final class IntLitExpr extends NullaryExpr<IntType>
-        implements LitExpr<IntType>, Comparable<IntLitExpr> {
+@Serializable
+@SerialName("IntLit")
+data class IntLitExpr(
+    @Serializable(with = BigIntegerSerializer::class)
+    val value: BigInteger
+) : NullaryExpr<IntType>(), LitExpr<IntType>, Comparable<IntLitExpr> {
 
-    private static final int HASH_SEED = 4111;
-    private volatile int hashCode = 0;
+    companion object {
 
-    private final BigInteger value;
-
-    private IntLitExpr(final BigInteger value) {
-        this.value = value;
+        @JvmStatic
+        fun of(value: BigInteger) = IntLitExpr(value)
     }
 
-    public static IntLitExpr of(final BigInteger value) {
-        return new IntLitExpr(value);
-    }
+    override val type: IntType = Int()
+    override fun eval(`val`: Valuation): IntLitExpr = this
+    fun toRat(): RatLitExpr = Rat(this.value, 1)
+    fun add(that: IntLitExpr) = IntLitExpr(this.value.add(that.value))
+    fun sub(that: IntLitExpr) = IntLitExpr(this.value.subtract(that.value))
+    fun neg() = IntLitExpr(this.value.negate())
+    fun pos() = IntLitExpr(this.value)
 
-    public BigInteger getValue() {
-        return value;
-    }
-
-    @Override
-    public IntType getType() {
-        return Int();
-    }
-
-    @Override
-    public IntLitExpr eval(final Valuation val) {
-        return this;
-    }
-
-    public RatLitExpr toRat() {
-        return Rat(this.value, 1);
-    }
-
-    public IntLitExpr add(final IntLitExpr that) {
-        return IntLitExpr.of(this.value.add(that.value));
-    }
-
-    public IntLitExpr sub(final IntLitExpr that) {
-        return IntLitExpr.of(this.value.subtract(that.value));
-    }
-
-    public IntLitExpr neg() {
-        return IntLitExpr.of(this.value.negate());
-    }
-
-    public IntLitExpr pos() {
-        return IntLitExpr.of(this.value);
-    }
-
-    public IntLitExpr div(final IntLitExpr that) {
+    fun div(that: IntLitExpr): IntLitExpr {
         // Semantics:
         // 5 div 3 = 1
         // 5 div -3 = -1
         // -5 div 3 = -2
         // -5 div -3 = 2
-        var result = this.value.divide(that.value);
-        if (this.value.compareTo(BigInteger.ZERO) < 0
-                && this.value.mod(that.value.abs()).compareTo(BigInteger.ZERO) != 0) {
-            result = result.subtract(BigInteger.valueOf(that.value.signum()));
+        var result = this.value.divide(that.value)
+        if (this.value < BigInteger.ZERO && this.value.mod(that.value.abs()) != BigInteger.ZERO) {
+            result = result.subtract(BigInteger.valueOf(that.value.signum().toLong()))
         }
-        return IntLitExpr.of(result);
+        return IntLitExpr(result)
     }
 
-    public IntLitExpr mod(final IntLitExpr that) {
+    fun mod(that: IntLitExpr): IntLitExpr {
         // Always positive semantics:
         // 5 mod 3 = 2
         // 5 mod -3 = 2
         // -5 mod 3 = 1
         // -5 mod -3 = 1
-        var result = this.value.mod(that.value.abs());
-        if (result.compareTo(BigInteger.ZERO) < 0) {
-            result = result.add(that.value.abs());
+        var result = this.value.mod(that.value.abs())
+        if (result < BigInteger.ZERO) {
+            result = result.add(that.value.abs())
         }
-        assert result.compareTo(BigInteger.ZERO) >= 0;
-        return IntLitExpr.of(result);
+        require(result >= BigInteger.ZERO)
+        return IntLitExpr(result)
     }
 
-    public IntLitExpr rem(final IntLitExpr that) {
+    fun rem(that: IntLitExpr): IntLitExpr {
         // Semantics:
         // 5 rem 3 = 2
         // 5 rem -3 = -2
         // -5 rem 3 = 1
         // -5 rem -3 = -1
-        final var thisAbs = this.value.abs();
-        final var thatAbs = that.value.abs();
-        if (this.value.compareTo(BigInteger.ZERO) < 0
-                && that.value.compareTo(BigInteger.ZERO) < 0) {
-            var result = thisAbs.mod(thatAbs);
-            if (result.compareTo(BigInteger.ZERO) != 0) {
-                result = result.subtract(thatAbs);
+        val thisAbs = this.value.abs()
+        val thatAbs = that.value.abs()
+        return when {
+            this.value < BigInteger.ZERO && that.value < BigInteger.ZERO -> {
+                var result = thisAbs.mod(thatAbs)
+                if (result != BigInteger.ZERO) result = result.subtract(thatAbs)
+                IntLitExpr(result)
             }
-            return new IntLitExpr(result);
-        } else if (this.value.compareTo(BigInteger.ZERO) >= 0
-                && that.value.compareTo(BigInteger.ZERO) < 0) {
-            return new IntLitExpr(thisAbs.mod(thatAbs).negate());
-        } else if (this.value.compareTo(BigInteger.ZERO) < 0
-                && that.value.compareTo(BigInteger.ZERO) >= 0) {
-            var result = thisAbs.mod(thatAbs);
-            if (result.compareTo(BigInteger.ZERO) != 0) {
-                result = thatAbs.subtract(result);
+
+            this.value >= BigInteger.ZERO && that.value < BigInteger.ZERO -> IntLitExpr(thisAbs.mod(thatAbs).negate())
+            this.value < BigInteger.ZERO && that.value >= BigInteger.ZERO -> {
+                var result = thisAbs.mod(thatAbs)
+                if (result != BigInteger.ZERO) result = thatAbs.subtract(result)
+                IntLitExpr(result)
             }
-            return IntLitExpr.of(result);
-        } else {
-            return IntLitExpr.of(this.value.mod(that.value));
+
+            else -> IntLitExpr(this.value.mod(that.value))
         }
     }
 
-    public BoolLitExpr eq(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) == 0);
-    }
-
-    public BoolLitExpr neq(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) != 0);
-    }
-
-    public BoolLitExpr lt(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) < 0);
-    }
-
-    public BoolLitExpr leq(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) <= 0);
-    }
-
-    public BoolLitExpr gt(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) > 0);
-    }
-
-    public BoolLitExpr geq(final IntLitExpr that) {
-        return Bool(this.value.compareTo(that.value) >= 0);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + value.hashCode();
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntLitExpr that = (IntLitExpr) obj;
-            return this.getValue().compareTo(that.getValue()) == 0;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return getValue().toString();
-    }
-
-    @Override
-    public int compareTo(final IntLitExpr that) {
-        return this.getValue().compareTo(that.getValue());
-    }
+    fun eq(that: IntLitExpr) = Bool(this.value == that.value)
+    fun neq(that: IntLitExpr) = Bool(this.value != that.value)
+    fun lt(that: IntLitExpr) = Bool(this.value < that.value)
+    fun leq(that: IntLitExpr) = Bool(this.value <= that.value)
+    fun gt(that: IntLitExpr) = Bool(this.value > that.value)
+    fun geq(that: IntLitExpr) = Bool(this.value >= that.value)
+    override fun compareTo(other: IntLitExpr): Int = this.value.compareTo(other.value)
+    override fun toString(): String = value.toString()
 }
+

@@ -43,7 +43,7 @@ abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
         return with(newLeftOp, newRightOp)
     }
 
-    fun with(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType> =
+    open fun with(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType> =
         if (leftOp == this.leftOp && rightOp == this.rightOp) {
             this
         } else {

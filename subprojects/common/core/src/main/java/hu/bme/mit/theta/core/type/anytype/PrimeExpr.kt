@@ -47,7 +47,7 @@ data class PrimeExpr<ExprType : Type>(
         throw UnsupportedOperationException("Prime expressions cannot be evaluated")
     }
 
-    override fun with(op: Expr<ExprType>): PrimeExpr<ExprType> = if (op == this.op) this else of(op)
+    override fun of(op: Expr<ExprType>): PrimeExpr<ExprType> = Companion.of(op)
 
     override val operatorLabel: String = OPERATOR_LABEL
 }

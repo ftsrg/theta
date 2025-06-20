@@ -30,8 +30,8 @@ data class EnumNeqExpr(
     override fun eval(`val`: Valuation): LitExpr<BoolType> =
         EnumLitExpr.neq(leftOp.eval(`val`) as EnumLitExpr, rightOp.eval(`val`) as EnumLitExpr)
 
-    override fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): BinaryExpr<EnumType, BoolType> =
-        of(leftOp, rightOp)
+    override fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EnumNeqExpr =
+        Companion.of(leftOp, rightOp)
 
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL)
         .body()

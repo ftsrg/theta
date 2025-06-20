@@ -50,8 +50,8 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
     override fun of(
         leftOp: Expr<ArrayType<IndexType, ElemType>>,
         rightOp: Expr<ArrayType<IndexType, ElemType>>
-    ): BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> =
-        ArrayNeqExpr(leftOp, rightOp)
+    ): ArrayNeqExpr<IndexType, ElemType> =
+        Companion.of(leftOp, rightOp)
 
     override val operatorLabel: String = OPERATOR_LABEL
 

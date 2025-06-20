@@ -30,8 +30,8 @@ data class EnumEqExpr(
     override fun eval(`val`: Valuation): LitExpr<BoolType> =
         EnumLitExpr.eq(leftOp.eval(`val`) as EnumLitExpr, rightOp.eval(`val`) as EnumLitExpr)
 
-    override fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): BinaryExpr<EnumType, BoolType> =
-        of(leftOp, rightOp)
+    override fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EnumEqExpr =
+        Companion.of(leftOp, rightOp)
 
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL)
         .body()

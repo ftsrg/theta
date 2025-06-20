@@ -13,72 +13,39 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class IntNegExpr extends NegExpr<IntType> {
+@Serializable
+@SerialName("IntNeg")
+data class IntNegExpr(
+    override val op: Expr<IntType>
+) : NegExpr<IntType>() {
 
-    private static final int HASH_SEED = 3359;
-    private static final String OPERATOR_LABEL = "-";
+    companion object {
 
-    private IntNegExpr(final Expr<IntType> op) {
-        super(op);
+        internal const val OPERATOR_LABEL = "-"
+        @JvmStatic
+        fun of(op: Expr<IntType>) = IntNegExpr(op)
+        @JvmStatic
+        fun create(op: Expr<*>) = IntNegExpr(cast(op, Int()))
     }
 
-    public static IntNegExpr of(final Expr<IntType> op) {
-        return new IntNegExpr(op);
+    override val type: IntType = Int()
+    override fun eval(`val`: Valuation): IntLitExpr {
+        val opVal = op.eval(`val`) as IntLitExpr
+        return opVal.neg()
     }
 
-    public static IntNegExpr create(final Expr<?> op) {
-        final Expr<IntType> newOp = cast(op, Int());
-        return IntNegExpr.of(newOp);
-    }
-
-    @Override
-    public IntType getType() {
-        return Int();
-    }
-
-    @Override
-    public IntLitExpr eval(final Valuation val) {
-        final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
-        return opVal.neg();
-    }
-
-    @Override
-    public IntNegExpr with(final Expr<IntType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return IntNegExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntNegExpr that = (IntNegExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun of(op: Expr<IntType>): IntNegExpr = Companion.of(op)
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

@@ -13,86 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class IntRemExpr extends RemExpr<IntType> {
+@Serializable
+@SerialName("IntRem")
+data class IntRemExpr(
+    override val leftOp: Expr<IntType>,
+    override val rightOp: Expr<IntType>
+) : RemExpr<IntType>() {
 
-    private static final int HASH_SEED = 199;
+    companion object {
 
-    private static final String OPERATOR_LABEL = "rem";
-
-    private IntRemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        super(leftOp, rightOp);
+        internal const val OPERATOR_LABEL = "rem"
+        @JvmStatic
+        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntRemExpr(cast(leftOp, Int()), cast(rightOp, Int()))
     }
 
-    public static IntRemExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return new IntRemExpr(leftOp, rightOp);
+    override val type: IntType = Int()
+    override fun eval(`val`: Valuation): IntLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+        return leftOpVal.rem(rightOpVal)
     }
 
-    public static IntRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<IntType> newLeftOp = cast(leftOp, Int());
-        final Expr<IntType> newRightOp = cast(rightOp, Int());
-        return IntRemExpr.of(newLeftOp, newRightOp);
-    }
+    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntRemExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public IntType getType() {
-        return Int();
-    }
-
-    @Override
-    public IntLitExpr eval(final Valuation val) {
-        final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
-        final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
-        return leftOpVal.rem(rightOpVal);
-    }
-
-    @Override
-    public IntRemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return IntRemExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public IntRemExpr withLeftOp(final Expr<IntType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public IntRemExpr withRightOp(final Expr<IntType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntRemExpr that = (IntRemExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

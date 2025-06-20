@@ -13,75 +13,44 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.CastExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr
+import hu.bme.mit.theta.core.type.rattype.RatType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class IntToRatExpr extends CastExpr<IntType, RatType> {
+@Serializable
+@SerialName("IntToRat")
+data class IntToRatExpr(
+    override val op: Expr<IntType>
+) : CastExpr<IntType, RatType>() {
 
-    private static final int HASH_SEED = 1627;
-    private static final String OPERATOR_LABEL = "to_rat";
+    companion object {
 
-    private IntToRatExpr(final Expr<IntType> op) {
-        super(op);
+        internal const val OPERATOR_LABEL = "to_rat"
+
+        @JvmStatic
+        fun of(op: Expr<IntType>) = IntToRatExpr(op)
+
+        @JvmStatic
+        fun create(op: Expr<*>) = IntToRatExpr(cast(op, Int()))
     }
 
-    public static IntToRatExpr of(final Expr<IntType> op) {
-        return new IntToRatExpr(op);
+    override val type: RatType = Rat()
+    override fun eval(`val`: Valuation): RatLitExpr {
+        val opVal = op.eval(`val`) as IntLitExpr
+        return opVal.toRat()
     }
 
-    public static IntToRatExpr create(final Expr<?> op) {
-        final Expr<IntType> newOp = cast(op, Int());
-        return IntToRatExpr.of(newOp);
-    }
-
-    @Override
-    public RatType getType() {
-        return Rat();
-    }
-
-    @Override
-    public RatLitExpr eval(final Valuation val) {
-        final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
-        return opVal.toRat();
-    }
-
-    @Override
-    public IntToRatExpr with(final Expr<IntType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return IntToRatExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntToRatExpr that = (IntToRatExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun of(op: Expr<IntType>): IntToRatExpr = Companion.of(op)
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

@@ -51,8 +51,8 @@ data class ArrayEqExpr<IndexType : Type, ElemType : Type>(
     override fun of(
         leftOp: Expr<ArrayType<IndexType, ElemType>>,
         rightOp: Expr<ArrayType<IndexType, ElemType>>
-    ): BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> =
-        ArrayEqExpr(leftOp, rightOp)
+    ): ArrayEqExpr<IndexType, ElemType> =
+        Companion.of(leftOp, rightOp)
 
     override val operatorLabel: String = OPERATOR_LABEL
 

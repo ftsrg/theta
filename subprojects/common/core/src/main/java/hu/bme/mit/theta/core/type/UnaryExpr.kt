@@ -44,7 +44,10 @@ abstract class UnaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
     override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().add(op).toString()
 
-    abstract fun with(op: Expr<OpType>): UnaryExpr<OpType, ExprType>
+    open fun with(op: Expr<OpType>): UnaryExpr<OpType, ExprType> =
+        if (op == this.op) this else of(op)
+
+    protected abstract fun of(op: Expr<OpType>): UnaryExpr<OpType, ExprType>
 
     protected abstract val operatorLabel: String
 }

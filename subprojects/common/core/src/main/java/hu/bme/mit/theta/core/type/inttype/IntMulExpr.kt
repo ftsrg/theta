@@ -13,78 +13,46 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import java.math.BigInteger;
-import java.util.List;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public final class IntMulExpr extends MulExpr<IntType> {
+@Serializable
+@SerialName("IntMul")
+data class IntMulExpr(
+    override val ops: List<Expr<IntType>>
+) : MulExpr<IntType>() {
 
-    private static final int HASH_SEED = 2707;
-    private static final String OPERATOR_LABEL = "*";
+    companion object {
 
-    private IntMulExpr(final Iterable<? extends Expr<IntType>> ops) {
-        super(ops);
+        internal const val OPERATOR_LABEL = "*"
+        @JvmStatic
+        fun of(ops: Iterable<Expr<IntType>>) = IntMulExpr(ops.toList())
+        @JvmStatic
+        fun create(ops: List<Expr<*>>) = IntMulExpr(ops.map { cast(it, Int()) })
     }
 
-    public static IntMulExpr of(final Iterable<? extends Expr<IntType>> ops) {
-        return new IntMulExpr(ops);
-    }
-
-    public static IntMulExpr create(final List<? extends Expr<?>> ops) {
-        return IntMulExpr.of(ops.stream().map(op -> cast(op, Int())).collect(toImmutableList()));
-    }
-
-    @Override
-    public IntType getType() {
-        return Int();
-    }
-
-    @Override
-    public IntLitExpr eval(final Valuation val) {
-        var prod = BigInteger.ONE;
-        for (final Expr<IntType> op : getOps()) {
-            final IntLitExpr opVal = (IntLitExpr) op.eval(val);
-            prod = prod.multiply(opVal.getValue());
+    override val type: IntType = Int()
+    override fun eval(`val`: Valuation): IntLitExpr {
+        var prod = BigInteger.ONE
+        for (op in ops) {
+            val opVal = op.eval(`val`) as IntLitExpr
+            prod = prod.multiply(opVal.value)
         }
-        return Int(prod);
+        return Int(prod)
     }
 
-    @Override
-    public IntMulExpr with(final Iterable<? extends Expr<IntType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return IntMulExpr.of(ops);
-        }
-    }
+    override fun of(ops: List<Expr<IntType>>): IntMulExpr =
+        Companion.of(ops)
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntMulExpr that = (IntMulExpr) obj;
-            return this.getOps().equals(that.getOps());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

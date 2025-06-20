@@ -13,88 +13,46 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class IntEqExpr extends EqExpr<IntType> {
+@Serializable
+@SerialName("IntEq")
+data class IntEqExpr(
+    override val leftOp: Expr<IntType>,
+    override val rightOp: Expr<IntType>
+) : EqExpr<IntType>() {
 
-    private static final int HASH_SEED = 2777;
-    private static final String OPERATOR_LABEL = "=";
+    companion object {
 
-    private IntEqExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        super(leftOp, rightOp);
+        internal const val OPERATOR_LABEL = "="
+        @JvmStatic
+        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntEqExpr(leftOp, rightOp)
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntEqExpr(cast(leftOp, Int()), cast(rightOp, Int()))
     }
 
-    public static IntEqExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return new IntEqExpr(leftOp, rightOp);
+    override val type: BoolType = Bool()
+    override fun eval(`val`: Valuation): BoolLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+        return leftOpVal.eq(rightOpVal)
     }
 
-    public static IntEqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<IntType> newLeftOp = cast(leftOp, Int());
-        final Expr<IntType> newRightOp = cast(rightOp, Int());
-        return IntEqExpr.of(newLeftOp, newRightOp);
-    }
+    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntEqExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public BoolType getType() {
-        return Bool();
-    }
-
-    @Override
-    public BoolLitExpr eval(final Valuation val) {
-        final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
-        final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
-        return leftOpVal.eq(rightOpVal);
-    }
-
-    @Override
-    public IntEqExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return IntEqExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public IntEqExpr withLeftOp(final Expr<IntType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public IntEqExpr withRightOp(final Expr<IntType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntEqExpr that = (IntEqExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

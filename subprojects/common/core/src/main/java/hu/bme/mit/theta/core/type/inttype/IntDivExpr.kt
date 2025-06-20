@@ -13,86 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+package hu.bme.mit.theta.core.type.inttype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class IntDivExpr extends DivExpr<IntType> {
+@Serializable
+@SerialName("IntDiv")
+data class IntDivExpr(
+    override val leftOp: Expr<IntType>,
+    override val rightOp: Expr<IntType>
+) : DivExpr<IntType>() {
 
-    private static final int HASH_SEED = 79;
+    companion object {
 
-    private static final String OPERATOR_LABEL = "div";
-
-    private IntDivExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        super(leftOp, rightOp);
+        internal const val OPERATOR_LABEL = "div"
+        @JvmStatic
+        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntDivExpr(leftOp, rightOp)
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntDivExpr(cast(leftOp, Int()), cast(rightOp, Int()))
     }
 
-    public static IntDivExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return new IntDivExpr(leftOp, rightOp);
+    override val type: IntType = Int()
+    override fun eval(`val`: Valuation): IntLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+        return leftOpVal.div(rightOpVal)
     }
 
-    public static IntDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<IntType> newLeftOp = cast(leftOp, Int());
-        final Expr<IntType> newRightOp = cast(rightOp, Int());
-        return IntDivExpr.of(newLeftOp, newRightOp);
-    }
+    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntDivExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public IntType getType() {
-        return Int();
-    }
-
-    @Override
-    public IntLitExpr eval(final Valuation val) {
-        final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
-        final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
-        return leftOpVal.div(rightOpVal);
-    }
-
-    @Override
-    public IntDivExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return IntDivExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public IntDivExpr withLeftOp(final Expr<IntType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public IntDivExpr withRightOp(final Expr<IntType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final IntDivExpr that = (IntDivExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 }
+

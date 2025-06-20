@@ -13,140 +13,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.inttype;
 
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.Additive;
-import hu.bme.mit.theta.core.type.abstracttype.Castable;
-import hu.bme.mit.theta.core.type.abstracttype.Divisible;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+package hu.bme.mit.theta.core.type.inttype
 
-public final class IntType
-        implements Additive<IntType>,
-                Multiplicative<IntType>,
-                Divisible<IntType>,
-                Equational<IntType>,
-                Ordered<IntType>,
-                Castable<IntType> {
+import hu.bme.mit.theta.core.type.DomainSize
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.*
+import hu.bme.mit.theta.core.type.rattype.RatType
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-    private static final IntType INSTANCE = new IntType();
-    private static final int HASH_SEED = 222670;
-    private static final String TYPE_LABEL = "Int";
+@Serializable
+@SerialName(IntType.TYPE_LABEL)
+object IntType : Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
+    Castable<IntType> {
 
-    private IntType() {}
+    internal const val TYPE_LABEL = "Int"
+    fun getInstance(): IntType = this
+    override fun toString(): String = TYPE_LABEL
 
-    public static IntType getInstance() {
-        return INSTANCE;
-    }
+    override fun Add(ops: Iterable<Expr<IntType>>) = IntExprs.Add(ops)
+    override fun Sub(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Sub(leftOp, rightOp)
+    override fun Pos(op: Expr<IntType>) = IntExprs.Pos(op)
+    override fun Neg(op: Expr<IntType>) = IntExprs.Neg(op)
+    override fun Mul(ops: Iterable<Expr<IntType>>) = IntExprs.Mul(ops)
+    override fun Div(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Div(leftOp, rightOp)
+    override fun Mod(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Mod(leftOp, rightOp)
+    override fun Rem(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Rem(leftOp, rightOp)
+    override fun Eq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Eq(leftOp, rightOp)
+    override fun Neq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Neq(leftOp, rightOp)
+    override fun Lt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Lt(leftOp, rightOp)
+    override fun Leq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Leq(leftOp, rightOp)
+    override fun Gt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Gt(leftOp, rightOp)
+    override fun Geq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntExprs.Geq(leftOp, rightOp)
+    @Suppress("UNCHECKED_CAST")
+    override fun <TargetType : Type> Cast(op: Expr<IntType>, type: TargetType): Expr<TargetType> =
+        if (type is RatType) IntExprs.ToRat(op) as Expr<TargetType>
+        else throw ClassCastException("Int cannot be cast to $type")
 
-    @Override
-    public int hashCode() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return (obj != null && this.getClass() == obj.getClass());
-    }
-
-    @Override
-    public String toString() {
-        return TYPE_LABEL;
-    }
-
-    ////
-
-    @Override
-    public IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
-        return IntExprs.Add(ops);
-    }
-
-    @Override
-    public IntSubExpr Sub(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Sub(leftOp, rightOp);
-    }
-
-    @Override
-    public IntPosExpr Pos(final Expr<IntType> op) {
-        return IntExprs.Pos(op);
-    }
-
-    @Override
-    public IntNegExpr Neg(final Expr<IntType> op) {
-        return IntExprs.Neg(op);
-    }
-
-    @Override
-    public IntMulExpr Mul(final Iterable<? extends Expr<IntType>> ops) {
-        return IntExprs.Mul(ops);
-    }
-
-    @Override
-    public IntDivExpr Div(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Div(leftOp, rightOp);
-    }
-
-    @Override
-    public ModExpr<IntType> Mod(Expr<IntType> leftOp, Expr<IntType> rightOp) {
-        return IntExprs.Mod(leftOp, rightOp);
-    }
-
-    @Override
-    public RemExpr<IntType> Rem(Expr<IntType> leftOp, Expr<IntType> rightOp) {
-        return IntExprs.Rem(leftOp, rightOp);
-    }
-
-    @Override
-    public IntEqExpr Eq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Eq(leftOp, rightOp);
-    }
-
-    @Override
-    public IntNeqExpr Neq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Neq(leftOp, rightOp);
-    }
-
-    @Override
-    public IntLtExpr Lt(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Lt(leftOp, rightOp);
-    }
-
-    @Override
-    public IntLeqExpr Leq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Leq(leftOp, rightOp);
-    }
-
-    @Override
-    public IntGtExpr Gt(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Gt(leftOp, rightOp);
-    }
-
-    @Override
-    public IntGeqExpr Geq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-        return IntExprs.Geq(leftOp, rightOp);
-    }
-
-    @Override
-    public <TargetType extends Type> Expr<TargetType> Cast(
-            final Expr<IntType> op, final TargetType type) {
-        if (type instanceof RatType) {
-            @SuppressWarnings("unchecked")
-            final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
-            return result;
-        } else {
-            throw new ClassCastException("Int cannot be cast to " + type);
-        }
-    }
-
-    @Override
-    public DomainSize getDomainSize() {
-        return DomainSize.INFINITY;
-    }
+    override val domainSize: DomainSize = DomainSize.INFINITY
 }
+

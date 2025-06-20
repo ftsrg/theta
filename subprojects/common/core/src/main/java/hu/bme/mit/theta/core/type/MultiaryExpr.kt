@@ -44,5 +44,12 @@ abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
     override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().addAll(ops).toString()
 
-    abstract fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
+    open fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType> =
+        if (ops.toList() == this.ops) {
+            this
+        } else {
+            of(ops.toList())
+        }
+
+    protected abstract fun of(ops: List<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
 }
