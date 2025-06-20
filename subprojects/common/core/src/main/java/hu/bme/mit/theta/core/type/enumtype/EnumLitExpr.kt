@@ -17,15 +17,18 @@ data class EnumLitExpr(
 
     companion object {
 
+        @JvmStatic
         fun of(type: EnumType, literalName: String): EnumLitExpr {
             val value = EnumType.getShortName(literalName)
             require(value in type.values) { "Invalid value $value for type ${type.name}" }
             return EnumLitExpr(type, value)
         }
 
+        @JvmStatic
         fun eq(l: EnumLitExpr, r: EnumLitExpr): BoolLitExpr =
             Bool(l.type == r.type && l.value == r.value)
 
+        @JvmStatic
         fun neq(l: EnumLitExpr, r: EnumLitExpr): BoolLitExpr =
             Bool(l.type != r.type || l.value != r.value)
     }
@@ -33,4 +36,3 @@ data class EnumLitExpr(
     override fun eval(`val`: Valuation): LitExpr<EnumType> = this
     override fun toString(): String = EnumType.makeLongName(type, value)
 }
-

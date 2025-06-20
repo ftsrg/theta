@@ -22,11 +22,15 @@ data class EnumType(
 
         internal const val TYPE_LABEL = "Enum"
         const val FULLY_QUALIFIED_NAME_SEPARATOR = "."
+        @JvmStatic
         fun of(name: String, values: Collection<String>) =
             EnumType(name, values.withIndex().associate { it.value to it.index }.toMap(LinkedHashMap()))
 
+        @JvmStatic
         fun makeLongName(typeName: String, literal: String) = "$typeName$FULLY_QUALIFIED_NAME_SEPARATOR$literal"
+        @JvmStatic
         fun makeLongName(type: EnumType, literal: String) = makeLongName(type.name, literal)
+        @JvmStatic
         fun getShortName(longName: String): String =
             if (FULLY_QUALIFIED_NAME_SEPARATOR !in longName) longName
             else longName.substring(
@@ -69,4 +73,3 @@ data class EnumType(
 
     override fun toString(): String = "EnumType{$name}"
 }
-

@@ -21,6 +21,7 @@ data class EnumEqExpr(
     companion object {
 
         private const val OPERATOR_LABEL = "="
+        @JvmStatic
         fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>) = EnumEqExpr(leftOp, rightOp)
     }
 
@@ -38,4 +39,3 @@ data class EnumEqExpr(
         .add(rightOp)
         .toString()
 }
-

@@ -21,6 +21,7 @@ data class EnumNeqExpr(
     companion object {
 
         private const val OPERATOR_LABEL = "!="
+        @JvmStatic
         fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>) = EnumNeqExpr(leftOp, rightOp)
     }
 
@@ -38,4 +39,3 @@ data class EnumNeqExpr(
         .add(rightOp)
         .toString()
 }
-
