@@ -23,4 +23,3 @@ abstract class NegExpr<ExprType : Additive<ExprType>> : UnaryExpr<ExprType, Expr
         }
     }
 }
-

@@ -24,4 +24,3 @@ abstract class EqExpr<OpType : Equational<OpType>> : BinaryExpr<OpType, BoolType
         }
     }
 }
-

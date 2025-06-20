@@ -15,15 +15,19 @@ import kotlinx.serialization.Serializable
  * Logical OR expression for boolean type.
  */
 @Serializable
-@SerialName(OrExpr.OPERATOR_LABEL)
+@SerialName("Or")
 data class OrExpr(
     override val ops: List<Expr<BoolType>>
 ) : MultiaryExpr<BoolType, BoolType>() {
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "or"
+        private const val OPERATOR_LABEL = "or"
+
+        @JvmStatic
         fun of(ops: Iterable<Expr<BoolType>>) = OrExpr(ops.toList())
+
+        @JvmStatic
         fun create(ops: List<Expr<*>>) = OrExpr(ops.map { cast(it, Bool()) })
     }
 
@@ -31,10 +35,9 @@ data class OrExpr(
     override fun eval(`val`: Valuation): BoolLitExpr =
         if (ops.any { (it.eval(`val`) as BoolLitExpr).value }) True() else False()
 
-    override fun with(ops: Iterable<Expr<BoolType>>): OrExpr =
-        if (ops.toList() == this.ops) this else OrExpr(ops.toList())
+    override fun of(ops: List<Expr<BoolType>>): OrExpr =
+        Companion.of(ops)
 
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(ops).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL
 }
-

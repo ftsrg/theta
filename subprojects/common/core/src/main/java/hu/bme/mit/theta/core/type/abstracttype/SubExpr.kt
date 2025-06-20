@@ -25,4 +25,3 @@ abstract class SubExpr<ExprType : Additive<ExprType>> : BinaryExpr<ExprType, Exp
         }
     }
 }
-

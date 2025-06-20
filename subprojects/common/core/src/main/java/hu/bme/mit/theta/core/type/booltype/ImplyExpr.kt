@@ -19,8 +19,10 @@ data class ImplyExpr(
     override val rightOp: Expr<BoolType>
 ) : BinaryExpr<BoolType, BoolType>() {
     companion object {
-        internal const val OPERATOR_LABEL = "=>"
+        private const val OPERATOR_LABEL = "=>"
+        @JvmStatic
         fun of(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>) = ImplyExpr(leftOp, rightOp)
+        @JvmStatic
         fun create(leftOp: Expr<*>, rightOp: Expr<*>) = ImplyExpr(cast(leftOp, Bool()), cast(rightOp, Bool()))
     }
     override val type: BoolType = Bool()
@@ -31,4 +33,3 @@ data class ImplyExpr(
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(leftOp).add(rightOp).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL
 }
-

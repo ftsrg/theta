@@ -11,8 +11,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 /**
  * Factory and utility methods for abstract expressions over multiple types.
  */
+@Suppress("FunctionName")
 object AbstractExprs {
-
+    @JvmStatic
     // General
     fun <T : Type> Ite(cond: Expr<BoolType>, then: Expr<*>, elze: Expr<*>): IteExpr<*> {
         val newOps: Pair<Expr<T>, Expr<T>> = unify(then, elze)
@@ -21,6 +22,7 @@ object AbstractExprs {
         return Exprs.Ite(cond, newThen, newElse)
     }
 
+    @JvmStatic
     // Additive
     fun <T : Additive<T>> Add(ops: Iterable<Expr<*>>): AddExpr<T> {
         val opList = ops.toList()
@@ -52,24 +54,26 @@ object AbstractExprs {
     private fun <T : Additive<T>> getAddOps(expr: Expr<T>): List<Expr<T>> =
         if (expr is AddExpr<*>) (expr as AddExpr<T>).ops else listOf(expr)
 
+    @JvmStatic
     fun <T : Additive<T>> Sub(leftOp: Expr<*>, rightOp: Expr<*>): SubExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Sub(l, r)
         }
 
+    @JvmStatic
     fun <T : Additive<T>> Pos(op: Expr<*>): PosExpr<*> {
         val tOp: Expr<T> = bind(op)
-        val type = tOp.type
-        return type.Pos(tOp)
+        return tOp.type.Pos(tOp)
     }
 
+    @JvmStatic
     fun <T : Additive<T>> Neg(op: Expr<*>): NegExpr<*> {
         val tOp: Expr<T> = bind(op)
-        val type = tOp.type
-        return type.Neg(tOp)
+        return tOp.type.Neg(tOp)
     }
 
     // Multiplicative
+    @JvmStatic
     fun <T : Multiplicative<T>> Mul(ops: Iterable<Expr<*>>): MulExpr<*> {
         val opList = ops.toList()
         require(opList.isNotEmpty())
@@ -100,58 +104,69 @@ object AbstractExprs {
     private fun <T : Multiplicative<T>> getMulOps(expr: Expr<T>): List<Expr<T>> =
         if (expr is MulExpr<*>) (expr as MulExpr<T>).ops else listOf(expr)
 
+    @JvmStatic
     fun <T : Multiplicative<T>> Div(leftOp: Expr<*>, rightOp: Expr<*>): DivExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Div(l, r)
         }
 
     // Divisible
+    @JvmStatic
     fun <T : Divisible<T>> Mod(leftOp: Expr<*>, rightOp: Expr<*>): ModExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Mod(l, r)
         }
 
+    @JvmStatic
     fun <T : Divisible<T>> Rem(leftOp: Expr<*>, rightOp: Expr<*>): RemExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Rem(l, r)
         }
 
+    @JvmStatic
     // Equational
     fun <T : Equational<T>> Eq(leftOp: Expr<*>, rightOp: Expr<*>): EqExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Eq(l, r)
         }
 
+    @JvmStatic
     fun <T : Equational<T>> Neq(leftOp: Expr<*>, rightOp: Expr<*>): NeqExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Neq(l, r)
         }
 
+    @JvmStatic
     // Ordered
     fun <T : Ordered<T>> Lt(leftOp: Expr<*>, rightOp: Expr<*>): LtExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Lt(l, r)
         }
 
+    @JvmStatic
     fun <T : Ordered<T>> Leq(leftOp: Expr<*>, rightOp: Expr<*>): LeqExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Leq(l, r)
         }
 
+    @JvmStatic
     fun <T : Ordered<T>> Gt(leftOp: Expr<*>, rightOp: Expr<*>): GtExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Gt(l, r)
         }
 
+    @JvmStatic
     fun <T : Ordered<T>> Geq(leftOp: Expr<*>, rightOp: Expr<*>): GeqExpr<*> =
         create(leftOp, rightOp) { type: T, l, r ->
             type.Geq(l, r)
         }
 
     // Convenience methods
+    @JvmStatic
     fun <T : Additive<T>> Add(leftOp: Expr<*>, rightOp: Expr<*>): AddExpr<*> =
         Add<T>(listOf(leftOp, rightOp))
 
+    @JvmStatic
     fun <T : Multiplicative<T>> Mul(leftOp: Expr<*>, rightOp: Expr<*>): MulExpr<*> =
         Mul<T>(listOf(leftOp, rightOp))
 
@@ -210,4 +225,3 @@ object AbstractExprs {
     private fun <TR : Type, TP : Type> bind(expr1: Expr<TP>, expr2: Expr<TP>): Pair<Expr<TR>, Expr<TR>> =
         Pair(expr1 as Expr<TR>, expr2 as Expr<TR>)
 }
-

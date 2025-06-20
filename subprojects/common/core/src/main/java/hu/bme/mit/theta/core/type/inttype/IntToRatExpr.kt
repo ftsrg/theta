@@ -35,7 +35,7 @@ data class IntToRatExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "to_rat"
+        private const val OPERATOR_LABEL = "to_rat"
 
         @JvmStatic
         fun of(op: Expr<IntType>) = IntToRatExpr(op)

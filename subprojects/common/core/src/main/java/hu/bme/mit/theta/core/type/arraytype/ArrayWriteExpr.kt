@@ -24,12 +24,14 @@ data class ArrayWriteExpr<IndexType : Type, ElemType : Type>(
 
         private const val OPERATOR_LABEL = "write"
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             array: Expr<ArrayType<IndexType, ElemType>>,
             index: Expr<IndexType>,
             elem: Expr<ElemType>
         ) = ArrayWriteExpr(array, index, elem)
 
+        @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <IndexType : Type, ElemType : Type> create(
             array: Expr<*>,
@@ -81,4 +83,3 @@ data class ArrayWriteExpr<IndexType : Type, ElemType : Type>(
     fun withIndex(index: Expr<IndexType>): ArrayWriteExpr<IndexType, ElemType> = with(array, index, elem)
     fun withElem(elem: Expr<ElemType>): ArrayWriteExpr<IndexType, ElemType> = with(array, index, elem)
 }
-

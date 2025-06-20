@@ -33,7 +33,7 @@ data class IntRemExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "rem"
+        private const val OPERATOR_LABEL = "rem"
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
         @JvmStatic

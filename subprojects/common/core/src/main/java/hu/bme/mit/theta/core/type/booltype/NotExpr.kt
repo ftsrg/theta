@@ -13,15 +13,18 @@ import kotlinx.serialization.Serializable
  * Logical NOT expression for boolean type.
  */
 @Serializable
-@SerialName(NotExpr.OPERATOR_LABEL)
+@SerialName("Not")
 data class NotExpr(
     override val op: Expr<BoolType>
 ) : UnaryExpr<BoolType, BoolType>() {
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "not"
+        private const val OPERATOR_LABEL = "not"
+
+        @JvmStatic
         fun of(op: Expr<BoolType>) = NotExpr(op)
+        @JvmStatic
         fun create(op: Expr<*>) = NotExpr(cast(op, Bool()))
     }
 
@@ -31,4 +34,3 @@ data class NotExpr(
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(op).toString()
     override val operatorLabel: String = OPERATOR_LABEL
 }
-

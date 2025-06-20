@@ -23,4 +23,3 @@ abstract class PosExpr<ExprType : Additive<ExprType>> : UnaryExpr<ExprType, Expr
         }
     }
 }
-

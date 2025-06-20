@@ -29,7 +29,7 @@ import kotlinx.serialization.Serializable
  * @param ExprType The type of the expression
  */
 @Serializable
-@SerialName(PrimeExpr.OPERATOR_LABEL)
+@SerialName("Prime")
 data class PrimeExpr<ExprType : Type>(
     override val op: Expr<ExprType>
 ) : UnaryExpr<ExprType, ExprType>() {
@@ -37,7 +37,7 @@ data class PrimeExpr<ExprType : Type>(
     companion object {
 
         internal const val OPERATOR_LABEL = "prime"
-
+        @JvmStatic
         fun <T : Type> of(op: Expr<T>): PrimeExpr<T> = PrimeExpr(op)
     }
 

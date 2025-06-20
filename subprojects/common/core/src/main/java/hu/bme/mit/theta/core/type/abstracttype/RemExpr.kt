@@ -25,4 +25,3 @@ abstract class RemExpr<ExprType : Divisible<ExprType>> : BinaryExpr<ExprType, Ex
         }
     }
 }
-

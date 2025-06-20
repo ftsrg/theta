@@ -26,4 +26,3 @@ abstract class LeqExpr<OpType : Ordered<OpType>> : BinaryExpr<OpType, BoolType>(
         }
     }
 }
-

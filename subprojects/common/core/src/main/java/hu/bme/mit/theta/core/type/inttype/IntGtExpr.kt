@@ -36,7 +36,7 @@ data class IntGtExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = ">"
+        private const val OPERATOR_LABEL = ">"
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGtExpr(leftOp, rightOp)
         @JvmStatic

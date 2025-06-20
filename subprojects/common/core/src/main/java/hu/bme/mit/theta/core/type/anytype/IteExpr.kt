@@ -33,7 +33,7 @@ import kotlinx.serialization.Serializable
  * @param ExprType The type of the expression
  */
 @Serializable
-@SerialName(IteExpr.OPERATOR_LABEL)
+@SerialName("Ite")
 data class IteExpr<ExprType : Type>(
     val cond: Expr<BoolType>,
     val then: Expr<ExprType>,
@@ -42,7 +42,7 @@ data class IteExpr<ExprType : Type>(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "ite"
+        private const val OPERATOR_LABEL = "ite"
 
         @JvmStatic
         fun <ExprType : Type> of(

@@ -36,6 +36,7 @@ data class RefExpr<DeclType : Type>(
 
     companion object {
 
+        @JvmStatic
         fun <T : Type> of(decl: Decl<T>): RefExpr<T> = RefExpr(decl)
     }
 

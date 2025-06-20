@@ -33,7 +33,7 @@ data class IntAddExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "+"
+        private const val OPERATOR_LABEL = "+"
 
         @JvmStatic
         fun of(ops: Iterable<Expr<IntType>>) = IntAddExpr(ops.toList())

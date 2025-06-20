@@ -26,11 +26,12 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
 
     companion object {
         private const val OPERATOR_LABEL = "/="
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             leftOp: Expr<ArrayType<IndexType, ElemType>>,
             rightOp: Expr<ArrayType<IndexType, ElemType>>
         ) = ArrayNeqExpr(leftOp, rightOp)
-
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> create(
             leftOp: Expr<*>, rightOp: Expr<*>
         ): ArrayNeqExpr<*, *> {

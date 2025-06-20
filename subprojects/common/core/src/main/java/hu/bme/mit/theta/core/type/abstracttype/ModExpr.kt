@@ -25,4 +25,3 @@ abstract class ModExpr<ExprType : Divisible<ExprType>> : BinaryExpr<ExprType, Ex
         }
     }
 }
-

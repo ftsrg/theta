@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
  * elements.
  */
 @Serializable
-@SerialName(ArrayInitExpr.OPERATOR_LABEL)
+@SerialName("ArrayInit")
 data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
     val elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
     val elseElem: Expr<ElemType>,
@@ -32,14 +32,16 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "arrayinit"
+        private const val OPERATOR_LABEL = "arrayinit"
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             elems: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
             elseElem: Expr<ElemType>,
             type: ArrayType<IndexType, ElemType>
         ) = ArrayInitExpr(elems, elseElem, type)
 
+        @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <IndexType : Type, ElemType : Type> create(
             elems: List<Pair<Expr<out Type>, Expr<out Type>>>,
@@ -80,6 +82,8 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
         return of(newOps, elseElem, type)
     }
 
+    override fun of(ops: List<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> = with(ops)
+
     @Suppress("UNCHECKED_CAST")
     override fun withOps(ops: List<Expr<*>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =
         with(ops.map { it as Expr<Type> })
@@ -89,4 +93,3 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
     override fun toString(): String =
         "arrayinit($elements, $elseElem, $type)"
 }
-

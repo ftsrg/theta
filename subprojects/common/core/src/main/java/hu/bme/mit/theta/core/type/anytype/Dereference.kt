@@ -36,7 +36,7 @@ import kotlinx.serialization.Serializable
  * @property uniquenessIdx Optional uniqueness index for SMT encoding
  */
 @Serializable
-@SerialName(Dereference.OPERATOR_LABEL)
+@SerialName("Dereference")
 data class Dereference<A : Type, O : Type, T : Type>(
     val array: Expr<A>,
     val offset: Expr<O>,
@@ -46,14 +46,16 @@ data class Dereference<A : Type, O : Type, T : Type>(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "deref"
+        private const val OPERATOR_LABEL = "deref"
 
+        @JvmStatic
         fun <A : Type, O : Type, T : Type> of(
             array: Expr<A>,
             offset: Expr<O>,
             type: T
         ): Dereference<A, O, T> = Dereference(array, offset, type)
 
+        @JvmStatic
         private fun <A : Type, O : Type, T : Type> of(
             array: Expr<A>,
             offset: Expr<O>,

@@ -33,7 +33,7 @@ data class IntModExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "mod"
+        private const val OPERATOR_LABEL = "mod"
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntModExpr(leftOp, rightOp)
         @JvmStatic

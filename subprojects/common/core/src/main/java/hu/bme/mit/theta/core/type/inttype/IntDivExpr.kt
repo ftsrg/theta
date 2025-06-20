@@ -33,7 +33,7 @@ data class IntDivExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "div"
+        private const val OPERATOR_LABEL = "div"
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntDivExpr(leftOp, rightOp)
         @JvmStatic

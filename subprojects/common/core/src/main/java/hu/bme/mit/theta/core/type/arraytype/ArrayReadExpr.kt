@@ -23,11 +23,13 @@ data class ArrayReadExpr<IndexType : Type, ElemType : Type>(
 
         private const val OPERATOR_LABEL = "read"
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             array: Expr<ArrayType<IndexType, ElemType>>,
             index: Expr<IndexType>
         ) = ArrayReadExpr(array, index)
 
+        @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <IndexType : Type, ElemType : Type> create(
             array: Expr<*>,
@@ -79,4 +81,3 @@ data class ArrayReadExpr<IndexType : Type, ElemType : Type>(
     override fun toString(): String =
         Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(index).toString()
 }
-

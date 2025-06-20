@@ -23,4 +23,3 @@ abstract class MulExpr<ExprType : Multiplicative<ExprType>> : MultiaryExpr<ExprT
         }
     }
 }
-

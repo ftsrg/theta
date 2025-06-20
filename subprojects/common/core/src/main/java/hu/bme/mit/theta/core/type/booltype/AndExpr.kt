@@ -15,15 +15,17 @@ import kotlinx.serialization.Serializable
  * Logical AND expression for boolean type.
  */
 @Serializable
-@SerialName(AndExpr.OPERATOR_LABEL)
+@SerialName("And")
 data class AndExpr(
     override val ops: List<Expr<BoolType>>
 ) : MultiaryExpr<BoolType, BoolType>() {
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "and"
+        private const val OPERATOR_LABEL = "and"
+        @JvmStatic
         fun of(ops: Iterable<Expr<BoolType>>) = AndExpr(ops.toList())
+        @JvmStatic
         fun create(ops: List<Expr<*>>) = AndExpr(ops.map { cast(it, Bool()) })
     }
 
@@ -37,4 +39,3 @@ data class AndExpr(
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(ops).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL
 }
-

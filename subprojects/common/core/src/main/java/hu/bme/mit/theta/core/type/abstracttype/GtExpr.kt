@@ -27,4 +27,3 @@ abstract class GtExpr<OpType : Ordered<OpType>> : BinaryExpr<OpType, BoolType>()
         }
     }
 }
-

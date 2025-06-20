@@ -33,15 +33,15 @@ import kotlinx.serialization.Serializable
  * @property type The type of the reference
  */
 @Serializable
-@SerialName(Reference.OPERATOR_LABEL)
+@SerialName("Reference")
 data class Reference<A : Type, T : Type>(
     val expr: Expr<T>,
     override val type: A
 ) : Expr<A> {
 
     companion object {
-        internal const val OPERATOR_LABEL = "ref"
-
+        private const val OPERATOR_LABEL = "ref"
+        @JvmStatic
         fun <A : Type, T : Type> of(expr: Expr<T>, type: A): Reference<A, T> = Reference(expr, type)
     }
 

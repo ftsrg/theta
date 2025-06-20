@@ -41,7 +41,7 @@ sealed class QuantifiedExpr : Expr<BoolType> {
  * Existential quantifier expression for boolean type.
  */
 @Serializable
-@SerialName(ExistsExpr.OPERATOR_LABEL)
+@SerialName("Exists")
 data class ExistsExpr(
     override val paramDecls: List<ParamDecl<*>>,
     override val op: Expr<BoolType>
@@ -49,10 +49,12 @@ data class ExistsExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "exists"
+        private const val OPERATOR_LABEL = "exists"
+        @JvmStatic
         fun of(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) =
             ExistsExpr(paramDecls.toList(), op)
 
+        @JvmStatic
         fun create(paramDecls: Iterable<ParamDecl<*>>, op: Expr<*>) =
             ExistsExpr(paramDecls.toList(), cast(op, Bool()))
     }
@@ -67,7 +69,7 @@ data class ExistsExpr(
  * Universal quantifier expression for boolean type.
  */
 @Serializable
-@SerialName(ForallExpr.OPERATOR_LABEL)
+@SerialName("Forall")
 data class ForallExpr(
     override val paramDecls: List<ParamDecl<*>>,
     override val op: Expr<BoolType>
@@ -75,10 +77,12 @@ data class ForallExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "forall"
+        private const val OPERATOR_LABEL = "forall"
+        @JvmStatic
         fun of(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) =
             ForallExpr(paramDecls.toList(), op)
 
+        @JvmStatic
         fun create(paramDecls: Iterable<ParamDecl<*>>, op: Expr<*>) =
             ForallExpr(paramDecls.toList(), cast(op, Bool()))
     }
@@ -88,4 +92,3 @@ data class ForallExpr(
 
     override val operatorLabel: String = OPERATOR_LABEL
 }
-

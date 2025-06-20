@@ -23,10 +23,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 /**
  * Factory and utility methods for any-type expressions.
  */
+@Suppress("FunctionName")
 object Exprs {
+    @JvmStatic
     fun <DeclType : Type> Ref(decl: Decl<DeclType>): RefExpr<DeclType> =
         RefExpr(decl)
 
+    @JvmStatic
     fun <ExprType : Type> Ite(
         cond: Expr<BoolType>,
         then: Expr<ExprType>,
@@ -34,9 +37,11 @@ object Exprs {
     ): IteExpr<ExprType> =
         IteExpr(cond, then, elze)
 
+    @JvmStatic
     fun <ExprType : Type> Prime(op: Expr<ExprType>): PrimeExpr<ExprType> =
         PrimeExpr(op)
 
+    @JvmStatic
     fun <ArrType : Type, OffsetType : Type, ExprType : Type> Dereference(
         arr: Expr<ArrType>,
         offset: Expr<OffsetType>,
@@ -44,6 +49,7 @@ object Exprs {
     ): Dereference<ArrType, OffsetType, ExprType> =
         Dereference(arr, offset, type)
 
+    @JvmStatic
     fun <ArrType : Type, ExprType : Type> Reference(
         expr: Expr<ExprType>,
         type: ArrType
@@ -51,6 +57,7 @@ object Exprs {
         Reference(expr, type)
 
     // Convenience methods
+    @JvmStatic
     fun <ExprType : Type> Prime(op: Expr<ExprType>, i: Int): Expr<ExprType> {
         require(i >= 0)
         return when (i) {
@@ -60,4 +67,3 @@ object Exprs {
         }
     }
 }
-

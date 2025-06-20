@@ -27,11 +27,13 @@ data class ArrayEqExpr<IndexType : Type, ElemType : Type>(
 
         private const val OPERATOR_LABEL = "="
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             leftOp: Expr<ArrayType<IndexType, ElemType>>,
             rightOp: Expr<ArrayType<IndexType, ElemType>>
         ) = ArrayEqExpr(leftOp, rightOp)
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> create(
             leftOp: Expr<*>, rightOp: Expr<*>
         ): ArrayEqExpr<*, *> {
@@ -64,4 +66,3 @@ data class ArrayEqExpr<IndexType : Type, ElemType : Type>(
             .toString()
     }
 }
-

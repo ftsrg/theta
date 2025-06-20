@@ -33,7 +33,7 @@ data class IntSubExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "-"
+        private const val OPERATOR_LABEL = "-"
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntSubExpr(leftOp, rightOp)
         @JvmStatic

@@ -23,7 +23,7 @@ data class ArrayType<IndexType : Type, ElemType : Type>(
     companion object {
 
         internal const val TYPE_LABEL = "Array"
-
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             indexType: IndexType, elemType: ElemType
         ): ArrayType<IndexType, ElemType> =
@@ -46,4 +46,3 @@ data class ArrayType<IndexType : Type, ElemType : Type>(
     override val domainSize: DomainSize
         get() = DomainSize.pow(elemType.domainSize, indexType.domainSize)
 }
-

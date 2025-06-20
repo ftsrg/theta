@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
  * Logical IFF (if and only if) expression for boolean type.
  */
 @Serializable
-@SerialName(IffExpr.OPERATOR_LABEL)
+@SerialName("Iff")
 data class IffExpr(
     override val leftOp: Expr<BoolType>,
     override val rightOp: Expr<BoolType>
@@ -21,8 +21,10 @@ data class IffExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "iff"
+        private const val OPERATOR_LABEL = "iff"
+        @JvmStatic
         fun of(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>) = IffExpr(leftOp, rightOp)
+        @JvmStatic
         fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IffExpr(cast(leftOp, Bool()), cast(rightOp, Bool()))
     }
 
@@ -36,4 +38,3 @@ data class IffExpr(
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(leftOp).add(rightOp).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL
 }
-

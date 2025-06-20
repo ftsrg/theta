@@ -27,5 +27,3 @@ abstract class DivExpr<ExprType : Multiplicative<ExprType>> : BinaryExpr<ExprTyp
         }
     }
 }
-
-

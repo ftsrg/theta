@@ -26,4 +26,3 @@ abstract class LtExpr<OpType : Ordered<OpType>> : BinaryExpr<OpType, BoolType>()
         }
     }
 }
-

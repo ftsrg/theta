@@ -33,7 +33,7 @@ data class IntMulExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "*"
+        private const val OPERATOR_LABEL = "*"
         @JvmStatic
         fun of(ops: Iterable<Expr<IntType>>) = IntMulExpr(ops.toList())
         @JvmStatic

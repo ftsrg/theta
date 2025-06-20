@@ -20,7 +20,7 @@ sealed class BoolLitExpr : NullaryExpr<BoolType>(), LitExpr<BoolType> {
     override fun eval(`val`: Valuation): BoolLitExpr = this
 
     companion object {
-
+        @JvmStatic
         fun of(value: Boolean): BoolLitExpr = if (value) TrueExpr else FalseExpr
     }
 }

@@ -36,7 +36,7 @@ data class IntEqExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "="
+        private const val OPERATOR_LABEL = "="
         @JvmStatic
         fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntEqExpr(leftOp, rightOp)
         @JvmStatic

@@ -25,4 +25,3 @@ abstract class NeqExpr<OpType : Equational<OpType>> : BinaryExpr<OpType, hu.bme.
         }
     }
 }
-

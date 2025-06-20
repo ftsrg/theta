@@ -26,6 +26,7 @@ data class ArrayLitExpr<IndexType : Type, ElemType : Type> private constructor(
 
         private const val OPERATOR_LABEL = "array"
 
+        @JvmStatic
         fun <IndexType : Type, ElemType : Type> of(
             elems: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
             elseElem: Expr<ElemType>,
@@ -54,4 +55,3 @@ data class ArrayLitExpr<IndexType : Type, ElemType : Type> private constructor(
             .add("(default $elseElem)")
             .toString()
 }
-

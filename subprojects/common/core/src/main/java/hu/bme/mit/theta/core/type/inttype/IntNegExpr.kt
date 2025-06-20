@@ -32,7 +32,7 @@ data class IntNegExpr(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "-"
+        private const val OPERATOR_LABEL = "-"
         @JvmStatic
         fun of(op: Expr<IntType>) = IntNegExpr(op)
         @JvmStatic
