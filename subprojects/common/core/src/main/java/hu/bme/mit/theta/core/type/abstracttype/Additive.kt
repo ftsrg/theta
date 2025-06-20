@@ -21,13 +21,10 @@ import hu.bme.mit.theta.core.type.Type
 import kotlinx.serialization.Polymorphic
 
 @Polymorphic
-abstract class Additive<ExprType : Additive<ExprType>> : Type {
+interface Additive<ExprType : Additive<ExprType>> : Type {
 
-    abstract fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
-
-    abstract fun Sub(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>): SubExpr<ExprType>
-
-    abstract fun Pos(op: Expr<ExprType>): PosExpr<ExprType>
-
-    abstract fun Neg(op: Expr<ExprType>): NegExpr<ExprType>
+    fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
+    fun Sub(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>): SubExpr<ExprType>
+    fun Pos(op: Expr<ExprType>): PosExpr<ExprType>
+    fun Neg(op: Expr<ExprType>): NegExpr<ExprType>
 }
