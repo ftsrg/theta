@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-atomic/read_write_lock-1.yml	ERROR (server error)	3.738144	1.3846807560000798	260.665344
+pthread-wmm/rfi003_tso.yml	ERROR (server error)	3.798252	1.3502610699999877	248.328192
+pthread/lazy01.yml	ERROR (server error)	3.746099	1.3970168109999577	268.091392
+pthread-wmm/mix000.oepc.yml	ERROR (server error)	4.316606	1.5506617300000016	254.873600
+pthread-wmm/safe032_tso.yml	ERROR (server error)	3.44616	1.2953745769999614	240.779264
+pthread-wmm/safe030_tso.yml	ERROR (server error)	4.072349	1.4852267549999851	252.166144
+pthread-wmm/safe018_power.opt.yml	ERROR (server error)	4.514268	1.5961137279999775	256.126976
+pthread-wmm/safe026_tso.yml	ERROR (server error)	3.464927	1.2810549619999847	245.116928
+pthread/fib_safe-11.yml	ERROR (server error)	3.742707	1.3741638240001066	258.519040
+pthread-wmm/safe024_tso.yml	ERROR (server error)	3.46939	1.3009501980000096	247.304192

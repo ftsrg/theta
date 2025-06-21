@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Loops, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-02-15 17:37:45 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1382-899
+os:                      Linux-6.2.0-1019-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2611.36 MHz
+ram:                     16757.788672 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Loops
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                          status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------
+nla-digbench/ps3-ll.yml                            Parsing OK                     110.72      101.20        None
+loop-crafted/simple_vardep_2.yml                   Parsing OK                     107.26      101.27        None
+nla-digbench-scaling/divbin_valuebound100.yml      Parsing OK                      82.87       77.15        None
+nla-digbench-scaling/mannadiv_valuebound50.yml     Parsing OK                       6.32        2.82        None
+nla-digbench-scaling/mannadiv_unwindbound10.yml    Parsing OK                       7.06        3.09        None
+----------------------------------------------------------------------------------------------------------------
+Run set 1                                          done                           102.38      286.06           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               5
+  Score:                 0 (max: 9)

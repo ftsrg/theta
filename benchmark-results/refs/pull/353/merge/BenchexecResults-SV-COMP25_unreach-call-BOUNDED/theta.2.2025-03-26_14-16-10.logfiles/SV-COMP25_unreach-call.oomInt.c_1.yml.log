@@ -1,0 +1,18 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/ldv-regression/oomInt.c_1.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/ldv-regression/oomInt.c_1.i' with property 'sv-benchmarks/c/properties/unreach-call.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32 --input sv-benchmarks/c/ldv-regression/oomInt.c_1.i --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Arithmetic: []
+ParsingResult Success
+Alias graph size: 0 -> []
+Using bounded portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=MDD, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=180000, inProcess=true, memlimit=0, specConfig=MddConfig(solver=Z3, validateSolver=false, iterationStrategy=GSAT, reversed=false, cegar=false, initPrec=EMPTY)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/oomInt.c_1.i), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: (SafetyResult Safe)
+server: (SafetyResult Safe)
+(SafetyResult Safe)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=MDD, solverHome=/home/runner/work/theta/theta/EmergenTheta/solvers, timeoutMs=180000, inProcess=true, memlimit=0, specConfig=MddConfig(solver=Z3, validateSolver=false, iterationStrategy=GSAT, reversed=false, cegar=false, initPrec=EMPTY)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/oomInt.c_1.i), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false)) succeeded in 2362 ms
+(SafetyResult Safe)

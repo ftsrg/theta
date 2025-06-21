@@ -1,0 +1,22 @@
+Theta/theta-start.sh sv-benchmarks/c/pthread-ext/14_spin2003.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32 --portfolio HORN --input sv-benchmarks/c/pthread-ext/14_spin2003.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/pthread-ext/14_spin2003.i as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: CompoundDefinitions are not yet implemented!
+WARNING: Unknown simple type union pthread_attr_t
+WARNING: enums are not yet supported! Using int instead.
+Arithmetic: []
+Frontend finished:   (in 935 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Starting verification of UnnamedXcfa using PORTFOLIO
+Process failed! (hu.bme.mit.theta.xcfa.cli.portfolio.HornKt.hornPortfolio(horn.kt:72), java.lang.UnsupportedOperationException: Multithreading for horn checkers not supported)
