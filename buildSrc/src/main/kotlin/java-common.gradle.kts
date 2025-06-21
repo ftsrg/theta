@@ -23,12 +23,11 @@ plugins {
 dependencies {
     val implementation: Configuration by configurations
     val testImplementation: Configuration by configurations
-    val libPath: String by rootProject.extra
 
     implementation(Deps.Kotlin.stdlib)
     implementation(Deps.guava)
     implementation(Deps.gson)
-    implementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
+    implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
     implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
     testImplementation(Deps.junit4)
     testImplementation(Deps.junit4engine)
@@ -51,6 +50,8 @@ tasks {
     withType<Test>() {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
+        environment["DYLD_LIBRARY_PATH"] = libPath
+        systemProperty("java.library.path", libPath)
         enableAssertions = true
     }
 

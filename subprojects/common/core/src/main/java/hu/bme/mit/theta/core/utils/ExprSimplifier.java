@@ -145,6 +145,7 @@ public final class ExprSimplifier {
                     .addCase(BvAddExpr.class, this::simplifyBvAdd)
                     .addCase(BvSubExpr.class, this::simplifyBvSub)
                     .addCase(BvPosExpr.class, this::simplifyBvPos)
+                    .addCase(BvToIntExpr.class, this::simplifyBvToInt)
                     .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
                     .addCase(BvNegExpr.class, this::simplifyBvNeg)
                     .addCase(BvMulExpr.class, this::simplifyBvMul)
@@ -1200,6 +1201,18 @@ public final class ExprSimplifier {
 
     private Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
         return simplify(expr.getOp(), val);
+    }
+
+    private Expr<IntType> simplifyBvToInt(final BvToIntExpr expr, final Valuation val) {
+        final var op = simplify(expr.getOp(), val);
+        if (op instanceof BvLitExpr opVal) {
+            if (expr.isSigned()) {
+                return IntLitExpr.of(BvUtils.signedBvLitExprToBigInteger(opVal));
+            } else {
+                return IntLitExpr.of(BvUtils.neutralBvLitExprToBigInteger(opVal));
+            }
+        }
+        return expr.with(op);
     }
 
     private Expr<BvType> simplifyBvSignChange(final BvSignChangeExpr expr, final Valuation val) {

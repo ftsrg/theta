@@ -136,7 +136,7 @@ fun hornPortfolio25(
     val configZ3native =
       ConfigNode(
         "Z3native-$inProcess",
-        baseConfig.adaptConfig(inProcess = inProcess, solver = "Z3:4.13", timeoutMs = 100_000),
+        baseConfig.adaptConfig(inProcess = inProcess, solver = "Z3:new", timeoutMs = 100_000),
         checker,
       )
     val configEldarica =
