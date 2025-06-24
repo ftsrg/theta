@@ -736,7 +736,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
       if (matcher.find()) {
         return FpRoundingMode.valueOf(matcher.group(1).uppercase())
       }
-      return FpRoundingMode.getDefaultRoundingMode()
+      return FpRoundingMode.defaultRoundingMode
     }
 
     override fun visitBitwiseNotExpr(ctx: BitwiseNotExprContext): Expr<out Type> {

@@ -13,92 +13,52 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import java.util.List;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public class FpMulExpr extends MulExpr<FpType> {
+@Serializable
+@SerialName("FpMul")
+data class FpMulExpr(
+    val roundingMode: FpRoundingMode,
+    override val ops: List<Expr<FpType>>
+) : MulExpr<FpType>() {
 
-    private static final int HASH_SEED = 4276;
-    private static final String OPERATOR_LABEL = "fpmul";
-
-    private final FpRoundingMode roundingMode;
-
-    private FpMulExpr(
-            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
-        super(ops);
-        checkAllTypesEqual(ops);
-        checkNotNull(roundingMode);
-        this.roundingMode = roundingMode;
+    init {
+        checkAllTypesEqual(ops)
     }
 
-    public static FpMulExpr of(
-            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
-        return new FpMulExpr(roundingMode, ops);
+    companion object {
+
+        private const val OPERATOR_LABEL = "fpmul"
+
+        @JvmStatic
+        fun of(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) =
+            FpMulExpr(roundingMode, ops.toList())
+
+        @JvmStatic
+        fun create(roundingMode: FpRoundingMode, ops: List<Expr<*>>) =
+            FpMulExpr(roundingMode, ops.map { castFp(it) })
     }
 
-    public static FpMulExpr create(
-            final FpRoundingMode roundingMode, final List<? extends Expr<?>> ops) {
-        checkNotNull(ops);
-        return FpMulExpr.of(
-                roundingMode, ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
-    }
+    override val type: FpType get() = ops[0].type
 
-    public FpRoundingMode getRoundingMode() {
-        return roundingMode;
-    }
-
-    @Override
-    public FpType getType() {
-        return getOps().get(0).getType();
-    }
-
-    @Override
-    public FpLitExpr eval(final Valuation val) {
-        return getOps().stream()
-                .skip(1)
-                .reduce(
-                        (FpLitExpr) getOps().get(0).eval(val),
-                        (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
-                        (op1, op2) -> (op1.mul(roundingMode, op2)));
-    }
-
-    @Override
-    public FpMulExpr with(final Iterable<? extends Expr<FpType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return FpMulExpr.of(roundingMode, ops);
+    override fun eval(`val`: Valuation): FpLitExpr =
+        ops.drop(1).fold(ops[0].eval(`val`) as FpLitExpr) { acc, op ->
+            acc.mul(roundingMode, op.eval(`val`) as FpLitExpr)
         }
-    }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpMulExpr that = (FpMulExpr) obj;
-            return this.getOps().equals(that.getOps()) && roundingMode == that.roundingMode;
-        } else {
-            return false;
-        }
-    }
+    override fun of(ops: List<Expr<FpType>>): FpMulExpr = Companion.of(roundingMode, ops)
 
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

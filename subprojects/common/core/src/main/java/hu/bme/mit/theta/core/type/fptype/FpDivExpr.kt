@@ -13,101 +13,52 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class FpDivExpr extends DivExpr<FpType> {
-    private static final int HASH_SEED = 1646;
-    private static final String OPERATOR = "fpdiv";
-
-    private final FpRoundingMode roundingMode;
-
-    private FpDivExpr(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> leftOp,
-            final Expr<FpType> rightOp) {
-        super(leftOp, rightOp);
-        checkAllTypesEqual(leftOp, rightOp);
-        this.roundingMode = roundingMode;
+@Serializable
+@SerialName("FpDiv")
+data class FpDivExpr(
+    val roundingMode: FpRoundingMode,
+    override val leftOp: Expr<FpType>,
+    override val rightOp: Expr<FpType>
+) : DivExpr<FpType>() {
+    init {
+        checkAllTypesEqual(leftOp, rightOp)
     }
 
-    public static FpDivExpr of(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> leftOp,
-            final Expr<FpType> rightOp) {
-        return new FpDivExpr(roundingMode, leftOp, rightOp);
+    companion object {
+        private const val OPERATOR_LABEL = "fpdiv"
+
+        @JvmStatic
+        fun of(roundingMode: FpRoundingMode, leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+            FpDivExpr(roundingMode, leftOp, rightOp)
+
+        @JvmStatic
+        fun create(roundingMode: FpRoundingMode, leftOp: Expr<*>, rightOp: Expr<*>) =
+            FpDivExpr(roundingMode, castFp(leftOp), castFp(rightOp))
     }
 
-    public static FpDivExpr create(
-            final FpRoundingMode roundingMode, final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<FpType> newLeftOp = castFp(leftOp);
-        final Expr<FpType> newRightOp = castFp(rightOp);
-        return FpDivExpr.of(roundingMode, newLeftOp, newRightOp);
+    override val type: FpType get() = leftOp.type
+
+    override fun eval(`val`: Valuation): FpLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+        return leftOpVal.div(roundingMode, rightOpVal)
     }
 
-    public FpRoundingMode getRoundingMode() {
-        return roundingMode;
-    }
+    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpDivExpr =
+        Companion.of(roundingMode, leftOp, rightOp)
 
-    @Override
-    public FpType getType() {
-        return getOps().get(0).getType();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public FpLitExpr eval(final Valuation val) {
-        final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
-        final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-
-        return leftOpVal.div(roundingMode, rightOpVal);
-    }
-
-    @Override
-    public FpDivExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return FpDivExpr.of(roundingMode, leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public FpDivExpr withLeftOp(final Expr<FpType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public FpDivExpr withRightOp(final Expr<FpType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpDivExpr that = (FpDivExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp())
-                    && roundingMode == that.roundingMode;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR + "[" + roundingMode.name().toLowerCase() + "]";
-    }
+    override fun toString(): String = super.toString()
 }

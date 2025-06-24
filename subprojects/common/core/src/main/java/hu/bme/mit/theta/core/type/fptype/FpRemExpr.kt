@@ -13,94 +13,58 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.utils.FpUtils;
-import org.kframework.mpfr.BigFloat;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.BinaryExpr
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.utils.FpUtils.*
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
+@Serializable
+@SerialName("FpRem")
+data class FpRemExpr(
+    override val leftOp: Expr<FpType>,
+    override val rightOp: Expr<FpType>
+) : BinaryExpr<FpType, FpType>() {
 
-    private static final int HASH_SEED = 6670;
-
-    private static final String OPERATOR_LABEL = "fprem";
-
-    private FpRemExpr(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        super(leftOp, rightOp);
-        checkAllTypesEqual(leftOp, rightOp);
+    init {
+        checkAllTypesEqual(leftOp, rightOp)
     }
 
-    public static FpRemExpr of(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return new FpRemExpr(leftOp, rightOp);
+    companion object {
+
+        private const val OPERATOR_LABEL = "fprem"
+
+        @JvmStatic
+        fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+            FpRemExpr(leftOp, rightOp)
+
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+            FpRemExpr(castFp(leftOp), castFp(rightOp))
     }
 
-    public static FpRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<FpType> newLeftOp = castFp(leftOp);
-        final Expr<FpType> newRightOp = castFp(rightOp);
-        return FpRemExpr.of(newLeftOp, newRightOp);
+    override val type: FpType get() = leftOp.type
+
+    override fun eval(`val`: Valuation): FpLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+        val leftFloat = fpLitExprToBigFloat(null, leftOpVal)
+        val rightFloat = fpLitExprToBigFloat(null, rightOpVal)
+        val remainder = leftFloat.remainder(rightFloat, getMathContext(this.type, null))
+        return bigFloatToFpLitExpr(remainder, this.type)
     }
 
-    @Override
-    public FpType getType() {
-        return getLeftOp().getType();
-    }
+    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpRemExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public FpLitExpr eval(final Valuation val) {
-        final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
-        final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-        BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(null, leftOpVal);
-        BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(null, rightOpVal);
-        BigFloat remainder =
-                leftFloat.remainder(rightFloat, FpUtils.getMathContext(this.getType(), null));
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-        return FpUtils.bigFloatToFpLitExpr(remainder, this.getType());
-    }
-
-    @Override
-    public FpRemExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return FpRemExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public FpRemExpr withLeftOp(final Expr<FpType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public FpRemExpr withRightOp(final Expr<FpType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpRemExpr that = (FpRemExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

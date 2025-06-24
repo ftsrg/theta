@@ -13,71 +13,40 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class FpPosExpr extends PosExpr<FpType> {
+@Serializable
+@SerialName("FpPos")
+data class FpPosExpr(
+    override val op: Expr<FpType>
+) : PosExpr<FpType>() {
+    companion object {
+        private const val OPERATOR_LABEL = "fppos"
 
-    private static final int HASH_SEED = 9424;
-    private static final String OPERATOR_LABEL = "fppos";
+        @JvmStatic
+        fun of(op: Expr<FpType>) = FpPosExpr(op)
 
-    private FpPosExpr(final Expr<FpType> op) {
-        super(op);
+        @JvmStatic
+        fun create(op: Expr<*>) = FpPosExpr(castFp(op))
     }
 
-    public static FpPosExpr of(final Expr<FpType> op) {
-        return new FpPosExpr(op);
-    }
+    override val type: FpType get() = op.type
 
-    public static FpPosExpr create(final Expr<?> op) {
-        final Expr<FpType> newOp = castFp(op);
-        return FpPosExpr.of(newOp);
-    }
+    override fun eval(`val`: Valuation): FpLitExpr =
+        (op.eval(`val`) as FpLitExpr).pos()
 
-    @Override
-    public FpType getType() {
-        return getOp().getType();
-    }
+    override fun of(op: Expr<FpType>): FpPosExpr = Companion.of(op)
 
-    @Override
-    public FpLitExpr eval(final Valuation val) {
-        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-        return opVal.pos();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public FpPosExpr with(final Expr<FpType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return FpPosExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpPosExpr that = (FpPosExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

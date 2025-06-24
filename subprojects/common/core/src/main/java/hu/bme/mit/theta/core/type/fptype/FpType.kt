@@ -13,139 +13,61 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static com.google.common.base.Preconditions.checkArgument;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.*;
-import java.math.BigInteger;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.*
+import hu.bme.mit.theta.core.type.abstracttype.*
+import java.math.BigInteger
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public class FpType
-        implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>, Ordered<FpType> {
+@Serializable
+@SerialName(FpType.TYPE_LABEL)
+data class FpType(
+    val exponent: Int,
+    val significand: Int
+) : Equational<FpType>, Additive<FpType>, Multiplicative<FpType>, Ordered<FpType> {
 
-    private static final int HASH_SEED = 5424;
-    private static final String TYPE_LABEL = "Fp";
-
-    private final int exponent;
-    private final int significand;
-
-    private volatile int hashCode = 0;
-
-    private FpType(final int exponent, final int significand) {
-        checkArgument(exponent > 1);
-        checkArgument(significand > 1);
-        this.exponent = exponent;
-        this.significand = significand;
+    init {
+        require(exponent > 1) { "Exponent must be greater than 1" }
+        require(significand > 1) { "Significand must be greater than 1" }
     }
 
-    public static FpType of(final int exponent, final int significand) {
-        return new FpType(exponent, significand);
+    companion object {
+
+        internal const val TYPE_LABEL = "Fp"
+
+        @JvmStatic
+        fun of(exponent: Int, significand: Int): FpType = FpType(exponent, significand)
     }
 
-    public int getExponent() {
-        return exponent;
-    }
+    override fun Eq(leftOp: Expr<FpType>, rightOp: Expr<FpType>): EqExpr<FpType> = FpEqExpr(leftOp, rightOp)
+    override fun Neq(leftOp: Expr<FpType>, rightOp: Expr<FpType>): NeqExpr<FpType> = FpNeqExpr(leftOp, rightOp)
+    override fun Add(ops: Iterable<Expr<FpType>>): AddExpr<FpType> =
+        FpExprs.Add(FpRoundingMode.defaultRoundingMode, ops)
 
-    public int getSignificand() {
-        return significand;
-    }
+    override fun Sub(leftOp: Expr<FpType>, rightOp: Expr<FpType>): SubExpr<FpType> =
+        FpExprs.Sub(FpRoundingMode.defaultRoundingMode, leftOp, rightOp)
 
-    @Override
-    public EqExpr<FpType> Eq(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpEqExpr.of(leftOp, rightOp);
-    }
+    override fun Pos(op: Expr<FpType>): PosExpr<FpType> = FpExprs.Pos(op)
+    override fun Neg(op: Expr<FpType>): NegExpr<FpType> = FpExprs.Neg(op)
+    override fun Mul(ops: Iterable<Expr<FpType>>): MulExpr<FpType> =
+        FpExprs.Mul(FpRoundingMode.defaultRoundingMode, ops)
 
-    @Override
-    public NeqExpr<FpType> Neq(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpNeqExpr.of(leftOp, rightOp);
-    }
+    override fun Div(leftOp: Expr<FpType>, rightOp: Expr<FpType>): DivExpr<FpType> =
+        FpExprs.Div(FpRoundingMode.defaultRoundingMode, leftOp, rightOp)
 
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + exponent;
-            result = 31 * result + significand;
-            hashCode = result;
-        }
-        return result;
-    }
+    override fun Lt(leftOp: Expr<FpType>, rightOp: Expr<FpType>): LtExpr<FpType> = FpExprs.Lt(leftOp, rightOp)
+    override fun Leq(leftOp: Expr<FpType>, rightOp: Expr<FpType>): LeqExpr<FpType> = FpExprs.Leq(leftOp, rightOp)
+    override fun Gt(leftOp: Expr<FpType>, rightOp: Expr<FpType>): GtExpr<FpType> = FpExprs.Gt(leftOp, rightOp)
+    override fun Geq(leftOp: Expr<FpType>, rightOp: Expr<FpType>): GeqExpr<FpType> = FpExprs.Geq(leftOp, rightOp)
+    override val domainSize: DomainSize
+        get() = DomainSize.of(
+            BigInteger.TWO.pow(significand).multiply(BigInteger.TWO.pow(exponent))
+        )
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpType that = (FpType) obj;
-            return this.getExponent() == that.getExponent()
-                    && this.getSignificand() == that.getSignificand();
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(TYPE_LABEL).add(exponent).add(significand).toString();
-    }
-
-    @Override
-    public AddExpr<FpType> Add(Iterable<? extends Expr<FpType>> ops) {
-        return FpExprs.Add(FpRoundingMode.getDefaultRoundingMode(), ops);
-    }
-
-    @Override
-    public SubExpr<FpType> Sub(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Sub(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
-    }
-
-    @Override
-    public PosExpr<FpType> Pos(Expr<FpType> op) {
-        return FpExprs.Pos(op);
-    }
-
-    @Override
-    public NegExpr<FpType> Neg(Expr<FpType> op) {
-        return FpExprs.Neg(op);
-    }
-
-    @Override
-    public MulExpr<FpType> Mul(Iterable<? extends Expr<FpType>> ops) {
-        return FpExprs.Mul(FpRoundingMode.getDefaultRoundingMode(), ops);
-    }
-
-    @Override
-    public DivExpr<FpType> Div(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Div(FpRoundingMode.getDefaultRoundingMode(), leftOp, rightOp);
-    }
-
-    @Override
-    public LtExpr<FpType> Lt(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Lt(leftOp, rightOp);
-    }
-
-    @Override
-    public LeqExpr<FpType> Leq(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Leq(leftOp, rightOp);
-    }
-
-    @Override
-    public GtExpr<FpType> Gt(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Gt(leftOp, rightOp);
-    }
-
-    @Override
-    public GeqExpr<FpType> Geq(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpExprs.Geq(leftOp, rightOp);
-    }
-
-    @Override
-    public DomainSize getDomainSize() {
-        return DomainSize.of(
-                BigInteger.TWO.pow(significand).multiply(BigInteger.TWO.pow(exponent)));
-    }
+    override fun toString(): String = Utils.lispStringBuilder(TYPE_LABEL).add(exponent).add(significand).toString()
 }
+

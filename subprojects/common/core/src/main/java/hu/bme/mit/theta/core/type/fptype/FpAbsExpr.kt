@@ -13,76 +13,46 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.UnaryExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
+@Serializable
+@SerialName("FpAbs")
+data class FpAbsExpr(
+    override val op: Expr<FpType>
+) : UnaryExpr<FpType, FpType>() {
+    companion object {
+        private const val OPERATOR_LABEL = "fpabs"
 
-    private static final int HASH_SEED = 6666;
-    private static final String OPERATOR_LABEL = "fpabs";
+        @JvmStatic
+        fun of(op: Expr<FpType>) = FpAbsExpr(op)
 
-    private FpAbsExpr(final Expr<FpType> op) {
-        super(op);
+        @JvmStatic
+        fun create(op: Expr<*>) = FpAbsExpr(castFp(op))
     }
 
-    public static FpAbsExpr of(final Expr<FpType> op) {
-        return new FpAbsExpr(castFp(op));
-    }
+    override val type: FpType get() = op.type
 
-    public static FpAbsExpr create(final Expr<?> op) {
-        checkNotNull(op);
-        return FpAbsExpr.of(castFp(op));
-    }
-
-    @Override
-    public FpType getType() {
-        return getOp().getType();
-    }
-
-    @Override
-    public FpLitExpr eval(Valuation val) {
-        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-        if (opVal.getHidden()) {
-            return opVal.neg();
+    override fun eval(`val`: Valuation): FpLitExpr {
+        val opVal = op.eval(`val`) as FpLitExpr
+        return if (opVal.hidden) {
+            opVal.neg()
         } else {
-            return opVal;
+            opVal
         }
     }
 
-    @Override
-    public FpAbsExpr with(final Expr<FpType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return FpAbsExpr.of(op);
-        }
-    }
+    override fun of(op: Expr<FpType>): FpAbsExpr = Companion.of(op)
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpAbsExpr that = (FpAbsExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

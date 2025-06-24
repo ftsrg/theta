@@ -13,94 +13,60 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.utils.FpUtils;
-import java.math.BigInteger;
-import org.kframework.mpfr.BigFloat;
-import org.kframework.mpfr.BinaryMathContext;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.UnaryExpr
+import hu.bme.mit.theta.core.utils.FpUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import org.kframework.mpfr.BinaryMathContext
 
-public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round to integral
+@Serializable
+@SerialName("FpRoundToIntegral")
+data class FpRoundToIntegralExpr(
+    val roundingMode: FpRoundingMode,
+    override val op: Expr<FpType>
+) : UnaryExpr<FpType, FpType>() {
+    companion object {
+        private const val OPERATOR_LABEL = "fproundtoint"
 
-    private static final int HASH_SEED = 6671;
-    private static final String OPERATOR_LABEL = "fproundtoint";
+        @JvmStatic
+        fun of(roundingMode: FpRoundingMode, op: Expr<FpType>) =
+            FpRoundToIntegralExpr(roundingMode, op)
 
-    private final FpRoundingMode roundingMode;
-
-    private FpRoundToIntegralExpr(final FpRoundingMode roundingMode, final Expr<FpType> op) {
-        super(op);
-        checkNotNull(roundingMode);
-        this.roundingMode = roundingMode;
+        @JvmStatic
+        fun create(roundingMode: FpRoundingMode, op: Expr<*>) =
+            FpRoundToIntegralExpr(roundingMode, castFp(op))
     }
 
-    public static FpRoundToIntegralExpr of(final FpRoundingMode roundingMode, Expr<FpType> op) {
-        return new FpRoundToIntegralExpr(roundingMode, op);
+    override val type: FpType get() = op.type
+
+    override fun eval(`val`: Valuation): FpLitExpr {
+        val opVal = op.eval(`val`) as FpLitExpr
+        val value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
+        val bigInteger = value.toBigInteger()
+        var round =
+            value.round(
+                BinaryMathContext(
+                    bigInteger.bitLength(),
+                    opVal.type.exponent,
+                    FpUtils.getMathContextRoundingMode(roundingMode)
+                )
+            )
+        round = round.round(FpUtils.getMathContext(type, roundingMode))
+        val fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.type)
+        return fpLitExpr
     }
 
-    public static FpRoundToIntegralExpr create(final FpRoundingMode roundingMode, Expr<?> op) {
-        checkNotNull(op);
-        return FpRoundToIntegralExpr.of(roundingMode, castFp(op));
-    }
+    override fun of(op: Expr<FpType>): FpRoundToIntegralExpr =
+        Companion.of(roundingMode, op)
 
-    public FpRoundingMode getRoundingMode() {
-        return roundingMode;
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public FpType getType() {
-        return getOp().getType();
-    }
-
-    @Override
-    public FpLitExpr eval(Valuation val) {
-        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-        BigFloat value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal);
-        BigInteger bigInteger = value.toBigInteger();
-        BigFloat round =
-                value.round(
-                        new BinaryMathContext(
-                                bigInteger.bitLength(),
-                                opVal.getType().getExponent(),
-                                FpUtils.getMathContextRoundingMode(roundingMode)));
-        round = round.round(FpUtils.getMathContext(getType(), roundingMode));
-        FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.getType());
-        return fpLitExpr;
-    }
-
-    @Override
-    public FpRoundToIntegralExpr with(final Expr<FpType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return FpRoundToIntegralExpr.of(roundingMode, op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpRoundToIntegralExpr that = (FpRoundToIntegralExpr) obj;
-            return this.getOp().equals(that.getOp()) && roundingMode.equals(that.roundingMode);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL + "[" + roundingMode.toString() + "]";
-    }
+    override fun toString(): String = super.toString()
 }
+

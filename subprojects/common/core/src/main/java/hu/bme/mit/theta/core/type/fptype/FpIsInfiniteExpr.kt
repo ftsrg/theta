@@ -13,81 +13,48 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.UnaryExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class FpIsInfiniteExpr extends UnaryExpr<FpType, BoolType> {
+@Serializable
+@SerialName("FpIsInfinite")
+data class FpIsInfiniteExpr(
+    override val op: Expr<FpType>
+) : UnaryExpr<FpType, BoolType>() {
 
-    private static final int HASH_SEED = 1756;
-    private static final String OPERATOR_LABEL = "isinfinite";
+    companion object {
+        private const val OPERATOR_LABEL = "isinfinite"
 
-    private FpIsInfiniteExpr(final Expr<FpType> op) {
-        super(op);
-        checkAllTypesEqual(op);
+        @JvmStatic
+        fun of(op: Expr<FpType>) = FpIsInfiniteExpr(op)
+
+        @JvmStatic
+        fun create(op: Expr<*>) = FpIsInfiniteExpr(castFp(op))
     }
 
-    public static FpIsInfiniteExpr of(final Expr<FpType> op) {
-        return new FpIsInfiniteExpr(op);
+    override val type: BoolType get() = Bool()
+
+    override fun eval(`val`: Valuation): BoolLitExpr {
+        val opVal = op.eval(`val`) as FpLitExpr
+        val or = Or(Bool(opVal.isNegativeInfinity()), Bool(opVal.isPositiveInfinity()))
+        return or.eval(`val`)
     }
 
-    public static FpIsInfiniteExpr create(final Expr<?> op) {
-        final Expr<FpType> newOp = castFp(op);
-        return FpIsInfiniteExpr.of(newOp);
-    }
+    override fun of(op: Expr<FpType>): FpIsInfiniteExpr = Companion.of(op)
 
-    @Override
-    public UnaryExpr with(Expr op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return FpIsInfiniteExpr.of(op);
-        }
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public BoolType getType() {
-        return Bool();
-    }
-
-    @Override
-    public BoolLitExpr eval(final Valuation val) {
-        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
-
-        OrExpr or = Or(Bool(opVal.isNegativeInfinity()), Bool(opVal.isPositiveInfinity()));
-        final BoolLitExpr boolExpr = or.eval(val);
-        return boolExpr;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpIsInfiniteExpr that = (FpIsInfiniteExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

@@ -13,90 +13,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class FpNeqExpr extends NeqExpr<FpType> {
+@Serializable
+@SerialName("FpNeq")
+data class FpNeqExpr(
+    override val leftOp: Expr<FpType>,
+    override val rightOp: Expr<FpType>
+) : NeqExpr<FpType>() {
 
-    private static final int HASH_SEED = 7646;
-    private static final String OPERATOR_LABEL = "/=";
-
-    private FpNeqExpr(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        super(leftOp, rightOp);
-        checkAllTypesEqual(leftOp, rightOp);
+    init {
+        checkAllTypesEqual(leftOp, rightOp)
     }
 
-    public static FpNeqExpr of(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return new FpNeqExpr(leftOp, rightOp);
+    companion object {
+
+        @JvmStatic
+        fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+            FpNeqExpr(leftOp, rightOp)
+
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+            FpNeqExpr(castFp(leftOp), castFp(rightOp))
     }
 
-    public static FpNeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<FpType> newLeftOp = castFp(leftOp);
-        final Expr<FpType> newRightOp = castFp(rightOp);
-        return FpNeqExpr.of(newLeftOp, newRightOp);
+    override fun eval(`val`: Valuation): BoolLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+        return leftOpVal.neq(rightOpVal)
     }
 
-    @Override
-    public BoolType getType() {
-        return Bool();
-    }
+    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpNeqExpr =
+        Companion.of(leftOp, rightOp)
 
-    @Override
-    public BoolLitExpr eval(final Valuation val) {
-        final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
-        final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
-
-        return leftOpVal.neq(rightOpVal);
-    }
-
-    @Override
-    public FpNeqExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return FpNeqExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public FpNeqExpr withLeftOp(final Expr<FpType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public FpNeqExpr withRightOp(final Expr<FpType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpNeqExpr that = (FpNeqExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

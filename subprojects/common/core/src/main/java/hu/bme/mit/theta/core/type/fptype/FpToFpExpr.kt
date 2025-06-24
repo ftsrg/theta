@@ -13,113 +13,52 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+package hu.bme.mit.theta.core.type.fptype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.UnaryExpr;
-import hu.bme.mit.theta.core.utils.FpUtils;
-import org.kframework.mpfr.BigFloat;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.UnaryExpr
+import hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr
+import hu.bme.mit.theta.core.utils.FpUtils.fpLitExprToBigFloat
+import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
+@Serializable
+@SerialName("FpToFp")
+data class FpToFpExpr(
+    val roundingMode: FpRoundingMode,
+    override val op: Expr<FpType>,
+    val expBits: Int,
+    val signBits: Int
+) : UnaryExpr<FpType, FpType>() {
+    companion object {
+        private const val OPERATOR_LABEL = "fptofp"
 
-    private static final int HASH_SEED = 6799;
-    private static final String OPERATOR_LABEL = "fptofp";
+        @JvmStatic
+        fun of(roundingMode: FpRoundingMode, op: Expr<FpType>, expBits: Int, signBits: Int) =
+            FpToFpExpr(roundingMode, op, expBits, signBits)
 
-    private final Expr<FpType> op;
-    private final int expBits;
-    private final int signBits;
-
-    private final FpRoundingMode roundingMode;
-
-    private FpToFpExpr(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> op,
-            final int expBits,
-            final int signBits) {
-        super(op);
-        checkNotNull(op);
-        this.op = op;
-
-        this.signBits = signBits;
-        this.expBits = expBits;
-
-        checkNotNull(roundingMode);
-        this.roundingMode = roundingMode;
+        @JvmStatic
+        fun create(roundingMode: FpRoundingMode, op: Expr<*>, expBits: Int, signBits: Int) =
+            FpToFpExpr(roundingMode, castFp(op), expBits, signBits)
     }
 
-    public static FpToFpExpr of(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> op,
-            final int exp,
-            final int signBits) {
-        return new FpToFpExpr(roundingMode, op, exp, signBits);
+    override val type: FpType get() = FpType(expBits, signBits)
+
+    override fun eval(`val`: Valuation): FpLitExpr {
+        val op = op.eval(`val`) as FpLitExpr
+        val value = fpLitExprToBigFloat(roundingMode, op)
+        return bigFloatToFpLitExpr(value, type)
     }
 
-    public static FpToFpExpr create(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> op,
-            final int exp,
-            final int signBits) {
-        return FpToFpExpr.of(roundingMode, op, exp, signBits);
-    }
+    override fun of(op: Expr<FpType>): FpToFpExpr =
+        Companion.of(roundingMode, op, expBits, signBits)
 
-    public int getExpBits() {
-        return expBits;
-    }
+    override val operatorLabel: String =
+        "$OPERATOR_LABEL[$expBits,$signBits]"
 
-    public int getSignBits() {
-        return signBits;
-    }
-
-    @Override
-    public FpToFpExpr with(Expr<FpType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return FpToFpExpr.of(roundingMode, op, expBits, signBits);
-        }
-    }
-
-    @Override
-    public FpType getType() {
-        return FpType.of(expBits, signBits);
-    }
-
-    @Override
-    public FpLitExpr eval(Valuation val) {
-        final FpLitExpr op = (FpLitExpr) this.op.eval(val);
-
-        BigFloat value = FpUtils.fpLitExprToBigFloat(roundingMode, op);
-        return FpUtils.bigFloatToFpLitExpr(value, getType());
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpToFpExpr that = (FpToFpExpr) obj;
-            return this.getOp().equals(that.getOp())
-                    && expBits == that.expBits
-                    && signBits == that.signBits
-                    && roundingMode.equals(that.roundingMode);
-        } else {
-            return false;
-        }
-    }
-
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL + "[" + expBits + "," + signBits + "]";
-    }
-
-    public FpRoundingMode getRoundingMode() {
-        return roundingMode;
-    }
+    override fun toString(): String = super.toString()
 }
+

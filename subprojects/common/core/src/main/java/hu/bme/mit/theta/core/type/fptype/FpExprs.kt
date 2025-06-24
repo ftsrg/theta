@@ -13,184 +13,132 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.fptype;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import java.util.Arrays;
+package hu.bme.mit.theta.core.type.fptype
 
-public final class FpExprs {
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 
-    private FpExprs() {}
+@Suppress("FunctionName")
+object FpExprs {
 
-    public static FpType FpType(final int exponent, final int significand) {
-        return FpType.of(exponent, significand);
+    @JvmStatic
+    fun FpType(exponent: Int, significand: Int) = FpType.of(exponent, significand)
+
+    @JvmStatic
+    fun Fp(hidden: Boolean, exponent: BvLitExpr, significand: BvLitExpr) = FpLitExpr(hidden, exponent, significand)
+
+    @JvmStatic
+    fun NaN(fpType: FpType): FpLitExpr {
+        val exponent = BooleanArray(fpType.exponent) { true }
+        val significand = BooleanArray(fpType.significand - 1) { true }
+        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand))
     }
 
-    public static FpLitExpr Fp(boolean hidden, BvLitExpr exponent, BvLitExpr significand) {
-        return FpLitExpr.of(hidden, exponent, significand);
+    @JvmStatic
+    fun PositiveInfinity(fpType: FpType): FpLitExpr {
+        val exponent = BooleanArray(fpType.exponent) { true }
+        val significand = BooleanArray(fpType.significand - 1) { false }
+        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand))
     }
 
-    public static FpLitExpr NaN(final FpType fpType) {
-        final var exponent = new boolean[fpType.getExponent()];
-        Arrays.fill(exponent, true);
-        final var significand = new boolean[fpType.getSignificand() - 1];
-        Arrays.fill(significand, true);
-
-        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    @JvmStatic
+    fun NegativeInfinity(fpType: FpType): FpLitExpr {
+        val exponent = BooleanArray(fpType.exponent) { true }
+        val significand = BooleanArray(fpType.significand - 1) { false }
+        return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand))
     }
 
-    public static FpLitExpr PositiveInfinity(final FpType fpType) {
-        final var exponent = new boolean[fpType.getExponent()];
-        Arrays.fill(exponent, true);
-        final var significand = new boolean[fpType.getSignificand() - 1];
-        Arrays.fill(significand, false);
-
-        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    @JvmStatic
+    fun PositiveZero(fpType: FpType): FpLitExpr {
+        val exponent = BooleanArray(fpType.exponent) { false }
+        val significand = BooleanArray(fpType.significand - 1) { false }
+        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand))
     }
 
-    public static FpLitExpr NegativeInfinity(final FpType fpType) {
-        final var exponent = new boolean[fpType.getExponent()];
-        Arrays.fill(exponent, true);
-        final var significand = new boolean[fpType.getSignificand() - 1];
-        Arrays.fill(significand, false);
-
-        return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
+    @JvmStatic
+    fun NegativeZero(fpType: FpType): FpLitExpr {
+        val exponent = BooleanArray(fpType.exponent) { false }
+        val significand = BooleanArray(fpType.significand - 1) { false }
+        return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand))
     }
 
-    public static FpLitExpr PositiveZero(final FpType fpType) {
-        final var exponent = new boolean[fpType.getExponent()];
-        Arrays.fill(exponent, false);
-        final var significand = new boolean[fpType.getSignificand() - 1];
-        Arrays.fill(significand, false);
+    @JvmStatic
+    fun Add(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) = FpAddExpr.of(roundingMode, ops)
 
-        return Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(significand));
-    }
+    @JvmStatic
+    fun Sub(roundingMode: FpRoundingMode, leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+        FpSubExpr(roundingMode, leftOp, rightOp)
 
-    public static FpLitExpr NegativeZero(final FpType fpType) {
-        final var exponent = new boolean[fpType.getExponent()];
-        Arrays.fill(exponent, false);
-        final var significand = new boolean[fpType.getSignificand() - 1];
-        Arrays.fill(significand, false);
+    @JvmStatic
+    fun Pos(op: Expr<FpType>) = FpPosExpr(op)
 
-        return Fp(true, BvLitExpr.of(exponent), BvLitExpr.of(significand));
-    }
+    @JvmStatic
+    fun Neg(op: Expr<FpType>) = FpNegExpr(op)
 
-    public static FpAddExpr Add(
-            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
-        return FpAddExpr.of(roundingMode, ops);
-    }
+    @JvmStatic
+    fun Mul(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) = FpMulExpr.of(roundingMode, ops)
 
-    public static FpSubExpr Sub(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> leftOp,
-            final Expr<FpType> rightOp) {
-        return FpSubExpr.of(roundingMode, leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Div(roundingMode: FpRoundingMode, leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+        FpDivExpr(roundingMode, leftOp, rightOp)
 
-    public static FpPosExpr Pos(final Expr<FpType> op) {
-        return FpPosExpr.of(op);
-    }
+    @JvmStatic
+    fun Rem(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpRemExpr(leftOp, rightOp)
 
-    public static FpNegExpr Neg(final Expr<FpType> op) {
-        return FpNegExpr.of(op);
-    }
+    @JvmStatic
+    fun Abs(op: Expr<FpType>) = FpAbsExpr(op)
 
-    public static FpMulExpr Mul(
-            final FpRoundingMode roundingMode, final Iterable<? extends Expr<FpType>> ops) {
-        return FpMulExpr.of(roundingMode, ops);
-    }
+    @JvmStatic
+    fun FromBv(roundingMode: FpRoundingMode, op: Expr<BvType>, fpType: FpType, signed: Boolean) =
+        FpFromBvExpr(roundingMode, op, fpType, signed)
 
-    public static FpDivExpr Div(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> leftOp,
-            final Expr<FpType> rightOp) {
-        return FpDivExpr.of(roundingMode, leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Eq(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpEqExpr(leftOp, rightOp)
 
-    public static FpRemExpr Rem(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpRemExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun FpAssign(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpAssignExpr(leftOp, rightOp)
 
-    public static FpAbsExpr Abs(final Expr<FpType> op) {
-        return FpAbsExpr.of(op);
-    }
+    @JvmStatic
+    fun Neq(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpNeqExpr(leftOp, rightOp)
 
-    public static FpFromBvExpr FromBv(
-            final FpRoundingMode roundingMode,
-            final Expr<BvType> op,
-            final FpType fpType,
-            final boolean signed) {
-        return FpFromBvExpr.of(roundingMode, op, fpType, signed);
-    }
+    @JvmStatic
+    fun Gt(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpGtExpr(leftOp, rightOp)
 
-    public static FpEqExpr Eq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpEqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Geq(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpGeqExpr(leftOp, rightOp)
 
-    public static FpAssignExpr FpAssign(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpAssignExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Lt(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpLtExpr(leftOp, rightOp)
 
-    public static FpNeqExpr Neq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpNeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Leq(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpLeqExpr(leftOp, rightOp)
 
-    public static FpGtExpr Gt(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpGtExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun IsNan(op: Expr<FpType>) = FpIsNanExpr(op)
 
-    public static FpGeqExpr Geq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpGeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun IsInfinite(op: Expr<FpType>) = FpIsInfiniteExpr(op)
 
-    public static FpLtExpr Lt(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpLtExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun RoundToIntegral(roundingMode: FpRoundingMode, op: Expr<FpType>) = FpRoundToIntegralExpr(roundingMode, op)
 
-    public static FpLeqExpr Leq(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpLeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Sqrt(roundingMode: FpRoundingMode, op: Expr<FpType>) = FpSqrtExpr(roundingMode, op)
 
-    public static FpIsNanExpr IsNan(final Expr<FpType> op) {
-        return FpIsNanExpr.of(op);
-    }
+    @JvmStatic
+    fun Max(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpMaxExpr(leftOp, rightOp)
 
-    public static FpIsInfiniteExpr IsInfinite(final Expr<FpType> op) {
-        return FpIsInfiniteExpr.of(op);
-    }
+    @JvmStatic
+    fun Min(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpMinExpr(leftOp, rightOp)
 
-    public static FpRoundToIntegralExpr RoundToIntegral(
-            final FpRoundingMode roundingMode, final Expr<FpType> op) {
-        return FpRoundToIntegralExpr.of(roundingMode, op);
-    }
+    @JvmStatic
+    fun ToBv(roundingMode: FpRoundingMode, op: Expr<FpType>, size: Int, sgn: Boolean) =
+        FpToBvExpr(roundingMode, op, size, sgn)
 
-    public static FpSqrtExpr Sqrt(final FpRoundingMode roundingMode, final Expr<FpType> op) {
-        return FpSqrtExpr.of(roundingMode, op);
-    }
-
-    public static FpMaxExpr Max(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpMaxExpr.of(leftOp, rightOp);
-    }
-
-    public static FpMinExpr Min(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-        return FpMinExpr.of(leftOp, rightOp);
-    }
-
-    public static FpToBvExpr ToBv(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> op,
-            final int size,
-            final boolean sgn) {
-        return FpToBvExpr.of(roundingMode, op, size, sgn);
-    }
-
-    public static FpToFpExpr ToFp(
-            final FpRoundingMode roundingMode,
-            final Expr<FpType> op,
-            final int exp,
-            final int sig) {
-        return FpToFpExpr.of(roundingMode, op, exp, sig);
-    }
+    @JvmStatic
+    fun ToFp(roundingMode: FpRoundingMode, op: Expr<FpType>, exp: Int, sig: Int) =
+        FpToFpExpr(roundingMode, op, exp, sig)
 }
+
