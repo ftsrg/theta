@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.cfa;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class CfaTest {
 

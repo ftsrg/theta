@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.*;
@@ -44,14 +46,11 @@ import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import kotlin.Pair;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import kotlin.Pair;
 
 final class Z3ExprTransformer {
 

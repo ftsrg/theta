@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,38 +26,40 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("FpDiv")
 data class FpDivExpr(
-    val roundingMode: FpRoundingMode,
-    override val leftOp: Expr<FpType>,
-    override val rightOp: Expr<FpType>
+  val roundingMode: FpRoundingMode,
+  override val leftOp: Expr<FpType>,
+  override val rightOp: Expr<FpType>,
 ) : DivExpr<FpType>() {
-    init {
-        checkAllTypesEqual(leftOp, rightOp)
-    }
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
 
-    companion object {
-        private const val OPERATOR_LABEL = "fpdiv"
+  companion object {
+    private const val OPERATOR_LABEL = "fpdiv"
 
-        @JvmStatic
-        fun of(roundingMode: FpRoundingMode, leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
-            FpDivExpr(roundingMode, leftOp, rightOp)
+    @JvmStatic
+    fun of(roundingMode: FpRoundingMode, leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
+      FpDivExpr(roundingMode, leftOp, rightOp)
 
-        @JvmStatic
-        fun create(roundingMode: FpRoundingMode, leftOp: Expr<*>, rightOp: Expr<*>) =
-            FpDivExpr(roundingMode, castFp(leftOp), castFp(rightOp))
-    }
+    @JvmStatic
+    fun create(roundingMode: FpRoundingMode, leftOp: Expr<*>, rightOp: Expr<*>) =
+      FpDivExpr(roundingMode, castFp(leftOp), castFp(rightOp))
+  }
 
-    override val type: FpType get() = leftOp.type
+  override val type: FpType
+    get() = leftOp.type
 
-    override fun eval(`val`: Valuation): FpLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
-        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
-        return leftOpVal.div(roundingMode, rightOpVal)
-    }
+  override fun eval(`val`: Valuation): FpLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+    val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+    return leftOpVal.div(roundingMode, rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpDivExpr =
-        of(roundingMode, leftOp, rightOp)
+  override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpDivExpr =
+    of(roundingMode, leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,32 +25,35 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("BvRotateRight")
 data class BvRotateRightExpr(
-    override val leftOp: Expr<BvType>,
-    override val rightOp: Expr<BvType>
+  override val leftOp: Expr<BvType>,
+  override val rightOp: Expr<BvType>,
 ) : BinaryExpr<BvType, BvType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "bvror"
+  companion object {
+    private const val OPERATOR_LABEL = "bvror"
 
-        @JvmStatic
-        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvRotateRightExpr(leftOp, rightOp)
+    @JvmStatic
+    fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvRotateRightExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvRotateRightExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      BvRotateRightExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
+  }
 
-    override val type: BvType get() = leftOp.type
+  override val type: BvType
+    get() = leftOp.type
 
-    override fun eval(`val`: Valuation): BvLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
-        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
-        return leftOpVal.rotateRight(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BvLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+    val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+    return leftOpVal.rotateRight(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvRotateRightExpr = of(leftOp, rightOp)
+  override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvRotateRightExpr =
+    of(leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

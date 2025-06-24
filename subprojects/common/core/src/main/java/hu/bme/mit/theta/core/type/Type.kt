@@ -18,14 +18,15 @@ package hu.bme.mit.theta.core.type
 import kotlinx.serialization.Polymorphic
 
 /**
- * Base class for all types in the Theta framework.
- * Represents the type of expressions and variables.
+ * Base class for all types in the Theta framework. Represents the type of expressions and
+ * variables.
  */
 @Polymorphic
 interface Type {
-    /**
-     * Returns the size of the domain of this type.
-     * @return The domain size of this type
-     */
-    val domainSize: DomainSize
+  /**
+   * Returns the size of the domain of this type.
+   *
+   * @return The domain size of this type
+   */
+  val domainSize: DomainSize
 }

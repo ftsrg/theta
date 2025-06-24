@@ -129,9 +129,7 @@ fun <T : Type> Expr<T>.uniqueDereferences(
 ): Pair<List<Stmt>, Expr<T>> =
   if (this is Dereference<*, *, T>) {
     val ret = ArrayList<Stmt>()
-    require(this.uniquenessIdx == null) {
-      "Only non-pretransformed dereferences should be here"
-    }
+    require(this.uniquenessIdx == null) { "Only non-pretransformed dereferences should be here" }
     val arrayExpr =
       ExprUtils.simplify(
         array.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second

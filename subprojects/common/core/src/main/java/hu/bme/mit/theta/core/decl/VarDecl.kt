@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.common.Utils
@@ -24,32 +23,30 @@ import kotlinx.serialization.Transient
 
 /**
  * Represents a variable declaration. Variables cannot be directly passed to the SMT solver, they
- * must be replaced with constants for a given index ([IndexedConstDecl]). See also [hu.bme.mit.theta.core.utils.PathUtils].
+ * must be replaced with constants for a given index ([IndexedConstDecl]). See also
+ * [hu.bme.mit.theta.core.utils.PathUtils].
  *
  * @param <DeclType>
  */
 @Serializable
 @SerialName(VarDecl.DECL_LABEL)
-data class VarDecl<DeclType : Type>(
-    override val name: String,
-    override val type: DeclType
-) : Decl<DeclType>() {
+data class VarDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
+  Decl<DeclType>() {
 
-    companion object {
+  companion object {
 
-        internal const val DECL_LABEL: String = "var"
+    internal const val DECL_LABEL: String = "var"
 
-        fun <T : Type> copyOf(from: VarDecl<T>): VarDecl<T> = VarDecl(from.name, from.type)
-    }
+    fun <T : Type> copyOf(from: VarDecl<T>): VarDecl<T> = VarDecl(from.name, from.type)
+  }
 
-    @Transient
-    private val indexToConst = mutableMapOf<Int, IndexedConstDecl<DeclType>>()
+  @Transient private val indexToConst = mutableMapOf<Int, IndexedConstDecl<DeclType>>()
 
-    fun getConstDecl(index: Int): IndexedConstDecl<DeclType> {
-        require(index >= 0) { "Index must be non-negative" }
-        return indexToConst.getOrPut(index) { IndexedConstDecl(this, index) }
-    }
+  fun getConstDecl(index: Int): IndexedConstDecl<DeclType> {
+    require(index >= 0) { "Index must be non-negative" }
+    return indexToConst.getOrPut(index) { IndexedConstDecl(this, index) }
+  }
 
-    override fun toString(): String =
-        Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 }

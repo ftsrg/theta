@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -29,29 +28,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatToInt")
-data class RatToIntExpr(
-    override val op: Expr<RatType>
-) : UnaryExpr<RatType, IntType>() {
+data class RatToIntExpr(override val op: Expr<RatType>) : UnaryExpr<RatType, IntType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "to_int"
+    private const val OPERATOR_LABEL = "to_int"
 
-        @JvmStatic
-        fun of(op: Expr<RatType>) = RatToIntExpr(op)
+    @JvmStatic fun of(op: Expr<RatType>) = RatToIntExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = RatToIntExpr(cast(op, Rat()))
-    }
+    @JvmStatic fun create(op: Expr<*>) = RatToIntExpr(cast(op, Rat()))
+  }
 
-    override val type: IntType = Int()
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun eval(`val`: Valuation): IntLitExpr {
-        val opVal = op.eval(`val`) as RatLitExpr
-        return opVal.toInt()
-    }
+  override val type: IntType = Int()
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun new(op: Expr<RatType>): RatToIntExpr = of(op)
-    override fun toString(): String = super.toString()
+  override fun eval(`val`: Valuation): IntLitExpr {
+    val opVal = op.eval(`val`) as RatLitExpr
+    return opVal.toInt()
+  }
+
+  override fun new(op: Expr<RatType>): RatToIntExpr = of(op)
+
+  override fun toString(): String = super.toString()
 }
-

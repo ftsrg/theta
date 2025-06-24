@@ -19,10 +19,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.UnaryExpr
 import kotlinx.serialization.Serializable
 
-/**
- * Abstract class for cast expressions with a single operand.
- */
+/** Abstract class for cast expressions with a single operand. */
 @Serializable
-abstract class CastExpr<SourceType : Castable<SourceType>, TargetType : Type> : UnaryExpr<SourceType, TargetType>()
-
-
+abstract class CastExpr<SourceType : Castable<SourceType>, TargetType : Type> :
+  UnaryExpr<SourceType, TargetType>()

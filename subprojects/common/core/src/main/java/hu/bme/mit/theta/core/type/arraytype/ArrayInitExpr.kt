@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.core.type.arraytype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -19,77 +34,75 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("ArrayInit")
 data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
-    val elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
-    val elseElem: Expr<ElemType>,
-    override val type: ArrayType<IndexType, ElemType>
+  val elements: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+  val elseElem: Expr<ElemType>,
+  override val type: ArrayType<IndexType, ElemType>,
 ) : MultiaryExpr<Type, ArrayType<IndexType, ElemType>>() {
 
+  @Suppress("UNCHECKED_CAST")
+  override val ops: List<Expr<Type>> =
+    listOf(elseElem as Expr<Type>) +
+      elements.map { it.first as Expr<Type> } +
+      elements.map { it.second as Expr<Type> }
+
+  companion object {
+
+    private const val OPERATOR_LABEL = "arrayinit"
+
+    @JvmStatic
+    fun <IndexType : Type, ElemType : Type> of(
+      elems: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
+      elseElem: Expr<ElemType>,
+      type: ArrayType<IndexType, ElemType>,
+    ) = ArrayInitExpr(elems, elseElem, type)
+
+    @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    override val ops: List<Expr<Type>> =
-        listOf(elseElem as Expr<Type>) +
-            elements.map { it.first as Expr<Type> } +
-            elements.map { it.second as Expr<Type> }
+    fun <IndexType : Type, ElemType : Type> create(
+      elems: List<Pair<Expr<out Type>, Expr<out Type>>>,
+      elseElem: Expr<*>,
+      type: ArrayType<*, *>,
+    ): ArrayInitExpr<IndexType, ElemType> =
+      of(
+        elems.map { Pair(it.first as Expr<IndexType>, it.second as Expr<ElemType>) },
+        elseElem as Expr<ElemType>,
+        type as ArrayType<IndexType, ElemType>,
+      )
+  }
 
-    companion object {
+  override fun eval(`val`: Valuation): LitExpr<ArrayType<IndexType, ElemType>> =
+    ArrayLitExpr.of(
+      elements.map { Pair(it.first.eval(`val`), it.second.eval(`val`)) },
+      elseElem,
+      type,
+    )
 
-        private const val OPERATOR_LABEL = "arrayinit"
-
-        @JvmStatic
-        fun <IndexType : Type, ElemType : Type> of(
-            elems: List<Pair<Expr<IndexType>, Expr<ElemType>>>,
-            elseElem: Expr<ElemType>,
-            type: ArrayType<IndexType, ElemType>
-        ) = ArrayInitExpr(elems, elseElem, type)
-
-        @JvmStatic
-        @Suppress("UNCHECKED_CAST")
-        fun <IndexType : Type, ElemType : Type> create(
-            elems: List<Pair<Expr<out Type>, Expr<out Type>>>,
-            elseElem: Expr<*>,
-            type: ArrayType<*, *>
-        ): ArrayInitExpr<IndexType, ElemType> =
-            of(
-                elems.map { Pair(it.first as Expr<IndexType>, it.second as Expr<ElemType>) },
-                elseElem as Expr<ElemType>,
-                type as ArrayType<IndexType, ElemType>
-            )
+  @Suppress("UNCHECKED_CAST")
+  override fun with(ops: Iterable<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
+    val size = ops.count()
+    require(size % 2 == 1) { "Ops must be odd long!" }
+    val elseElem: Expr<ElemType> = ops.first() as Expr<ElemType>
+    val indices = mutableListOf<Expr<IndexType>>()
+    val elems = mutableListOf<Expr<ElemType>>()
+    ops.forEachIndexed { counter, op ->
+      when {
+        counter == 0 -> {}
+        counter <= (size - 1) / 2 -> indices.add(op as Expr<IndexType>)
+        else -> elems.add(op as Expr<ElemType>)
+      }
     }
+    val newOps = indices.indices.map { i -> indices[i] to elems[i] }
+    return of(newOps, elseElem, type)
+  }
 
-    override fun eval(`val`: Valuation): LitExpr<ArrayType<IndexType, ElemType>> =
-        ArrayLitExpr.of(
-            elements.map { Pair(it.first.eval(`val`), it.second.eval(`val`)) },
-            elseElem,
-            type
-        )
+  override fun new(ops: List<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =
+    with(ops)
 
-    @Suppress("UNCHECKED_CAST")
-    override fun with(ops: Iterable<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
-        val size = ops.count()
-        require(size % 2 == 1) { "Ops must be odd long!" }
-        val elseElem: Expr<ElemType> = ops.first() as Expr<ElemType>
-        val indices = mutableListOf<Expr<IndexType>>()
-        val elems = mutableListOf<Expr<ElemType>>()
-        ops.forEachIndexed { counter, op ->
-            when {
-                counter == 0 -> {}
-                counter <= (size - 1) / 2 -> indices.add(op as Expr<IndexType>)
-                else -> elems.add(op as Expr<ElemType>)
-            }
-        }
-        val newOps = indices.indices.map { i ->
-            indices[i] to elems[i]
-        }
-        return of(newOps, elseElem, type)
-    }
+  @Suppress("UNCHECKED_CAST")
+  override fun withOps(ops: List<Expr<*>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =
+    with(ops.map { it as Expr<Type> })
 
-    override fun new(ops: List<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> = with(ops)
+  override val operatorLabel: String = OPERATOR_LABEL
 
-    @Suppress("UNCHECKED_CAST")
-    override fun withOps(ops: List<Expr<*>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =
-        with(ops.map { it as Expr<Type> })
-
-    override val operatorLabel: String = OPERATOR_LABEL
-
-    override fun toString(): String =
-        "arrayinit($elements, $elseElem, $type)"
+  override fun toString(): String = "arrayinit($elements, $elseElem, $type)"
 }

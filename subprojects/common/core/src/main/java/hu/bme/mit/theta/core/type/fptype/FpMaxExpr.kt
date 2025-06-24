@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -28,47 +27,43 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpMax")
-data class FpMaxExpr(
-    override val leftOp: Expr<FpType>,
-    override val rightOp: Expr<FpType>
-) : BinaryExpr<FpType, FpType>() {
+data class FpMaxExpr(override val leftOp: Expr<FpType>, override val rightOp: Expr<FpType>) :
+  BinaryExpr<FpType, FpType>() {
 
-    init {
-        checkAllTypesEqual(leftOp, rightOp)
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
+
+  companion object {
+
+    private const val OPERATOR_LABEL = "fpmax"
+
+    @JvmStatic fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpMaxExpr(leftOp, rightOp)
+
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) = FpMaxExpr(castFp(leftOp), castFp(rightOp))
+  }
+
+  override val type: FpType
+    get() = leftOp.type
+
+  override fun eval(`val`: Valuation): LitExpr<FpType> {
+    val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+    val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+    return if (
+      FpUtils.fpLitExprToBigFloat(null, leftOpVal)
+        .greaterThan(FpUtils.fpLitExprToBigFloat(null, rightOpVal))
+    ) {
+      leftOpVal
+    } else {
+      rightOpVal
     }
+  }
 
-    companion object {
+  override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpMaxExpr = of(leftOp, rightOp)
 
-        private const val OPERATOR_LABEL = "fpmax"
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-        @JvmStatic
-        fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
-            FpMaxExpr(leftOp, rightOp)
-
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
-            FpMaxExpr(castFp(leftOp), castFp(rightOp))
-    }
-
-    override val type: FpType get() = leftOp.type
-
-    override fun eval(`val`: Valuation): LitExpr<FpType> {
-        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
-        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
-        return if (FpUtils.fpLitExprToBigFloat(null, leftOpVal)
-                .greaterThan(FpUtils.fpLitExprToBigFloat(null, rightOpVal))
-        ) {
-            leftOpVal
-        } else {
-            rightOpVal
-        }
-    }
-
-    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpMaxExpr =
-        of(leftOp, rightOp)
-
-    override val operatorLabel: String get() = OPERATOR_LABEL
-
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

@@ -25,9 +25,9 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.graphsolver.ThreeVL
@@ -221,9 +221,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
   override fun compile(pattern: Inverse): Map<Tuple, Expr<BoolType>> {
     val opCompiled = pattern.op.accept(this)
     return events
-      .map { a ->
-        events.map { b -> Pair(Tuple2.of(a, b), opCompiled[Tuple2.of(b, a)]!!) }
-      }
+      .map { a -> events.map { b -> Pair(Tuple2.of(a, b), opCompiled[Tuple2.of(b, a)]!!) } }
       .flatten()
       .toMap()
   }
@@ -361,14 +359,8 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
                       .filter { c -> a != c && b != c }
                       .map { c ->
                         Or(
-                          And(
-                            opCompiled[Tuple2.of(a, c)]!!,
-                            consts[Tuple2.of(c, b)]!!.ref,
-                          ),
-                          And(
-                            consts[Tuple2.of(a, c)]!!.ref,
-                            opCompiled[Tuple2.of(c, b)]!!,
-                          ),
+                          And(opCompiled[Tuple2.of(a, c)]!!, consts[Tuple2.of(c, b)]!!.ref),
+                          And(consts[Tuple2.of(a, c)]!!.ref, opCompiled[Tuple2.of(c, b)]!!),
                         )
                       }
                   ),
@@ -381,9 +373,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
       )
     transitiveConstraints.add(constraints)
     val ret =
-      events.map { a ->
-        events.map { b -> Pair(Tuple2.of(a, b), consts[Tuple2.of(a, b)]!!.ref) }
-      }
+      events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), consts[Tuple2.of(a, b)]!!.ref) } }
     return ret.flatten().toMap()
   }
 

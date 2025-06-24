@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,35 +26,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpNeq")
-data class FpNeqExpr(
-    override val leftOp: Expr<FpType>,
-    override val rightOp: Expr<FpType>
-) : NeqExpr<FpType>() {
+data class FpNeqExpr(override val leftOp: Expr<FpType>, override val rightOp: Expr<FpType>) :
+  NeqExpr<FpType>() {
 
-    init {
-        checkAllTypesEqual(leftOp, rightOp)
-    }
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
-            FpNeqExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpNeqExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
-            FpNeqExpr(castFp(leftOp), castFp(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) = FpNeqExpr(castFp(leftOp), castFp(rightOp))
+  }
 
-    override fun eval(`val`: Valuation): BoolLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
-        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
-        return leftOpVal.neq(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BoolLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+    val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+    return leftOpVal.neq(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpNeqExpr =
-        of(leftOp, rightOp)
+  override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpNeqExpr = of(leftOp, rightOp)
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -28,43 +27,44 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatDiv")
-data class RatDivExpr(
-    override val leftOp: Expr<RatType>,
-    override val rightOp: Expr<RatType>
-) : DivExpr<RatType>() {
+data class RatDivExpr(override val leftOp: Expr<RatType>, override val rightOp: Expr<RatType>) :
+  DivExpr<RatType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "/"
-        @JvmStatic
-        fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatDivExpr(leftOp, rightOp)
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) : RatDivExpr {
-            val newLeftOp = when (leftOp.type) {
-                is RatType -> cast(leftOp, Rat())
-                is IntType -> IntToRatExpr.create(leftOp)
-                else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${leftOp.type}")
-            }
-            val newRightOp = when (rightOp.type) {
-                is RatType -> cast(rightOp, Rat())
-                is IntType -> IntToRatExpr.create(rightOp)
-                else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${rightOp.type}")
-            }
-            return RatDivExpr(newLeftOp, newRightOp)
+  companion object {
+    private const val OPERATOR_LABEL = "/"
+
+    @JvmStatic fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatDivExpr(leftOp, rightOp)
+
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>): RatDivExpr {
+      val newLeftOp =
+        when (leftOp.type) {
+          is RatType -> cast(leftOp, Rat())
+          is IntType -> IntToRatExpr.create(leftOp)
+          else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${leftOp.type}")
         }
+      val newRightOp =
+        when (rightOp.type) {
+          is RatType -> cast(rightOp, Rat())
+          is IntType -> IntToRatExpr.create(rightOp)
+          else -> throw IllegalArgumentException("Unsupported type for RatDiv: ${rightOp.type}")
+        }
+      return RatDivExpr(newLeftOp, newRightOp)
     }
+  }
 
-    override val type: RatType = Rat()
-    override fun eval(`val`: Valuation): RatLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as RatLitExpr
-        val rightOpVal = rightOp.eval(`val`) as RatLitExpr
-        return leftOpVal.div(rightOpVal)
-    }
+  override val type: RatType = Rat()
 
-    override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr =
-        of(leftOp, rightOp)
+  override fun eval(`val`: Valuation): RatLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as RatLitExpr
+    val rightOpVal = rightOp.eval(`val`) as RatLitExpr
+    return leftOpVal.div(rightOpVal)
+  }
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr = of(leftOp, rightOp)
 
-    override fun toString(): String = super.toString()
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

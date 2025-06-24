@@ -22,7 +22,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 
 import hu.bme.mit.theta.common.DispatchTable2;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -48,7 +47,6 @@ import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import java.math.BigInteger;
 import java.util.*;
-
 import kotlin.Pair;
 import org.kframework.mpfr.BigFloat;
 

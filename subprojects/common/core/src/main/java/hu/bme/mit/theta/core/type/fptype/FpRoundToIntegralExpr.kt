@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,46 +26,43 @@ import org.kframework.mpfr.BinaryMathContext
 
 @Serializable
 @SerialName("FpRoundToIntegral")
-data class FpRoundToIntegralExpr(
-    val roundingMode: FpRoundingMode,
-    override val op: Expr<FpType>
-) : UnaryExpr<FpType, FpType>() {
-    companion object {
-        private const val OPERATOR_LABEL = "fproundtoint"
+data class FpRoundToIntegralExpr(val roundingMode: FpRoundingMode, override val op: Expr<FpType>) :
+  UnaryExpr<FpType, FpType>() {
+  companion object {
+    private const val OPERATOR_LABEL = "fproundtoint"
 
-        @JvmStatic
-        fun of(roundingMode: FpRoundingMode, op: Expr<FpType>) =
-            FpRoundToIntegralExpr(roundingMode, op)
+    @JvmStatic
+    fun of(roundingMode: FpRoundingMode, op: Expr<FpType>) = FpRoundToIntegralExpr(roundingMode, op)
 
-        @JvmStatic
-        fun create(roundingMode: FpRoundingMode, op: Expr<*>) =
-            FpRoundToIntegralExpr(roundingMode, castFp(op))
-    }
+    @JvmStatic
+    fun create(roundingMode: FpRoundingMode, op: Expr<*>) =
+      FpRoundToIntegralExpr(roundingMode, castFp(op))
+  }
 
-    override val type: FpType get() = op.type
+  override val type: FpType
+    get() = op.type
 
-    override fun eval(`val`: Valuation): FpLitExpr {
-        val opVal = op.eval(`val`) as FpLitExpr
-        val value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
-        val bigInteger = value.toBigInteger()
-        var round =
-            value.round(
-                BinaryMathContext(
-                    bigInteger.bitLength(),
-                    opVal.type.exponent,
-                    FpUtils.getMathContextRoundingMode(roundingMode)
-                )
-            )
-        round = round.round(FpUtils.getMathContext(type, roundingMode))
-        val fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.type)
-        return fpLitExpr
-    }
+  override fun eval(`val`: Valuation): FpLitExpr {
+    val opVal = op.eval(`val`) as FpLitExpr
+    val value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
+    val bigInteger = value.toBigInteger()
+    var round =
+      value.round(
+        BinaryMathContext(
+          bigInteger.bitLength(),
+          opVal.type.exponent,
+          FpUtils.getMathContextRoundingMode(roundingMode),
+        )
+      )
+    round = round.round(FpUtils.getMathContext(type, roundingMode))
+    val fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.type)
+    return fpLitExpr
+  }
 
-    override fun new(op: Expr<FpType>): FpRoundToIntegralExpr =
-        of(roundingMode, op)
+  override fun new(op: Expr<FpType>): FpRoundToIntegralExpr = of(roundingMode, op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

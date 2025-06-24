@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.common.DispatchTable;
@@ -47,20 +52,14 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-import kotlin.Pair;
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -1096,7 +1095,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running =
                     String.format(
-                            "(store %s %s %s)", running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
+                            "(store %s %s %s)",
+                            running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }
@@ -1109,7 +1109,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running =
                     String.format(
-                            "(store %s %s %s)", running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
+                            "(store %s %s %s)",
+                            running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }

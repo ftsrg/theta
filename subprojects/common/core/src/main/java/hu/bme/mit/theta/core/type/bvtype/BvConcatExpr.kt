@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.common.Utils
@@ -25,26 +24,26 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvConcat")
-data class BvConcatExpr(
-    override val ops: List<Expr<BvType>>
-) : Expr<BvType> {
+data class BvConcatExpr(override val ops: List<Expr<BvType>>) : Expr<BvType> {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "++"
+    private const val OPERATOR_LABEL = "++"
 
-        @JvmStatic
-        fun of(ops: Iterable<Expr<BvType>>) = BvConcatExpr(ops.toList())
+    @JvmStatic fun of(ops: Iterable<Expr<BvType>>) = BvConcatExpr(ops.toList())
 
-        @JvmStatic
-        fun create(ops: List<Expr<*>>) = BvConcatExpr(ops.map { TypeUtils.castBv(it) })
+    @JvmStatic fun create(ops: List<Expr<*>>) = BvConcatExpr(ops.map { TypeUtils.castBv(it) })
+  }
+
+  override val type: BvType = BvType.of(ops.sumOf { it.type.size })
+
+  override fun eval(`val`: Valuation): BvLitExpr =
+    ops.drop(1).fold(ops[0].eval(`val`) as BvLitExpr) { acc, op ->
+      acc.concat(op.eval(`val`) as BvLitExpr)
     }
 
-    override val type: BvType = BvType.of(ops.sumOf { it.type.size })
-    override fun eval(`val`: Valuation): BvLitExpr =
-        ops.drop(1).fold(ops[0].eval(`val`) as BvLitExpr) { acc, op -> acc.concat(op.eval(`val`) as BvLitExpr) }
+  override fun withOps(ops: List<Expr<*>>): Expr<BvType> = of(ops.map { TypeUtils.castBv(it) })
 
-    override fun withOps(ops: List<Expr<*>>): Expr<BvType> = of(ops.map { TypeUtils.castBv(it) })
-    override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(ops).toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(ops).toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,29 +24,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvAnd")
-data class BvAndExpr(
-    override val ops: List<Expr<BvType>>
-) : MultiaryExpr<BvType, BvType>() {
+data class BvAndExpr(override val ops: List<Expr<BvType>>) : MultiaryExpr<BvType, BvType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "bvand"
+  companion object {
+    private const val OPERATOR_LABEL = "bvand"
 
-        @JvmStatic
-        fun of(ops: Iterable<Expr<BvType>>) = BvAndExpr(ops.toList())
+    @JvmStatic fun of(ops: Iterable<Expr<BvType>>) = BvAndExpr(ops.toList())
 
-        @JvmStatic
-        fun create(ops: List<Expr<*>>) = BvAndExpr(ops.map { TypeUtils.castBv(it) })
+    @JvmStatic fun create(ops: List<Expr<*>>) = BvAndExpr(ops.map { TypeUtils.castBv(it) })
+  }
+
+  override val type: BvType
+    get() = ops[0].type
+
+  override fun eval(`val`: Valuation): BvLitExpr =
+    ops.drop(1).fold(ops[0].eval(`val`) as BvLitExpr) { acc, op ->
+      acc.and(op.eval(`val`) as BvLitExpr)
     }
 
-    override val type: BvType get() = ops[0].type
+  override fun new(ops: List<Expr<BvType>>): BvAndExpr = of(ops)
 
-    override fun eval(`val`: Valuation): BvLitExpr = ops.drop(1).fold(ops[0].eval(`val`) as BvLitExpr) { acc, op ->
-        acc.and(op.eval(`val`) as BvLitExpr)
-    }
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun new(ops: List<Expr<BvType>>): BvAndExpr = of(ops)
-
-    override val operatorLabel: String get() = OPERATOR_LABEL
-
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }

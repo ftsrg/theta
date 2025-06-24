@@ -13,14 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.LtExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
 import kotlinx.serialization.SerialName
@@ -28,30 +26,30 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvULt")
-data class BvULtExpr(
-    override val leftOp: Expr<BvType>,
-    override val rightOp: Expr<BvType>
-) : LtExpr<BvType>() {
+data class BvULtExpr(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
+  LtExpr<BvType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "bvult"
+    private const val OPERATOR_LABEL = "bvult"
 
-        @JvmStatic
-        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvULtExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvULtExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvULtExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      BvULtExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
+  }
 
-    override fun eval(`val`: Valuation): LitExpr<BoolType> {
-        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
-        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
-        return leftOpVal.ult(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): LitExpr<BoolType> {
+    val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+    val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+    return leftOpVal.ult(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvULtExpr = of(leftOp, rightOp)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvULtExpr = of(leftOp, rightOp)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -29,32 +28,29 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpIsInfinite")
-data class FpIsInfiniteExpr(
-    override val op: Expr<FpType>
-) : UnaryExpr<FpType, BoolType>() {
+data class FpIsInfiniteExpr(override val op: Expr<FpType>) : UnaryExpr<FpType, BoolType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "isinfinite"
+  companion object {
+    private const val OPERATOR_LABEL = "isinfinite"
 
-        @JvmStatic
-        fun of(op: Expr<FpType>) = FpIsInfiniteExpr(op)
+    @JvmStatic fun of(op: Expr<FpType>) = FpIsInfiniteExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = FpIsInfiniteExpr(castFp(op))
-    }
+    @JvmStatic fun create(op: Expr<*>) = FpIsInfiniteExpr(castFp(op))
+  }
 
-    override val type: BoolType get() = Bool()
+  override val type: BoolType
+    get() = Bool()
 
-    override fun eval(`val`: Valuation): BoolLitExpr {
-        val opVal = op.eval(`val`) as FpLitExpr
-        val or = Or(Bool(opVal.isNegativeInfinity()), Bool(opVal.isPositiveInfinity()))
-        return or.eval(`val`)
-    }
+  override fun eval(`val`: Valuation): BoolLitExpr {
+    val opVal = op.eval(`val`) as FpLitExpr
+    val or = Or(Bool(opVal.isNegativeInfinity()), Bool(opVal.isPositiveInfinity()))
+    return or.eval(`val`)
+  }
 
-    override fun new(op: Expr<FpType>): FpIsInfiniteExpr = of(op)
+  override fun new(op: Expr<FpType>): FpIsInfiniteExpr = of(op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

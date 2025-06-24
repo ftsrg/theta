@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
@@ -21,26 +20,23 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * A constant declaration that belongs to a variable ([VarDecl] declaration for a given index.
- * For example, when unfolding a path, each variable will have a new constant for each step of the
- * path.
+ * A constant declaration that belongs to a variable ([VarDecl] declaration for a given index. For
+ * example, when unfolding a path, each variable will have a new constant for each step of the path.
  *
  * @param <DeclType>
  */
 @Serializable
 @SerialName("IndexedConstDecl")
-data class IndexedConstDecl<DeclType : Type>(
-    val varDecl: VarDecl<DeclType>,
-    val index: Int
-) : ConstDecl<DeclType>() {
-    init {
-        require(index >= 0) { "Index must be non-negative" }
-    }
+data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val index: Int) :
+  ConstDecl<DeclType>() {
+  init {
+    require(index >= 0) { "Index must be non-negative" }
+  }
 
-    companion object {
-        private const val NAME_FORMAT: String = "_%s:%d"
-    }
+  companion object {
+    private const val NAME_FORMAT: String = "_%s:%d"
+  }
 
-    override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
-    override val type: DeclType = varDecl.type
+  override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
+  override val type: DeclType = varDecl.type
 }

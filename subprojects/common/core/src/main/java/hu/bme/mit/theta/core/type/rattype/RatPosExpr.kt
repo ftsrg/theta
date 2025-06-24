@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,26 +25,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatPos")
-data class RatPosExpr(
-    override val op: Expr<RatType>
-) : PosExpr<RatType>() {
+data class RatPosExpr(override val op: Expr<RatType>) : PosExpr<RatType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "+"
-        @JvmStatic
-        fun of(op: Expr<RatType>) = RatPosExpr(op)
-        @JvmStatic
-        fun create(op: Expr<*>) = RatPosExpr(cast(op, Rat()))
-    }
+  companion object {
+    private const val OPERATOR_LABEL = "+"
 
-    override val type: RatType = Rat()
-    override fun eval(`val`: Valuation): RatLitExpr {
-        val opVal = op.eval(`val`) as RatLitExpr
-        return opVal.pos()
-    }
+    @JvmStatic fun of(op: Expr<RatType>) = RatPosExpr(op)
 
-    override fun new(op: Expr<RatType>): RatPosExpr = of(op)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+    @JvmStatic fun create(op: Expr<*>) = RatPosExpr(cast(op, Rat()))
+  }
+
+  override val type: RatType = Rat()
+
+  override fun eval(`val`: Valuation): RatLitExpr {
+    val opVal = op.eval(`val`) as RatLitExpr
+    return opVal.pos()
+  }
+
+  override fun new(op: Expr<RatType>): RatPosExpr = of(op)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import kotlinx.serialization.SerialName
@@ -23,16 +22,14 @@ import kotlinx.serialization.Serializable
 @SerialName("FpRoundingMode")
 enum class FpRoundingMode {
 
-    RNE, // Round nearest ties to even
-    RNA, // Round nearest ties to away
-    RTP, // Round toward positive
-    RTN, // Round toward negative
-    RTZ; // Round toward zero
+  RNE, // Round nearest ties to even
+  RNA, // Round nearest ties to away
+  RTP, // Round toward positive
+  RTN, // Round toward negative
+  RTZ; // Round toward zero
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        val defaultRoundingMode: FpRoundingMode = RNE
-    }
+    @JvmStatic val defaultRoundingMode: FpRoundingMode = RNE
+  }
 }
-

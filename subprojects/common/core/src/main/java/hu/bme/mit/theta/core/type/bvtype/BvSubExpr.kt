@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,32 +24,32 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvSub")
-data class BvSubExpr(
-    override val leftOp: Expr<BvType>,
-    override val rightOp: Expr<BvType>
-) : SubExpr<BvType>() {
+data class BvSubExpr(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
+  SubExpr<BvType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "bvsub"
+  companion object {
+    private const val OPERATOR_LABEL = "bvsub"
 
-        @JvmStatic
-        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSubExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSubExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvSubExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      BvSubExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
+  }
 
-    override val type: BvType get() = leftOp.type
+  override val type: BvType
+    get() = leftOp.type
 
-    override fun eval(`val`: Valuation): BvLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
-        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
-        return leftOpVal.sub(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BvLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+    val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+    return leftOpVal.sub(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSubExpr = of(leftOp, rightOp)
+  override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSubExpr = of(leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }

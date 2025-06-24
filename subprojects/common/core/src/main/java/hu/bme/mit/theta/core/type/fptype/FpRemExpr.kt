@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,44 +26,39 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpRem")
-data class FpRemExpr(
-    override val leftOp: Expr<FpType>,
-    override val rightOp: Expr<FpType>
-) : BinaryExpr<FpType, FpType>() {
+data class FpRemExpr(override val leftOp: Expr<FpType>, override val rightOp: Expr<FpType>) :
+  BinaryExpr<FpType, FpType>() {
 
-    init {
-        checkAllTypesEqual(leftOp, rightOp)
-    }
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "fprem"
+    private const val OPERATOR_LABEL = "fprem"
 
-        @JvmStatic
-        fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) =
-            FpRemExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>) = FpRemExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
-            FpRemExpr(castFp(leftOp), castFp(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) = FpRemExpr(castFp(leftOp), castFp(rightOp))
+  }
 
-    override val type: FpType get() = leftOp.type
+  override val type: FpType
+    get() = leftOp.type
 
-    override fun eval(`val`: Valuation): FpLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as FpLitExpr
-        val rightOpVal = rightOp.eval(`val`) as FpLitExpr
-        val leftFloat = fpLitExprToBigFloat(null, leftOpVal)
-        val rightFloat = fpLitExprToBigFloat(null, rightOpVal)
-        val remainder = leftFloat.remainder(rightFloat, getMathContext(this.type, null))
-        return bigFloatToFpLitExpr(remainder, this.type)
-    }
+  override fun eval(`val`: Valuation): FpLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as FpLitExpr
+    val rightOpVal = rightOp.eval(`val`) as FpLitExpr
+    val leftFloat = fpLitExprToBigFloat(null, leftOpVal)
+    val rightFloat = fpLitExprToBigFloat(null, rightOpVal)
+    val remainder = leftFloat.remainder(rightFloat, getMathContext(this.type, null))
+    return bigFloatToFpLitExpr(remainder, this.type)
+  }
 
-    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpRemExpr =
-        of(leftOp, rightOp)
+  override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpRemExpr = of(leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

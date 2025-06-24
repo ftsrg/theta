@@ -56,8 +56,8 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import org.kframework.mpfr.BigFloat
 import java.math.BigInteger
+import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
   get() =

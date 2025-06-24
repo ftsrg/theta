@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,30 +24,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvNot")
-data class BvNotExpr(
-    override val op: Expr<BvType>
-) : UnaryExpr<BvType, BvType>() {
+data class BvNotExpr(override val op: Expr<BvType>) : UnaryExpr<BvType, BvType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "bvnot"
+  companion object {
+    private const val OPERATOR_LABEL = "bvnot"
 
-        @JvmStatic
-        fun of(op: Expr<BvType>) = BvNotExpr(op)
+    @JvmStatic fun of(op: Expr<BvType>) = BvNotExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = BvNotExpr(TypeUtils.castBv(op))
-    }
+    @JvmStatic fun create(op: Expr<*>) = BvNotExpr(TypeUtils.castBv(op))
+  }
 
-    override val type: BvType get() = op.type
+  override val type: BvType
+    get() = op.type
 
-    override fun eval(`val`: Valuation): BvLitExpr {
-        val opVal = op.eval(`val`) as BvLitExpr
-        return opVal.not()
-    }
+  override fun eval(`val`: Valuation): BvLitExpr {
+    val opVal = op.eval(`val`) as BvLitExpr
+    return opVal.not()
+  }
 
-    override fun new(op: Expr<BvType>): BvNotExpr = of(op)
+  override fun new(op: Expr<BvType>): BvNotExpr = of(op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }

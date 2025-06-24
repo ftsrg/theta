@@ -28,28 +28,29 @@ import kotlinx.serialization.Serializable
 @Serializable
 abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-    abstract override val ops: List<Expr<OpType>>
+  abstract override val ops: List<Expr<OpType>>
 
-    abstract val operatorLabel: String
+  abstract val operatorLabel: String
 
-    override fun withOps(ops: List<Expr<*>>): MultiaryExpr<OpType, ExprType> {
-        if (ops.isEmpty()) {
-            return with(listOf())
-        } else {
-            val opType: OpType = this.ops[0].type
-            val newOps: List<Expr<OpType>> = ops.map { op: Expr<*> -> TypeUtils.cast(op, opType) }
-            return with(newOps)
-        }
+  override fun withOps(ops: List<Expr<*>>): MultiaryExpr<OpType, ExprType> {
+    if (ops.isEmpty()) {
+      return with(listOf())
+    } else {
+      val opType: OpType = this.ops[0].type
+      val newOps: List<Expr<OpType>> = ops.map { op: Expr<*> -> TypeUtils.cast(op, opType) }
+      return with(newOps)
+    }
+  }
+
+  override fun toString(): String =
+    Utils.lispStringBuilder(operatorLabel).body().addAll(ops).toString()
+
+  open fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType> =
+    if (ops.toList() == this.ops) {
+      this
+    } else {
+      new(ops.toList())
     }
 
-    override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().addAll(ops).toString()
-
-    open fun with(ops: Iterable<Expr<OpType>>): MultiaryExpr<OpType, ExprType> =
-        if (ops.toList() == this.ops) {
-            this
-        } else {
-            new(ops.toList())
-        }
-
-    protected abstract fun new(ops: List<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
+  protected abstract fun new(ops: List<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
 }

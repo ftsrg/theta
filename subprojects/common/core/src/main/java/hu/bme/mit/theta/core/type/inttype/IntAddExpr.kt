@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -21,41 +20,38 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import java.math.BigInteger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.math.BigInteger
 
 @Serializable
 @SerialName("IntAdd")
-data class IntAddExpr(
-    override val ops: List<Expr<IntType>>
-) : AddExpr<IntType>() {
+data class IntAddExpr(override val ops: List<Expr<IntType>>) : AddExpr<IntType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "+"
+    private const val OPERATOR_LABEL = "+"
 
-        @JvmStatic
-        fun of(ops: Iterable<Expr<IntType>>) = IntAddExpr(ops.toList())
+    @JvmStatic fun of(ops: Iterable<Expr<IntType>>) = IntAddExpr(ops.toList())
 
-        @JvmStatic
-        fun create(ops: List<Expr<*>>) = IntAddExpr(ops.map { cast(it, Int()) })
+    @JvmStatic fun create(ops: List<Expr<*>>) = IntAddExpr(ops.map { cast(it, Int()) })
+  }
+
+  override val type: IntType = Int()
+
+  override fun eval(`val`: Valuation): IntLitExpr {
+    var sum = BigInteger.ZERO
+    ops.forEach { op ->
+      val opVal = op.eval(`val`) as IntLitExpr
+      sum = sum.add(opVal.value)
     }
+    return Int(sum)
+  }
 
-    override val type: IntType = Int()
-    override fun eval(`val`: Valuation): IntLitExpr {
-        var sum = BigInteger.ZERO
-        ops.forEach { op ->
-            val opVal = op.eval(`val`) as IntLitExpr
-            sum = sum.add(opVal.value)
-        }
-        return Int(sum)
-    }
+  override fun new(ops: List<Expr<IntType>>): IntAddExpr = of(ops)
 
-    override fun new(ops: List<Expr<IntType>>): IntAddExpr =
-        of(ops)
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

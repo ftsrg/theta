@@ -38,57 +38,51 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("Dereference")
 data class Dereference<A : Type, O : Type, T : Type>(
-    val array: Expr<A>,
-    val offset: Expr<O>,
-    override val type: T,
-    val uniquenessIdx: Expr<IntType>? = null
+  val array: Expr<A>,
+  val offset: Expr<O>,
+  override val type: T,
+  val uniquenessIdx: Expr<IntType>? = null,
 ) : Expr<T> {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "deref"
+    private const val OPERATOR_LABEL = "deref"
 
-        @JvmStatic
-        fun <A : Type, O : Type, T : Type> of(
-            array: Expr<A>,
-            offset: Expr<O>,
-            type: T
-        ): Dereference<A, O, T> = Dereference(array, offset, type)
+    @JvmStatic
+    fun <A : Type, O : Type, T : Type> of(
+      array: Expr<A>,
+      offset: Expr<O>,
+      type: T,
+    ): Dereference<A, O, T> = Dereference(array, offset, type)
 
-        @JvmStatic
-        private fun <A : Type, O : Type, T : Type> of(
-            array: Expr<A>,
-            offset: Expr<O>,
-            uniqueness: Expr<IntType>,
-            type: T
-        ): Dereference<A, O, T> = Dereference(array, offset, type, uniqueness)
+    @JvmStatic
+    private fun <A : Type, O : Type, T : Type> of(
+      array: Expr<A>,
+      offset: Expr<O>,
+      uniqueness: Expr<IntType>,
+      type: T,
+    ): Dereference<A, O, T> = Dereference(array, offset, type, uniqueness)
+  }
+
+  fun withUniquenessExpr(expr: Expr<IntType>): Dereference<A, O, T> = of(array, offset, expr, type)
+
+  override val arity: Int = 3
+
+  override val ops: List<Expr<*>> =
+    if (uniquenessIdx != null) listOf(array, offset, uniquenessIdx) else listOf(array, offset)
+
+  override fun eval(`val`: Valuation): LitExpr<T> =
+    throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
+
+  @Suppress("UNCHECKED_CAST")
+  override fun withOps(ops: List<Expr<*>>): Expr<T> {
+    require(ops.size == 2 || ops.size == 3) { "Dereference must have 2 or 3 operands" }
+    return when (ops.size) {
+      2 -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, type)
+      else -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, ops[2] as Expr<IntType>, type)
     }
+  }
 
-    fun withUniquenessExpr(expr: Expr<IntType>): Dereference<A, O, T> =
-        of(array, offset, expr, type)
-
-    override val arity: Int = 3
-
-    override val ops: List<Expr<*>> =
-        if (uniquenessIdx != null) listOf(array, offset, uniquenessIdx)
-        else listOf(array, offset)
-
-    override fun eval(`val` : Valuation): LitExpr<T> =
-        throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
-
-    @Suppress("UNCHECKED_CAST")
-    override fun withOps(ops: List<Expr<*>>): Expr<T> {
-        require(ops.size == 2 || ops.size == 3) { "Dereference must have 2 or 3 operands" }
-        return when (ops.size) {
-            2 -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, type)
-            else -> of(ops[0] as Expr<A>, ops[1] as Expr<O>, ops[2] as Expr<IntType>, type)
-        }
-    }
-
-    override fun toString(): String =
-        Utils.lispStringBuilder(OPERATOR_LABEL)
-            .body()
-            .addAll(ops)
-            .add(type)
-            .toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(ops).add(type).toString()
 }

@@ -30,22 +30,19 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("Ref")
-data class RefExpr<DeclType : Type>(
-    val decl: Decl<DeclType>
-) : NullaryExpr<DeclType>() {
+data class RefExpr<DeclType : Type>(val decl: Decl<DeclType>) : NullaryExpr<DeclType>() {
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun <T : Type> of(decl: Decl<T>): RefExpr<T> = RefExpr(decl)
+    @JvmStatic fun <T : Type> of(decl: Decl<T>): RefExpr<T> = RefExpr(decl)
+  }
+
+  override val type: DeclType = decl.type
+
+  override fun eval(`val`: Valuation): LitExpr<DeclType> =
+    `val`.eval(decl).orElseThrow {
+      IllegalStateException("No value found for declaration: ${decl.name}")
     }
 
-    override val type: DeclType = decl.type
-
-    override fun eval(`val`: Valuation): LitExpr<DeclType> =
-        `val`.eval(decl).orElseThrow {
-            IllegalStateException("No value found for declaration: ${decl.name}")
-        }
-
-    override fun toString(): String = decl.name
+  override fun toString(): String = decl.name
 }

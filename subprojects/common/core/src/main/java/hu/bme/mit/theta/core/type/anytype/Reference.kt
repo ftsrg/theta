@@ -34,33 +34,30 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("Reference")
-data class Reference<A : Type, T : Type>(
-    val expr: Expr<T>,
-    override val type: A
-) : Expr<A> {
+data class Reference<A : Type, T : Type>(val expr: Expr<T>, override val type: A) : Expr<A> {
 
-    companion object {
-        private const val OPERATOR_LABEL = "ref"
-        @JvmStatic
-        fun <A : Type, T : Type> of(expr: Expr<T>, type: A): Reference<A, T> = Reference(expr, type)
+  companion object {
+    private const val OPERATOR_LABEL = "ref"
+
+    @JvmStatic
+    fun <A : Type, T : Type> of(expr: Expr<T>, type: A): Reference<A, T> = Reference(expr, type)
+  }
+
+  override val arity: Int = 1
+
+  override val ops: List<Expr<*>> = listOf(expr)
+
+  override fun eval(`val`: Valuation): LitExpr<A> =
+    throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
+
+  override fun withOps(ops: List<Expr<*>>): Expr<A> {
+    require(ops.size == 1) { "Reference must have exactly one operand" }
+    require(ops[0] is RefExpr<*> && (ops[0] as RefExpr<*>).decl is VarDecl<*>) {
+      "Don't transform references to constants."
     }
+    @Suppress("UNCHECKED_CAST") return Reference(ops[0] as Expr<T>, type)
+  }
 
-    override val arity: Int = 1
-
-    override val ops: List<Expr<*>> = listOf(expr)
-
-    override fun eval(`val`: Valuation): LitExpr<A> =
-        throw IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!")
-
-    override fun withOps(ops: List<Expr<*>>): Expr<A> {
-        require(ops.size == 1) { "Reference must have exactly one operand" }
-        require(ops[0] is RefExpr<*> && (ops[0] as RefExpr<*>).decl is VarDecl<*>) {
-            "Don't transform references to constants."
-        }
-        @Suppress("UNCHECKED_CAST")
-        return Reference(ops[0] as Expr<T>, type)
-    }
-
-    override fun toString(): String =
-        Utils.lispStringBuilder(OPERATOR_LABEL).body().add(expr).add(type).toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(OPERATOR_LABEL).body().add(expr).add(type).toString()
 }

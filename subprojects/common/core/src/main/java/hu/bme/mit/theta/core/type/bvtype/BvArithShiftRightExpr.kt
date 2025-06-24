@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,31 +25,35 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("BvArithShiftRight")
 data class BvArithShiftRightExpr(
-    override val leftOp: Expr<BvType>,
-    override val rightOp: Expr<BvType>
+  override val leftOp: Expr<BvType>,
+  override val rightOp: Expr<BvType>,
 ) : BinaryExpr<BvType, BvType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "bvashr"
+  companion object {
+    private const val OPERATOR_LABEL = "bvashr"
 
-        @JvmStatic
-        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvArithShiftRightExpr(leftOp, rightOp)
+    @JvmStatic
+    fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvArithShiftRightExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvArithShiftRightExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      BvArithShiftRightExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
+  }
 
-    override val type: BvType get() = leftOp.type
+  override val type: BvType
+    get() = leftOp.type
 
-    override fun eval(`val`: Valuation): BvLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
-        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
-        return leftOpVal.arithShiftRight(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BvLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+    val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+    return leftOpVal.arithShiftRight(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvArithShiftRightExpr = of(leftOp, rightOp)
+  override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvArithShiftRightExpr =
+    of(leftOp, rightOp)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }

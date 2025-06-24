@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.abstracttype
 
 import hu.bme.mit.theta.core.type.Expr
@@ -23,8 +22,11 @@ import kotlinx.serialization.Polymorphic
 @Polymorphic
 interface Additive<ExprType : Additive<ExprType>> : Type {
 
-    fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
-    fun Sub(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>): SubExpr<ExprType>
-    fun Pos(op: Expr<ExprType>): PosExpr<ExprType>
-    fun Neg(op: Expr<ExprType>): NegExpr<ExprType>
+  fun Add(ops: Iterable<Expr<ExprType>>): AddExpr<ExprType>
+
+  fun Sub(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>): SubExpr<ExprType>
+
+  fun Pos(op: Expr<ExprType>): PosExpr<ExprType>
+
+  fun Neg(op: Expr<ExprType>): NegExpr<ExprType>
 }

@@ -28,26 +28,27 @@ import kotlinx.serialization.Serializable
 @Serializable
 abstract class UnaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-    abstract val op: Expr<OpType>
+  abstract val op: Expr<OpType>
 
-    override val arity: Int get() = 1
+  override val arity: Int
+    get() = 1
 
-    override val ops: List<Expr<*>>
-        get() = listOf(op)
+  override val ops: List<Expr<*>>
+    get() = listOf(op)
 
-    override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
-        require(ops.size == 1) { "Operands must have size 1 for unary expression" }
-        val opType = op.type
-        val newOp = TypeUtils.cast(ops[0], opType)
-        return with(newOp)
-    }
+  override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
+    require(ops.size == 1) { "Operands must have size 1 for unary expression" }
+    val opType = op.type
+    val newOp = TypeUtils.cast(ops[0], opType)
+    return with(newOp)
+  }
 
-    override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().add(op).toString()
+  override fun toString(): String = Utils.lispStringBuilder(operatorLabel).body().add(op).toString()
 
-    open fun with(op: Expr<OpType>): UnaryExpr<OpType, ExprType> =
-        if (op == this.op) this else new(op)
+  open fun with(op: Expr<OpType>): UnaryExpr<OpType, ExprType> =
+    if (op == this.op) this else new(op)
 
-    protected abstract fun new(op: Expr<OpType>): UnaryExpr<OpType, ExprType>
+  protected abstract fun new(op: Expr<OpType>): UnaryExpr<OpType, ExprType>
 
-    abstract val operatorLabel: String
+  abstract val operatorLabel: String
 }

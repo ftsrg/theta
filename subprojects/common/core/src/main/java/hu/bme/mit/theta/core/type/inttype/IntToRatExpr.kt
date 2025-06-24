@@ -13,45 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.CastExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.type.rattype.RatType
-import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("IntToRat")
-data class IntToRatExpr(
-    override val op: Expr<IntType>
-) : CastExpr<IntType, RatType>() {
+data class IntToRatExpr(override val op: Expr<IntType>) : CastExpr<IntType, RatType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "to_rat"
+    private const val OPERATOR_LABEL = "to_rat"
 
-        @JvmStatic
-        fun of(op: Expr<IntType>) = IntToRatExpr(op)
+    @JvmStatic fun of(op: Expr<IntType>) = IntToRatExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = IntToRatExpr(cast(op, Int()))
-    }
+    @JvmStatic fun create(op: Expr<*>) = IntToRatExpr(cast(op, Int()))
+  }
 
-    override val type: RatType = Rat()
-    override fun eval(`val`: Valuation): RatLitExpr {
-        val opVal = op.eval(`val`) as IntLitExpr
-        return opVal.toRat()
-    }
+  override val type: RatType = Rat()
 
-    override fun new(op: Expr<IntType>): IntToRatExpr = of(op)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun eval(`val`: Valuation): RatLitExpr {
+    val opVal = op.eval(`val`) as IntLitExpr
+    return opVal.toRat()
+  }
+
+  override fun new(op: Expr<IntType>): IntToRatExpr = of(op)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

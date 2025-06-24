@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,34 +24,31 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpAbs")
-data class FpAbsExpr(
-    override val op: Expr<FpType>
-) : UnaryExpr<FpType, FpType>() {
-    companion object {
-        private const val OPERATOR_LABEL = "fpabs"
+data class FpAbsExpr(override val op: Expr<FpType>) : UnaryExpr<FpType, FpType>() {
+  companion object {
+    private const val OPERATOR_LABEL = "fpabs"
 
-        @JvmStatic
-        fun of(op: Expr<FpType>) = FpAbsExpr(op)
+    @JvmStatic fun of(op: Expr<FpType>) = FpAbsExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = FpAbsExpr(castFp(op))
+    @JvmStatic fun create(op: Expr<*>) = FpAbsExpr(castFp(op))
+  }
+
+  override val type: FpType
+    get() = op.type
+
+  override fun eval(`val`: Valuation): FpLitExpr {
+    val opVal = op.eval(`val`) as FpLitExpr
+    return if (opVal.hidden) {
+      opVal.neg()
+    } else {
+      opVal
     }
+  }
 
-    override val type: FpType get() = op.type
+  override fun new(op: Expr<FpType>): FpAbsExpr = of(op)
 
-    override fun eval(`val`: Valuation): FpLitExpr {
-        val opVal = op.eval(`val`) as FpLitExpr
-        return if (opVal.hidden) {
-            opVal.neg()
-        } else {
-            opVal
-        }
-    }
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun new(op: Expr<FpType>): FpAbsExpr = of(op)
-
-    override val operatorLabel: String get() = OPERATOR_LABEL
-
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

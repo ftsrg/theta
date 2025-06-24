@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,38 +26,32 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpSqrt")
-data class FpSqrtExpr(
-    val roundingMode: FpRoundingMode,
-    override val op: Expr<FpType>
-) : UnaryExpr<FpType, FpType>() {
+data class FpSqrtExpr(val roundingMode: FpRoundingMode, override val op: Expr<FpType>) :
+  UnaryExpr<FpType, FpType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "fpsqrt"
+    private const val OPERATOR_LABEL = "fpsqrt"
 
-        @JvmStatic
-        fun of(roundingMode: FpRoundingMode, op: Expr<FpType>) =
-            FpSqrtExpr(roundingMode, op)
+    @JvmStatic fun of(roundingMode: FpRoundingMode, op: Expr<FpType>) = FpSqrtExpr(roundingMode, op)
 
-        @JvmStatic
-        fun create(roundingMode: FpRoundingMode, op: Expr<*>) =
-            FpSqrtExpr(roundingMode, castFp(op))
-    }
+    @JvmStatic
+    fun create(roundingMode: FpRoundingMode, op: Expr<*>) = FpSqrtExpr(roundingMode, castFp(op))
+  }
 
-    override val type: FpType get() = op.type
+  override val type: FpType
+    get() = op.type
 
-    override fun eval(`val`: Valuation): LitExpr<FpType> {
-        val opVal = op.eval(`val`) as FpLitExpr
-        val sqrt = fpLitExprToBigFloat(roundingMode, opVal)
-            .sqrt(getMathContext(type, roundingMode))
-        return bigFloatToFpLitExpr(sqrt, type)
-    }
+  override fun eval(`val`: Valuation): LitExpr<FpType> {
+    val opVal = op.eval(`val`) as FpLitExpr
+    val sqrt = fpLitExprToBigFloat(roundingMode, opVal).sqrt(getMathContext(type, roundingMode))
+    return bigFloatToFpLitExpr(sqrt, type)
+  }
 
-    override fun new(op: Expr<FpType>): FpSqrtExpr =
-        of(roundingMode, op)
+  override fun new(op: Expr<FpType>): FpSqrtExpr = of(roundingMode, op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

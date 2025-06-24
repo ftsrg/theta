@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.common.Utils
@@ -23,16 +22,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName(ParamDecl.DECL_LABEL)
-data class ParamDecl<DeclType : Type>(
-    override val name: String,
-    override val type: DeclType
-) : Decl<DeclType>() {
+data class ParamDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
+  Decl<DeclType>() {
 
-    companion object {
+  companion object {
 
-        internal const val DECL_LABEL: String = "Param"
-    }
+    internal const val DECL_LABEL: String = "Param"
+  }
 
-    override fun toString(): String =
-        Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 }

@@ -13,77 +13,53 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.type.Expr
 import java.math.BigInteger
 
-/**
- * Factory and utility methods for integer expressions.
- */
+/** Factory and utility methods for integer expressions. */
 @Suppress("FunctionName")
 object IntExprs {
-    @JvmStatic
-    fun Int() = IntType
+  @JvmStatic fun Int() = IntType
 
-    @JvmStatic
-    fun Int(value: Int) = IntLitExpr(BigInteger.valueOf(value.toLong()))
+  @JvmStatic fun Int(value: Int) = IntLitExpr(BigInteger.valueOf(value.toLong()))
 
-    @JvmStatic
-    fun Int(value: String) = IntLitExpr(BigInteger(value))
+  @JvmStatic fun Int(value: String) = IntLitExpr(BigInteger(value))
 
-    @JvmStatic
-    fun Int(value: BigInteger) = IntLitExpr(value)
+  @JvmStatic fun Int(value: BigInteger) = IntLitExpr(value)
 
-    @JvmStatic
-    fun ToRat(op: Expr<IntType>) = IntToRatExpr(op)
+  @JvmStatic fun ToRat(op: Expr<IntType>) = IntToRatExpr(op)
 
-    @JvmStatic
-    fun Add(ops: Iterable<Expr<IntType>>) = IntAddExpr.of(ops)
+  @JvmStatic fun Add(ops: Iterable<Expr<IntType>>) = IntAddExpr.of(ops)
 
-    @JvmStatic
-    fun Add(vararg ops: Expr<IntType>) = IntAddExpr(ops.asList())
+  @JvmStatic fun Add(vararg ops: Expr<IntType>) = IntAddExpr(ops.asList())
 
-    @JvmStatic
-    fun Sub(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntSubExpr(leftOp, rightOp)
+  @JvmStatic fun Sub(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntSubExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Pos(op: Expr<IntType>) = IntPosExpr(op)
+  @JvmStatic fun Pos(op: Expr<IntType>) = IntPosExpr(op)
 
-    @JvmStatic
-    fun Neg(op: Expr<IntType>) = IntNegExpr(op)
+  @JvmStatic fun Neg(op: Expr<IntType>) = IntNegExpr(op)
 
-    @JvmStatic
-    fun Mul(ops: Iterable<Expr<IntType>>) = IntMulExpr.of(ops)
+  @JvmStatic fun Mul(ops: Iterable<Expr<IntType>>) = IntMulExpr.of(ops)
 
-    @JvmStatic
-    fun Mul(vararg ops: Expr<IntType>) = IntMulExpr(ops.asList())
+  @JvmStatic fun Mul(vararg ops: Expr<IntType>) = IntMulExpr(ops.asList())
 
-    @JvmStatic
-    fun Div(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntDivExpr(leftOp, rightOp)
+  @JvmStatic fun Div(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntDivExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Mod(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntModExpr(leftOp, rightOp)
+  @JvmStatic fun Mod(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntModExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Rem(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
+  @JvmStatic fun Rem(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Eq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntEqExpr(leftOp, rightOp)
+  @JvmStatic fun Eq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntEqExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Neq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntNeqExpr(leftOp, rightOp)
+  @JvmStatic fun Neq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntNeqExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Lt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLtExpr(leftOp, rightOp)
+  @JvmStatic fun Lt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLtExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Leq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLeqExpr(leftOp, rightOp)
+  @JvmStatic fun Leq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLeqExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Gt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGtExpr(leftOp, rightOp)
+  @JvmStatic fun Gt(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGtExpr(leftOp, rightOp)
 
-    @JvmStatic
-    fun Geq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGeqExpr(leftOp, rightOp)
+  @JvmStatic fun Geq(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGeqExpr(leftOp, rightOp)
 }

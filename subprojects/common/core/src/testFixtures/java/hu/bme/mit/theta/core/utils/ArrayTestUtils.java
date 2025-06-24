@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.type.arraytype.*;
-import kotlin.Pair;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
+import hu.bme.mit.theta.core.type.arraytype.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import kotlin.Pair;
 
 public class ArrayTestUtils {
 

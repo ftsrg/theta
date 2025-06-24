@@ -1018,10 +1018,7 @@ class FrontendXcfaBuilder(
   }
 
   private fun buildWithoutPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation {
-    checkState(
-      cStatement is CCompound,
-      "Currently only CCompounds have pre- and post statements!",
-    )
+    checkState(cStatement is CCompound, "Currently only CCompounds have pre- and post statements!")
     val statement = cStatement as CCompound
     val builder: XcfaProcedureBuilder = param.builder
     var lastLoc = param.lastLoc
@@ -1059,10 +1056,7 @@ class FrontendXcfaBuilder(
   }
 
   private fun buildPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation {
-    checkState(
-      cStatement is CCompound,
-      "Currently only CCompounds have pre- and post statements!",
-    )
+    checkState(cStatement is CCompound, "Currently only CCompounds have pre- and post statements!")
     val statement = cStatement as CCompound
     val builder: XcfaProcedureBuilder = param.builder
     var lastLoc = param.lastLoc

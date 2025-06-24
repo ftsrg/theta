@@ -24,13 +24,14 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 abstract class NullaryExpr<ExprType : Type> : Expr<ExprType> {
-    override val arity: Int get() = 0
-    
-    override val ops: List<Expr<*>>
-        get() = emptyList()
+  override val arity: Int
+    get() = 0
 
-    override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
-        require(ops.isEmpty()) { "Operands must be empty for nullary expression" }
-        return this
-    }
+  override val ops: List<Expr<*>>
+    get() = emptyList()
+
+  override fun withOps(ops: List<Expr<*>>): Expr<ExprType> {
+    require(ops.isEmpty()) { "Operands must be empty for nullary expression" }
+    return this
+  }
 }

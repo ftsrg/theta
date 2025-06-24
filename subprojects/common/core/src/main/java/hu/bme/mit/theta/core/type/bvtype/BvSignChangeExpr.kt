@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,30 +24,31 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvSignChange")
-data class BvSignChangeExpr(
-    override val op: Expr<BvType>,
-    val newType: BvType
-) : PosExpr<BvType>() {
+data class BvSignChangeExpr(override val op: Expr<BvType>, val newType: BvType) :
+  PosExpr<BvType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "bvpos"
+    private const val OPERATOR_LABEL = "bvpos"
 
-        @JvmStatic
-        fun of(op: Expr<BvType>, newType: BvType) = BvSignChangeExpr(op, newType)
+    @JvmStatic fun of(op: Expr<BvType>, newType: BvType) = BvSignChangeExpr(op, newType)
 
-        @JvmStatic
-        fun create(op: Expr<*>, newType: BvType) = BvSignChangeExpr(TypeUtils.castBv(op), newType)
-    }
+    @JvmStatic
+    fun create(op: Expr<*>, newType: BvType) = BvSignChangeExpr(TypeUtils.castBv(op), newType)
+  }
 
-    override val type: BvType get() = newType
-    override fun eval(`val`: Valuation): BvLitExpr {
-        val opVal = op.eval(`val`) as BvLitExpr
-        return opVal.pos()
-    }
+  override val type: BvType
+    get() = newType
 
-    override fun new(op: Expr<BvType>): BvSignChangeExpr = of(op, newType)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun eval(`val`: Valuation): BvLitExpr {
+    val opVal = op.eval(`val`) as BvLitExpr
+    return opVal.pos()
+  }
+
+  override fun new(op: Expr<BvType>): BvSignChangeExpr = of(op, newType)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

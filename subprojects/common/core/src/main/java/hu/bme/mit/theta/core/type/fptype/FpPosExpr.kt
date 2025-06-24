@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -25,28 +24,24 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpPos")
-data class FpPosExpr(
-    override val op: Expr<FpType>
-) : PosExpr<FpType>() {
-    companion object {
-        private const val OPERATOR_LABEL = "fppos"
+data class FpPosExpr(override val op: Expr<FpType>) : PosExpr<FpType>() {
+  companion object {
+    private const val OPERATOR_LABEL = "fppos"
 
-        @JvmStatic
-        fun of(op: Expr<FpType>) = FpPosExpr(op)
+    @JvmStatic fun of(op: Expr<FpType>) = FpPosExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = FpPosExpr(castFp(op))
-    }
+    @JvmStatic fun create(op: Expr<*>) = FpPosExpr(castFp(op))
+  }
 
-    override val type: FpType get() = op.type
+  override val type: FpType
+    get() = op.type
 
-    override fun eval(`val`: Valuation): FpLitExpr =
-        (op.eval(`val`) as FpLitExpr).pos()
+  override fun eval(`val`: Valuation): FpLitExpr = (op.eval(`val`) as FpLitExpr).pos()
 
-    override fun new(op: Expr<FpType>): FpPosExpr = of(op)
+  override fun new(op: Expr<FpType>): FpPosExpr = of(op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,30 +26,30 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvSLeq")
-data class BvSLeqExpr(
-    override val leftOp: Expr<BvType>,
-    override val rightOp: Expr<BvType>
-) : LeqExpr<BvType>() {
+data class BvSLeqExpr(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
+  LeqExpr<BvType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "bvsle"
+    private const val OPERATOR_LABEL = "bvsle"
 
-        @JvmStatic
-        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSLeqExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSLeqExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvSLeqExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      BvSLeqExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
+  }
 
-    override fun eval(`val`: Valuation): LitExpr<BoolType> {
-        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
-        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
-        return leftOpVal.sle(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): LitExpr<BoolType> {
+    val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+    val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+    return leftOpVal.sle(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSLeqExpr = of(leftOp, rightOp)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSLeqExpr = of(leftOp, rightOp)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

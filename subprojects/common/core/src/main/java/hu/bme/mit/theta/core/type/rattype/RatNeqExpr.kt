@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,29 +26,25 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatNeq")
-data class RatNeqExpr(
-    override val leftOp: Expr<RatType>,
-    override val rightOp: Expr<RatType>
-) : NeqExpr<RatType>() {
+data class RatNeqExpr(override val leftOp: Expr<RatType>, override val rightOp: Expr<RatType>) :
+  NeqExpr<RatType>() {
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatNeqExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatNeqExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = RatNeqExpr(cast(leftOp, Rat()), cast(rightOp, Rat()))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      RatNeqExpr(cast(leftOp, Rat()), cast(rightOp, Rat()))
+  }
 
-    override fun eval(`val`: Valuation): BoolLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as RatLitExpr
-        val rightOpVal = rightOp.eval(`val`) as RatLitExpr
-        return leftOpVal.neq(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BoolLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as RatLitExpr
+    val rightOpVal = rightOp.eval(`val`) as RatLitExpr
+    return leftOpVal.neq(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatNeqExpr =
-        of(leftOp, rightOp)
+  override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatNeqExpr = of(leftOp, rightOp)
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

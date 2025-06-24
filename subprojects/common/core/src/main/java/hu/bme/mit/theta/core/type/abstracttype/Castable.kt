@@ -27,5 +27,5 @@ import kotlinx.serialization.Polymorphic
 @Polymorphic
 interface Castable<SourceType : Castable<SourceType>> : Type {
 
-    fun <TargetType : Type> Cast(op: Expr<SourceType>, type: TargetType): Expr<TargetType>
+  fun <TargetType : Type> Cast(op: Expr<SourceType>, type: TargetType): Expr<TargetType>
 }

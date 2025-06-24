@@ -29,13 +29,12 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("InvalidLit")
-data class InvalidLitExpr<ExprType : Type>(
-    override val type: ExprType
-) : NullaryExpr<ExprType>(), LitExpr<ExprType> {
+data class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
+  NullaryExpr<ExprType>(), LitExpr<ExprType> {
 
-    override fun eval(`val`: Valuation): LitExpr<ExprType> = this
+  override fun eval(`val`: Valuation): LitExpr<ExprType> = this
 
-    override val isInvalid: Boolean = true
+  override val isInvalid: Boolean = true
 
-    override fun equals(other: Any?): Boolean = false
+  override fun equals(other: Any?): Boolean = false
 }

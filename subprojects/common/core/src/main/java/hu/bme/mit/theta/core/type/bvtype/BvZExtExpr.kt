@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype
 
 import hu.bme.mit.theta.common.Utils
@@ -26,38 +25,32 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvZExt")
-data class BvZExtExpr(
-    val op: Expr<BvType>,
-    val extendType: BvType
-) : Expr<BvType> {
+data class BvZExtExpr(val op: Expr<BvType>, val extendType: BvType) : Expr<BvType> {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "bv_zero_extend"
+    private const val OPERATOR_LABEL = "bv_zero_extend"
 
-        @JvmStatic
-        fun of(op: Expr<BvType>, extendType: BvType) = BvZExtExpr(op, extendType)
+    @JvmStatic fun of(op: Expr<BvType>, extendType: BvType) = BvZExtExpr(op, extendType)
 
-        @JvmStatic
-        fun create(op: Expr<*>, extendType: BvType) = BvZExtExpr(TypeUtils.castBv(op), extendType)
-    }
+    @JvmStatic
+    fun create(op: Expr<*>, extendType: BvType) = BvZExtExpr(TypeUtils.castBv(op), extendType)
+  }
 
-    override val arity: Int = 1
-    override val type: BvType = extendType
-    override val ops: List<Expr<*>> = listOf(op)
-    override fun eval(`val`: Valuation): LitExpr<BvType> {
-        val bvLitExpr = op.eval(`val`) as BvLitExpr
-        return bvLitExpr.zext(extendType)
-    }
+  override val arity: Int = 1
+  override val type: BvType = extendType
+  override val ops: List<Expr<*>> = listOf(op)
 
-    override fun withOps(ops: List<Expr<*>>): Expr<BvType> {
-        require(ops.size == 1)
-        return of(TypeUtils.castBv(ops[0]), extendType)
-    }
+  override fun eval(`val`: Valuation): LitExpr<BvType> {
+    val bvLitExpr = op.eval(`val`) as BvLitExpr
+    return bvLitExpr.zext(extendType)
+  }
 
-    override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL)
-        .body()
-        .add(op)
-        .add(type)
-        .toString()
+  override fun withOps(ops: List<Expr<*>>): Expr<BvType> {
+    require(ops.size == 1)
+    return of(TypeUtils.castBv(ops[0]), extendType)
+  }
+
+  override fun toString(): String =
+    Utils.lispStringBuilder(OPERATOR_LABEL).body().add(op).add(type).toString()
 }

@@ -13,57 +13,51 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import java.math.BigInteger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.math.BigInteger
 
 @Serializable
 @SerialName("RatAdd")
-class RatAddExpr(
-    override val ops: List<Expr<RatType>>
-) : AddExpr<RatType>() {
+class RatAddExpr(override val ops: List<Expr<RatType>>) : AddExpr<RatType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "+"
+    private const val OPERATOR_LABEL = "+"
 
-        @JvmStatic
-        fun of(ops: Iterable<Expr<RatType>>): RatAddExpr = RatAddExpr(ops.toList())
+    @JvmStatic fun of(ops: Iterable<Expr<RatType>>): RatAddExpr = RatAddExpr(ops.toList())
 
-        @Suppress("UNCHECKED_CAST")
-        @JvmStatic
-        fun create(ops: Iterable<Expr<*>>): RatAddExpr =
-            RatAddExpr(ops.map { it as Expr<RatType> })
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun create(ops: Iterable<Expr<*>>): RatAddExpr = RatAddExpr(ops.map { it as Expr<RatType> })
+  }
+
+  override val type: RatType = Rat()
+
+  override fun eval(`val`: Valuation): RatLitExpr {
+    var sumNum = BigInteger.ZERO
+    var sumDenom = BigInteger.ONE
+    ops.forEach { op ->
+      val opLit = op.eval(`val`) as RatLitExpr
+      val leftNum = sumNum
+      val leftDenom = sumDenom
+      val rightNum = opLit.num
+      val rightDenom = opLit.denom
+      sumNum = leftNum.multiply(rightDenom).add(leftDenom.multiply(rightNum))
+      sumDenom = leftDenom.multiply(rightDenom)
     }
+    return Rat(sumNum, sumDenom)
+  }
 
-    override val type: RatType = Rat()
+  override fun new(ops: List<Expr<RatType>>): RatAddExpr = new(ops)
 
-    override fun eval(`val`: Valuation): RatLitExpr {
-        var sumNum = BigInteger.ZERO
-        var sumDenom = BigInteger.ONE
-        ops.forEach { op ->
-            val opLit = op.eval(`val`) as RatLitExpr
-            val leftNum = sumNum
-            val leftDenom = sumDenom
-            val rightNum = opLit.num
-            val rightDenom = opLit.denom
-            sumNum = leftNum.multiply(rightDenom).add(leftDenom.multiply(rightNum))
-            sumDenom = leftDenom.multiply(rightDenom)
-        }
-        return Rat(sumNum, sumDenom)
-    }
+  override val operatorLabel: String = OPERATOR_LABEL
 
-    override fun new(ops: List<Expr<RatType>>): RatAddExpr = new(ops)
-
-    override val operatorLabel: String = OPERATOR_LABEL
-
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

@@ -61,7 +61,9 @@ class MultiAnalysisTest {
       InitFunc<NumberedState, UnitPrec> { listOf(NumberedState(0)) }
 
     override fun getTransFunc(): TransFunc<NumberedState, NumberedAction, UnitPrec> =
-      TransFunc<NumberedState, NumberedAction, UnitPrec> { state, action, prec -> listOf(NumberedState(state.num + 1)) }
+      TransFunc<NumberedState, NumberedAction, UnitPrec> { state, action, prec ->
+        listOf(NumberedState(state.num + 1))
+      }
   }
 
   class NumberedLTS : LTS<NumberedState, NumberedAction> {

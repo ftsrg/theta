@@ -30,24 +30,23 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("Prime")
-data class PrimeExpr<ExprType : Type>(
-    override val op: Expr<ExprType>
-) : UnaryExpr<ExprType, ExprType>() {
+data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
+  UnaryExpr<ExprType, ExprType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "prime"
-        @JvmStatic
-        fun <T : Type> of(op: Expr<T>): PrimeExpr<T> = PrimeExpr(op)
-    }
+    private const val OPERATOR_LABEL = "prime"
 
-    override val type: ExprType = op.type
+    @JvmStatic fun <T : Type> of(op: Expr<T>): PrimeExpr<T> = PrimeExpr(op)
+  }
 
-    override fun eval(`val`: Valuation): LitExpr<ExprType> {
-        throw UnsupportedOperationException("Prime expressions cannot be evaluated")
-    }
+  override val type: ExprType = op.type
 
-    override fun new(op: Expr<ExprType>): PrimeExpr<ExprType> = of(op)
+  override fun eval(`val`: Valuation): LitExpr<ExprType> {
+    throw UnsupportedOperationException("Prime expressions cannot be evaluated")
+  }
 
-    override val operatorLabel: String = OPERATOR_LABEL
+  override fun new(op: Expr<ExprType>): PrimeExpr<ExprType> = of(op)
+
+  override val operatorLabel: String = OPERATOR_LABEL
 }

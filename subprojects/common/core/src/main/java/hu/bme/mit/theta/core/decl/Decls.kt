@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
@@ -21,21 +20,12 @@ import hu.bme.mit.theta.core.type.Type
 /** Factory class to create declarations. */
 @Suppress("FunctionName")
 object Decls {
-    /**
-     * Create a constant declaration with a given name and type.
-     */
-    @JvmStatic
-    fun <T : Type> Const(name: String, type: T): ConstDecl<T> = BasicConstDecl(name, type)
+  /** Create a constant declaration with a given name and type. */
+  @JvmStatic fun <T : Type> Const(name: String, type: T): ConstDecl<T> = BasicConstDecl(name, type)
 
-    /**
-     * Create a parameter declaration with a given name and type.
-     */
-    @JvmStatic
-    fun <T : Type> Param(name: String, type: T): ParamDecl<T> = ParamDecl(name, type)
+  /** Create a parameter declaration with a given name and type. */
+  @JvmStatic fun <T : Type> Param(name: String, type: T): ParamDecl<T> = ParamDecl(name, type)
 
-    /**
-     * Create a variable declaration with a given type.
-     */
-    @JvmStatic
-    fun <T : Type> Var(name: String, type: T): VarDecl<T> = VarDecl(name, type)
+  /** Create a variable declaration with a given type. */
+  @JvmStatic fun <T : Type> Var(name: String, type: T): VarDecl<T> = VarDecl(name, type)
 }

@@ -15,14 +15,11 @@
  */
 package hu.bme.mit.theta.core.type
 
-import hu.bme.mit.theta.core.model.Valuation
 import kotlinx.serialization.Polymorphic
-import kotlinx.serialization.Serializable
 
 /**
  * Interface for literal expressions (constants).
  *
  * @param ExprType The type of the literal, must be a subtype of [Type]
  */
-@Polymorphic
-interface LitExpr<ExprType : Type> : Expr<ExprType>
+@Polymorphic interface LitExpr<ExprType : Type> : Expr<ExprType>

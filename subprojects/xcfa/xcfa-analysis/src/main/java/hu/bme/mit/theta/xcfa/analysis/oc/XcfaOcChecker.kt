@@ -37,9 +37,9 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
@@ -494,7 +494,11 @@ class XcfaOcChecker(
               And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
             if (v == memoryDecl) {
               conseq =
-                And(conseq, Eq(rel.from.array!!, rel.to.array!!), Eq(rel.from.offset!!, rel.to.offset!!))
+                And(
+                  conseq,
+                  Eq(rel.from.array!!, rel.to.array!!),
+                  Eq(rel.from.offset!!, rel.to.offset!!),
+                )
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,29 +26,25 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("IntLeq")
-data class IntLeqExpr(
-    override val leftOp: Expr<IntType>,
-    override val rightOp: Expr<IntType>
-) : LeqExpr<IntType>() {
+data class IntLeqExpr(override val leftOp: Expr<IntType>, override val rightOp: Expr<IntType>) :
+  LeqExpr<IntType>() {
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLeqExpr(leftOp, rightOp)
+    @JvmStatic fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntLeqExpr(leftOp, rightOp)
 
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntLeqExpr(cast(leftOp, Int()), cast(rightOp, Int()))
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      IntLeqExpr(cast(leftOp, Int()), cast(rightOp, Int()))
+  }
 
-    override fun eval(`val`: Valuation): BoolLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
-        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
-        return leftOpVal.leq(rightOpVal)
-    }
+  override fun eval(`val`: Valuation): BoolLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+    val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+    return leftOpVal.leq(rightOpVal)
+  }
 
-    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntLeqExpr =
-        of(leftOp, rightOp)
+  override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntLeqExpr = of(leftOp, rightOp)
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -27,28 +26,25 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("IntGt")
-data class IntGtExpr(
-    override val leftOp: Expr<IntType>,
-    override val rightOp: Expr<IntType>
-) : GtExpr<IntType>() {
+data class IntGtExpr(override val leftOp: Expr<IntType>, override val rightOp: Expr<IntType>) :
+  GtExpr<IntType>() {
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGtExpr(leftOp, rightOp)
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntGtExpr(cast(leftOp, Int()), cast(rightOp, Int()))
-    }
+    @JvmStatic fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntGtExpr(leftOp, rightOp)
 
-    override fun eval(`val`: Valuation): BoolLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
-        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
-        return leftOpVal.gt(rightOpVal)
-    }
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      IntGtExpr(cast(leftOp, Int()), cast(rightOp, Int()))
+  }
 
-    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntGtExpr =
-        of(leftOp, rightOp)
+  override fun eval(`val`: Valuation): BoolLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+    val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+    return leftOpVal.gt(rightOpVal)
+  }
 
-    override fun toString(): String = super.toString()
+  override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntGtExpr = of(leftOp, rightOp)
+
+  override fun toString(): String = super.toString()
 }
-

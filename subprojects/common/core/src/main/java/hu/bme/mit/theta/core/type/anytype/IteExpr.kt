@@ -35,76 +35,68 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("Ite")
 data class IteExpr<ExprType : Type>(
-    val cond: Expr<BoolType>,
-    val then: Expr<ExprType>,
-    val elze: Expr<ExprType>
+  val cond: Expr<BoolType>,
+  val then: Expr<ExprType>,
+  val elze: Expr<ExprType>,
 ) : Expr<ExprType> {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "ite"
+    private const val OPERATOR_LABEL = "ite"
 
-        @JvmStatic
-        fun <ExprType : Type> of(
-            cond: Expr<BoolType>,
-            then: Expr<ExprType>,
-            elze: Expr<ExprType>
-        ): IteExpr<ExprType> = IteExpr(cond, then, elze)
+    @JvmStatic
+    fun <ExprType : Type> of(
+      cond: Expr<BoolType>,
+      then: Expr<ExprType>,
+      elze: Expr<ExprType>,
+    ): IteExpr<ExprType> = IteExpr(cond, then, elze)
 
-        @JvmStatic
-        fun <ExprType : Type> create(
-            cond: Expr<*>,
-            then: Expr<*>,
-            elze: Expr<*>
-        ): IteExpr<ExprType> {
-            val newCond = cast(cond, Bool())
+    @JvmStatic
+    fun <ExprType : Type> create(cond: Expr<*>, then: Expr<*>, elze: Expr<*>): IteExpr<ExprType> {
+      val newCond = cast(cond, Bool())
 
-            @Suppress("UNCHECKED_CAST")
-            val newThen = then as Expr<ExprType>
-            val newElze = cast(elze, newThen.type)
-            return of(newCond, newThen, newElze)
-        }
+      @Suppress("UNCHECKED_CAST") val newThen = then as Expr<ExprType>
+      val newElze = cast(elze, newThen.type)
+      return of(newCond, newThen, newElze)
+    }
+  }
+
+  override val type: ExprType = then.type
+
+  override val arity: Int = 3
+
+  override val ops: List<Expr<*>> = listOf(cond, then, elze)
+
+  fun getElse(): Expr<ExprType> = elze
+
+  override fun eval(`val`: Valuation): LitExpr<ExprType> =
+    if ((cond.eval(`val`) as BoolLitExpr).value) {
+      then.eval(`val`)
+    } else {
+      elze.eval(`val`)
     }
 
-    override val type: ExprType = then.type
+  override fun withOps(ops: List<Expr<*>>): IteExpr<ExprType> {
+    require(ops.size == 3) { "Operands must have size 3 for Ite expression" }
+    val newCond = cast(ops[0], Bool())
+    val newThen = cast(ops[1], type)
+    val newElze = cast(ops[2], type)
+    return with(newCond, newThen, newElze)
+  }
 
-    override val arity: Int = 3
-
-    override val ops: List<Expr<*>> = listOf(cond, then, elze)
-
-    fun getElse(): Expr<ExprType> = elze
-
-    override fun eval(`val`: Valuation): LitExpr<ExprType> =
-        if ((cond.eval(`val`) as BoolLitExpr).value) {
-            then.eval(`val`)
-        } else {
-            elze.eval(`val`)
-        }
-
-    override fun withOps(ops: List<Expr<*>>): IteExpr<ExprType> {
-        require(ops.size == 3) { "Operands must have size 3 for Ite expression" }
-        val newCond = cast(ops[0], Bool())
-        val newThen = cast(ops[1], type)
-        val newElze = cast(ops[2], type)
-        return with(newCond, newThen, newElze)
+  fun with(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprType>): IteExpr<ExprType> =
+    if (this.cond === cond && this.then === then && this.elze === elze) {
+      this
+    } else {
+      of(cond, then, elze)
     }
 
-    fun with(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprType>): IteExpr<ExprType> =
-        if (this.cond === cond && this.then === then && this.elze === elze) {
-            this
-        } else {
-            of(cond, then, elze)
-        }
+  fun withCond(cond: Expr<BoolType>): IteExpr<ExprType> = with(cond, then, elze)
 
-    fun withCond(cond: Expr<BoolType>): IteExpr<ExprType> = with(cond, then, elze)
+  fun withThen(then: Expr<ExprType>): IteExpr<ExprType> = with(cond, then, elze)
 
-    fun withThen(then: Expr<ExprType>): IteExpr<ExprType> = with(cond, then, elze)
+  fun withElse(elze: Expr<ExprType>): IteExpr<ExprType> = with(cond, then, elze)
 
-    fun withElse(elze: Expr<ExprType>): IteExpr<ExprType> = with(cond, then, elze)
-
-    override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL)
-        .add(cond)
-        .add(then)
-        .add(elze)
-        .toString()
+  override fun toString(): String =
+    Utils.lispStringBuilder(OPERATOR_LABEL).add(cond).add(then).add(elze).toString()
 }

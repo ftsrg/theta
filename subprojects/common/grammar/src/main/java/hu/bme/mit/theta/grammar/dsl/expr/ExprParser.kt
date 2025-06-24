@@ -48,7 +48,6 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.functype.FuncExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.rattype.RatExprs
@@ -166,10 +165,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
     override fun visitIffExpr(ctx: IffExprContext): Expr<out Type> {
       return if (ctx.rightOp != null) {
-        val leftOp: Expr<BoolType> =
-          cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-        val rightOp: Expr<BoolType> =
-          cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val leftOp: Expr<BoolType> = cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val rightOp: Expr<BoolType> = cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
         BoolExprs.Iff(leftOp, rightOp)
       } else {
         visitChildren(ctx)
@@ -178,10 +175,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
     override fun visitImplyExpr(ctx: ImplyExprContext): Expr<out Type> {
       return if (ctx.rightOp != null) {
-        val leftOp: Expr<BoolType> =
-          cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-        val rightOp: Expr<BoolType> =
-          cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val leftOp: Expr<BoolType> = cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val rightOp: Expr<BoolType> = cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
         BoolExprs.Imply(leftOp, rightOp)
       } else {
         visitChildren(ctx)
@@ -215,9 +210,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
     override fun visitOrExpr(ctx: OrExprContext): Expr<out Type> {
       return if (ctx.ops.size >= 1) {
         val opStream: Stream<Expr<BoolType>> =
-          ctx.ops
-            .stream()
-            .map { op: ExprContext -> cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) }
+          ctx.ops.stream().map { op: ExprContext ->
+            cast(op.accept<Expr<*>>(this), BoolExprs.Bool())
+          }
         val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
         BoolExprs.Or(ops)
       } else {
@@ -227,10 +222,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
     override fun visitXorExpr(ctx: XorExprContext): Expr<out Type> {
       return if (ctx.rightOp != null) {
-        val leftOp: Expr<BoolType> =
-          cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-        val rightOp: Expr<BoolType> =
-          cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val leftOp: Expr<BoolType> = cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
+        val rightOp: Expr<BoolType> = cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
         BoolExprs.Xor(leftOp, rightOp)
       } else {
         visitChildren(ctx)
@@ -240,9 +233,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
     override fun visitAndExpr(ctx: AndExprContext): Expr<out Type> {
       return if (ctx.ops.size >= 1) {
         val opStream: Stream<Expr<BoolType>> =
-          ctx.ops
-            .stream()
-            .map { op: ExprContext -> cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) }
+          ctx.ops.stream().map { op: ExprContext ->
+            cast(op.accept<Expr<*>>(this), BoolExprs.Bool())
+          }
         val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
         BoolExprs.And(ops)
       } else {
@@ -893,7 +886,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
       var value = BigInteger(lit)
       Preconditions.checkArgument(
         value >= BigInteger.TWO.pow(size - 1).multiply(BigInteger.valueOf(-1)) &&
-            value < BigInteger.TWO.pow(size),
+          value < BigInteger.TWO.pow(size),
         "Decimal literal is not in range",
       )
       if (value < BigInteger.ZERO) {

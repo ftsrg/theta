@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,26 +25,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatNeg")
-data class RatNegExpr(
-    override val op: Expr<RatType>
-) : NegExpr<RatType>() {
+data class RatNegExpr(override val op: Expr<RatType>) : NegExpr<RatType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "-"
-        @JvmStatic
-        fun of(op: Expr<RatType>) = RatNegExpr(op)
-        @JvmStatic
-        fun create(op: Expr<*>) = RatNegExpr(cast(op, Rat()))
-    }
+  companion object {
+    private const val OPERATOR_LABEL = "-"
 
-    override val type: RatType = Rat()
-    override fun eval(`val`: Valuation): RatLitExpr {
-        val opVal = op.eval(`val`) as RatLitExpr
-        return opVal.neg()
-    }
+    @JvmStatic fun of(op: Expr<RatType>) = RatNegExpr(op)
 
-    override fun new(op: Expr<RatType>): RatNegExpr = of(op)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+    @JvmStatic fun create(op: Expr<*>) = RatNegExpr(cast(op, Rat()))
+  }
+
+  override val type: RatType = Rat()
+
+  override fun eval(`val`: Valuation): RatLitExpr {
+    val opVal = op.eval(`val`) as RatLitExpr
+    return opVal.neg()
+  }
+
+  override fun new(op: Expr<RatType>): RatNegExpr = of(op)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

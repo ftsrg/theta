@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,31 +25,32 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("IntRem")
-data class IntRemExpr(
-    override val leftOp: Expr<IntType>,
-    override val rightOp: Expr<IntType>
-) : RemExpr<IntType>() {
+data class IntRemExpr(override val leftOp: Expr<IntType>, override val rightOp: Expr<IntType>) :
+  RemExpr<IntType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "rem"
-        @JvmStatic
-        fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
-        @JvmStatic
-        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = IntRemExpr(cast(leftOp, Int()), cast(rightOp, Int()))
-    }
+    private const val OPERATOR_LABEL = "rem"
 
-    override val type: IntType = Int()
-    override fun eval(`val`: Valuation): IntLitExpr {
-        val leftOpVal = leftOp.eval(`val`) as IntLitExpr
-        val rightOpVal = rightOp.eval(`val`) as IntLitExpr
-        return leftOpVal.rem(rightOpVal)
-    }
+    @JvmStatic fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntRemExpr(leftOp, rightOp)
 
-    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntRemExpr =
-        of(leftOp, rightOp)
+    @JvmStatic
+    fun create(leftOp: Expr<*>, rightOp: Expr<*>) =
+      IntRemExpr(cast(leftOp, Int()), cast(rightOp, Int()))
+  }
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override val type: IntType = Int()
+
+  override fun eval(`val`: Valuation): IntLitExpr {
+    val leftOpVal = leftOp.eval(`val`) as IntLitExpr
+    val rightOpVal = rightOp.eval(`val`) as IntLitExpr
+    return leftOpVal.rem(rightOpVal)
+  }
+
+  override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntRemExpr = of(leftOp, rightOp)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

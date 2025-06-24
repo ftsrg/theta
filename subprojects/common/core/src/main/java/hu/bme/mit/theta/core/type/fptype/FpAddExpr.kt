@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,38 +25,37 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpAdd")
-data class FpAddExpr(
-    val roundingMode: FpRoundingMode,
-    override val ops: List<Expr<FpType>>
-) : AddExpr<FpType>() {
+data class FpAddExpr(val roundingMode: FpRoundingMode, override val ops: List<Expr<FpType>>) :
+  AddExpr<FpType>() {
 
-    init {
-        checkAllTypesEqual(ops)
+  init {
+    checkAllTypesEqual(ops)
+  }
+
+  companion object {
+    private const val OPERATOR_LABEL = "fpadd"
+
+    @JvmStatic
+    fun of(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) =
+      FpAddExpr(roundingMode, ops.toList())
+
+    @JvmStatic
+    fun create(roundingMode: FpRoundingMode, ops: List<Expr<*>>) =
+      FpAddExpr(roundingMode, ops.map { castFp(it) })
+  }
+
+  override val type: FpType
+    get() = ops[0].type
+
+  override fun eval(`val`: Valuation): FpLitExpr =
+    ops.drop(1).fold(ops[0].eval(`val`) as FpLitExpr) { acc, op ->
+      acc.add(roundingMode, op.eval(`val`) as FpLitExpr)
     }
 
-    companion object {
-        private const val OPERATOR_LABEL = "fpadd"
+  override fun new(ops: List<Expr<FpType>>): FpAddExpr = of(roundingMode, ops)
 
-        @JvmStatic
-        fun of(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) =
-            FpAddExpr(roundingMode, ops.toList())
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-        @JvmStatic
-        fun create(roundingMode: FpRoundingMode, ops: List<Expr<*>>) =
-            FpAddExpr(roundingMode, ops.map { castFp(it) })
-    }
-
-    override val type: FpType get() = ops[0].type
-
-    override fun eval(`val`: Valuation): FpLitExpr =
-        ops.drop(1).fold(ops[0].eval(`val`) as FpLitExpr) { acc, op ->
-            acc.add(roundingMode, op.eval(`val`) as FpLitExpr)
-        }
-
-    override fun new(ops: List<Expr<FpType>>): FpAddExpr = of(roundingMode, ops)
-
-    override val operatorLabel: String get() = OPERATOR_LABEL
-
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

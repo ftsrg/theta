@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.solver.z3legacy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
@@ -48,11 +47,10 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
-import kotlin.Pair;
-
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+import kotlin.Pair;
 
 final class Z3ExprTransformer {
 

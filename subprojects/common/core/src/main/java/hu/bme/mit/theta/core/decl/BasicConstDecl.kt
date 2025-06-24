@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
@@ -27,7 +26,5 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("BasicConstDecl")
-data class BasicConstDecl<DeclType : Type>(
-    override val name: String,
-    override val type: DeclType
-) : ConstDecl<DeclType>()
+data class BasicConstDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
+  ConstDecl<DeclType>()

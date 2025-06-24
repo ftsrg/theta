@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -30,57 +29,58 @@ import org.kframework.mpfr.BigFloat
 @Serializable
 @SerialName("FpFromBv")
 data class FpFromBvExpr(
-    val roundingMode: FpRoundingMode,
-    override val op: Expr<BvType>,
-    val fpType: FpType,
-    val signed: Boolean
+  val roundingMode: FpRoundingMode,
+  override val op: Expr<BvType>,
+  val fpType: FpType,
+  val signed: Boolean,
 ) : UnaryExpr<BvType, FpType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "fpfrombv"
+    private const val OPERATOR_LABEL = "fpfrombv"
 
-        @JvmStatic
-        fun of(roundingMode: FpRoundingMode, op: Expr<BvType>, fpType: FpType, signed: Boolean) =
-            FpFromBvExpr(roundingMode, op, fpType, signed)
+    @JvmStatic
+    fun of(roundingMode: FpRoundingMode, op: Expr<BvType>, fpType: FpType, signed: Boolean) =
+      FpFromBvExpr(roundingMode, op, fpType, signed)
 
-        @JvmStatic
-        fun create(roundingMode: FpRoundingMode, op: Expr<BvType>, fpType: FpType, signed: Boolean): FpFromBvExpr =
-            of(roundingMode, op, fpType, signed)
-    }
+    @JvmStatic
+    fun create(
+      roundingMode: FpRoundingMode,
+      op: Expr<BvType>,
+      fpType: FpType,
+      signed: Boolean,
+    ): FpFromBvExpr = of(roundingMode, op, fpType, signed)
+  }
 
-    override val type: FpType get() = fpType
+  override val type: FpType
+    get() = fpType
 
-    fun isSigned(): Boolean = signed
+  fun isSigned(): Boolean = signed
 
-    override fun eval(`val`: Valuation): FpLitExpr {
-        val mathContext = FpUtils.getMathContext(fpType, roundingMode)
-        val eval = op.eval(`val`) as BvLitExpr
-        return FpUtils.bigFloatToFpLitExpr(
-            BigFloat(
-                if (signed)
-                    BvUtils.signedBvLitExprToBigInteger(eval)
-                else
-                    BvUtils.unsignedBvLitExprToBigInteger(eval),
-                mathContext
-            ),
-            fpType
-        )
-    }
+  override fun eval(`val`: Valuation): FpLitExpr {
+    val mathContext = FpUtils.getMathContext(fpType, roundingMode)
+    val eval = op.eval(`val`) as BvLitExpr
+    return FpUtils.bigFloatToFpLitExpr(
+      BigFloat(
+        if (signed) BvUtils.signedBvLitExprToBigInteger(eval)
+        else BvUtils.unsignedBvLitExprToBigInteger(eval),
+        mathContext,
+      ),
+      fpType,
+    )
+  }
 
-    override fun new(op: Expr<BvType>): FpFromBvExpr =
-        of(roundingMode, op, fpType, signed)
+  override fun new(op: Expr<BvType>): FpFromBvExpr = of(roundingMode, op, fpType, signed)
 
-    override val operatorLabel: String =
-        (OPERATOR_LABEL
-            + "["
-            + fpType.exponent
-            + ","
-            + fpType.significand
-            + "]["
-            + (if (signed) "s" else "u")
-            + "]")
+  override val operatorLabel: String =
+    (OPERATOR_LABEL +
+      "[" +
+      fpType.exponent +
+      "," +
+      fpType.significand +
+      "][" +
+      (if (signed) "s" else "u") +
+      "]")
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

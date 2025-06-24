@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.fptype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -28,28 +27,25 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpIsNan")
-data class FpIsNanExpr(
-    override val op: Expr<FpType>
-) : UnaryExpr<FpType, BoolType>() {
+data class FpIsNanExpr(override val op: Expr<FpType>) : UnaryExpr<FpType, BoolType>() {
 
-    companion object {
-        private const val OPERATOR_LABEL = "fpisnan"
+  companion object {
+    private const val OPERATOR_LABEL = "fpisnan"
 
-        @JvmStatic
-        fun of(op: Expr<FpType>) = FpIsNanExpr(op)
+    @JvmStatic fun of(op: Expr<FpType>) = FpIsNanExpr(op)
 
-        @JvmStatic
-        fun create(op: Expr<*>) = FpIsNanExpr(castFp(op))
-    }
+    @JvmStatic fun create(op: Expr<*>) = FpIsNanExpr(castFp(op))
+  }
 
-    override val type: BoolType get() = Bool()
+  override val type: BoolType
+    get() = Bool()
 
-    override fun eval(`val`: Valuation): BoolLitExpr = Bool((op.eval(`val`) as FpLitExpr).isNaN())
+  override fun eval(`val`: Valuation): BoolLitExpr = Bool((op.eval(`val`) as FpLitExpr).isNaN())
 
-    override fun new(op: Expr<FpType>): FpIsNanExpr = of(op)
+  override fun new(op: Expr<FpType>): FpIsNanExpr = of(op)
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

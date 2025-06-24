@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
@@ -24,8 +23,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 abstract class Decl<DeclType : Type> {
 
-    abstract val name: String
-    abstract val type: DeclType
+  abstract val name: String
+  abstract val type: DeclType
 
-    val ref: RefExpr<DeclType> by lazy { Ref(this) }
+  val ref: RefExpr<DeclType> by lazy { Ref(this) }
 }

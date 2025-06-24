@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.inttype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -26,27 +25,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("IntPos")
-data class IntPosExpr(
-    override val op: Expr<IntType>
-) : PosExpr<IntType>() {
+data class IntPosExpr(override val op: Expr<IntType>) : PosExpr<IntType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "+"
-        @JvmStatic
-        fun of(op: Expr<IntType>) = IntPosExpr(op)
-        @JvmStatic
-        fun create(op: Expr<*>) = IntPosExpr(cast(op, Int()))
-    }
+    private const val OPERATOR_LABEL = "+"
 
-    override val type: IntType = Int()
-    override fun eval(`val`: Valuation): IntLitExpr {
-        val opVal = op.eval(`val`) as IntLitExpr
-        return opVal.pos()
-    }
+    @JvmStatic fun of(op: Expr<IntType>) = IntPosExpr(op)
 
-    override fun new(op: Expr<IntType>): IntPosExpr = of(op)
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+    @JvmStatic fun create(op: Expr<*>) = IntPosExpr(cast(op, Int()))
+  }
+
+  override val type: IntType = Int()
+
+  override fun eval(`val`: Valuation): IntLitExpr {
+    val opVal = op.eval(`val`) as IntLitExpr
+    return opVal.pos()
+  }
+
+  override fun new(op: Expr<IntType>): IntPosExpr = of(op)
+
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
-

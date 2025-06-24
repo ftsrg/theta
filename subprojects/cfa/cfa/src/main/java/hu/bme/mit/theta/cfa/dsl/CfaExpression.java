@@ -15,43 +15,6 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.dsl.ParseException;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.bvtype.*;
-import hu.bme.mit.theta.core.type.fptype.FpExprs;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.functype.FuncExprs;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import kotlin.Pair;
-import org.antlr.v4.runtime.Token;
-
-import java.math.BigInteger;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
 import static hu.bme.mit.theta.common.Utils.*;
@@ -84,6 +47,42 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 import static java.util.stream.Collectors.toList;
+
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
+import hu.bme.mit.theta.core.dsl.ParseException;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import kotlin.Pair;
+import org.antlr.v4.runtime.Token;
 
 final class CfaExpression {
 

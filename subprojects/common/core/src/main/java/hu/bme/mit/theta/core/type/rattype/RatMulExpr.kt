@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.rattype
 
 import hu.bme.mit.theta.core.model.Valuation
@@ -21,43 +20,40 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import java.math.BigInteger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.math.BigInteger
 
 @Serializable
 @SerialName("RatMul")
-data class RatMulExpr(
-    override val ops: List<Expr<RatType>>
-) : MulExpr<RatType>() {
+data class RatMulExpr(override val ops: List<Expr<RatType>>) : MulExpr<RatType>() {
 
-    companion object {
+  companion object {
 
-        private const val OPERATOR_LABEL = "*"
+    private const val OPERATOR_LABEL = "*"
 
-        @JvmStatic
-        fun of(ops: Iterable<Expr<RatType>>) = RatMulExpr(ops.toList())
+    @JvmStatic fun of(ops: Iterable<Expr<RatType>>) = RatMulExpr(ops.toList())
 
-        @JvmStatic
-        fun create(ops: List<Expr<*>>) = RatMulExpr(ops.map { cast(it, Rat()) })
+    @JvmStatic fun create(ops: List<Expr<*>>) = RatMulExpr(ops.map { cast(it, Rat()) })
+  }
+
+  override val type: RatType = Rat()
+
+  override fun eval(`val`: Valuation): RatLitExpr {
+    var prodNum = BigInteger.ONE
+    var prodDenom = BigInteger.ONE
+    ops.forEach { op ->
+      val opVal = op.eval(`val`) as RatLitExpr
+      prodNum *= opVal.num
+      prodDenom *= opVal.denom
     }
+    return Rat(prodNum, prodDenom)
+  }
 
-    override val type: RatType = Rat()
-    override fun eval(`val`: Valuation): RatLitExpr {
-        var prodNum = BigInteger.ONE
-        var prodDenom = BigInteger.ONE
-        ops.forEach { op ->
-            val opVal = op.eval(`val`) as RatLitExpr
-            prodNum *= opVal.num
-            prodDenom *= opVal.denom
-        }
-        return Rat(prodNum, prodDenom)
-    }
+  override fun new(ops: List<Expr<RatType>>): RatMulExpr = of(ops)
 
-    override fun new(ops: List<Expr<RatType>>): RatMulExpr =
-        of(ops)
+  override val operatorLabel: String
+    get() = OPERATOR_LABEL
 
-    override val operatorLabel: String get() = OPERATOR_LABEL
-    override fun toString(): String = super.toString()
+  override fun toString(): String = super.toString()
 }
-

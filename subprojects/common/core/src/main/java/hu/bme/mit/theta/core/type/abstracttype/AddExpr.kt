@@ -20,20 +20,17 @@ import hu.bme.mit.theta.core.type.MultiaryExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import kotlinx.serialization.Serializable
 
-/**
- * Abstract class for additive expressions with multiple operands.
- */
+/** Abstract class for additive expressions with multiple operands. */
 @Serializable
 abstract class AddExpr<ExprType : Additive<ExprType>> : MultiaryExpr<ExprType, ExprType>() {
 
-    companion object {
+  companion object {
 
-        @JvmStatic
-        fun <ExprType : Additive<ExprType>> create2(ops: List<Expr<*>>): AddExpr<*> {
-            require(ops.isNotEmpty())
-            @Suppress("UNCHECKED_CAST")
-            val type = ops[0].type as ExprType
-            return type.Add(ops.map { cast(it, type) })
-        }
+    @JvmStatic
+    fun <ExprType : Additive<ExprType>> create2(ops: List<Expr<*>>): AddExpr<*> {
+      require(ops.isNotEmpty())
+      @Suppress("UNCHECKED_CAST") val type = ops[0].type as ExprType
+      return type.Add(ops.map { cast(it, type) })
     }
+  }
 }
