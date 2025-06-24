@@ -43,7 +43,7 @@ data class BvSModExpr(
         val rightOpVal = rightOp.eval(`val`) as BvLitExpr
         return leftOpVal.smod(rightOpVal)
     }
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSModExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSModExpr = of(leftOp, rightOp)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

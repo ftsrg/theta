@@ -46,7 +46,7 @@ data class FpIsNanExpr(
 
     override fun eval(`val`: Valuation): BoolLitExpr = Bool((op.eval(`val`) as FpLitExpr).isNaN())
 
-    override fun of(op: Expr<FpType>): FpIsNanExpr = Companion.of(op)
+    override fun new(op: Expr<FpType>): FpIsNanExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

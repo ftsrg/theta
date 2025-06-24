@@ -47,8 +47,8 @@ data class IntModExpr(
         return leftOpVal.mod(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntModExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntModExpr =
+        of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

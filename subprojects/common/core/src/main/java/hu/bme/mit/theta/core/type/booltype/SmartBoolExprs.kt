@@ -7,6 +7,8 @@ import hu.bme.mit.theta.core.type.Expr
  */
 @Suppress("FunctionName")
 object SmartBoolExprs {
+
+    @JvmStatic
     fun Not(op: Expr<BoolType>): Expr<BoolType> = when (op) {
         BoolExprs.True() -> BoolExprs.False()
         BoolExprs.False() -> BoolExprs.True()
@@ -14,6 +16,7 @@ object SmartBoolExprs {
         else -> BoolExprs.Not(op)
     }
 
+    @JvmStatic
     fun Imply(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>): Expr<BoolType> = when {
         leftOp == BoolExprs.False() -> BoolExprs.True()
         leftOp == BoolExprs.True() -> rightOp
@@ -22,6 +25,7 @@ object SmartBoolExprs {
         else -> BoolExprs.Imply(leftOp, rightOp)
     }
 
+    @JvmStatic
     fun And(ops: Collection<Expr<BoolType>>): Expr<BoolType> {
         if (ops.isEmpty()) return BoolExprs.True()
         if (BoolExprs.False() in ops) return BoolExprs.False()
@@ -33,6 +37,7 @@ object SmartBoolExprs {
         }
     }
 
+    @JvmStatic
     fun Or(ops: Collection<Expr<BoolType>>): Expr<BoolType> {
         if (ops.isEmpty()) return BoolExprs.False()
         if (BoolExprs.True() in ops) return BoolExprs.True()
@@ -45,7 +50,10 @@ object SmartBoolExprs {
     }
 
     // Convenience methods
+    @JvmStatic
     fun And(vararg ops: Expr<BoolType>) = And(ops.toList())
+
+    @JvmStatic
     fun Or(vararg ops: Expr<BoolType>) = Or(ops.toList())
 }
 

@@ -53,8 +53,8 @@ data class FpNeqExpr(
         return leftOpVal.neq(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpNeqExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpNeqExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

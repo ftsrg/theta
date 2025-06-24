@@ -28,8 +28,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-    protected abstract val leftOp: Expr<OpType>
-    protected abstract val rightOp: Expr<OpType>
+    abstract val leftOp: Expr<OpType>
+    abstract val rightOp: Expr<OpType>
 
     override val ops: List<Expr<OpType>> get() = listOf(leftOp, rightOp)
 
@@ -47,10 +47,10 @@ abstract class BinaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
         if (leftOp == this.leftOp && rightOp == this.rightOp) {
             this
         } else {
-            of(leftOp, rightOp)
+            new(leftOp, rightOp)
         }
 
-    protected abstract fun of(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
+    protected abstract fun new(leftOp: Expr<OpType>, rightOp: Expr<OpType>): BinaryExpr<OpType, ExprType>
 
     open fun withLeftOp(leftOp: Expr<OpType>): BinaryExpr<OpType, ExprType> = with(leftOp, rightOp)
 

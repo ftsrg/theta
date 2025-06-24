@@ -48,7 +48,7 @@ data class BvSubExpr(
         return leftOpVal.sub(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSubExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSubExpr = of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

@@ -15,23 +15,7 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.DynamicScope;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -49,6 +33,9 @@ import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
+import kotlin.Pair;
+import org.antlr.v4.runtime.Token;
+
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
@@ -56,7 +43,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.Token;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
+import static java.util.stream.Collectors.toList;
 
 final class XstsExpression {
 
@@ -497,11 +498,11 @@ final class XstsExpression {
             }
             valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-            final List<Tuple2<Expr<T1>, Expr<T2>>> elems =
+            final List<Pair<Expr<T1>, Expr<T2>>> elems =
                     IntStream.range(0, ctx.indexExpr.size())
                             .mapToObj(
                                     i ->
-                                            Tuple2.of(
+                                            new Pair<>(
                                                     cast(
                                                             ctx.indexExpr.get(i).accept(this),
                                                             indexType),

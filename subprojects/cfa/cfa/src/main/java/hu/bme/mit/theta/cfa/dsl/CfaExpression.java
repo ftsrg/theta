@@ -15,68 +15,8 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.singleElementOf;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Max;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Min;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.RoundToIntegral;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sqrt;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToBv;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.BasicScope;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
@@ -87,29 +27,13 @@ import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParseException;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
@@ -117,18 +41,49 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import kotlin.Pair;
+import org.antlr.v4.runtime.Token;
+
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.Token;
+
+import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.*;
+import static hu.bme.mit.theta.common.Utils.*;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
+import static hu.bme.mit.theta.core.utils.TypeUtils.*;
+import static java.util.stream.Collectors.toList;
 
 final class CfaExpression {
 
@@ -1105,11 +1060,11 @@ final class CfaExpression {
             }
             valueType = (T2) ctx.elseExpr.accept(this).getType();
 
-            final List<Tuple2<Expr<T1>, Expr<T2>>> elems =
+            final List<Pair<Expr<T1>, Expr<T2>>> elems =
                     IntStream.range(0, ctx.indexExpr.size())
                             .mapToObj(
                                     i ->
-                                            Tuple2.of(
+                                            new Pair<>(
                                                     cast(
                                                             ctx.indexExpr.get(i).accept(this),
                                                             indexType),

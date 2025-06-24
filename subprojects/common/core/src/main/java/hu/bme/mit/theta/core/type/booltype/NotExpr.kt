@@ -30,7 +30,7 @@ data class NotExpr(
 
     override val type: BoolType = Bool()
     override fun eval(`val`: Valuation): BoolLitExpr = Bool(!(op.eval(`val`) as BoolLitExpr).value)
-    override fun of(op: Expr<BoolType>): NotExpr = NotExpr(op)
+    override fun new(op: Expr<BoolType>): NotExpr = NotExpr(op)
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(op).toString()
     override val operatorLabel: String = OPERATOR_LABEL
 }

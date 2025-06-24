@@ -54,8 +54,8 @@ data class FpSqrtExpr(
         return bigFloatToFpLitExpr(sqrt, type)
     }
 
-    override fun of(op: Expr<FpType>): FpSqrtExpr =
-        Companion.of(roundingMode, op)
+    override fun new(op: Expr<FpType>): FpSqrtExpr =
+        of(roundingMode, op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

@@ -72,6 +72,8 @@ data class IteExpr<ExprType : Type>(
 
     override val ops: List<Expr<*>> = listOf(cond, then, elze)
 
+    fun getElse(): Expr<ExprType> = elze
+
     override fun eval(`val`: Valuation): LitExpr<ExprType> =
         if ((cond.eval(`val`) as BoolLitExpr).value) {
             then.eval(`val`)

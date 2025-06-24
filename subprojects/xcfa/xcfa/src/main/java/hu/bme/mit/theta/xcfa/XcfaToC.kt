@@ -333,7 +333,7 @@ fun ArrayReadExpr<*, *>.toC(parseContext: ParseContext): String =
   "array_read(${this.array.toC(parseContext)}, ${this.index.toC(parseContext)})"
 
 fun IteExpr<*>.toC(parseContext: ParseContext): String =
-  "(${this.cond.toC(parseContext)} ? ${this.then.toC(parseContext)} : ${this.`else`.toC(parseContext)})"
+  "(${this.cond.toC(parseContext)} ? ${this.then.toC(parseContext)} : ${this.elze.toC(parseContext)})"
 
 // nullary: ref + lit
 fun NullaryExpr<*>.toC(parseContext: ParseContext): String =

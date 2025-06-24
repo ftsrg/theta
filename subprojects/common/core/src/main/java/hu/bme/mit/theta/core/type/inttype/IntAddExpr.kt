@@ -52,8 +52,8 @@ data class IntAddExpr(
         return Int(sum)
     }
 
-    override fun of(ops: List<Expr<IntType>>): IntAddExpr =
-        Companion.of(ops)
+    override fun new(ops: List<Expr<IntType>>): IntAddExpr =
+        of(ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()

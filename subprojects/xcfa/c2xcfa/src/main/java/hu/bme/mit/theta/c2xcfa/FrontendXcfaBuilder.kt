@@ -17,7 +17,6 @@
 
 package hu.bme.mit.theta.c2xcfa
 
-import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
@@ -29,21 +28,18 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -241,7 +237,7 @@ class FrontendXcfaBuilder(
     }
     for (function in cProgram.functions) {
       val toAdd: XcfaProcedureBuilder = handleFunction(function, initStmtList, builder)
-      if (toAdd.name.equals("main")) builder.addEntryPoint(toAdd, listOf())
+      if (toAdd.name == "main") builder.addEntryPoint(toAdd, listOf())
     }
     return builder
   }
@@ -260,7 +256,7 @@ class FrontendXcfaBuilder(
       XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
-    if (param.size > 0 && builder.name.equals("main")) {
+    if (param.isNotEmpty() && builder.name == "main") {
       initStmtList.addAll(param)
     }
     //        builder.setRetType(if (funcDecl.actualType is CVoid) null else
@@ -278,7 +274,7 @@ class FrontendXcfaBuilder(
       builder.addParam(toAdd, ParamDirection.OUT)
     }
     for (functionParam in funcDecl.functionParams) {
-      Preconditions.checkState(
+      checkState(
         functionParam.actualType is CVoid || functionParam.varDecls.size > 0,
         "Function param should have an associated variable!",
       )
@@ -431,7 +427,7 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
@@ -458,7 +454,7 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(edge)
     check(breakLoc != null)
     edge = XcfaEdge(initLoc, breakLoc, metadata = getMetadata(statement))
@@ -479,7 +475,7 @@ class FrontendXcfaBuilder(
     val myParams = statement.params
     var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
@@ -546,11 +542,11 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(edge)
     check(continueLoc != null)
     edge = XcfaEdge(initLoc, continueLoc, metadata = getMetadata(statement))
-    val unreachableLoc: XcfaLocation =
+    val unreachableLoc =
       XcfaLocation("Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))
     builder.addLoc(unreachableLoc)
     builder.addEdge(edge)
@@ -587,7 +583,7 @@ class FrontendXcfaBuilder(
     builder.addLoc(outerInnerGuard)
     builder.addLoc(innerEndLoc)
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val lastBody = body.accept(this, ParamPack(builder, initLoc, endLoc, innerEndLoc, returnLoc))
     xcfaEdge = XcfaEdge(lastBody, innerEndLoc, metadata = getMetadata(statement))
@@ -596,7 +592,7 @@ class FrontendXcfaBuilder(
       buildWithoutPostStatement(guard, ParamPack(builder, innerEndLoc, null, null, returnLoc))
     val assume =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           AbstractExprs.Neq(
             guard.expression,
             CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -609,7 +605,7 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           AbstractExprs.Eq(
             guard.expression,
             CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -660,7 +656,7 @@ class FrontendXcfaBuilder(
     builder.addLoc(endInit)
     builder.addLoc(initLoc)
     builder.addLoc(startIncrement)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val lastInit =
       if (init == null) initLoc
@@ -670,7 +666,7 @@ class FrontendXcfaBuilder(
       else buildWithoutPostStatement(guard, ParamPack(builder, lastInit!!, null, null, returnLoc))
     val assume =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           if (guard == null) True()
           else
             AbstractExprs.Neq(
@@ -686,7 +682,7 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           if (guard == null) False()
           else
             AbstractExprs.Eq(
@@ -736,7 +732,7 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(edge)
     edge =
       XcfaEdge(
@@ -745,7 +741,7 @@ class FrontendXcfaBuilder(
         metadata = getMetadata(statement),
       )
     builder.addLoc(getLoc(builder, statement.label, metadata = getMetadata(statement)))
-    val unreachableLoc: XcfaLocation =
+    val unreachableLoc =
       XcfaLocation("Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))
     builder.addLoc(unreachableLoc)
     builder.addEdge(edge)
@@ -769,7 +765,7 @@ class FrontendXcfaBuilder(
     builder.addLoc(mainBranch)
     builder.addLoc(elseBranch)
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val endGuard =
       buildWithoutPostStatement(
@@ -778,7 +774,7 @@ class FrontendXcfaBuilder(
       )
     val assume =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           AbstractExprs.Neq(
             guard.expression,
             CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -791,7 +787,7 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
-        Stmts.Assume(
+        Assume(
           AbstractExprs.Eq(
             guard.expression,
             CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -851,7 +847,7 @@ class FrontendXcfaBuilder(
     val expr = statement.expr
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    val xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    val xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val endExpr =
       expr?.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: initLoc
@@ -889,15 +885,15 @@ class FrontendXcfaBuilder(
     builder.addLoc(initLoc)
     val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(endLoc)
-    val edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    val edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(edge)
     val endInit =
       buildWithoutPostStatement(
         testValue,
         ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc),
       )
-    Preconditions.checkState(body is CCompound, "Switch body has to be a CompoundStatement!")
-    var defaultExpr: Expr<BoolType?>? = True()
+    checkState(body is CCompound, "Switch body has to be a CompoundStatement!")
+    var defaultExpr: Expr<BoolType> = True()
     for (cStatement in (body as CCompound).getcStatementList()) {
       if (cStatement is CCase) {
         defaultExpr =
@@ -924,7 +920,7 @@ class FrontendXcfaBuilder(
           )
         val assume =
           StmtLabel(
-            Stmts.Assume(AbstractExprs.Eq(testValue.expression, cStatement.expr.expression)),
+            Assume(AbstractExprs.Eq(testValue.expression, cStatement.expr.expression)),
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(testValue),
           )
@@ -938,7 +934,7 @@ class FrontendXcfaBuilder(
           )
         val assume =
           StmtLabel(
-            Stmts.Assume(defaultExpr),
+            Assume(defaultExpr),
             choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect?
             metadata = getMetadata(cStatement),
           )
@@ -949,7 +945,7 @@ class FrontendXcfaBuilder(
         cStatement.accept(this, ParamPack(builder, location, endLoc, continueLoc, returnLoc))
     }
     if (lastLocation != null) {
-      val xcfaEdge: XcfaEdge = XcfaEdge(lastLocation, endLoc, metadata = getMetadata(statement))
+      val xcfaEdge = XcfaEdge(lastLocation, endLoc, metadata = getMetadata(statement))
       builder.addEdge(xcfaEdge)
     }
     return endLoc
@@ -966,7 +962,7 @@ class FrontendXcfaBuilder(
     val body = statement.body
     var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(endLoc)
@@ -983,7 +979,7 @@ class FrontendXcfaBuilder(
       }
       val assume =
         StmtLabel(
-          Stmts.Assume(
+          Assume(
             AbstractExprs.Neq(
               guard.expression,
               CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -996,7 +992,7 @@ class FrontendXcfaBuilder(
       builder.addEdge(xcfaEdge)
       val assume1 =
         StmtLabel(
-          Stmts.Assume(
+          Assume(
             AbstractExprs.Eq(
               guard.expression,
               CComplexType.getType(guard.expression, parseContext).nullValue,
@@ -1021,7 +1017,7 @@ class FrontendXcfaBuilder(
   }
 
   private fun buildWithoutPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation {
-    Preconditions.checkState(
+    checkState(
       cStatement is CCompound,
       "Currently only CCompounds have pre- and post statements!",
     )
@@ -1062,7 +1058,7 @@ class FrontendXcfaBuilder(
   }
 
   private fun buildPostStatement(cStatement: CStatement, param: ParamPack): XcfaLocation {
-    Preconditions.checkState(
+    checkState(
       cStatement is CCompound,
       "Currently only CCompounds have pre- and post statements!",
     )

@@ -45,7 +45,7 @@ data class IntPosExpr(
         return opVal.pos()
     }
 
-    override fun of(op: Expr<IntType>): IntPosExpr = Companion.of(op)
+    override fun new(op: Expr<IntType>): IntPosExpr = of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

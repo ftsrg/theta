@@ -49,7 +49,7 @@ data class BvUGtExpr(
         return leftOpVal.ugt(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvUGtExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvUGtExpr = of(leftOp, rightOp)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

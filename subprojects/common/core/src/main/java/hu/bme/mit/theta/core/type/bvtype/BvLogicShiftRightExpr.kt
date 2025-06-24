@@ -48,7 +48,7 @@ data class BvLogicShiftRightExpr(
         return leftOpVal.logicShiftRight(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvLogicShiftRightExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvLogicShiftRightExpr = of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

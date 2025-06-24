@@ -28,7 +28,7 @@ data class ImplyExpr(
     override val type: BoolType = Bool()
     override fun eval(`val`: Valuation): BoolLitExpr =
         Bool(!(leftOp.eval(`val`) as BoolLitExpr).value || (rightOp.eval(`val`) as BoolLitExpr).value)
-    override fun of(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>): ImplyExpr =
+    override fun new(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>): ImplyExpr =
         ImplyExpr(leftOp, rightOp)
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(leftOp).add(rightOp).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL

@@ -21,7 +21,9 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.plus
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions

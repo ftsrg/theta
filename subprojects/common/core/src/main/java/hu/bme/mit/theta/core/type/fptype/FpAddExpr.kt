@@ -54,7 +54,7 @@ data class FpAddExpr(
             acc.add(roundingMode, op.eval(`val`) as FpLitExpr)
         }
 
-    override fun of(ops: List<Expr<FpType>>): FpAddExpr = Companion.of(roundingMode, ops)
+    override fun new(ops: List<Expr<FpType>>): FpAddExpr = of(roundingMode, ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

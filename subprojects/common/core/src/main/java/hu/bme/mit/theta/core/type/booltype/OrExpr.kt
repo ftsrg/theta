@@ -35,8 +35,8 @@ data class OrExpr(
     override fun eval(`val`: Valuation): BoolLitExpr =
         if (ops.any { (it.eval(`val`) as BoolLitExpr).value }) True() else False()
 
-    override fun of(ops: List<Expr<BoolType>>): OrExpr =
-        Companion.of(ops)
+    override fun new(ops: List<Expr<BoolType>>): OrExpr =
+        of(ops)
 
     override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(ops).toString()
     override val operatorLabel: String get() = OPERATOR_LABEL

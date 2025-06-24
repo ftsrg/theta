@@ -60,8 +60,8 @@ data class FpRemExpr(
         return bigFloatToFpLitExpr(remainder, this.type)
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpRemExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpRemExpr =
+        of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

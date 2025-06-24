@@ -50,7 +50,7 @@ data class BvSGeqExpr(
         return leftOpVal.sge(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSGeqExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSGeqExpr = of(leftOp, rightOp)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

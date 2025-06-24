@@ -47,14 +47,14 @@ object Exprs {
         offset: Expr<OffsetType>,
         type: ExprType
     ): Dereference<ArrType, OffsetType, ExprType> =
-        Dereference(arr, offset, type)
+        Dereference.of(arr, offset, type)
 
     @JvmStatic
     fun <ArrType : Type, ExprType : Type> Reference(
         expr: Expr<ExprType>,
         type: ArrType
     ): Reference<ArrType, ExprType> =
-        Reference(expr, type)
+        Reference.of(expr, type)
 
     // Convenience methods
     @JvmStatic

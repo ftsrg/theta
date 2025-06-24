@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.stmt.Stmts.*
+import hu.bme.mit.theta.core.stmt.Stmts.Skip
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper

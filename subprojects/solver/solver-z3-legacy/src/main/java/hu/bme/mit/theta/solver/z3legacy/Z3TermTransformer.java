@@ -135,6 +135,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import kotlin.Pair;
 import org.kframework.mpfr.BigFloat;
 
 final class Z3TermTransformer {
@@ -415,7 +417,7 @@ final class Z3TermTransformer {
                         .map(
                                 entry -> {
                                     checkState(entry.get1().size() == 1);
-                                    return Tuple2.of(
+                                    return new Pair<>(
                                             (Expr<I>) entry.get1().get(0), (Expr<E>) entry.get2());
                                 })
                         .collect(Collectors.toUnmodifiableList()),

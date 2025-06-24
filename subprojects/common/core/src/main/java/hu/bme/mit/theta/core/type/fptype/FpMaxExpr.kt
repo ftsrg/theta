@@ -64,8 +64,8 @@ data class FpMaxExpr(
         }
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpMaxExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpMaxExpr =
+        of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

@@ -50,7 +50,7 @@ data class IntToRatExpr(
         return opVal.toRat()
     }
 
-    override fun of(op: Expr<IntType>): IntToRatExpr = Companion.of(op)
+    override fun new(op: Expr<IntType>): IntToRatExpr = of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

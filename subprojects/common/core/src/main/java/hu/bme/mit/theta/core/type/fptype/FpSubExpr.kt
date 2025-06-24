@@ -57,8 +57,8 @@ data class FpSubExpr(
         return leftOpVal.sub(roundingMode, rightOpVal)
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpSubExpr =
-        Companion.of(roundingMode, leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpSubExpr =
+        of(roundingMode, leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

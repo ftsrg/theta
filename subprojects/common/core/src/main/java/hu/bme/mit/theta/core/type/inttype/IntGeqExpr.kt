@@ -47,8 +47,8 @@ data class IntGeqExpr(
         return leftOpVal.geq(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntGeqExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntGeqExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

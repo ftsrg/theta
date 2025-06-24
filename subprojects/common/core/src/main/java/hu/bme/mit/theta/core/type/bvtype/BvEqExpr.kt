@@ -51,7 +51,7 @@ data class BvEqExpr(
         return leftOpVal.eq(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvEqExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvEqExpr = of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

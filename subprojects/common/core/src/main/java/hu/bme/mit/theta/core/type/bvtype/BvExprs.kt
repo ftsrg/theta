@@ -23,10 +23,16 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 object BvExprs {
 
     @JvmStatic
-    fun BvType(size: Int, signedness: Boolean? = null) = BvType.of(size, signedness)
+    fun BvType(size: Int) = BvType.of(size, null)
 
     @JvmStatic
-    fun Bv(value: BooleanArray, signedness: Boolean? = null) = BvLitExpr(value, signedness)
+    fun BvType(size: Int, signedness: Boolean?) = BvType.of(size, signedness)
+
+    @JvmStatic
+    fun Bv(value: BooleanArray) = BvLitExpr(value, null)
+
+    @JvmStatic
+    fun Bv(value: BooleanArray, signedness: Boolean?) = BvLitExpr(value, signedness)
 
     @JvmStatic
     fun Concat(ops: Iterable<Expr<BvType>>) = BvConcatExpr.of(ops)

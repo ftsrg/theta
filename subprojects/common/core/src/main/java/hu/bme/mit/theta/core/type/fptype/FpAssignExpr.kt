@@ -53,8 +53,8 @@ data class FpAssignExpr(
         return leftOpVal.assign(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpAssignExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpAssignExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

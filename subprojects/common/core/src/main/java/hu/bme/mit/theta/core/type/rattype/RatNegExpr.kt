@@ -44,7 +44,7 @@ data class RatNegExpr(
         return opVal.neg()
     }
 
-    override fun of(op: Expr<RatType>): RatNegExpr = Companion.of(op)
+    override fun new(op: Expr<RatType>): RatNegExpr = of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

@@ -47,8 +47,8 @@ data class IntLtExpr(
         return leftOpVal.lt(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntLtExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntLtExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 

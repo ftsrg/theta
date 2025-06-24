@@ -82,7 +82,7 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
         return of(newOps, elseElem, type)
     }
 
-    override fun of(ops: List<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> = with(ops)
+    override fun new(ops: List<Expr<Type>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> = with(ops)
 
     @Suppress("UNCHECKED_CAST")
     override fun withOps(ops: List<Expr<*>>): MultiaryExpr<Type, ArrayType<IndexType, ElemType>> =

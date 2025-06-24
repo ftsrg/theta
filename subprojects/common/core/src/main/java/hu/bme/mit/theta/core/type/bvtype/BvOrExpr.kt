@@ -45,7 +45,7 @@ data class BvOrExpr(
         acc.or(op.eval(`val`) as BvLitExpr)
     }
 
-    override fun of(ops: List<Expr<BvType>>): BvOrExpr = Companion.of(ops)
+    override fun new(ops: List<Expr<BvType>>): BvOrExpr = of(ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

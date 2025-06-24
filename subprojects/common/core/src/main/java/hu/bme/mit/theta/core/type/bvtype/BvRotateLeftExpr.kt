@@ -48,7 +48,7 @@ data class BvRotateLeftExpr(
         return leftOpVal.rotateLeft(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvRotateLeftExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvRotateLeftExpr = of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

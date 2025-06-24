@@ -60,7 +60,7 @@ class RatAddExpr(
         return Rat(sumNum, sumDenom)
     }
 
-    override fun of(ops: List<Expr<RatType>>): RatAddExpr = of(ops)
+    override fun new(ops: List<Expr<RatType>>): RatAddExpr = new(ops)
 
     override val operatorLabel: String = OPERATOR_LABEL
 

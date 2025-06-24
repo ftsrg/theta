@@ -48,8 +48,8 @@ abstract class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
         if (ops.toList() == this.ops) {
             this
         } else {
-            of(ops.toList())
+            new(ops.toList())
         }
 
-    protected abstract fun of(ops: List<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
+    protected abstract fun new(ops: List<Expr<OpType>>): MultiaryExpr<OpType, ExprType>
 }

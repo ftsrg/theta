@@ -24,8 +24,8 @@ data class EnumEqExpr(
     override fun eval(`val`: Valuation): LitExpr<BoolType> =
         EnumLitExpr.eq(leftOp.eval(`val`) as EnumLitExpr, rightOp.eval(`val`) as EnumLitExpr)
 
-    override fun of(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EnumEqExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EnumEqExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

@@ -51,6 +51,8 @@ data class FpFromBvExpr(
 
     override val type: FpType get() = fpType
 
+    fun isSigned(): Boolean = signed
+
     override fun eval(`val`: Valuation): FpLitExpr {
         val mathContext = FpUtils.getMathContext(fpType, roundingMode)
         val eval = op.eval(`val`) as BvLitExpr
@@ -66,8 +68,8 @@ data class FpFromBvExpr(
         )
     }
 
-    override fun of(op: Expr<BvType>): FpFromBvExpr =
-        Companion.of(roundingMode, op, fpType, signed)
+    override fun new(op: Expr<BvType>): FpFromBvExpr =
+        of(roundingMode, op, fpType, signed)
 
     override val operatorLabel: String =
         (OPERATOR_LABEL

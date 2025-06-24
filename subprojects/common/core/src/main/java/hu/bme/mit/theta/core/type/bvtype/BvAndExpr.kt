@@ -45,7 +45,7 @@ data class BvAndExpr(
         acc.and(op.eval(`val`) as BvLitExpr)
     }
 
-    override fun of(ops: List<Expr<BvType>>): BvAndExpr = Companion.of(ops)
+    override fun new(ops: List<Expr<BvType>>): BvAndExpr = of(ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

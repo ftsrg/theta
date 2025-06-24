@@ -47,8 +47,8 @@ data class RatLtExpr(
         return leftOpVal.lt(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatLtExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatLtExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

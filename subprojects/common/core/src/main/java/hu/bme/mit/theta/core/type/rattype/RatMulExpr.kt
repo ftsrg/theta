@@ -54,8 +54,8 @@ data class RatMulExpr(
         return Rat(prodNum, prodDenom)
     }
 
-    override fun of(ops: List<Expr<RatType>>): RatMulExpr =
-        Companion.of(ops)
+    override fun new(ops: List<Expr<RatType>>): RatMulExpr =
+        of(ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()

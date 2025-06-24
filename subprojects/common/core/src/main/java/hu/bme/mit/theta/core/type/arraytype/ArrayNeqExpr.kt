@@ -40,11 +40,11 @@ data class ArrayNeqExpr<IndexType : Type, ElemType : Type>(
 
     override fun eval(`val`: Valuation): LitExpr<BoolType> = throw UnsupportedOperationException()
 
-    override fun of(
+    override fun new(
         leftOp: Expr<ArrayType<IndexType, ElemType>>,
         rightOp: Expr<ArrayType<IndexType, ElemType>>
     ): ArrayNeqExpr<IndexType, ElemType> =
-        Companion.of(leftOp, rightOp)
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

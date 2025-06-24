@@ -49,7 +49,7 @@ data class FpAbsExpr(
         }
     }
 
-    override fun of(op: Expr<FpType>): FpAbsExpr = Companion.of(op)
+    override fun new(op: Expr<FpType>): FpAbsExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

@@ -51,8 +51,8 @@ data class FpLeqExpr(
         return leftOpVal.leq(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpLeqExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpLeqExpr =
+        of(leftOp, rightOp)
 
     override fun toString(): String = super.toString()
 }

@@ -60,8 +60,8 @@ data class RatDivExpr(
         return leftOpVal.div(rightOpVal)
     }
 
-    override fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr =
-        Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr =
+        of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

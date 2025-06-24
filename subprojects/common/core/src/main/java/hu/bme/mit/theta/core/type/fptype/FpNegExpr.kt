@@ -45,7 +45,7 @@ data class FpNegExpr(
     override fun eval(`val`: Valuation): FpLitExpr =
         (op.eval(`val`) as FpLitExpr).neg()
 
-    override fun of(op: Expr<FpType>): FpNegExpr = Companion.of(op)
+    override fun new(op: Expr<FpType>): FpNegExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

@@ -15,22 +15,17 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import hu.bme.mit.theta.core.type.arraytype.*;
+import kotlin.Pair;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 public class ArrayTestUtils {
 
@@ -68,7 +63,7 @@ public class ArrayTestUtils {
                         Int(3),
                         ArrayReadExpr.of(
                                 ArrayLitExpr.of(
-                                        List.of(Tuple2.of(Int(42), Int(3))),
+                                        List.of(new Pair<>(Int(42), Int(3))),
                                         Int(5),
                                         ArrayType.of(Int(), Int())),
                                 Int(42))
@@ -78,7 +73,7 @@ public class ArrayTestUtils {
                         Int(3),
                         ArrayReadExpr.of(
                                 ArrayInitExpr.of(
-                                        List.of(Tuple2.of(Int(42), Int(3))),
+                                        List.of(new Pair<>(Int(42), Int(3))),
                                         Int(5),
                                         ArrayType.of(Int(), Int())),
                                 Int(42))

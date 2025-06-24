@@ -53,8 +53,8 @@ data class FpToFpExpr(
         return bigFloatToFpLitExpr(value, type)
     }
 
-    override fun of(op: Expr<FpType>): FpToFpExpr =
-        Companion.of(roundingMode, op, expBits, signBits)
+    override fun new(op: Expr<FpType>): FpToFpExpr =
+        of(roundingMode, op, expBits, signBits)
 
     override val operatorLabel: String =
         "$OPERATOR_LABEL[$expBits,$signBits]"

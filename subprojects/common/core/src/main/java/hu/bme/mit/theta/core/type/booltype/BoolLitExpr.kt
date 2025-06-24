@@ -29,6 +29,7 @@ sealed class BoolLitExpr : NullaryExpr<BoolType>(), LitExpr<BoolType> {
 @SerialName("False")
 object FalseExpr : BoolLitExpr() {
 
+    @JvmStatic
     fun getInstance(): FalseExpr = this
     override val value: Boolean = false
     override fun toString(): String = "false"
@@ -38,6 +39,7 @@ object FalseExpr : BoolLitExpr() {
 @SerialName("True")
 object TrueExpr : BoolLitExpr() {
 
+    @JvmStatic
     fun getInstance(): TrueExpr = this
     override val value: Boolean = true
     override fun toString(): String = "true"

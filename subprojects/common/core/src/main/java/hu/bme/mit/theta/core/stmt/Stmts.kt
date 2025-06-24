@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
  *
  * @see Stmt
  */
+@Suppress("FunctionName")
 object Stmts {
 
     /** Create a skip statement */
@@ -29,6 +30,7 @@ object Stmts {
     ): AssignStmt<T> = AssignStmt.of(lhs, rhs)
 
     /** Create a memory assignment statement */
+    @JvmStatic
     fun <P : Type, O : Type, T : Type> MemoryAssign(
         deref: Dereference<P, O, T>,
         expr: Expr<T>

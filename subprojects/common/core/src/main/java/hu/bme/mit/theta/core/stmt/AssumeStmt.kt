@@ -24,7 +24,7 @@ data class AssumeStmt(val cond: Expr<BoolType>) : Stmt {
         fun of(cond: Expr<BoolType>): AssumeStmt = AssumeStmt(cond)
 
         @JvmStatic
-        fun create(cond: Expr<BoolType>): AssumeStmt {
+        fun create(cond: Expr<*>): AssumeStmt {
             val newCond = cast(cond, Bool())
             return of(newCond)
         }

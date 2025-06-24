@@ -45,7 +45,7 @@ data class IntNegExpr(
         return opVal.neg()
     }
 
-    override fun of(op: Expr<IntType>): IntNegExpr = Companion.of(op)
+    override fun new(op: Expr<IntType>): IntNegExpr = of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class CfaTest {
 
     @Test(expected = IllegalArgumentException.class)
@@ -32,7 +34,7 @@ public class CfaTest {
         builder.createLoc("A");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDuplicateVarName() {
         CFA.Builder builder = CFA.builder();
         VarDecl<IntType> v1 = Decls.Var("x", IntExprs.Int());
@@ -43,6 +45,7 @@ public class CfaTest {
         builder.createEdge(init, loc1, Stmts.Havoc(v1));
         builder.createEdge(init, loc2, Stmts.Havoc(v2));
         builder.setInitLoc(init);
-        builder.build();
+        CFA cfa = builder.build();
+        assertEquals(1, cfa.getVars().size());
     }
 }

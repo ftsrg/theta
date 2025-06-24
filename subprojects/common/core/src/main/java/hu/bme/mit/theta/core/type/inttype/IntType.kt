@@ -30,7 +30,10 @@ object IntType : Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>,
     Castable<IntType> {
 
     internal const val TYPE_LABEL = "Int"
+
+    @JvmStatic
     fun getInstance(): IntType = this
+
     override fun toString(): String = TYPE_LABEL
 
     override fun Add(ops: Iterable<Expr<IntType>>) = IntExprs.Add(ops)

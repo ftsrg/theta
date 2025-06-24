@@ -62,8 +62,8 @@ data class FpToBvExpr(
         }
     }
 
-    override fun of(op: Expr<FpType>): FpToBvExpr =
-        Companion.of(roundingMode, op, size, sgn)
+    override fun new(op: Expr<FpType>): FpToBvExpr =
+        of(roundingMode, op, size, sgn)
 
     override val operatorLabel: String =
         (OPERATOR_LABEL

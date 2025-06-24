@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.core.type.arraytype
 
+import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import kotlinx.serialization.Serializable
@@ -7,6 +8,7 @@ import kotlinx.serialization.Serializable
 /**
  * Factory and utility methods for array-type expressions.
  */
+@Suppress("FunctionName")
 object ArrayExprs {
     @JvmStatic
     fun <IndexType : Type, ElemType : Type> Array(

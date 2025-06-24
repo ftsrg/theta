@@ -46,7 +46,7 @@ data class BvPosExpr(
         return opVal.pos()
     }
 
-    override fun of(op: Expr<BvType>): BvPosExpr = Companion.of(op)
+    override fun new(op: Expr<BvType>): BvPosExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

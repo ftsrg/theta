@@ -374,7 +374,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                                 (BvType) smallestCommonType.getSmtType());
                 if (ctx.signs.get(i - 1).getText().equals(">>")) {
                     // TODO: is this sound?
-                    if (leftExpr.getType().getSigned()) {
+                    if (leftExpr.getType().isSigned()) {
                         expr = BvExprs.ArithShiftRight(leftExpr, rightExpr);
                     } else {
                         expr = BvExprs.LogicShiftRight(leftExpr, rightExpr);

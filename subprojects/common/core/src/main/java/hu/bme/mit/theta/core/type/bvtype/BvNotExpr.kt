@@ -46,7 +46,7 @@ data class BvNotExpr(
         return opVal.not()
     }
 
-    override fun of(op: Expr<BvType>): BvNotExpr = Companion.of(op)
+    override fun new(op: Expr<BvType>): BvNotExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

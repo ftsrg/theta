@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.util.*
 
 private val reprEq = { e1: Expr<*>, e2: Expr<*> ->
-  if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
+  if (e1.type is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
   else Eq(e1, e2)
 }
 
@@ -70,7 +70,7 @@ fun MonolithicExpr.createMonolithicL2S(): MonolithicExpr {
   newTransExpr.add(skipOrSave)
 
   // New prop expr
-  var prop: Expr<BoolType?>? = saved.ref
+  var prop: Expr<BoolType> = saved.ref
   for ((key, value) in saveMap) {
     val exp = reprEq(value.ref, key.ref)
     prop = And(exp, prop)

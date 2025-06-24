@@ -51,7 +51,7 @@ data class FpIsInfiniteExpr(
         return or.eval(`val`)
     }
 
-    override fun of(op: Expr<FpType>): FpIsInfiniteExpr = Companion.of(op)
+    override fun new(op: Expr<FpType>): FpIsInfiniteExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

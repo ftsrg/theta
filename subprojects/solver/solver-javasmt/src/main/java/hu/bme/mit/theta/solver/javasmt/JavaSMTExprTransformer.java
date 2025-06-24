@@ -15,10 +15,6 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.common.DispatchTable;
@@ -34,148 +30,35 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.ForallExpr;
-import hu.bme.mit.theta.core.type.booltype.IffExpr;
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.arraytype.*;
+import hu.bme.mit.theta.core.type.booltype.*;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
-import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
-import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
-import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
+import hu.bme.mit.theta.core.type.inttype.*;
+import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import kotlin.Pair;
+import org.sosy_lab.java_smt.api.*;
+import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
+import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
+import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.sosy_lab.java_smt.api.ArrayFormula;
-import org.sosy_lab.java_smt.api.ArrayFormulaManager;
-import org.sosy_lab.java_smt.api.BitvectorFormula;
-import org.sosy_lab.java_smt.api.BitvectorFormulaManager;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.BooleanFormulaManager;
-import org.sosy_lab.java_smt.api.EnumerationFormula;
-import org.sosy_lab.java_smt.api.EnumerationFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointFormula;
-import org.sosy_lab.java_smt.api.FloatingPointFormulaManager;
-import org.sosy_lab.java_smt.api.FloatingPointRoundingMode;
-import org.sosy_lab.java_smt.api.Formula;
-import org.sosy_lab.java_smt.api.FormulaType;
-import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
-import org.sosy_lab.java_smt.api.FunctionDeclaration;
-import org.sosy_lab.java_smt.api.IntegerFormulaManager;
-import org.sosy_lab.java_smt.api.NumeralFormula;
-import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
-import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
-import org.sosy_lab.java_smt.api.QuantifiedFormulaManager;
-import org.sosy_lab.java_smt.api.RationalFormulaManager;
-import org.sosy_lab.java_smt.api.SolverContext;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 final class JavaSMTExprTransformer {
 
@@ -389,12 +272,11 @@ final class JavaSMTExprTransformer {
         };
     }
 
-    ////
+    /// /
 
     /*
      * General
      */
-
     public Formula toTerm(final Expr<?> expr) {
         try {
             return exprToTerm.get(expr, () -> table.dispatch(expr));
@@ -1176,9 +1058,9 @@ final class JavaSMTExprTransformer {
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
         var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
-        for (Tuple2<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
-            final TI index = (TI) toTerm(element.get1());
-            final TE elem = (TE) toTerm(element.get2());
+        for (Pair<? extends LitExpr<?>, ? extends LitExpr<?>> element : expr.getElements()) {
+            final TI index = (TI) toTerm(element.getFirst());
+            final TE elem = (TE) toTerm(element.getSecond());
             arr = arrayFormulaManager.store(arr, index, elem);
         }
         return arr;
@@ -1196,9 +1078,9 @@ final class JavaSMTExprTransformer {
         final FormulaType<TI> indexType =
                 (FormulaType<TI>) transformer.toSort(expr.getType().getIndexType());
         var arr = arrayFormulaManager.makeArray(elseElem, indexType, elemType);
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
-            final TI index = (TI) toTerm(element.get1());
-            final TE elem = (TE) toTerm(element.get2());
+        for (Pair<? extends Expr<?>, ? extends Expr<?>> element : expr.getElements()) {
+            final TI index = (TI) toTerm(element.getFirst());
+            final TE elem = (TE) toTerm(element.getSecond());
             arr = arrayFormulaManager.store(arr, index, elem);
         }
         return arr;
@@ -1240,8 +1122,8 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformDereference(final Dereference<?, ?, ?> expr) {
-        checkState(
-                expr.getUniquenessIdx().isPresent(),
+        checkNotNull(
+                expr.getUniquenessIdx(),
                 "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
         final var sort = transformer.toSort(expr.getArray().getType());
         final var sortName = expr.getArray().getType().toString() + "-" + expr.getType().toString();
@@ -1261,7 +1143,7 @@ final class JavaSMTExprTransformer {
                                 funcDecl,
                                 toTerm(expr.getArray()),
                                 toTerm(expr.getOffset()),
-                                toTerm(expr.getUniquenessIdx().get()));
+                                toTerm(expr.getUniquenessIdx()));
         return func;
     }
 

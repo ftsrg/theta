@@ -52,7 +52,7 @@ data class BvType(
 
     fun withSize(size: Int): BvType = BvType(size, signed)
 
-    fun getSigned(): Boolean = signed ?: error("Signedness is not specified")
+    fun isSigned(): Boolean = signed ?: error("Signedness is not specified")
 
     override fun Eq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvEqExpr(leftOp, rightOp)
     override fun Neq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvNeqExpr(leftOp, rightOp)

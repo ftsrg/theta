@@ -43,7 +43,7 @@ data class FpPosExpr(
     override fun eval(`val`: Valuation): FpLitExpr =
         (op.eval(`val`) as FpLitExpr).pos()
 
-    override fun of(op: Expr<FpType>): FpPosExpr = Companion.of(op)
+    override fun new(op: Expr<FpType>): FpPosExpr = of(op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

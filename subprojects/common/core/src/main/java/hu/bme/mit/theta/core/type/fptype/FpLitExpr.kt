@@ -68,7 +68,7 @@ data class FpLitExpr(
         }
     }
 
-    override val type: FpType get() = FpType(exponent.type.size, significand.type.size)
+    override val type: FpType get() = FpType(exponent.type.size, significand.type.size + 1)
     override fun eval(`val`: Valuation): FpLitExpr = this
 
     fun isNaN(): Boolean {

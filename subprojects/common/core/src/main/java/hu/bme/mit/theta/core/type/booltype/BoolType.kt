@@ -15,7 +15,10 @@ import kotlinx.serialization.Serializable
 object BoolType : Equational<BoolType> {
 
     internal const val TYPE_LABEL = "Bool"
+
+    @JvmStatic
     fun getInstance(): BoolType = this
+
     override fun toString(): String = TYPE_LABEL
 
     override fun Eq(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>): IffExpr =

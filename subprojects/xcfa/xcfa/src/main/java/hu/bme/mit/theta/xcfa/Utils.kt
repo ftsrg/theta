@@ -552,9 +552,9 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
 data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
 
-  override fun getType(): T = kType
+  override val type: T = kType
 
-  override fun eval(valuation: Valuation): LitExpr<T> = this
+  override fun eval(`val`: Valuation): LitExpr<T> = this
 }
 
 val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>

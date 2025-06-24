@@ -62,8 +62,8 @@ data class FpRoundToIntegralExpr(
         return fpLitExpr
     }
 
-    override fun of(op: Expr<FpType>): FpRoundToIntegralExpr =
-        Companion.of(roundingMode, op)
+    override fun new(op: Expr<FpType>): FpRoundToIntegralExpr =
+        of(roundingMode, op)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
 

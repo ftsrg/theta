@@ -51,7 +51,7 @@ data class RatToIntExpr(
         return opVal.toInt()
     }
 
-    override fun of(op: Expr<RatType>): RatToIntExpr = Companion.of(op)
+    override fun new(op: Expr<RatType>): RatToIntExpr = of(op)
     override fun toString(): String = super.toString()
 }
 

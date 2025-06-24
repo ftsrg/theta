@@ -43,7 +43,7 @@ data class BvUDivExpr(
         val rightOpVal = rightOp.eval(`val`) as BvLitExpr
         return leftOpVal.udiv(rightOpVal)
     }
-    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvUDivExpr = Companion.of(leftOp, rightOp)
+    override fun new(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvUDivExpr = of(leftOp, rightOp)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }

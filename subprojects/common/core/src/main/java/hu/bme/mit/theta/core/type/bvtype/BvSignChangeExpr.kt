@@ -47,7 +47,7 @@ data class BvSignChangeExpr(
         return opVal.pos()
     }
 
-    override fun of(op: Expr<BvType>): BvSignChangeExpr = Companion.of(op, newType)
+    override fun new(op: Expr<BvType>): BvSignChangeExpr = of(op, newType)
     override val operatorLabel: String get() = OPERATOR_LABEL
     override fun toString(): String = super.toString()
 }
