@@ -78,6 +78,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "nand" -> Btor2BinaryOperator.NAND
             "nor" -> Btor2BinaryOperator.NOR
             "or" -> Btor2BinaryOperator.OR
+            "xnor" -> Btor2BinaryOperator.XNOR
             "xor" -> Btor2BinaryOperator.XOR
             "add" -> Btor2BinaryOperator.ADD
             "mul" -> Btor2BinaryOperator.MUL

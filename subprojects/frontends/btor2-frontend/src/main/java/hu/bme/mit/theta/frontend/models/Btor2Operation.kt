@@ -38,8 +38,8 @@ import java.math.BigInteger
 abstract class Btor2Operation(id: UInt, sort: Btor2Sort) : Btor2Node(id, sort)
 {
     abstract fun getStmt(negate: Boolean): Stmt
-
 }
+
 // Operators
 data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2UnaryOperator, val operand: Btor2Node) : Btor2Operation(nid, sort)
 {
@@ -50,15 +50,16 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
     }
 
     override fun getExpr(): Expr<*> {
+        val one = BvExprs.Bv(booleanArrayOf(true)) as Expr<BvType>
         return when(operator)
         {
             Btor2UnaryOperator.NOT -> BvNotExpr.of(operand.getExpr() as Expr<BvType>)
-            Btor2UnaryOperator.INC -> TODO()
-            Btor2UnaryOperator.DEC -> TODO()
-            Btor2UnaryOperator.NEG -> TODO()
-            Btor2UnaryOperator.REDAND -> TODO()
-            Btor2UnaryOperator.REDOR -> TODO()
-            Btor2UnaryOperator.REDXOR -> TODO()
+            Btor2UnaryOperator.INC -> BvAddExpr.create(mutableListOf(operand.getExpr() as Expr<BvType>, one))
+            Btor2UnaryOperator.DEC -> BvSubExpr.create(operand.getExpr() as Expr<BvType>, one)
+            Btor2UnaryOperator.NEG -> BvNegExpr.of(operand.getExpr() as Expr<BvType>)
+            Btor2UnaryOperator.REDAND -> BvAndExpr.create(cutValue())
+            Btor2UnaryOperator.REDOR -> BvOrExpr.create(cutValue())
+            Btor2UnaryOperator.REDXOR -> BvXorExpr.create(cutValue())
         }
     }
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -67,6 +68,16 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
 
     override fun getStmt(negate: Boolean): Stmt {
         TODO("Not yet implemented")
+    }
+
+    fun cutValue() : List<Expr<BvType>> {
+        val expr = operand.getExpr() as BvLitExpr
+        val value = expr.value // BooleanArray
+        val cut = mutableListOf<Expr<BvType>>()
+        for (i in value.indices) {
+            cut.add(BvLitExpr.of(booleanArrayOf(value[i])))
+        }
+        return cut
     }
 }
 
@@ -132,6 +143,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.NAND -> BvNotExpr.create(BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
             Btor2BinaryOperator.NOR -> BvNotExpr.create(BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
             Btor2BinaryOperator.OR -> BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.XNOR -> BvNotExpr.create(BvXorExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
             Btor2BinaryOperator.XOR -> BvXorExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.MUL -> BvMulExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
             Btor2BinaryOperator.UDIV -> BvUDivExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
@@ -168,6 +180,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.NAND -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.NOR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.OR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
+            Btor2BinaryOperator.XNOR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.XOR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.MUL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.UDIV -> AssignStmt.of(value, getExpr() as Expr<BvType>)

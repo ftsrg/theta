@@ -33,12 +33,12 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         val nid = idVisitor.visit(ctx.id)
         val sid = idVisitor.visit(ctx.sid())
         val sort : Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
-        val value = ctx.NUM().text.toInt()
+        val value = ctx.NUM().text.toString()
         val size = sort.width.toInt()
-        val bin_array = BooleanArray(size) { index ->
-            (value shr (size - 1 - index)) and 1 == 1
+        val binArray = BooleanArray(size) { index ->
+            (value[index] - '0') == 1
         }
-        var node = Btor2Const(nid, bin_array, sort)
+        var node = Btor2Const(nid, binArray, sort)
         Btor2Circuit.constants[nid] = node
         Btor2Circuit.nodes[nid] = node
         return node
@@ -50,27 +50,30 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         val sort : Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
         val value = ctx.NUM().text.toInt()
         val size = sort.width.toInt()
-        val bin_array = BooleanArray(size) { index ->
-            (value shr (size - 1 - index)) and 1 == 1
+        val binArray = BooleanArray(size) { index ->
+            ((value and ((1 shl size) - 1)) shr (size - 1 - index)) and 1 == 1
         }
-        var node = Btor2Const(nid, bin_array, sort)
+        var node = Btor2Const(nid, binArray, sort)
         Btor2Circuit.constants[nid] = node
         Btor2Circuit.nodes[nid] = node
         return node
     }
 
     override fun visitConstant_h(ctx: Btor2Parser.Constant_hContext): Btor2Const {
-        //val nid = idVisitor.visit(ctx.id)
-        //val sid = idVisitor.visit(ctx.sid())
-        //val sort : Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
-        //val value = ctx.SYMBOL().toString()
-        //val size = sort.width.toInt()
-
-        //var node = Btor2Const(nid, bin_array, sort)
-        //Btor2Circuit.constants[nid] = node
-        //Btor2Circuit.nodes[nid] = node
-        //return node
-        TODO("Hexa not yet implemented")
+        val nid = idVisitor.visit(ctx.id)
+        val sid = idVisitor.visit(ctx.sid())
+        val sort : Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
+        val value = ctx.NUM().toString()
+        val size = sort.width.toInt()
+        val binArray = BooleanArray(size) { index ->
+            val hexDigit = value[index / 4]
+            val bitIndex = 3 - (index % 4)
+            ((hexDigit - '0') shr bitIndex and 1) == 1
+        }
+        var node = Btor2Const(nid, binArray, sort)
+        Btor2Circuit.constants[nid] = node
+        Btor2Circuit.nodes[nid] = node
+        return node
     }
 
     override fun visitFilled_constant(ctx: Btor2Parser.Filled_constantContext): Btor2Const {

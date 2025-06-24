@@ -4,14 +4,14 @@ grammar Btor2;
 
 // Lexer rules
 WS: [ ]+ -> skip;
-NUM: (MINUS)? [0-9]+;
+NUM: (MINUS)? [0-9a-fA-F]+;
 PLUS: '+';
 MINUS: '-';
 UNARYOP: 'not'
          | 'inc' | 'dec' | 'neg'
          | 'redand' | 'redor' | 'redxor';
 TERNARYOP: 'ite' | 'write';
-BINOP: 'and' | 'nand' | 'nor' | 'or' | 'xor' | 'iff' | 'implies'
+BINOP: 'and' | 'nand' | 'nor' | 'or' | 'xnor' | 'xor' | 'iff' | 'implies'
     | 'eq' | 'neq'
     | 'slt' | 'slte' | 'sgt' | 'sgte'
     | 'ult' | 'ulte' | 'ugt' | 'ugte'
@@ -64,7 +64,7 @@ bitvec_sort: id=sid 'sort bitvec' width=NUM;
 
 constant: id=nid 'const' sid bin=NUM;
 constant_d: id=nid 'constd' sid dec=NUM;
-constant_h: id=nid 'consth' sid hex=SYMBOL;
+constant_h: id=nid 'consth' sid hex=NUM;
 filled_constant: id=nid fill=('one' | 'ones' | 'zero') sid;
 
 symbol: SYMBOL;

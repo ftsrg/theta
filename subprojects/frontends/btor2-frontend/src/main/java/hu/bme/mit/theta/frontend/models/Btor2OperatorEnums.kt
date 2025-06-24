@@ -55,6 +55,7 @@ enum class Btor2BinaryOperator {
     NAND,
     NOR,
     OR,
+    XNOR,
     XOR,
     ADD,
     MUL,
