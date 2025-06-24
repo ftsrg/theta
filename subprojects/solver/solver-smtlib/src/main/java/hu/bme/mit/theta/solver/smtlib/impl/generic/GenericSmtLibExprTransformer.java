@@ -15,11 +15,6 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
-import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.common.DispatchTable;
@@ -53,6 +48,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -60,7 +56,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 

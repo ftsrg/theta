@@ -22,11 +22,12 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode.Companion.defaultRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.math.BigInteger
+
 
 @Serializable
 @SerialName(BvType.TYPE_LABEL)
@@ -63,7 +64,7 @@ data class BvType(
     override fun <TargetType : Type> Cast(op: Expr<BvType>, type: TargetType): Expr<TargetType> {
         if (type is FpType && signed != null) {
             @Suppress("UNCHECKED_CAST")
-            return FromBv(FpRoundingMode.RTZ, op, type, signed) as Expr<TargetType>
+            return FromBv(defaultRoundingMode, op, type as FpType, signed) as Expr<TargetType>
         }
         throw ClassCastException("Bv cannot be cast to $type")
     }
