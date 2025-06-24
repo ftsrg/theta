@@ -29,6 +29,7 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
 
     private final AbstractNextStateDescriptor wrapped;
 
+    // This must be handle or to force traversing until the terminal level
     private final MddHandle target;
 
     private final KillSwitch killSwitch;
@@ -70,7 +71,7 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
         this.killSwitch = killSwitch;
         if (target.isTerminal() && !target.isTerminalZero()) {
             System.out.println("Stopping state space enumeration, violating state reached.");
-            killSwitch.setKilled(true);
+//            killSwitch.setKilled(true);
         }
     }
 

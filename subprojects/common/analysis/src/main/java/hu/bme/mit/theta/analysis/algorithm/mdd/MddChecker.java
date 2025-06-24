@@ -163,7 +163,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddHandle transitionNode =
                 transSig.getTopVariableHandle()
                         .checkInNode(
-                                MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
+                                MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool, true, false));
         final AbstractNextStateDescriptor nextStates =
                 MddNodeNextStateDescriptor.of(transitionNode);
 

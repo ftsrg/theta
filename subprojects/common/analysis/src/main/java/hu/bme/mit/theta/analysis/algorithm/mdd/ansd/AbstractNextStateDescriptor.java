@@ -129,9 +129,10 @@ public interface AbstractNextStateDescriptor {
         final IntObjMapView<AbstractNextStateDescriptor> diagonal = getDiagonal(stateSpaceInfo);
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal =
                 getOffDiagonal(stateSpaceInfo);
-        return offDiagonal.isEmpty()
+        final var res = offDiagonal.isEmpty()
                 && isNullOrEmpty(offDiagonal.defaultValue())
                 && diagonal.isEmpty();
+        return res;
     }
 
     static boolean isNullOrEmpty(AbstractNextStateDescriptor ns) {

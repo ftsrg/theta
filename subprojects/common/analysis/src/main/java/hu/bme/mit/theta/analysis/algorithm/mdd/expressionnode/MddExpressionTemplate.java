@@ -15,12 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
+import hu.bme.mit.delta.Pair;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -28,36 +31,38 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+
+import java.util.Optional;
 import java.util.function.Function;
+
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class MddExpressionTemplate implements MddNode.Template {
 
     private final Expr<BoolType> expr;
+
     private final Function<Object, Decl> extractDecl;
-    private final SolverPool solverPool;
+    private final ExpressionMddBuilder expressionMddBuilder;
 
-    private static Solver lazySolver;
 
-    private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
-        if (lazySolver == null) lazySolver = solverPool.requestSolver();
-        boolean res;
-        try (var wpp = new WithPushPop(lazySolver)) {
-            lazySolver.add(expr);
-            res = lazySolver.check().isSat();
-        }
-        return res;
-    }
+    private final boolean transExpr;
 
     private MddExpressionTemplate(
-            Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
+            Expr<BoolType> expr, Function<Object, Decl> extractDecl, ExpressionMddBuilder expressionMddBuilder, boolean transExpr) {
         this.expr = expr;
         this.extractDecl = extractDecl;
-        this.solverPool = solverPool;
+        this.expressionMddBuilder = expressionMddBuilder;
+        this.transExpr = transExpr;
+    }
+
+    public static MddNode.Template of(
+            Expr<BoolType> expr, Function<Object, Decl> extractDecl, ExpressionMddBuilder expressionMddBuilder) {
+        return MddExpressionTemplate.of(expr, extractDecl, expressionMddBuilder, false);
     }
 
     public static MddExpressionTemplate of(
-            Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool);
+            Expr<BoolType> expr, Function<Object, Decl> extractDecl, ExpressionMddBuilder expressionMddBuilder, boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, expressionMddBuilder, transExpr);
     }
 
     @Override
@@ -66,23 +71,6 @@ public class MddExpressionTemplate implements MddNode.Template {
         final Decl decl = extractDecl.apply(mddVariable.getTraceInfo());
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
-
-        //        // TODO: we might not need this
-        //        // Check if terminal 1
-        //        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
-        //            if (canonizedExpr instanceof FalseExpr) {
-        //                return mddVariable.getMddGraph().getTerminalZeroNode();
-        //            } /*else {
-        //                final MddGraph<Expr> mddGraph = (MddGraph<Expr>)
-        // mddVariable.getMddGraph();
-        //                return mddGraph.getNodeFor(canonizedExpr);
-        //            }*/
-        //        }
-
-        // Check if terminal 0
-        if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
-            return null;
-        }
 
         // Check if default
         if (mddVariable.getDomainSize() == 0
@@ -95,15 +83,31 @@ public class MddExpressionTemplate implements MddNode.Template {
                                 .get()
                                 .checkInNode(
                                         new MddExpressionTemplate(
-                                                canonizedExpr, o -> (Decl) o, solverPool));
+                                                canonizedExpr, o -> (Decl) o, expressionMddBuilder, transExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    canonizedExpr, decl, mddVariable, solverPool, childNode);
+                    canonizedExpr, decl, mddVariable, expressionMddBuilder, childNode, transExpr);
         }
 
-        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
+        if (transExpr && decl instanceof IndexedConstDecl<?> constDecl && constDecl.getIndex() == 0 && mddVariable.getLower().isPresent() && mddVariable.getLower().get().getLower().isPresent()) {
+            final Substitution sub =
+                    BasicSubstitution.builder().put(extractDecl.apply(mddVariable.getLower().get().getTraceInfo()), decl.getRef()).build();
+            final Expr<BoolType> identityContinuationExpr = ExprUtils.simplify(sub.apply(canonizedExpr));
+            if (!ExprUtils.getConstants(identityContinuationExpr).contains(decl)) {
+                final var cont = mddVariable.getLower().get().getLower().get().checkInNode(
+                        new MddExpressionTemplate(identityContinuationExpr, extractDecl, expressionMddBuilder, transExpr)
+                );
+                return new IdentityExpressionRepresentation(cont);
+            }
+        }
+
+        final var newRepresentation = MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, expressionMddBuilder, transExpr);
+
+        // Create child based on valuation and cache
+
+        return newRepresentation;
     }
 }

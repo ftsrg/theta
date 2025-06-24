@@ -73,7 +73,7 @@ public class SolverPool implements AutoCloseable {
             this.available.add(solver);
             this.all.add(solver);
         }
-        //        System.out.println(created + " solvers created");
+        System.out.println(created + " solvers created");
         //        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }

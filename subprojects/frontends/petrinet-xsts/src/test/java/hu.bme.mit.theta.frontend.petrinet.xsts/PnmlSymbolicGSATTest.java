@@ -39,11 +39,11 @@ public class PnmlSymbolicGSATTest {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
-                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-10.pnml", "");
+                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-20.pnml", "");
 
         XSTS xsts;
-        try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
-            xsts = PetriNetToXSTS.createXSTS(petriNet, propStream);
+        try (InputStream propStream = new ByteArrayInputStream(("prop { false }").getBytes())) {
+            xsts = PetriNetToXSTS.createXSTS(petriNet, propStream, PetriNetToXSTS.PropType.PN_SAFE);
         }
 
         final SafetyResult<?, ?> status;
