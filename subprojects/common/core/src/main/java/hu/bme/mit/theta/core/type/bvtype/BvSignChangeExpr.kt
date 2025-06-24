@@ -13,74 +13,42 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class BvSignChangeExpr extends PosExpr<BvType> {
+@Serializable
+@SerialName("BvSignChange")
+data class BvSignChangeExpr(
+    override val op: Expr<BvType>,
+    val newType: BvType
+) : PosExpr<BvType>() {
 
-    private static final int HASH_SEED = 8963;
-    private static final String OPERATOR_LABEL = "bvpos";
+    companion object {
 
-    private final BvType newType;
+        private const val OPERATOR_LABEL = "bvpos"
 
-    private BvSignChangeExpr(final Expr<BvType> op, final BvType newType) {
-        super(op);
-        this.newType = newType;
+        @JvmStatic
+        fun of(op: Expr<BvType>, newType: BvType) = BvSignChangeExpr(op, newType)
+
+        @JvmStatic
+        fun create(op: Expr<*>, newType: BvType) = BvSignChangeExpr(TypeUtils.castBv(op), newType)
     }
 
-    public static BvSignChangeExpr of(final Expr<BvType> op, final BvType newType) {
-        return new BvSignChangeExpr(op, newType);
+    override val type: BvType get() = newType
+    override fun eval(`val`: Valuation): BvLitExpr {
+        val opVal = op.eval(`val`) as BvLitExpr
+        return opVal.pos()
     }
 
-    public static BvSignChangeExpr create(final Expr<?> op, final BvType newType) {
-        final Expr<BvType> newOp = castBv(op);
-        return BvSignChangeExpr.of(newOp, newType);
-    }
-
-    @Override
-    public BvType getType() {
-        return newType;
-    }
-
-    @Override
-    public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr opVal = (BvLitExpr) getOp().eval(val);
-        return opVal.pos();
-    }
-
-    @Override
-    public BvSignChangeExpr with(final Expr<BvType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return BvSignChangeExpr.of(op, newType);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvSignChangeExpr that = (BvSignChangeExpr) obj;
-            return this.getOp().equals(that.getOp()) && this.getType().equals(that.getType());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun of(op: Expr<BvType>): BvSignChangeExpr = Companion.of(op, newType)
+    override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
+

@@ -31,7 +31,7 @@ data class RatPosExpr(
 ) : PosExpr<RatType>() {
 
     companion object {
-        internal const val OPERATOR_LABEL = "+"
+        private const val OPERATOR_LABEL = "+"
         @JvmStatic
         fun of(op: Expr<RatType>) = RatPosExpr(op)
         @JvmStatic

@@ -32,7 +32,7 @@ data class RatSubExpr(
 ) : SubExpr<RatType>() {
 
     companion object {
-        internal const val OPERATOR_LABEL = "-"
+        private const val OPERATOR_LABEL = "-"
         @JvmStatic
         fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatSubExpr(leftOp, rightOp)
         @JvmStatic

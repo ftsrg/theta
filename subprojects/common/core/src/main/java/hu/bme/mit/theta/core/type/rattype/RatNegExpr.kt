@@ -31,7 +31,7 @@ data class RatNegExpr(
 ) : NegExpr<RatType>() {
 
     companion object {
-        internal const val OPERATOR_LABEL = "-"
+        private const val OPERATOR_LABEL = "-"
         @JvmStatic
         fun of(op: Expr<RatType>) = RatNegExpr(op)
         @JvmStatic

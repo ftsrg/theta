@@ -36,7 +36,7 @@ data class PrimeExpr<ExprType : Type>(
 
     companion object {
 
-        internal const val OPERATOR_LABEL = "prime"
+        private const val OPERATOR_LABEL = "prime"
         @JvmStatic
         fun <T : Type> of(op: Expr<T>): PrimeExpr<T> = PrimeExpr(op)
     }

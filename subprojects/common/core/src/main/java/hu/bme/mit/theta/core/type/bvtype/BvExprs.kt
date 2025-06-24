@@ -13,166 +13,117 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import java.util.List;
+package hu.bme.mit.theta.core.type.bvtype
 
-public final class BvExprs {
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 
-    private BvExprs() {}
+@Suppress("FunctionName")
+object BvExprs {
 
-    public static BvType BvType(final int size, final Boolean signedness) {
-        return BvType.of(size, signedness);
-    }
+    @JvmStatic
+    fun BvType(size: Int, signedness: Boolean? = null) = BvType.of(size, signedness)
 
-    public static BvType BvType(final int size) {
-        return BvType(size, null);
-    }
+    @JvmStatic
+    fun Bv(value: BooleanArray, signedness: Boolean? = null) = BvLitExpr(value, signedness)
 
-    public static BvLitExpr Bv(final boolean[] value, final Boolean signedness) {
-        return BvLitExpr.of(value, signedness);
-    }
+    @JvmStatic
+    fun Concat(ops: Iterable<Expr<BvType>>) = BvConcatExpr.of(ops)
 
-    public static BvLitExpr Bv(final boolean[] value) {
-        return Bv(value, null);
-    }
+    @JvmStatic
+    fun Extract(bitvec: Expr<BvType>, from: IntLitExpr, until: IntLitExpr) = BvExtractExpr(bitvec, from, until)
 
-    public static BvConcatExpr Concat(final Iterable<? extends Expr<BvType>> ops) {
-        return BvConcatExpr.of(ops);
-    }
+    @JvmStatic
+    fun ZExt(bitvec: Expr<BvType>, extendType: BvType) = BvZExtExpr(bitvec, extendType)
 
-    public static BvExtractExpr Extract(
-            final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
-        return BvExtractExpr.of(bitvec, from, until);
-    }
+    @JvmStatic
+    fun SExt(bitvec: Expr<BvType>, extendType: BvType) = BvSExtExpr(bitvec, extendType)
 
-    public static BvZExtExpr ZExt(final Expr<BvType> bitvec, final BvType extendType) {
-        return BvZExtExpr.of(bitvec, extendType);
-    }
+    @JvmStatic
+    fun Add(ops: Iterable<Expr<BvType>>) = BvAddExpr.of(ops)
 
-    public static BvSExtExpr SExt(final Expr<BvType> bitvec, final BvType extendType) {
-        return BvSExtExpr.of(bitvec, extendType);
-    }
+    @JvmStatic
+    fun Sub(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSubExpr(leftOp, rightOp)
 
-    public static BvAddExpr Add(final Iterable<? extends Expr<BvType>> ops) {
-        return BvAddExpr.of(ops);
-    }
+    @JvmStatic
+    fun Pos(op: Expr<BvType>) = BvPosExpr(op)
 
-    public static BvSubExpr Sub(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSubExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Neg(op: Expr<BvType>) = BvNegExpr(op)
 
-    public static BvPosExpr Pos(final Expr<BvType> op) {
-        return BvPosExpr.of(op);
-    }
+    @JvmStatic
+    fun Mul(ops: Iterable<Expr<BvType>>) = BvMulExpr.of(ops)
 
-    public static BvNegExpr Neg(final Expr<BvType> op) {
-        return BvNegExpr.of(op);
-    }
+    @JvmStatic
+    fun UDiv(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvUDivExpr(leftOp, rightOp)
 
-    public static BvMulExpr Mul(final Iterable<? extends Expr<BvType>> ops) {
-        return BvMulExpr.of(ops);
-    }
+    @JvmStatic
+    fun SDiv(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSDivExpr(leftOp, rightOp)
 
-    public static BvUDivExpr UDiv(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvUDivExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SMod(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSModExpr(leftOp, rightOp)
 
-    public static BvSDivExpr SDiv(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSDivExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun URem(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvURemExpr(leftOp, rightOp)
 
-    public static BvSModExpr SMod(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSModExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SRem(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSRemExpr(leftOp, rightOp)
 
-    public static BvURemExpr URem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvURemExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Or(ops: Iterable<Expr<BvType>>) = BvOrExpr.of(ops)
 
-    public static BvSRemExpr SRem(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSRemExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun And(ops: Iterable<Expr<BvType>>) = BvAndExpr.of(ops)
 
-    public static BvOrExpr Or(final List<? extends Expr<BvType>> ops) {
-        return BvOrExpr.of(ops);
-    }
+    @JvmStatic
+    fun Xor(ops: Iterable<Expr<BvType>>) = BvXorExpr.of(ops)
 
-    public static BvAndExpr And(final List<? extends Expr<BvType>> ops) {
-        return BvAndExpr.of(ops);
-    }
+    @JvmStatic
+    fun Not(op: Expr<BvType>) = BvNotExpr(op)
 
-    public static BvXorExpr Xor(final List<? extends Expr<BvType>> ops) {
-        return BvXorExpr.of(ops);
-    }
+    @JvmStatic
+    fun ShiftLeft(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvShiftLeftExpr(leftOp, rightOp)
 
-    public static BvNotExpr Not(final Expr<BvType> op) {
-        return BvNotExpr.of(op);
-    }
+    @JvmStatic
+    fun ArithShiftRight(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvArithShiftRightExpr(leftOp, rightOp)
 
-    public static BvShiftLeftExpr ShiftLeft(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvShiftLeftExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun LogicShiftRight(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvLogicShiftRightExpr(leftOp, rightOp)
 
-    public static BvArithShiftRightExpr ArithShiftRight(
-            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvArithShiftRightExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun RotateLeft(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvRotateLeftExpr(leftOp, rightOp)
 
-    public static BvLogicShiftRightExpr LogicShiftRight(
-            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvLogicShiftRightExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun RotateRight(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvRotateRightExpr(leftOp, rightOp)
 
-    public static BvRotateLeftExpr RotateLeft(
-            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvRotateLeftExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Eq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvEqExpr(leftOp, rightOp)
 
-    public static BvRotateRightExpr RotateRight(
-            final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvRotateRightExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun Neq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvNeqExpr(leftOp, rightOp)
 
-    public static BvEqExpr Eq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvEqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun ULt(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvULtExpr(leftOp, rightOp)
 
-    public static BvNeqExpr Neq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvNeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun ULeq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvULeqExpr(leftOp, rightOp)
 
-    public static BvULtExpr ULt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvULtExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun UGt(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvUGtExpr(leftOp, rightOp)
 
-    public static BvULeqExpr ULeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvULeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun UGeq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvUGeqExpr(leftOp, rightOp)
 
-    public static BvUGtExpr UGt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvUGtExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SLt(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSLtExpr(leftOp, rightOp)
 
-    public static BvUGeqExpr UGeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvUGeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SLeq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSLeqExpr(leftOp, rightOp)
 
-    public static BvSLtExpr SLt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSLtExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SGt(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSGtExpr(leftOp, rightOp)
 
-    public static BvSLeqExpr SLeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSLeqExpr.of(leftOp, rightOp);
-    }
-
-    public static BvSGtExpr SGt(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSGtExpr.of(leftOp, rightOp);
-    }
-
-    public static BvSGeqExpr SGeq(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return BvSGeqExpr.of(leftOp, rightOp);
-    }
+    @JvmStatic
+    fun SGeq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvSGeqExpr(leftOp, rightOp)
 }

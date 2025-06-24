@@ -13,205 +13,99 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.DomainSize;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import java.math.BigInteger;
+import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.type.DomainSize
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.*
+import hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
+import hu.bme.mit.theta.core.type.fptype.FpType
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
-public class BvType
-        implements Additive<BvType>,
-                Multiplicative<BvType>,
-                Divisible<BvType>,
-                Equational<BvType>,
-                Ordered<BvType>,
-                Castable<BvType> {
+@Serializable
+@SerialName(BvType.TYPE_LABEL)
+data class BvType(
+    val size: Int,
+    val signed: Boolean?,
+) : Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>, Equational<BvType>, Ordered<BvType>, Castable<BvType> {
 
-    private static final int HASH_SEED = 5674;
-    private static final String TYPE_LABEL = "Bv";
-
-    private final int size;
-    private final Boolean signed;
-
-    private volatile int hashCode = 0;
-
-    protected BvType(final int size, Boolean signed) {
-        this.signed = signed;
-        checkArgument(size > 0);
-        this.size = size;
+    init {
+        require(size > 0) { "Bitvector size must be positive" }
     }
 
-    public static BvType of(final int size) {
-        return new BvType(size, null);
+    companion object {
+
+        internal const val TYPE_LABEL = "Bv"
+
+        @JvmStatic
+        fun of(size: Int): BvType = BvType(size, null)
+
+        @JvmStatic
+        fun of(size: Int, signed: Boolean?): BvType = BvType(size, signed)
     }
 
-    public static BvType of(final int size, final Boolean signed) {
-        return new BvType(size, signed);
-    }
+    fun withSize(size: Int): BvType = BvType(size, signed)
 
-    public BvType withSize(final int size) {
-        return new BvType(size, signed);
-    }
+    fun getSigned(): Boolean = signed ?: error("Signedness is not specified")
 
-    public int getSize() {
-        return size;
-    }
-
-    public Boolean getSigned() {
-        checkState(signed != null);
-        return signed;
-    }
-
-    @Override
-    public EqExpr<BvType> Eq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        return BvEqExpr.of(leftOp, rightOp);
-    }
-
-    @Override
-    public NeqExpr<BvType> Neq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        return BvNeqExpr.of(leftOp, rightOp);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + size;
-            hashCode = result;
+    override fun Eq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvEqExpr(leftOp, rightOp)
+    override fun Neq(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvNeqExpr(leftOp, rightOp)
+    override fun Add(ops: Iterable<Expr<BvType>>) = BvExprs.Add(ops)
+    override fun Sub(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvExprs.Sub(leftOp, rightOp)
+    override fun Pos(op: Expr<BvType>) = BvExprs.Pos(op)
+    override fun Neg(op: Expr<BvType>) = BvExprs.Neg(op)
+    override fun <TargetType : Type> Cast(op: Expr<BvType>, type: TargetType): Expr<TargetType> {
+        if (type is FpType && signed != null) {
+            @Suppress("UNCHECKED_CAST")
+            return FromBv(FpRoundingMode.RTZ, op, type, signed) as Expr<TargetType>
         }
-        return result;
+        throw ClassCastException("Bv cannot be cast to $type")
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvType that = (BvType) obj;
-            return this.getSize() == that.getSize();
-        } else {
-            return false;
-        }
+    override fun Mod(leftOp: Expr<BvType>, rightOp: Expr<BvType>): ModExpr<BvType> {
+        check(signed != null && signed) { "Signed BvType required for Mod" }
+        return BvExprs.SMod(leftOp, rightOp)
     }
 
-    @Override
-    public String toString() {
-        return Utils.lispStringBuilder(TYPE_LABEL).add(size).toString();
+    override fun Rem(leftOp: Expr<BvType>, rightOp: Expr<BvType>): RemExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SRem(leftOp, rightOp) else BvExprs.URem(leftOp, rightOp)
     }
 
-    @Override
-    public AddExpr<BvType> Add(Iterable<? extends Expr<BvType>> ops) {
-        return BvExprs.Add(ops);
+    override fun Mul(ops: Iterable<Expr<BvType>>) = BvExprs.Mul(ops)
+    override fun Div(leftOp: Expr<BvType>, rightOp: Expr<BvType>): DivExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SDiv(leftOp, rightOp) else BvExprs.UDiv(leftOp, rightOp)
     }
 
-    @Override
-    public SubExpr<BvType> Sub(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        return BvExprs.Sub(leftOp, rightOp);
+    override fun Lt(leftOp: Expr<BvType>, rightOp: Expr<BvType>): LtExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SLt(leftOp, rightOp) else BvExprs.ULt(leftOp, rightOp)
     }
 
-    @Override
-    public PosExpr<BvType> Pos(Expr<BvType> op) {
-        return BvExprs.Pos(op);
+    override fun Leq(leftOp: Expr<BvType>, rightOp: Expr<BvType>): LeqExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SLeq(leftOp, rightOp) else BvExprs.ULeq(leftOp, rightOp)
     }
 
-    @Override
-    public NegExpr<BvType> Neg(Expr<BvType> op) {
-        return BvExprs.Neg(op);
+    override fun Gt(leftOp: Expr<BvType>, rightOp: Expr<BvType>): GtExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SGt(leftOp, rightOp) else BvExprs.UGt(leftOp, rightOp)
     }
 
-    @Override
-    public <TargetType extends Type> Expr<TargetType> Cast(Expr<BvType> op, TargetType type) {
-        if (type instanceof FpType && signed != null) {
-            //noinspection unchecked
-            return (Expr<TargetType>) FromBv(FpRoundingMode.RTZ, op, (FpType) type, signed);
-        }
-        throw new ClassCastException("Bv cannot be cast to " + type);
+    override fun Geq(leftOp: Expr<BvType>, rightOp: Expr<BvType>): GeqExpr<BvType> {
+        check(signed != null) { "Neutral BvType cannot be used here" }
+        return if (signed) BvExprs.SGeq(leftOp, rightOp) else BvExprs.UGeq(leftOp, rightOp)
     }
 
-    @Override
-    public ModExpr<BvType> Mod(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        checkState(signed, "Unsigned BvType cannot be used here");
-        return BvExprs.SMod(leftOp, rightOp);
-    }
+    override val domainSize: DomainSize get() = DomainSize.of(BigInteger.TWO.pow(size))
 
-    @Override
-    public RemExpr<BvType> Rem(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SRem(leftOp, rightOp);
-        } else {
-            return BvExprs.URem(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public MulExpr<BvType> Mul(Iterable<? extends Expr<BvType>> ops) {
-        return BvExprs.Mul(ops);
-    }
-
-    @Override
-    public DivExpr<BvType> Div(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SDiv(leftOp, rightOp);
-        } else {
-            return BvExprs.UDiv(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public LtExpr<BvType> Lt(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SLt(leftOp, rightOp);
-        } else {
-            return BvExprs.ULt(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public LeqExpr<BvType> Leq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SLeq(leftOp, rightOp);
-        } else {
-            return BvExprs.ULeq(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public GtExpr<BvType> Gt(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SGt(leftOp, rightOp);
-        } else {
-            return BvExprs.UGt(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public GeqExpr<BvType> Geq(Expr<BvType> leftOp, Expr<BvType> rightOp) {
-        checkState(signed != null, "Neutral BvType cannot be used here");
-        if (signed) {
-            return BvExprs.SGeq(leftOp, rightOp);
-        } else {
-            return BvExprs.UGeq(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public DomainSize getDomainSize() {
-        return DomainSize.of(BigInteger.TWO.pow(size));
-    }
+    override fun toString(): String = Utils.lispStringBuilder(TYPE_LABEL).add(size).toString()
 }
+

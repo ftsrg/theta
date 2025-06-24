@@ -13,71 +13,42 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class BvNegExpr extends NegExpr<BvType> {
+@Serializable
+@SerialName("BvNeg")
+data class BvNegExpr(
+    override val op: Expr<BvType>
+) : NegExpr<BvType>() {
 
-    private static final int HASH_SEED = 8325;
-    private static final String OPERATOR_LABEL = "bvneg";
+    companion object {
+        private const val OPERATOR_LABEL = "bvneg"
 
-    private BvNegExpr(final Expr<BvType> op) {
-        super(op);
+        @JvmStatic
+        fun of(op: Expr<BvType>) = BvNegExpr(op)
+
+        @JvmStatic
+        fun create(op: Expr<*>) = BvNegExpr(TypeUtils.castBv(op))
     }
 
-    public static BvNegExpr of(final Expr<BvType> op) {
-        return new BvNegExpr(op);
+    override val type: BvType get() = op.type
+
+    override fun eval(`val`: Valuation): BvLitExpr {
+        val opVal = op.eval(`val`) as BvLitExpr
+        return opVal.neg()
     }
 
-    public static BvNegExpr create(final Expr<?> op) {
-        final Expr<BvType> newOp = castBv(op);
-        return BvNegExpr.of(newOp);
-    }
+    override fun of(op: Expr<BvType>): BvNegExpr = Companion.of(op)
 
-    @Override
-    public BvType getType() {
-        return getOp().getType();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr opVal = (BvLitExpr) getOp().eval(val);
-        return opVal.neg();
-    }
-
-    @Override
-    public BvNegExpr with(final Expr<BvType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return BvNegExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvNegExpr that = (BvNegExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }

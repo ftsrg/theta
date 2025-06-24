@@ -13,86 +13,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.BinaryExpr;
-import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.BinaryExpr
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class BvShiftLeftExpr extends BinaryExpr<BvType, BvType> {
+@Serializable
+@SerialName("BvShiftLeft")
+data class BvShiftLeftExpr(
+    override val leftOp: Expr<BvType>,
+    override val rightOp: Expr<BvType>
+) : BinaryExpr<BvType, BvType>() {
 
-    private static final int HASH_SEED = 4288;
-    private static final String OPERATOR_LABEL = "bvshl";
+    companion object {
+        private const val OPERATOR_LABEL = "bvshl"
 
-    private BvShiftLeftExpr(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        super(leftOp, rightOp);
-        checkAllTypesEqual(leftOp, rightOp);
+        @JvmStatic
+        fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>) = BvShiftLeftExpr(leftOp, rightOp)
+
+        @JvmStatic
+        fun create(leftOp: Expr<*>, rightOp: Expr<*>) = BvShiftLeftExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
     }
 
-    public static BvShiftLeftExpr of(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        return new BvShiftLeftExpr(leftOp, rightOp);
+    override val type: BvType get() = leftOp.type
+
+    override fun eval(`val`: Valuation): BvLitExpr {
+        val leftOpVal = leftOp.eval(`val`) as BvLitExpr
+        val rightOpVal = rightOp.eval(`val`) as BvLitExpr
+        return leftOpVal.shiftLeft(rightOpVal)
     }
 
-    public static BvShiftLeftExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-        final Expr<BvType> newLeftOp = castBv(leftOp);
-        final Expr<BvType> newRightOp = castBv(rightOp);
-        return BvShiftLeftExpr.of(newLeftOp, newRightOp);
-    }
+    override fun of(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvShiftLeftExpr = Companion.of(leftOp, rightOp)
 
-    @Override
-    public BvType getType() {
-        return getOps().get(0).getType();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr leftOpVal = (BvLitExpr) getLeftOp().eval(val);
-        final BvLitExpr rightOpVal = (BvLitExpr) getRightOp().eval(val);
-        return leftOpVal.shiftLeft(rightOpVal);
-    }
-
-    @Override
-    public BvShiftLeftExpr with(final Expr<BvType> leftOp, final Expr<BvType> rightOp) {
-        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-            return this;
-        } else {
-            return BvShiftLeftExpr.of(leftOp, rightOp);
-        }
-    }
-
-    @Override
-    public BvShiftLeftExpr withLeftOp(final Expr<BvType> leftOp) {
-        return with(leftOp, getRightOp());
-    }
-
-    @Override
-    public BvShiftLeftExpr withRightOp(final Expr<BvType> rightOp) {
-        return with(getLeftOp(), rightOp);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvShiftLeftExpr that = (BvShiftLeftExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp())
-                    && this.getRightOp().equals(that.getRightOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
+

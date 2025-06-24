@@ -13,424 +13,390 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToNeutralBvLitExpr;
-import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToSignedBvLitExpr;
-import static hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToUnsignedBvLitExpr;
-import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoNeutralDomain;
-import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoSignedDomain;
-import static hu.bme.mit.theta.core.utils.BvUtils.fitBigIntegerIntoUnsignedDomain;
-import static hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger;
-import static hu.bme.mit.theta.core.utils.BvUtils.signedBvLitExprToBigInteger;
-import static hu.bme.mit.theta.core.utils.BvUtils.unsignedBvLitExprToBigInteger;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.utils.BvUtils;
-import java.math.BigInteger;
-import java.util.Arrays;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import java.math.BigInteger
+import kotlin.concurrent.Volatile
 
-public final class BvLitExpr extends NullaryExpr<BvType>
-        implements LitExpr<BvType>, Comparable<BvLitExpr> {
+@Serializable
+@SerialName("BvLit")
+data class BvLitExpr(
+    val value: BooleanArray,
+    val signed: Boolean? = null
+) : NullaryExpr<BvType>(), LitExpr<BvType>, Comparable<BvLitExpr> {
 
-    private static final int HASH_SEED = 5624;
-    private volatile int hashCode = 0;
-
-    private final boolean[] value;
-    private final Boolean signed;
-
-    private BvLitExpr(final boolean[] value, final Boolean signed) {
-        this.signed = signed;
-        checkNotNull(value);
-        checkArgument(value.length > 0, "Bitvector must have positive size");
-
-        this.value = value;
+    init {
+        require(value.isNotEmpty()) { "Bitvector must have positive size." }
     }
 
-    public static BvLitExpr of(final boolean[] value, final Boolean signed) {
-        return new BvLitExpr(value, signed);
+    companion object {
+
+        private const val HASH_SEED: Int = 5624
+
+        @JvmStatic
+        fun of(value: BooleanArray, signed: Boolean? = null) = BvLitExpr(value, signed)
     }
 
-    public static BvLitExpr of(final boolean[] value) {
-        return of(value, null);
+    @Volatile
+    @Transient
+    private var hashCode = 0
+
+    override val type: BvType get() = BvType(value.size, signed)
+    override fun eval(`val`: Valuation): BvLitExpr = this
+
+    fun concat(that: BvLitExpr): BvLitExpr {
+        val concatenated = BooleanArray(this.type.size + that.type.size)
+        for (i in 0 until this.type.size) concatenated[i] = this.value[i]
+        for (i in 0 until that.type.size) concatenated[this.type.size + i] = that.value[i]
+        return of(concatenated)
     }
 
-    public boolean[] getValue() {
-        return value;
-    }
-
-    @Override
-    public BvType getType() {
-        return BvType(value.length, signed);
-    }
-
-    @Override
-    public LitExpr<BvType> eval(Valuation val) {
-        return this;
-    }
-
-    public BvLitExpr concat(final BvLitExpr that) {
-        boolean[] concated = new boolean[this.getType().getSize() + that.getType().getSize()];
-        for (int i = 0; i < this.getType().getSize(); i++) {
-            concated[i] = this.getValue()[i];
+    fun extract(from: IntLitExpr, until: IntLitExpr): BvLitExpr {
+        val fromValue = from.value.toInt()
+        val untilValue = until.value.toInt()
+        require(fromValue >= 0 && untilValue >= 0 && untilValue > fromValue)
+        val extracted = BooleanArray(untilValue - fromValue)
+        for (i in extracted.indices) {
+            extracted[extracted.size - i - 1] = this.value[this.value.size - (fromValue + i) - 1]
         }
-        for (int i = 0; i < that.getType().getSize(); i++) {
-            concated[this.getType().getSize() + i] = that.getValue()[i];
+        return of(extracted)
+    }
+
+    fun zext(extendType: BvType): BvLitExpr {
+        require(extendType.size >= this.type.size)
+        val extended = BooleanArray(extendType.size)
+        for (i in this.value.indices) {
+            extended[extended.size - i - 1] = this.value[this.value.size - i - 1]
         }
-        return Bv(concated);
-    }
-
-    public BvLitExpr extract(final IntLitExpr from, final IntLitExpr until) {
-        final int fromValue = from.getValue().intValue();
-        final int untilValue = until.getValue().intValue();
-        checkArgument(fromValue >= 0);
-        checkArgument(untilValue >= 0);
-        checkArgument(untilValue > fromValue);
-
-        boolean[] extracted = new boolean[untilValue - fromValue];
-        for (int i = 0; i < extracted.length; i++) {
-            extracted[extracted.length - i - 1] =
-                    this.getValue()[this.getValue().length - (fromValue + i) - 1];
+        for (i in 0 until extendType.size - this.type.size) {
+            extended[i] = false
         }
-        return Bv(extracted);
+        return of(extended)
     }
 
-    public BvLitExpr zext(final BvType extendType) {
-        checkArgument(extendType.getSize() >= this.getType().getSize());
-
-        boolean[] extended = new boolean[extendType.getSize()];
-        for (int i = 0; i < this.getValue().length; i++) {
-            extended[extended.length - i - 1] = this.getValue()[this.getValue().length - i - 1];
+    fun sext(extendType: BvType): BvLitExpr {
+        require(extendType.size >= this.type.size)
+        val extended = BooleanArray(extendType.size)
+        for (i in this.value.indices) {
+            extended[extended.size - i - 1] = this.value[this.value.size - i - 1]
         }
-        for (int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
-            extended[i] = false;
+        for (i in 0 until extendType.size - this.type.size) {
+            extended[i] = this.value[0]
         }
-        return Bv(extended);
+        return of(extended)
     }
 
-    public BvLitExpr sext(final BvType extendType) {
-        checkArgument(extendType.getSize() >= this.getType().getSize());
-
-        boolean[] extended = new boolean[extendType.getSize()];
-        for (int i = 0; i < this.getValue().length; i++) {
-            extended[extended.length - i - 1] = this.getValue()[this.getValue().length - i - 1];
-        }
-        for (int i = 0; i < extendType.getSize() - this.getType().getSize(); i++) {
-            extended[i] = this.getValue()[0];
-        }
-        return Bv(extended);
+    fun add(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        var sum = neutralBvLitExprToBigInteger(this).add(neutralBvLitExprToBigInteger(that))
+        sum = fitBigIntegerIntoNeutralDomain(sum, type.size)
+        return bigIntegerToNeutralBvLitExpr(sum, type.size)
     }
 
-    public BvLitExpr add(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger sum = neutralBvLitExprToBigInteger(this).add(neutralBvLitExprToBigInteger(that));
-        sum = fitBigIntegerIntoNeutralDomain(sum, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(sum, getType().getSize());
+    fun sub(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        var sub = neutralBvLitExprToBigInteger(this).subtract(neutralBvLitExprToBigInteger(that))
+        sub = fitBigIntegerIntoNeutralDomain(sub, type.size)
+        return bigIntegerToNeutralBvLitExpr(sub, type.size)
     }
 
-    public BvLitExpr sub(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger sub =
-                neutralBvLitExprToBigInteger(this).subtract(neutralBvLitExprToBigInteger(that));
-        sub = fitBigIntegerIntoNeutralDomain(sub, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(sub, getType().getSize());
+    fun mul(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        var prod = neutralBvLitExprToBigInteger(this).multiply(neutralBvLitExprToBigInteger(that))
+        prod = fitBigIntegerIntoNeutralDomain(prod, type.size)
+        return bigIntegerToNeutralBvLitExpr(prod, type.size)
     }
 
-    public BvLitExpr mul(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger prod =
-                neutralBvLitExprToBigInteger(this).multiply(neutralBvLitExprToBigInteger(that));
-        prod = fitBigIntegerIntoNeutralDomain(prod, getType().getSize());
-        return bigIntegerToNeutralBvLitExpr(prod, getType().getSize());
+    fun pos(): BvLitExpr {
+        var pos = signedBvLitExprToBigInteger(this)
+        pos = fitBigIntegerIntoSignedDomain(pos, type.size)
+        return bigIntegerToSignedBvLitExpr(pos, type.size)
     }
 
-    public BvLitExpr pos() {
-        BigInteger pos = signedBvLitExprToBigInteger(this);
-        pos = fitBigIntegerIntoSignedDomain(pos, getType().getSize());
-        return bigIntegerToSignedBvLitExpr(pos, getType().getSize());
+    fun neg(): BvLitExpr {
+        var neg = signedBvLitExprToBigInteger(this).negate()
+        neg = fitBigIntegerIntoSignedDomain(neg, type.size)
+        return bigIntegerToSignedBvLitExpr(neg, type.size)
     }
 
-    public BvLitExpr neg() {
-        BigInteger neg = signedBvLitExprToBigInteger(this).negate();
-        neg = fitBigIntegerIntoSignedDomain(neg, getType().getSize());
-        return bigIntegerToSignedBvLitExpr(neg, getType().getSize());
+    fun udiv(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        var div = unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that))
+        div = fitBigIntegerIntoUnsignedDomain(div, type.size)
+        return bigIntegerToUnsignedBvLitExpr(div, type.size)
     }
 
-    public BvLitExpr udiv(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger div =
-                unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that));
-        div = fitBigIntegerIntoUnsignedDomain(div, getType().getSize());
-        return bigIntegerToUnsignedBvLitExpr(div, getType().getSize());
+    fun sdiv(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        var div = signedBvLitExprToBigInteger(this).divide(signedBvLitExprToBigInteger(that))
+        div = fitBigIntegerIntoSignedDomain(div, type.size)
+        return bigIntegerToSignedBvLitExpr(div, type.size)
     }
 
-    public BvLitExpr sdiv(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger div =
-                signedBvLitExprToBigInteger(this).divide(signedBvLitExprToBigInteger(that));
-        div = fitBigIntegerIntoSignedDomain(div, getType().getSize());
-        return bigIntegerToSignedBvLitExpr(div, getType().getSize());
+    fun and(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val and = neutralBvLitExprToBigInteger(this).and(neutralBvLitExprToBigInteger(that))
+        return bigIntegerToNeutralBvLitExpr(and, type.size)
     }
 
-    public BvLitExpr and(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger and = neutralBvLitExprToBigInteger(this).and(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(and, getType().getSize());
+    fun or(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val or = neutralBvLitExprToBigInteger(this).or(neutralBvLitExprToBigInteger(that))
+        return bigIntegerToNeutralBvLitExpr(or, type.size)
     }
 
-    public BvLitExpr or(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger or = neutralBvLitExprToBigInteger(this).or(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(or, getType().getSize());
+    fun xor(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val xor = neutralBvLitExprToBigInteger(this).xor(neutralBvLitExprToBigInteger(that))
+        return bigIntegerToNeutralBvLitExpr(xor, type.size)
     }
 
-    public BvLitExpr xor(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        BigInteger xor = neutralBvLitExprToBigInteger(this).xor(neutralBvLitExprToBigInteger(that));
-        return bigIntegerToNeutralBvLitExpr(xor, getType().getSize());
+    fun not(): BvLitExpr {
+        val not = neutralBvLitExprToBigInteger(this).not()
+        return bigIntegerToNeutralBvLitExpr(not, type.size)
     }
 
-    public BvLitExpr not() {
-        BigInteger not = neutralBvLitExprToBigInteger(this).not();
-        return bigIntegerToNeutralBvLitExpr(not, getType().getSize());
-    }
-
-    public BvLitExpr shiftLeft(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-
-        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO;
-                i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-                i = i.add(BigInteger.ONE)) {
-            for (int j = 0; j < shifted.length - 1; j++) {
-                shifted[j] = shifted[j + 1];
+    fun shiftLeft(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val shifted = value.copyOf(value.size)
+        val shift = neutralBvLitExprToBigInteger(that)
+        var i = BigInteger.ZERO
+        while (i < shift) {
+            for (j in 0 until shifted.size - 1) {
+                shifted[j] = shifted[j + 1]
             }
-            shifted[shifted.length - 1] = false;
+            shifted[shifted.size - 1] = false
+            i = i.add(BigInteger.ONE)
         }
-        return Bv(shifted);
+        return of(shifted)
     }
 
-    public BvLitExpr arithShiftRight(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-
-        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        boolean insert = shifted[0];
-        for (BigInteger i = BigInteger.ZERO;
-                i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-                i = i.add(BigInteger.ONE)) {
-            for (int j = shifted.length - 1; j > 0; j--) {
-                shifted[j] = shifted[j - 1];
+    fun arithShiftRight(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val shifted = value.copyOf(value.size)
+        val insert = shifted[0]
+        val shift = neutralBvLitExprToBigInteger(that)
+        var i = BigInteger.ZERO
+        while (i < shift) {
+            for (j in shifted.size - 1 downTo 1) {
+                shifted[j] = shifted[j - 1]
             }
-            shifted[0] = insert;
+            shifted[0] = insert
+            i = i.add(BigInteger.ONE)
         }
-        return Bv(shifted);
+        return of(shifted)
     }
 
-    public BvLitExpr logicShiftRight(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-
-        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        boolean insert = false;
-        for (BigInteger i = BigInteger.ZERO;
-                i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-                i = i.add(BigInteger.ONE)) {
-            for (int j = shifted.length - 1; j > 0; j--) {
-                shifted[j] = shifted[j - 1];
+    fun logicShiftRight(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val shifted = value.copyOf(value.size)
+        val shift = neutralBvLitExprToBigInteger(that)
+        var i = BigInteger.ZERO
+        while (i < shift) {
+            for (j in shifted.size - 1 downTo 1) {
+                shifted[j] = shifted[j - 1]
             }
-            shifted[0] = insert;
+            shifted[0] = false
+            i = i.add(BigInteger.ONE)
         }
-        return Bv(shifted);
+        return of(shifted)
     }
 
-    public BvLitExpr rotateLeft(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-
-        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO;
-                i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-                i = i.add(BigInteger.ONE)) {
-            boolean rotated = shifted[0];
-            for (int j = 0; j < shifted.length - 1; j++) {
-                shifted[j] = shifted[j + 1];
+    fun rotateLeft(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val shifted = value.copyOf(value.size)
+        val shift = neutralBvLitExprToBigInteger(that)
+        var i = BigInteger.ZERO
+        while (i < shift) {
+            val rotated = shifted[0]
+            for (j in 0 until shifted.size - 1) {
+                shifted[j] = shifted[j + 1]
             }
-            shifted[shifted.length - 1] = rotated;
+            shifted[shifted.size - 1] = rotated
+            i = i.add(BigInteger.ONE)
         }
-        return Bv(shifted);
+        return of(shifted)
     }
 
-    public BvLitExpr rotateRight(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-
-        boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO;
-                i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-                i = i.add(BigInteger.ONE)) {
-            boolean rotated = shifted[shifted.length - 1];
-            for (int j = shifted.length - 1; j > 0; j--) {
-                shifted[j] = shifted[j - 1];
+    fun rotateRight(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
+        val shifted = value.copyOf(value.size)
+        val shift = neutralBvLitExprToBigInteger(that)
+        var i = BigInteger.ZERO
+        while (i < shift) {
+            val rotated = shifted[shifted.size - 1]
+            for (j in shifted.size - 1 downTo 1) {
+                shifted[j] = shifted[j - 1]
             }
-            shifted[0] = rotated;
+            shifted[0] = rotated
+            i = i.add(BigInteger.ONE)
         }
-        return Bv(shifted);
+        return of(shifted)
     }
 
-    public BvLitExpr smod(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun smod(that: BvLitExpr): BvLitExpr {
+        require(this.type == that.type)
         // Always positive semantics:
         // 5 mod 3 = 2
         // 5 mod -3 = 2
         // -5 mod 3 = 1
         // -5 mod -3 = 1
-        BigInteger result =
-                signedBvLitExprToBigInteger(this).mod(signedBvLitExprToBigInteger(that));
-        if (result.compareTo(BigInteger.ZERO) < 0) {
-            result = result.add(signedBvLitExprToBigInteger(that).abs());
+        var result = signedBvLitExprToBigInteger(this).mod(signedBvLitExprToBigInteger(that))
+        if (result < BigInteger.ZERO) {
+            result = result.add(signedBvLitExprToBigInteger(that).abs())
         }
-        assert result.compareTo(BigInteger.ZERO) >= 0;
-        return bigIntegerToSignedBvLitExpr(result, getType().getSize());
+        require(result >= BigInteger.ZERO)
+        return bigIntegerToSignedBvLitExpr(result, type.size)
     }
 
-    public BvLitExpr urem(final BvLitExpr that) {
+    fun urem(that: BvLitExpr): BvLitExpr {
         // Semantics:
         // 5 rem 3 = 2
-        BigInteger thisInt = signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = signedBvLitExprToBigInteger(that);
-        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        val thisInt = signedBvLitExprToBigInteger(this)
+        val thatInt = signedBvLitExprToBigInteger(that)
+        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), type.size)
     }
 
-    public BvLitExpr srem(final BvLitExpr that) {
+    fun srem(that: BvLitExpr): BvLitExpr {
         // Semantics:
         // 5 rem 3 = 2
         // 5 rem -3 = 2
         // -5 rem 3 = -1
         // -5 rem -3 = -1
-        BigInteger thisInt = BvUtils.signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = BvUtils.signedBvLitExprToBigInteger(that);
-        BigInteger thisAbs = thisInt.abs();
-        BigInteger thatAbs = thatInt.abs();
-        if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
-            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
-        } else if (thisInt.compareTo(BigInteger.ZERO) >= 0
-                && thatInt.compareTo(BigInteger.ZERO) < 0) {
-            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs), getType().getSize());
-        } else if (thisInt.compareTo(BigInteger.ZERO) < 0
-                && thatInt.compareTo(BigInteger.ZERO) >= 0) {
-            return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
-        } else {
-            return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        val thisInt = signedBvLitExprToBigInteger(this)
+        val thatInt = signedBvLitExprToBigInteger(that)
+        val thisAbs = thisInt.abs()
+        val thatAbs = thatInt.abs()
+        return when {
+            thisInt < BigInteger.ZERO && thatInt < BigInteger.ZERO -> {
+                bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), type.size)
+            }
+
+            thisInt >= BigInteger.ZERO && thatInt < BigInteger.ZERO -> {
+                bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs), type.size)
+            }
+
+            thisInt < BigInteger.ZERO && thatInt >= BigInteger.ZERO -> {
+                bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), type.size)
+            }
+
+            else -> {
+                bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), type.size)
+            }
         }
     }
 
-    public BoolLitExpr eq(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        return Bool(Arrays.equals(this.getValue(), that.getValue()));
+    fun eq(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
+        return Bool(this.value.contentEquals(that.value))
     }
 
-    public BoolLitExpr neq(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        return Bool(!Arrays.equals(this.getValue(), that.getValue()));
+    fun neq(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
+        return Bool(!this.value.contentEquals(that.value))
     }
 
-    public BoolLitExpr ult(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun ult(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        < 0);
+            unsignedBvLitExprToBigInteger(this) < unsignedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr ule(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun ule(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        <= 0);
+            unsignedBvLitExprToBigInteger(this) <= unsignedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr ugt(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun ugt(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        > 0);
+            unsignedBvLitExprToBigInteger(this) > unsignedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr uge(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun uge(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        >= 0);
+            unsignedBvLitExprToBigInteger(this) >= unsignedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr slt(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun slt(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) < 0);
+            signedBvLitExprToBigInteger(this) < signedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr sle(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun sle(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that))
-                        <= 0);
+            signedBvLitExprToBigInteger(this) <= signedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr sgt(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun sgt(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) > 0);
+            signedBvLitExprToBigInteger(this) > signedBvLitExprToBigInteger(that)
+        )
     }
 
-    public BoolLitExpr sge(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
+    fun sge(that: BvLitExpr): BoolLitExpr {
+        require(this.type == that.type)
         return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that))
-                        >= 0);
+            signedBvLitExprToBigInteger(this) >= signedBvLitExprToBigInteger(that)
+        )
     }
 
-    @Override
-    public int hashCode() {
-        int result = hashCode;
+    override fun compareTo(other: BvLitExpr): Int {
+        // Use unsigned comparison for ordering
+        return unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(other))
+    }
+
+
+    override fun hashCode(): Int {
+        var result = hashCode
         if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + Arrays.hashCode(value);
-            hashCode = result;
+            result = HASH_SEED
+            result = 31 * result + value.contentHashCode()
+            hashCode = result
         }
-        return result;
+        return result
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvLitExpr that = (BvLitExpr) obj;
-            return Arrays.equals(this.value, that.value);
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        } else if (other != null && this.javaClass == other.javaClass) {
+            val that = other as BvLitExpr
+            return value.contentEquals(that.value)
         } else {
-            return false;
+            return false
         }
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
+    override fun toString(): String {
+        val sb = StringBuilder()
         //        sb.append(getType().getSize());
-        sb.append("#b");
-        for (boolean bit : value) {
-            sb.append(bit ? "1" : "0");
+        sb.append("#b")
+        for (bit in value) {
+            sb.append(if (bit) "1" else "0")
         }
-        return sb.toString();
-    }
-
-    @Override
-    public int compareTo(final BvLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        return neutralBvLitExprToBigInteger(this).compareTo(neutralBvLitExprToBigInteger(that));
+        return sb.toString()
     }
 }

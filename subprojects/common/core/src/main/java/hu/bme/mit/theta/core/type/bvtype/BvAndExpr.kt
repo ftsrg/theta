@@ -13,80 +13,41 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
-import hu.bme.mit.theta.core.utils.TypeUtils;
-import java.util.List;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.MultiaryExpr
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class BvAndExpr extends MultiaryExpr<BvType, BvType> {
+@Serializable
+@SerialName("BvAnd")
+data class BvAndExpr(
+    override val ops: List<Expr<BvType>>
+) : MultiaryExpr<BvType, BvType>() {
 
-    private static final int HASH_SEED = 9125;
-    private static final String OPERATOR_LABEL = "bvand";
+    companion object {
+        private const val OPERATOR_LABEL = "bvand"
 
-    private BvAndExpr(final Iterable<? extends Expr<BvType>> ops) {
-        super(ops);
-        checkAllTypesEqual(ops);
+        @JvmStatic
+        fun of(ops: Iterable<Expr<BvType>>) = BvAndExpr(ops.toList())
+
+        @JvmStatic
+        fun create(ops: List<Expr<*>>) = BvAndExpr(ops.map { TypeUtils.castBv(it) })
     }
 
-    public static BvAndExpr of(final Iterable<? extends Expr<BvType>> ops) {
-        return new BvAndExpr(ops);
+    override val type: BvType get() = ops[0].type
+
+    override fun eval(`val`: Valuation): BvLitExpr = ops.drop(1).fold(ops[0].eval(`val`) as BvLitExpr) { acc, op ->
+        acc.and(op.eval(`val`) as BvLitExpr)
     }
 
-    public static BvAndExpr create(final List<? extends Expr<?>> ops) {
-        checkNotNull(ops);
-        return BvAndExpr.of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
-    }
+    override fun of(ops: List<Expr<BvType>>): BvAndExpr = Companion.of(ops)
 
-    @Override
-    public BvType getType() {
-        return getOps().get(0).getType();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public BvLitExpr eval(final Valuation val) {
-        return getOps().stream()
-                .skip(1)
-                .reduce(
-                        (BvLitExpr) getOps().get(0).eval(val),
-                        (op1, op2) -> (op1.and((BvLitExpr) op2.eval(val))),
-                        BvLitExpr::and);
-    }
-
-    @Override
-    public BvAndExpr with(final Iterable<? extends Expr<BvType>> ops) {
-        if (ops == getOps()) {
-            return this;
-        } else {
-            return BvAndExpr.of(ops);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvAndExpr that = (BvAndExpr) obj;
-            return this.getOps().equals(that.getOps());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }

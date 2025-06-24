@@ -34,7 +34,7 @@ data class RatDivExpr(
 ) : DivExpr<RatType>() {
 
     companion object {
-        internal const val OPERATOR_LABEL = "/"
+        private const val OPERATOR_LABEL = "/"
         @JvmStatic
         fun of(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatDivExpr(leftOp, rightOp)
         @JvmStatic

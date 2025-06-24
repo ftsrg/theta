@@ -13,71 +13,42 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type.bvtype;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+package hu.bme.mit.theta.core.type.bvtype
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
+import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-public final class BvPosExpr extends PosExpr<BvType> {
+@Serializable
+@SerialName("BvPos")
+data class BvPosExpr(
+    override val op: Expr<BvType>
+) : PosExpr<BvType>() {
 
-    private static final int HASH_SEED = 8962;
-    private static final String OPERATOR_LABEL = "bvpos";
+    companion object {
+        private const val OPERATOR_LABEL = "bvpos"
 
-    private BvPosExpr(final Expr<BvType> op) {
-        super(op);
+        @JvmStatic
+        fun of(op: Expr<BvType>) = BvPosExpr(op)
+
+        @JvmStatic
+        fun create(op: Expr<*>) = BvPosExpr(TypeUtils.castBv(op))
     }
 
-    public static BvPosExpr of(final Expr<BvType> op) {
-        return new BvPosExpr(op);
+    override val type: BvType get() = op.type
+
+    override fun eval(`val`: Valuation): BvLitExpr {
+        val opVal = op.eval(`val`) as BvLitExpr
+        return opVal.pos()
     }
 
-    public static BvPosExpr create(final Expr<?> op) {
-        final Expr<BvType> newOp = castBv(op);
-        return BvPosExpr.of(newOp);
-    }
+    override fun of(op: Expr<BvType>): BvPosExpr = Companion.of(op)
 
-    @Override
-    public BvType getType() {
-        return getOp().getType();
-    }
+    override val operatorLabel: String get() = OPERATOR_LABEL
 
-    @Override
-    public BvLitExpr eval(final Valuation val) {
-        final BvLitExpr opVal = (BvLitExpr) getOp().eval(val);
-        return opVal.pos();
-    }
-
-    @Override
-    public BvPosExpr with(final Expr<BvType> op) {
-        if (op == getOp()) {
-            return this;
-        } else {
-            return BvPosExpr.of(op);
-        }
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        } else if (obj != null && this.getClass() == obj.getClass()) {
-            final BvPosExpr that = (BvPosExpr) obj;
-            return this.getOp().equals(that.getOp());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    protected int getHashSeed() {
-        return HASH_SEED;
-    }
-
-    @Override
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
+    override fun toString(): String = super.toString()
 }
