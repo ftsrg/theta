@@ -46,5 +46,6 @@ data class RatPosExpr(
 
     override fun of(op: Expr<RatType>): RatPosExpr = Companion.of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
 

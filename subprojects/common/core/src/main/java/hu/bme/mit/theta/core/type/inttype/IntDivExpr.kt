@@ -51,5 +51,6 @@ data class IntDivExpr(
         Companion.of(leftOp, rightOp)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
 

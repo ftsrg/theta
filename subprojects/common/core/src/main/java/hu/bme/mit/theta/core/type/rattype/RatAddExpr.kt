@@ -63,5 +63,7 @@ class RatAddExpr(
     override fun of(ops: List<Expr<RatType>>): RatAddExpr = of(ops)
 
     override val operatorLabel: String = OPERATOR_LABEL
+
+    override fun toString(): String = super.toString()
 }
 

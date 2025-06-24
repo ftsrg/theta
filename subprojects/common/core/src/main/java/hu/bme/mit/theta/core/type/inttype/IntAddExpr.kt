@@ -56,5 +56,6 @@ data class IntAddExpr(
         Companion.of(ops)
 
     override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
 

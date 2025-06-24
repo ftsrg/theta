@@ -47,5 +47,6 @@ data class IntPosExpr(
 
     override fun of(op: Expr<IntType>): IntPosExpr = Companion.of(op)
     override val operatorLabel: String get() = OPERATOR_LABEL
+    override fun toString(): String = super.toString()
 }
 
