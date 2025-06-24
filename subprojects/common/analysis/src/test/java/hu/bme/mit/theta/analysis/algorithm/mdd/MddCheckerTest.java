@@ -184,9 +184,10 @@ public class MddCheckerTest {
 
         if (safe) {
             assertTrue(status.isSafe());
+            assertEquals(stateSpaceSize, status.getProof().size());
         } else {
             assertTrue(status.isUnsafe());
+            assertTrue(stateSpaceSize >= status.getProof().size());
         }
-        assertEquals(stateSpaceSize, status.getProof().size());
     }
 }

@@ -110,10 +110,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       callStmt: InvokeLabel ->
       handleIsnan(builder, callStmt)
     }
-    addHandler(arrayOf("trunc")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+    addHandler(arrayOf("trunc", "truncf", "truncl")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
       handleTrunc(builder, callStmt)
     }
-    addHandler(arrayOf("ceil")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+    addHandler(arrayOf("ceil", "ceilf", "ceill")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
       handleCeil(builder, callStmt)
     }
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->

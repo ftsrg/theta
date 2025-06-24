@@ -38,9 +38,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
 
 class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
-  val xcfa: XCFA,
+  val xcfa: XCFA?,
   val config: XcfaConfig<F, B>,
-  val parseContext: ParseContext,
+  val parseContext: ParseContext?,
   val logger: Logger,
 ) : SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> {
 
@@ -50,31 +50,52 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
   override fun check(): SafetyResult<EmptyProof, EmptyCex> {
     val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
-
-    val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
-    val parseContextJson =
-      CachingFileSerializer.serialize("parseContext.json", parseContext) {
-        getGson(xcfa).toJson(parseContext)
-      }
-
-    val processConfig =
-      config.copy(
-        inputConfig = config.inputConfig.copy(input = xcfaJson, parseCtx = parseContextJson),
-        frontendConfig = config.frontendConfig.copy(inputType = InputType.JSON),
-        backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
-        outputConfig =
-          config.outputConfig.copy(
-            resultFolder = tempDir.toFile(),
-            cOutputConfig = COutputConfig(disable = true),
-            xcfaOutputConfig = XcfaOutputConfig(disable = true),
-            argConfig =
-              config.outputConfig.argConfig.copy(disable = false), // we need the arg to be produced
-          ),
+    Runtime.getRuntime()
+      .addShutdownHook(
+        Thread {
+          if (tempDir.toFile().exists()) {
+            tempDir.toFile().deleteRecursively()
+          }
+        }
       )
 
     val configJson =
-      CachingFileSerializer.serialize("config.json", processConfig) {
-        getGson(xcfa).toJson(processConfig)
+      if (config.backendConfig.parseInProcess) {
+
+        val config =
+          config.copy(
+            outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
+            backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
+          )
+        CachingFileSerializer.serialize("config.json", config) { getGson().toJson(config) }
+      } else {
+        xcfa!!
+        parseContext!!
+        val xcfaJson =
+          CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
+        val parseContextJson =
+          CachingFileSerializer.serialize("parseContext.json", parseContext) {
+            getGson(xcfa).toJson(parseContext)
+          }
+
+        val config =
+          config.copy(
+            inputConfig = config.inputConfig.copy(input = xcfaJson, parseCtx = parseContextJson),
+            frontendConfig = config.frontendConfig.copy(inputType = InputType.JSON),
+            backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
+            outputConfig =
+              config.outputConfig.copy(
+                resultFolder = tempDir.toFile(),
+                cOutputConfig = COutputConfig(disable = true),
+                xcfaOutputConfig = XcfaOutputConfig(disable = true),
+                chcOutputConfig = ChcOutputConfig(disable = true),
+                argConfig =
+                  config.outputConfig.argConfig.copy(
+                    disable = false
+                  ), // we need the arg to be produced
+              ),
+          )
+        CachingFileSerializer.serialize("config.json", config) { getGson(xcfa).toJson(config) }
       }
 
     val heapSize =
@@ -86,6 +107,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         listOf(
             ProcessHandle.current().info().command().orElse("java"),
             "-Xss120m",
+            heapSize,
             heapSize,
             "-cp",
             File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,

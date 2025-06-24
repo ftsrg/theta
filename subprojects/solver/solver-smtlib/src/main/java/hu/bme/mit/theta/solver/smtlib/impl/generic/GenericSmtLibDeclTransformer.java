@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
@@ -111,6 +112,6 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     }
 
     private String symbolNameFor(final Decl<?> decl) {
-        return String.format("%s_%d", decl.getName(), symbolCount++);
+        return encodeSymbol(String.format("%s_%d", decl.getName(), symbolCount++));
     }
 }

@@ -98,6 +98,7 @@ class FrontendXcfaBuilder(
       offsetStart = source.offsetStart.takeIf { it != -1 },
       offsetEnd = source.offsetEnd.takeIf { it != -1 },
       sourceText = source.sourceText,
+      astNodes = listOf(source),
     )
 
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
@@ -336,7 +337,7 @@ class FrontendXcfaBuilder(
     val rValue = statement.getrValue()
     var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
@@ -427,7 +428,7 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
@@ -437,7 +438,7 @@ class FrontendXcfaBuilder(
         location,
         StmtLabel(
           statement.assumeStmt,
-          choiceType = ChoiceType.MAIN_PATH,
+          choiceType = ChoiceType.NONE,
           metadata = getMetadata(statement),
         ),
         metadata = getMetadata(statement),
@@ -454,10 +455,10 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(edge)
     check(breakLoc != null)
-    edge = XcfaEdge(initLoc, breakLoc, metadata = getMetadata(statement))
+    edge = XcfaEdge(initLoc, breakLoc, metadata = EmptyMetaData)
     val unreachableLoc =
       XcfaLocation("Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))
     builder.addLoc(unreachableLoc)
@@ -473,11 +474,11 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val ret = statement.ret
     val myParams = statement.params
-    var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
+    var initLoc = getLoc(builder, statement.id, EmptyMetaData)
     builder.addLoc(initLoc)
-    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
-    val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
+    val location = getAnonymousLoc(builder, metadata = EmptyMetaData)
     builder.addLoc(location)
     val params: MutableList<Expr<*>> = ArrayList()
     builder.addVar(ret)
@@ -515,9 +516,9 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val preStatements = statement.preStatements
     val postStatements = statement.postStatements
-    val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
+    val initLoc = getLoc(builder, statement.id, metadata = EmptyMetaData)
     builder.addLoc(initLoc)
-    val edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    val edge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(edge)
     lastLoc = initLoc
     if (preStatements != null)
@@ -542,11 +543,11 @@ class FrontendXcfaBuilder(
     val returnLoc = param.returnLoc
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    var edge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(edge)
     check(continueLoc != null)
-    edge = XcfaEdge(initLoc, continueLoc, metadata = getMetadata(statement))
-    val unreachableLoc =
+    edge = XcfaEdge(initLoc, continueLoc, metadata = EmptyMetaData)
+    val unreachableLoc: XcfaLocation =
       XcfaLocation("Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))
     builder.addLoc(unreachableLoc)
     builder.addEdge(edge)
@@ -583,7 +584,7 @@ class FrontendXcfaBuilder(
     builder.addLoc(outerInnerGuard)
     builder.addLoc(innerEndLoc)
     builder.addLoc(initLoc)
-    var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    var xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     val lastBody = body.accept(this, ParamPack(builder, initLoc, endLoc, innerEndLoc, returnLoc))
     xcfaEdge = XcfaEdge(lastBody, innerEndLoc, metadata = getMetadata(statement))
@@ -599,9 +600,9 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(guard),
+        metadata = getMetadata(body),
       )
-    xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
@@ -612,17 +613,17 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(guard),
+        metadata = getMetadata(body),
       )
-    xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
     val outerLastGuard =
       buildPostStatement(guard, ParamPack(builder, outerInnerGuard, null, null, null))
     val innerLastGuard =
       buildPostStatement(guard, ParamPack(builder, innerInnerGuard, null, null, null))
-    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
-    xcfaEdge = XcfaEdge(innerLastGuard, initLoc, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(innerLastGuard, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     return endLoc
   }
@@ -675,10 +676,10 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = if (guard == null) getMetadata(statement) else getMetadata(guard),
+        metadata = if (guard == null) getMetadata(statement) else getMetadata(body),
       )
     check(lastTest != null)
-    xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = assume.metadata)
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
@@ -691,9 +692,9 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = if (guard == null) getMetadata(statement) else getMetadata(guard),
+        metadata = if (guard == null) getMetadata(statement) else getMetadata(body),
       )
-    xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = assume1.metadata)
     builder.addEdge(xcfaEdge)
     val innerLastGuard =
       if (guard == null) endInit
@@ -701,15 +702,15 @@ class FrontendXcfaBuilder(
     val lastBody =
       if (body == null) innerLastGuard
       else body.accept(this, ParamPack(builder, innerLastGuard, endLoc, startIncrement, returnLoc))
-    xcfaEdge = XcfaEdge(lastBody, startIncrement, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(lastBody, startIncrement, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     if (increment != null) {
       val lastIncrement =
         increment.accept(this, ParamPack(builder, startIncrement, null, null, returnLoc))
-      xcfaEdge = XcfaEdge(lastIncrement, lastInit, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(lastIncrement, lastInit, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     } else {
-      xcfaEdge = XcfaEdge(startIncrement, lastInit, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(startIncrement, lastInit, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     }
     val outerLastGuard =
@@ -719,7 +720,7 @@ class FrontendXcfaBuilder(
           guard,
           ParamPack(builder, outerLastTest, endLoc, startIncrement, returnLoc),
         )
-    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     return endLoc
   }
@@ -781,9 +782,9 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(guard),
+        metadata = getMetadata(body),
       )
-    xcfaEdge = XcfaEdge(endGuard, mainBranch, assume, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(endGuard, mainBranch, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
     val assume1 =
       StmtLabel(
@@ -794,9 +795,9 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(guard),
+        metadata = getMetadata(body),
       )
-    xcfaEdge = XcfaEdge(endGuard, elseBranch, assume1, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(endGuard, elseBranch, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
     val mainAfterGuard =
       buildPostStatement(guard, ParamPack(builder, mainBranch, breakLoc, continueLoc, returnLoc))
@@ -810,15 +811,15 @@ class FrontendXcfaBuilder(
           this,
           ParamPack(builder, elseAfterGuard, breakLoc, continueLoc, returnLoc),
         )
-      xcfaEdge = XcfaEdge(elseEnd, endLoc, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(elseEnd, endLoc, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     } else {
       val elseAfterGuard =
         buildPostStatement(guard, ParamPack(builder, elseBranch, breakLoc, continueLoc, returnLoc))
-      xcfaEdge = XcfaEdge(elseAfterGuard, endLoc, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(elseAfterGuard, endLoc, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     }
-    xcfaEdge = XcfaEdge(mainEnd, endLoc, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(mainEnd, endLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     return endLoc
   }
@@ -847,7 +848,7 @@ class FrontendXcfaBuilder(
     val expr = statement.expr
     val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
     builder.addLoc(initLoc)
-    val xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
+    val xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     val endExpr =
       expr?.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: initLoc
@@ -909,7 +910,7 @@ class FrontendXcfaBuilder(
       builder.addLoc(location)
       var xcfaEdge: XcfaEdge
       if (lastLocation != null) {
-        xcfaEdge = XcfaEdge(lastLocation, location, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(lastLocation, location, metadata = EmptyMetaData)
         builder.addEdge(xcfaEdge)
       }
       if (cStatement is CCase) {
@@ -922,9 +923,9 @@ class FrontendXcfaBuilder(
           StmtLabel(
             Assume(AbstractExprs.Eq(testValue.expression, cStatement.expr.expression)),
             choiceType = ChoiceType.MAIN_PATH,
-            metadata = getMetadata(testValue),
+            metadata = getMetadata(cStatement),
           )
-        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
         builder.addEdge(xcfaEdge)
       } else if (cStatement is CDefault) {
         val afterGuard =
@@ -938,14 +939,14 @@ class FrontendXcfaBuilder(
             choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect?
             metadata = getMetadata(cStatement),
           )
-        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
         builder.addEdge(xcfaEdge)
       }
       lastLocation =
         cStatement.accept(this, ParamPack(builder, location, endLoc, continueLoc, returnLoc))
     }
     if (lastLocation != null) {
-      val xcfaEdge = XcfaEdge(lastLocation, endLoc, metadata = getMetadata(statement))
+      val xcfaEdge: XcfaEdge = XcfaEdge(lastLocation, endLoc, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     }
     return endLoc
@@ -986,9 +987,9 @@ class FrontendXcfaBuilder(
             )
           ),
           choiceType = ChoiceType.MAIN_PATH,
-          metadata = getMetadata(guard),
+          metadata = getMetadata(body),
         )
-      xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(body))
       builder.addEdge(xcfaEdge)
       val assume1 =
         StmtLabel(
@@ -999,19 +1000,19 @@ class FrontendXcfaBuilder(
             )
           ),
           choiceType = ChoiceType.ALTERNATIVE_PATH,
-          metadata = getMetadata(statement),
+          metadata = getMetadata(body),
         )
-      xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(body))
       builder.addEdge(xcfaEdge)
       val lastGuard =
         buildPostStatement(guard, ParamPack(builder, innerLoop, endLoc, initLoc, returnLoc))
       val lastBody = body.accept(this, ParamPack(builder, lastGuard, endLoc, initLoc, returnLoc))
-      xcfaEdge = XcfaEdge(lastBody, initLoc, metadata = getMetadata(statement))
+      xcfaEdge = XcfaEdge(lastBody, initLoc, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     }
     val outerLastGuard =
       buildPostStatement(guard, ParamPack(builder, outerBeforeGuard, null, null, null))
-    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = getMetadata(statement))
+    xcfaEdge = XcfaEdge(outerLastGuard, endLoc, metadata = EmptyMetaData)
     builder.addEdge(xcfaEdge)
     return endLoc
   }
@@ -1103,6 +1104,10 @@ class FrontendXcfaBuilder(
       this.continueLoc = continueLoc
       this.returnLoc = returnLoc
     }
+  }
+
+  override fun visit(statement: CNullStatement, param: ParamPack): XcfaLocation {
+    return param.lastLoc
   }
 }
 

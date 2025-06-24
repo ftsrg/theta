@@ -67,7 +67,7 @@ class ConfigNode(
 
   override fun execute(): Pair<Any, Any> {
     println("Current configuration: $config")
-    return Pair(config, check(config))
+    return Pair(Pair(name, config), check(config))
   }
 
   override fun visualize(): String =

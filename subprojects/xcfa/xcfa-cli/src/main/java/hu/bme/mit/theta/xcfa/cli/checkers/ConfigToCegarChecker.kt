@@ -20,25 +20,29 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.utils.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -48,11 +52,7 @@ fun getCegarChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<
-  ARG<XcfaState<*>, XcfaAction>,
-  Trace<XcfaState<PtrState<*>>, XcfaAction>,
-  XcfaPrec<*>,
-> {
+): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
   if (
     config.inputConfig.property == ErrorDetection.DATA_RACE &&
@@ -167,20 +167,62 @@ fun getCegarChecker(
   }
 
   return object :
-    SafetyChecker<
-      ARG<XcfaState<*>, XcfaAction>,
-      Trace<XcfaState<PtrState<*>>, XcfaAction>,
-      XcfaPrec<*>,
-    > {
+    SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     override fun check(
       prec: XcfaPrec<*>?
-    ): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
-      return cegarChecker.check(prec)
-        as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>
+    ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+      val ret = cegarChecker.check(prec)
+      if (ret.isSafe) {
+        val arg = ret.asSafe().proof
+
+        val locmap =
+          xcfa.procedures
+            .flatMap { it.locs }
+            .associateWith { loc ->
+              arg.nodes
+                .filter {
+                  (it.state as XcfaState<PtrState<*>>).processes.any { it.value.locs.peek() == loc }
+                }
+                .map {
+                  (it.state as XcfaState<PtrState<*>>).sGlobal.innerState.let { s ->
+                    val declMap =
+                      (it.state as XcfaState<PtrState<*>>)
+                        .processes
+                        .map {
+                          it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
+                        }
+                        .reduce { a, b -> a + b }
+                    when (s) {
+                      is ExplState -> {
+                        if (s.isBottom) {
+                          ExplState.bottom()
+                        } else {
+                          ExplState.of(s.`val`.changeVars(declMap))
+                        }
+                      }
+                      is PredState -> {
+                        PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
+                      }
+                      else -> {
+                        error("Unknown state: ${s}")
+                      }
+                    }
+                  }
+                }
+                .toList()
+            }
+
+        return SafetyResult.safe(LocationInvariants(locmap))
+      } else {
+        return SafetyResult.unsafe(
+          ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+          LocationInvariants(),
+        )
+      }
     }
 
     override fun check():
-      SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+      SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
       return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
     }
   }

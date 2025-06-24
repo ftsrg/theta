@@ -40,6 +40,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -58,6 +59,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -84,6 +86,7 @@
               "colNumberStop": 19,
               "offsetStart": 0,
               "offsetEnd": 19,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -140,6 +143,7 @@
               "colNumberStop": 0,
               "offsetStart": 22,
               "offsetEnd": 120,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a[2], b[3];\n    a[0] \u003d 12;\n    b[3] \u003d a[0];\n    if(b[3] \u003e 11) reach_error();\n}"
             }
           }
@@ -158,6 +162,7 @@
               "colNumberStop": 0,
               "offsetStart": 22,
               "offsetEnd": 120,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a[2], b[3];\n    a[0] \u003d 12;\n    b[3] \u003d a[0];\n    if(b[3] \u003e 11) reach_error();\n}"
             }
           }
@@ -170,6 +175,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -207,6 +213,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 91,
                     "offsetEnd": 118,
+                    "astNodes": [],
                     "sourceText": "if(b[3] \u003e 11) reach_error();"
                   }
                 },
@@ -223,6 +230,7 @@
               "colNumberStop": 31,
               "offsetStart": 22,
               "offsetEnd": 120,
+              "astNodes": [],
               "sourceText": "if(b[3] \u003e 11) reach_error();if(b[3] \u003e 11) reach_error();int main() {\n    int a[2], b[3];\n    a[0] \u003d 12;\n    b[3] \u003d a[0];\n    if(b[3] \u003e 11) reach_error();\n}"
             }
           }
@@ -258,6 +266,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -268,6 +277,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -284,6 +294,7 @@
               "colNumberStop": 31,
               "offsetStart": 0,
               "offsetEnd": 120,
+              "astNodes": [],
               "sourceText": "int main() {\n    int a[2], b[3];\n    a[0] \u003d 12;\n    b[3] \u003d a[0];\n    if(b[3] \u003e 11) reach_error();\n}int a[2], b[3];\n    a[0] \u003d 12;\n    b[3] \u003d a[0];\n    if(b[3] \u003e 11) reach_error();int a[2], b[3];a[0] \u003d 12;a[0] \u003d 12;a[0] \u003d 12;b[3] \u003d a[0];b[3] \u003d a[0];b[3] \u003d a[0];if(b[3] \u003e 11) reach_error();if(b[3] \u003e 11) reach_error();if(b[3] \u003e 11) reach_error();"
             }
           }
@@ -309,6 +320,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 91,
                     "offsetEnd": 118,
+                    "astNodes": [],
                     "sourceText": "if(b[3] \u003e 11) reach_error();"
                   }
                 },
@@ -325,6 +337,7 @@
               "colNumberStop": 31,
               "offsetStart": 91,
               "offsetEnd": 118,
+              "astNodes": [],
               "sourceText": "if(b[3] \u003e 11) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }

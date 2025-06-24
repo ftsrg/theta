@@ -71,6 +71,10 @@ fun getPortfolioChecker(
 
       "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "CHC-COMP" -> chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "CHC-COMP-MODELS" ->
+        chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       "TESTING",
       "CHC",
       "HORN",
@@ -93,12 +97,13 @@ fun getPortfolioChecker(
       }
     }
 
-  val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
+  val result = portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
   logger.write(
     Logger.Level.RESULT,
-    "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
+    "Config ${result.first.second} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
   )
+  logger.write(Logger.Level.RESULT, "success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<

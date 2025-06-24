@@ -35,6 +35,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
@@ -172,6 +173,7 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
 
         logger.write(Level.INFO, "Created initial node");
 
+        final var transNodes = new ArrayList<MddHandle>();
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
         for (Stmt stmt : new ArrayList<>(envTran.getStmts())) {
             final var stmtToExpr = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
@@ -195,9 +197,19 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
                             .checkInNode(
                                     MddExpressionTemplate.of(
                                             stmtUnfold, o -> (Decl) o, solverPool));
+            transNodes.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
         final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
+
+        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
+        final MddHandle propNode =
+                stateSig.getTopVariableHandle()
+                        .checkInNode(
+                                MddExpressionTemplate.of(
+                                        negatedPropExpr, o -> (Decl) o, solverPool));
+        final AbstractNextStateDescriptor targetedNextStates =
+                OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
 
         logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
@@ -217,17 +229,19 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
         final MddHandle stateSpace =
                 stateSpaceProvider.compute(
                         MddNodeInitializer.of(initResult),
-                        nextStates,
+                        targetedNextStates,
                         stateSig.getTopVariableHandle());
 
-        logger.write(Level.INFO, "Enumerated state-space");
+        //        final var provider2 = new
+        // GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        //        final MddHandle stateSpace2 =
+        //                provider2.compute(
+        //                        MddNodeInitializer.of(initResult),
+        //                        nextStates,
+        //                        stateSig.getTopVariableHandle());
+        //        stateSpace2.get(0);
 
-        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
-        final MddHandle propNode =
-                stateSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(
-                                        negatedPropExpr, o -> (Decl) o, solverPool));
+        logger.write(Level.INFO, "Enumerated state-space");
 
         final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
 
@@ -246,6 +260,24 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
                         stateSpaceProvider.getHitCount(),
                         stateSpaceProvider.getQueryCount(),
                         stateSpaceProvider.getCacheSize());
+
+        System.out.println(
+                stateSpaceProvider.getHitCount()
+                        + " "
+                        + stateSpaceProvider.getQueryCount()
+                        + " "
+                        + stateSpaceProvider.getCacheSize());
+        //        System.out.println(provider2.getHitCount() + " " + provider2.getQueryCount() + " "
+        // + provider2.getCacheSize());
+
+        //        var transCount = 0;
+        //        for(var transNode: transNodes) {
+        //            final var explTrans =
+        //                    MddExplicitRepresentationExtractor.INSTANCE.transform(
+        //                            transNode, transSig.getTopVariableHandle());
+        //            transCount += MddInterpreter.calculateNonzeroCount(explTrans);
+        //        }
+        //        System.out.println("Trans: " + transCount);
 
         final SafetyResult<MddProof, MddCex> result;
         if (violatingSize != 0) {

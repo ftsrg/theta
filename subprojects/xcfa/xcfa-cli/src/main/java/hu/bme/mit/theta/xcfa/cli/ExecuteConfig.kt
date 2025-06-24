@@ -51,13 +51,14 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -75,13 +76,22 @@ fun runConfig(
 
   validateInputOptions(config, logger, uniqueLogger)
 
-  val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+  val (xcfa, mcm, parseContext) =
+    if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+      logger.writeln(INFO, "Not parsing input because a worker process will handle it later.")
+      Triple(null, null, null)
+    } else {
 
-  preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+
+      preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      Triple(xcfa, mcm, parseContext)
+    }
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-  postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postVerificationLogging(xcfa, result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
 }
@@ -177,7 +187,6 @@ fun frontend(
   }
 
   val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)
@@ -216,9 +225,9 @@ fun frontend(
 }
 
 private fun backend(
-  xcfa: XCFA,
-  mcm: MCM,
-  parseContext: ParseContext,
+  xcfa: XCFA?,
+  mcm: MCM?,
+  parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
@@ -228,12 +237,12 @@ private fun backend(
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
     if (
-      xcfa.procedures.all {
+      xcfa?.procedures?.all {
         it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
-      }
+      } ?: false
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-      logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+      logger.write(Logger.Level.RESULT, "Input is trivially safe\n")
 
       logger.write(RESULT, result.toString() + "\n")
       result
@@ -242,7 +251,7 @@ private fun backend(
 
       logger.write(
         Logger.Level.INFO,
-        "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n",
+        "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}\n",
       )
 
       val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
@@ -252,7 +261,7 @@ private fun backend(
           }
           .let ResultMapper@{ result ->
             when {
-              result.isSafe && xcfa.unsafeUnrollUsed -> {
+              result.isSafe && xcfa?.unsafeUnrollUsed ?: false -> {
                 // cannot report safe if force unroll was used
                 logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                 if (config.outputConfig.acceptUnreliableSafe)
@@ -315,7 +324,7 @@ private fun backend(
           }
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
             } ms)\n",
@@ -341,14 +350,20 @@ private fun preVerificationLogging(
 
       logger.write(
         Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
       )
 
       if (!config.outputConfig.chcOutputConfig.disable) {
         xcfa.procedures.forEach {
           try {
             val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-            chcFile.writeText(it.toSMT2CHC())
+            chcFile.writeText(
+              it.toSMT2CHC(
+                config.inputConfig.property == ErrorDetection.TERMINATION,
+                (config.backendConfig.specConfig as? HornConfig)?.rankingFuncConstr
+                  ?: RankingFunction.ADD,
+              )
+            )
           } catch (e: Exception) {
             logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
           }
@@ -387,14 +402,15 @@ private fun preVerificationLogging(
 }
 
 private fun postVerificationLogging(
+  xcfa: XCFA?,
   safetyResult: SafetyResult<*, *>,
-  mcm: MCM,
-  parseContext: ParseContext,
+  mcm: MCM?,
+  parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
 ) {
-  if (config.outputConfig.enableOutput) {
+  if (config.outputConfig.enableOutput && mcm != null && parseContext != null) {
     try {
       // we only want to log the files if the current configuration is not --in-process or portfolio
       if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
@@ -408,6 +424,12 @@ private fun postVerificationLogging(
         Logger.Level.INFO,
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
       )
+
+      if (config.frontendConfig.inputType == InputType.CHC && xcfa != null) {
+        val chcAnswer = writeModel(xcfa, safetyResult)
+        val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
+        chcAnswerFile.writeText(chcAnswer)
+      }
 
       // TODO eliminate the need for the instanceof check
       if (
@@ -473,7 +495,7 @@ private fun postVerificationLogging(
             config.inputConfig.property,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
-        YmlWitnessWriter()
+        YamlWitnessWriter()
           .writeWitness(
             safetyResult,
             config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
