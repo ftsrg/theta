@@ -67,7 +67,7 @@ public final class BfsTest {
         }
 
         BfsProvider bfs =
-                new BfsProvider(variableOrder, new LegacyRelationalProductProvider(variableOrder));
+                new BfsProvider(variableOrder);
 
         final MddHandle stateSpace =
                 bfs.compute(

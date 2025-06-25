@@ -17,10 +17,12 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -39,12 +41,12 @@ public class XstsMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    //                    {
-                    //                        "src/test/resources/model/spacecraft.xsts",
-                    //
-                    // "src/test/resources/property/transmitting_battery_40.prop",
-                    //                        false
-                    //                    },
+                                        {
+                                            "src/test/resources/model/spacecraft.xsts",
+
+                     "src/test/resources/property/transmitting_battery_40.prop",
+                                            false
+                                        },
 
                     //                { "src/test/resources/model/trafficlight.xsts",
                     // "src/test/resources/property/green_and_red.prop", true},
@@ -211,7 +213,7 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final SafetyResult<MddProof, MddCex> status;
+        final SafetyResult<MddProof, Trace<ExplState, XstsAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final XstsMddChecker checker =
                     XstsMddChecker.create(xsts, solverPool, logger, iterationStrategy);
@@ -222,6 +224,7 @@ public class XstsMddCheckerTest {
             assertTrue(status.isSafe());
         } else {
             assertTrue(status.isUnsafe());
+            assertTrue(status.asUnsafe().getCex().length() > 0);
         }
     }
 }
