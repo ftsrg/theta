@@ -65,7 +65,7 @@ object SmartBoolExprs {
   }
 
   // Convenience methods
-  @JvmStatic fun And(vararg ops: Expr<BoolType>) = And(ops.toList())
+  @JvmStatic @SafeVarargs fun And(vararg ops: Expr<BoolType>) = And(ops.toList())
 
-  @JvmStatic fun Or(vararg ops: Expr<BoolType>) = Or(ops.toList())
+  @JvmStatic @SafeVarargs fun Or(vararg ops: Expr<BoolType>) = Or(ops.toList())
 }

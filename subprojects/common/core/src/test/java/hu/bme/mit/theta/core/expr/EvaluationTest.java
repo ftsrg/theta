@@ -15,36 +15,37 @@
  */
 package hu.bme.mit.theta.core.expr;
 
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import kotlin.Pair;
+import org.junit.Test;
+
+import java.util.ArrayList;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToRat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
@@ -55,22 +56,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 import static org.junit.Assert.assertEquals;
-
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import java.util.ArrayList;
-import org.junit.Test;
 
 public class EvaluationTest {
 
@@ -369,9 +356,9 @@ public class EvaluationTest {
 
     @Test
     public void testRead() {
-        var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Int(2)));
+        var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Int(2)));
         var arr = Array(elems, Int(100), Array(Int(), Int()));
         assertEquals(Int(1), evaluate(Read(arr, Int(0))));
         assertEquals(Int(2), evaluate(Read(arr, Int(1))));
@@ -380,9 +367,9 @@ public class EvaluationTest {
 
     @Test
     public void testWrite() {
-        var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Int(2)));
+        var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Int(2)));
         var arr = Array(elems, Int(100), Array(Int(), Int()));
 
         var arr1 = Write(arr, Int(0), Int(34));
@@ -399,11 +386,11 @@ public class EvaluationTest {
 
     @Test
     public void testArrayInit() {
-        var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
+        var elems = new ArrayList<Pair<Expr<IntType>, Expr<IntType>>>();
         VarDecl<IntType> noname = Var("noname", Int());
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Int(2)));
-        elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Int(2)));
+        elems.add(new Pair<>(Int(2), Add(noname.getRef(), Int(3))));
         var arr = ArrayInit(elems, Int(100), Array(Int(), Int()));
 
         ImmutableValuation val = ImmutableValuation.builder().put(noname, Int(1)).build();

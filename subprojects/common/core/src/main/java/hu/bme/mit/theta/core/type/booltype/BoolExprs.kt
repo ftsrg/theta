@@ -49,7 +49,7 @@ object BoolExprs {
   fun Exists(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) = ExistsExpr.of(paramDecls, op)
 
   // Convenience methods
-  @JvmStatic fun And(vararg ops: Expr<BoolType>) = AndExpr.of(ops.asList())
+  @JvmStatic @SafeVarargs fun And(vararg ops: Expr<BoolType>) = AndExpr.of(ops.asList())
 
-  @JvmStatic fun Or(vararg ops: Expr<BoolType>) = OrExpr.of(ops.asList())
+  @JvmStatic @SafeVarargs fun Or(vararg ops: Expr<BoolType>) = OrExpr.of(ops.asList())
 }

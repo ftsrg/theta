@@ -15,57 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToRat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
-import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -80,9 +29,45 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import kotlin.Pair;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
+import static org.junit.Assert.*;
 
 public class ExprSimplifierTest {
 
@@ -679,9 +664,9 @@ public class ExprSimplifierTest {
     // Array
     @Test
     public void testArrayRead() {
-        var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Int(2)));
+        var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Int(2)));
         var arr = Array(elems, Int(100), Array(Int(), Int()));
         assertEquals(Int(1), simplify(Read(arr, Int(0))));
         assertEquals(Int(2), simplify(Read(arr, Int(1))));
@@ -690,8 +675,8 @@ public class ExprSimplifierTest {
 
     @Test
     public void testArrayWrite() {
-        var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-        elems.add(Tuple2.of(Int(0), Int(1)));
+        var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+        elems.add(new Pair<>(Int(0), Int(1)));
         var arr = Array(elems, Int(100), Array(Int(), Int()));
         var newArr = simplify(Write(arr, Int(5), Int(6)));
         assertTrue(newArr instanceof ArrayLitExpr);
@@ -702,15 +687,15 @@ public class ExprSimplifierTest {
 
     @Test
     public void testArrayInit() {
-        var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Add(Int(1), Int(2))));
+        var elems = new ArrayList<Pair<Expr<IntType>, Expr<IntType>>>();
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Add(Int(1), Int(2))));
         var initArr = ArrayInit(elems, Int(100), Array(Int(), Int()));
         var litArr = simplify(initArr);
         assertTrue(litArr instanceof ArrayLitExpr);
 
         VarDecl<IntType> noname = Var("noname", Int());
-        elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(1))));
+        elems.add(new Pair<>(Int(2), Add(noname.getRef(), Int(1))));
         var arr = ArrayInit(elems, Int(100), Array(Int(), Int()));
         var newArr = simplify(arr);
         assertTrue(newArr instanceof ArrayInitExpr);

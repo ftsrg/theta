@@ -33,7 +33,7 @@ object IntExprs {
 
   @JvmStatic fun Add(ops: Iterable<Expr<IntType>>) = IntAddExpr.of(ops)
 
-  @JvmStatic fun Add(vararg ops: Expr<IntType>) = IntAddExpr(ops.asList())
+  @JvmStatic @SafeVarargs fun Add(vararg ops: Expr<IntType>) = IntAddExpr(ops.asList())
 
   @JvmStatic fun Sub(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntSubExpr(leftOp, rightOp)
 
@@ -43,7 +43,7 @@ object IntExprs {
 
   @JvmStatic fun Mul(ops: Iterable<Expr<IntType>>) = IntMulExpr.of(ops)
 
-  @JvmStatic fun Mul(vararg ops: Expr<IntType>) = IntMulExpr(ops.asList())
+  @JvmStatic @SafeVarargs fun Mul(vararg ops: Expr<IntType>) = IntMulExpr(ops.asList())
 
   @JvmStatic fun Div(leftOp: Expr<IntType>, rightOp: Expr<IntType>) = IntDivExpr(leftOp, rightOp)
 

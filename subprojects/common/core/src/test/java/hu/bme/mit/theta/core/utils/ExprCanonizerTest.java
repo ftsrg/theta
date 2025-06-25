@@ -15,17 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
-import static hu.bme.mit.theta.core.utils.ExprCanonizer.canonize;
-import static org.junit.Assert.assertEquals;
-
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -33,13 +22,33 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import kotlin.Pair;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static hu.bme.mit.theta.core.utils.ExprCanonizer.canonize;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Enclosed.class)
 public class ExprCanonizerTest {
@@ -475,9 +484,9 @@ public class ExprCanonizerTest {
         // Array
         @Test
         public void testArrayRead() {
-            var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-            elems.add(Tuple2.of(Int(0), Int(1)));
-            elems.add(Tuple2.of(Int(1), Int(2)));
+            var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+            elems.add(new Pair<>(Int(0), Int(1)));
+            elems.add(new Pair<>(Int(1), Int(2)));
             var arr = Array(elems, Int(100), Array(Int(), Int()));
             assertEquals(Read(arr, Int(0)), canonize(Read(arr, Int(0))));
             assertEquals(Read(arr, a), canonize(Read(arr, a)));
@@ -485,8 +494,8 @@ public class ExprCanonizerTest {
 
         @Test
         public void testArrayWrite() {
-            var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
-            elems.add(Tuple2.of(Int(0), Int(1)));
+            var elems = new ArrayList<Pair<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+            elems.add(new Pair<>(Int(0), Int(1)));
             var arr = Array(elems, Int(100), Array(Int(), Int()));
             assertEquals(Write(arr, Int(5), Int(6)), canonize(Write(arr, Int(5), Int(6))));
             assertEquals(Write(arr, b, a), canonize(Write(arr, b, a)));

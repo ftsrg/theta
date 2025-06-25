@@ -71,9 +71,9 @@ object RatExprs {
 
   @JvmStatic fun Geq(leftOp: Expr<RatType>, rightOp: Expr<RatType>) = RatGeqExpr(leftOp, rightOp)
 
-  @JvmStatic fun Add(vararg ops: Expr<RatType>) = RatAddExpr(ops.asList())
+  @JvmStatic @SafeVarargs fun Add(vararg ops: Expr<RatType>) = RatAddExpr(ops.asList())
 
-  @JvmStatic fun Mul(vararg ops: Expr<RatType>) = RatMulExpr(ops.asList())
+  @JvmStatic @SafeVarargs fun Mul(vararg ops: Expr<RatType>) = RatMulExpr(ops.asList())
 
   @JvmStatic fun ToInt(op: Expr<RatType>) = RatToIntExpr.of(op)
 }
