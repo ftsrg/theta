@@ -77,6 +77,7 @@ enum class Btor2BinaryOperator {
     SLL,
     SRA,
     SRL,
+    SUB,
     READ
 }
 

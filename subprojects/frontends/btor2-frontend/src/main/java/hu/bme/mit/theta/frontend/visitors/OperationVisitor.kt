@@ -82,6 +82,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "xor" -> Btor2BinaryOperator.XOR
             "add" -> Btor2BinaryOperator.ADD
             "mul" -> Btor2BinaryOperator.MUL
+            "sub" -> Btor2BinaryOperator.SUB
             "udiv" -> Btor2BinaryOperator.UDIV
             "urem" -> Btor2BinaryOperator.UREM
             "sdiv" -> Btor2BinaryOperator.SDIV

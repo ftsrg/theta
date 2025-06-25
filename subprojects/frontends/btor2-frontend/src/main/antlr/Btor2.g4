@@ -4,7 +4,10 @@ grammar Btor2;
 
 // Lexer rules
 WS: [ ]+ -> skip;
-NUM: (MINUS)? [0-9a-fA-F]+;
+HEX: [0-9a-fA-F]+;
+BIN: [0-1]+;
+DEC: [0-9];
+NUM: (MINUS)? (HEX | BIN | DEC);
 PLUS: '+';
 MINUS: '-';
 UNARYOP: 'not'
@@ -15,7 +18,7 @@ BINOP: 'and' | 'nand' | 'nor' | 'or' | 'xnor' | 'xor' | 'iff' | 'implies'
     | 'eq' | 'neq'
     | 'slt' | 'slte' | 'sgt' | 'sgte'
     | 'ult' | 'ulte' | 'ugt' | 'ugte'
-    | 'concat' | 'add' | 'mul'
+    | 'concat' | 'add' | 'mul' | 'sub'
     | 'udiv' | 'urem'
     | 'sdiv' | 'srem' | 'smod'
     | 'saddo' | 'sdivo' | 'smulo' | 'ssubo'
