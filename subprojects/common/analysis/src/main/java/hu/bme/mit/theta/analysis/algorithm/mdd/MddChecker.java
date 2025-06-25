@@ -27,19 +27,18 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.container.Containers;
@@ -53,9 +52,10 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, UnitPrec> {
+public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
     private final MonolithicExpr monolithicExpr;
     private final List<VarDecl<?>> variableOrdering;
@@ -102,7 +102,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
     }
 
     @Override
-    public SafetyResult<MddProof, MddCex> check(UnitPrec prec) {
+    public SafetyResult<MddProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
@@ -223,11 +223,24 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
         // transSig.getTopVariableHandle());
 
-        final SafetyResult<MddProof, MddCex> result;
+        final SafetyResult<MddProof, Trace<ExplState, ExprAction>> result;
         if (violatingSize != 0) {
+            final var explTrans =
+                    MddExplicitRepresentationExtractor.INSTANCE.transform(
+                            transitionNode, transSig.getTopVariableHandle());
+            final var reversed = ReverseNextStateDescriptor.of(stateSpace, explTrans);
+
+            final TraceProvider traceProvider = new TraceProvider(stateSig.getVariableOrder());
+            final var mddTrace = traceProvider.compute(propViolating, reversed, initNode, stateSig.getTopVariableHandle());
+            final var states = mddTrace.stream().map(
+                    it -> ExplState.of(MddValuationCollector.collect(it).stream().findFirst().orElseThrow())
+            ).toList();
+            final var actions = Collections.nCopies(states.size() - 1, MonolithicExprKt.action(monolithicExpr));
+            final Trace<ExplState, ExprAction> trace = Trace.of(states, actions);
+
             result =
                     SafetyResult.unsafe(
-                            MddCex.of(propViolating), MddProof.of(stateSpace), statistics);
+                            trace, MddProof.of(stateSpace), statistics);
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }

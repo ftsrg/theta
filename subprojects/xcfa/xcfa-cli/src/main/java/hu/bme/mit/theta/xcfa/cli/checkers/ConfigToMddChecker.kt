@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
@@ -54,7 +55,7 @@ fun getMddChecker(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<LocationInvariants, MddCex, UnitPrec> {
+): SafetyChecker<LocationInvariants, Trace<ExplState, ExprAction>, UnitPrec> {
   val mddConfig = config.backendConfig.specConfig as MddConfig
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
@@ -90,7 +91,7 @@ fun getMddChecker(
       logger,
       iterationStrategy,
     )
-  return SafetyChecker<LocationInvariants, MddCex, UnitPrec> { input ->
+  return SafetyChecker<LocationInvariants, Trace<ExplState, ExprAction>, UnitPrec> { input ->
     val result = checker.check(input)
     if (result.isUnsafe) {
       SafetyResult.unsafe(result.asUnsafe().cex, LocationInvariants())
