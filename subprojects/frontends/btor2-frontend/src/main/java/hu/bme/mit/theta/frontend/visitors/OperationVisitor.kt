@@ -139,6 +139,9 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "inc" -> Btor2UnaryOperator.INC
             "dec" -> Btor2UnaryOperator.DEC
             "neg" -> Btor2UnaryOperator.NEG
+            "redand" -> Btor2UnaryOperator.REDAND
+            "redor" -> Btor2UnaryOperator.REDOR
+            "redxor" -> Btor2UnaryOperator.REDXOR
             else -> throw RuntimeException("Unary operator unknown")
         }
 
@@ -161,8 +164,9 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             else -> throw RuntimeException("Ternary operator unknown")
         }
         val negated = ctx.opd1.text.toInt() < 0
+        val opd1_index = abs(ctx.opd1.text.toInt()).toUInt()
 
-        val opd1 = nodes[ctx.opd1.text.toUInt()] as Btor2Node
+        val opd1 = nodes[opd1_index] as Btor2Node
         val opd2 = nodes[ctx.opd2.text.toUInt()] as Btor2Node
         val opd3 = nodes[ctx.opd3.text.toUInt()] as Btor2Node
 

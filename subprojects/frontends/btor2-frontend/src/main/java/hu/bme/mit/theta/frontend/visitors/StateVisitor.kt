@@ -54,7 +54,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
         val sort = Btor2Circuit.sorts[sid]!!
 
         val param1 = Btor2Circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
-        val param2 = Btor2Circuit.nodes[ctx.param2.NUM().text.toUInt()] as Btor2Const
+        val param2 = Btor2Circuit.nodes[ctx.param2.NUM().text.toUInt()] as Btor2Node
 
 
         check((param1.sort as Btor2BitvecSort).width == (param2.sort as Btor2BitvecSort).width)
