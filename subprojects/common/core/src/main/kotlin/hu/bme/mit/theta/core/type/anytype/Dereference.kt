@@ -92,19 +92,25 @@ data class Dereference<A : Type, O : Type, T : Type>(
 
   object Serializer : KSerializer<Dereference<out Type, out Type, out Type>> {
 
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Dereference") {
-      element<Expr<out Type>>("array")
-      element<Expr<out Type>>("offset")
-      element<Type>("type")
-      element<Expr<IntType>?>("uniquenessIdx")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("Dereference") {
+        element<Expr<out Type>>("array")
+        element<Expr<out Type>>("offset")
+        element<Type>("type")
+        element<Expr<IntType>?>("uniquenessIdx")
+      }
 
     override fun serialize(encoder: Encoder, value: Dereference<out Type, out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.array)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.offset)
         encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class), value.type)
-        encodeSerializableElement(descriptor, 3, PolymorphicSerializer(Expr::class).nullable, value.uniquenessIdx)
+        encodeSerializableElement(
+          descriptor,
+          3,
+          PolymorphicSerializer(Expr::class).nullable,
+          value.uniquenessIdx,
+        )
       }
 
     override fun deserialize(decoder: Decoder): Dereference<out Type, out Type, out Type> =
@@ -115,11 +121,19 @@ data class Dereference<A : Type, O : Type, T : Type>(
         var uniquenessIdx: Expr<IntType>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> array = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
-            1 -> offset = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+            0 ->
+              array = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+            1 ->
+              offset = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
             2 -> type = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class))
-            3 -> uniquenessIdx =
-              decodeSerializableElement(descriptor, 3, PolymorphicSerializer(Expr::class).nullable) as Expr<IntType>?
+            3 ->
+              uniquenessIdx =
+                decodeSerializableElement(
+                  descriptor,
+                  3,
+                  PolymorphicSerializer(Expr::class).nullable,
+                )
+                  as Expr<IntType>?
 
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
@@ -129,7 +143,7 @@ data class Dereference<A : Type, O : Type, T : Type>(
           array ?: throw SerializationException("Missing array "),
           offset ?: throw SerializationException("Missing offset "),
           type ?: throw SerializationException("Missing type "),
-          uniquenessIdx
+          uniquenessIdx,
         )
       }
   }

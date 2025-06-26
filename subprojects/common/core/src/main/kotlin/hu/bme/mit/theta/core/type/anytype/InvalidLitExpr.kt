@@ -41,13 +41,13 @@ data class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
   override fun equals(other: Any?): Boolean = false
 
   object Serializer : KSerializer<InvalidLitExpr<out Type>> {
-    override val descriptor = buildClassSerialDescriptor("InvalidLit") {
-      element<Type>("type")
-    }
+    override val descriptor = buildClassSerialDescriptor("InvalidLit") { element<Type>("type") }
+
     override fun serialize(encoder: Encoder, value: InvalidLitExpr<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class), value.type)
       }
+
     override fun deserialize(decoder: Decoder): InvalidLitExpr<out Type> =
       decoder.decodeStructure(descriptor) {
         var type: Type? = null
@@ -58,9 +58,7 @@ data class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
             else -> throw SerializationException("Unknown index $i")
           }
         }
-        InvalidLitExpr(
-          type = type ?: throw SerializationException("Missing type ")
-        )
+        InvalidLitExpr(type = type ?: throw SerializationException("Missing type "))
       }
   }
 }

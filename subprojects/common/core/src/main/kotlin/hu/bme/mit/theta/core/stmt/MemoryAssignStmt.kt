@@ -67,30 +67,42 @@ data class MemoryAssignStmt<PtrType : Type, OffsetType : Type, DeclType : Type>(
     Utils.lispStringBuilder(STMT_LABEL).add(deref).add(expr).toString()
 
   object Serializer : KSerializer<MemoryAssignStmt<out Type, out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("MemoryAssignStmt") {
-      element<Dereference<out Type, out Type, out Type>>("deref")
-      element<Expr<out Type>>("expr")
-    }
-    override fun serialize(encoder: Encoder, value: MemoryAssignStmt<out Type, out Type, out Type>) =
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("MemoryAssignStmt") {
+        element<Dereference<out Type, out Type, out Type>>("deref")
+        element<Expr<out Type>>("expr")
+      }
+
+    override fun serialize(
+      encoder: Encoder,
+      value: MemoryAssignStmt<out Type, out Type, out Type>,
+    ) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, Dereference.Serializer, value.deref)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.expr)
       }
+
     override fun deserialize(decoder: Decoder): MemoryAssignStmt<out Type, out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var deref: Dereference<out Type, out Type, Type>? = null
         var expr: Expr<Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> deref = decodeSerializableElement(descriptor, 0, Dereference.Serializer) as Dereference<out Type, out Type, Type>
-            1 -> expr = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            0 ->
+              deref =
+                decodeSerializableElement(descriptor, 0, Dereference.Serializer)
+                  as Dereference<out Type, out Type, Type>
+            1 ->
+              expr =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
         MemoryAssignStmt(
           deref ?: throw SerializationException("Missing deref "),
-          expr ?: throw SerializationException("Missing expr ")
+          expr ?: throw SerializationException("Missing expr "),
         )
       }
   }

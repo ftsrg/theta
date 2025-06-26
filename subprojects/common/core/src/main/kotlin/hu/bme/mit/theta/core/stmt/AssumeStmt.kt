@@ -52,26 +52,28 @@ data class AssumeStmt(val cond: Expr<BoolType>) : Stmt {
   override fun toString(): String = Utils.lispStringBuilder(STMT_LABEL).add(cond).toString()
 
   object Serializer : KSerializer<AssumeStmt> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("AssumeStmt") {
-      element<Expr<BoolType>>("cond")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("AssumeStmt") { element<Expr<BoolType>>("cond") }
+
     override fun serialize(encoder: Encoder, value: AssumeStmt) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.cond)
       }
+
     override fun deserialize(decoder: Decoder): AssumeStmt =
       decoder.decodeStructure(descriptor) {
         var cond: Expr<BoolType>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> cond = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<BoolType>
+            0 ->
+              cond =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+                  as Expr<BoolType>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
-        AssumeStmt(
-          cond = cond ?: throw SerializationException("Missing cond")
-        )
+        AssumeStmt(cond = cond ?: throw SerializationException("Missing cond"))
       }
   }
 }

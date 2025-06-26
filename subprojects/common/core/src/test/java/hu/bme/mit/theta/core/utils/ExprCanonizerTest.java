@@ -15,23 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatExprs;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-import kotlin.Pair;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
@@ -49,6 +32,22 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprCanonizer.canonize;
 import static org.junit.Assert.assertEquals;
+
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import kotlin.Pair;
+import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Enclosed.class)
 public class ExprCanonizerTest {

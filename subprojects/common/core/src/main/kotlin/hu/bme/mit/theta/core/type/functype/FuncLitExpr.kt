@@ -67,30 +67,41 @@ data class FuncLitExpr<ParamType : Type, ResultType : Type>(
   }
 
   object Serializer : KSerializer<FuncLitExpr<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("FuncLit") {
-      element<ParamDecl<out Type>>("param")
-      element<Expr<out Type>>("result")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("FuncLit") {
+        element<ParamDecl<out Type>>("param")
+        element<Expr<out Type>>("result")
+      }
+
     override fun serialize(encoder: Encoder, value: FuncLitExpr<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class), value.param)
+        encodeSerializableElement(
+          descriptor,
+          0,
+          PolymorphicSerializer(ParamDecl::class),
+          value.param,
+        )
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.result)
       }
+
     override fun deserialize(decoder: Decoder): FuncLitExpr<out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var param: ParamDecl<out Type>? = null
         var result: Expr<out Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> param = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class))
-            1 -> result = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+            0 ->
+              param =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class))
+            1 ->
+              result = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
         FuncLitExpr(
           param ?: throw SerializationException("Missing param"),
-          result ?: throw SerializationException("Missing result")
+          result ?: throw SerializationException("Missing result"),
         )
       }
   }

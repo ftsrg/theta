@@ -81,30 +81,39 @@ data class FuncAppExpr<ParamType : Type, ResultType : Type>(
   override fun toString(): String = Utils.lispStringBuilder().add(func).body().add(param).toString()
 
   object Serializer : KSerializer<FuncAppExpr<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("FuncApp") {
-      element<Expr<out Type>>("func")
-      element<Expr<out Type>>("param")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("FuncApp") {
+        element<Expr<out Type>>("func")
+        element<Expr<out Type>>("param")
+      }
+
     override fun serialize(encoder: Encoder, value: FuncAppExpr<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.func)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.param)
       }
+
     override fun deserialize(decoder: Decoder): FuncAppExpr<out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var func: Expr<FuncType<Type, Type>>? = null
         var param: Expr<Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> func = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<FuncType<Type, Type>>
-            1 -> param = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            0 ->
+              func =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+                  as Expr<FuncType<Type, Type>>
+            1 ->
+              param =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
         FuncAppExpr(
           func ?: throw SerializationException("Missing func"),
-          param ?: throw SerializationException("Missing param")
+          param ?: throw SerializationException("Missing param"),
         )
       }
   }

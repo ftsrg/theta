@@ -31,49 +31,50 @@ import kotlinx.serialization.encoding.*
 @Serializable(with = IndexedConstDecl.Serializer::class)
 @SerialName("IndexedConstDecl")
 data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val index: Int) :
-    ConstDecl<DeclType>() {
+  ConstDecl<DeclType>() {
 
-    init {
-        require(index >= 0) { "Index must be non-negative" }
-    }
+  init {
+    require(index >= 0) { "Index must be non-negative" }
+  }
 
-    companion object {
+  companion object {
 
-        private const val NAME_FORMAT: String = "_%s:%d"
-    }
+    private const val NAME_FORMAT: String = "_%s:%d"
+  }
 
-    override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
-    override val type: DeclType = varDecl.type
+  override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
+  override val type: DeclType = varDecl.type
 
-    object Serializer : KSerializer<IndexedConstDecl<out Type>> {
+  object Serializer : KSerializer<IndexedConstDecl<out Type>> {
 
-        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("IndexedConstDecl") {
-            element<VarDecl<out Type>>("varDecl")
-            element<Int>("index")
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("IndexedConstDecl") {
+        element<VarDecl<out Type>>("varDecl")
+        element<Int>("index")
+      }
+
+    override fun serialize(encoder: Encoder, value: IndexedConstDecl<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
+        encodeIntElement(descriptor, 1, value.index)
+      }
+
+    override fun deserialize(decoder: Decoder): IndexedConstDecl<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var varDecl: VarDecl<out Type>? = null
+        var index: Int? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer)
+            1 -> index = decodeIntElement(descriptor, 1)
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
         }
-
-        override fun serialize(encoder: Encoder, value: IndexedConstDecl<out Type>) =
-            encoder.encodeStructure(descriptor) {
-                encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
-                encodeIntElement(descriptor, 1, value.index)
-            }
-
-        override fun deserialize(decoder: Decoder): IndexedConstDecl<out Type> =
-            decoder.decodeStructure(descriptor) {
-                var varDecl: VarDecl<out Type>? = null
-                var index: Int? = null
-                while (true) {
-                    when (val i = decodeElementIndex(descriptor)) {
-                        0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer)
-                        1 -> index = decodeIntElement(descriptor, 1)
-                        CompositeDecoder.DECODE_DONE -> break
-                        else -> throw SerializationException("Unknown index $i")
-                    }
-                }
-                IndexedConstDecl(
-                    varDecl = varDecl ?: error("Missing varDecl"),
-                    index = index ?: error("Missing index"),
-                )
-            }
-    }
+        IndexedConstDecl(
+          varDecl = varDecl ?: error("Missing varDecl"),
+          index = index ?: error("Missing index"),
+        )
+      }
+  }
 }

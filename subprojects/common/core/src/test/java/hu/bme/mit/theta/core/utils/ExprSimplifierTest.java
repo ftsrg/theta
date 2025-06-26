@@ -15,26 +15,6 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-import kotlin.Pair;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
@@ -68,6 +48,25 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.*;
+
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.ArrayList;
+import java.util.List;
+import kotlin.Pair;
+import org.junit.Test;
 
 public class ExprSimplifierTest {
 

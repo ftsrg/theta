@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.serialization
 
 import hu.bme.mit.theta.core.decl.generated.declSerializerModule
@@ -24,13 +23,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 
 val coreSerializerModule = SerializersModule {
-    include(typeSerializerModule)
-    include(declSerializerModule)
-    include(stmtSerializerModule)
-    include(exprSerializerModule)
+  include(typeSerializerModule)
+  include(declSerializerModule)
+  include(stmtSerializerModule)
+  include(exprSerializerModule)
 }
 
 val coreJson = Json {
-    serializersModule = coreSerializerModule
-    classDiscriminator = "class"
+  serializersModule = coreSerializerModule
+  classDiscriminator = "class"
 }

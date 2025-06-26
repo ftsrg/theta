@@ -50,13 +50,14 @@ data class RefExpr<DeclType : Type>(val decl: Decl<DeclType>) : NullaryExpr<Decl
   override fun toString(): String = decl.name
 
   object Serializer : KSerializer<RefExpr<out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Ref") {
-      element<Decl<out Type>>("decl")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("Ref") { element<Decl<out Type>>("decl") }
+
     override fun serialize(encoder: Encoder, value: RefExpr<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Decl::class), value.decl)
       }
+
     override fun deserialize(decoder: Decoder): RefExpr<out Type> =
       decoder.decodeStructure(descriptor) {
         var decl: Decl<out Type>? = null
@@ -67,9 +68,7 @@ data class RefExpr<DeclType : Type>(val decl: Decl<DeclType>) : NullaryExpr<Decl
             else -> throw SerializationException("Unknown index $i")
           }
         }
-        RefExpr(
-          decl = decl ?: throw SerializationException("Missing decl ")
-        )
+        RefExpr(decl = decl ?: throw SerializationException("Missing decl "))
       }
   }
 }

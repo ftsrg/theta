@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.serialization
 
 import hu.bme.mit.theta.core.decl.Decls
@@ -27,113 +26,112 @@ import org.junit.jupiter.api.Test
 
 class StmtSerializationTest {
 
-    companion object {
+  companion object {
 
-        private val json = coreJson
-    }
+    private val json = coreJson
+  }
 
-    @Test
-    fun `test AssignStmt serialization`() {
-        val x = Decls.Var("x", Int())
-        val original: Stmt = AssignStmt(x, Int(42))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-        assertEquals("x", (deserialized as AssignStmt<*>).varDecl.name)
-    }
+  @Test
+  fun `test AssignStmt serialization`() {
+    val x = Decls.Var("x", Int())
+    val original: Stmt = AssignStmt(x, Int(42))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+    assertEquals("x", (deserialized as AssignStmt<*>).varDecl.name)
+  }
 
-    @Test
-    fun `test AssumeStmt serialization`() {
-        val x = Decls.Var("x", Int())
-        val cond = Eq(x.ref, Int(42))
-        val original: Stmt = AssumeStmt(cond)
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-        assertEquals("(= x 42)", (deserialized as AssumeStmt).cond.toString())
-    }
+  @Test
+  fun `test AssumeStmt serialization`() {
+    val x = Decls.Var("x", Int())
+    val cond = Eq(x.ref, Int(42))
+    val original: Stmt = AssumeStmt(cond)
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+    assertEquals("(= x 42)", (deserialized as AssumeStmt).cond.toString())
+  }
 
-    @Test
-    fun `test HavocStmt serialization`() {
-        val x = Decls.Var("x", Int())
-        val original: Stmt = HavocStmt(x)
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-        assertEquals("x", (deserialized as HavocStmt<*>).varDecl.name)
-    }
+  @Test
+  fun `test HavocStmt serialization`() {
+    val x = Decls.Var("x", Int())
+    val original: Stmt = HavocStmt(x)
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+    assertEquals("x", (deserialized as HavocStmt<*>).varDecl.name)
+  }
 
-    @Test
-    fun `test IfStmt serialization`() {
-        val x = Decls.Var("x", Int())
-        val cond = Eq(x.ref, Int(42))
-        val thenStmt: Stmt = AssignStmt(x, Int(1))
-        val elseStmt: Stmt = AssignStmt(x, Int(0))
-        val original: Stmt = IfStmt(cond, thenStmt, elseStmt)
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test IfStmt serialization`() {
+    val x = Decls.Var("x", Int())
+    val cond = Eq(x.ref, Int(42))
+    val thenStmt: Stmt = AssignStmt(x, Int(1))
+    val elseStmt: Stmt = AssignStmt(x, Int(0))
+    val original: Stmt = IfStmt(cond, thenStmt, elseStmt)
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test LoopStmt serialization`() {
-        val i = Decls.Var("i", Int())
-        val x = Decls.Var("x", Int())
-        val stmt: Stmt = AssignStmt(x, Int(1))
-        val original: Stmt = LoopStmt(stmt, i, Int(0), Int(42))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test LoopStmt serialization`() {
+    val i = Decls.Var("i", Int())
+    val x = Decls.Var("x", Int())
+    val stmt: Stmt = AssignStmt(x, Int(1))
+    val original: Stmt = LoopStmt(stmt, i, Int(0), Int(42))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test MemoryAssignStmt serialization`() {
-        val dereference = Dereference(Decls.Var("ptr", Int()).ref, Int(0), Int())
-        val original: Stmt = MemoryAssignStmt(dereference, Int(42))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test MemoryAssignStmt serialization`() {
+    val dereference = Dereference(Decls.Var("ptr", Int()).ref, Int(0), Int())
+    val original: Stmt = MemoryAssignStmt(dereference, Int(42))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test NonDetStmt serialization`() {
-        val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
-        val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
-        val s3 = SkipStmt
-        val original: Stmt = NonDetStmt(listOf(s1, s2, s3))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test NonDetStmt serialization`() {
+    val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
+    val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
+    val s3 = SkipStmt
+    val original: Stmt = NonDetStmt(listOf(s1, s2, s3))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test OrtStmt serialization`() {
-        val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
-        val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
-        val s3 = SkipStmt
-        val original: Stmt = OrtStmt(listOf(s1, s2, s3))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test OrtStmt serialization`() {
+    val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
+    val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
+    val s3 = SkipStmt
+    val original: Stmt = OrtStmt(listOf(s1, s2, s3))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test SequenceStmt serialization`() {
-        val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
-        val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
-        val s3 = SkipStmt
-        val original: Stmt = SequenceStmt(listOf(s1, s2, s3))
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test SequenceStmt serialization`() {
+    val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
+    val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
+    val s3 = SkipStmt
+    val original: Stmt = SequenceStmt(listOf(s1, s2, s3))
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 
-    @Test
-    fun `test SkipStmt serialization`() {
-        val original: Stmt = SkipStmt
-        val serialized = json.encodeToString(original)
-        val deserialized = json.decodeFromString<Stmt>(serialized)
-        assertEquals(original, deserialized)
-    }
+  @Test
+  fun `test SkipStmt serialization`() {
+    val original: Stmt = SkipStmt
+    val serialized = json.encodeToString(original)
+    val deserialized = json.decodeFromString<Stmt>(serialized)
+    assertEquals(original, deserialized)
+  }
 }
-

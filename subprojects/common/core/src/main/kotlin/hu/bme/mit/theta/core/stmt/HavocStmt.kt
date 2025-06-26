@@ -45,13 +45,14 @@ data class HavocStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>) : Stmt {
   override fun toString(): String = Utils.lispStringBuilder(STMT_LABEL).add(varDecl.name).toString()
 
   object Serializer : KSerializer<HavocStmt<out Type>> {
-    override val descriptor = buildClassSerialDescriptor("HavocStmt") {
-      element<VarDecl<out Type>>("varDecl")
-    }
+    override val descriptor =
+      buildClassSerialDescriptor("HavocStmt") { element<VarDecl<out Type>>("varDecl") }
+
     override fun serialize(encoder: Encoder, value: HavocStmt<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
       }
+
     override fun deserialize(decoder: Decoder): HavocStmt<out Type> =
       decoder.decodeStructure(descriptor) {
         var varDecl: VarDecl<out Type>? = null
@@ -62,9 +63,7 @@ data class HavocStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>) : Stmt {
             else -> throw SerializationException("Unknown index $i")
           }
         }
-        HavocStmt(
-          varDecl = varDecl ?: throw SerializationException("Missing varDecl"),
-        )
+        HavocStmt(varDecl = varDecl ?: throw SerializationException("Missing varDecl"))
       }
   }
 }

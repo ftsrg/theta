@@ -60,15 +60,18 @@ data class Reference<A : Type, T : Type>(val expr: Expr<T>, override val type: A
   }
 
   object Serializer : KSerializer<Reference<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Reference") {
-      element<Expr<out Type>>("expr")
-      element<Type>("type")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("Reference") {
+        element<Expr<out Type>>("expr")
+        element<Type>("type")
+      }
+
     override fun serialize(encoder: Encoder, value: Reference<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.expr)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.type)
       }
+
     override fun deserialize(decoder: Decoder): Reference<out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var expr: Expr<out Type>? = null
@@ -83,7 +86,7 @@ data class Reference<A : Type, T : Type>(val expr: Expr<T>, override val type: A
         }
         Reference(
           expr ?: throw SerializationException("Missing expr "),
-          type ?: throw SerializationException("Missing type ")
+          type ?: throw SerializationException("Missing type "),
         )
       }
   }

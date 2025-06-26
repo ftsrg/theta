@@ -15,19 +15,6 @@
  */
 package hu.bme.mit.theta.core.expr;
 
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import kotlin.Pair;
-import org.junit.Test;
-
-import java.util.ArrayList;
-
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
@@ -58,6 +45,18 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static org.junit.Assert.assertEquals;
+
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.ArrayList;
+import kotlin.Pair;
+import org.junit.Test;
 
 public class EvaluationTest {
 

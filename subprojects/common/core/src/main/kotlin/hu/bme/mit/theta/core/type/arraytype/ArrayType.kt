@@ -67,34 +67,45 @@ data class ArrayType<IndexType : Type, ElemType : Type>(
     get() = DomainSize.pow(elemType.domainSize, indexType.domainSize)
 
   object Serializer : KSerializer<ArrayType<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayType") {
-      element<String>("indexType")
-      element<String>("elemType")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("ArrayType") {
+        element<String>("indexType")
+        element<String>("elemType")
+      }
 
     override fun serialize(encoder: Encoder, value: ArrayType<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class), value.indexType)
+        encodeSerializableElement(
+          descriptor,
+          0,
+          PolymorphicSerializer(Type::class),
+          value.indexType,
+        )
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.elemType)
       }
 
-    override fun deserialize(decoder: Decoder): ArrayType<out Type, out Type> = decoder.decodeStructure(descriptor) {
-      var indexType: Type? = null
-      var elemType: Type? = null
+    override fun deserialize(decoder: Decoder): ArrayType<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var indexType: Type? = null
+        var elemType: Type? = null
 
-      while (true) {
-        when (val index = decodeElementIndex(descriptor)) {
-          0 -> indexType = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class))
-          1 -> elemType = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
-          CompositeDecoder.DECODE_DONE -> break
-          else -> error("Unexpected index: $index")
+        while (true) {
+          when (val index = decodeElementIndex(descriptor)) {
+            0 ->
+              indexType =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class))
+            1 ->
+              elemType =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> error("Unexpected index: $index")
+          }
         }
-      }
 
-      ArrayType(
-        indexType = indexType ?: error("Missing indexType"),
-        elemType = elemType ?: error("Missing elemType")
-      )
-    }
+        ArrayType(
+          indexType = indexType ?: error("Missing indexType"),
+          elemType = elemType ?: error("Missing elemType"),
+        )
+      }
   }
 }

@@ -60,10 +60,11 @@ data class AssignStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>, val expr:
     Utils.lispStringBuilder(STMT_LABEL).add(varDecl.name).add(expr).toString()
 
   object Serializer : KSerializer<AssignStmt<out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("AssignStmt") {
-      element<VarDecl<out Type>>("varDecl")
-      element<Expr<out Type>>("expr")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("AssignStmt") {
+        element<VarDecl<out Type>>("varDecl")
+        element<Expr<out Type>>("expr")
+      }
 
     override fun serialize(encoder: Encoder, value: AssignStmt<out Type>) =
       encoder.encodeStructure(descriptor) {
@@ -77,8 +78,13 @@ data class AssignStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>, val expr:
         var expr: Expr<Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer) as VarDecl<Type>
-            1 -> expr = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            0 ->
+              varDecl =
+                decodeSerializableElement(descriptor, 0, VarDecl.Serializer) as VarDecl<Type>
+            1 ->
+              expr =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }

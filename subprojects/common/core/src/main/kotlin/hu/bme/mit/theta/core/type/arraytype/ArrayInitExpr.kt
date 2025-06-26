@@ -112,17 +112,32 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
   override fun toString(): String = "arrayinit($elements, $elseElem, $type)"
 
   object Serializer : KSerializer<ArrayInitExpr<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayInit") {
-      element<List<Pair<Expr<out Type>, Expr<out Type>>>>("elements")
-      element<Expr<out Type>>("elseElem")
-      element<ArrayType<out Type, out Type>>("type")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("ArrayInit") {
+        element<List<Pair<Expr<out Type>, Expr<out Type>>>>("elements")
+        element<Expr<out Type>>("elseElem")
+        element<ArrayType<out Type, out Type>>("type")
+      }
+
     override fun serialize(encoder: Encoder, value: ArrayInitExpr<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(descriptor, 0, ListSerializer(PairSerializer(PolymorphicSerializer(Expr::class), PolymorphicSerializer(Expr::class))), value.elements)
+        encodeSerializableElement(
+          descriptor,
+          0,
+          ListSerializer(
+            PairSerializer(PolymorphicSerializer(Expr::class), PolymorphicSerializer(Expr::class))
+          ),
+          value.elements,
+        )
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.elseElem)
-        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(ArrayType::class), value.type)
+        encodeSerializableElement(
+          descriptor,
+          2,
+          PolymorphicSerializer(ArrayType::class),
+          value.type,
+        )
       }
+
     override fun deserialize(decoder: Decoder): ArrayInitExpr<out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var elements: List<Pair<Expr<Type>, Expr<Type>>>? = null
@@ -130,9 +145,27 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
         var type: ArrayType<Type, Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> elements = decodeSerializableElement(descriptor, 0, ListSerializer(PairSerializer(PolymorphicSerializer(Expr::class), PolymorphicSerializer(Expr::class)))) as List<Pair<Expr<Type>, Expr<Type>>>
-            1 -> elseElem = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
-            2 -> type = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(ArrayType::class)) as ArrayType<Type, Type>
+            0 ->
+              elements =
+                decodeSerializableElement(
+                  descriptor,
+                  0,
+                  ListSerializer(
+                    PairSerializer(
+                      PolymorphicSerializer(Expr::class),
+                      PolymorphicSerializer(Expr::class),
+                    )
+                  ),
+                )
+                  as List<Pair<Expr<Type>, Expr<Type>>>
+            1 ->
+              elseElem =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
+            2 ->
+              type =
+                decodeSerializableElement(descriptor, 2, PolymorphicSerializer(ArrayType::class))
+                  as ArrayType<Type, Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
@@ -140,7 +173,7 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
         ArrayInitExpr(
           elements ?: throw SerializationException("Missing elements"),
           elseElem ?: throw SerializationException("Missing elseElem"),
-          type ?: throw SerializationException("Missing type")
+          type ?: throw SerializationException("Missing type"),
         )
       }
   }

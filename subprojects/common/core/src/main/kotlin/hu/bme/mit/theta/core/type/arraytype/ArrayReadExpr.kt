@@ -96,30 +96,39 @@ data class ArrayReadExpr<IndexType : Type, ElemType : Type>(
     Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(index).toString()
 
   object Serializer : KSerializer<ArrayReadExpr<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayRead") {
-      element<Expr<out Type>>("array")
-      element<Expr<out Type>>("index")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("ArrayRead") {
+        element<Expr<out Type>>("array")
+        element<Expr<out Type>>("index")
+      }
+
     override fun serialize(encoder: Encoder, value: ArrayReadExpr<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.array)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.index)
       }
+
     override fun deserialize(decoder: Decoder): ArrayReadExpr<out Type, out Type> =
       decoder.decodeStructure(descriptor) {
         var array: Expr<ArrayType<Type, Type>>? = null
         var index: Expr<Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> array = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<ArrayType<Type, Type>>
-            1 -> index = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            0 ->
+              array =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+                  as Expr<ArrayType<Type, Type>>
+            1 ->
+              index =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
         ArrayReadExpr(
           array ?: throw SerializationException("Missing array"),
-          index ?: throw SerializationException("Missing index")
+          index ?: throw SerializationException("Missing index"),
         )
       }
   }

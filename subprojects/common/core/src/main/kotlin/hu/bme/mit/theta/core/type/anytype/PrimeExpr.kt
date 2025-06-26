@@ -54,13 +54,14 @@ data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
   override val operatorLabel: String = OPERATOR_LABEL
 
   object Serializer : KSerializer<PrimeExpr<out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Prime") {
-      element<Expr<out Type>>("op")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("Prime") { element<Expr<out Type>>("op") }
+
     override fun serialize(encoder: Encoder, value: PrimeExpr<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.op)
       }
+
     override fun deserialize(decoder: Decoder): PrimeExpr<out Type> =
       decoder.decodeStructure(descriptor) {
         var op: Expr<out Type>? = null
@@ -71,9 +72,7 @@ data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
             else -> throw SerializationException("Unknown index $i")
           }
         }
-        PrimeExpr(
-          op = op ?: throw SerializationException("Missing op ")
-        )
+        PrimeExpr(op = op ?: throw SerializationException("Missing op "))
       }
   }
 }

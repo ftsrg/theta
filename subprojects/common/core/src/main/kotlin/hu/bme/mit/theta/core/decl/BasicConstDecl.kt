@@ -33,39 +33,37 @@ import kotlinx.serialization.encoding.*
 @Serializable(with = BasicConstDecl.Serializer::class)
 @SerialName("BasicConstDecl")
 data class BasicConstDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
-    ConstDecl<DeclType>() {
+  ConstDecl<DeclType>() {
 
-    object Serializer : KSerializer<BasicConstDecl<out Type>> {
+  object Serializer : KSerializer<BasicConstDecl<out Type>> {
 
-        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("BasicConstDecl") {
-            element<String>("name")
-            element<String>("type")
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("BasicConstDecl") {
+        element<String>("name")
+        element<String>("type")
+      }
+
+    override fun serialize(encoder: Encoder, value: BasicConstDecl<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeStringElement(descriptor, 0, value.name)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.type)
+      }
+
+    override fun deserialize(decoder: Decoder): BasicConstDecl<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var name: String? = null
+        var type: Type? = null
+
+        while (true) {
+          when (val index = decodeElementIndex(descriptor)) {
+            0 -> name = decodeStringElement(descriptor, 0)
+            1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> error("Unexpected index: $index")
+          }
         }
 
-        override fun serialize(encoder: Encoder, value: BasicConstDecl<out Type>) =
-            encoder.encodeStructure(descriptor) {
-                encodeStringElement(descriptor, 0, value.name)
-                encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.type)
-            }
-
-        override fun deserialize(decoder: Decoder): BasicConstDecl<out Type> =
-            decoder.decodeStructure(descriptor) {
-                var name: String? = null
-                var type: Type? = null
-
-                while (true) {
-                    when (val index = decodeElementIndex(descriptor)) {
-                        0 -> name = decodeStringElement(descriptor, 0)
-                        1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
-                        CompositeDecoder.DECODE_DONE -> break
-                        else -> error("Unexpected index: $index")
-                    }
-                }
-
-                BasicConstDecl(
-                    name = name ?: error("Missing name"),
-                    type = type ?: error("Missing type")
-                )
-            }
-    }
+        BasicConstDecl(name = name ?: error("Missing name"), type = type ?: error("Missing type"))
+      }
+  }
 }

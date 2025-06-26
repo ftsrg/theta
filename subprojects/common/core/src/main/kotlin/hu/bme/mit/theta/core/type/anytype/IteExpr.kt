@@ -104,17 +104,20 @@ data class IteExpr<ExprType : Type>(
     Utils.lispStringBuilder(OPERATOR_LABEL).add(cond).add(then).add(elze).toString()
 
   object Serializer : KSerializer<IteExpr<out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Ite") {
-      element<Expr<BoolType>>("cond")
-      element<Expr<out Type>>("then")
-      element<Expr<out Type>>("elze")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("Ite") {
+        element<Expr<BoolType>>("cond")
+        element<Expr<out Type>>("then")
+        element<Expr<out Type>>("elze")
+      }
+
     override fun serialize(encoder: Encoder, value: IteExpr<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.cond)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.then)
         encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class), value.elze)
       }
+
     override fun deserialize(decoder: Decoder): IteExpr<out Type> =
       decoder.decodeStructure(descriptor) {
         var cond: Expr<BoolType>? = null
@@ -122,9 +125,18 @@ data class IteExpr<ExprType : Type>(
         var elze: Expr<Type>? = null
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
-            0 -> cond = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<BoolType>
-            1 -> then = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
-            2 -> elze = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            0 ->
+              cond =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+                  as Expr<BoolType>
+            1 ->
+              then =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
+            2 ->
+              elze =
+                decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class))
+                  as Expr<Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
@@ -132,7 +144,7 @@ data class IteExpr<ExprType : Type>(
         IteExpr(
           cond ?: throw SerializationException("Missing cond "),
           then ?: throw SerializationException("Missing then "),
-          elze ?: throw SerializationException("Missing elze ")
+          elze ?: throw SerializationException("Missing elze "),
         )
       }
   }

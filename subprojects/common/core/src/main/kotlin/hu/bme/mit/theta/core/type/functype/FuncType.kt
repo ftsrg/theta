@@ -51,34 +51,50 @@ data class FuncType<ParamType : Type, ResultType : Type>(
     get() = throw UnsupportedOperationException()
 
   object Serializer : KSerializer<FuncType<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("FuncType") {
-      element<String>("paramType")
-      element<String>("resultType")
-    }
+    override val descriptor: SerialDescriptor =
+      buildClassSerialDescriptor("FuncType") {
+        element<String>("paramType")
+        element<String>("resultType")
+      }
 
     override fun serialize(encoder: Encoder, value: FuncType<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class), value.paramType)
-        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.resultType)
+        encodeSerializableElement(
+          descriptor,
+          0,
+          PolymorphicSerializer(Type::class),
+          value.paramType,
+        )
+        encodeSerializableElement(
+          descriptor,
+          1,
+          PolymorphicSerializer(Type::class),
+          value.resultType,
+        )
       }
 
-    override fun deserialize(decoder: Decoder): FuncType<Type, Type> = decoder.decodeStructure(descriptor) {
-      var paramType: Type? = null
-      var resultType: Type? = null
+    override fun deserialize(decoder: Decoder): FuncType<Type, Type> =
+      decoder.decodeStructure(descriptor) {
+        var paramType: Type? = null
+        var resultType: Type? = null
 
-      while (true) {
-        when (val index = decodeElementIndex(descriptor)) {
-          0 -> paramType = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class))
-          1 -> resultType = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
-          CompositeDecoder.DECODE_DONE -> break
-          else -> error("Unexpected index: $index")
+        while (true) {
+          when (val index = decodeElementIndex(descriptor)) {
+            0 ->
+              paramType =
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class))
+            1 ->
+              resultType =
+                decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> error("Unexpected index: $index")
+          }
         }
-      }
 
-      FuncType(
-        paramType = paramType ?: error("Missing paramType"),
-        resultType = resultType ?: error("Missing resultType")
-      )
-    }
+        FuncType(
+          paramType = paramType ?: error("Missing paramType"),
+          resultType = resultType ?: error("Missing resultType"),
+        )
+      }
   }
 }
