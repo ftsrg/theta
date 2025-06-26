@@ -22,13 +22,19 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.generated.typeSerializerModule
 import hu.bme.mit.theta.core.utils.ExprSimplifier
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.PairSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /** Literal array expression for array types, containing only literal values. */
 @Serializable
-@SerialName("ArrayLitExpr")
+@SerialName("ArrayLit")
 data class ArrayLitExpr<IndexType : Type, ElemType : Type>(
   val elements: List<Pair<LitExpr<IndexType>, LitExpr<ElemType>>>,
   val elseElem: LitExpr<ElemType>,
@@ -70,4 +76,41 @@ data class ArrayLitExpr<IndexType : Type, ElemType : Type>(
       .addAll(elements.map { "(${it.first} ${it.second})" })
       .add("(default $elseElem)")
       .toString()
+
+  object Serializer : KSerializer<ArrayLitExpr<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayLitExpr") {
+      element<String>("elements")
+      element<String>("elseElem")
+      element<String>("type")
+    }
+
+    override fun serialize(encoder: Encoder, value: ArrayLitExpr<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, ListSerializer(PairSerializer(PolymorphicSerializer(Expr::class), PolymorphicSerializer(Expr::class))), value.elements)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.elseElem)
+        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class), value.type)
+      }
+
+    override fun deserialize(decoder: Decoder): ArrayLitExpr<Type, Type> = decoder.decodeStructure(descriptor) {
+      var elements: List<Pair<LitExpr<Type>, LitExpr<Type>>>? = null
+      var elseElem: LitExpr<Type>? = null
+      var type: ArrayType<Type, Type>? = null
+
+      while (true) {
+        when (val index = decodeElementIndex(descriptor)) {
+          0 -> elements = decodeSerializableElement(descriptor, 0, ListSerializer(PairSerializer(PolymorphicSerializer(Expr::class), PolymorphicSerializer(Expr::class)))) as List<Pair<LitExpr<Type>, LitExpr<Type>>>
+          1 -> elseElem = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as LitExpr<Type>
+          2 -> type = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class)) as ArrayType<Type, Type>
+          CompositeDecoder.DECODE_DONE -> break
+          else -> error("Unexpected index: $index")
+        }
+      }
+
+      ArrayLitExpr(
+        elements = elements ?: error("Missing elements"),
+        elseElem = elseElem ?: error("Missing elseElem"),
+        type = type ?: error("Missing type"),
+      )
+    }
+  }
 }

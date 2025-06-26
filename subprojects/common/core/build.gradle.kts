@@ -20,12 +20,27 @@ plugins {
     id("kotlin-common")
     id("kaml-serialization")
     id("kotlinx-serialization")
+    id("com.google.devtools.ksp") version "1.9.25-1.0.20"
 }
 
 dependencies {
     implementation(project(":theta-common"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testFixturesImplementation(project(":theta-common"))
     val libPath: String by rootProject.extra
     testFixturesImplementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
     testFixturesImplementation(Deps.guava)
+    ksp(project(":theta-ksp-processor"))
+}
+
+kotlin {
+    sourceSets["main"].kotlin.srcDir("build/generated/ksp/main/kotlin")
+}
+
+tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm> {
+    when (name) {
+        "kspKotlin" -> dependsOn("generateGrammarSource")
+        "kspTestKotlin" -> dependsOn("generateTestGrammarSource")
+        "kspTestFixturesKotlin" -> dependsOn("generateTestFixturesGrammarSource")
+    }
 }

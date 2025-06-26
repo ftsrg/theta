@@ -25,7 +25,7 @@ import kotlinx.serialization.Serializable
 /** Boolean type for expressions. */
 @Serializable
 @SerialName(BoolType.TYPE_LABEL)
-object BoolType : Equational<BoolType> {
+data object BoolType : Equational<BoolType> {
 
   internal const val TYPE_LABEL = "Bool"
 

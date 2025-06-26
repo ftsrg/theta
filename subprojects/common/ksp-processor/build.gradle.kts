@@ -13,9 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-/**
- * This package contains statements (e.g., assignment, assume). Constructors of the statements are
- * usually package private, use the factory class {@link hu.bme.mit.theta.core.stmt.Stmts} to
- * instantiate them.
- */
-package hu.bme.mit.theta.core.stmt;
+plugins {
+    kotlin("jvm")
+}
+
+dependencies {
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.9.25-1.0.20")
+}

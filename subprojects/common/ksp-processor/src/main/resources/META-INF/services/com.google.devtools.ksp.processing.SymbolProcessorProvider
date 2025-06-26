@@ -1,0 +1,3 @@
+hu.bme.mit.theta.ksp.TypeSerializerProcessorProvider
+hu.bme.mit.theta.ksp.StmtSerializerProcessorProvider
+hu.bme.mit.theta.ksp.ExprSerializerProcessorProvider
