@@ -28,13 +28,15 @@ object RatExprs {
     RatLitExpr.of(BigInteger.valueOf(num.toLong()), BigInteger.valueOf(denom.toLong()))
 
   @JvmStatic
-  fun Rat(num: Int, denom: String) = RatLitExpr.of(BigInteger.valueOf(num.toLong()), BigInteger(denom))
+  fun Rat(num: Int, denom: String) =
+    RatLitExpr.of(BigInteger.valueOf(num.toLong()), BigInteger(denom))
 
   @JvmStatic
   fun Rat(num: Int, denom: BigInteger) = RatLitExpr.of(BigInteger.valueOf(num.toLong()), denom)
 
   @JvmStatic
-  fun Rat(num: String, denom: Int) = RatLitExpr.of(BigInteger(num), BigInteger.valueOf(denom.toLong()))
+  fun Rat(num: String, denom: Int) =
+    RatLitExpr.of(BigInteger(num), BigInteger.valueOf(denom.toLong()))
 
   @JvmStatic fun Rat(num: String, denom: String) = RatLitExpr.of(BigInteger(num), BigInteger(denom))
 
