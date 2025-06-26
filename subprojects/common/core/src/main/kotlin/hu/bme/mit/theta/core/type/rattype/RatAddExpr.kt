@@ -25,7 +25,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RatAdd")
-class RatAddExpr(override val ops: List<Expr<RatType>>) : AddExpr<RatType>() {
+data class RatAddExpr(override val ops: List<Expr<RatType>>) : AddExpr<RatType>() {
 
   companion object {
 
@@ -55,7 +55,7 @@ class RatAddExpr(override val ops: List<Expr<RatType>>) : AddExpr<RatType>() {
     return Rat(sumNum, sumDenom)
   }
 
-  override fun new(ops: List<Expr<RatType>>): RatAddExpr = new(ops)
+  override fun new(ops: List<Expr<RatType>>): RatAddExpr = of(ops)
 
   override val operatorLabel: String = OPERATOR_LABEL
 

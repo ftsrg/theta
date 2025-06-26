@@ -25,27 +25,27 @@ object RatExprs {
 
   @JvmStatic
   fun Rat(num: Int, denom: Int) =
-    RatLitExpr(BigInteger.valueOf(num.toLong()), BigInteger.valueOf(denom.toLong()))
+    RatLitExpr.of(BigInteger.valueOf(num.toLong()), BigInteger.valueOf(denom.toLong()))
 
   @JvmStatic
-  fun Rat(num: Int, denom: String) = RatLitExpr(BigInteger.valueOf(num.toLong()), BigInteger(denom))
+  fun Rat(num: Int, denom: String) = RatLitExpr.of(BigInteger.valueOf(num.toLong()), BigInteger(denom))
 
   @JvmStatic
-  fun Rat(num: Int, denom: BigInteger) = RatLitExpr(BigInteger.valueOf(num.toLong()), denom)
+  fun Rat(num: Int, denom: BigInteger) = RatLitExpr.of(BigInteger.valueOf(num.toLong()), denom)
 
   @JvmStatic
-  fun Rat(num: String, denom: Int) = RatLitExpr(BigInteger(num), BigInteger.valueOf(denom.toLong()))
+  fun Rat(num: String, denom: Int) = RatLitExpr.of(BigInteger(num), BigInteger.valueOf(denom.toLong()))
 
-  @JvmStatic fun Rat(num: String, denom: String) = RatLitExpr(BigInteger(num), BigInteger(denom))
+  @JvmStatic fun Rat(num: String, denom: String) = RatLitExpr.of(BigInteger(num), BigInteger(denom))
 
-  @JvmStatic fun Rat(num: String, denom: BigInteger) = RatLitExpr(BigInteger(num), denom)
+  @JvmStatic fun Rat(num: String, denom: BigInteger) = RatLitExpr.of(BigInteger(num), denom)
 
   @JvmStatic
-  fun Rat(num: BigInteger, denom: Int) = RatLitExpr(num, BigInteger.valueOf(denom.toLong()))
+  fun Rat(num: BigInteger, denom: Int) = RatLitExpr.of(num, BigInteger.valueOf(denom.toLong()))
 
-  @JvmStatic fun Rat(num: BigInteger, denom: String) = RatLitExpr(num, BigInteger(denom))
+  @JvmStatic fun Rat(num: BigInteger, denom: String) = RatLitExpr.of(num, BigInteger(denom))
 
-  @JvmStatic fun Rat(num: BigInteger, denom: BigInteger) = RatLitExpr(num, denom)
+  @JvmStatic fun Rat(num: BigInteger, denom: BigInteger) = RatLitExpr.of(num, denom)
 
   @JvmStatic fun Add(ops: Iterable<Expr<RatType>>) = RatAddExpr.of(ops)
 

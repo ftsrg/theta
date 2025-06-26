@@ -35,6 +35,9 @@ data class RatLitExpr(
 
   init {
     require(denom != BigInteger.ZERO)
+    require(num.abs().gcd(denom.abs()) == BigInteger.ONE) {
+      "Numerator and denominator must be coprime. Use the factory method RatLitExpr.of() to ensure this."
+    }
   }
 
   companion object {
