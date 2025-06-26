@@ -16,13 +16,11 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import hu.bme.mit.delta.collections.*;
-import hu.bme.mit.delta.collections.impl.IntObjCursors;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-
 import java.util.Objects;
 
 public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
@@ -35,7 +33,8 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReverseNextStateDescriptor that = (ReverseNextStateDescriptor) o;
-        return Objects.equals(transitions, that.transitions) && Objects.equals(stateSpace, that.stateSpace);
+        return Objects.equals(transitions, that.transitions)
+                && Objects.equals(stateSpace, that.stateSpace);
     }
 
     @Override
@@ -69,11 +68,9 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
         return new IntObjMapViews.Transforming<>(
                 transitions,
                 (n, key) -> {
-                    if (key == null || n == null) return AbstractNextStateDescriptor.terminalEmpty();
-                    else
-                        return ReverseNextStateDescriptor.of(
-                                stateSpace.get(key),
-                                n.get(key));
+                    if (key == null || n == null)
+                        return AbstractNextStateDescriptor.terminalEmpty();
+                    else return ReverseNextStateDescriptor.of(stateSpace.get(key), n.get(key));
                 });
     }
 
@@ -116,7 +113,8 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
                     @Override
                     public IntObjCursor<? extends AbstractNextStateDescriptor> cursor() {
                         return new IntObjCursor<AbstractNextStateDescriptor>() {
-                            private final IntObjCursor<? extends MddNode> toValues = transitions.trim(stateSpace.keySet()).cursor();
+                            private final IntObjCursor<? extends MddNode> toValues =
+                                    transitions.trim(stateSpace.keySet()).cursor();
 
                             @Override
                             public int key() {
@@ -125,7 +123,8 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
 
                             @Override
                             public AbstractNextStateDescriptor value() {
-                                return ReverseNextStateDescriptor.of(stateSpace.get(key()), toValues.value().get(from));
+                                return ReverseNextStateDescriptor.of(
+                                        stateSpace.get(key()), toValues.value().get(from));
                             }
 
                             @Override
@@ -143,7 +142,6 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
                         throw new UnsupportedOperationException();
                     }
                 };
-
             }
 
             @Override

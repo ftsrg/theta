@@ -17,36 +17,31 @@ package hu.bme.mit.theta.analysis.algorithm.mdd
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
-import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
-import hu.bme.mit.delta.java.mdd.MddVariableHandle
-import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
-import hu.bme.mit.theta.core.utils.ExprUtils
 
 object MddSinglePathExtractor {
 
-  fun transform(
-    node: MddHandle
-  ): MddHandle {
+  fun transform(node: MddHandle): MddHandle {
 
     if (node.isTerminal) {
       Preconditions.checkState(!node.isTerminalZero)
-      return node;
+      return node
     } else {
 
       val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
 
       if (!node.defaultValue().isTerminalZero) {
-        templateBuilder.set(0, transform(node.defaultValue(),).node)
+        templateBuilder.set(0, transform(node.defaultValue()).node)
       } else {
         val cursor = node.cursor()
         cursor.moveNext()
         templateBuilder.set(cursor.key(), transform(cursor.value()).node)
       }
 
-      return node.variableHandle.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
-
+      return node.variableHandle.checkInNode(
+        MddStructuralTemplate.of(templateBuilder.buildAndReset())
+      )
     }
   }
 }

@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-
 import java.util.Optional;
 
 public final class SingleStepProvider implements StateSpaceEnumerationProvider {
@@ -73,17 +72,13 @@ public final class SingleStepProvider implements StateSpaceEnumerationProvider {
             final MddVariable mddVariable) {
         MddNode res = variableOrder.getMddGraph().getTerminalZeroNode();
 
-        final Optional<Iterable<AbstractNextStateDescriptor>> splitNS =
-                nextStateRelation.split();
+        final Optional<Iterable<AbstractNextStateDescriptor>> splitNS = nextStateRelation.split();
         if (splitNS.isPresent()) {
             for (AbstractNextStateDescriptor next : splitNS.get()) {
                 if (verbose) {
                     System.out.println("Applying transition: " + next);
                 }
-                res =
-                        mddVariable.union(
-                                res,
-                                relProdProvider.compute(mddNode, next, mddVariable));
+                res = mddVariable.union(res, relProdProvider.compute(mddNode, next, mddVariable));
             }
         } else {
             if (verbose) {
@@ -91,8 +86,7 @@ public final class SingleStepProvider implements StateSpaceEnumerationProvider {
             }
             res =
                     mddVariable.union(
-                            res,
-                            relProdProvider.compute(mddNode, nextStateRelation, mddVariable));
+                            res, relProdProvider.compute(mddNode, nextStateRelation, mddVariable));
         }
 
         return res;

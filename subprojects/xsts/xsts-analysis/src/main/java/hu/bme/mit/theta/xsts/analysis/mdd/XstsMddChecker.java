@@ -30,7 +30,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector;
@@ -258,7 +257,7 @@ public class XstsMddChecker implements SafetyChecker<MddProof, Trace<ExplState, 
         final SafetyResult<MddProof, Trace<ExplState, XstsAction>> result;
         if (violatingSize != 0) {
             var reversedDescriptors = new ArrayList<AbstractNextStateDescriptor>();
-            for(var transNode: transNodes) {
+            for (var transNode : transNodes) {
                 final var explTrans =
                         MddExplicitRepresentationExtractor.INSTANCE.transform(
                                 transNode, transSig.getTopVariableHandle());
@@ -267,15 +266,21 @@ public class XstsMddChecker implements SafetyChecker<MddProof, Trace<ExplState, 
             final var orReversed = OrNextStateDescriptor.create(reversedDescriptors);
 
             final TraceProvider traceProvider = new TraceProvider(stateSig.getVariableOrder());
-            final var mddTrace = traceProvider.compute(propViolating, orReversed, initResult, stateSig.getTopVariableHandle());
-            final var states = mddTrace.stream().map(
-                    it -> ExplState.of(MddValuationCollector.collect(it).stream().findFirst().orElseThrow())
-            ).toList();
+            final var mddTrace =
+                    traceProvider.compute(
+                            propViolating, orReversed, initResult, stateSig.getTopVariableHandle());
+            final var states =
+                    mddTrace.stream()
+                            .map(
+                                    it ->
+                                            ExplState.of(
+                                                    MddValuationCollector.collect(it).stream()
+                                                            .findFirst()
+                                                            .orElseThrow()))
+                            .toList();
             final var actions = Collections.nCopies(states.size() - 1, XstsAction.create(envTran));
             final Trace<ExplState, XstsAction> trace = Trace.of(states, actions);
-            result =
-                    SafetyResult.unsafe(
-                            trace, MddProof.of(stateSpace), statistics);
+            result = SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }

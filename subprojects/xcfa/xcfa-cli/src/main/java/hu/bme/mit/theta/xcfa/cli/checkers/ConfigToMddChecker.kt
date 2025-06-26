@@ -20,12 +20,12 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
@@ -55,7 +55,7 @@ fun getMddChecker(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<LocationInvariants, Trace<ExplState, ExprAction>, UnitPrec> {
+): SafetyChecker<LocationInvariants, Trace<ExprState, ExprAction>, UnitPrec> {
   val mddConfig = config.backendConfig.specConfig as MddConfig
 
   val refinementSolverFactory: SolverFactory = getSolver(mddConfig.solver, mddConfig.validateSolver)
@@ -84,14 +84,16 @@ fun getMddChecker(
   val iterationStrategy = mddConfig.iterationStrategy
 
   val checker =
-    MddChecker.create<ExprAction>(
+    MddChecker.create<ExprState, ExprAction>(
       monolithicExpr,
       variableOrder,
       solverPool,
       logger,
       iterationStrategy,
+      monolithicExpr.valToState,
+      monolithicExpr.biValToAction,
     )
-  return SafetyChecker<LocationInvariants, Trace<ExplState, ExprAction>, UnitPrec> { input ->
+  return SafetyChecker<LocationInvariants, Trace<ExprState, ExprAction>, UnitPrec> { input ->
     val result = checker.check(input)
     if (result.isUnsafe) {
       SafetyResult.unsafe(result.asUnsafe().cex, LocationInvariants())

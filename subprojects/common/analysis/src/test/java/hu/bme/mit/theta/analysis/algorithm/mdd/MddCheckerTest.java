@@ -23,13 +23,16 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -170,15 +173,19 @@ public class MddCheckerTest {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final SafetyResult<MddProof, MddCex> status;
+        final SafetyResult<MddProof, Trace<ExprState, ExprAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final MddChecker<ExprAction> checker =
+            final var monolithicExpr = new MonolithicExpr(initExpr, tranExpr, propExpr);
+            final MddChecker<ExprState, ExprAction> checker =
                     MddChecker.create(
-                            new MonolithicExpr(initExpr, tranExpr, propExpr),
+                            monolithicExpr,
                             List.copyOf(ExprUtils.getVars(List.of(initExpr, tranExpr, propExpr))),
                             solverPool,
                             logger,
-                            iterationStrategy);
+                            iterationStrategy,
+                            valuation -> monolithicExpr.getValToState().invoke(valuation),
+                            (Valuation v1, Valuation v2) ->
+                                    monolithicExpr.getBiValToAction().invoke(v1, v2));
             status = checker.check(null);
         }
 
@@ -188,6 +195,7 @@ public class MddCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
             assertTrue(stateSpaceSize >= status.getProof().size());
+            assertTrue(status.asUnsafe().getCex().length() >= 0);
         }
     }
 }

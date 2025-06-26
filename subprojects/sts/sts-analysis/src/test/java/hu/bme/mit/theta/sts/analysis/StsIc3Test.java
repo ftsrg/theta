@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
-public class Ic3Test {
+public class StsIc3Test {
 
     @Parameterized.Parameter(value = 0)
     public String filePath;

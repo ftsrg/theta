@@ -160,7 +160,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 try (var wpp = new WithPushPop(solver)) {
                     solver.add(canonizedExpr);
                     if (solver.check().isSat()) {
-                        childNode = mddGraph.getNodeFor(canonizedExpr);
+                        // TODO ask Vince
+                        childNode = mddGraph.getNodeFor(True());
                     } else {
                         childNode = null;
                     }
@@ -589,7 +590,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                             MddGraph<Expr> mddGraph =
                                     (MddGraph<Expr>) representation.mddVariable.getMddGraph();
                             assert !(canonizedExpr instanceof FalseExpr);
-                            childNode = mddGraph.getNodeFor(canonizedExpr);
+                            childNode = mddGraph.getNodeFor(True());
                         }
 
                         assert !representation.mddVariable.isNullOrZero(childNode)
