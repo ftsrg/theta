@@ -9,17 +9,17 @@ class PolymorphicModuleProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val pack: String,
-    private val topLevelClass: String,
+    private val baseClass: String,
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val topLevelClassFqn = "$pack.$topLevelClass"
+        val topLevelClassFqn = "$pack.$baseClass"
         val generatedPack = "$pack.generated"
 
         val subclasses = resolver
             .getSymbolsWithAnnotation("kotlinx.serialization.Serializable")
             .filterIsInstance<KSClassDeclaration>()
-            .filter { !it.isAbstract() }
+            .filter { !it.isAbstract() && it.getSealedSubclasses().toList().isEmpty() }
             .filter {
                 val allSuperTypes = it.getAllSuperTypes()
                 allSuperTypes.any { superType ->
@@ -33,17 +33,11 @@ class PolymorphicModuleProcessor(
         val file = codeGenerator.createNewFile(
             Dependencies(false),
             generatedPack,
-            "${topLevelClass}Serializer"
+            "${baseClass}Serializer"
         )
 
         file.bufferedWriter().use { writer ->
             writer.write("package $generatedPack\n\n")
-            writer.write("import kotlinx.serialization.KSerializer\n")
-            writer.write("import kotlinx.serialization.PolymorphicSerializer\n")
-            writer.write("import kotlinx.serialization.descriptors.SerialDescriptor\n")
-            writer.write("import kotlinx.serialization.descriptors.buildClassSerialDescriptor\n")
-            writer.write("import kotlinx.serialization.descriptors.element\n")
-            writer.write("import kotlinx.serialization.encoding.*\n")
             writer.write("import kotlinx.serialization.modules.SerializersModule\n")
             writer.write("import kotlinx.serialization.modules.polymorphic\n")
             writer.write("import kotlinx.serialization.modules.subclass\n")
@@ -54,9 +48,9 @@ class PolymorphicModuleProcessor(
             }
 
             writer.write(
-                "\nval ${topLevelClass.replaceFirstChar { it.lowercase() }}SerializerModule = SerializersModule {\n"
+                "\nval ${baseClass.replaceFirstChar { it.lowercase() }}SerializerModule = SerializersModule {\n"
             )
-            writer.write("    polymorphic($topLevelClass::class) {\n")
+            writer.write("    polymorphic($baseClass::class) {\n")
 
             subclasses.forEach { subclass ->
                 val serializer = subclass.annotations.firstOrNull {
@@ -76,69 +70,6 @@ class PolymorphicModuleProcessor(
             }
             writer.write("    }\n")
             writer.write("}\n")
-
-            subclasses.filter { it.typeParameters.isNotEmpty() }.forEach { subclass ->
-                val name = subclass.simpleName.asString()
-                logger.warn("$name -> ${subclass.typeParameters[0].bounds.toList()}")
-                val typeParams = subclass.typeParameters.joinToString(", ") {
-                    val bounds = it.bounds.toList()
-                    require(bounds.size <= 1) {
-                        "Serializer class generation: multiple bounds not supported for type parameters."
-                    }
-                    "out ${bounds.firstOrNull()?.toString() ?: "Any?"}"
-                }
-
-                writer.write("\n\nclass ${name}Serializer : KSerializer<$name<$typeParams>> {\n\n")
-                writer.write(
-                    "    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(\"$name\") {\n"
-                )
-
-                val parameters = subclass.primaryConstructor!!.parameters.map { parameter ->
-                    val typeName = parameter.type.toString()
-                    val type = subclass.typeParameters.find { it.name.asString() == typeName }?.bounds?.firstOrNull()
-                        ?: typeName
-                    parameter.name!!.asString() to type
-                }
-                parameters.forEach { (name, _) ->
-                    writer.write("        element<String>(\"$name\")\n")
-                }
-                writer.write("    }\n\n")
-
-                writer.write("    override fun serialize(encoder: Encoder, value: $name<$typeParams>) =\n")
-                writer.write("        encoder.encodeStructure(descriptor) {\n")
-                parameters.forEachIndexed { index, (name, type) ->
-                    writer.write(
-                        "            encodeSerializableElement(descriptor, $index, PolymorphicSerializer($type::class), value.$name)\n"
-                    )
-                }
-                writer.write("        }\n")
-
-                writer.write(
-                    "    override fun deserialize(decoder: Decoder): $name<$typeParams> = decoder.decodeStructure(descriptor) {\n"
-                )
-                parameters.forEach { (name, type) ->
-                    writer.write("        var $name: $type? = null\n")
-                }
-                writer.write("        while (true) {\n")
-                writer.write("            when (val index = decodeElementIndex(descriptor)) {\n")
-                parameters.forEachIndexed { index, (name, type) ->
-                    writer.write(
-                        "                $index -> $name = decodeSerializableElement(descriptor, 0, PolymorphicSerializer($type::class))\n"
-                    )
-                }
-                writer.write("                CompositeDecoder.DECODE_DONE -> break\n")
-                writer.write("                else -> error(\"Unexpected index: \$index\")")
-                writer.write("            }\n")
-                writer.write("        }\n")
-                writer.write("        $name(\n")
-                parameters.forEach { (name, _) ->
-                    writer.write("            $name = $name ?: error(\"Missing $name\"),\n")
-                }
-                writer.write("        )\n")
-                writer.write("    }\n")
-
-                writer.write("}\n")
-            }
         }
 
         return emptyList()

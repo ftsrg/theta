@@ -22,9 +22,11 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.generated.typeSerializerModule
 import hu.bme.mit.theta.core.utils.ExprSimplifier
-import kotlinx.serialization.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -33,7 +35,7 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 
 /** Literal array expression for array types, containing only literal values. */
-@Serializable
+@Serializable(with = ArrayLitExpr.Serializer::class)
 @SerialName("ArrayLit")
 data class ArrayLitExpr<IndexType : Type, ElemType : Type>(
   val elements: List<Pair<LitExpr<IndexType>, LitExpr<ElemType>>>,
@@ -78,7 +80,7 @@ data class ArrayLitExpr<IndexType : Type, ElemType : Type>(
       .toString()
 
   object Serializer : KSerializer<ArrayLitExpr<out Type, out Type>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayLitExpr") {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayLit") {
       element<String>("elements")
       element<String>("elseElem")
       element<String>("type")

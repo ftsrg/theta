@@ -24,7 +24,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-@SerialName("EnumEqExpr")
+@SerialName("EnumEq")
 data class EnumEqExpr(override val leftOp: Expr<EnumType>, override val rightOp: Expr<EnumType>) :
   EqExpr<EnumType>() {
 

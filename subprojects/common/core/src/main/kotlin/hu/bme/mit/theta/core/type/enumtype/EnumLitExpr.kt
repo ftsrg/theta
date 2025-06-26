@@ -24,7 +24,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-@SerialName("EnumLitExpr")
+@SerialName("EnumLit")
 data class EnumLitExpr(override val type: EnumType, val value: String) :
   NullaryExpr<EnumType>(), LitExpr<EnumType> {
 

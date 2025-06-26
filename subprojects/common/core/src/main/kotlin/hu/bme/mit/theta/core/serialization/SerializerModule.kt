@@ -16,22 +16,21 @@
 
 package hu.bme.mit.theta.core.serialization
 
-import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.decl.generated.declSerializerModule
+import hu.bme.mit.theta.core.stmt.generated.stmtSerializerModule
+import hu.bme.mit.theta.core.type.generated.exprSerializerModule
+import hu.bme.mit.theta.core.type.generated.typeSerializerModule
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 
-val stmtSerializerModule = SerializersModule {
-    polymorphic(Stmt::class) {
-        subclass(AssignStmt::class)
-        subclass(AssumeStmt::class)
-        subclass(HavocStmt::class)
-        subclass(IfStmt::class)
-        subclass(LoopStmt::class)
-        subclass(MemoryAssignStmt::class)
-        subclass(NonDetStmt::class)
-        subclass(OrtStmt::class)
-        subclass(SequenceStmt::class)
-        subclass(SkipStmt::class)
-    }
+val coreSerializerModule = SerializersModule {
+    include(typeSerializerModule)
+    include(declSerializerModule)
+    include(stmtSerializerModule)
+    include(exprSerializerModule)
+}
+
+val coreJson = Json {
+    serializersModule = coreSerializerModule
+    classDiscriminator = "class"
 }

@@ -18,8 +18,10 @@ package hu.bme.mit.theta.core.stmt
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Havoc statement of the form `havoc VARIABLE`, which performs a non-deterministic assignment to
@@ -27,7 +29,7 @@ import kotlinx.serialization.Serializable
  *
  * @param <DeclType>
  */
-@Serializable
+@Serializable(with = HavocStmt.Serializer::class)
 @SerialName(HavocStmt.STMT_LABEL)
 data class HavocStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>) : Stmt {
 
@@ -41,4 +43,28 @@ data class HavocStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>) : Stmt {
   override fun <P, R> accept(visitor: StmtVisitor<P, R>, param: P): R = visitor.visit(this, param)
 
   override fun toString(): String = Utils.lispStringBuilder(STMT_LABEL).add(varDecl.name).toString()
+
+  object Serializer : KSerializer<HavocStmt<out Type>> {
+    override val descriptor = buildClassSerialDescriptor("HavocStmt") {
+      element<VarDecl<out Type>>("varDecl")
+    }
+    override fun serialize(encoder: Encoder, value: HavocStmt<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
+      }
+    override fun deserialize(decoder: Decoder): HavocStmt<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var varDecl: VarDecl<out Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer)
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        HavocStmt(
+          varDecl = varDecl ?: throw SerializationException("Missing varDecl"),
+        )
+      }
+  }
 }

@@ -22,12 +22,15 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /** Equality expression for array types. */
-@Serializable
-@SerialName("ArrayEqExpr")
+@Serializable(with = ArrayEqExpr.Serializer::class)
+@SerialName("ArrayEq")
 data class ArrayEqExpr<IndexType : Type, ElemType : Type>(
   override val leftOp: Expr<ArrayType<IndexType, ElemType>>,
   override val rightOp: Expr<ArrayType<IndexType, ElemType>>,
@@ -61,4 +64,33 @@ data class ArrayEqExpr<IndexType : Type, ElemType : Type>(
   ): ArrayEqExpr<IndexType, ElemType> = of(leftOp, rightOp)
 
   override fun toString(): String = super.toString()
+
+  object Serializer : KSerializer<ArrayEqExpr<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayEq") {
+      element<Expr<out Type>>("leftOp")
+      element<Expr<out Type>>("rightOp")
+    }
+    override fun serialize(encoder: Encoder, value: ArrayEqExpr<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.leftOp)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.rightOp)
+      }
+    override fun deserialize(decoder: Decoder): ArrayEqExpr<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var leftOp: Expr<ArrayType<Type, Type>>? = null
+        var rightOp: Expr<ArrayType<Type, Type>>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> leftOp = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<ArrayType<Type, Type>>
+            1 -> rightOp = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<ArrayType<Type, Type>>
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        ArrayEqExpr(
+          leftOp ?: throw SerializationException("Missing leftOp "),
+          rightOp ?: throw SerializationException("Missing rightOp ")
+        )
+      }
+  }
 }

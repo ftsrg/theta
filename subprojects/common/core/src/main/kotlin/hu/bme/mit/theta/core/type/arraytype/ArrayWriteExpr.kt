@@ -21,12 +21,15 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /** Write expression for array types. */
-@Serializable
-@SerialName("ArrayWriteExpr")
+@Serializable(with = ArrayWriteExpr.Serializer::class)
+@SerialName("ArrayWrite")
 data class ArrayWriteExpr<IndexType : Type, ElemType : Type>(
   val array: Expr<ArrayType<IndexType, ElemType>>,
   val index: Expr<IndexType>,
@@ -97,4 +100,38 @@ data class ArrayWriteExpr<IndexType : Type, ElemType : Type>(
     with(array, index, elem)
 
   fun withElem(elem: Expr<ElemType>): ArrayWriteExpr<IndexType, ElemType> = with(array, index, elem)
+
+  object Serializer : KSerializer<ArrayWriteExpr<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ArrayWrite") {
+      element<Expr<out Type>>("array")
+      element<Expr<out Type>>("index")
+      element<Expr<out Type>>("elem")
+    }
+    override fun serialize(encoder: Encoder, value: ArrayWriteExpr<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.array)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.index)
+        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class), value.elem)
+      }
+    override fun deserialize(decoder: Decoder): ArrayWriteExpr<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var array: Expr<ArrayType<Type, Type>>? = null
+        var index: Expr<Type>? = null
+        var elem: Expr<Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> array = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<ArrayType<Type, Type>>
+            1 -> index = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            2 -> elem = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        ArrayWriteExpr(
+          array ?: throw SerializationException("Missing array"),
+          index ?: throw SerializationException("Missing index"),
+          elem ?: throw SerializationException("Missing elem")
+        )
+      }
+  }
 }

@@ -24,15 +24,18 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents an if-then-else expression.
  *
  * @param ExprType The type of the expression
  */
-@Serializable
+@Serializable(with = IteExpr.Serializer::class)
 @SerialName("Ite")
 data class IteExpr<ExprType : Type>(
   val cond: Expr<BoolType>,
@@ -99,4 +102,38 @@ data class IteExpr<ExprType : Type>(
 
   override fun toString(): String =
     Utils.lispStringBuilder(OPERATOR_LABEL).add(cond).add(then).add(elze).toString()
+
+  object Serializer : KSerializer<IteExpr<out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Ite") {
+      element<Expr<BoolType>>("cond")
+      element<Expr<out Type>>("then")
+      element<Expr<out Type>>("elze")
+    }
+    override fun serialize(encoder: Encoder, value: IteExpr<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.cond)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.then)
+        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class), value.elze)
+      }
+    override fun deserialize(decoder: Decoder): IteExpr<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var cond: Expr<BoolType>? = null
+        var then: Expr<Type>? = null
+        var elze: Expr<Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> cond = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<BoolType>
+            1 -> then = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            2 -> elze = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        IteExpr(
+          cond ?: throw SerializationException("Missing cond "),
+          then ?: throw SerializationException("Missing then "),
+          elze ?: throw SerializationException("Missing elze ")
+        )
+      }
+  }
 }

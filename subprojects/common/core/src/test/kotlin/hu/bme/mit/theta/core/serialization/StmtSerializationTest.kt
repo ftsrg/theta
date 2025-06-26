@@ -18,20 +18,18 @@ package hu.bme.mit.theta.core.serialization
 
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.stmt.*
-//import hu.bme.mit.theta.core.stmt.generated.stmtSerializer
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class StmtSerializationTest {
 
-    private val json = Json {
-//        serializersModule = stmtSerializer
-        classDiscriminator = "type"
+    companion object {
+
+        private val json = coreJson
     }
 
     @Test

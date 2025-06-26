@@ -20,8 +20,11 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Assignment statement of the form `VARIABLE := EXPRESSION`. The statement updates the VARIABLE
@@ -29,7 +32,7 @@ import kotlinx.serialization.Serializable
  *
  * @param <DeclType>
  */
-@Serializable
+@Serializable(with = AssignStmt.Serializer::class)
 @SerialName(AssignStmt.STMT_LABEL)
 data class AssignStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>, val expr: Expr<DeclType>) :
   Stmt {
@@ -55,4 +58,35 @@ data class AssignStmt<DeclType : Type>(val varDecl: VarDecl<DeclType>, val expr:
 
   override fun toString(): String =
     Utils.lispStringBuilder(STMT_LABEL).add(varDecl.name).add(expr).toString()
+
+  object Serializer : KSerializer<AssignStmt<out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("AssignStmt") {
+      element<VarDecl<out Type>>("varDecl")
+      element<Expr<out Type>>("expr")
+    }
+
+    override fun serialize(encoder: Encoder, value: AssignStmt<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.expr)
+      }
+
+    override fun deserialize(decoder: Decoder): AssignStmt<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var varDecl: VarDecl<Type>? = null
+        var expr: Expr<Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer) as VarDecl<Type>
+            1 -> expr = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        AssignStmt(
+          varDecl = varDecl ?: throw SerializationException("Missing varDecl"),
+          expr = expr ?: throw SerializationException("Missing expr"),
+        )
+      }
+  }
 }

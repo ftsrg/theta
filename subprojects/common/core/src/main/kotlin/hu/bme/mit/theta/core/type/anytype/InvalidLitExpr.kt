@@ -19,15 +19,17 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents an invalid literal expression.
  *
  * @param ExprType The type of the expression
  */
-@Serializable
+@Serializable(with = InvalidLitExpr.Serializer::class)
 @SerialName("InvalidLit")
 data class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
   NullaryExpr<ExprType>(), LitExpr<ExprType> {
@@ -37,4 +39,28 @@ data class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
   override val isInvalid: Boolean = true
 
   override fun equals(other: Any?): Boolean = false
+
+  object Serializer : KSerializer<InvalidLitExpr<out Type>> {
+    override val descriptor = buildClassSerialDescriptor("InvalidLit") {
+      element<Type>("type")
+    }
+    override fun serialize(encoder: Encoder, value: InvalidLitExpr<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class), value.type)
+      }
+    override fun deserialize(decoder: Decoder): InvalidLitExpr<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var type: Type? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> type = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Type::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        InvalidLitExpr(
+          type = type ?: throw SerializationException("Missing type ")
+        )
+      }
+  }
 }

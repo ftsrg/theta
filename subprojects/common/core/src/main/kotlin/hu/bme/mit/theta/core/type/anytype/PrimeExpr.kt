@@ -20,15 +20,18 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.UnaryExpr
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents a prime expression (next state).
  *
  * @param ExprType The type of the expression
  */
-@Serializable
+@Serializable(with = PrimeExpr.Serializer::class)
 @SerialName("Prime")
 data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
   UnaryExpr<ExprType, ExprType>() {
@@ -49,4 +52,28 @@ data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
   override fun new(op: Expr<ExprType>): PrimeExpr<ExprType> = of(op)
 
   override val operatorLabel: String = OPERATOR_LABEL
+
+  object Serializer : KSerializer<PrimeExpr<out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Prime") {
+      element<Expr<out Type>>("op")
+    }
+    override fun serialize(encoder: Encoder, value: PrimeExpr<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.op)
+      }
+    override fun deserialize(decoder: Decoder): PrimeExpr<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var op: Expr<out Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> op = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        PrimeExpr(
+          op = op ?: throw SerializationException("Missing op ")
+        )
+      }
+  }
 }

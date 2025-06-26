@@ -22,12 +22,15 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /** Function literal expression (lambda abstraction) for function types. */
-@Serializable
-@SerialName("FuncLitExpr")
+@Serializable(with = FuncLitExpr.Serializer::class)
+@SerialName("FuncLit")
 data class FuncLitExpr<ParamType : Type, ResultType : Type>(
   val param: ParamDecl<ParamType>,
   val result: Expr<ResultType>,
@@ -61,5 +64,34 @@ data class FuncLitExpr<ParamType : Type, ResultType : Type>(
   override fun toString(): String {
     val paramString = "(${param.name} ${param.type})"
     return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(paramString).add(result).toString()
+  }
+
+  object Serializer : KSerializer<FuncLitExpr<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("FuncLit") {
+      element<ParamDecl<out Type>>("param")
+      element<Expr<out Type>>("result")
+    }
+    override fun serialize(encoder: Encoder, value: FuncLitExpr<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class), value.param)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.result)
+      }
+    override fun deserialize(decoder: Decoder): FuncLitExpr<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var param: ParamDecl<out Type>? = null
+        var result: Expr<out Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> param = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class))
+            1 -> result = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        FuncLitExpr(
+          param ?: throw SerializationException("Missing param"),
+          result ?: throw SerializationException("Missing result")
+        )
+      }
   }
 }

@@ -20,15 +20,18 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents a reference to a declaration.
  *
  * @param DeclType The type of the declaration
  */
-@Serializable
+@Serializable(with = RefExpr.Serializer::class)
 @SerialName("Ref")
 data class RefExpr<DeclType : Type>(val decl: Decl<DeclType>) : NullaryExpr<DeclType>() {
 
@@ -45,4 +48,28 @@ data class RefExpr<DeclType : Type>(val decl: Decl<DeclType>) : NullaryExpr<Decl
     }
 
   override fun toString(): String = decl.name
+
+  object Serializer : KSerializer<RefExpr<out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Ref") {
+      element<Decl<out Type>>("decl")
+    }
+    override fun serialize(encoder: Encoder, value: RefExpr<out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Decl::class), value.decl)
+      }
+    override fun deserialize(decoder: Decoder): RefExpr<out Type> =
+      decoder.decodeStructure(descriptor) {
+        var decl: Decl<out Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> decl = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Decl::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        RefExpr(
+          decl = decl ?: throw SerializationException("Missing decl ")
+        )
+      }
+  }
 }

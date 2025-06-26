@@ -21,12 +21,15 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /** Function application expression for function types. */
-@Serializable
-@SerialName("FuncAppExpr")
+@Serializable(with = FuncAppExpr.Serializer::class)
+@SerialName("FuncApp")
 data class FuncAppExpr<ParamType : Type, ResultType : Type>(
   val func: Expr<FuncType<ParamType, ResultType>>,
   val param: Expr<ParamType>,
@@ -76,4 +79,33 @@ data class FuncAppExpr<ParamType : Type, ResultType : Type>(
   fun withParam(param: Expr<ParamType>): FuncAppExpr<ParamType, ResultType> = with(func, param)
 
   override fun toString(): String = Utils.lispStringBuilder().add(func).body().add(param).toString()
+
+  object Serializer : KSerializer<FuncAppExpr<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("FuncApp") {
+      element<Expr<out Type>>("func")
+      element<Expr<out Type>>("param")
+    }
+    override fun serialize(encoder: Encoder, value: FuncAppExpr<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.func)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.param)
+      }
+    override fun deserialize(decoder: Decoder): FuncAppExpr<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var func: Expr<FuncType<Type, Type>>? = null
+        var param: Expr<Type>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> func = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class)) as Expr<FuncType<Type, Type>>
+            1 -> param = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class)) as Expr<Type>
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        FuncAppExpr(
+          func ?: throw SerializationException("Missing func"),
+          param ?: throw SerializationException("Missing param")
+        )
+      }
+  }
 }

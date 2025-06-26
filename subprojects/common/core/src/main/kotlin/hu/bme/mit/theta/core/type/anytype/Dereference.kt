@@ -21,8 +21,12 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.inttype.IntType
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents a dereference expression for array access.
@@ -35,7 +39,7 @@ import kotlinx.serialization.Serializable
  * @property type The type of the dereferenced element
  * @property uniquenessIdx Optional uniqueness index for SMT encoding
  */
-@Serializable
+@Serializable(with = Dereference.Serializer::class)
 @SerialName("Dereference")
 data class Dereference<A : Type, O : Type, T : Type>(
   val array: Expr<A>,
@@ -85,4 +89,48 @@ data class Dereference<A : Type, O : Type, T : Type>(
 
   override fun toString(): String =
     Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(ops).add(type).toString()
+
+  object Serializer : KSerializer<Dereference<out Type, out Type, out Type>> {
+
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Dereference") {
+      element<Expr<out Type>>("array")
+      element<Expr<out Type>>("offset")
+      element<Type>("type")
+      element<Expr<IntType>?>("uniquenessIdx")
+    }
+
+    override fun serialize(encoder: Encoder, value: Dereference<out Type, out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.array)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.offset)
+        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class), value.type)
+        encodeSerializableElement(descriptor, 3, PolymorphicSerializer(Expr::class).nullable, value.uniquenessIdx)
+      }
+
+    override fun deserialize(decoder: Decoder): Dereference<out Type, out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var array: Expr<out Type>? = null
+        var offset: Expr<out Type>? = null
+        var type: Type? = null
+        var uniquenessIdx: Expr<IntType>? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> array = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+            1 -> offset = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
+            2 -> type = decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class))
+            3 -> uniquenessIdx =
+              decodeSerializableElement(descriptor, 3, PolymorphicSerializer(Expr::class).nullable) as Expr<IntType>?
+
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        Dereference(
+          array ?: throw SerializationException("Missing array "),
+          offset ?: throw SerializationException("Missing offset "),
+          type ?: throw SerializationException("Missing type "),
+          uniquenessIdx
+        )
+      }
+  }
 }

@@ -15,14 +15,16 @@
  */
 package hu.bme.mit.theta.core.type.anytype
 
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.*
 
 /**
  * Represents a reference to an expression.
@@ -32,12 +34,11 @@ import kotlinx.serialization.Serializable
  * @property expr The referenced expression
  * @property type The type of the reference
  */
-@Serializable
+@Serializable(with = Reference.Serializer::class)
 @SerialName("Reference")
 data class Reference<A : Type, T : Type>(val expr: Expr<T>, override val type: A) : Expr<A> {
 
   companion object {
-    private const val OPERATOR_LABEL = "ref"
 
     @JvmStatic
     fun <A : Type, T : Type> of(expr: Expr<T>, type: A): Reference<A, T> = Reference(expr, type)
@@ -58,6 +59,32 @@ data class Reference<A : Type, T : Type>(val expr: Expr<T>, override val type: A
     @Suppress("UNCHECKED_CAST") return Reference(ops[0] as Expr<T>, type)
   }
 
-  override fun toString(): String =
-    Utils.lispStringBuilder(OPERATOR_LABEL).body().add(expr).add(type).toString()
+  object Serializer : KSerializer<Reference<out Type, out Type>> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Reference") {
+      element<Expr<out Type>>("expr")
+      element<Type>("type")
+    }
+    override fun serialize(encoder: Encoder, value: Reference<out Type, out Type>) =
+      encoder.encodeStructure(descriptor) {
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class), value.expr)
+        encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.type)
+      }
+    override fun deserialize(decoder: Decoder): Reference<out Type, out Type> =
+      decoder.decodeStructure(descriptor) {
+        var expr: Expr<out Type>? = null
+        var type: Type? = null
+        while (true) {
+          when (val i = decodeElementIndex(descriptor)) {
+            0 -> expr = decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Expr::class))
+            1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
+            CompositeDecoder.DECODE_DONE -> break
+            else -> throw SerializationException("Unknown index $i")
+          }
+        }
+        Reference(
+          expr ?: throw SerializationException("Missing expr "),
+          type ?: throw SerializationException("Missing type ")
+        )
+      }
+  }
 }
