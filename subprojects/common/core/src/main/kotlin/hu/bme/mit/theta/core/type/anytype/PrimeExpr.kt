@@ -53,6 +53,8 @@ data class PrimeExpr<ExprType : Type>(override val op: Expr<ExprType>) :
 
   override val operatorLabel: String = OPERATOR_LABEL
 
+  override fun toString(): String = super.toString()
+
   object Serializer : KSerializer<PrimeExpr<out Type>> {
     override val descriptor: SerialDescriptor =
       buildClassSerialDescriptor("Prime") { element<Expr<out Type>>("op") }

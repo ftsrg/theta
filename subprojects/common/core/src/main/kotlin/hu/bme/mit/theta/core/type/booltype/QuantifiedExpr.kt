@@ -79,6 +79,8 @@ data class ExistsExpr(
     if (op == this.op) this else ExistsExpr(paramDecls, op)
 
   override val operatorLabel: String = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
 
 /** Universal quantifier expression for boolean type. */
@@ -106,4 +108,6 @@ data class ForallExpr(
     if (op == this.op) this else ForallExpr(paramDecls, op)
 
   override val operatorLabel: String = OPERATOR_LABEL
+
+  override fun toString(): String = super.toString()
 }
