@@ -20,7 +20,11 @@ import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.App
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr
@@ -28,13 +32,13 @@ import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.HornSolver
-import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
 class Z3HornSolverTest {
   companion object {
@@ -81,7 +85,7 @@ class Z3HornSolverTest {
         checkerSolver.add(
           App(
             App(
-              model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
+              model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
               p0.ref,
             ),
             p1.ref,
