@@ -130,12 +130,7 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
           value.elements,
         )
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.elseElem)
-        encodeSerializableElement(
-          descriptor,
-          2,
-          PolymorphicSerializer(ArrayType::class),
-          value.type,
-        )
+        encodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class), value.type)
       }
 
     override fun deserialize(decoder: Decoder): ArrayInitExpr<out Type, out Type> =
@@ -164,7 +159,7 @@ data class ArrayInitExpr<IndexType : Type, ElemType : Type>(
                   as Expr<Type>
             2 ->
               type =
-                decodeSerializableElement(descriptor, 2, PolymorphicSerializer(ArrayType::class))
+                decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class))
                   as ArrayType<Type, Type>
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")

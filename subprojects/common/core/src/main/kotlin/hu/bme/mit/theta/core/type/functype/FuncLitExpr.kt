@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.functype
 
 import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
@@ -75,12 +76,7 @@ data class FuncLitExpr<ParamType : Type, ResultType : Type>(
 
     override fun serialize(encoder: Encoder, value: FuncLitExpr<out Type, out Type>) =
       encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(
-          descriptor,
-          0,
-          PolymorphicSerializer(ParamDecl::class),
-          value.param,
-        )
+        encodeSerializableElement(descriptor, 0, PolymorphicSerializer(Decl::class), value.param)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class), value.result)
       }
 
@@ -92,7 +88,8 @@ data class FuncLitExpr<ParamType : Type, ResultType : Type>(
           when (val i = decodeElementIndex(descriptor)) {
             0 ->
               param =
-                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(ParamDecl::class))
+                decodeSerializableElement(descriptor, 0, PolymorphicSerializer(Decl::class))
+                  as ParamDecl<out Type>
             1 ->
               result = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Expr::class))
             CompositeDecoder.DECODE_DONE -> break

@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.core.type.booltype
 
-import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.MultiaryExpr

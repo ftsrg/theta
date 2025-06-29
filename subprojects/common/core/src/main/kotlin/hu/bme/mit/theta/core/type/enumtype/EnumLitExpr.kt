@@ -28,12 +28,15 @@ import kotlinx.serialization.Serializable
 data class EnumLitExpr(override val type: EnumType, val value: String) :
   NullaryExpr<EnumType>(), LitExpr<EnumType> {
 
+  init {
+    require(value in type.values) { "Invalid value $value for type ${type.name}" }
+  }
+
   companion object {
 
     @JvmStatic
     fun of(type: EnumType, literalName: String): EnumLitExpr {
       val value = EnumType.getShortName(literalName)
-      require(value in type.values) { "Invalid value $value for type ${type.name}" }
       return EnumLitExpr(type, value)
     }
 
