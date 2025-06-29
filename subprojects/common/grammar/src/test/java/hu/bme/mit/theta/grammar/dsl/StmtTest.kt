@@ -22,7 +22,10 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.stmt.Stmts.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
+import hu.bme.mit.theta.core.stmt.Stmts.MemoryAssign
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -91,12 +94,5 @@ class StmtTest {
     decls.forEach { env.define(it.key, it.value) }
     val stmt = StatementWrapper(memory.toString(), SimpleScope(symbolTable)).instantiate(env)
     Assert.assertEquals(memory, stmt)
-  }
-
-  data class NamedSymbol(val _name: String) : Symbol {
-
-    override fun getName(): String {
-      return _name
-    }
   }
 }

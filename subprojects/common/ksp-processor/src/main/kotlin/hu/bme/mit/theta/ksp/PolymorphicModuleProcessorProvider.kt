@@ -22,7 +22,7 @@ sealed class PolymorphicModuleProcessorProvider(
     private val baseClass: String,
 ) : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =
-        PolymorphicModuleProcessor(environment.codeGenerator, environment.logger, pack, baseClass)
+        PolymorphicModuleProcessor(environment.codeGenerator, pack, baseClass)
 }
 
 class TypeSerializerProcessorProvider :

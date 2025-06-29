@@ -22,7 +22,6 @@ import com.google.devtools.ksp.symbol.*
 
 class PolymorphicModuleProcessor(
     private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger,
     private val pack: String,
     private val baseClass: String,
 ) : SymbolProcessor {
@@ -31,25 +30,35 @@ class PolymorphicModuleProcessor(
         val topLevelClassFqn = "$pack.$baseClass"
         val generatedPack = "$pack.generated"
 
-        val subclasses = resolver
-            .getSymbolsWithAnnotation("kotlinx.serialization.Serializable")
-            .filterIsInstance<KSClassDeclaration>()
-            .filter { !it.isAbstract() && it.getSealedSubclasses().toList().isEmpty() }
-            .filter {
-                val allSuperTypes = it.getAllSuperTypes()
-                allSuperTypes.any { superType ->
-                    superType.declaration.qualifiedName?.asString() == topLevelClassFqn
+        val subclasses = resolver.getAllFiles().flatMap { file ->
+            file.declarations
+                .filterIsInstance<KSClassDeclaration>()
+                .filter { !it.isAbstract() && it.getSealedSubclasses().toList().isEmpty() }
+                .filter { clazz ->
+                    clazz.annotations.any {
+                        it.annotationType.resolve().declaration.qualifiedName?.asString() == "kotlinx.serialization.Serializable"
+                    }
                 }
-            }
-            .toList()
+                .filter {
+                    val allSuperTypes = it.getAllSuperTypes()
+                    allSuperTypes.any { superType ->
+                        superType.declaration.qualifiedName?.asString() == topLevelClassFqn
+                    }
+                }
+        }.toList()
 
         if (subclasses.isEmpty()) return emptyList()
 
-        val file = codeGenerator.createNewFile(
-            Dependencies(false),
-            generatedPack,
-            "${baseClass}Serializer"
-        )
+        val inputFiles = subclasses.mapNotNull { it.containingFile }.distinct()
+        val file = try {
+            codeGenerator.createNewFile(
+                Dependencies(false, *inputFiles.toTypedArray()),
+                generatedPack,
+                "${baseClass}Serializer"
+            )
+        } catch (e: FileAlreadyExistsException) {
+            return emptyList()
+        }
 
         file.bufferedWriter().use { writer ->
             writer.write("package $generatedPack\n\n")

@@ -44,3 +44,7 @@ tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm> {
         "kspTestFixturesKotlin" -> dependsOn("generateTestFixturesGrammarSource")
     }
 }
+
+ksp {
+    arg("incremental", "false")
+}
