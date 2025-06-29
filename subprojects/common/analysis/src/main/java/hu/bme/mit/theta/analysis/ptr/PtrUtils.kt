@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.ptr
 
-import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -113,7 +112,7 @@ fun Stmt.uniqueDereferences(
 
       is AssumeStmt ->
         AssumeStmt.of(cond.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
-      is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
+      is SequenceStmt -> Stmts.Sequence(stmts.map { it.uniqueDereferences(vargen, lookup) })
       is HavocStmt<*> -> this
       is SkipStmt -> this
       is NonDetStmt -> this
@@ -130,10 +129,7 @@ fun <T : Type> Expr<T>.uniqueDereferences(
 ): Pair<List<Stmt>, Expr<T>> =
   if (this is Dereference<*, *, T>) {
     val ret = ArrayList<Stmt>()
-    Preconditions.checkState(
-      this.uniquenessIdx.isEmpty,
-      "Only non-pretransformed dereferences should be here",
-    )
+    require(this.uniquenessIdx == null) { "Only non-pretransformed dereferences should be here" }
     val arrayExpr =
       ExprUtils.simplify(
         array.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second

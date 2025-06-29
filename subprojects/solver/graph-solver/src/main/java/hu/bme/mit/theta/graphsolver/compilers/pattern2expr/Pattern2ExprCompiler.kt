@@ -22,7 +22,13 @@ import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.graphsolver.ThreeVL
 import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
@@ -47,7 +53,6 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     this.facts.putAll(edges)
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
   override fun getCompleteGraph(
     namedPatterns: Set<GraphPattern>,
     model: Valuation,
@@ -103,14 +108,14 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
   override fun compile(reflexive: Reflexive): Expr<BoolType> {
     val compiled = reflexive.constrainedRule.accept(this)
-    val ret = And(Or(events.map { compiled[Tuple2.of(it, it)] }), And(transitiveConstraints))
+    val ret = And(Or(events.map { compiled[Tuple2.of(it, it)]!! }), And(transitiveConstraints))
     transitiveConstraints.clear()
     return ret
   }
 
   override fun compile(irreflexive: Irreflexive): Expr<BoolType> {
     val compiled = irreflexive.constrainedRule.accept(this)
-    val ret = And(Not(Or(events.map { compiled[Tuple2.of(it, it)] })), And(transitiveConstraints))
+    val ret = And(Not(Or(events.map { compiled[Tuple2.of(it, it)]!! })), And(transitiveConstraints))
     transitiveConstraints.clear()
     return ret
   }
@@ -122,7 +127,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val ret =
       events.map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), And(op1Compiled[Tuple1.of(a)], op2Compiled[Tuple1.of(b)]))
+          Pair(Tuple2.of(a, b), And(op1Compiled[Tuple1.of(a)]!!, op2Compiled[Tuple1.of(b)]!!))
         }
       }
     return ret.flatten().toMap()
@@ -143,7 +148,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
         events.map { b ->
           Pair(
             Tuple2.of(a, b),
-            And(op1Compiled[Tuple2.of(a, b)], Not(op2Compiled[Tuple2.of(a, b)])),
+            And(op1Compiled[Tuple2.of(a, b)]!!, Not(op2Compiled[Tuple2.of(a, b)]!!)),
           )
         }
       }
@@ -156,7 +161,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
     val ret =
       events.map { a ->
-        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)], Not(op2Compiled[Tuple1.of(a)])))
+        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)]!!, Not(op2Compiled[Tuple1.of(a)]!!)))
       }
     return ret.toMap()
   }
@@ -165,7 +170,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val opCompiled = pattern.op.accept(this)
 
     val ret =
-      events.map { a -> Pair(Tuple1.of(a), Or(events.map { b -> opCompiled[Tuple2.of(a, b)] })) }
+      events.map { a -> Pair(Tuple1.of(a), Or(events.map { b -> opCompiled[Tuple2.of(a, b)]!! })) }
     return ret.toMap()
   }
 
@@ -182,7 +187,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     return events
       .map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), if (a == b) True() else checkNotNull(opCompiled[Tuple2.of(a, b)]))
+          Pair(Tuple2.of(a, b), if (a == b) True() else opCompiled[Tuple2.of(a, b)]!!)
         }
       }
       .flatten()
@@ -196,7 +201,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val ret =
       events.map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), And(op1Compiled[Tuple2.of(a, b)], op2Compiled[Tuple2.of(a, b)]))
+          Pair(Tuple2.of(a, b), And(op1Compiled[Tuple2.of(a, b)]!!, op2Compiled[Tuple2.of(a, b)]!!))
         }
       }
     return ret.flatten().toMap()
@@ -208,7 +213,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
     val ret =
       events.map { a ->
-        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)], op2Compiled[Tuple1.of(a)]))
+        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)]!!, op2Compiled[Tuple1.of(a)]!!))
       }
     return ret.toMap()
   }
@@ -216,9 +221,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
   override fun compile(pattern: Inverse): Map<Tuple, Expr<BoolType>> {
     val opCompiled = pattern.op.accept(this)
     return events
-      .map { a ->
-        events.map { b -> Pair(Tuple2.of(a, b), checkNotNull(opCompiled[Tuple2.of(b, a)])) }
-      }
+      .map { a -> events.map { b -> Pair(Tuple2.of(a, b), opCompiled[Tuple2.of(b, a)]!!) } }
       .flatten()
       .toMap()
   }
@@ -227,7 +230,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val opCompiled = pattern.op.accept(this)
 
     val ret =
-      events.map { a -> Pair(Tuple1.of(a), Or(events.map { b -> opCompiled[Tuple2.of(a, b)] })) }
+      events.map { a -> Pair(Tuple1.of(a), Or(events.map { b -> opCompiled[Tuple2.of(a, b)]!! })) }
     return ret.toMap()
   }
 
@@ -261,17 +264,17 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
               Iff(
                 Or(
-                  opCompiled[Tuple2.of(a, b)],
+                  opCompiled[Tuple2.of(a, b)]!!,
                   Or(
                     events.map { c ->
                       Or(
-                        And(opCompiled[Tuple2.of(a, c)], checkNotNull(consts[Tuple2.of(c, b)]).ref),
-                        And(checkNotNull(consts[Tuple2.of(a, c)]).ref, opCompiled[Tuple2.of(c, b)]),
+                        And(opCompiled[Tuple2.of(a, c)]!!, consts[Tuple2.of(c, b)]!!.ref),
+                        And(consts[Tuple2.of(a, c)]!!.ref, opCompiled[Tuple2.of(c, b)]!!),
                       )
                     }
                   ),
                 ),
-                checkNotNull(consts[Tuple2.of(a, b)]).ref,
+                consts[Tuple2.of(a, b)]!!.ref,
               )
             }
           }
@@ -281,7 +284,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val ret =
       events.map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), if (a == b) True() else checkNotNull(consts[Tuple2.of(a, b)]).ref)
+          Pair(Tuple2.of(a, b), if (a == b) True() else consts[Tuple2.of(a, b)]!!.ref)
         }
       }
     return ret.flatten().toMap()
@@ -301,7 +304,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             Or(
               events
                 .filter { c -> a != c && b != c }
-                .map { c -> And(op1Compiled[Tuple2.of(a, c)], op2Compiled[Tuple2.of(c, b)]) }
+                .map { c -> And(op1Compiled[Tuple2.of(a, c)]!!, op2Compiled[Tuple2.of(c, b)]!!) }
             ),
           )
         }
@@ -314,7 +317,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val ret =
       events.map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), if (a == b) checkNotNull(opCompiled[Tuple1.of(a)]) else False())
+          Pair(Tuple2.of(a, b), if (a == b) opCompiled[Tuple1.of(a)]!! else False())
         }
       }
     return ret.flatten().toMap()
@@ -350,25 +353,19 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
               Iff(
                 Or(
-                  opCompiled[Tuple2.of(a, b)],
+                  opCompiled[Tuple2.of(a, b)]!!,
                   Or(
                     events
                       .filter { c -> a != c && b != c }
                       .map { c ->
                         Or(
-                          And(
-                            opCompiled[Tuple2.of(a, c)],
-                            checkNotNull(consts[Tuple2.of(c, b)]).ref,
-                          ),
-                          And(
-                            checkNotNull(consts[Tuple2.of(a, c)]).ref,
-                            opCompiled[Tuple2.of(c, b)],
-                          ),
+                          And(opCompiled[Tuple2.of(a, c)]!!, consts[Tuple2.of(c, b)]!!.ref),
+                          And(consts[Tuple2.of(a, c)]!!.ref, opCompiled[Tuple2.of(c, b)]!!),
                         )
                       }
                   ),
                 ),
-                checkNotNull(consts[Tuple2.of(a, b)]).ref,
+                consts[Tuple2.of(a, b)]!!.ref,
               )
             }
           }
@@ -376,9 +373,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
       )
     transitiveConstraints.add(constraints)
     val ret =
-      events.map { a ->
-        events.map { b -> Pair(Tuple2.of(a, b), checkNotNull(consts[Tuple2.of(a, b)]).ref) }
-      }
+      events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), consts[Tuple2.of(a, b)]!!.ref) } }
     return ret.flatten().toMap()
   }
 
@@ -389,7 +384,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
     val ret =
       events.map { a ->
         events.map { b ->
-          Pair(Tuple2.of(a, b), Or(op1Compiled[Tuple2.of(a, b)], op2Compiled[Tuple2.of(a, b)]))
+          Pair(Tuple2.of(a, b), Or(op1Compiled[Tuple2.of(a, b)]!!, op2Compiled[Tuple2.of(a, b)]!!))
         }
       }
     return ret.flatten().toMap()
@@ -401,7 +396,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
     val ret =
       events.map { a ->
-        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)], op2Compiled[Tuple1.of(a)]))
+        Pair(Tuple1.of(a), And(op1Compiled[Tuple1.of(a)]!!, op2Compiled[Tuple1.of(a)]!!))
       }
     return ret.toMap()
   }

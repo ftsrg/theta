@@ -21,7 +21,11 @@ import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.App
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr
@@ -69,10 +73,7 @@ class GenericSmtLibHornSolverTest {
             e.printStackTrace()
           }
 
-          solverFactories.put(
-            Pair(solver, version),
-            solverManager!!.getSolverFactory(solver, version),
-          )
+          solverFactories[Pair(solver, version)] = solverManager!!.getSolverFactory(solver, version)
         }
       }
     }
@@ -122,14 +123,14 @@ class GenericSmtLibHornSolverTest {
       Assertions.assertTrue(model.containsKey(init.constDecl))
 
       val checkerSolver =
-        solverFactories.filter { it.key.first.equals("z3") }.values.first().createSolver()
+        solverFactories.filter { it.key.first == "z3" }.values.first().createSolver()
       checkerSolver.use {
         val p0 = Const("p0", Int())
         val p1 = Const("p1", Int())
         checkerSolver.add(
           App(
             App(
-              model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
+              model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
               p0.ref,
             ),
             p1.ref,

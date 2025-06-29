@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
@@ -50,6 +50,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+import kotlin.Pair;
 
 final class Z3ExprTransformer {
 
@@ -1030,8 +1031,8 @@ final class Z3ExprTransformer {
                 context.mkConstArray(
                         transformer.toSort(expr.getType().getIndexType()),
                         toTerm(expr.getElseElem()));
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+        for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+            running = context.mkStore(running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }
@@ -1041,8 +1042,8 @@ final class Z3ExprTransformer {
                 context.mkConstArray(
                         transformer.toSort(expr.getType().getIndexType()),
                         toTerm(expr.getElseElem()));
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+        for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+            running = context.mkStore(running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }
@@ -1065,8 +1066,8 @@ final class Z3ExprTransformer {
     }
 
     private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?, ?> expr) {
-        checkState(
-                expr.getUniquenessIdx().isPresent(),
+        checkNotNull(
+                expr.getUniquenessIdx(),
                 "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
         final var sort = transformer.toSort(expr.getArray().getType());
         final var constSort = transformer.toSort(Int());
@@ -1079,7 +1080,7 @@ final class Z3ExprTransformer {
                 func,
                 toTerm(expr.getArray()),
                 toTerm(expr.getOffset()),
-                toTerm(expr.getUniquenessIdx().get()));
+                toTerm(expr.getUniquenessIdx()));
     }
 
     private com.microsoft.z3legacy.Expr transformEnumLit(final EnumLitExpr expr) {

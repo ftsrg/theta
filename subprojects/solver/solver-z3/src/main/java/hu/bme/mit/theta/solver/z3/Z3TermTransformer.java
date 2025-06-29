@@ -15,18 +15,13 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
@@ -36,13 +31,7 @@ import static java.lang.String.format;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.ArraySort;
-import com.microsoft.z3.FPNum;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Model;
-import com.microsoft.z3.Sort;
-import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.*;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 import com.microsoft.z3.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
@@ -80,6 +69,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import kotlin.Pair;
 import org.kframework.mpfr.BigFloat;
 
 final class Z3TermTransformer {
@@ -388,7 +378,7 @@ final class Z3TermTransformer {
                         .map(
                                 entry -> {
                                     checkState(entry.get1().size() == 1);
-                                    return Tuple2.of(
+                                    return new Pair<>(
                                             (Expr<I>) entry.get1().get(0), (Expr<E>) entry.get2());
                                 })
                         .collect(Collectors.toUnmodifiableList()),

@@ -21,7 +21,10 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.NonDetStmt
+import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
@@ -29,7 +32,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.fptype.FpExprs.*
+import hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign
+import hu.bme.mit.theta.core.type.fptype.FpExprs.NaN
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -38,7 +42,6 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.math.BigInteger
-import java.util.*
 
 fun CFA.toMonolithicExpr(): MonolithicExpr {
   Preconditions.checkArgument(this.errorLoc.isPresent)

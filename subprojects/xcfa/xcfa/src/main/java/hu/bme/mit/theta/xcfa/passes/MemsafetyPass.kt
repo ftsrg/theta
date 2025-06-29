@@ -18,7 +18,10 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext

@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
-import java.util.*
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,9 +45,9 @@ class VarCollectorStmtVisitorTest(
 
   companion object {
 
-    private val VA: VarDecl<BoolType?> = Decls.Var("a", BoolExprs.Bool())
-    private val VB: VarDecl<IntType?> = Decls.Var("b", IntExprs.Int())
-    private val VC: VarDecl<IntType?> = Decls.Var("d", IntExprs.Int())
+    private val VA: VarDecl<BoolType> = Decls.Var("a", BoolExprs.Bool())
+    private val VB: VarDecl<IntType> = Decls.Var("b", IntExprs.Int())
+    private val VC: VarDecl<IntType> = Decls.Var("d", IntExprs.Int())
 
     @JvmStatic
     @Parameterized.Parameters

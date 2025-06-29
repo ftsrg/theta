@@ -20,6 +20,7 @@ include(
     "common/common",
     "common/core",
     "common/grammar",
+    "common/ksp-processor",
     "common/multi-tests",
     "common/ltl",
     "common/ltl-cli",

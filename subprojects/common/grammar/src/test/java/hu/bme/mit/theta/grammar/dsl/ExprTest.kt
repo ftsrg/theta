@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.grammar.dsl
 
-import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
@@ -24,16 +23,46 @@ import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.type.anytype.Exprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Prime
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
-import hu.bme.mit.theta.core.type.bvtype.BvExprs.*
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Concat
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Not
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.SExt
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.UDiv
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpExprs.Max
 import hu.bme.mit.theta.core.type.fptype.FpExprs.Min
@@ -90,13 +119,13 @@ class ExprTest {
           emptyMap<Symbol, Decl<*>>(),
         ),
         arrayOf(
-          ArrayLitExpr.of(listOf(Tuple2.of(Int(0), Int(1))), Int(2), ArrayType.of(Int(), Int())),
+          ArrayLitExpr.of(listOf(Pair(Int(0), Int(1))), Int(2), ArrayType.of(Int(), Int())),
           "(array (0 1) (default 2))",
           emptyMap<Symbol, Decl<*>>(),
         ),
         arrayOf(
           ArrayLitExpr.of(
-            listOf(Tuple2.of(Int(0), Int(1)), Tuple2.of(Int(1), Int(2))),
+            listOf(Pair(Int(0), Int(1)), Pair(Int(1), Int(2))),
             Int(3),
             ArrayType.of(Int(), Int()),
           ),
