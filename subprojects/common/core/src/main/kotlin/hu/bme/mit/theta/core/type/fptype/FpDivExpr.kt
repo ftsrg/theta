@@ -59,7 +59,7 @@ data class FpDivExpr(
     of(roundingMode, leftOp, rightOp)
 
   override val operatorLabel: String
-    get() = OPERATOR_LABEL
+    get() = "$OPERATOR_LABEL[${roundingMode.name.lowercase()}]"
 
   override fun toString(): String = super.toString()
 }

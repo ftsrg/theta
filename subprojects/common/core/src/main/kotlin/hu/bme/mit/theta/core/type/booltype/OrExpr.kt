@@ -47,7 +47,7 @@ data class OrExpr(override val ops: List<Expr<BoolType>>) : MultiaryExpr<BoolTyp
 
   override fun new(ops: List<Expr<BoolType>>): OrExpr = of(ops)
 
-  override fun toString(): String = Utils.lispStringBuilder(OPERATOR_LABEL).add(ops).toString()
+  override fun toString(): String = super.toString()
 
   override val operatorLabel: String
     get() = OPERATOR_LABEL
