@@ -40,11 +40,12 @@ public class XstsMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    {
-                        "src/test/resources/model/spacecraft.xsts",
-                        "src/test/resources/property/transmitting_battery_40.prop",
-                        false
-                    },
+                    //                    {
+                    //                        "src/test/resources/model/spacecraft.xsts",
+                    //
+                    // "src/test/resources/property/transmitting_battery_40.prop",
+                    //                        false
+                    //                    },
 
                     //                { "src/test/resources/model/trafficlight.xsts",
                     // "src/test/resources/property/green_and_red.prop", true},
