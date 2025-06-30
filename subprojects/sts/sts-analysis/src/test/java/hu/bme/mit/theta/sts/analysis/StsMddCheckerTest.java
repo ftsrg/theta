@@ -17,16 +17,18 @@ package hu.bme.mit.theta.sts.analysis;
 
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
@@ -84,16 +86,19 @@ public class StsMddCheckerTest {
             sts = Utils.singleElementOf(spec.getAllSts());
         }
 
-        final SafetyResult<MddProof, MddCex> status;
+        final SafetyResult<MddProof, Trace<ExplState, ExprAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
-            final MddChecker<ExprAction> checker =
+            final MddChecker<ExplState, ExprAction> checker =
                     MddChecker.create(
                             monolithicExpr,
                             List.copyOf(sts.getVars()),
                             solverPool,
                             logger,
-                            IterationStrategy.GSAT);
+                            IterationStrategy.GSAT,
+                            valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                            (Valuation v1, Valuation v2) ->
+                                    StsToMonolithicExprKt.valToAction(sts, v1, v2));
             status = checker.check(null);
         }
 
@@ -101,6 +106,7 @@ public class StsMddCheckerTest {
             assertTrue(status.isSafe());
         } else {
             assertTrue(status.isUnsafe());
+            assertTrue(status.asUnsafe().getCex().length() >= 0);
         }
     }
 }
