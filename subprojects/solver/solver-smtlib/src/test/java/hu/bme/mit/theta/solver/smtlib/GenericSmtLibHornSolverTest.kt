@@ -129,10 +129,7 @@ class GenericSmtLibHornSolverTest {
         val p1 = Const("p1", Int())
         checkerSolver.add(
           App(
-            App(
-              model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
-              p0.ref,
-            ),
+            App(model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>, p0.ref),
             p1.ref,
           )
         )

@@ -32,13 +32,13 @@ import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.HornSolver
+import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 class Z3HornSolverTest {
   companion object {
@@ -84,10 +84,7 @@ class Z3HornSolverTest {
         val p1 = Const("p1", Int())
         checkerSolver.add(
           App(
-            App(
-              model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
-              p0.ref,
-            ),
+            App(model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>, p0.ref),
             p1.ref,
           )
         )
