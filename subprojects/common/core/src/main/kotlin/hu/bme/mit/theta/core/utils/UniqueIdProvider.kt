@@ -13,27 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.decl
+package hu.bme.mit.theta.core.utils
 
-import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.anytype.Exprs.Ref
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import kotlinx.serialization.Serializable
-
-@Serializable
-abstract class Decl<DeclType : Type> {
-
-  /** The name of the declaration. */
-  abstract val name: String
-
-  /** The type of the declaration. */
-  abstract val type: DeclType
+class UniqueIdProvider {
+  private var currentId = 0
 
   /**
-   * Unique identifier for the declaration used for serialization. Do not use for other purposes!
+   * Returns a unique identifier.
+   *
+   * @return A unique integer identifier
    */
-  protected abstract val id: Int
-
-  /** Reference to this declaration. */
-  val ref: RefExpr<DeclType> by lazy { Ref(this) }
+  fun get(): Int = currentId++
 }

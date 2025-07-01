@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.utils.UniqueIdProvider
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
@@ -32,10 +33,15 @@ import kotlinx.serialization.encoding.*
  */
 @Serializable(with = VarDecl.Serializer::class)
 @SerialName(VarDecl.DECL_LABEL)
-data class VarDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
-  Decl<DeclType>() {
+data class VarDecl<DeclType : Type>(
+  override val name: String,
+  override val type: DeclType,
+  override val id: Int = uniqueIdProvider.get(),
+) : Decl<DeclType>() {
 
   companion object {
+
+    private val uniqueIdProvider = UniqueIdProvider()
 
     internal const val DECL_LABEL: String = "var"
 
@@ -52,37 +58,43 @@ data class VarDecl<DeclType : Type>(override val name: String, override val type
   override fun toString(): String =
     Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 
-  override fun equals(other: Any?): Boolean = super.equals(other)
-
   object Serializer : KSerializer<VarDecl<out Type>> {
 
     override val descriptor: SerialDescriptor =
       buildClassSerialDescriptor("VarDecl") {
         element<String>("name")
-        element<String>("type")
+        element<Type>("type")
+        element<Int>("id")
       }
 
     override fun serialize(encoder: Encoder, value: VarDecl<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeStringElement(descriptor, 0, value.name)
         encodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class), value.type)
+        encodeIntElement(descriptor, 2, value.id)
       }
 
     override fun deserialize(decoder: Decoder): VarDecl<out Type> =
       decoder.decodeStructure(descriptor) {
         var name: String? = null
         var type: Type? = null
+        var id: Int? = null
 
         while (true) {
           when (val index = decodeElementIndex(descriptor)) {
             0 -> name = decodeStringElement(descriptor, 0)
             1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
+            2 -> id = decodeIntElement(descriptor, 2)
             CompositeDecoder.DECODE_DONE -> break
             else -> error("Unexpected index: $index")
           }
         }
 
-        VarDecl(name = name ?: error("Missing name"), type = type ?: error("Missing type"))
+        VarDecl(
+          name = name ?: error("Missing name"),
+          type = type ?: error("Missing type"),
+          id = id ?: error("Missing id"),
+        )
       }
   }
 }

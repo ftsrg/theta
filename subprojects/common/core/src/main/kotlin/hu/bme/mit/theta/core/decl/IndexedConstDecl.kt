@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.utils.UniqueIdProvider
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
@@ -30,8 +31,11 @@ import kotlinx.serialization.encoding.*
  */
 @Serializable(with = IndexedConstDecl.Serializer::class)
 @SerialName("IndexedConstDecl")
-data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val index: Int) :
-  ConstDecl<DeclType>() {
+data class IndexedConstDecl<DeclType : Type>(
+  val varDecl: VarDecl<DeclType>,
+  val index: Int,
+  override val id: Int = uniqueIdProvider.get(),
+) : ConstDecl<DeclType>() {
 
   init {
     require(index >= 0) { "Index must be non-negative" }
@@ -39,13 +43,13 @@ data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val
 
   companion object {
 
+    private val uniqueIdProvider = UniqueIdProvider()
+
     private const val NAME_FORMAT: String = "_%s:%d"
   }
 
   override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
   override val type: DeclType = varDecl.type
-
-  override fun equals(other: Any?): Boolean = super.equals(other)
 
   object Serializer : KSerializer<IndexedConstDecl<out Type>> {
 
@@ -53,29 +57,36 @@ data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val
       buildClassSerialDescriptor("IndexedConstDecl") {
         element<VarDecl<out Type>>("varDecl")
         element<Int>("index")
+        element<Int>("id")
       }
 
     override fun serialize(encoder: Encoder, value: IndexedConstDecl<out Type>) =
       encoder.encodeStructure(descriptor) {
         encodeSerializableElement(descriptor, 0, VarDecl.Serializer, value.varDecl)
         encodeIntElement(descriptor, 1, value.index)
+        encodeIntElement(descriptor, 2, value.id)
       }
 
     override fun deserialize(decoder: Decoder): IndexedConstDecl<out Type> =
       decoder.decodeStructure(descriptor) {
         var varDecl: VarDecl<out Type>? = null
         var index: Int? = null
+        var id: Int? = null
+
         while (true) {
           when (val i = decodeElementIndex(descriptor)) {
             0 -> varDecl = decodeSerializableElement(descriptor, 0, VarDecl.Serializer)
             1 -> index = decodeIntElement(descriptor, 1)
+            2 -> id = decodeIntElement(descriptor, 2)
             CompositeDecoder.DECODE_DONE -> break
             else -> throw SerializationException("Unknown index $i")
           }
         }
+
         IndexedConstDecl(
           varDecl = varDecl ?: error("Missing varDecl"),
           index = index ?: error("Missing index"),
+          id = id ?: error("Missing id"),
         )
       }
   }
