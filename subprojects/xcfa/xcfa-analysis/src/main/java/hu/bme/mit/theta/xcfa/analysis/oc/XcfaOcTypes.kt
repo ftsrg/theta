@@ -163,7 +163,7 @@ internal class XcfaEvent(
       arrayEq = null
     }
 
-    var offsetEq: Expr<BoolType>? = Eq(offset, other.offset)
+    var offsetEq: Expr<BoolType>? = Eq(offset!!, other.offset!!)
     if (offsetStatic != null && other.offsetStatic != null) {
       if (offsetStatic != other.offsetStatic) return null
       offsetEq = null

@@ -100,7 +100,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
           .map {
             when ((it.value as BoolLitExpr).value) {
               true -> literalToPred[it.key]
-              false -> Not(literalToPred[it.key])
+              false -> Not(literalToPred[it.key]!!)
             }
           }
           .toList()

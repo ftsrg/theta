@@ -70,9 +70,9 @@ class VarCollectorStmtVisitor : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
   override fun visit(stmt: IfStmt, param: Set<VarDecl<*>>) =
     param + stmt.then.accept(this, param) + stmt.elze.accept(this, param)
 
-  override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
-    param: Set<VarDecl<*>>?,
+  override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
+    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>,
+    param: Set<VarDecl<*>>,
   ): Set<VarDecl<*>> {
     TODO("Not yet implemented")
   }

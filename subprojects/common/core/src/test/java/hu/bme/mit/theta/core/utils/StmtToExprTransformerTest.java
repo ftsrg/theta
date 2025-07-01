@@ -60,11 +60,11 @@ public class StmtToExprTransformerTest {
                     {Stmts.Havoc(VX), ImmutableList.of(True())},
                     {Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2)))},
                     {
-                        Stmts.SequenceStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))),
+                        Stmts.Sequence(ImmutableList.of(Stmts.Assume(And(True(), False())))),
                         ImmutableList.of(And(ImmutableList.of(And(True(), False()))))
                     },
                     {
-                        Stmts.SequenceStmt(
+                        Stmts.Sequence(
                                 ImmutableList.of(
                                         Stmts.Assign(VX, Int(2)), Stmts.Assign(VX, Int(2)))),
                         ImmutableList.of(

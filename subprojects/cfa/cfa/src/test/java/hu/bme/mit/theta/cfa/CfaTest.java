@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.cfa;
 
+import static org.junit.Assert.assertEquals;
+
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -43,6 +45,7 @@ public class CfaTest {
         builder.createEdge(init, loc1, Stmts.Havoc(v1));
         builder.createEdge(init, loc2, Stmts.Havoc(v2));
         builder.setInitLoc(init);
-        builder.build();
+        CFA cfa = builder.build();
+        assertEquals(1, cfa.getVars().size());
     }
 }

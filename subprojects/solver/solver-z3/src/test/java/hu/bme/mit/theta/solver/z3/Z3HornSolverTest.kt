@@ -20,7 +20,11 @@ import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.App
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr
@@ -80,10 +84,7 @@ class Z3HornSolverTest {
         val p1 = Const("p1", Int())
         checkerSolver.add(
           App(
-            App(
-              model.get(init.constDecl) as FuncLitExpr<IntType, FuncType<IntType, BoolType>>,
-              p0.ref,
-            ),
+            App(model[init.constDecl] as FuncLitExpr<IntType, FuncType<IntType, BoolType>>, p0.ref),
             p1.ref,
           )
         )

@@ -32,7 +32,7 @@ class CFAVarChangerUnitTest {
     val newVar = Decls.Var("x", IntType.getInstance())
     val newCfa = origCfa.copyWithReplacingVars(listOf(newVar).associateBy { it.name })
 
-    assert(!newCfa.vars.any { origCfa.vars.contains(it) })
-    assert(origCfa.vars.iterator().next() != newCfa.vars.iterator().next())
+    assert(!newCfa.vars.any { it in origCfa.vars })
+    assert(origCfa.vars.first() != newCfa.vars.first())
   }
 }

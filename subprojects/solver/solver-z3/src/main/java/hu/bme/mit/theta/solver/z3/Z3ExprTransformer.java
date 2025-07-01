@@ -20,11 +20,6 @@ import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.*;
-import com.microsoft.z3.BitVecExpr;
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Context;
-import com.microsoft.z3.FPExpr;
-import com.microsoft.z3.FPSort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -55,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+import kotlin.Pair;
 
 final class Z3ExprTransformer {
 
@@ -1022,8 +1018,8 @@ final class Z3ExprTransformer {
                 context.mkConstArray(
                         transformer.toSort(expr.getType().getIndexType()),
                         toTerm(expr.getElseElem()));
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+        for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+            running = context.mkStore(running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }
@@ -1033,8 +1029,8 @@ final class Z3ExprTransformer {
                 context.mkConstArray(
                         transformer.toSort(expr.getType().getIndexType()),
                         toTerm(expr.getElseElem()));
-        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
+        for (Pair<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
+            running = context.mkStore(running, toTerm(elem.getFirst()), toTerm(elem.getSecond()));
         }
         return running;
     }

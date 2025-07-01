@@ -18,23 +18,16 @@ package hu.bme.mit.theta.solver.z3;
 import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -58,6 +51,7 @@ import hu.bme.mit.theta.solver.UCSolver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import kotlin.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -161,11 +155,11 @@ public final class Z3SolverTest {
     // @Test
     public void testArrayInit() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
-        var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
+        var elems = new ArrayList<Pair<Expr<IntType>, Expr<IntType>>>();
         ConstDecl<IntType> noname = Const("noname", Int());
-        elems.add(Tuple2.of(Int(0), Int(1)));
-        elems.add(Tuple2.of(Int(1), Int(2)));
-        elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
+        elems.add(new Pair<>(Int(0), Int(1)));
+        elems.add(new Pair<>(Int(1), Int(2)));
+        elems.add(new Pair<>(Int(2), Add(noname.getRef(), Int(3))));
         var initarr = ArrayInit(elems, Int(100), Array(Int(), Int()));
 
         solver.add(ArrayExprs.Eq(arr.getRef(), initarr));

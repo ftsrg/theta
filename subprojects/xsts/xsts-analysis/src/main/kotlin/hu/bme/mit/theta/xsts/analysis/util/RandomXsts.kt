@@ -38,22 +38,22 @@ fun generateXsts(
 ): XSTS {
   val writtenVars =
     object : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
-      override fun visit(stmt: SkipStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
+      override fun visit(stmt: SkipStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
         return param
       }
 
-      override fun visit(stmt: AssumeStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
+      override fun visit(stmt: AssumeStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
         return param
       }
 
-      override fun <DeclType : Type?> visit(
+      override fun <DeclType : Type> visit(
         stmt: AssignStmt<DeclType>,
         param: Set<VarDecl<*>>,
       ): Set<VarDecl<*>> {
         return setOf(stmt.varDecl) + param
       }
 
-      override fun <DeclType : Type?> visit(
+      override fun <DeclType : Type> visit(
         stmt: HavocStmt<DeclType>,
         param: Set<VarDecl<*>>,
       ): Set<VarDecl<*>> {
@@ -76,7 +76,7 @@ fun generateXsts(
         return res
       }
 
-      override fun visit(stmt: OrtStmt?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
+      override fun visit(stmt: OrtStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
         TODO("Not yet implemented")
       }
 
@@ -88,9 +88,9 @@ fun generateXsts(
         return stmt.then.accept(this, stmt.elze.accept(this, param))
       }
 
-      override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-        stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
-        param: Set<VarDecl<*>>?,
+      override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
+        stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>,
+        param: Set<VarDecl<*>>,
       ): Set<VarDecl<*>> {
         TODO("Not yet implemented")
       }
@@ -129,8 +129,8 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     var xsts: XSTS
     do {
       val trans = generateRandomStmt(depth, numCtrl, numClock, numOther)
-      val env = Stmts.NonDetStmt(listOf(Stmts.Skip()))
-      val init = Stmts.NonDetStmt(listOf(Stmts.Skip()))
+      val env = Stmts.NonDet(listOf(Stmts.Skip()))
+      val init = Stmts.NonDet(listOf(Stmts.Skip()))
       val initExpr =
         BoolExprs.And(
           ctrlVars.map { IntExprs.Eq(it.ref, IntExprs.Int(0)) } +
@@ -193,7 +193,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
   }
 
   fun randomSeq(currDepth: Int, maxDepth: Int): Stmt {
-    return Stmts.SequenceStmt(
+    return Stmts.Sequence(
       listOf(
         randomIntermediate(currDepth + 1, maxDepth),
         randomIntermediate(currDepth + 1, maxDepth),
@@ -202,7 +202,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
   }
 
   fun randomNonDet(currDepth: Int, maxDepth: Int): Stmt {
-    return Stmts.NonDetStmt(
+    return Stmts.NonDet(
       listOf(
         randomIntermediate(currDepth + 1, maxDepth),
         randomIntermediate(currDepth + 1, maxDepth),

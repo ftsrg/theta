@@ -125,7 +125,7 @@ fun getExpressionFromC(
   check(expr is Expr<*>)
   val signedType = CComplexType.getSignedInt(parseContext)
   if (
-    expr is IteExpr<*> && expr.then == signedType.unitValue && expr.`else` == signedType.nullValue
+    expr is IteExpr<*> && expr.then == signedType.unitValue && expr.elze == signedType.nullValue
   ) {
     return expr.cond
   } else {

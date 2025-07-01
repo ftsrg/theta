@@ -179,7 +179,7 @@ class APGeneratorVisitor(
   }
 
   override fun visitEnumLitExpr(ctx: EnumLitExprContext): Expr<*> {
-    return EnumLitExpr.of(enumTypes[ctx.type.text], ctx.lit.text)
+    return EnumLitExpr.of(enumTypes[ctx.type.text]!!, ctx.lit.text)
   }
 
   override fun visitVariable(ctx: LTLGrammarParser.VariableContext): Expr<*> {

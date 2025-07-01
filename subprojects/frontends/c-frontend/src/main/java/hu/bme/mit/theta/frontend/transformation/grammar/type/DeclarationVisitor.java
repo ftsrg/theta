@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializerExpr;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
@@ -117,7 +117,8 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                             initializerExpression = cInitializerList;
                         } catch (NullPointerException e) {
                             initializerExpression =
-                                    new CExpr(new UnsupportedInitializer(), parseContext);
+                                    new CExpr(
+                                            UnsupportedInitializerExpr.getInstance(), parseContext);
                             parseContext
                                     .getMetadata()
                                     .create(
