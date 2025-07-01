@@ -34,7 +34,7 @@ public class CfaTest {
         builder.createLoc("A");
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testDuplicateVarName() {
         CFA.Builder builder = CFA.builder();
         VarDecl<IntType> v1 = Decls.Var("x", IntExprs.Int());
