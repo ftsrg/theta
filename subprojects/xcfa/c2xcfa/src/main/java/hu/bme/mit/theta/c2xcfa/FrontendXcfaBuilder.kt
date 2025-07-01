@@ -46,7 +46,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializerExpr
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -166,7 +166,7 @@ class FrontendXcfaBuilder(
       } else {
         if (
           globalDeclaration.get1().initExpr != null &&
-            globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer
+            globalDeclaration.get1().initExpr.expression !is UnsupportedInitializerExpr
         ) {
           initStmtList.add(
             StmtLabel(

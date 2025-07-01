@@ -13,14 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("kotlin-common")
-    id("antlr-grammar")
-    id("kotlinx-serialization")
+package hu.bme.mit.theta.frontend.transformation.grammar.expression
+
+import hu.bme.mit.theta.core.serialization.coreSerializerModule
+import hu.bme.mit.theta.core.type.Expr
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+
+val frontendSerializerModule = SerializersModule {
+  include(coreSerializerModule)
+  polymorphic(Expr::class) { subclass(UnsupportedInitializerExpr::class) }
 }
-dependencies {
-    implementation(project(":theta-core"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-grammar"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+val frontendJson = Json {
+  serializersModule = frontendSerializerModule
+  classDiscriminator = "class"
 }
