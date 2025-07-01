@@ -45,6 +45,8 @@ data class IndexedConstDecl<DeclType : Type>(val varDecl: VarDecl<DeclType>, val
   override val name: String = String.format(NAME_FORMAT, varDecl.name, index)
   override val type: DeclType = varDecl.type
 
+  override fun equals(other: Any?): Boolean = super.equals(other)
+
   object Serializer : KSerializer<IndexedConstDecl<out Type>> {
 
     override val descriptor: SerialDescriptor =

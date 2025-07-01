@@ -35,6 +35,8 @@ import kotlinx.serialization.encoding.*
 data class BasicConstDecl<DeclType : Type>(override val name: String, override val type: DeclType) :
   ConstDecl<DeclType>() {
 
+  override fun equals(other: Any?): Boolean = super.equals(other)
+
   object Serializer : KSerializer<BasicConstDecl<out Type>> {
 
     override val descriptor: SerialDescriptor =

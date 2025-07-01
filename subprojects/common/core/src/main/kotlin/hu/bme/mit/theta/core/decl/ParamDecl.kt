@@ -39,6 +39,8 @@ data class ParamDecl<DeclType : Type>(override val name: String, override val ty
   override fun toString(): String =
     Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 
+  override fun equals(other: Any?): Boolean = super.equals(other)
+
   object Serializer : KSerializer<ParamDecl<out Type>> {
 
     override val descriptor: SerialDescriptor =

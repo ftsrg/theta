@@ -52,6 +52,8 @@ data class VarDecl<DeclType : Type>(override val name: String, override val type
   override fun toString(): String =
     Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 
+  override fun equals(other: Any?): Boolean = super.equals(other)
+
   object Serializer : KSerializer<VarDecl<out Type>> {
 
     override val descriptor: SerialDescriptor =

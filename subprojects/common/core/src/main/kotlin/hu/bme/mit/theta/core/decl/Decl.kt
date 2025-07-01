@@ -27,4 +27,6 @@ abstract class Decl<DeclType : Type> {
   abstract val type: DeclType
 
   val ref: RefExpr<DeclType> by lazy { Ref(this) }
+
+  override fun equals(other: Any?): Boolean = this === other
 }
