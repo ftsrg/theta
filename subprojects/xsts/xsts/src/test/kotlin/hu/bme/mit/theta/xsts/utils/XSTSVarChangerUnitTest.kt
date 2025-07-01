@@ -48,6 +48,6 @@ class XSTSVarChangerUnitTest {
         StmtUtils.getVars(newXsts.env),
       )
 
-    assert(!newVars.any { origVars.contains(it) })
+    assert(!newVars.any { new -> origVars.any { old -> new === old } })
   }
 }
