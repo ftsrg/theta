@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.runners.Parameterized.Parameters;
+
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
@@ -31,6 +36,11 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExpressionUtils;
+import java.util.Collection;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,17 +52,6 @@ import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 import org.sosy_lab.java_smt.api.SolverContext;
-
-import java.util.Collection;
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class JavaSMTTransformerTest {
@@ -142,8 +141,6 @@ public class JavaSMTTransformerTest {
             final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
 
             try {
-                System.err.println(expr);
-                System.err.println(expExpr);
                 Assert.assertEquals(expr, expExpr);
             } catch (AssertionError e) {
                 if (hasType(expr, type -> type instanceof FuncType<?, ?>)) {

@@ -358,16 +358,15 @@ data class BvLitExpr(val value: BooleanArray, val signed: Boolean? = null) :
     return result
   }
 
-  override fun equals(other: Any?): Boolean {
+  override fun equals(other: Any?): Boolean =
     if (this === other) {
-      return true
+      true
     } else if (other != null && this.javaClass == other.javaClass) {
       val that = other as BvLitExpr
-      return value.contentEquals(that.value)
+      value.contentEquals(that.value)
     } else {
-      return false
+      false
     }
-  }
 
   override fun toString(): String {
     val sb = StringBuilder()

@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.kframework.mpfr.BigFloat
 
 @Serializable
@@ -51,6 +52,8 @@ data class FpFromBvExpr(
       signed: Boolean,
     ): FpFromBvExpr = of(roundingMode, op, fpType, signed)
   }
+
+  @Volatile @Transient private var hashCode = 0
 
   override val type: FpType
     get() = fpType
@@ -83,4 +86,25 @@ data class FpFromBvExpr(
       "]")
 
   override fun toString(): String = super.toString()
+
+  override fun hashCode(): Int {
+    var result = hashCode
+    if (result == 0) {
+      result = op.hashCode()
+      result = 31 * result + roundingMode.hashCode()
+      result = 31 * result + fpType.hashCode()
+      hashCode = result
+    }
+    return result
+  }
+
+  override fun equals(other: Any?): Boolean =
+    if (this === other) {
+      true
+    } else if (other != null && this.javaClass == other.javaClass) {
+      val that = other as FpFromBvExpr
+      op == that.op && roundingMode == that.roundingMode && fpType == that.fpType
+    } else {
+      false
+    }
 }
