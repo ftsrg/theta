@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.Stmts.NonDet
+import hu.bme.mit.theta.core.stmt.Stmts.Sequence
 import hu.bme.mit.theta.core.stmt.Stmts.Skip
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
@@ -216,7 +218,7 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   XcfaLabel(metadata = metadata) {
 
   override fun toStmt(): Stmt {
-    return SequenceStmt(labels.map { it.toStmt() })
+    return Sequence(labels.map { it.toStmt() })
   }
 
   override fun toString(): String {
@@ -232,7 +234,7 @@ constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyM
   XcfaLabel(metadata = metadata) {
 
   override fun toStmt(): Stmt {
-    return NonDetStmt(labels.map { it.toStmt() })
+    return NonDet(labels.map { it.toStmt() })
   }
 
   override fun toString(): String {

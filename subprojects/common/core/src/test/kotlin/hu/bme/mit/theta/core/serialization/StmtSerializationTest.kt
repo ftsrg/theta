@@ -17,6 +17,8 @@ package hu.bme.mit.theta.core.serialization
 
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.stmt.Stmts.NonDet
+import hu.bme.mit.theta.core.stmt.Stmts.Sequence
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -99,7 +101,7 @@ class StmtSerializationTest {
     val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
     val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
     val s3 = SkipStmt
-    val original: Stmt = NonDetStmt(listOf(s1, s2, s3))
+    val original: Stmt = NonDet(listOf(s1, s2, s3))
     val serialized = json.encodeToString(original)
     val deserialized = json.decodeFromString<Stmt>(serialized)
     assertEquals(original, deserialized)
@@ -121,7 +123,7 @@ class StmtSerializationTest {
     val s1 = AssignStmt(Decls.Var("x", Int()), Int(1))
     val s2 = AssignStmt(Decls.Var("y", Int()), Int(2))
     val s3 = SkipStmt
-    val original: Stmt = SequenceStmt(listOf(s1, s2, s3))
+    val original: Stmt = Sequence(listOf(s1, s2, s3))
     val serialized = json.encodeToString(original)
     val deserialized = json.decodeFromString<Stmt>(serialized)
     assertEquals(original, deserialized)
