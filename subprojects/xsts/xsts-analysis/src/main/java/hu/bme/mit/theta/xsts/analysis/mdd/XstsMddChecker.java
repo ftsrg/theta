@@ -26,20 +26,20 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OnTheFlyReachabilityNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -53,11 +53,13 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsVarOrderingKt;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
+public class XstsMddChecker implements SafetyChecker<MddProof, Trace<ExplState, XstsAction>, Void> {
 
     private final SolverPool solverPool;
     private final XSTS xsts;
@@ -83,7 +85,7 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
     }
 
     @Override
-    public SafetyResult<MddProof, MddCex> check(Void input) {
+    public SafetyResult<MddProof, Trace<ExplState, XstsAction>> check(Void input) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
@@ -232,15 +234,6 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
                         targetedNextStates,
                         stateSig.getTopVariableHandle());
 
-        //        final var provider2 = new
-        // GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        //        final MddHandle stateSpace2 =
-        //                provider2.compute(
-        //                        MddNodeInitializer.of(initResult),
-        //                        nextStates,
-        //                        stateSig.getTopVariableHandle());
-        //        stateSpace2.get(0);
-
         logger.write(Level.INFO, "Enumerated state-space");
 
         final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
@@ -261,29 +254,33 @@ public class XstsMddChecker implements SafetyChecker<MddProof, MddCex, Void> {
                         stateSpaceProvider.getQueryCount(),
                         stateSpaceProvider.getCacheSize());
 
-        System.out.println(
-                stateSpaceProvider.getHitCount()
-                        + " "
-                        + stateSpaceProvider.getQueryCount()
-                        + " "
-                        + stateSpaceProvider.getCacheSize());
-        //        System.out.println(provider2.getHitCount() + " " + provider2.getQueryCount() + " "
-        // + provider2.getCacheSize());
-
-        //        var transCount = 0;
-        //        for(var transNode: transNodes) {
-        //            final var explTrans =
-        //                    MddExplicitRepresentationExtractor.INSTANCE.transform(
-        //                            transNode, transSig.getTopVariableHandle());
-        //            transCount += MddInterpreter.calculateNonzeroCount(explTrans);
-        //        }
-        //        System.out.println("Trans: " + transCount);
-
-        final SafetyResult<MddProof, MddCex> result;
+        final SafetyResult<MddProof, Trace<ExplState, XstsAction>> result;
         if (violatingSize != 0) {
-            result =
-                    SafetyResult.unsafe(
-                            MddCex.of(propViolating), MddProof.of(stateSpace), statistics);
+            var reversedDescriptors = new ArrayList<AbstractNextStateDescriptor>();
+            for (var transNode : transNodes) {
+                final var explTrans =
+                        MddExplicitRepresentationExtractor.INSTANCE.transform(
+                                transNode, transSig.getTopVariableHandle());
+                reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans));
+            }
+            final var orReversed = OrNextStateDescriptor.create(reversedDescriptors);
+
+            final TraceProvider traceProvider = new TraceProvider(stateSig.getVariableOrder());
+            final var mddTrace =
+                    traceProvider.compute(
+                            propViolating, orReversed, initResult, stateSig.getTopVariableHandle());
+            final var states =
+                    mddTrace.stream()
+                            .map(
+                                    it ->
+                                            ExplState.of(
+                                                    MddValuationCollector.collect(it).stream()
+                                                            .findFirst()
+                                                            .orElseThrow()))
+                            .toList();
+            final var actions = Collections.nCopies(states.size() - 1, XstsAction.create(envTran));
+            final Trace<ExplState, XstsAction> trace = Trace.of(states, actions);
+            result = SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }

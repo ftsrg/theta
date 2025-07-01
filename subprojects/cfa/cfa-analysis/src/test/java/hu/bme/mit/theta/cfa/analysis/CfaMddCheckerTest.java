@@ -18,17 +18,19 @@ package hu.bme.mit.theta.cfa.analysis;
 import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain.*;
 import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.*;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -90,15 +92,18 @@ public class CfaMddCheckerTest {
             CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
             var monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
 
-            final SafetyResult<MddProof, MddCex> status;
+            final SafetyResult<MddProof, Trace<ExprState, ExprAction>> status;
             try (var solverPool = new SolverPool(solverFactory)) {
-                final MddChecker<ExprAction> checker =
+                final MddChecker<ExprState, ExprAction> checker =
                         MddChecker.create(
                                 monolithicExpr,
                                 monolithicExpr.getVars(),
                                 solverPool,
                                 logger,
-                                MddChecker.IterationStrategy.GSAT);
+                                MddChecker.IterationStrategy.GSAT,
+                                valuation -> monolithicExpr.getValToState().invoke(valuation),
+                                (Valuation v1, Valuation v2) ->
+                                        monolithicExpr.getBiValToAction().invoke(v1, v2));
                 status = checker.check(null);
             }
 

@@ -19,15 +19,17 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
+import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
@@ -43,7 +45,11 @@ class XstsCliMdd :
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
 
-  private fun printResult(status: SafetyResult<MddProof, MddCex>, xsts: XSTS, totalTimeMs: Long) {
+  private fun printResult(
+    status: SafetyResult<MddProof, Trace<ExplState, XstsAction>>,
+    xsts: XSTS,
+    totalTimeMs: Long,
+  ) {
     if (!outputOptions.benchmarkMode) {
       logger.writeln(Logger.Level.RESULT, status.toString())
       return

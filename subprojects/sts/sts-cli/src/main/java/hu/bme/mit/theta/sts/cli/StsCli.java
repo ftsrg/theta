@@ -234,7 +234,11 @@ public class StsCli {
                                 abstractME -> buildBoundedChecker(monolithicExpr, solverFactory));
                 status = checker.check(null);
             } else if (algorithm == Algorithm.MDD) {
-                final var checker = buildMddChecker(monolithicExpr, solverFactory);
+                final var checker =
+                        wrapInCegarIfNeeded(
+                                monolithicExpr,
+                                solverFactory,
+                                abstractME -> buildMddChecker(monolithicExpr, solverFactory));
                 status = checker.check(null);
             } else if (algorithm == Algorithm.IC3) {
                 final var checker =
@@ -403,16 +407,20 @@ public class StsCli {
         return checker;
     }
 
-    private MddChecker<?> buildMddChecker(
-            final MonolithicExpr monolithicExpr, final SolverFactory solverFactory)
-            throws Exception {
+    private MddChecker<?, ?> buildMddChecker(
+            final MonolithicExpr monolithicExpr, final SolverFactory solverFactory) {
         try (var solverPool = new SolverPool(solverFactory)) {
             return MddChecker.create(
                     monolithicExpr,
                     List.copyOf(monolithicExpr.getVars()),
                     solverPool,
                     logger,
-                    MddChecker.IterationStrategy.GSAT);
+                    MddChecker.IterationStrategy.GSAT,
+                    valuation -> monolithicExpr.getValToState().invoke(valuation),
+                    (Valuation v1, Valuation v2) ->
+                            monolithicExpr.getBiValToAction().invoke(v1, v2));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
