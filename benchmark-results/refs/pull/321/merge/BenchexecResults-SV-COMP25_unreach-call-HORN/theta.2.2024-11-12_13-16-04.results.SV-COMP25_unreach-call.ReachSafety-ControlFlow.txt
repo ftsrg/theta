@@ -1,0 +1,107 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ControlFlow
+date:                    Tue, 2024-11-12 13:16:04 UTC
+tool:                    Theta 6.8.2
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1022-262
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2764.745 MHz
+ram:                     16757.334016 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ControlFlow
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------
+openssl-simplified/s3_srvr_1b.cil.yml                                      true                            10.52        4.81        None
+locks/test_locks_10.yml                                                    true                            15.27        7.36        None
+locks/test_locks_11.yml                                                    true                            15.83        7.75        None
+locks/test_locks_12.yml                                                    true                            17.31        8.46        None
+locks/test_locks_13.yml                                                    true                            18.02        9.85        None
+locks/test_locks_14-1.yml                                                  true                            19.75       11.28        None
+locks/test_locks_14-2.yml                                                  
+locks/test_locks_15-1.yml                                                  
+locks/test_locks_15-2.yml                                                  
+locks/test_locks_5.yml                                                     
+locks/test_locks_6.yml                                                     
+locks/test_locks_7.yml                                                     
+locks/test_locks_8.yml                                                     
+locks/test_locks_9.yml                                                     
+ntdrivers/cdaudio.i.cil-1.yml                                              
+ntdrivers/diskperf.i.cil-1.yml                                             
+ntdrivers/diskperf.i.cil-2.yml                                             
+ntdrivers/floppy.i.cil-1.yml                                               
+ntdrivers/floppy.i.cil-3.yml                                               
+ntdrivers/kbfiltr.i.cil-2.yml                                              
+ntdrivers/parport.i.cil-1.yml                                              
+ntdrivers/parport.i.cil-2.yml                                              
+memory-model/2SB.yml                                                       
+memory-model/4SB.yml                                                       
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml                   
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml              
+unsignedintegeroverflow-sas23/distance_through_overflow.yml                
+unsignedintegeroverflow-sas23/linear_interpolation.yml                     
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml                   
+longjmp/68-longjmp_04-counting-local_true.yml                              
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                     
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                     
+longjmp/68-longjmp_05-heap-counting-return-one-method_true.yml             
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_neg.yml    
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_pos.yml    
+longjmp/68-longjmp_07-returns_true.yml                                     
+longjmp/68-longjmp_11-counting-return_true.yml                             
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml                    
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml                    
+longjmp/68-longjmp_12-counting-global_true.yml                             
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml                    
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml                    
+longjmp/68-longjmp_13-counting-local_true.yml                              
+longjmp/68-longjmp_13-counting-local_unknown_1_neg.yml                     
+longjmp/68-longjmp_13-counting-local_unknown_1_pos.yml                     
+longjmp/68-longjmp_14-counting-return-one-method_true.yml                  
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml         
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml         
+longjmp/68-longjmp_15-counting-global-one-method_true.yml                  
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml         
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml         
+longjmp/68-longjmp_16-counting-local-one-method_true.yml                   
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml          
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml          
+longjmp/68-longjmp_18-simple-else_true.yml                                 
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                        
+longjmp/68-longjmp_19-simpler_true.yml                                     
+longjmp/68-longjmp_20-simpler-multifun_true.yml                            
+longjmp/68-longjmp_21-multifun_true.yml                                    
+longjmp/68-longjmp_22-multifun-arg_true.yml                                
+longjmp/68-longjmp_42-poison-reduced_true.yml                              
+longjmp/68-longjmp_44-simple-else-path_true.yml                            
+longjmp/68-longjmp_51-worries_true.yml                                     
+----------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                  done                            77.41       55.53           -
+
+Statistics:              6 Files
+  correct:               6
+    correct true:        6
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               0
+  Score:                12 (max: 12)

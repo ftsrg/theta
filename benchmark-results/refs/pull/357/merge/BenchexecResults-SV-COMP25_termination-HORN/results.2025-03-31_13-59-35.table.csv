@@ -1,0 +1,520 @@
+tool		Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2	Theta 6.12.2
+run set		SV-COMP25_termination.Termination-BitVectors	SV-COMP25_termination.Termination-BitVectors	SV-COMP25_termination.Termination-BitVectors	SV-COMP25_termination.Termination-BitVectors	SV-COMP25_termination.Termination-MainControlFlow	SV-COMP25_termination.Termination-MainControlFlow	SV-COMP25_termination.Termination-MainControlFlow	SV-COMP25_termination.Termination-MainControlFlow	SV-COMP25_termination.Termination-MainHeap	SV-COMP25_termination.Termination-MainHeap	SV-COMP25_termination.Termination-MainHeap	SV-COMP25_termination.Termination-MainHeap
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)	status	cputime (s)	walltime (s)	memory (MB)	status	cputime (s)	walltime (s)	memory (MB)
+termination-dietlibc/atoi.yml	true									ERROR (generic error, before parsing finished)	0.182404	0.1885344019999593	23.793664
+termination-dietlibc/atol.yml	true									ERROR (generic error, before parsing finished)	0.184226	0.18539903200007757	23.986176
+termination-dietlibc/atoll-2.yml	true									ERROR (generic error, before parsing finished)	0.18284	0.18446715199991104	23.896064
+termination-dietlibc/basename-3.yml	true									ERROR (generic error, before parsing finished)	0.184584	0.1848532139999861	24.018944
+termination-dietlibc/skip_to.yml	true									ERROR (generic error, before parsing finished)	0.180038	0.1819676590000654	23.789568
+termination-dietlibc/stpcpy.yml	true									ERROR (generic error, before parsing finished)	0.181829	0.18323257899999135	23.998464
+termination-dietlibc/strchr-1.yml	true									ERROR (generic error, before parsing finished)	0.182689	0.1861626019999676	24.010752
+termination-dietlibc/strchr_short.yml	true									ERROR (generic error, before parsing finished)	0.184227	0.19011764499998662	23.887872
+termination-dietlibc/strcmp_short.yml	true									ERROR (generic error, before parsing finished)	0.185039	0.18582186399999046	23.908352
+termination-dietlibc/strcpy_small.yml	true									ERROR (generic error, before parsing finished)	0.188661	0.1895802139999887	24.010752
+termination-dietlibc/strcspn.yml	true									ERROR (generic error, before parsing finished)	0.182414	0.1839990600000192	23.928832
+termination-dietlibc/strdup.yml	true									ERROR (generic error, before parsing finished)	0.182224	0.1827950829999736	24.006656
+termination-dietlibc/strlen.yml	true									ERROR (generic error, before parsing finished)	0.184623	0.18878347600002598	23.887872
+termination-dietlibc/strpbrk.yml	true									ERROR (generic error, before parsing finished)	0.183548	0.18809071700002278	24.002560
+termination-dietlibc/strrchr.yml	true									ERROR (generic error, before parsing finished)	0.189601	0.18884192300004088	23.666688
+termination-dietlibc/strrchr_short.yml	true									ERROR (generic error, before parsing finished)	0.181446	0.1839517570000453	23.707648
+termination-dietlibc/strspn.yml	true									ERROR (generic error, before parsing finished)	0.18563	0.19295077200001742	24.002560
+termination-dietlibc/strstr.yml	true									ERROR (generic error, before parsing finished)	0.184411	0.18472205000000486	23.973888
+termination-dietlibc/wcsrchr.yml	true									ERROR (generic error, before parsing finished)	0.184614	0.18811562400003368	23.789568
+termination-memory-alloca/Avery-2006FLOPS-Tabel1_true-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184471	0.18549416700000165	23.887872
+termination-memory-alloca/BrockschmidtCookFuhs-2013CAV-Fig1-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.184077	0.18967424699997082	24.133632
+termination-memory-alloca/BrockschmidtCookFuhs-2013CAV-Introduction-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.186999	0.18729789299993627	23.924736
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig3-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185728	0.1867311849999851	23.752704
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig7a-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.183543	0.18455053599996063	23.801856
+termination-memory-alloca/CookSeeZuleger-2013TACAS-Fig7b-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.18644	0.1870884910000541	23.740416
+termination-memory-alloca/GulwaniJainKoskinen-2009PLDI-Fig1-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.186266	0.18962982000005013	23.724032
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig1-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188857	0.1906749029999446	23.998464
+termination-memory-alloca/HarrisLalNoriRajamani-2010SAS-Fig3-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185256	0.19327503099998466	23.879680
+termination-memory-alloca/KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185825	0.1858675339999536	23.916544
+termination-memory-alloca/Masse-alloca-3.yml	true									ERROR (generic error, before parsing finished)	0.18513	0.18572776300004534	23.855104
+termination-memory-alloca/TelAviv-Amir-Minimum-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.186496	0.18664343700004338	23.851008
+termination-memory-alloca/Urban-2013WST-Fig1-alloca.yml	false									ERROR (generic error, before parsing finished)	0.185155	0.18638044099998297	24.002560
+termination-memory-alloca/Urban-2013WST-Fig2-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185411	0.18752857499998754	23.732224
+termination-memory-alloca/Urban-2013WST-Fig2-modified1000-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184682	0.18635060400004022	23.863296
+termination-memory-alloca/Urban-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.18511	0.18579378099991573	24.010752
+termination-memory-alloca/Velroyen-alloca.yml	false									ERROR (generic error, before parsing finished)	0.187056	0.18779380700004822	23.928832
+termination-memory-alloca/a.01-alloca.yml	true									ERROR (generic error, before parsing finished)	0.189886	0.18988045100002182	23.879680
+termination-memory-alloca/a.04-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184916	0.18893573100001504	23.715840
+termination-memory-alloca/a.05-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186329	0.19060750199992071	23.941120
+termination-memory-alloca/a.06-alloca.yml	true									ERROR (generic error, before parsing finished)	0.190345	0.19860476099995594	23.760896
+termination-memory-alloca/a.07-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188386	0.18907596700000795	23.990272
+termination-memory-alloca/a.08-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186273	0.1865662989999919	23.957504
+termination-memory-alloca/a.09_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184753	0.18456340899990664	23.994368
+termination-memory-alloca/a.10-alloca.yml	true									ERROR (generic error, before parsing finished)	0.187132	0.18888609199996154	23.953408
+termination-memory-alloca/array01-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.181097	0.18448395200005052	23.814144
+termination-memory-alloca/aviad_true-alloca.yml	true									ERROR (generic error, before parsing finished)	0.189229	0.1892928209999809	23.756800
+termination-memory-alloca/b.01-alloca.yml	true									ERROR (generic error, before parsing finished)	0.183752	0.18481594100001075	23.982080
+termination-memory-alloca/b.02-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184057	0.18541869299997416	24.018944
+termination-memory-alloca/b.03-no-inv_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.189446	0.19567029500001354	23.986176
+termination-memory-alloca/b.03_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.190959	0.19140629000003173	23.900160
+termination-memory-alloca/b.04-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188104	0.19211423800004468	23.855104
+termination-memory-alloca/b.05-alloca.yml	true									ERROR (generic error, before parsing finished)	0.187222	0.18986168600008568	23.736320
+termination-memory-alloca/b.06-alloca.yml	true									ERROR (generic error, before parsing finished)	0.18917	0.18957362799994826	23.748608
+termination-memory-alloca/b.07-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186705	0.19483696000008877	24.002560
+termination-memory-alloca/b.09-no-inv_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185988	0.18964690000007067	23.949312
+termination-memory-alloca/b.09_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185458	0.1865270140000348	24.010752
+termination-memory-alloca/b.10-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186513	0.1906560189999027	23.998464
+termination-memory-alloca/b.11-alloca.yml	true									ERROR (generic error, before parsing finished)	0.183847	0.1866442890000144	23.744512
+termination-memory-alloca/b.12-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186827	0.18795963799993842	23.998464
+termination-memory-alloca/b.13-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188271	0.18891103800001474	24.006656
+termination-memory-alloca/b.14-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185786	0.187326631000019	24.002560
+termination-memory-alloca/b.15-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185265	0.19301544600000398	23.756800
+termination-memory-alloca/b.16-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188867	0.18917652400000406	23.875584
+termination-memory-alloca/b.17-alloca.yml	true									ERROR (generic error, before parsing finished)	0.189251	0.18979462499999045	23.629824
+termination-memory-alloca/b.18-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185065	0.18653168800005915	23.842816
+termination-memory-alloca/bubblesort-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.188966	0.18968685699996968	23.973888
+termination-memory-alloca/c.01-no-inv-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185909	0.1904186409999511	23.773184
+termination-memory-alloca/c.01_assume-alloca.yml	true									ERROR (generic error, before parsing finished)	0.183328	0.18527631799997835	23.752704
+termination-memory-alloca/c.02-alloca.yml	true									ERROR (generic error, before parsing finished)	0.183827	0.1886213029999908	24.002560
+termination-memory-alloca/c.03-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.186201	0.1865585599999804	23.797760
+termination-memory-alloca/c.07-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186274	0.1945386840000083	23.740416
+termination-memory-alloca/c.08-alloca.yml	true									ERROR (generic error, before parsing finished)	0.187546	0.18869183799995426	23.740416
+termination-memory-alloca/count_down-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185068	0.18745818800005054	23.998464
+termination-memory-alloca/cstrcat-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.18669	0.1885754329999827	23.744512
+termination-memory-alloca/cstrchr-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.183053	0.18484231399997952	23.715840
+termination-memory-alloca/cstrcmp-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.186533	0.18771341399997254	23.744512
+termination-memory-alloca/cstrcpy-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.186918	0.19505622299993775	23.977984
+termination-memory-alloca/cstrcspn-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.184469	0.18585726399999203	23.789568
+termination-memory-alloca/cstrlen-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.187985	0.188766309000016	24.014848
+termination-memory-alloca/cstrncat-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.182738	0.18471850999992512	23.879680
+termination-memory-alloca/cstrncpy-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.186283	0.19375914800002647	23.752704
+termination-memory-alloca/cstrpbrk-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.184971	0.18684215300004325	23.998464
+termination-memory-alloca/cstrspn-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185074	0.1862554019999152	23.969792
+termination-memory-alloca/diff-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.185887	0.18673167100007504	23.867392
+termination-memory-alloca/easySum-alloca.yml	true									ERROR (generic error, before parsing finished)	0.183528	0.18590557200002422	23.752704
+termination-memory-alloca/ex3a-alloca.yml	true									ERROR (generic error, before parsing finished)	0.185331	0.18738880699993388	23.752704
+termination-memory-alloca/fermat-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186219	0.1869398750000073	23.994368
+termination-memory-alloca/genady-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186017	0.18727334200002588	23.752704
+termination-memory-alloca/insertionsort-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.182549	0.18430550100003984	23.756800
+termination-memory-alloca/java_AG313-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184171	0.18630693600005088	23.973888
+termination-memory-alloca/java_Break-alloca.yml	true									ERROR (generic error, before parsing finished)	0.187465	0.18895871799998076	23.752704
+termination-memory-alloca/java_BubbleSort-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185081	0.19132338200006416	23.724032
+termination-memory-alloca/java_Continue1-alloca.yml	true									ERROR (generic error, before parsing finished)	0.188555	0.1895064640000328	24.010752
+termination-memory-alloca/java_LogBuiltIn-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186851	0.1901131519999808	23.527424
+termination-memory-alloca/java_Nested-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184511	0.18560045300000638	23.867392
+termination-memory-alloca/java_Sequence-alloca.yml	true									ERROR (generic error, before parsing finished)	0.186014	0.18817253500003517	23.867392
+termination-memory-alloca/lis-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185204	0.18634147600005235	23.760896
+termination-memory-alloca/openbsd_cbzero-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.183168	0.1857282529999793	23.764992
+termination-memory-alloca/openbsd_cmemchr-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.185097	0.18664945599994098	23.748608
+termination-memory-alloca/openbsd_cmemrchr-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.187449	0.1889348739999832	23.830528
+termination-memory-alloca/openbsd_cmemset-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.183488	0.19064766799999688	23.646208
+termination-memory-alloca/openbsd_cstpcpy-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.187668	0.18948877899993022	23.842816
+termination-memory-alloca/openbsd_cstpncpy-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.183985	0.18575349699995058	23.953408
+termination-memory-alloca/openbsd_cstrcat-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.181478	0.18746044600004552	24.002560
+termination-memory-alloca/openbsd_cstrcmp-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.187337	0.1885285539999586	23.928832
+termination-memory-alloca/openbsd_cstrcpy-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.185447	0.1866646060000221	24.002560
+termination-memory-alloca/openbsd_cstrcspn-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.182557	0.18838750000008986	23.703552
+termination-memory-alloca/openbsd_cstrlcpy-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.18486	0.18742556199993032	23.982080
+termination-memory-alloca/openbsd_cstrlen-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.188877	0.1899486680000564	23.875584
+termination-memory-alloca/openbsd_cstrncat-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.187835	0.19687873400005174	23.916544
+termination-memory-alloca/openbsd_cstrncmp-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.186043	0.18701882400000613	23.654400
+termination-memory-alloca/openbsd_cstrncpy-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.187657	0.18773246900002505	23.912448
+termination-memory-alloca/openbsd_cstrnlen-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.191415	0.19464086499999667	23.982080
+termination-memory-alloca/openbsd_cstrpbrk-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.187388	0.1879580500000202	23.908352
+termination-memory-alloca/openbsd_cstrspn-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.183759	0.1853348529999721	23.896064
+termination-memory-alloca/openbsd_cstrstr-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.183733	0.18600346800008083	23.748608
+termination-memory-alloca/rec_strlen-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.185989	0.18670666600007735	23.998464
+termination-memory-alloca/selectionsort-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.184622	0.19134529899997688	23.756800
+termination-memory-alloca/strreplace-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.186653	0.18727308400002585	23.715840
+termination-memory-alloca/subseq-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.184077	0.18552688700003728	23.920640
+termination-memory-alloca/substring-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.185266	0.18645000100002562	24.055808
+termination-memory-alloca/twisted-alloca.yml	true									ERROR (generic error, before parsing finished)	0.18223	0.18423397200001546	23.875584
+termination-memory-linkedlists/cll_by_lseg-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.18314	0.1855135020000489	24.055808
+termination-memory-linkedlists/cll_by_lseg_traverse-alloca.yml	false									ERROR (generic error, before parsing finished)	0.185707	0.18650469300007444	24.010752
+termination-memory-linkedlists/cll_search-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.18397	0.18845977900002708	23.818240
+termination-memory-linkedlists/cll_search-alloca-2.yml	false									ERROR (generic error, before parsing finished)	0.186269	0.1867257179999342	23.965696
+termination-memory-linkedlists/cll_traverse-alloca.yml	false									ERROR (generic error, before parsing finished)	0.187723	0.19124407900005735	24.010752
+termination-memory-linkedlists/ll_append-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.18645	0.18761918400002742	23.900160
+termination-memory-linkedlists/ll_append-alloca-2.yml	false									ERROR (generic error, before parsing finished)	0.185295	0.1869885470000554	24.023040
+termination-memory-linkedlists/ll_append_rec-alloca-1.yml	true									ERROR (generic error, before parsing finished)	0.188835	0.18912700900000345	23.875584
+termination-memory-linkedlists/ll_append_rec-alloca-2.yml	false									ERROR (generic error, before parsing finished)	0.183095	0.184814461999963	23.752704
+termination-memory-linkedlists/ll_create_rec-alloca-1.yml	false									ERROR (generic error, before parsing finished)	0.187867	0.192729417999999	24.010752
+termination-memory-linkedlists/ll_create_rec-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.187483	0.18775273300002482	23.879680
+termination-memory-linkedlists/ll_search-alloca.yml	true									ERROR (generic error, before parsing finished)	0.190021	0.1985748810000132	23.486464
+termination-memory-linkedlists/ll_search_not_found-alloca.yml	true									ERROR (generic error, before parsing finished)	0.184439	0.18582735200004663	23.920640
+termination-memory-linkedlists/ll_traverse-alloca.yml	true									ERROR (generic error, before parsing finished)	0.189178	0.19307305299992095	23.920640
+termination-memory-linkedlists/nondet_ll_search-alloca-1.yml	false									ERROR (generic error, before parsing finished)	0.187013	0.1885496070000272	23.744512
+termination-memory-linkedlists/nondet_ll_search-alloca-2.yml	true									ERROR (generic error, before parsing finished)	0.181363	0.1834665800000721	23.752704
+termination-memory-linkedlists/nondet_ll_traverse-alloca.yml	false									ERROR (generic error, before parsing finished)	0.185316	0.18523635799999738	24.039424
+termination-15/array12_alloca.yml	true									ERROR (generic error, before parsing finished)	0.185402	0.18721131400002378	24.080384
+termination-15/array13_alloca.yml	true									ERROR (generic error, before parsing finished)	0.188405	0.18981755899994823	23.748608
+termination-15/array14_alloca.yml	false									ERROR (generic error, before parsing finished)	0.182762	0.18460211700005402	23.982080
+termination-15/array15_alloca.yml	false									ERROR (generic error, before parsing finished)	0.185181	0.18618845200001033	23.777280
+termination-15/array16_alloca_fixed.yml	true									ERROR (generic error, before parsing finished)	0.187061	0.1916765439999608	24.031232
+termination-15/array16_alloca_original.yml	false									ERROR (generic error, before parsing finished)	0.183037	0.18534109300003365	23.990272
+termination-15/array17_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186505	0.18697123399999782	23.760896
+termination-15/count_up_alloca.yml	true									ERROR (generic error, before parsing finished)	0.184444	0.18576877700002115	23.957504
+termination-15/count_up_and_down_alloca.yml	true									ERROR (generic error, before parsing finished)	0.185301	0.1869209920000685	23.724032
+termination-15/cstrcat_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186909	0.18745214199998372	23.728128
+termination-15/cstrcat_malloc.yml	true									ERROR (generic error, before parsing finished)	0.182436	0.18391687300004378	23.711744
+termination-15/cstrcat_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.184825	0.19308357800002796	23.859200
+termination-15/cstrcat_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.187463	0.19548331799990137	23.990272
+termination-15/cstrchr_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.189674	0.19363196199992672	23.744512
+termination-15/cstrchr_malloc.yml	true									ERROR (generic error, before parsing finished)	0.183351	0.1883769130000701	23.928832
+termination-15/cstrchr_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.188286	0.18938131000004432	23.728128
+termination-15/cstrcmp_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.181889	0.1846887340000194	23.920640
+termination-15/cstrcmp_malloc.yml	true									ERROR (generic error, before parsing finished)	0.184626	0.18471991000001253	23.990272
+termination-15/cstrcmp_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.18416	0.18625389000010273	23.732224
+termination-15/cstrcmp_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.1815	0.18429729299998598	23.732224
+termination-15/cstrcpy_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.187005	0.18698845400001574	23.748608
+termination-15/cstrcpy_malloc.yml	true									ERROR (generic error, before parsing finished)	0.187526	0.18734860600000047	23.961600
+termination-15/cstrcpy_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.185076	0.18583231999991767	24.010752
+termination-15/cstrcpy_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.189856	0.19088183199994546	23.928832
+termination-15/cstrcspn_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186565	0.1875577280000016	24.174592
+termination-15/cstrcspn_malloc.yml	true									ERROR (generic error, before parsing finished)	0.186743	0.18722669800001768	24.010752
+termination-15/cstrcspn_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.184128	0.18552296300003945	23.818240
+termination-15/cstrcspn_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.184115	0.18504859600000145	24.018944
+termination-15/cstrlen_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.185315	0.18705201299997043	23.908352
+termination-15/cstrlen_malloc.yml	true									ERROR (generic error, before parsing finished)	0.186967	0.1884315099999867	23.994368
+termination-15/cstrlen_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.183442	0.1855774499999825	23.924736
+termination-15/cstrncat_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186682	0.18745526600002904	23.728128
+termination-15/cstrncat_malloc.yml	true									ERROR (generic error, before parsing finished)	0.183048	0.18446026499998425	23.916544
+termination-15/cstrncat_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.185458	0.19382796399997915	23.781376
+termination-15/cstrncpy_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.184874	0.1876086629999918	23.900160
+termination-15/cstrncpy_malloc.yml	true									ERROR (generic error, before parsing finished)	0.182801	0.18386039300003176	23.724032
+termination-15/cstrncpy_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186021	0.1876286680000021	23.928832
+termination-15/cstrncpy_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.187558	0.18768654000007245	23.867392
+termination-15/cstrpbrk_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.182138	0.18485313399992265	23.932928
+termination-15/cstrpbrk_malloc.yml	true									ERROR (generic error, before parsing finished)	0.186513	0.19045188899997356	23.797760
+termination-15/cstrpbrk_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.187278	0.18761287200004517	23.871488
+termination-15/cstrpbrk_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186602	0.18696492599997327	24.002560
+termination-15/cstrspn_diffterm_alloca.yml	true									ERROR (generic error, before parsing finished)	0.183664	0.1849908990000131	23.932928
+termination-15/cstrspn_malloc.yml	true									ERROR (generic error, before parsing finished)	0.184019	0.18806433999998262	24.027136
+termination-15/cstrspn_mixed_alloca.yml	true									ERROR (generic error, before parsing finished)	0.186351	0.18662510300009671	23.724032
+termination-15/cstrspn_reverse_alloca.yml	true									ERROR (generic error, before parsing finished)	0.183849	0.1868466260000332	23.900160
+termination-recursive-malloc/chunk1-2.yml	true									ERROR (generic error, before parsing finished)	0.187557	0.18869207000000188	23.748608
+termination-recursive-malloc/chunk2.yml	true									ERROR (generic error, before parsing finished)	0.185236	0.18654308499992567	23.912448
+termination-recursive-malloc/insertionSort_recursive.yml	true									ERROR (generic error, before parsing finished)	0.186074	0.19144658499999423	23.740416
+termination-recursive-malloc/mergeSort.yml	true									ERROR (generic error, before parsing finished)	0.186249	0.1869707930000004	23.998464
+termination-recursive-malloc/mutual_simple.yml	true									ERROR (generic error, before parsing finished)	4.430745	1.6572676270000102	194.355200
+termination-recursive-malloc/mutual_simple2.yml	true									ERROR (generic error, before parsing finished)	4.318388	1.6515288980000378	193.323008
+termination-recursive-malloc/rec_malloc_ex11.yml	true									ERROR (frontend failed, before parsing finished)	6.19407	2.32803765999995	193.589248
+termination-recursive-malloc/rec_malloc_ex11B.yml	true									ERROR (frontend failed, before parsing finished)	6.325432	2.349620361999996	196.460544
+termination-recursive-malloc/rec_malloc_ex11C.yml	true									ERROR (frontend failed, before parsing finished)	6.46529	2.3977090340000586	195.977216
+termination-recursive-malloc/rec_malloc_ex11D.yml	true									ERROR (frontend failed, before parsing finished)	6.282736	2.341606742999943	198.131712
+termination-recursive-malloc/rec_malloc_ex2.yml	true									ERROR (frontend failed, before parsing finished)	6.235484	2.308399527000006	196.050944
+termination-recursive-malloc/rec_malloc_ex3.yml	true									ERROR (frontend failed, before parsing finished)	6.087023	2.2719360050000432	178.417664
+termination-recursive-malloc/rec_malloc_ex9.yml	true									ERROR (frontend failed, before parsing finished)	6.348358	2.3885202249999793	192.868352
+termination-recursive-malloc/rec_strcopy_malloc.yml	true									ERROR (generic error, before parsing finished)	0.182784	0.1847590190000119	24.002560
+termination-recursive-malloc/rec_strcopy_malloc2.yml	true									ERROR (generic error, before parsing finished)	0.181648	0.183459088999939	23.851008
+termination-recursive-malloc/rec_strlen_malloc.yml	true									ERROR (generic error, before parsing finished)	0.182575	0.19139825499996732	23.982080
+termination-recursive-malloc/selectionSort_recursive.yml	true									ERROR (generic error, before parsing finished)	0.181478	0.18290201100001013	24.186880
+termination-crafted/2Nested-1.yml	true					true	12.596087	5.0662227650000204	442.269696				
+termination-crafted/4BitCounterPointer.yml	true					ERROR (frontend failed, before parsing finished)	6.04832	2.2566451129999905	179.687424				
+termination-crafted/4NestedWith3Variables-1.yml	true					TIMEOUT	40.700287	32.699790441000005	559.931392				
+termination-crafted/Ackermann-2.yml	true					ERROR (generic error, before parsing finished)	4.243848	1.6135274090000848	175.837184				
+termination-crafted/Arrays01-EquivalentConstantIndices-1.yml	true					ERROR (generic error, before parsing finished)	0.183622	0.19758445000002212	23.928832				
+termination-crafted/Arrays02-EquivalentConstantIndices.yml	false					ERROR (generic error, before parsing finished)	0.183292	0.1853300489999583	23.977984				
+termination-crafted/Arrays03-ValueRestictsIndex-2.yml	true					ERROR (generic error, before parsing finished)	0.18389	0.18637255199996616	23.732224				
+termination-crafted/Bangalore-2.yml	true					TIMEOUT	40.588851	33.429652720000036	520.392704				
+termination-crafted/Bangalore_v2.yml	false					false(unreach-call)	12.734515	5.451178937000009	415.932416				
+termination-crafted/Bangalore_v4.yml	true					TIMEOUT	40.625775	33.185296498999946	453.656576				
+termination-crafted/Benghazi.yml	true					true	12.387971	5.133281046999969	457.134080				
+termination-crafted/Benghazi_nondet-2.yml	true					true	13.347159	5.330828294999947	481.329152				
+termination-crafted/Binary_Search-2.yml	false					ERROR (generic error, before parsing finished)	4.437548	1.6689282769999636	186.798080				
+termination-crafted/Cairo.yml	true					true	12.115484	5.030124301000001	424.624128				
+termination-crafted/Cairo_step2-1.yml	true					true	11.69109	4.888802542999997	408.195072				
+termination-crafted/Cairo_step2-3.yml	false					ERROR (frontend failed, before parsing finished)	5.967836	2.2461226740000484	192.536576				
+termination-crafted/Collatz_bounded.yml	true					TIMEOUT	40.575414	33.51051230199994	439.889920				
+termination-crafted/Copenhagen.yml	true					true	12.698714	5.110626756999977	455.598080				
+termination-crafted/Copenhagen_disj-2.yml	true					true	12.610451	5.165240067000013	446.652416				
+termination-crafted/Division-2.yml	false					false(unreach-call)	12.279941	5.119190801000059	418.242560				
+termination-crafted/Gothenburg-1.yml	true					true	15.96513	7.8315009740000505	511.348736				
+termination-crafted/Gothenburg_v2-1.yml	true												
+termination-crafted/LexIndexValue-Array-1.yml	true												
+termination-crafted/LexIndexValue-Pointer-2.yml	true												
+termination-crafted/Lobnya-Boolean-Reordered-2.yml	true												
+termination-crafted/Madrid.yml	false												
+termination-crafted/McCarthy91_Iteration.yml	true												
+termination-crafted/McCarthy91_Recursion.yml	true												
+termination-crafted/MenloPark.yml	true												
+termination-crafted/MutualRecursion_1a.yml	false												
+termination-crafted/MutualRecursion_1b.yml	true												
+termination-crafted/Mysore-2.yml	true												
+termination-crafted/NestedRecursion_1a-2.yml	false												
+termination-crafted/NestedRecursion_1b.yml	true												
+termination-crafted/NestedRecursion_1c.yml	true												
+termination-crafted/NestedRecursion_1d.yml	true												
+termination-crafted/NestedRecursion_2b.yml	false												
+termination-crafted/NestedRecursion_2c.yml	true												
+termination-crafted/NonTermination3-1.yml	false												
+termination-crafted/NonTermination3-2.yml	false												
+termination-crafted/NonTerminationSimple7.yml	false												
+termination-crafted/Nyala-2lex-2.yml	true												
+termination-crafted/Parallel.yml	true												
+termination-crafted/Piecewise.yml	true												
+termination-crafted/Pure2Phase-1.yml	true												
+termination-crafted/Pure3Phase-1.yml	true												
+termination-crafted/RecursiveMultiplication-1.yml	true												
+termination-crafted/RecursiveNonterminating-1.yml	false												
+termination-crafted/Rotation180-1.yml	false												
+termination-crafted/Singapore-2.yml	true												
+termination-crafted/Stockholm-1.yml	true												
+termination-crafted/SyntaxSupportPointer01-1.yml	true												
+termination-crafted/SyntaxSupportPointer01-2.yml	true												
+termination-crafted/TelAviv-Amir-Minimum.yml	true												
+termination-crafted/Thun-2.yml	true												
+termination-crafted/Toulouse-BranchesToLoop-2.yml	true												
+termination-crafted/Toulouse-MultiBranchesToLoop-2.yml	true												
+termination-crafted/Waldkirch.yml	true												
+termination-crafted/WhileFalse.yml	true												
+termination-crafted/WhileTrue.yml	false												
+termination-crafted/aaron2-1.yml	true												
+termination-crafted/aaron3-1.yml	true												
+termination-crafted/easy1.yml	true												
+termination-crafted/easy2-2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-Fig1.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-cousot9.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-easy1.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-easy2-2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-loops.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-nestedLoop-1.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-random1d-2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-random2d.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi3.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi4.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-wcet2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-while2.yml	true												
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-wise.yml	true												
+termination-crafted-lit/Avery-FLOPS2006-Table1.yml	true												
+termination-crafted-lit/BradleyMannaSipma-CAV2005-Fig1-modified.yml	false												
+termination-crafted-lit/BradleyMannaSipma-CAV2005-Fig1.yml	true												
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig1.yml	true												
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig9a.yml	true												
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Introduction.yml	true												
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-easy1.yml	true												
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-easy2.yml	true												
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-random1d.yml	true												
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-random2d.yml	true												
+termination-crafted-lit/ChenCookFuhsNimkarOHearn-TACAS2014-Introduction.yml	false												
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.20.yml	true												
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex3.01.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig1.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig7a.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig7b.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8a-modified.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8a.yml	true												
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8b.yml	true												
+termination-crafted-lit/GopanReps-CAV2006-Fig1a.yml	true												
+termination-crafted-lit/HarrisLalNoriRajamani-SAS2010-Fig1.yml	true												
+termination-crafted-lit/HarrisLalNoriRajamani-SAS2010-Fig3.yml	true												
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig1.yml	true												
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig4.yml	true												
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig5.yml	true												
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig6.yml	true												
+termination-crafted-lit/HenzingerJhalaMajumdarSutre-POPL2002-LockingExample.yml	false												
+termination-crafted-lit/KroeningSharyginaTsitovichWintersteiger-CAV2010-Ex.yml	true												
+termination-crafted-lit/KroeningSharyginaTsitovichWintersteiger-CAV2010-Fig1.yml	true												
+termination-crafted-lit/LarrazOliverasRodriguez-CarbonellRubio-FMCAD2013-Fig1.yml	true												
+termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex4.yml	true												
+termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex5.yml	true												
+termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex1.yml	true												
+termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex9.yml	true												
+termination-crafted-lit/LeikeHeizmann-WST2014-Ex9.yml	true												
+termination-crafted-lit/PodelskiRybalchenko-LICS2004-Fig1.yml	true												
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig1.yml	true												
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig2.yml	true												
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig4.yml	true												
+termination-crafted-lit/Urban-WST2013-Fig1.yml	false												
+termination-crafted-lit/Urban-WST2013-Fig2-modified1000.yml	true												
+termination-crafted-lit/Urban-WST2013-Fig2.yml	true												
+termination-crafted-lit/UrbanMine-ESOP2014-Fig3.yml	true												
+termination-crafted-lit/Velroyen.yml	false												
+termination-crafted-lit/aviad.yml	true												
+termination-crafted-lit/cstrcmp.yml	true												
+termination-crafted-lit/cstrcspn.yml	true												
+termination-crafted-lit/cstrlen.yml	true												
+termination-crafted-lit/cstrpbrk.yml	true												
+termination-crafted-lit/cstrspn.yml	true												
+termination-crafted-lit/genady.yml	true												
+termination-crafted-lit/strchr-2.yml	true												
+termination-numeric/Ackermann01-1.yml	true												
+termination-numeric/Binomial.yml	true												
+termination-numeric/EvenOdd01-2.yml	true												
+termination-numeric/Fibonacci01-2.yml	true												
+termination-numeric/LeUserDefRec.yml	true												
+termination-numeric/LogRecursive.yml	true												
+termination-numeric/Parts.yml	true												
+termination-numeric/TerminatorRec02.yml	true												
+termination-numeric/TwoWay.yml	true												
+termination-numeric/gcd01-2.yml	true												
+termination-numeric/java_LogBuiltIn.yml	true												
+termination-numeric/recHanoi02-1.yml	true												
+termination-numeric/rec_counter1.yml	true												
+termination-numeric/rec_counter3.yml	true												
+termination-numeric/twisted.yml	true												
+termination-restricted-15/AlternKonv.yml	false												
+termination-restricted-15/ComplInterv2.yml	false												
+termination-restricted-15/ConvLower.yml	false												
+termination-restricted-15/DivMinus.yml	true												
+termination-restricted-15/DivMinus2.yml	true												
+termination-restricted-15/Ex02.yml	false												
+termination-restricted-15/Ex03.yml	false												
+termination-restricted-15/Ex05.yml	false												
+termination-restricted-15/Ex06.yml	false												
+termination-restricted-15/Ex07.yml	false												
+termination-restricted-15/Ex08.yml	false												
+termination-restricted-15/Flip.yml	false												
+termination-restricted-15/Flip2.yml	false												
+termination-restricted-15/GCD-1.yml	false												
+termination-restricted-15/GCD2.yml	false												
+termination-restricted-15/GCD3.yml	true												
+termination-restricted-15/GCD4.yml	true												
+termination-restricted-15/IntPath.yml	true												
+termination-restricted-15/Log.yml	true												
+termination-restricted-15/LogAG.yml	true												
+termination-restricted-15/Loop-2.yml	false												
+termination-restricted-15/McCarthyIterative.yml	true												
+termination-restricted-15/MinusBuiltIn.yml	true												
+termination-restricted-15/MinusUserDefined.yml	true												
+termination-restricted-15/MirrorIntervSim.yml	false												
+termination-restricted-15/NO_00.yml	false												
+termination-restricted-15/NO_01.yml	false												
+termination-restricted-15/NO_02.yml	false												
+termination-restricted-15/NO_03.yml	false												
+termination-restricted-15/NO_04.yml	false												
+termination-restricted-15/NO_13.yml	false												
+termination-restricted-15/NO_21.yml	false												
+termination-restricted-15/NO_22.yml	false												
+termination-restricted-15/NO_23.yml	false												
+termination-restricted-15/NO_24.yml	false												
+termination-restricted-15/NarrowKonv.yml	false												
+termination-restricted-15/Narrowing.yml	false												
+termination-restricted-15/Nested-2.yml	true												
+termination-restricted-15/PastaA1.yml	true												
+termination-restricted-15/PastaA10.yml	true												
+termination-restricted-15/PastaA4.yml	true												
+termination-restricted-15/PastaA7.yml	true												
+termination-restricted-15/PastaB1.yml	true												
+termination-restricted-15/PastaB14.yml	true												
+termination-restricted-15/PastaB15.yml	true												
+termination-restricted-15/PastaB16.yml	true												
+termination-restricted-15/PastaB17.yml	true												
+termination-restricted-15/PastaB2.yml	true												
+termination-restricted-15/PastaB4.yml	true												
+termination-restricted-15/PastaB6.yml	true												
+termination-restricted-15/PastaB7.yml	true												
+termination-restricted-15/PastaC3.yml	true												
+termination-restricted-15/PastaC7.yml	true												
+termination-restricted-15/PastaC9.yml	true												
+termination-restricted-15/Sequence.yml	true												
+termination-restricted-15/Sunset.yml	false												
+termination-restricted-15/Swingers.yml	false												
+termination-restricted-15/TwoFloatInterv.yml	false												
+termination-restricted-15/UpAndDown.yml	false												
+termination-restricted-15/UpAndDownIneq.yml	false												
+termination-restricted-15/WhileDecr.yml	true												
+termination-restricted-15/WhilePart.yml	false												
+termination-restricted-15/WhileSingle.yml	false												
+termination-restricted-15/a.01.yml	true												
+termination-restricted-15/a.04.yml	true												
+termination-restricted-15/a.05.yml	true												
+termination-restricted-15/a.06.yml	true												
+termination-restricted-15/a.07.yml	true												
+termination-restricted-15/a.08.yml	true												
+termination-restricted-15/a.09_assume.yml	true												
+termination-restricted-15/a.10.yml	true												
+termination-restricted-15/b.01.yml	true												
+termination-restricted-15/b.02.yml	true												
+termination-restricted-15/b.03-no-inv_assume.yml	true												
+termination-restricted-15/b.03_assume.yml	true												
+termination-restricted-15/b.04.yml	true												
+termination-restricted-15/b.05.yml	true												
+termination-restricted-15/b.06.yml	true												
+termination-restricted-15/b.07.yml	true												
+termination-restricted-15/b.09-no-inv_assume.yml	true												
+termination-restricted-15/b.09_assume.yml	true												
+termination-restricted-15/b.10.yml	true												
+termination-restricted-15/b.11.yml	true												
+termination-restricted-15/b.12.yml	true												
+termination-restricted-15/b.13.yml	true												
+termination-restricted-15/b.14.yml	true												
+termination-restricted-15/b.15.yml	true												
+termination-restricted-15/b.16.yml	true												
+termination-restricted-15/b.17.yml	true												
+termination-restricted-15/b.18.yml	true												
+termination-restricted-15/c.01-no-inv.yml	true												
+termination-restricted-15/c.01_assume.yml	true												
+termination-restricted-15/c.02.yml	true												
+termination-restricted-15/c.03.yml	true												
+termination-restricted-15/c.07.yml	true												
+termination-restricted-15/c.08.yml	true												
+termination-restricted-15/ex3a.yml	true												
+termination-restricted-15/ex3b.yml	true												
+termination-restricted-15/java_AG313.yml	true												
+termination-restricted-15/java_Break.yml	true												
+termination-restricted-15/java_Continue1.yml	true												
+termination-restricted-15/java_Nested.yml	true												
+termination-restricted-15/java_Sequence.yml	true												
+termination-nla/cohencu1-both-t.yml	true												
+termination-nla/cohencu2-both-t.yml	true												
+termination-nla/cohencu3-both-t.yml	true												
+termination-nla/cohencu4-both-t.yml	true												
+termination-nla/cohencu5-both-t.yml	true												
+termination-nla/cohencu6-both-t.yml	true												
+termination-nla/cohencu7-both-t.yml	true												
+termination-nla/dijkstra1-both-nt-2.yml	false												
+termination-nla/dijkstra1-both-nt.yml	false												
+termination-nla/dijkstra1-both-t.yml	true												
+termination-nla/dijkstra2-both-nt.yml	false												
+termination-nla/dijkstra2-both-t.yml	true												
+termination-nla/dijkstra3-both-t.yml	true												
+termination-nla/dijkstra4-both-t.yml	true												
+termination-nla/dijkstra5-both-t.yml	true												
+termination-nla/dijkstra6-both-t.yml	true												
+termination-nla/divbin1-both-nt.yml	false												
+termination-nla/divbin1-both-t.yml	true												
+termination-nla/egcd2-both-t.yml	true												
+termination-nla/hard2-both-t.yml	true												
+termination-nla/knuth-both-nt.yml	false												
+termination-nla/knuth-both-t.yml	true												
+termination-nla/knuth-nosqrt-both-nt.yml	false												
+termination-nla/knuth-nosqrt-both-t.yml	true												
+termination-nla/lcm1-both-nt.yml	false												
+termination-nla/lcm1-both-t.yml	true												
+termination-nla/mannadiv-both-t.yml	true												
+termination-nla/ps2-both-t.yml	true												
+termination-nla/ps3-both-t.yml	true												
+termination-nla/ps4-both-t.yml	true												
+termination-nla/ps5-both-t.yml	true												
+termination-nla/ps6-both-t.yml	true												
+termination-nla/sqrt1-both-t.yml	true												
+termination-bwb/and-01.yml	true	ERROR (generic error, before parsing finished)	0.187493	0.20070261399999367	23.785472								
+termination-bwb/and-02.yml	true	TIMEOUT	40.380747	35.610846400000014	7402.024960								
+termination-bwb/and-03-false.yml	false	TIMEOUT	40.750959	32.94264861900001	7315.476480								
+termination-bwb/and-03.yml	true	TIMEOUT	40.762251	32.71204634700001	7321.251840								
+termination-bwb/and-04-false.yml	false	TIMEOUT	40.700866	32.958645510999986	7317.262336								
+termination-bwb/and-04.yml	true	TIMEOUT	40.708243	32.94084609599997	7311.925248								
+termination-bwb/and-05-false.yml	false	TIMEOUT	40.718095	32.80456911600004	7311.290368								
+termination-bwb/and-05.yml	true												
+termination-bwb/and-06.yml	true												
+termination-bwb/and-assume.yml	true												
+termination-bwb/consecutive-zero-bits-trailing.yml	true												
+termination-bwb/counting-bits-BK.yml	true												
+termination-bwb/counting-bits-BK1.yml	true												
+termination-bwb/counting-bits-set.yml	true												
+termination-bwb/not-01.yml	true												
+termination-bwb/not-02-false.yml	false												
+termination-bwb/not-02.yml	false												
+termination-bwb/not-03-false.yml	false												
+termination-bwb/not-03.yml	true												
+termination-bwb/not-04-false.yml	false												
+termination-bwb/not-04.yml	true												
+termination-bwb/not-05-false.yml	false												
+termination-bwb/not-05.yml	true												
+termination-bwb/or-01.yml	true												
+termination-bwb/or-02.yml	true												
+termination-bwb/or-03.yml	true												
+termination-bwb/or-04.yml	false												
+termination-bwb/or-05-false.yml	false												
+termination-bwb/or-05.yml	false												
+termination-bwb/or-06.yml	true												
+termination-bwb/parity0.yml	true												
+termination-bwb/parity1.yml	true												
+termination-bwb/reverse-bits1.yml	true												
+termination-bwb/xor-01.yml	true												

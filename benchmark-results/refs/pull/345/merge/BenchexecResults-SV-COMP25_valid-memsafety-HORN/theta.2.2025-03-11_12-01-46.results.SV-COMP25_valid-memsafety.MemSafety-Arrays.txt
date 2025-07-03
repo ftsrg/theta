@@ -1,0 +1,110 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_valid-memsafety.MemSafety-Arrays
+date:                    Tue, 2025-03-11 12:01:46 UTC
+tool:                    Theta 6.11.5
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1118-280
+os:                      Linux-6.8.0-1021-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3242.763 MHz
+ram:                     16766.767104 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety.MemSafety-Arrays
+Run set 4 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                    status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+array-examples/data_structures_set_multi_proc_trivial_ground.yml                             ERROR (server error, after parsing finished)       14.13        6.98        None
+array-examples/relax-1.yml                                                                   ERROR (server error, after parsing finished)       19.09        8.28        None
+array-examples/relax-2-2.yml                                                                 ERROR (server error, after parsing finished)       21.23        8.85        None
+array-examples/relax-2.yml                                                                   ERROR (server error, after parsing finished)       19.63        8.68        None
+array-examples/sanfoundry_24-2.yml                                                           ERROR (server error, after parsing finished)       19.60        8.30        None
+array-examples/standard_strcpy_ground-2.yml                                                  ERROR (server error, after parsing finished)       14.93        6.53        None
+array-examples/standard_strcpy_original-1.yml                                                ERROR (server error, after parsing finished)       14.99        6.59        None
+array-fpi/indp1.yml                                                                          ERROR (frontend failed, before parsing finished)        1.80        0.72        None
+array-memsafety/add_last_unsafe.yml                                                          ERROR (frontend failed, before parsing finished)        2.95        1.07        None
+array-memsafety/array01-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        2.78        1.01        None
+array-memsafety/array02-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        2.97        1.07        None
+array-memsafety/bubblesort-alloca-2.yml                                                      ERROR (frontend failed, before parsing finished)        2.79        1.01        None
+array-memsafety/bubblesort_unsafe.yml                                                        ERROR (server error, after parsing finished)       14.98        6.54        None
+array-memsafety/count_down-alloca-1.yml                                                      ERROR (frontend failed, before parsing finished)        3.08        1.14        None
+array-memsafety/count_down_unsafe.yml                                                        ERROR (frontend failed, before parsing finished)        3.12        1.16        None
+array-memsafety/cstrcat-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        2.80        1.02        None
+array-memsafety/cstrcat_unsafe.yml                                                           ERROR (frontend failed, before parsing finished)        1.89        0.75        None
+array-memsafety/cstrchr-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        2.99        1.11        None
+array-memsafety/cstrchr_unsafe.yml                                                           ERROR (frontend failed, before parsing finished)        3.00        1.08        None
+array-memsafety/cstrcmp-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        3.04        1.11        None
+array-memsafety/cstrcpy-alloca-1.yml                                                         ERROR (frontend failed, before parsing finished)        2.95        1.07        None
+array-memsafety/cstrcspn-alloca-1.yml                                                        ERROR (frontend failed, before parsing finished)        3.04        1.12        None
+array-memsafety/cstrlen-alloca-2.yml                                                         ERROR (frontend failed, before parsing finished)        2.74        1.00        None
+array-memsafety/cstrlen_unsafe.yml                                                           ERROR (frontend failed, before parsing finished)        2.93        1.06        None
+array-memsafety/cstrncat-alloca-2.yml                                                        ERROR (frontend failed, before parsing finished)        3.00        1.09        None
+array-memsafety/cstrncat_unsafe.yml                                                          ERROR (frontend failed, before parsing finished)        1.93        0.75        None
+array-memsafety/cstrncpy-alloca-2.yml                                                        ERROR (frontend failed, before parsing finished)        3.03        1.09        None
+array-memsafety/cstrncpy_unsafe.yml                                                          ERROR (frontend failed, before parsing finished)        1.92        0.77        None
+array-memsafety/cstrpbrk-alloca-2.yml                                                        ERROR (frontend failed, before parsing finished)        3.02        1.10        None
+array-memsafety/cstrpbrk_unsafe.yml                                                          ERROR (frontend failed, before parsing finished)        3.05        1.10        None
+array-memsafety/cstrspn-alloca-1.yml                                                         ERROR (frontend failed, before parsing finished)        2.79        1.02        None
+array-memsafety/diff-alloca-2.yml                                                            ERROR (frontend failed, before parsing finished)        3.05        1.10        None
+array-memsafety/diff_usafe.yml                                                               ERROR (server error, after parsing finished)       13.84        6.24        None
+array-memsafety/insertionsort-alloca-1.yml                                                   ERROR (frontend failed, before parsing finished)        3.03        1.09        None
+array-memsafety/java_BubbleSort-alloca-1.yml                                                 ERROR (frontend failed, before parsing finished)        2.95        1.06        None
+array-memsafety/knapsack_alloca_unsafe.yml                                                   ERROR (frontend failed, before parsing finished)        3.00        1.09        None
+array-memsafety/lis-alloca-1.yml                                                             ERROR (frontend failed, before parsing finished)        2.78        1.02        None
+array-memsafety/lis_unsafe.yml                                                               ERROR (frontend failed, before parsing finished)        3.29        1.18        None
+array-memsafety/mult_array-alloca-1.yml                                                      ERROR (frontend failed, before parsing finished)        2.78        1.01        None
+array-memsafety/mult_array_unsafe.yml                                                        ERROR (frontend failed, before parsing finished)        2.75        1.00        None
+array-memsafety/openbsd_cbzero-alloca-2.yml                                                  ERROR (frontend failed, before parsing finished)        2.97        1.08        None
+array-memsafety/openbsd_cmemchr-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        2.83        1.02        None
+array-memsafety/openbsd_cmemrchr-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        3.00        1.11        None
+array-memsafety/openbsd_cmemset-alloca-1.yml                                                 ERROR (frontend failed, before parsing finished)        3.00        1.07        None
+array-memsafety/openbsd_cstpcpy-alloca-1.yml                                                 ERROR (frontend failed, before parsing finished)        2.74        1.00        None
+array-memsafety/openbsd_cstpncpy-alloca-1.yml                                                ERROR (frontend failed, before parsing finished)        3.00        1.10        None
+array-memsafety/openbsd_cstrcat-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        3.04        1.12        None
+array-memsafety/openbsd_cstrcmp-alloca-1.yml                                                 ERROR (frontend failed, before parsing finished)        3.05        1.11        None
+array-memsafety/openbsd_cstrcpy-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        2.96        1.07        None
+array-memsafety/openbsd_cstrcspn-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        3.09        1.13        None
+array-memsafety/openbsd_cstrlcpy-alloca-1.yml                                                ERROR (frontend failed, before parsing finished)        3.09        1.12        None
+array-memsafety/openbsd_cstrlen-alloca-1.yml                                                 ERROR (frontend failed, before parsing finished)        3.18        1.15        None
+array-memsafety/openbsd_cstrncat-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        3.04        1.11        None
+array-memsafety/openbsd_cstrncmp-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        2.72        0.99        None
+array-memsafety/openbsd_cstrncpy-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        2.98        1.08        None
+array-memsafety/openbsd_cstrnlen-alloca-1.yml                                                ERROR (frontend failed, before parsing finished)        2.95        1.07        None
+array-memsafety/openbsd_cstrpbrk-alloca-2.yml                                                ERROR (frontend failed, before parsing finished)        3.05        1.11        None
+array-memsafety/openbsd_cstrspn-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        3.13        1.13        None
+array-memsafety/openbsd_cstrstr-alloca-2.yml                                                 ERROR (frontend failed, before parsing finished)        3.06        1.11        None
+array-memsafety/rec_strlen-alloca-1.yml                                                      ERROR (frontend failed, before parsing finished)        2.98        1.08        None
+array-memsafety/reverse_array_alloca_unsafe.yml                                              ERROR (frontend failed, before parsing finished)        2.96        1.09        None
+array-memsafety/reverse_array_unsafe.yml                                                     ERROR (frontend failed, before parsing finished)        3.17        1.18        None
+array-memsafety/selectionsort-alloca-1.yml                                                   ERROR (frontend failed, before parsing finished)        3.01        1.09        None
+array-memsafety/selectionsort_unsafe.yml                                                     ERROR (server error, after parsing finished)       13.49        6.03        None
+array-memsafety/stroeder1_unsafe.yml                                                         ERROR (frontend failed, before parsing finished)        1.68        0.68        None
+array-memsafety/strreplace-alloca-2.yml                                                      ERROR (frontend failed, before parsing finished)        3.01        1.10        None
+array-memsafety/subseq-alloca-2.yml                                                          ERROR (frontend failed, before parsing finished)        2.96        1.08        None
+array-memsafety/substring-alloca-2.yml                                                       ERROR (frontend failed, before parsing finished)        3.12        1.14        None
+array-memsafety-realloc/array-realloc-1.yml                                                  ERROR (server error, after parsing finished)       13.62        6.42        None

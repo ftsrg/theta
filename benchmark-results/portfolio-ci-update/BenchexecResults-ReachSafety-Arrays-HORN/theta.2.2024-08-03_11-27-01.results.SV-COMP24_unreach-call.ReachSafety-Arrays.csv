@@ -1,0 +1,53 @@
+tool		Theta 6.3.4	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4
+run set		SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays	SV-COMP24_unreach-call.ReachSafety-Arrays
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+array-examples/standard_partition_ground-2.yml	true	Parsing OK	10.111092	5.4576179199999615	430.907392
+array-crafted/mapavg4.yml	true	Parsing OK	10.512668	5.337752242000022	436.264960
+array-programs/copysome2-1.yml	true	Parsing OK	10.40862	5.613825077999991	424.570880
+array-examples/sanfoundry_24-1.yml	true	Parsing OK	10.364271	5.557232947999978	423.563264
+array-multidimensional/max-2-u.yml	true	ERROR (frontend failed)	1.848143	0.7564989189999665	159.260672
+array-examples/sorting_bubblesort_ground-1.yml	true	Parsing OK	10.477827	5.629312973000026	428.765184
+array-crafted/bAnd2.yml	true	TIMEOUT	20.534312	11.628663528999994	993.009664
+array-multidimensional/rev-2-n-u.yml	true	ERROR (frontend failed)	1.831257	0.7524387079999997	161.153024
+array-examples/data_structures_set_multi_proc_trivial_ground.yml	true	Parsing OK	13.867845	6.114206638999974	458.838016
+array-patterns/array21_pattern.yml	true	ERROR (frontend failed)	1.999124	0.8305287590000034	175.337472
+array-examples/standard_copy3_ground-2.yml	false	Parsing OK	12.217416	5.803251103000036	456.970240
+array-examples/standard_copy6_ground-2.yml	true	Parsing OK	13.102134	5.951181597000016	467.320832
+array-examples/standard_copyInit_ground.yml	true	Parsing OK	11.795369	5.711572482999998	454.000640
+array-examples/standard_init4_ground-1.yml	false	Parsing OK	12.195822	5.828298570000015	464.818176
+array-examples/standard_copy9_ground-1.yml	false	Parsing OK	13.753249	6.165849057999992	489.177088
+array-crafted/mapsum1.yml	true	TIMEOUT	21.837953	7.842354083000032	598.020096
+array-examples/standard_init7_ground-2.yml	true	Parsing OK	12.979346	5.955797813000004	463.007744
+array-cav19/array_init_var_plus_ind3.yml	true	Parsing OK	11.384294	5.652594902999965	434.712576
+array-tiling/mbpr4.yml	true	Parsing OK	14.762385	6.310983259000011	462.811136
+reducercommutativity/sum20-2.yml	true	Parsing OK	15.519159	6.242442644999983	465.305600
+array-programs/copysome1-1.yml	true	Parsing OK	12.166212	5.803824840000004	447.361024
+array-tiling/pr2.yml	true	Parsing OK	12.486863	5.905191410999976	440.815616
+array-examples/standard_copy8_ground-1.yml	true	Parsing OK	13.655585	6.230338383999992	485.941248
+array-examples/standard_init8_ground-2.yml	true	Parsing OK	12.733186	5.69991002200004	476.844032
+array-cav19/array_tiling_tcpy.yml	true	Parsing OK	12.154085	5.59235656200002	443.363328
+reducercommutativity/max60-2.yml	true	TIMEOUT (Parsing OK)	20.780325	7.624233538999988	588.619776
+array-examples/standard_init4_ground-2.yml	true	Parsing OK	11.854792	5.717980886000021	457.814016
+array-patterns/array29_pattern.yml	true	ERROR (frontend failed)	1.793277	0.749220476000005	156.340224
+array-examples/standard_init1_ground-1.yml	false	Parsing OK	11.392719	5.6151391170000124	453.439488
+reducercommutativity/max20-1.yml	true	Parsing OK	15.89036	6.644874097000013	478.035968
+array-examples/standard_copyInitSum_ground.yml	true	Parsing OK	11.723533	5.701825830000018	447.598592
+array-examples/standard_reverse_ground.yml	true	Parsing OK	11.880298	5.733347791000028	457.342976
+array-examples/standard_find_ground-1.yml	true	Parsing OK	11.555839	5.607278119999933	453.865472
+array-examples/standard_palindrome_ground.yml	true	Parsing OK	11.836404	5.745941167000069	458.235904
+array-cav19/array_init_pair_symmetr2.yml	true	Parsing OK	12.678067	5.944197497999994	452.857856
+reducercommutativity/sum40-2.yml	true	Parsing OK	17.192354	6.784583892000001	501.596160
+array-crafted/bor3.yml	true	Parsing OK	12.360554	5.959935771999994	501.448704
+array-programs/copysome1-2.yml	false	Parsing OK	12.076163	5.498515315000077	461.434880
+array-patterns/array24_pattern.yml	true	ERROR (frontend failed)	1.970639	0.7854977680000275	172.961792
+array-multidimensional/min-2-u.yml	true	ERROR (frontend failed)	1.815973	0.7332549989999961	158.191616
+array-crafted/mapavg1.yml	true	TIMEOUT	21.449943	7.969384816999991	612.642816
+array-patterns/array10_pattern.yml	true	Parsing OK	12.519864	5.844676509999999	442.724352
+array-examples/standard_copy9_ground-2.yml	true	Parsing OK	13.50425	6.032289696000021	497.979392
+reducercommutativity/sum10-1.yml	true	Parsing OK	13.928362	5.894274034999967	452.083712
+array-tiling/pr3.yml	true	Parsing OK	12.606286	5.884190727000032	448.438272
+array-patterns/array17_pattern.yml	true	ERROR (frontend failed)	1.975543	0.7983626569999842	172.822528
+array-examples/standard_seq_init_ground.yml	true	Parsing OK	11.465719	5.59746165699994	445.104128
+array-examples/standard_minInArray_ground-2.yml	true	Parsing OK	12.021017	5.804905665999968	461.922304
+array-crafted/zero_sum_m2.yml	true	Parsing OK	11.947142	5.771790788999965	438.763520
+reducercommutativity/max05-1.yml	true	Parsing OK	13.425238	5.733918951999954	455.782400

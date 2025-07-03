@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Hardware, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Tue, 2024-03-12 12:45:16 UTC
+tool:                    Theta 5.0.4
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1251-612
+os:                      Linux-6.5.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2592.151 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Hardware
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                            status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml      TIMEOUT                        120.33      115.80        None
+btor2c-lazyMod.cambridge.5.prop1-back-serstep.yml    TIMEOUT (Parsing OK)           120.53       96.31        None
+btor2c-lazyMod.extinction.4.prop1-func-interl.yml    TIMEOUT (Parsing OK)           120.44       94.12        None
+btor2c-lazyMod.lup.2.prop1-func-interl.yml           TIMEOUT (Parsing OK)           120.45       94.68        None
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml    Parsing OK                      86.17       63.10        None
+------------------------------------------------------------------------------------------------------------------
+Run set 1                                            done                            73.97      466.14           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               5
+  Score:                 0 (max: 9)

@@ -1,0 +1,13 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/termination-memory-alloca/array01-alloca-1.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-memory-alloca/array01-alloca-1.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_k5on4ej6/tmp/.mount_specif6IVPRX/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_k5on4ej6/tmp/.mount_specif6IVPRX/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_k5on4ej6/tmp/.mount_specif6IVPRX/algorithms/instrumentation_operator.py", line 74, in transform
+Exception: The program sv-benchmarks/c/termination-memory-alloca/array01-alloca-1.i has unsupported types or loop structures

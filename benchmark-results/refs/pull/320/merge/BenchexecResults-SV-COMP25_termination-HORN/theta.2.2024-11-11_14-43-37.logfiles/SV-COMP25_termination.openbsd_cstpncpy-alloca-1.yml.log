@@ -1,0 +1,8 @@
+Thorn/theta-start.sh sv-benchmarks/c/array-memsafety/openbsd_cstpncpy-alloca-1.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/array-memsafety/openbsd_cstpncpy-alloca-1.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture ILP32'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
