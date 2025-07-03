@@ -81,14 +81,13 @@ fun getMddChecker(
     xcfa.procedures
       .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
       .toSet()
-  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddChecker.create(
       monolithicExpr,
-      variableOrder,
+      orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20),
       solverPool,
       logger,
       iterationStrategy,
