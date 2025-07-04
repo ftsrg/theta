@@ -84,15 +84,15 @@ fun getMddChecker(
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  val baseChecker = { monolithicExpr: MonolithicExpr ->
+  val baseChecker = { abstractME: MonolithicExpr ->
     MddChecker.create(
-      monolithicExpr,
-      orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20),
+      abstractME,
+      orderVarsFromRandomStartingPoints(abstractME.vars, stmts, 20),
       solverPool,
       logger,
       iterationStrategy,
-      monolithicExpr.valToState,
-      monolithicExpr.biValToAction,
+      abstractME.valToState,
+      abstractME.biValToAction,
     )
   }
 
