@@ -278,7 +278,8 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
 
 // Ehhez a nidhez vezetünk be egy változót, bekötjük
 data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor2Sort, val operator: Btor2TernaryOperator,
-    val op1: Btor2Node, val op2: Btor2Node, val op3: Btor2Node, val negated: Boolean) : Btor2Operation(nid, sort)
+    val op1: Btor2Node, val op2: Btor2Node, val op3: Btor2Node,
+    val negated1: Boolean, val negated2: Boolean, val negated3: Boolean) : Btor2Operation(nid, sort)
 {
     val value = Decls.Var("ternary_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -288,12 +289,16 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
 
     override fun getExpr(): Expr<BvType> {
         //checkAllTypesEqual(op1.getExpr(), BvExprs.Bv(BooleanArray(1) { true }))
-
-        val op1Expr = if (negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
+        val op1Expr = if (negated1) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
         val op1ExprBool = Eq(op1Expr, BvExprs.Bv(BooleanArray(1) { true }))
+        val op2Expr = if (negated2) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else (op2.getExpr() as Expr<BvType> )
+        val op2ExprBool = Eq(op2Expr, BvExprs.Bv(BooleanArray(1) { true }))
+        val op3Expr = if (negated3) BvNotExpr.create(op3.getExpr() as Expr<BvType>) else (op3.getExpr() as Expr<BvType> )
+        val op3ExprBool = Eq(op3Expr, BvExprs.Bv(BooleanArray(1) { true }))
+
         return when(operator)
         {
-            Btor2TernaryOperator.ITE -> IteExpr.of(op1ExprBool as Expr<BoolType>, op2.getExpr() as Expr<BvType>, op3.getExpr() as Expr<BvType>)
+            Btor2TernaryOperator.ITE -> IteExpr.of(op1ExprBool as Expr<BoolType>, op2ExprBool as Expr<BvType>, op3ExprBool as Expr<BvType>)
             Btor2TernaryOperator.WRITE -> TODO()
         }
     }

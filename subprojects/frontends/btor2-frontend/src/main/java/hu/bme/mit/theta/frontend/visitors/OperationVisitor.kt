@@ -163,14 +163,18 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "write" -> Btor2TernaryOperator.WRITE
             else -> throw RuntimeException("Ternary operator unknown")
         }
-        val negated = ctx.opd1.text.toInt() < 0
-        val opd1_index = abs(ctx.opd1.text.toInt()).toUInt()
+        val negated1 = ctx.opd1.text.toInt() < 0
+        val opd1Index = abs(ctx.opd1.text.toInt()).toUInt()
+        val negated2 = ctx.opd2.text.toInt() < 0
+        val negated3 = ctx.opd3.text.toInt() < 0
+        val opd2Index = abs(ctx.opd2.text.toInt()).toUInt()
+        val opd3Index = abs(ctx.opd3.text.toInt()).toUInt()
 
-        val opd1 = nodes[opd1_index] as Btor2Node
-        val opd2 = nodes[ctx.opd2.text.toUInt()] as Btor2Node
-        val opd3 = nodes[ctx.opd3.text.toUInt()] as Btor2Node
+        val opd1 = nodes[opd1Index] as Btor2Node
+        val opd2 = nodes[opd2Index] as Btor2Node
+        val opd3 = nodes[opd3Index] as Btor2Node
 
-        val node =  Btor2TernaryOperation(nid, sort, op, opd1, opd2, opd3, negated)
+        val node =  Btor2TernaryOperation(nid, sort, op, opd1, opd2, opd3, negated1, negated2, negated3)
         Btor2Circuit.nodes[nid] = node
         Btor2Circuit.ops[nid] = node
         return node
