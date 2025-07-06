@@ -293,8 +293,8 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
         //checkAllTypesEqual(op1.getExpr(), BvExprs.Bv(BooleanArray(1) { true }))
         val op1Expr = if (negated1) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else (op1.getExpr() as Expr<BvType>)
         val op1ExprBool = Eq(op1Expr, BvExprs.Bv(BooleanArray(1) { true }))
-        val op2Expr = if (negated2) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else (op2.getExpr() as Expr<BvType> )
-        val op3Expr = if (negated3) BvNotExpr.create(op3.getExpr() as Expr<BvType>) else (op3.getExpr() as Expr<BvType> )
+        val op2Expr = if (negated2) BvNegExpr.create(op2.getExpr() as Expr<BvType>) else (op2.getExpr() as Expr<BvType> )
+        val op3Expr = if (negated3) BvNegExpr.create(op3.getExpr() as Expr<BvType>) else (op3.getExpr() as Expr<BvType> )
 
         return when(operator)
         {
