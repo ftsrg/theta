@@ -132,26 +132,29 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
     }
 
     override fun getExpr(): Expr<*> {
-        val op1_expr = if (opd1_negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
-        val op2_expr = if (opd2_negated) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
+
+        val op1ExprLogical = if (opd1_negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
+        val op2ExprLogical = if (opd2_negated) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
+        val op1ExprArithmetic = if (opd1_negated) BvNegExpr.create(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
+        val op2ExprArithmetic = if (opd2_negated) BvNegExpr.create(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
 
         return when(operator)
         {
-            Btor2BinaryOperator.ADD -> BvAddExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.AND -> BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.NAND -> BvNotExpr.create(BvAndExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
-            Btor2BinaryOperator.NOR -> BvNotExpr.create(BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
-            Btor2BinaryOperator.OR -> BvOrExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.XNOR -> BvNotExpr.create(BvXorExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)))
-            Btor2BinaryOperator.XOR -> BvXorExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.MUL -> BvMulExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.SUB -> BvSubExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.UDIV -> BvUDivExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.UREM -> BvURemExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SDIV -> BvSDivExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SREM -> BvSRemExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SMOD -> BvSModExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.CONCAT -> BvConcatExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
+            Btor2BinaryOperator.ADD -> BvAddExpr.create(mutableListOf(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>))
+            Btor2BinaryOperator.AND -> BvAndExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>))
+            Btor2BinaryOperator.NAND -> BvNotExpr.create(BvAndExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>)))
+            Btor2BinaryOperator.NOR -> BvNotExpr.create(BvOrExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>)))
+            Btor2BinaryOperator.OR -> BvOrExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>))
+            Btor2BinaryOperator.XNOR -> BvNotExpr.create(BvXorExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>)))
+            Btor2BinaryOperator.XOR -> BvXorExpr.create(mutableListOf(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>))
+            Btor2BinaryOperator.MUL -> BvMulExpr.create(mutableListOf(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>))
+            Btor2BinaryOperator.SUB -> BvSubExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.UDIV -> BvUDivExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.UREM -> BvURemExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.SDIV -> BvSDivExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.SREM -> BvSRemExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.SMOD -> BvSModExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.CONCAT -> BvConcatExpr.create(mutableListOf(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>))
             Btor2BinaryOperator.SADDO -> TODO("Signed addition with overflow not implemented yet")
             Btor2BinaryOperator.SDIVO -> TODO("Signed division with overflow not implemented yet")
             Btor2BinaryOperator.SMULO -> TODO("Signed multiplication with overflow not implemented yet")
@@ -159,11 +162,11 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.UADDO -> TODO("Unsigned addition with overflow not implemented yet")
             Btor2BinaryOperator.UMULO -> TODO("Unsigned multiplication with overflow not implemented yet")
             Btor2BinaryOperator.USUBO -> TODO("Unsigned subtraction with overflow not implemented yet")
-            Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
+            Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>)
+            Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1ExprArithmetic as Expr<BvType>, op2ExprArithmetic as Expr<BvType>)
+            Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1ExprLogical as Expr<BvType>, op2ExprLogical as Expr<BvType>)
             Btor2BinaryOperator.READ -> TODO("Read operation not implemented yet")
         }
     }
