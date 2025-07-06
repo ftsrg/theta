@@ -19,19 +19,15 @@ package hu.bme.mit.theta.frontend.models
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
-import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import java.math.BigInteger
 
 
@@ -57,9 +53,9 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
             Btor2UnaryOperator.INC -> BvAddExpr.create(mutableListOf(operand.getExpr() as Expr<BvType>, one))
             Btor2UnaryOperator.DEC -> BvSubExpr.create(operand.getExpr() as Expr<BvType>, one)
             Btor2UnaryOperator.NEG -> BvNegExpr.of(operand.getExpr() as Expr<BvType>)
-            Btor2UnaryOperator.REDAND -> BvAndExpr.create(cutValue())
-            Btor2UnaryOperator.REDOR -> BvOrExpr.create(cutValue())
-            Btor2UnaryOperator.REDXOR -> BvXorExpr.create(cutValue())
+            Btor2UnaryOperator.REDAND -> BvAndExpr.create(valueByBits())
+            Btor2UnaryOperator.REDOR -> BvOrExpr.create(valueByBits())
+            Btor2UnaryOperator.REDXOR -> BvXorExpr.create(valueByBits())
         }
     }
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -70,7 +66,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
         TODO("Not yet implemented")
     }
 
-    fun cutValue() : List<Expr<BvType>> {
+    fun valueByBits() : List<Expr<BvType>> {
         val expr = operand.getExpr() as BvLitExpr
         val value = expr.value // BooleanArray
         val cut = mutableListOf<Expr<BvType>>()
@@ -81,7 +77,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
     }
 }
 
-data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val w : UInt) : Btor2Operation(nid, sort)
+data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2ExtOperator, val operand: Btor2Node, val w : UInt) : Btor2Operation(nid, sort)
 {
     val value = Decls.Var("ext_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -90,15 +86,18 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
     }
 
     override fun getExpr(): Expr<*> {
-        //return BvExt
-        TODO()
+        return when(operator)
+        {
+            Btor2ExtOperator.SEXT -> TODO("Signed extension not implemented yet")
+            Btor2ExtOperator.UEXT -> TODO("Unsigned extension not implemented yet")
+        }
     }
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
     }
 
     override fun getStmt(negate: Boolean): Stmt {
-        TODO("Not yet implemented")
+        TODO("Ext not yet implemented")
     }
 }
 
@@ -153,19 +152,19 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.SREM -> BvSRemExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SMOD -> BvSModExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.CONCAT -> BvConcatExpr.create(mutableListOf(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>))
-            Btor2BinaryOperator.SADDO -> TODO()
-            Btor2BinaryOperator.SDIVO -> TODO()
-            Btor2BinaryOperator.SMULO -> TODO()
-            Btor2BinaryOperator.SSUBO -> TODO()
-            Btor2BinaryOperator.UADDO -> TODO()
-            Btor2BinaryOperator.UMULO -> TODO()
-            Btor2BinaryOperator.USUBO -> TODO()
+            Btor2BinaryOperator.SADDO -> TODO("Signed addition with overflow not implemented yet")
+            Btor2BinaryOperator.SDIVO -> TODO("Signed division with overflow not implemented yet")
+            Btor2BinaryOperator.SMULO -> TODO("Signed multiplication with overflow not implemented yet")
+            Btor2BinaryOperator.SSUBO -> TODO("Signed subtraction with overflow not implemented yet")
+            Btor2BinaryOperator.UADDO -> TODO("Unsigned addition with overflow not implemented yet")
+            Btor2BinaryOperator.UMULO -> TODO("Unsigned multiplication with overflow not implemented yet")
+            Btor2BinaryOperator.USUBO -> TODO("Unsigned subtraction with overflow not implemented yet")
             Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
             Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1_expr as Expr<BvType>, op2_expr as Expr<BvType>)
-            Btor2BinaryOperator.READ -> TODO()
+            Btor2BinaryOperator.READ -> TODO("Read operation not implemented yet")
         }
     }
 
@@ -191,19 +190,19 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
             Btor2BinaryOperator.SREM -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.SMOD -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.CONCAT -> AssignStmt.of(value, getExpr() as Expr<BvType>)
-            Btor2BinaryOperator.SADDO -> TODO()
-            Btor2BinaryOperator.SDIVO -> TODO()
-            Btor2BinaryOperator.SMULO -> TODO()
-            Btor2BinaryOperator.SSUBO -> TODO()
-            Btor2BinaryOperator.UADDO -> TODO()
-            Btor2BinaryOperator.UMULO -> TODO()
-            Btor2BinaryOperator.USUBO -> TODO()
+            Btor2BinaryOperator.SADDO -> TODO("Signed addition with overflow not implemented yet")
+            Btor2BinaryOperator.SDIVO -> TODO("Signed division with overflow not implemented yet")
+            Btor2BinaryOperator.SMULO -> TODO("Signed multiplication with overflow not implemented yet")
+            Btor2BinaryOperator.SSUBO -> TODO("Signed subtraction with overflow not implemented yet")
+            Btor2BinaryOperator.UADDO -> TODO("Unsigned addition with overflow not implemented yet")
+            Btor2BinaryOperator.UMULO -> TODO("Unsigned multiplication with overflow not implemented yet")
+            Btor2BinaryOperator.USUBO -> TODO("Unsigned subtraction with overflow not implemented yet")
             Btor2BinaryOperator.ROL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.ROR -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.SLL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.SRA -> AssignStmt.of(value, getExpr() as Expr<BvType>)
             Btor2BinaryOperator.SRL -> AssignStmt.of(value, getExpr() as Expr<BvType>)
-            Btor2BinaryOperator.READ -> TODO()
+            Btor2BinaryOperator.READ -> TODO("Read operation not implemented yet")
         }
     }
 }
@@ -265,13 +264,13 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
             Btor2ComparisonOperator.EQ -> AssignStmt.of(value,getExpr() as Expr<BvType>)
             Btor2ComparisonOperator.NEQ -> AssignStmt.of(value,getExpr() as Expr<BvType>)
             Btor2ComparisonOperator.SLT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
-            Btor2ComparisonOperator.SLTE -> TODO()
-            Btor2ComparisonOperator.SGT -> TODO()
-            Btor2ComparisonOperator.SGTE -> TODO()
-            Btor2ComparisonOperator.ULT -> TODO()
-            Btor2ComparisonOperator.ULTE -> TODO()
-            Btor2ComparisonOperator.UGT -> TODO()
-            Btor2ComparisonOperator.UGTE -> TODO()
+            Btor2ComparisonOperator.SLTE -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.SGT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.SGTE -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.ULT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.ULTE -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.UGT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
+            Btor2ComparisonOperator.UGTE -> AssignStmt.of(value,getExpr() as Expr<BvType>)
         }
     }
 }
@@ -311,7 +310,7 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
         return when(operator)
         {
             Btor2TernaryOperator.ITE -> AssignStmt.of(value, getExpr() as Expr<BvType>)
-            Btor2TernaryOperator.WRITE -> TODO()
+            Btor2TernaryOperator.WRITE -> TODO("Write operation not implemented yet")
         }
 
     }

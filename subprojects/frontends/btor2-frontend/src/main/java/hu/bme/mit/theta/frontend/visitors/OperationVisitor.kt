@@ -33,12 +33,17 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
         val nid = idVisitor.visit(ctx.id)
         val sid = idVisitor.visit(ctx.sid())
         val sort : Btor2BitvecSort = Btor2Circuit.sorts[sid] as Btor2BitvecSort
+        val op = when (ctx.operator.text) {
+            "sext" -> Btor2ExtOperator.SEXT
+            "uext" -> Btor2ExtOperator.UEXT
+            else -> throw RuntimeException("Extension operator unknown")
+        }
 
         val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
         val w = ctx.w.text.toUInt()
 
         check(sort.width == (opd.sort as Btor2BitvecSort).width + w)
-        val node =  Btor2ExtOperation(nid, sort, opd, w)
+        val node =  Btor2ExtOperation(nid, sort, op, opd, w)
         Btor2Circuit.nodes[nid] = node
         Btor2Circuit.ops[nid] = node
         return node

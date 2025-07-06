@@ -15,12 +15,11 @@
  */
 
 package hu.bme.mit.theta.frontend.models
-// Btor2Ext and Slice Operation already exists
-//enum class Btor2IndexedOperator {
-//    SEXT,
-//    UEXT,
-//    SLICE
-//}
+
+enum class Btor2ExtOperator {
+    SEXT,
+    UEXT
+}
 
 enum class Btor2UnaryOperator {
     NOT,

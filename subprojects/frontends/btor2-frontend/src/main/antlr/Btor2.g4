@@ -44,7 +44,7 @@ node: ( array_sort | bitvec_sort ) #sort // sort declaration
 
 opidx: ext | slice;
 
-ext: id=nid ('uext'|'sext') sid opd1=nid w=NUM;
+ext: id=nid operator=('uext'|'sext') sid opd1=nid w=NUM;
 slice: id=nid 'slice' sid opd1=nid u=NUM l=NUM;
 
 op: binop | unop | terop;
