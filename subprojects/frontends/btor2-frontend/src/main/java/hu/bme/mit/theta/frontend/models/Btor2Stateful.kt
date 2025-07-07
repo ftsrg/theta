@@ -18,6 +18,9 @@ package hu.bme.mit.theta.frontend.models
 
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
@@ -26,6 +29,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 abstract class Btor2Stateful(id: UInt, sort: Btor2Sort, state: Btor2State?, value: Btor2Node?) : Btor2Node(id, sort) {
     abstract val state: Btor2State?
     abstract val value: Btor2Node?
+
+    abstract fun getStmt(): Stmt
 }
 
 // Inputs and States
@@ -39,7 +44,11 @@ data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort, over
     }
 
     override fun getExpr(): Expr<*> {
-        return RefExpr.of(declsVar) // Valamilyen Bool type kellene? nem
+        return RefExpr.of(declsVar)
+    }
+
+    override fun getStmt(): Stmt {
+        return HavocStmt.of(declsVar)
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -57,6 +66,10 @@ data class Btor2State(override val nid: UInt, override val sort: Btor2Sort, over
 
     override fun getExpr(): Expr<*> {
         return RefExpr.of(declsVar)
+    }
+
+    override fun getStmt(): Stmt {
+        TODO("We might not even need this Stmt for states")
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
@@ -77,6 +90,10 @@ data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, overr
         TODO("Not yet implemented")
     }
 
+    override fun getStmt(): Stmt {
+        return AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
+    }
+
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
     }
@@ -92,6 +109,10 @@ data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, overr
 
     override fun getExpr(): Expr<*> {
         return RefExpr.of(declsVar)
+    }
+
+    override fun getStmt(): Stmt {
+        return AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {

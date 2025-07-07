@@ -45,7 +45,7 @@ object Btor2XcfaBuilder{
         Btor2Circuit.states.forEach {
             it.value.getVar()?.let{varDecl ->
                 if(varDecl.name.startsWith(("init_"))){
-                    val edge = XcfaEdge(lastLoc,newLoc, StmtLabel(AssignStmt.of(it.value.state?.getVar(), it.value.value?.getExpr() as Expr<BvType>)), EmptyMetaData)
+                    val edge = XcfaEdge(lastLoc,newLoc, StmtLabel(it.value.getStmt()), EmptyMetaData)
                     procBuilder.addEdge(edge)
                     // Amit tudunk 1 élre helyezzük, tehát az első élen vannak az initek
                 }
@@ -62,7 +62,7 @@ object Btor2XcfaBuilder{
             Btor2Circuit.states.forEach {
                 it.value.getVar()?.let{ varDecl ->
                     if(varDecl.name.startsWith(("input_"))){
-                        val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(varDecl)), EmptyMetaData)
+                        val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(it.value.getStmt()), EmptyMetaData)
                         procBuilder.addEdge(edge)
                     }
                 }
@@ -79,7 +79,7 @@ object Btor2XcfaBuilder{
 
             procBuilder.addLoc(loc)
 
-            val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt(false)), EmptyMetaData)
+            val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt()), EmptyMetaData)
             procBuilder.addEdge(edge)
             i++
             lastLoc=loc
@@ -100,7 +100,7 @@ object Btor2XcfaBuilder{
             it.value.getVar()?.let{varDecl ->
                 if(varDecl.name.startsWith(("next_"))){
                     val firstLoc = procBuilder.getLocs().elementAt(1)
-                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(AssignStmt.of(it.value.state?.getVar(), it.value.getExpr() as Expr<BvType>)),EmptyMetaData))
+                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(it.value.getStmt()),EmptyMetaData))
 
                 }
             }

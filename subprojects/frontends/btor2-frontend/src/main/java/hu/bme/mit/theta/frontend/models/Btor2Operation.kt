@@ -33,7 +33,8 @@ import java.math.BigInteger
 
 abstract class Btor2Operation(id: UInt, sort: Btor2Sort) : Btor2Node(id, sort)
 {
-    abstract fun getStmt(negate: Boolean): Stmt
+    // Ebben volt egy negálás de hát szinte felesleges
+    abstract fun getStmt(): Stmt
 }
 
 // Operators
@@ -45,7 +46,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
         return value
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
         val one = BvExprs.Bv(booleanArrayOf(true)) as Expr<BvType>
         return when(operator)
         {
@@ -62,7 +63,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         return AssignStmt.of(value, getExpr() as Expr<BvType>)
     }
 
@@ -85,7 +86,7 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
         return value
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
         return when(operator)
         {
             Btor2ExtOperator.SEXT -> TODO("Signed extension not implemented yet")
@@ -96,7 +97,7 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         TODO("Ext not yet implemented")
     }
 }
@@ -109,7 +110,7 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
         return value
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
         val newU : BigInteger = u + BigInteger.valueOf(1)
         return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(newU))
     }
@@ -118,7 +119,7 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         return AssignStmt.of(value, getExpr() as Expr<BvType>)
     }
 }
@@ -131,7 +132,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return value
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
 
         val op1ExprLogical = if (opd1_negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
         val op2ExprLogical = if (opd2_negated) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
@@ -175,7 +176,7 @@ data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         return when(operator)
         {
             Btor2BinaryOperator.ADD -> AssignStmt.of(value, getExpr() as Expr<BvType>)
@@ -218,7 +219,7 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         return value
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
         val op1_expr = if (opd1_negated) BvNotExpr.create(op1.getExpr() as Expr<BvType>) else op1.getExpr() as Expr<BvType>
         val op2_expr = if (opd2_negated) BvNotExpr.create(op2.getExpr() as Expr<BvType>) else op2.getExpr() as Expr<BvType>
         return when(operator)
@@ -261,7 +262,7 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         return when(operator)
         {
             Btor2ComparisonOperator.EQ -> AssignStmt.of(value,getExpr() as Expr<BvType>)
@@ -307,7 +308,7 @@ data class Btor2TernaryOperation(override val nid: UInt, override val sort: Btor
         return visitor.visit(this, param)
     }
 
-    override fun getStmt(negate: Boolean): Stmt {
+    override fun getStmt(): Stmt {
         return when(operator)
         {
             Btor2TernaryOperator.ITE -> AssignStmt.of(value, getExpr() as Expr<BvType>)

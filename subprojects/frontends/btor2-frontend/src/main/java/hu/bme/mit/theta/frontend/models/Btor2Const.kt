@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 
 data class Btor2Const(
@@ -32,7 +33,7 @@ data class Btor2Const(
         return null
     }
 
-    override fun getExpr(): Expr<*> {
+    override fun getExpr(): Expr<BvType> {
         return BvLitExpr.of(value)
     }
 
