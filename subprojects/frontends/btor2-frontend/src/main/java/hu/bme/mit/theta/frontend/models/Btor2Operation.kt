@@ -63,7 +63,7 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
     }
 
     override fun getStmt(negate: Boolean): Stmt {
-        TODO("Not yet implemented")
+        return AssignStmt.of(value, getExpr() as Expr<BvType>)
     }
 
     fun valueByBits() : List<Expr<BvType>> {
