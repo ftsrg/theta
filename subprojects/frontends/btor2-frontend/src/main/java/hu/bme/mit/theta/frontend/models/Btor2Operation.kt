@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.IffExpr
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg
@@ -68,13 +70,14 @@ data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2
     }
 
     fun valueByBits() : List<Expr<BvType>> {
-        val expr = operand.getExpr() as BvLitExpr
-        val value = expr.value // BooleanArray
-        val cut = mutableListOf<Expr<BvType>>()
-        for (i in value.indices) {
-            cut.add(BvLitExpr.of(booleanArrayOf(value[i])))
-        }
-        return cut
+        //val expr = operand.getExpr() as BvLitExpr
+        //val value = expr.value // BooleanArray
+        //val cut = mutableListOf<Expr<BvType>>()
+        //for (i in value.indices) {
+        //    cut.add(BvLitExpr.of(booleanArrayOf(value[i])))
+        //}
+        //return cut
+        TODO()
     }
 }
 
@@ -87,18 +90,22 @@ data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2So
     }
 
     override fun getExpr(): Expr<BvType> {
+        val ogLength = operand.sort?.width?.toInt()
+        val wLength = w.toInt()
+        val newLength = ogLength?.plus(wLength) ?: throw IllegalArgumentException("Operand sort width is null or not defined")
         return when(operator)
         {
-            Btor2ExtOperator.SEXT -> TODO("Signed extension not implemented yet")
-            Btor2ExtOperator.UEXT -> TODO("Unsigned extension not implemented yet")
+            Btor2ExtOperator.SEXT -> BvSExtExpr.create(operand.getExpr(), BvType.of(newLength))
+            Btor2ExtOperator.UEXT -> BvZExtExpr.create(operand.getExpr(), BvType.of(newLength))
         }
     }
+
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
     }
 
     override fun getStmt(): Stmt {
-        TODO("Ext not yet implemented")
+        return AssignStmt.of(value, getExpr())
     }
 }
 
@@ -276,6 +283,45 @@ data class Btor2Comparison(override val nid: UInt, override val sort : Btor2Sort
             Btor2ComparisonOperator.UGT -> AssignStmt.of(value,getExpr() as Expr<BvType>)
             Btor2ComparisonOperator.UGTE -> AssignStmt.of(value,getExpr() as Expr<BvType>)
         }
+    }
+}
+
+data class Btor2Boolean(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2BooleanOperator, val op1: Btor2Node, val op2: Btor2Node, val opd1_negated: Boolean, val opd2_negated: Boolean) : Btor2Operation(nid, sort) {
+
+    val value = Decls.Var("boolean_$nid", BvExprs.BvType(sort.width.toInt()))
+
+    override fun getVar(): VarDecl<*>? {
+        return value
+    }
+
+    override fun getExpr(): Expr<BvType> {
+        return when(operator)
+        {
+            Btor2BooleanOperator.IFF ->  IteExpr.of(
+                IffExpr.create(
+                if (opd1_negated) BvNotExpr.create(op1.getExpr()) else op1.getExpr(),
+                if (opd2_negated) BvNotExpr.create(op2.getExpr()) else op2.getExpr()
+                ),
+                BvExprs.Bv(BooleanArray(1) { true }),
+                BvExprs.Bv(BooleanArray(1) { false })
+            )
+            Btor2BooleanOperator.IMPLIES ->  IteExpr.of(
+                ImplyExpr.create(
+                    if (opd1_negated) BvNotExpr.create(op1.getExpr()) else op1.getExpr(),
+                    if (opd2_negated) BvNotExpr.create(op2.getExpr()) else op2.getExpr()
+                ),
+                BvExprs.Bv(BooleanArray(1) { true }),
+                BvExprs.Bv(BooleanArray(1) { false })
+            )
+        }
+    }
+
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {
+        return visitor.visit(this, param)
+    }
+
+    override fun getStmt(): Stmt {
+        return AssignStmt.of(value, getExpr())
     }
 }
 

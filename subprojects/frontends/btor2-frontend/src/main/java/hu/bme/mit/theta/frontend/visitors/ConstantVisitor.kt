@@ -20,6 +20,7 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 import hu.bme.mit.theta.frontend.models.Btor2Circuit.sorts
+import java.math.BigInteger
 
 class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val idVisitor = IdVisitor()
@@ -48,10 +49,11 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         val nid = idVisitor.visit(ctx.id)
         val sid = idVisitor.visit(ctx.sid())
         val sort : Btor2BitvecSort = sorts[sid] as Btor2BitvecSort
-        val value = ctx.NUM().text.toInt()
-        val size = sort.width.toInt()
-        val binArray = BooleanArray(size) { index ->
-            ((value and ((1 shl size) - 1)) shr (size - 1 - index)) and 1 == 1
+        val value = ctx.NUM().text.toBigInteger()
+        val size = sort.width.toLong().toBigInteger()
+        val binArray = BooleanArray(size.toInt()) { index ->
+            ((value and ((BigInteger.ONE.shiftLeft(size.toInt())) - BigInteger.ONE))
+                .shiftRight(size.toInt() - 1 - index) and BigInteger.ONE) == BigInteger.ONE
         }
         var node = Btor2Const(nid, binArray, sort)
         Btor2Circuit.constants[nid] = node

@@ -26,6 +26,7 @@ interface Btor2NodeVisitor<R, P> {
     fun visit(node: Btor2SliceOperation, param: P) : R
     fun visit(node: Btor2ExtOperation, param: P) : R
     fun visit(node: Btor2Comparison, param: P) : R
+    fun visit(node: Btor2Boolean, param: P) : R
     fun visit(node: Btor2BitvecSort, param: P) : R
     fun visit(node: Btor2Input, param: P) : R
     fun visit(node: Btor2State, param: P) : R

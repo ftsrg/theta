@@ -116,8 +116,13 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             "ulte" -> Btor2ComparisonOperator.ULTE
             "ugt" -> Btor2ComparisonOperator.UGT
             "ugte" -> Btor2ComparisonOperator.UGTE
-            else -> throw RuntimeException("Binary operator unknown")
+            "iff" -> Btor2BooleanOperator.IFF
+            "implies" -> Btor2BooleanOperator.IMPLIES
+
+            else -> throw RuntimeException("Binary operator unknown: ${ctx.BINOP().text}")
         }
+
+
         if (op is Btor2ComparisonOperator) {
             val node =  Btor2Comparison(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
             Btor2Circuit.nodes[nid] = node
@@ -127,6 +132,12 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
             val node =  Btor2BinaryOperation(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
             Btor2Circuit.nodes[nid] = node
             Btor2Circuit.ops[nid] = node
+            return node
+        }
+        else if (op is Btor2BooleanOperator) {
+            // Boolean operators are not operations, but comparisons
+            val node =  Btor2Boolean(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
+            Btor2Circuit.nodes[nid] = node
             return node
         }
         else {
