@@ -17,9 +17,12 @@
 package hu.bme.mit.theta.frontend.models
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvEqExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
@@ -40,5 +43,9 @@ data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val o
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
         return visitor.visit(this, param)
+    }
+
+    fun getStmt(): Stmt {
+        return AssumeStmt.of(BoolExprs.Not(getExpr()))
     }
 }

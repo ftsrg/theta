@@ -92,7 +92,7 @@ object Btor2XcfaBuilder{
 
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))
         newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(AssumeStmt.of(Not(bad.getExpr()))),EmptyMetaData))
+        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(bad.getStmt()),EmptyMetaData))
 
         //Circuit folytatása
         // ha nincsen next akkor azt el kelll havocolni
