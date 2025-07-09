@@ -24,11 +24,12 @@ BIN: [0-1]+;
 DEC: [0-9]+;
 PLUS: '+';
 MINUS: '-';
-SYMBOL: ~[ \r\n]+;
 COMMENT: ';' ~[\r\n]+;
+SYMBOL: ~[ \r\n]+;
+NEWLINE: [\r\n]+;
 
 // Parser rules
-btor2: (line '\n')* line ('\n')*;
+btor2: (line NEWLINE)* line (NEWLINE)* EOF;
 
 line: comment | node (symbol)? (comment)?;
 
@@ -70,4 +71,4 @@ constant_d: id=nid 'constd' sid dec=NUM;
 constant_h: id=nid 'consth' sid hex=NUM;
 filled_constant: id=nid fill=('one' | 'ones' | 'zero') sid;
 
-symbol: SYMBOL;
+symbol: (SYMBOL | NUM);

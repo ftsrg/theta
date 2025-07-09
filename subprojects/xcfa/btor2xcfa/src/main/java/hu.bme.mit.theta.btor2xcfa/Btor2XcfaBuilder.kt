@@ -15,7 +15,8 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 object Btor2XcfaBuilder{
     fun btor2xcfa(circuit: Btor2Circuit) : XCFA {
     // checks fontos: nodes, ops, properties csak 1 legyen
-        check(Btor2Circuit.properties.size == 1, { "More than 1 bad isn't allowed" })
+        check(Btor2Circuit.properties.size != 0, { "Circuit has no error property" })
+        check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
         val ops = Btor2Circuit.ops.values.toList()
         for(i in 1 until ops.size) {
             check(ops[i].nid > ops[i - 1].nid, { "Ops are not in increasing order" })
