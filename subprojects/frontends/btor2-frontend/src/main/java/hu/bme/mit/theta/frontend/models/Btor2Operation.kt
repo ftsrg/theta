@@ -119,8 +119,8 @@ data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2
 
     override fun getExpr(): Expr<BvType> {
         //val newU : BigInteger = u + BigInteger.valueOf(1)
-        //val newL : BigInteger = l + BigInteger.valueOf(1)
-        return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(u))
+        val newU: BigInteger = if (u == l) u + BigInteger.valueOf(1) else u
+        return BvExtractExpr.create(operand.getExpr() as Expr<BvType>, IntLitExpr.of(l), IntLitExpr.of(newU))
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
