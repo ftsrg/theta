@@ -21,7 +21,7 @@ BINOP: 'and' | 'nand' | 'nor' | 'or' | 'xnor' | 'xor' | 'iff' | 'implies'
 NUM: (MINUS)? (HEX | BIN | DEC);
 HEX: [0-9a-fA-F]+;
 BIN: [0-1]+;
-DEC: [0-9];
+DEC: [0-9]+;
 PLUS: '+';
 MINUS: '-';
 SYMBOL: ~[ \r\n]+;
