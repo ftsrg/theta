@@ -54,17 +54,20 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     private final ExplicitRepresentation explicitRepresentation;
 
     private final SolverPool solverPool;
+    private final boolean transExpr;
 
     private MddExpressionRepresentation(
             final Expr<BoolType> expr,
             final Decl<?> decl,
             final MddVariable mddVariable,
-            final SolverPool solverPool) {
+            final SolverPool solverPool,
+            final boolean transExpr) {
         this.expr = expr;
         this.decl = decl;
         this.mddVariable = mddVariable;
         this.solverPool = solverPool;
         this.explicitRepresentation = new ExplicitRepresentation();
+        this.transExpr = transExpr;
     }
 
     // TODO only for debugging
@@ -76,8 +79,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final Expr<BoolType> expr,
             final Decl<?> decl,
             final MddVariable mddVariable,
-            final SolverPool solverPool) {
-        return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool);
+            final SolverPool solverPool,
+            final boolean transExpr) {
+        return new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
     }
 
     public static MddExpressionRepresentation ofDefault(
@@ -85,9 +89,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             final Decl<?> decl,
             final MddVariable mddVariable,
             final SolverPool solverPool,
-            final MddNode defaultValue) {
+            final MddNode defaultValue,
+            final boolean transExpr) {
         final MddExpressionRepresentation representation =
-                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool);
+                new MddExpressionRepresentation(expr, decl, mddVariable, solverPool, transExpr);
         representation.explicitRepresentation.cacheDefault(defaultValue);
         representation.explicitRepresentation.setComplete();
         return representation;
@@ -126,7 +131,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return getLazyTraverser().queryEdge(key);
     }
 
-    public static int getCounter = 0;
+    public boolean isTransExpr() {
+        return this.transExpr;
+    }
 
     @Override
     public MddNode get(int key) {
@@ -146,7 +153,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         final MddNode childNode;
         if (mddVariable.getLower().isPresent()) {
             final MddExpressionTemplate template =
-                    MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverPool);
+                    MddExpressionTemplate.of(simplifiedExpr, o -> (Decl) o, solverPool, transExpr);
             childNode = mddVariable.getLower().get().checkInNode(template);
         } else {
             final Expr<BoolType> canonizedExpr =
@@ -582,7 +589,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                     MddExpressionTemplate.of(
                                             substitutedExpr,
                                             o -> (Decl) o,
-                                            representation.solverPool);
+                                            representation.solverPool,
+                                            currentRepresentation.transExpr);
                             childNode = lower.get().checkInNode(template);
                         } else {
                             final Expr<BoolType> canonizedExpr =
@@ -609,7 +617,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 // Preconditions.checkArgument(childNode.getRepresentation() instanceof
                 // MddExpressionRepresentation);
                 // TODO assert
-                representation = (MddExpressionRepresentation) childNode.getRepresentation();
+                var nextRepr = childNode.getRepresentation();
+                while (nextRepr instanceof IdentityExpressionRepresentation identity) {
+                    nextRepr = identity.getContinuation().getRepresentation();
+                }
+                representation = (MddExpressionRepresentation) nextRepr;
             }
         }
 

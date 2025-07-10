@@ -187,7 +187,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         final MddHandle transitionNode =
                 transSig.getTopVariableHandle()
                         .checkInNode(
-                                MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
+                                MddExpressionTemplate.of(
+                                        transExpr, o -> (Decl) o, solverPool, true));
         final AbstractNextStateDescriptor nextStates =
                 MddNodeNextStateDescriptor.of(transitionNode);
 
