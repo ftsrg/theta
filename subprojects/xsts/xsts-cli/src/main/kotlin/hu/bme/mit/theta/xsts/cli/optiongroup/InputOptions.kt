@@ -27,7 +27,7 @@ import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS.PropType
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.util.transform
+import hu.bme.mit.theta.xsts.analysis.passes.transform
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 

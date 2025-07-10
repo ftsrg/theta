@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xsts.analysis.util
+package hu.bme.mit.theta.xsts.analysis.passes
 
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr
