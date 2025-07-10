@@ -13,18 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd.identitynode;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import java.util.Objects;
 
-public class IdentityExpressionRepresentation implements RecursiveIntObjMapView<MddNode> {
+public class IdentityRepresentation implements RecursiveIntObjMapView<MddNode> {
 
     private final MddNode continuation;
 
-    public IdentityExpressionRepresentation(MddNode continuation) {
+    public IdentityRepresentation(MddNode continuation) {
         this.continuation = continuation;
     }
 
@@ -70,8 +70,8 @@ public class IdentityExpressionRepresentation implements RecursiveIntObjMapView<
     @Override
     public boolean equals(Object that) {
         if (this == that) return true;
-        if (that instanceof IdentityExpressionRepresentation identityExpressionRepresentation) {
-            return Objects.equals(continuation, identityExpressionRepresentation.continuation);
+        if (that instanceof IdentityRepresentation identityRepresentation) {
+            return Objects.equals(continuation, identityRepresentation.continuation);
         }
         return false;
     }
@@ -79,5 +79,10 @@ public class IdentityExpressionRepresentation implements RecursiveIntObjMapView<
     @Override
     public int hashCode() {
         return Objects.hash(continuation);
+    }
+
+    @Override
+    public String toString() {
+        return "--|--> " + continuation;
     }
 }
