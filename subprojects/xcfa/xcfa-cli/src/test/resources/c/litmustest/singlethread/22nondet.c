@@ -1,8 +1,8 @@
 void reach_error(){}
-extern int __VERIFIER_nondet_int();
+extern char __VERIFIER_nondet_char();
 int main() {
     int i = 0;
-    if(__VERIFIER_nondet_int() % 2) {
+    if(__VERIFIER_nondet_char() % 2) {
         i = 1;
     } else {
         i = 2;
