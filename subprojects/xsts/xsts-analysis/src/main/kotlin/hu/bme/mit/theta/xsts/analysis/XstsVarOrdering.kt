@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xsts.XSTS
 fun XSTS.orderVars(): List<VarDecl<*>> {
   val flattened = flattenStmts(tran)
   val orderedVars = orderVarsFromRandomStartingPoints(this.stateVars.toList(), flattened)
-  return orderedVars
+  return orderedVars.filter { it.name.contains("Timeout") } + orderedVars.filter { !it.name.contains("Timeout") }
 }
 
 fun cartesianProduct(vararg sets: Set<*>): Set<List<*>> =

@@ -37,7 +37,7 @@ fun orderVarsFromRandomStartingPoints(
 
 fun orderVars(vars: List<VarDecl<*>>, events: Set<Stmt>): List<VarDecl<*>> {
 
-  val affectedVars = events.associateWith { event -> StmtUtils.getVars(event) }
+  val affectedVars = events.associateWith { event -> StmtUtils.getWrittenVars(event) }
 
   val affectingEvents =
     vars.associateWith { varDecl -> events.filter { varDecl in affectedVars[it]!! }.toSet() }
