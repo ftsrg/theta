@@ -24,9 +24,12 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import java.util.*
 
 data class MonolithicExpr
 @JvmOverloads
@@ -55,6 +58,13 @@ fun MonolithicExpr.action() =
 
     override fun nextIndexing(): VarIndexing = transOffsetIndex
   }
+
+fun MonolithicExpr.split(): List<Expr<BoolType>> {
+  var simplifiedTransExpr = ExprUtils.simplify(transExpr)
+  if (simplifiedTransExpr is OrExpr) {
+    return simplifiedTransExpr.ops
+  } else return listOf(simplifiedTransExpr)
+}
 
 /** Only keep decls in the valuation that are contained within the parameter */
 fun Valuation.filterVars(vars: Collection<Decl<*>>) =

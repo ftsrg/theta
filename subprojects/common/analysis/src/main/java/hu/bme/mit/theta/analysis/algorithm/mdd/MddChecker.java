@@ -31,6 +31,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -179,17 +180,20 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
 
         logger.write(Level.INFO, "Created initial node\n");
 
-        final Expr<BoolType> transExpr =
-                And(
-                        PathUtils.unfold(
-                                monolithicExpr.getTransExpr(), VarIndexingFactory.indexing(0)),
-                        And(identityExprs));
-        final MddHandle transitionNode =
-                transSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
-        final AbstractNextStateDescriptor nextStates =
-                MddNodeNextStateDescriptor.of(transitionNode);
+        final var transNodes = new ArrayList<MddHandle>();
+        final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
+        for (var expr : MonolithicExprKt.split(monolithicExpr)) {
+            final Expr<BoolType> transExpr =
+                    And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs));
+            final MddHandle transitionNode =
+                    transSig.getTopVariableHandle()
+                            .checkInNode(
+                                    MddExpressionTemplate.of(
+                                            transExpr, o -> (Decl) o, solverPool, true));
+            transNodes.add(transitionNode);
+            descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
+        }
+        final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
 
         final Expr<BoolType> negatedPropExpr =
                 PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
@@ -249,15 +253,19 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
 
         final SafetyResult<MddProof, Trace<S, A>> result;
         if (violatingSize != 0) {
-            final var explTrans =
-                    MddExplicitRepresentationExtractor.INSTANCE.transform(
-                            transitionNode, transSig.getTopVariableHandle());
-            final var reversed = ReverseNextStateDescriptor.of(stateSpace, explTrans);
+            var reversedDescriptors = new ArrayList<AbstractNextStateDescriptor>();
+            for (var transNode : transNodes) {
+                final var explTrans =
+                        MddExplicitRepresentationExtractor.INSTANCE.transform(
+                                transNode, transSig.getTopVariableHandle());
+                reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans));
+            }
+            final var orReversed = OrNextStateDescriptor.create(reversedDescriptors);
 
             final TraceProvider traceProvider = new TraceProvider(stateSig.getVariableOrder());
             final var mddTrace =
                     traceProvider.compute(
-                            propViolating, reversed, initNode, stateSig.getTopVariableHandle());
+                            propViolating, orReversed, initNode, stateSig.getTopVariableHandle());
             final var valuations =
                     mddTrace.stream()
                             .map(

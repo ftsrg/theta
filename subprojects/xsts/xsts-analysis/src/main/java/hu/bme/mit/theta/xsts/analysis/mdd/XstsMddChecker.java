@@ -165,7 +165,7 @@ public class XstsMddChecker implements SafetyChecker<MddProof, Trace<ExplState, 
                 initSig.getTopVariableHandle()
                         .checkInNode(
                                 MddExpressionTemplate.of(
-                                        initExprWithIdentity, o -> (Decl) o, solverPool));
+                                        initExprWithIdentity, o -> (Decl) o, solverPool, true));
         final AbstractNextStateDescriptor initNextState =
                 MddNodeNextStateDescriptor.of(initTranNode);
 
@@ -198,7 +198,7 @@ public class XstsMddChecker implements SafetyChecker<MddProof, Trace<ExplState, 
                     transSig.getTopVariableHandle()
                             .checkInNode(
                                     MddExpressionTemplate.of(
-                                            stmtUnfold, o -> (Decl) o, solverPool));
+                                            stmtUnfold, o -> (Decl) o, solverPool, true));
             transNodes.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
