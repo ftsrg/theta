@@ -295,7 +295,6 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }
-        logger.write(Level.RESULT, "%s\n", result);
         return result;
     }
 }
