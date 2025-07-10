@@ -182,12 +182,9 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
 
         final var transNodes = new ArrayList<MddHandle>();
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
-        for (var expr: MonolithicExprKt.split(monolithicExpr)) {
+        for (var expr : MonolithicExprKt.split(monolithicExpr)) {
             final Expr<BoolType> transExpr =
-                    And(
-                            PathUtils.unfold(
-                                    expr, VarIndexingFactory.indexing(0)),
-                            And(identityExprs));
+                    And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs));
             final MddHandle transitionNode =
                     transSig.getTopVariableHandle()
                             .checkInNode(
@@ -196,8 +193,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             transNodes.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
-        final AbstractNextStateDescriptor nextStates =
-                OrNextStateDescriptor.create(descriptors);
+        final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
 
         final Expr<BoolType> negatedPropExpr =
                 PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);

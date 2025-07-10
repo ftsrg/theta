@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.algorithm.mdd.identitynode;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
@@ -30,7 +29,8 @@ public class IdentityTemplate implements MddNode.Template {
     }
 
     @Override
-    public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
+    public RecursiveIntObjMapView<? extends MddNode> toCanonicalRepresentation(
+            MddVariable mddVariable, MddCanonizationStrategy mddCanonizationStrategy) {
         return new IdentityRepresentation(continuation);
     }
 }

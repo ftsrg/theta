@@ -52,15 +52,23 @@ object MddExplicitRepresentationExtractor {
       }
     } else {
       if (node.node.representation is IdentityRepresentation) {
-        val identityNode = variable.checkInNode(
-          IdentityTemplate(
-            transform(
-              variable.lower.get().lower.get().getHandleFor((node.node.representation as IdentityRepresentation).continuation),
-              variable.lower.get().lower.orElse(null),
-              cache
-            ).node
+        val identityNode =
+          variable.checkInNode(
+            IdentityTemplate(
+              transform(
+                  variable.lower
+                    .get()
+                    .lower
+                    .get()
+                    .getHandleFor(
+                      (node.node.representation as IdentityRepresentation).continuation
+                    ),
+                  variable.lower.get().lower.orElse(null),
+                  cache,
+                )
+                .node
+            )
           )
-        )
         result = identityNode
       } else {
         val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
@@ -71,10 +79,10 @@ object MddExplicitRepresentationExtractor {
         if (explicitRepresentation.cacheView.defaultValue() != null) {
           templateBuilder.setDefault(
             transform(
-              variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
-              variable.lower.orElse(null),
-              cache,
-            )
+                variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
+                variable.lower.orElse(null),
+                cache,
+              )
               .node
           )
         } else {

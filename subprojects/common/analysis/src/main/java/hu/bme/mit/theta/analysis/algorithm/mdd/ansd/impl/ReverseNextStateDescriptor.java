@@ -22,7 +22,6 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
-
 import java.util.Objects;
 
 public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
@@ -53,11 +52,10 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
         if (transitions == null || stateSpace.isTerminalZero()) {
             return AbstractNextStateDescriptor.terminalEmpty();
         }
-        if (transitions.getRepresentation() instanceof IdentityRepresentation identityExpressionRepresentation) {
+        if (transitions.getRepresentation()
+                instanceof IdentityRepresentation identityExpressionRepresentation) {
             final var cont = identityExpressionRepresentation.getContinuation();
-            return new IdentityReverseNextStateDescriptor(
-                    stateSpace,
-                    cont);
+            return new IdentityReverseNextStateDescriptor(stateSpace, cont);
         }
         return new ReverseNextStateDescriptor(stateSpace, transitions);
     }
@@ -200,24 +198,29 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
         private final MddHandle stateSpace;
         private final MddNode transitionsContinuation;
 
-        private IdentityReverseNextStateDescriptor(MddHandle stateSpace, MddNode transitionsContinuation) {
+        private IdentityReverseNextStateDescriptor(
+                MddHandle stateSpace, MddNode transitionsContinuation) {
             this.stateSpace = stateSpace;
             this.transitionsContinuation = transitionsContinuation;
         }
 
         @Override
-        public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+        public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(
+                StateSpaceInfo localStateSpace) {
             return new IntObjMapViews.Transforming<>(
                     stateSpace,
                     (n, key) -> {
                         if (key == null || n == null)
                             return AbstractNextStateDescriptor.terminalEmpty();
-                        else return ReverseNextStateDescriptor.of((MddHandle) n, transitionsContinuation);
+                        else
+                            return ReverseNextStateDescriptor.of(
+                                    (MddHandle) n, transitionsContinuation);
                     });
         }
 
         @Override
-        public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+        public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+                StateSpaceInfo localStateSpace) {
             return IntObjMapView.empty(
                     IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
         }
