@@ -25,7 +25,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.IdentityExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,7 +67,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
             return AbstractNextStateDescriptor.terminalEmpty();
         if (node.getRepresentation()
-                instanceof IdentityExpressionRepresentation identityExpressionRepresentation) {
+                instanceof IdentityRepresentation identityExpressionRepresentation) {
             final var cont = identityExpressionRepresentation.getContinuation();
             return IdentityNextStateDescriptor.withChild(
                     MddNodeNextStateDescriptor.of(

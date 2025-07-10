@@ -26,6 +26,7 @@ import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -618,7 +619,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 // MddExpressionRepresentation);
                 // TODO assert
                 var nextRepr = childNode.getRepresentation();
-                while (nextRepr instanceof IdentityExpressionRepresentation identity) {
+                while (nextRepr instanceof IdentityRepresentation identity) {
                     nextRepr = identity.getContinuation().getRepresentation();
                 }
                 representation = (MddExpressionRepresentation) nextRepr;

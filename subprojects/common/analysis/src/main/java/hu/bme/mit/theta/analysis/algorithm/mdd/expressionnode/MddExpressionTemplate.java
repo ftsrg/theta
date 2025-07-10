@@ -20,6 +20,7 @@ import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
@@ -149,7 +150,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                                 extractDecl,
                                                 solverPool,
                                                 transExpr));
-                return new IdentityExpressionRepresentation(cont);
+                return new IdentityRepresentation(cont);
             }
         }
 
