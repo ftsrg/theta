@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 
 abstract class Btor2Stateful(id: UInt, sort: Btor2Sort, state: Btor2State?, value: Btor2Node?) : Btor2Node(id, sort) {
@@ -99,7 +100,8 @@ data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, overr
     }
 }
 
-data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, override val state: Btor2State, override val value: Btor2Node) : Btor2Stateful(nid, sort, state, value)
+data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, override val state: Btor2State, override val value: Btor2Node,
+    val negated: Boolean) : Btor2Stateful(nid, sort, state, value)
 {
     val declsVar = Decls.Var("next_$nid", BvExprs.BvType(sort.width.toInt()))
 
@@ -112,7 +114,8 @@ data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, overr
     }
 
     override fun getStmt(): Stmt {
-        return AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
+        return if (negated) AssignStmt.of(state.getVar(), BvNotExpr.create(value.getExpr())) else
+            AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
     }
 
     override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {

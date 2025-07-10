@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.visitors
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
+import kotlin.math.abs
 
 class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
     private val idVisitor = IdVisitor()
@@ -68,9 +69,12 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
         val sid = idVisitor.visit(ctx.sid())
         val sort = Btor2Circuit.sorts[sid] as Btor2Sort
 
+        val param2_id = ctx.param2.text.toInt()
+
+        val param2_negated = param2_id < 0
         val param1 = Btor2Circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
-        val param2 = Btor2Circuit.nodes[ctx.param2.NUM().text.toUInt()] as Btor2Node
-        val node = Btor2Next(nid, sort, param1, param2)
+        val param2 = Btor2Circuit.nodes[abs(param2_id).toUInt()] as Btor2Node
+        val node = Btor2Next(nid, sort, param1, param2, param2_negated)
         Btor2Circuit.states[nid] = node
         Btor2Circuit.nodes[nid] = node
         return node
