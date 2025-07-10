@@ -54,6 +54,15 @@ public class Struct extends NamedType {
         currentlyBeingBuilt = false;
     }
 
+    private Struct(Struct from) {
+        super(from.parseContext, "struct", from.uniqueWarningLogger);
+        fields = new LinkedHashMap<>();
+        fields.putAll(from.fields);
+        this.name = from.name;
+        this.uniqueWarningLogger = from.uniqueWarningLogger;
+        currentlyBeingBuilt = false;
+    }
+
     public void addField(CDeclaration decl) {
         fields.put(checkNotNull(decl.getName()), checkNotNull(decl));
     }
@@ -92,9 +101,8 @@ public class Struct extends NamedType {
 
     @Override
     public CSimpleType copyOf() {
-        Struct struct = new Struct(name, parseContext, uniqueWarningLogger);
-        struct.fields.putAll(fields);
-        setUpCopy(struct);
-        return struct;
+        var ret = new Struct(this);
+        setUpCopy(ret);
+        return ret;
     }
 }
