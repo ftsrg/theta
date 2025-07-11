@@ -20,13 +20,17 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.utils.StmtUtils
 import kotlin.random.Random
 
+interface Event {
+  fun getAffectedVars(): Set<VarDecl<*>>
+}
+
 /**
  * Variable ordering based on the 'FORCE' variable ordering heuristic.
  * https://doi.org/10.1145/764808.764839
  */
 fun orderVarsFromRandomStartingPoints(
   vars: List<VarDecl<*>>,
-  events: Set<Stmt>,
+  events: Set<Event>,
   numStartingPoints: Int = 5,
 ): List<VarDecl<*>> {
   val random = Random(0)
@@ -35,9 +39,9 @@ fun orderVarsFromRandomStartingPoints(
   return orderings.minBy { eventSpans(it, events) }
 }
 
-fun orderVars(vars: List<VarDecl<*>>, events: Set<Stmt>): List<VarDecl<*>> {
+fun orderVars(vars: List<VarDecl<*>>, events: Set<Event>): List<VarDecl<*>> {
 
-  val affectedVars = events.associateWith { event -> StmtUtils.getWrittenVars(event) }
+  val affectedVars = events.associateWith { it.getAffectedVars() }
 
   val affectingEvents =
     vars.associateWith { varDecl -> events.filter { varDecl in affectedVars[it]!! }.toSet() }
@@ -73,10 +77,10 @@ fun orderVars(vars: List<VarDecl<*>>, events: Set<Stmt>): List<VarDecl<*>> {
   return currentVarOrdering
 }
 
-private fun eventSpans(vars: List<VarDecl<*>>, events: Set<Stmt>) =
+private fun eventSpans(vars: List<VarDecl<*>>, events: Set<Event>) =
   events
     .map { event ->
-      StmtUtils.getVars(event).let {
+      event.getAffectedVars().let {
         when (it.isEmpty()) {
           true -> 0
           else -> {

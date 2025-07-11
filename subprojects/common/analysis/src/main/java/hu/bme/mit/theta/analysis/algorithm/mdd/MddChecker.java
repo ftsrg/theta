@@ -32,6 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprVarOrderingKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -147,7 +148,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 variableOrdering.size() == Containers.createSet(variableOrdering).size(),
                 "Variable ordering contains duplicates");
         final var identityExprs = new ArrayList<Expr<BoolType>>();
-        for (var v : Lists.reverse(variableOrdering)) {
+        final var orderedVars = MonolithicExprVarOrderingKt.orderVars(monolithicExpr);
+        for (var v : Lists.reverse(orderedVars)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             //     if (domainSize > 100) {
