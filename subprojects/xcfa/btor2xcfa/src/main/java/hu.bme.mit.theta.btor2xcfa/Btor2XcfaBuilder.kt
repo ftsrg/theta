@@ -44,15 +44,17 @@ object Btor2XcfaBuilder{
         var newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
         // initekhez
         procBuilder.addLoc(newLoc)
-        Btor2Circuit.states.forEach {
-            it.value.getVar()?.let{varDecl ->
-                if(varDecl.name.startsWith(("init_"))){
-                    val edge = XcfaEdge(lastLoc,newLoc, StmtLabel(it.value.getStmt()), EmptyMetaData)
-                    procBuilder.addEdge(edge)
-                    // Amit tudunk 1 élre helyezzük, tehát az első élen vannak az initek
-                }
-            }
-        }
+
+        val edge = XcfaEdge(lastLoc, newLoc,
+            SequenceLabel(
+            Btor2Circuit.states.filter {
+                if(it.value.getVar()!=null && it.value.getVar()!!.name.startsWith("init_")) true else false
+            }.map {
+                StmtLabel(it.value.getStmt(),metadata=EmptyMetaData)
+            }.toList()
+        ), EmptyMetaData
+        )
+        procBuilder.addEdge(edge)
         i++
         lastLoc=newLoc
 ///////////////////////////////////////////////
@@ -61,14 +63,16 @@ object Btor2XcfaBuilder{
         if(Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("input_") == true }.isNotEmpty()){
             newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
             procBuilder.addLoc(newLoc)
-            Btor2Circuit.states.forEach {
-                it.value.getVar()?.let{ varDecl ->
-                    if(varDecl.name.startsWith(("input_"))){
-                        val edge = XcfaEdge(lastLoc, newLoc, StmtLabel(it.value.getStmt()), EmptyMetaData)
-                        procBuilder.addEdge(edge)
-                    }
-                }
-            }
+            val edge = XcfaEdge(lastLoc, newLoc,
+                SequenceLabel(
+                    Btor2Circuit.states.filter {
+                        if(it.value.getVar()!=null && it.value.getVar()!!.name.startsWith("input_")) true else false
+                    }.map {
+                        StmtLabel(it.value.getStmt(),metadata=EmptyMetaData)
+                    }.toList()
+                ), EmptyMetaData
+            )
+            procBuilder.addEdge(edge)
             i++
             lastLoc=newLoc
         }
@@ -95,9 +99,9 @@ object Btor2XcfaBuilder{
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))
         newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
         procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(bad.getStmt()),EmptyMetaData))
-
+        lastLoc = newLoc
         //Circuit folytatása
-        // ha nincsen next akkor azt el kelll havocolni
+        // ha nincsen next akkor azt el kell havocolni
         var nexts = Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
         val firstLoc = procBuilder.getLocs().elementAt(1)
 
