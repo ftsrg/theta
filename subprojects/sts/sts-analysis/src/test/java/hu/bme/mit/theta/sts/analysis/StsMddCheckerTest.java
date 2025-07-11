@@ -98,7 +98,8 @@ public class StsMddCheckerTest {
                             IterationStrategy.GSAT,
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) ->
-                                    StsToMonolithicExprKt.valToAction(sts, v1, v2));
+                                    StsToMonolithicExprKt.valToAction(sts, v1, v2),
+                            true);
             status = checker.check(null);
         }
 

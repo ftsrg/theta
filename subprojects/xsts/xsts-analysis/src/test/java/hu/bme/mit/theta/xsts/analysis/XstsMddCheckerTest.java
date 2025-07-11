@@ -232,7 +232,7 @@ public class XstsMddCheckerTest {
                     MddChecker.IterationStrategy.GSAT,
                     valuation -> monolithicExpr.getValToState().invoke(valuation),
                     (Valuation v1, Valuation v2) ->
-                            monolithicExpr.getBiValToAction().invoke(v1, v2));
+                            monolithicExpr.getBiValToAction().invoke(v1, v2), true);
           status = checker.check(null);
           logger.mainStep(status.toString());
         }

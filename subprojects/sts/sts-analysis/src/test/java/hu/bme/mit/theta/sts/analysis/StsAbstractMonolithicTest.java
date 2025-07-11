@@ -184,7 +184,7 @@ public class StsAbstractMonolithicTest {
                                     MddChecker.IterationStrategy.GSAT,
                                     valuation -> abstractMe.getValToState().invoke(valuation),
                                     (Valuation v1, Valuation v2) ->
-                                            abstractMe.getBiValToAction().invoke(v1, v2)));
+                                            abstractMe.getBiValToAction().invoke(v1, v2), true));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

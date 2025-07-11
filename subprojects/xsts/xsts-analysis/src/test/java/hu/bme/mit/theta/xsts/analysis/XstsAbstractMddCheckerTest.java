@@ -281,7 +281,8 @@ public class XstsAbstractMddCheckerTest {
                                             MddChecker.IterationStrategy.GSAT,
                                             valuation -> abstractMe.getValToState().invoke(valuation),
                                             (Valuation v1, Valuation v2) ->
-                                                    abstractMe.getBiValToAction().invoke(v1, v2)), logger, Z3LegacySolverFactory.getInstance());
+                                                    abstractMe.getBiValToAction().invoke(v1, v2),
+                                            true), logger, Z3LegacySolverFactory.getInstance());
 
             final SafetyResult<?, ?> status = checker.check(null);
             logger.mainStep(status.toString());
