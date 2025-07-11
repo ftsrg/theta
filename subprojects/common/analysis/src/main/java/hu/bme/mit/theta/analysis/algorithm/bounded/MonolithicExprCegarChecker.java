@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -122,9 +123,12 @@ public class MonolithicExprCegarChecker<W extends Proof>
                     } else {
                         final var ref = concretizationResult.asInfeasible().getRefutation();
                         final var newPred = ref.get(ref.getPruneIndex());
-                        final var newPrec = PredPrec.of(newPred);
-                        predPrec = predPrec.join(newPrec);
-                        logger.write(Logger.Level.INFO, "Added new predicate " + newPrec + "\n");
+                        for (var splitPred : ExprSplitters.conjuncts().apply(newPred)) {
+                            final var newPrec = PredPrec.of(splitPred);
+                            predPrec = predPrec.join(newPrec);
+                        }
+
+                        logger.write(Logger.Level.INFO, "Added new predicate " + newPred + "\n");
                     }
                 }
             }
