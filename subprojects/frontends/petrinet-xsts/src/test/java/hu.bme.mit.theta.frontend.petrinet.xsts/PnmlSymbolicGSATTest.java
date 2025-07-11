@@ -17,18 +17,24 @@ package hu.bme.mit.theta.frontend.petrinet.xsts;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
+
 import org.junit.Test;
 
 public class PnmlSymbolicGSATTest {
@@ -48,9 +54,16 @@ public class PnmlSymbolicGSATTest {
 
         final SafetyResult<?, ?> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final SafetyChecker<?, ?, ?> checker =
-                    XstsMddChecker.create(
-                            xsts, solverPool, logger, MddChecker.IterationStrategy.GSAT);
+            var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
+            var checker = MddChecker.create(
+                    monolithicExpr,
+                    List.copyOf(monolithicExpr.getVars()),
+                    solverPool,
+                    logger,
+                    MddChecker.IterationStrategy.GSAT,
+                    valuation -> monolithicExpr.getValToState().invoke(valuation),
+                    (Valuation v1, Valuation v2) ->
+                            monolithicExpr.getBiValToAction().invoke(v1, v2));
             status = checker.check();
             logger.mainStep(
                     "State space size: "
