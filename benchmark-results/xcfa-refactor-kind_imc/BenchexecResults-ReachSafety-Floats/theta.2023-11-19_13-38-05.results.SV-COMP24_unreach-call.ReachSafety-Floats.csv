@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+float-benchs/float_double.yml	true	ERROR (portfolio error)	6.66255	4.174906620999991	274.841600
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml	true	ERROR (portfolio error)	7.297283	4.345910361999984	296.136704
+float-benchs/float_int_inv_square.yml	false	ERROR (portfolio error)	7.458521	4.319494441000018	291.307520
+floats-cdfpl/square_3.yml	false	ERROR (portfolio error)	7.036313	4.273549273000015	300.142592
+floats-cbmc-regression/float11.yml	true	ERROR (portfolio error)	6.880742	4.341987915999994	275.845120
+float-benchs/nan_double.yml	false	ERROR (portfolio error)	6.653836	4.1894515079999906	280.408064
+float-benchs/Rump_double.yml	true	ERROR (portfolio error)	6.909188	4.207662814999992	286.834688
+floats-cdfpl/newton_2_2.yml	true	ERROR (portfolio error)	7.900525	4.445241890000034	309.391360
+floats-cdfpl/sine_3.yml	false	ERROR (portfolio error)	7.324894	4.301162094999995	301.608960
+float-benchs/zonotope_3.c.v+lhb-reducer.yml	true	ERROR (portfolio error)	12.071463	5.506534457000043	422.023168

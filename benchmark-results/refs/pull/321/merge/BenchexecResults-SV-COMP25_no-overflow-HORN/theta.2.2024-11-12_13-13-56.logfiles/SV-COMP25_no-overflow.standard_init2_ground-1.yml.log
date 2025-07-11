@@ -1,0 +1,64 @@
+Thorn/theta-start.sh sv-benchmarks/c/array-examples/standard_init2_ground-1.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/array-examples/standard_init2_ground-1.i' with property 'sv-benchmarks/c/properties/no-overflow.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture ILP32'
+Mapping property 'sv-benchmarks/c/properties/no-overflow.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Language C detected and set for analysis (CPAMain.detectFrontendLanguageIfNecessary, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (ResourceLimitChecker.fromConfiguration, INFO)
+
+CPAchecker 3.1-svn-c087875f13 / default (OpenJDK 64-Bit Server VM 17.0.13) started (CPAchecker.run, INFO)
+
+Parsing CFA from file(s) "formatted_files/standard_init2_ground-1.i" (CPAchecker.parse, INFO)
+
+Using default specification, which checks for assertion failures and error labels. (CPAchecker.run, INFO)
+
+Using Restarting Algorithm (CoreComponentsFactory.createAlgorithm, INFO)
+
+The following configuration options were specified but are not used:
+ instrumentation.instrumentationProperty 
+ (CPAchecker.printConfigurationWarnings, WARNING)
+
+Starting analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Loading analysis 1 from file /tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/cpachecker/config/components/kInduction+Invariants/kInduction.properties ... (RestartAlgorithm.run, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (Analysis /tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/cpachecker/config/components/kInduction+Invariants/kInduction.properties:ResourceLimitChecker.fromConfiguration, INFO)
+
+Starting analysis 1 ... (RestartAlgorithm.run, INFO)
+
+The line number is not Integer !
+Exception in thread "main" java.lang.NumberFormatException: For input string: "lines 36-38"
+	at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67)
+	at java.base/java.lang.Integer.parseInt(Integer.java:668)
+	at java.base/java.lang.Integer.parseInt(Integer.java:786)
+	at org.sosy_lab.cpachecker.core.algorithm.instrumentation.SequentializationOperatorAlgorithm.computeLineNumberBasedOnTransition(SequentializationOperatorAlgorithm.java:192)
+	at org.sosy_lab.cpachecker.core.algorithm.instrumentation.SequentializationOperatorAlgorithm.run(SequentializationOperatorAlgorithm.java:155)
+	at org.sosy_lab.cpachecker.core.algorithm.RestartAlgorithm.run(RestartAlgorithm.java:327)
+	at org.sosy_lab.cpachecker.core.CPAchecker.runAlgorithm(CPAchecker.java:489)
+	at org.sosy_lab.cpachecker.core.CPAchecker.run(CPAchecker.java:357)
+	at org.sosy_lab.cpachecker.cmdline.CPAMain.main(CPAMain.java:171)
+ (Analysis /tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/cpachecker/config/components/kInduction+Invariants/kInduction.properties:SequentializationOperatorAlgorithm.computeLineNumberBasedOnTransition, SEVERE)
+
+Ignoring restart configuration '/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/cpachecker/config/components/valueAnalysis-predicateAnalysis-bam-rec.properties' because condition if-recursive did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Ignoring restart configuration '/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/cpachecker/config/components/bddAnalysis-concurrency.properties' because condition if-concurrent did not match. (RestartAlgorithm.skipNextAnalysesIfRequired, INFO)
+
+Analysis 3 terminated, but result is unsound. (RestartAlgorithm.run, INFO)
+
+No further configuration available. (RestartAlgorithm.run, INFO)
+
+Stopping analysis ... (CPAchecker.runAlgorithm, INFO)
+
+Finished.
+More details about the verification run can be found in the directory "./output".
+Graphical representation included in the file "./output/Report.html".
+Traceback (most recent call last):
+  File "/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/specification-transformation.py", line 160, in <module>
+  File "/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/specification-transformation.py", line 148, in main
+  File "/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/algorithms/instrumentation_operator.py", line 80, in transform
+  File "/tmp/BenchExec_run_jzyp0_hd/tmp/.mount_specifF7NsNJ/algorithms/instrumentation_operator.py", line 158, in __extract_edge_info
+ValueError: invalid literal for int() with base 10: ''

@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Sat, 2025-06-21 16:11:57 UTC
+tool:                    Theta 6.16.2
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmxyh4eaekms
+os:                      Linux-6.11.0-1015-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.507 MHz
+ram:                     16772.673536000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (generic error, before parsing finished)        0.19        0.22        None
+and-02.yml                            TIMEOUT                         40.64       35.60        None
+and-03-false.yml                      false(unreach-call)             34.18       23.58        None
+and-03.yml                            TIMEOUT                         40.86       29.44        None
+and-04-false.yml                      false(unreach-call)             33.98       23.19        None
+and-04.yml                            TIMEOUT                         40.76       29.58        None
+and-05-false.yml                      false(unreach-call)             34.84       23.87        None
+and-05.yml                            ERROR (server error, after parsing finished)       36.95       25.85        None
+and-06.yml                            TIMEOUT                         40.33       28.53        None
+and-assume.yml                        ERROR (generic error, before parsing finished)        0.19        0.20        None
+consecutive-zero-bits-trailing.yml    
+counting-bits-BK.yml                  
+counting-bits-BK1.yml                 
+counting-bits-set.yml                 
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           157.43      225.06           -
+
+Statistics:             10 Files
+  correct:               3
+    correct true:        0
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               7
+  Score:                 3 (max: 17)
