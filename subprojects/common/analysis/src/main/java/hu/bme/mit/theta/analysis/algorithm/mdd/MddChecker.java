@@ -32,6 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprVarOrderingKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -67,6 +68,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
     private final IterationStrategy iterationStrategy;
     private final Function<Valuation, S> valToState;
     private final BiFunction<Valuation, Valuation, A> biValToAction;
+    private final boolean forwardTrace;
 
     public enum IterationStrategy {
         BFS,
@@ -81,7 +83,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             Logger logger,
             IterationStrategy iterationStrategy,
             Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction) {
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace) {
         this.monolithicExpr = monolithicExpr;
         this.variableOrdering = variableOrdering;
         this.solverPool = solverPool;
@@ -89,6 +92,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         this.iterationStrategy = iterationStrategy;
         this.valToState = valToState;
         this.biValToAction = biValToAction;
+        this.forwardTrace = forwardTrace;
     }
 
     public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
@@ -97,7 +101,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             SolverPool solverPool,
             Logger logger,
             Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction) {
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace) {
         return new MddChecker<S, A>(
                 monolithicExpr,
                 variableOrdering,
@@ -105,7 +110,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 logger,
                 IterationStrategy.GSAT,
                 valToState,
-                biValToAction);
+                biValToAction,
+                forwardTrace);
     }
 
     public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
@@ -115,7 +121,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             Logger logger,
             IterationStrategy iterationStrategy,
             Function<Valuation, S> valToState,
-            BiFunction<Valuation, Valuation, A> biValToAction) {
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace) {
         return new MddChecker<S, A>(
                 monolithicExpr,
                 variableOrdering,
@@ -123,7 +130,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 logger,
                 iterationStrategy,
                 valToState,
-                biValToAction);
+                biValToAction,
+                forwardTrace);
     }
 
     @Override
@@ -147,7 +155,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 variableOrdering.size() == Containers.createSet(variableOrdering).size(),
                 "Variable ordering contains duplicates");
         final var identityExprs = new ArrayList<Expr<BoolType>>();
-        for (var v : Lists.reverse(variableOrdering)) {
+        final var orderedVars = MonolithicExprVarOrderingKt.orderVars(monolithicExpr);
+        for (var v : Lists.reverse(orderedVars)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
             //     if (domainSize > 100) {
@@ -285,9 +294,17 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 }
             }
 
-            result =
-                    SafetyResult.unsafe(
-                            Trace.of(states, actions), MddProof.of(stateSpace), statistics);
+            if (forwardTrace) {
+                result =
+                        SafetyResult.unsafe(
+                                Trace.of(states, actions), MddProof.of(stateSpace), statistics);
+            } else {
+                result =
+                        SafetyResult.unsafe(
+                                Trace.of(Lists.reverse(states), Lists.reverse(actions)),
+                                MddProof.of(stateSpace),
+                                statistics);
+            }
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }
