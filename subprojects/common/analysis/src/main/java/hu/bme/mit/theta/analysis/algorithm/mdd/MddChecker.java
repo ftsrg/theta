@@ -33,7 +33,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprVarOrderingKt;
-import hu.bme.mit.theta.analysis.algorithm.bounded.ReversibleAction;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -302,7 +301,9 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             } else {
                 result =
                         SafetyResult.unsafe(
-                                Trace.of(Lists.reverse(states), Lists.reverse(actions)), MddProof.of(stateSpace), statistics);
+                                Trace.of(Lists.reverse(states), Lists.reverse(actions)),
+                                MddProof.of(stateSpace),
+                                statistics);
             }
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);

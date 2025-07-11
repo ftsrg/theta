@@ -25,17 +25,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
-import java.util.List
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -99,12 +94,17 @@ class XstsCliMdd :
               MddChecker.IterationStrategy.GSAT,
               it.valToState,
               it.biValToAction,
-              !reversed)
+              !reversed,
+            )
           }
         checker.check(null)
       }
     sw.stop()
-    printResult(result as SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printResult(
+      result as SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>,
+      xsts,
+      sw.elapsed(TimeUnit.MILLISECONDS),
+    )
     writeCex(result, xsts)
   }
 }

@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
+import static org.junit.Assert.assertTrue;
+
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -28,18 +28,15 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
 public class XstsAbstractMddCheckerTest {
@@ -141,11 +138,11 @@ public class XstsAbstractMddCheckerTest {
                         "src/test/resources/property/on_off_statemachine3.prop",
                         false
                     },
-//                    {
-//                        "src/test/resources/model/counter50.xsts",
-//                        "src/test/resources/property/x_eq_5.prop",
-//                        false
-//                    },
+                    //                    {
+                    //                        "src/test/resources/model/counter50.xsts",
+                    //                        "src/test/resources/property/x_eq_5.prop",
+                    //                        false
+                    //                    },
                     //                                        {
                     //
                     // "src/test/resources/model/counter50.xsts",
@@ -153,13 +150,11 @@ public class XstsAbstractMddCheckerTest {
                     // "src/test/resources/property/x_eq_50.prop",
                     //                                            false
                     //                                        },
-                                        {
-
-                                        "src/test/resources/model/counter50.xsts",
-
-                                    "src/test/resources/property/x_eq_51.prop",
-                                            true
-                                        },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_51.prop",
+                        true
+                    },
                     //                                        {
                     //
                     // "src/test/resources/model/count_up_down.xsts",
@@ -167,20 +162,20 @@ public class XstsAbstractMddCheckerTest {
                     // "src/test/resources/property/count_up_down.prop",
                     //                                            false
                     //                                        },
-//                                                            {
-//
-//                     "src/test/resources/model/count_up_down.xsts",
-//
-//                     "src/test/resources/property/count_up_down2.prop",
-//                                                                true
-//                                                            },
-//                                                            {
-//
-//                     "src/test/resources/model/count_up_down.xsts",
-//
-//                     "src/test/resources/property/count_up_down2.prop",
-//                                                                true
-//                                                            },
+                    //                                                            {
+                    //
+                    //                     "src/test/resources/model/count_up_down.xsts",
+                    //
+                    //                     "src/test/resources/property/count_up_down2.prop",
+                    //                                                                true
+                    //                                                            },
+                    //                                                            {
+                    //
+                    //                     "src/test/resources/model/count_up_down.xsts",
+                    //
+                    //                     "src/test/resources/property/count_up_down2.prop",
+                    //                                                                true
+                    //                                                            },
 
                     //
                     // {"src/test/resources/model/bhmr2007.xsts",
@@ -271,7 +266,8 @@ public class XstsAbstractMddCheckerTest {
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
             final var checker =
-                    new MonolithicExprCegarChecker<>(monolithicExpr,
+                    new MonolithicExprCegarChecker<>(
+                            monolithicExpr,
                             abstractMe ->
                                     MddChecker.create(
                                             abstractMe,
@@ -279,10 +275,13 @@ public class XstsAbstractMddCheckerTest {
                                             solverPool,
                                             logger,
                                             MddChecker.IterationStrategy.GSAT,
-                                            valuation -> abstractMe.getValToState().invoke(valuation),
+                                            valuation ->
+                                                    abstractMe.getValToState().invoke(valuation),
                                             (Valuation v1, Valuation v2) ->
                                                     abstractMe.getBiValToAction().invoke(v1, v2),
-                                            true), logger, Z3LegacySolverFactory.getInstance());
+                                            true),
+                            logger,
+                            Z3LegacySolverFactory.getInstance());
 
             final SafetyResult<?, ?> status = checker.check(null);
             logger.mainStep(status.toString());
@@ -293,8 +292,6 @@ public class XstsAbstractMddCheckerTest {
                 assertTrue(status.isUnsafe());
                 assertTrue(status.asUnsafe().getCex().length() >= 0);
             }
-
         }
-
     }
 }

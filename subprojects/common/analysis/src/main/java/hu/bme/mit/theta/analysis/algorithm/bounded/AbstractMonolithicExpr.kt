@@ -80,11 +80,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
     }
   }
 
-  val transExpr = Or(
-    this.split().map {
-      And(lambdaList + lambdaPrimeList + it)
-    }
-  )
+  val transExpr = Or(this.split().map { And(lambdaList + lambdaPrimeList + it) })
 
   return MonolithicExpr(
     initExpr = And(And(lambdaList), initExpr),

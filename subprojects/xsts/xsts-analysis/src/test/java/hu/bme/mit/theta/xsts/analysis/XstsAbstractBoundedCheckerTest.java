@@ -196,11 +196,11 @@ public class XstsAbstractBoundedCheckerTest {
                     //                        "src/test/resources/property/if2.prop",
                     //                        false
                     //                    },
-//                    {
-//                        "src/test/resources/model/localvars3.xsts",
-//                        "src/test/resources/property/localvars3.prop",
-//                        false
-//                    }, TODO: this is faulty, investigate
+                    //                    {
+                    //                        "src/test/resources/model/localvars3.xsts",
+                    //                        "src/test/resources/property/localvars3.prop",
+                    //                        false
+                    //                    }, TODO: this is faulty, investigate
                     {
                         "src/test/resources/model/bool.xsts",
                         "src/test/resources/property/bool.prop",

@@ -32,19 +32,15 @@ fun MonolithicExpr.orderVars(): List<VarDecl<*>> {
 }
 
 // Filters affected variables
-class MonolithicExprEvent: Event {
+class MonolithicExprEvent : Event {
 
   constructor(expr: Expr<BoolType>, transOffsetIndex: VarIndexing) {
     val vars = ExprUtils.getVars(expr)
     var sub = BasicSubstitution.builder()
     for (v in vars) {
-      sub = sub.put(
-        v.getConstDecl(transOffsetIndex.get(v)),
-        v.getConstDecl(0).ref
-      )
+      sub = sub.put(v.getConstDecl(transOffsetIndex.get(v)), v.getConstDecl(0).ref)
     }
-    val identityRemovedExpr =
-      ExprUtils.simplify(sub.build().apply(PathUtils.unfold(expr,0)))
+    val identityRemovedExpr = ExprUtils.simplify(sub.build().apply(PathUtils.unfold(expr, 0)))
     val remainingConstants = ExprUtils.getConstants(identityRemovedExpr)
     this.affectedVars = vars.filter { it.getConstDecl(0) in remainingConstants }.toSet()
   }
@@ -52,7 +48,4 @@ class MonolithicExprEvent: Event {
   private val affectedVars: Set<VarDecl<*>>
 
   override fun getAffectedVars(): Set<VarDecl<*>> = affectedVars
-
 }
-
-

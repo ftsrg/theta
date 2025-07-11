@@ -158,7 +158,10 @@ constructor(
 
         if (bmcSolver.check().isSat) {
           val trace = getTrace(bmcSolver.model)
-          logger.write(Logger.Level.MAINSTEP, "CeX found in the initial state (length ${trace.length()})\n")
+          logger.write(
+            Logger.Level.MAINSTEP,
+            "CeX found in the initial state (length ${trace.length()})\n",
+          )
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }
@@ -268,7 +271,10 @@ constructor(
 
         if (itpSolver.check().isSat) {
           val trace = getTrace(itpSolver.model)
-          logger.write(Logger.Level.MAINSTEP, "CeX found in the initial state (length ${trace.length()})\n")
+          logger.write(
+            Logger.Level.MAINSTEP,
+            "CeX found in the initial state (length ${trace.length()})\n",
+          )
           return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
         }
       }

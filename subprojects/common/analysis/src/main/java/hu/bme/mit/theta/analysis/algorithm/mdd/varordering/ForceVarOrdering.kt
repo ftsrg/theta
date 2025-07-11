@@ -16,8 +16,6 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.varordering
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.utils.StmtUtils
 import kotlin.random.Random
 
 interface Event {

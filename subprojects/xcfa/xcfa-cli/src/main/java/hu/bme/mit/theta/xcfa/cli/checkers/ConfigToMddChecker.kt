@@ -90,14 +90,23 @@ fun getMddChecker(
   val baseChecker = { abstractME: MonolithicExpr ->
     MddChecker.create(
       abstractME,
-      orderVarsFromRandomStartingPoints(abstractME.vars, stmts.map { object: Event {
-        override fun getAffectedVars(): Set<VarDecl<*>> = StmtUtils.getWrittenVars(it)}}.toSet(), 20),
+      orderVarsFromRandomStartingPoints(
+        abstractME.vars,
+        stmts
+          .map {
+            object : Event {
+              override fun getAffectedVars(): Set<VarDecl<*>> = StmtUtils.getWrittenVars(it)
+            }
+          }
+          .toSet(),
+        20,
+      ),
       solverPool,
       logger,
       iterationStrategy,
       abstractME.valToState,
       abstractME.biValToAction,
-      true
+      true,
     )
   }
 

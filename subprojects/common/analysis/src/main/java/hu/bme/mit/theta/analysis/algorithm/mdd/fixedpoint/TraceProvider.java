@@ -20,7 +20,6 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddSinglePathExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -71,7 +70,6 @@ public final class TraceProvider implements MddGraph.CleanupListener {
                 states.pop();
                 currentState = states.peek();
             }
-
         }
 
         return Lists.reverse(states);
