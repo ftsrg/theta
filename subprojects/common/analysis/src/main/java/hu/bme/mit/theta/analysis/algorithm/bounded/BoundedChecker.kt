@@ -152,6 +152,18 @@ constructor(
     val bmcSolver = this.bmcSolver!!
     logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
 
+    if (iteration == 1) {
+      WithPushPop(bmcSolver).use {
+        bmcSolver.add(Not(unfoldedPropExpr(indices.first())))
+
+        if (bmcSolver.check().isSat) {
+          val trace = getTrace(bmcSolver.model)
+          logger.write(Logger.Level.MAINSTEP, "CeX found in the initial state (length ${trace.length()})\n")
+          return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+        }
+      }
+    }
+
     bmcSolver.add(exprs.last())
 
     if (lfPathOnly()) { // indices contains currIndex as last()
@@ -248,6 +260,19 @@ constructor(
     val a = itpSolver.createMarker()
     val b = itpSolver.createMarker()
     val pattern = itpSolver.createBinPattern(a, b)
+
+    if (iteration == 1) {
+      WithPushPop(itpSolver).use {
+        itpSolver.add(a, unfoldedInitExpr)
+        itpSolver.add(a, Not(unfoldedPropExpr(indices.first())))
+
+        if (itpSolver.check().isSat) {
+          val trace = getTrace(itpSolver.model)
+          logger.write(Logger.Level.MAINSTEP, "CeX found in the initial state (length ${trace.length()})\n")
+          return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+        }
+      }
+    }
 
     itpSolver.push()
 
