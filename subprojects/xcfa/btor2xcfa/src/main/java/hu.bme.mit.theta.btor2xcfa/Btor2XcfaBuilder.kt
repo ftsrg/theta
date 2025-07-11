@@ -97,13 +97,16 @@ object Btor2XcfaBuilder{
 
         //Circuit folytatása
         // ha nincsen next akkor azt el kelll havocolni
-        Btor2Circuit.states.forEach {
-            it.value.getVar()?.let{varDecl ->
-                if(varDecl.name.startsWith(("next_"))){
-                    val firstLoc = procBuilder.getLocs().elementAt(1)
-                    procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(it.value.getStmt()),EmptyMetaData))
-
-                }
+        var nexts = Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
+        val firstLoc = procBuilder.getLocs().elementAt(1)
+        if(nexts.size==1){
+            procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(nexts[0].second.getStmt()),EmptyMetaData))
+        }
+        else{
+            nexts.forEach {
+                procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(it.second.getStmt()),EmptyMetaData))
+                i++
+                newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
             }
         }
         return xcfaBuilder.build()
