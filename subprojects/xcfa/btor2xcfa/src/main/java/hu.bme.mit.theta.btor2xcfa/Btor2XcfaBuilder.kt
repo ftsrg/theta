@@ -3,6 +3,7 @@ package hu.bme.mit.theta.btor2xcfa
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -99,16 +100,14 @@ object Btor2XcfaBuilder{
         // ha nincsen next akkor azt el kelll havocolni
         var nexts = Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
         val firstLoc = procBuilder.getLocs().elementAt(1)
-        if(nexts.size==1){
-            procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(nexts[0].second.getStmt()),EmptyMetaData))
+
+        nexts.forEach {
+            newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+            procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.second.getStmt()),EmptyMetaData))
+            i++
+            lastLoc=newLoc
         }
-        else{
-            nexts.forEach {
-                procBuilder.addEdge(XcfaEdge(newLoc, firstLoc, StmtLabel(it.second.getStmt()),EmptyMetaData))
-                i++
-                newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-            }
-        }
+        procBuilder.addEdge(XcfaEdge(lastLoc, firstLoc, metadata=EmptyMetaData))
         return xcfaBuilder.build()
     }
 }
