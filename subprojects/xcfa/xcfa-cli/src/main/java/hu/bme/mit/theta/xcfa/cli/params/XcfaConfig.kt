@@ -166,7 +166,7 @@ data class CHCFrontendConfig(
     description = "Direction of transformation from CHC to XCFA",
   )
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
-  @Parameter(names = ["--get-models"], description = "Print model to file, not only binary output")
+  @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
 ) : SpecFrontendConfig
 
