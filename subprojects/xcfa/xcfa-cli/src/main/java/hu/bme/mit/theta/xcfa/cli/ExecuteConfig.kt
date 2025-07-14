@@ -419,8 +419,15 @@ private fun postVerificationLogging(
     resultFolder.mkdirs()
     val chcAnswer = writeModel(xcfa, safetyResult)
     val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
-    chcAnswerFile.writeText(chcAnswer)
-    logger.writeln(INFO, "CHC answer/model written to file $chcAnswerFile")
+    if (chcAnswerFile.exists()) {
+      logger.writeln(
+        INFO,
+        "CHC answer/model already written to file $chcAnswerFile, not overwriting",
+      )
+    } else {
+      chcAnswerFile.writeText(chcAnswer)
+      logger.writeln(INFO, "CHC answer/model written to file $chcAnswerFile")
+    }
   }
   if (config.outputConfig.enableOutput && mcm != null && parseContext != null) {
     try {
