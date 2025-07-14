@@ -4,8 +4,8 @@ set -e
 scriptdir=$(dirname "$(realpath "$0")")
 IN=$1
 
-export VERIFIER_NAME=Theta
-export VERIFIER_VERSION=6.12.3
+export VERIFIER_NAME=TOOL_NAME
+export VERIFIER_VERSION=TOOL_VERSION
 
 if [ "$1" == "--version" ]; then
     LD_LIBRARY_PATH=$scriptdir/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar --version || echo $VERIFIER_VERSION
@@ -20,7 +20,7 @@ grep -o "openjdk $JAVA_VERSION" <<< "$(java --version)" >/dev/null || {
     exit 1
 }
 
-args="--portfolio CHC-COMP --loglevel RESULT --input-type CHC --parse-in-process --svcomp"
+args="--portfolio CHC-COMP --loglevel RESULT --input-type CHC --parse-in-process --svcomp ${@:2}"
 
 echo "; LD_LIBRARY_PATH=\"$scriptdir\"/lib java -Xss120m -Xmx14210m -jar \"$scriptdir\"/theta.jar $args --input \"$IN\" --smt-home \"$scriptdir\"/solvers"
 LD_LIBRARY_PATH="$scriptdir"/lib java -Xss120m -Xmx14210m -jar "$scriptdir"/theta.jar $args --input "$IN" --smt-home "$scriptdir"/solvers 2>&1 | tee "$(basename "$1")".log >/dev/null
