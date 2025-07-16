@@ -34,7 +34,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
     val sort = Btor2Circuit.sorts[sid] as Btor2Sort
 
     val node = Btor2State(nid, sort, null, null)
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -44,7 +44,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
     val sort = Btor2Circuit.sorts[sid] as Btor2Sort
 
     val node = Btor2Input(nid, sort, null, null)
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -58,7 +58,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
 
     check((param1.sort as Btor2BitvecSort).width == (param2.sort as Btor2BitvecSort).width)
     val node = Btor2Init(nid, sort, param1, param2)
-    Btor2Circuit.states[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -73,8 +73,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
     val param1 = Btor2Circuit.nodes[ctx.param1.NUM().text.toUInt()] as Btor2State
     val param2 = Btor2Circuit.nodes[abs(param2_id).toUInt()] as Btor2Node
     val node = Btor2Next(nid, sort, param1, param2, param2_negated)
-    Btor2Circuit.states[nid] = node
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -84,8 +83,7 @@ class StateVisitor : Btor2BaseVisitor<Btor2Node>() {
     val node = Btor2Bad(nid, null, Btor2Circuit.nodes[ctx.param.NUM().text.toUInt()] as Btor2Node)
     when (ctx.property_type.text) {
       "bad" -> {
-        Btor2Circuit.properties[nid] = node
-        Btor2Circuit.nodes[nid] = node
+        Btor2Circuit.addNode(node)
         return node
       }
       else ->

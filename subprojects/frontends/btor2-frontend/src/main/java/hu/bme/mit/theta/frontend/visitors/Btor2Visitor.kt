@@ -38,7 +38,7 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Circuit>() {
   override fun visitSort(ctx: Btor2Parser.SortContext?): Btor2Circuit {
     val result = sortVisitor.visit(ctx)
     // logger.write(Logger.Level.VERBOSE, "Sort visited \t")
-    Btor2Circuit.sorts[result.sid] = result
+    Btor2Circuit.addSort(result)
     return Btor2Circuit
   }
 

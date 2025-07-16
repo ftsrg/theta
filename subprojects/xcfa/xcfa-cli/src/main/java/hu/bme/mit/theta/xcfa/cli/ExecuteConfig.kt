@@ -86,7 +86,11 @@ fun runConfig(
   return result
 }
 
-private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: UniqueWarningLogger) {
+private fun propagateInputOptions(
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: UniqueWarningLogger,
+) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.level = config.frontendConfig.lbeLevel
   StaticCoiPass.enabled = config.frontendConfig.staticCoi
@@ -114,7 +118,11 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
-private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: UniqueWarningLogger) {
+private fun validateInputOptions(
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: UniqueWarningLogger,
+) {
   rule("NoCoiWhenDataRace") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&

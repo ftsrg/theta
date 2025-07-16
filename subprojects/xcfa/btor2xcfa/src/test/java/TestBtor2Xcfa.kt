@@ -19,7 +19,6 @@ import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.UniqueWarningLogger
-import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.xcfa.model.toDot
 import java.io.File

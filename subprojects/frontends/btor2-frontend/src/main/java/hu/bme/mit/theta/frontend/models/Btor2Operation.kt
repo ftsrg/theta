@@ -31,8 +31,8 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import java.math.BigInteger
 
-fun getOperandExpr(operand: Btor2Node, negated: Boolean = false) : Expr<BvType> {
-  return if(negated) {
+fun getOperandExpr(operand: Btor2Node, negated: Boolean = false): Expr<BvType> {
+  return if (negated) {
     Not(operand.getVar()!!.ref as Expr<BvType>) as Expr<BvType>
   } else {
     operand.getVar()!!.ref as Expr<BvType>
@@ -61,8 +61,7 @@ data class Btor2UnaryOperation(
     val one = BvExprs.Bv(booleanArrayOf(true)) as Expr<BvType>
     return when (operator) {
       Btor2UnaryOperator.NOT -> BvNotExpr.of(getOperandExpr(operand))
-      Btor2UnaryOperator.INC ->
-        BvAddExpr.create(mutableListOf(getOperandExpr(operand), one))
+      Btor2UnaryOperator.INC -> BvAddExpr.create(mutableListOf(getOperandExpr(operand), one))
       Btor2UnaryOperator.DEC -> BvSubExpr.create(getOperandExpr(operand), one)
       Btor2UnaryOperator.NEG -> BvNegExpr.of(getOperandExpr(operand))
       Btor2UnaryOperator.REDAND -> BvAndExpr.create(valueByBits())
@@ -134,11 +133,7 @@ data class Btor2SliceOperation(
   override fun getExpr(): Expr<BvType> {
     val newU: BigInteger = u + BigInteger.valueOf(1)
     // val newU: BigInteger = if (u == l) u + BigInteger.valueOf(1) else u
-    return BvExtractExpr.create(
-      getOperandExpr(operand),
-      IntLitExpr.of(l),
-      IntLitExpr.of(newU),
-    )
+    return BvExtractExpr.create(getOperandExpr(operand), IntLitExpr.of(l), IntLitExpr.of(newU))
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {
@@ -170,60 +165,23 @@ data class Btor2BinaryOperation(
     val op2Expr = getOperandExpr(op2, opd2_negated)
 
     return when (operator) {
-      Btor2BinaryOperator.ADD ->
-        BvAddExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
-      Btor2BinaryOperator.AND ->
-        BvAndExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
+      Btor2BinaryOperator.ADD -> BvAddExpr.create(mutableListOf(op1Expr, op2Expr))
+      Btor2BinaryOperator.AND -> BvAndExpr.create(mutableListOf(op1Expr, op2Expr))
       Btor2BinaryOperator.NAND ->
-        BvNotExpr.create(
-          BvAndExpr.create(
-            mutableListOf(op1Expr, op2Expr)
-          )
-        )
-      Btor2BinaryOperator.NOR ->
-        BvNotExpr.create(
-          BvOrExpr.create(
-            mutableListOf(op1Expr, op2Expr)
-          )
-        )
-      Btor2BinaryOperator.OR ->
-        BvOrExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
+        BvNotExpr.create(BvAndExpr.create(mutableListOf(op1Expr, op2Expr)))
+      Btor2BinaryOperator.NOR -> BvNotExpr.create(BvOrExpr.create(mutableListOf(op1Expr, op2Expr)))
+      Btor2BinaryOperator.OR -> BvOrExpr.create(mutableListOf(op1Expr, op2Expr))
       Btor2BinaryOperator.XNOR ->
-        BvNotExpr.create(
-          BvXorExpr.create(
-            mutableListOf(op1Expr, op2Expr)
-          )
-        )
-      Btor2BinaryOperator.XOR ->
-        BvXorExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
-      Btor2BinaryOperator.MUL ->
-        BvMulExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
-      Btor2BinaryOperator.SUB ->
-        BvSubExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.UDIV ->
-        BvUDivExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.UREM ->
-        BvURemExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.SDIV ->
-        BvSDivExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.SREM ->
-        BvSRemExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.SMOD ->
-        BvSModExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.CONCAT ->
-        BvConcatExpr.create(
-          mutableListOf(op1Expr, op2Expr)
-        )
+        BvNotExpr.create(BvXorExpr.create(mutableListOf(op1Expr, op2Expr)))
+      Btor2BinaryOperator.XOR -> BvXorExpr.create(mutableListOf(op1Expr, op2Expr))
+      Btor2BinaryOperator.MUL -> BvMulExpr.create(mutableListOf(op1Expr, op2Expr))
+      Btor2BinaryOperator.SUB -> BvSubExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.UDIV -> BvUDivExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.UREM -> BvURemExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.SDIV -> BvSDivExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.SREM -> BvSRemExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.SMOD -> BvSModExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.CONCAT -> BvConcatExpr.create(mutableListOf(op1Expr, op2Expr))
       Btor2BinaryOperator.SADDO -> TODO("Signed addition with overflow not implemented yet")
       Btor2BinaryOperator.SDIVO -> TODO("Signed division with overflow not implemented yet")
       Btor2BinaryOperator.SMULO -> TODO("Signed multiplication with overflow not implemented yet")
@@ -231,16 +189,11 @@ data class Btor2BinaryOperation(
       Btor2BinaryOperator.UADDO -> TODO("Unsigned addition with overflow not implemented yet")
       Btor2BinaryOperator.UMULO -> TODO("Unsigned multiplication with overflow not implemented yet")
       Btor2BinaryOperator.USUBO -> TODO("Unsigned subtraction with overflow not implemented yet")
-      Btor2BinaryOperator.ROL ->
-        BvRotateLeftExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.ROR ->
-        BvRotateRightExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.SLL ->
-        BvShiftLeftExpr.create(op1Expr, op2Expr)
-      Btor2BinaryOperator.SRA ->
-        BvArithShiftRightExpr.of(op1Expr, op2Expr)
-      Btor2BinaryOperator.SRL ->
-        BvLogicShiftRightExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.ROL -> BvRotateLeftExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.ROR -> BvRotateRightExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.SLL -> BvShiftLeftExpr.create(op1Expr, op2Expr)
+      Btor2BinaryOperator.SRA -> BvArithShiftRightExpr.of(op1Expr, op2Expr)
+      Btor2BinaryOperator.SRL -> BvLogicShiftRightExpr.create(op1Expr, op2Expr)
       Btor2BinaryOperator.READ -> TODO("Read operation not implemented yet")
     }
   }
@@ -405,19 +358,13 @@ data class Btor2Boolean(
     return when (operator) {
       Btor2BooleanOperator.IFF ->
         IteExpr.of(
-          IffExpr.create(
-            getOperandExpr(op1, opd1_negated),
-            getOperandExpr(op2, opd2_negated)
-          ),
+          IffExpr.create(getOperandExpr(op1, opd1_negated), getOperandExpr(op2, opd2_negated)),
           BvExprs.Bv(BooleanArray(1) { true }),
           BvExprs.Bv(BooleanArray(1) { false }),
         )
       Btor2BooleanOperator.IMPLIES ->
         IteExpr.of(
-          ImplyExpr.create(
-            getOperandExpr(op1, opd1_negated),
-            getOperandExpr(op2, opd2_negated)
-          ),
+          ImplyExpr.create(getOperandExpr(op1, opd1_negated), getOperandExpr(op2, opd2_negated)),
           BvExprs.Bv(BooleanArray(1) { true }),
           BvExprs.Bv(BooleanArray(1) { false }),
         )
@@ -459,8 +406,7 @@ data class Btor2TernaryOperation(
     val op3Expr = getOperandExpr(op3, negated3)
 
     return when (operator) {
-      Btor2TernaryOperator.ITE ->
-        IteExpr.of(op1ExprBool as Expr<BoolType>, op2Expr, op3Expr)
+      Btor2TernaryOperator.ITE -> IteExpr.of(op1ExprBool as Expr<BoolType>, op2Expr, op3Expr)
       Btor2TernaryOperator.WRITE -> TODO()
     }
   }

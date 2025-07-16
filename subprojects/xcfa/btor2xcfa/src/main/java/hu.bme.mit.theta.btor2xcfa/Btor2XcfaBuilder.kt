@@ -19,11 +19,11 @@ import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.Btor2Passes
-import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
 
 object Btor2XcfaBuilder {
   private var i: Int = 1
@@ -59,7 +59,13 @@ object Btor2XcfaBuilder {
         newLoc,
         SequenceLabel(
           Btor2Circuit.constants
-            .map { AssignStmtLabel(it.value.getVar()!!.ref, BvLitExpr.of(it.value.value), metadata = EmptyMetaData) }
+            .map {
+              AssignStmtLabel(
+                it.value.getVar()!!.ref,
+                BvLitExpr.of(it.value.value),
+                metadata = EmptyMetaData,
+              )
+            }
             .toList()
         ),
         EmptyMetaData,
@@ -88,7 +94,6 @@ object Btor2XcfaBuilder {
         EmptyMetaData,
       )
     procBuilder.addEdge(edge)
-    i++
     lastLoc = newLoc
 
     // Havoc initial value of variables

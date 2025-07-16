@@ -37,8 +37,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
     val size = sort.width.toInt()
     val binArray = BooleanArray(size) { index -> (value[index] - '0') == 1 }
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.constants[nid] = node
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -55,8 +54,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         ) and BigInteger.ONE) == BigInteger.ONE
       }
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.constants[nid] = node
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -73,8 +71,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         ((hexDigit - '0') shr bitIndex and 1) == 1
       }
     var node = Btor2Const(nid, binArray, sort)
-    Btor2Circuit.constants[nid] = node
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -101,8 +98,7 @@ class ConstantVisitor : Btor2BaseVisitor<Btor2Const>() {
         }
       }
     var node = Btor2Const(nid, value, sort)
-    Btor2Circuit.constants[nid] = node
-    Btor2Circuit.nodes[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 }

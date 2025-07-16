@@ -45,8 +45,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
 
     check(sort.width == (opd.sort as Btor2BitvecSort).width + w)
     val node = Btor2ExtOperation(nid, sort, op, opd, w)
-    Btor2Circuit.nodes[nid] = node
-    Btor2Circuit.ops[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -60,8 +59,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val l = ctx.l.text.toBigInteger()
 
     val node = Btor2SliceOperation(nid, sort, opd, u, l)
-    Btor2Circuit.nodes[nid] = node
-    Btor2Circuit.ops[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -126,17 +124,16 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
 
     if (op is Btor2ComparisonOperator) {
       val node = Btor2Comparison(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.nodes[nid] = node
+      Btor2Circuit.addNode(node)
       return node
     } else if (op is Btor2BinaryOperator) {
       val node = Btor2BinaryOperation(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.nodes[nid] = node
-      Btor2Circuit.ops[nid] = node
+      Btor2Circuit.addNode(node)
       return node
     } else if (op is Btor2BooleanOperator) {
       // Boolean operators are not operations, but comparisons
       val node = Btor2Boolean(nid, sort, op, opd1, opd2, opd1_negated, opd2_negated)
-      Btor2Circuit.nodes[nid] = node
+      Btor2Circuit.addNode(node)
       return node
     } else {
       throw RuntimeException("Binary operator unknown")
@@ -163,8 +160,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val opd = nodes[ctx.opd1.text.toUInt()] as Btor2Node
 
     val node = Btor2UnaryOperation(nid, sort, op, opd)
-    Btor2Circuit.nodes[nid] = node
-    Btor2Circuit.ops[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 
@@ -190,8 +186,7 @@ class OperationVisitor : Btor2BaseVisitor<Btor2Node>() {
     val opd3 = nodes[opd3Index] as Btor2Node
 
     val node = Btor2TernaryOperation(nid, sort, op, opd1, opd2, opd3, negated1, negated2, negated3)
-    Btor2Circuit.nodes[nid] = node
-    Btor2Circuit.ops[nid] = node
+    Btor2Circuit.addNode(node)
     return node
   }
 }

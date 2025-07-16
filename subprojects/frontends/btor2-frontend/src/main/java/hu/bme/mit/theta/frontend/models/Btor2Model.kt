@@ -49,12 +49,34 @@ interface Btor2NodeVisitor<R, P> {
 }
 
 object Btor2Circuit {
-  var nodes: MutableMap<UInt, Btor2Node> = mutableMapOf()
-  var sorts: MutableMap<UInt, Btor2Sort> = mutableMapOf()
-  var constants: MutableMap<UInt, Btor2Const> = mutableMapOf()
-  var ops: MutableMap<UInt, Btor2Operation> = mutableMapOf()
-  var states: MutableMap<UInt, Btor2Stateful> = mutableMapOf()
-  var properties: MutableMap<UInt, Btor2Bad> = mutableMapOf()
+  private val _nodes = mutableMapOf<UInt, Btor2Node>()
+  private val _sorts = mutableMapOf<UInt, Btor2Sort>()
+  private val _constants = mutableMapOf<UInt, Btor2Const>()
+  private val _ops = mutableMapOf<UInt, Btor2Operation>()
+  private val _states = mutableMapOf<UInt, Btor2Stateful>()
+  private val _properties = mutableMapOf<UInt, Btor2Bad>()
+
+  val nodes: Map<UInt, Btor2Node> get() = _nodes
+  val sorts: Map<UInt, Btor2Sort> get() = _sorts
+  val constants: Map<UInt, Btor2Const> get() = _constants
+  val ops: Map<UInt, Btor2Operation> get() = _ops
+  val states: Map<UInt, Btor2Stateful> get() = _states
+  val properties: Map<UInt, Btor2Bad> get() = _properties
+
+  fun addSort(sort: Btor2Sort) {
+    _sorts[sort.sid] = sort
+  }
+
+  fun addNode(node: Btor2Node) {
+    _nodes[node.nid] = node
+    when (node) {
+      is Btor2Const -> _constants[node.nid] = node
+      is Btor2Operation -> _ops[node.nid] = node
+      is Btor2Stateful -> _states[node.nid] = node
+      is Btor2Bad -> _properties[node.nid] = node
+      else -> error("Btor2Circuit cannot sort this type: ${node.javaClass}")
+    }
+  }
 }
 
 // sortID lookup in Btor2Sort

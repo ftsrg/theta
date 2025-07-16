@@ -233,7 +233,11 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseBTOR2(input: File, logger: Logger, uniqueWarningLogger: UniqueWarningLogger): XCFA {
+private fun parseBTOR2(
+  input: File,
+  logger: Logger,
+  uniqueWarningLogger: UniqueWarningLogger,
+): XCFA {
   val visitor = Btor2Visitor()
   val btor2File = input
 

@@ -29,7 +29,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val operand: Btor2Node) :
   Btor2Node(nid, null) {
 
-  // TODO: btor2 probably enables operations on the bad node(?) - check and add var decl for properties as well, if necessary
+  // TODO: btor2 probably enables operations on the bad node(?) - check and add var decl for
+  // properties as well, if necessary
   override fun getVar(): VarDecl<*>? {
     return null
   }

@@ -26,7 +26,7 @@ class SortVisitor : Btor2BaseVisitor<Btor2Sort>() {
 
   override fun visitBitvec_sort(ctx: Btor2Parser.Bitvec_sortContext): Btor2Sort {
     var sort = Btor2BitvecSort(ctx.id.NUM().text.toUInt(), ctx.width.text.toUInt())
-    Btor2Circuit.sorts[sort.sid] = sort as Btor2Sort
+    Btor2Circuit.addSort(sort)
     return sort
   }
 }
