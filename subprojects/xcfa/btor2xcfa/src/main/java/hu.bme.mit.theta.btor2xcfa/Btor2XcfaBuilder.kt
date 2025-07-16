@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.Btor2Passes
@@ -41,7 +42,10 @@ object Btor2XcfaBuilder {
     }
 
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
-    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(ParseContext(), uniqueWarningLogger))
+    val context = ParseContext()
+    context.addArithmeticTrait(ArithmeticTrait.BITWISE)
+
+    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(context, uniqueWarningLogger))
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
 
