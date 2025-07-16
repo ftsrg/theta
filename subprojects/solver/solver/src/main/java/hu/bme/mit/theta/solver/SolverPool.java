@@ -57,7 +57,7 @@ public class SolverPool implements AutoCloseable {
 
     public Solver requestSolver() {
         if (this.available.isEmpty()) createNewSolvers();
-        return this.available.removeAt(0);
+        return this.available.removeFirst();
     }
 
     public void returnSolver(Solver solver) {
