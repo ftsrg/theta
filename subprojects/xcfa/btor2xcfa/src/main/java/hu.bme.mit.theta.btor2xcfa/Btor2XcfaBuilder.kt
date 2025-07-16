@@ -17,10 +17,11 @@ package hu.bme.mit.theta.btor2xcfa
 
 import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.models.Btor2Circuit
+import hu.bme.mit.theta.frontend.models.*
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
@@ -80,18 +81,31 @@ object Btor2XcfaBuilder {
     // Initializations
     newLoc = nextLoc(false, false, false)
     procBuilder.addLoc(newLoc)
+    val stateInitMap : MutableMap<Btor2State, Btor2Init?> = mutableMapOf()
+    for(init in Btor2Circuit.states.values.filter { it.value is Btor2Init }) {
+      stateInitMap[init.state!!] = init as Btor2Init
+    }
 
     val edge =
       XcfaEdge(
         lastLoc,
         newLoc,
         SequenceLabel(
-          Btor2Circuit.states
+          Btor2Circuit.states.values
             .filter {
-              if (it.value.getVar() != null && it.value.getVar()!!.name.startsWith("init_")) true
-              else false
+              it is Btor2State
             }
-            .map { StmtLabel(it.value.getStmt(), metadata = EmptyMetaData) }
+            .map {
+              StmtLabel(
+                if(it in stateInitMap) {
+                    stateInitMap[it]!!.getStmt()
+                } else {
+                  HavocStmt.of(it.getVar())
+                },
+                metadata = EmptyMetaData
+              )
+
+            }
             .toList()
         ),
         EmptyMetaData,
@@ -102,8 +116,8 @@ object Btor2XcfaBuilder {
 
     // Havoc initial value of input variables
     if (
-      Btor2Circuit.states
-        .filter { it.value.getVar()?.name?.startsWith("input_") == true }
+      Btor2Circuit.states.values
+        .filter { it is Btor2Input }
         .isNotEmpty()
     ) {
       newLoc = nextLoc(false, false, false)
@@ -113,12 +127,11 @@ object Btor2XcfaBuilder {
           lastLoc,
           newLoc,
           SequenceLabel(
-            Btor2Circuit.states
+            Btor2Circuit.states.values
               .filter {
-                if (it.value.getVar() != null && it.value.getVar()!!.name.startsWith("input_")) true
-                else false
+                it is Btor2Input
               }
-              .map { StmtLabel(it.value.getStmt(), metadata = EmptyMetaData) }
+              .map { StmtLabel(it.getStmt(), metadata = EmptyMetaData) }
               .toList()
           ),
           EmptyMetaData,
@@ -163,13 +176,22 @@ object Btor2XcfaBuilder {
 
     // Close circuit (update state values with nexts, havoc otherwise)
     var nexts =
-      Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
+      Btor2Circuit.states.values.filter { it is Btor2Next }.toList()
+    var statesWithNext = nexts.map { (it as Btor2Next).state }.toSet()
+    var statesWithoutNext = Btor2Circuit.states.values.filter { it is Btor2State }.filter { !statesWithNext.contains(it.value) }.toList()
 
     nexts.forEach {
       newLoc = nextLoc(false, false, false)
-      procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.second.getStmt()), EmptyMetaData))
+      procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.getStmt()), EmptyMetaData))
       lastLoc = newLoc
     }
+
+    statesWithoutNext.forEach {
+      newLoc = nextLoc(false, false, false)
+      procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(HavocStmt.of(it.getVar()!!)), EmptyMetaData))
+      lastLoc = newLoc
+    }
+
     procBuilder.addEdge(XcfaEdge(lastLoc, loopHeadLoc, metadata = EmptyMetaData))
     return xcfaBuilder.build()
   }

@@ -15,8 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
@@ -114,7 +113,7 @@ class XcfaCliPortfolioTest {
         ParseContext(),
         XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(),
         NullLogger.getInstance(),
-        NullLogger.getInstance(),
+        UniqueWarningLogger(NullLogger.getInstance())
       )
 
     val vis = stm.visualize()
