@@ -62,11 +62,11 @@ object Btor2XcfaBuilder {
         lastLoc,
         newLoc,
         SequenceLabel(
-          Btor2Circuit.constants
+          Btor2Circuit.constants.values
             .map {
               AssignStmtLabel(
-                it.value.getVar()!!.ref,
-                BvLitExpr.of(it.value.value),
+                it.getVar()!!.ref,
+                BvLitExpr.of(it.value),
                 metadata = EmptyMetaData,
               )
             }
@@ -82,8 +82,8 @@ object Btor2XcfaBuilder {
     newLoc = nextLoc(false, false, false)
     procBuilder.addLoc(newLoc)
     val stateInitMap : MutableMap<Btor2State, Btor2Init?> = mutableMapOf()
-    for(init in Btor2Circuit.states.values.filter { it.value is Btor2Init }) {
-      stateInitMap[init.state!!] = init as Btor2Init
+    for(init in Btor2Circuit.states.values.filter { it is Btor2Init }) {
+      stateInitMap[init.state!!] = (init as Btor2Init)
     }
 
     val edge =
@@ -97,7 +97,7 @@ object Btor2XcfaBuilder {
             }
             .map {
               StmtLabel(
-                if(it in stateInitMap) {
+                if(it in stateInitMap.keys) {
                     stateInitMap[it]!!.getStmt()
                 } else {
                   HavocStmt.of(it.getVar())
@@ -178,7 +178,7 @@ object Btor2XcfaBuilder {
     var nexts =
       Btor2Circuit.states.values.filter { it is Btor2Next }.toList()
     var statesWithNext = nexts.map { (it as Btor2Next).state }.toSet()
-    var statesWithoutNext = Btor2Circuit.states.values.filter { it is Btor2State }.filter { !statesWithNext.contains(it.value) }.toList()
+    var statesWithoutNext = Btor2Circuit.states.values.filter { it is Btor2State }.filter { !statesWithNext.contains(it) }.toList()
 
     nexts.forEach {
       newLoc = nextLoc(false, false, false)
