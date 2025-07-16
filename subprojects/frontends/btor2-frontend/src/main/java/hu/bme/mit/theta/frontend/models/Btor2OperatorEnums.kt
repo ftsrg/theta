@@ -13,74 +13,73 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.models
 
 enum class Btor2ExtOperator {
-    SEXT,
-    UEXT
+  SEXT,
+  UEXT,
 }
 
 enum class Btor2UnaryOperator {
-    NOT,
-    INC,
-    DEC,
-    NEG,
-    REDAND,
-    REDOR,
-    REDXOR
+  NOT,
+  INC,
+  DEC,
+  NEG,
+  REDAND,
+  REDOR,
+  REDXOR,
 }
 
 enum class Btor2ComparisonOperator {
-    EQ,
-    NEQ,
-    SLT,
-    SLTE,
-    SGT,
-    SGTE,
-    ULT,
-    ULTE,
-    UGT,
-    UGTE
+  EQ,
+  NEQ,
+  SLT,
+  SLTE,
+  SGT,
+  SGTE,
+  ULT,
+  ULTE,
+  UGT,
+  UGTE,
 }
 
 enum class Btor2BooleanOperator {
-    IFF,
-    IMPLIES
+  IFF,
+  IMPLIES,
 }
 
 enum class Btor2BinaryOperator {
-    AND,
-    NAND,
-    NOR,
-    OR,
-    XNOR,
-    XOR,
-    ADD,
-    MUL,
-    UDIV,
-    UREM,
-    SDIV,
-    SREM,
-    SMOD,
-    CONCAT,
-    SADDO,
-    SDIVO,
-    SMULO,
-    SSUBO,
-    UADDO,
-    UMULO,
-    USUBO,
-    ROL,
-    ROR,
-    SLL,
-    SRA,
-    SRL,
-    SUB,
-    READ
+  AND,
+  NAND,
+  NOR,
+  OR,
+  XNOR,
+  XOR,
+  ADD,
+  MUL,
+  UDIV,
+  UREM,
+  SDIV,
+  SREM,
+  SMOD,
+  CONCAT,
+  SADDO,
+  SDIVO,
+  SMULO,
+  SSUBO,
+  UADDO,
+  UMULO,
+  USUBO,
+  ROL,
+  ROR,
+  SLL,
+  SRA,
+  SRL,
+  SUB,
+  READ,
 }
 
 enum class Btor2TernaryOperator {
-    ITE,
-    WRITE
+  ITE,
+  WRITE,
 }

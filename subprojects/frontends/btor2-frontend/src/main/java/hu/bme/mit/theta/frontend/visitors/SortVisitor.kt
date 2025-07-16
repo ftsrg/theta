@@ -13,22 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.visitors
-
 
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.models.*
 
 class SortVisitor : Btor2BaseVisitor<Btor2Sort>() {
-    override fun visitSort(ctx: Btor2Parser.SortContext): Btor2Sort {
-        return this.visitBitvec_sort(ctx.bitvec_sort())
-    }
+  override fun visitSort(ctx: Btor2Parser.SortContext): Btor2Sort {
+    return this.visitBitvec_sort(ctx.bitvec_sort())
+  }
 
-    override fun visitBitvec_sort(ctx: Btor2Parser.Bitvec_sortContext): Btor2Sort {
-        var sort = Btor2BitvecSort(ctx.id.NUM().text.toUInt(), ctx.width.text.toUInt())
-        Btor2Circuit.sorts[sort.sid] = sort as Btor2Sort
-        return sort
-    }
+  override fun visitBitvec_sort(ctx: Btor2Parser.Bitvec_sortContext): Btor2Sort {
+    var sort = Btor2BitvecSort(ctx.id.NUM().text.toUInt(), ctx.width.text.toUInt())
+    Btor2Circuit.sorts[sort.sid] = sort as Btor2Sort
+    return sort
+  }
 }

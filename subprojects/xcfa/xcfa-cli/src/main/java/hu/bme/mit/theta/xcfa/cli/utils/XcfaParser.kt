@@ -21,7 +21,6 @@ import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
-import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
@@ -40,7 +39,6 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import org.antlr.v4.runtime.BailErrorStrategy
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -48,6 +46,7 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
+import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
@@ -105,11 +104,7 @@ fun getXcfa(
       }
 
       InputType.BTOR2 -> {
-        parseBTOR2(
-            config.inputConfig.input!!,
-            logger,
-            uniqueWarningLogger,
-        )
+        parseBTOR2(config.inputConfig.input!!, logger, uniqueWarningLogger)
       }
     }
   } catch (e: Exception) {
@@ -238,11 +233,7 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseBTOR2(
-    input: File,
-    logger: Logger,
-    uniqueWarningLogger: Logger
-) : XCFA {
+private fun parseBTOR2(input: File, logger: Logger, uniqueWarningLogger: Logger): XCFA {
   val visitor = Btor2Visitor()
   val btor2File = input
 
@@ -257,6 +248,6 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder.btor2xcfa(Btor2Circuit)
-  logger.write( Logger.Level.MAINSTEP, "XCFA built successfully")
+  logger.write(Logger.Level.MAINSTEP, "XCFA built successfully")
   return xcfa
 }
