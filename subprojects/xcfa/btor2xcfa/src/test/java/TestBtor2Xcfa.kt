@@ -18,6 +18,7 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -47,6 +48,7 @@ class TestBtor2Xcfa {
   @Test
   fun testBtor2Xcfa() {
     val logger = ConsoleLogger(Logger.Level.VERBOSE)
+    val uniqueWarningLogger = UniqueWarningLogger(logger)
     val visitor = Btor2Visitor()
     val btor2File = File("")
 
@@ -60,7 +62,7 @@ class TestBtor2Xcfa {
 
     context.accept(visitor)
 
-    val xcfa = Btor2XcfaBuilder.btor2xcfa(Btor2Circuit)
+    val xcfa = Btor2XcfaBuilder.btor2xcfa(uniqueWarningLogger)
     logger.write(Logger.Level.VERBOSE, "XCFA built, result: " + xcfa.toDot() + "\n")
   }
 }

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
@@ -53,7 +54,7 @@ fun getXcfa(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
-  uniqueWarningLogger: Logger,
+  uniqueWarningLogger: UniqueWarningLogger,
 ) =
   try {
     when (config.frontendConfig.inputType) {
@@ -232,7 +233,7 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseBTOR2(input: File, logger: Logger, uniqueWarningLogger: Logger): XCFA {
+private fun parseBTOR2(input: File, logger: Logger, uniqueWarningLogger: UniqueWarningLogger): XCFA {
   val visitor = Btor2Visitor()
   val btor2File = input
 
@@ -246,7 +247,7 @@ private fun parseBTOR2(input: File, logger: Logger, uniqueWarningLogger: Logger)
 
   context.accept(visitor)
 
-  val xcfa = Btor2XcfaBuilder.btor2xcfa()
+  val xcfa = Btor2XcfaBuilder.btor2xcfa(uniqueWarningLogger)
   logger.write(Logger.Level.MAINSTEP, "XCFA built successfully")
   return xcfa
 }

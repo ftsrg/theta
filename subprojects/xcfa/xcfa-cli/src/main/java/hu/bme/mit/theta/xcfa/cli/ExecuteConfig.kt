@@ -34,6 +34,7 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.*
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -65,7 +66,7 @@ import kotlin.random.Random
 fun runConfig(
   config: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
   throwDontExit: Boolean,
 ): SafetyResult<*, *> {
   propagateInputOptions(config, logger, uniqueLogger)
@@ -85,7 +86,7 @@ fun runConfig(
   return result
 }
 
-private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: UniqueWarningLogger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.level = config.frontendConfig.lbeLevel
   StaticCoiPass.enabled = config.frontendConfig.staticCoi
@@ -113,7 +114,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
-private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: UniqueWarningLogger) {
   rule("NoCoiWhenDataRace") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
@@ -139,7 +140,7 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
 fun frontend(
   config: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ): Triple<XCFA, MCM, ParseContext> {
   if (config.inputConfig.xcfaWCtx != null) {
     val xcfa = config.inputConfig.xcfaWCtx!!.first
@@ -214,7 +215,7 @@ private fun backend(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
   throwDontExit: Boolean,
 ): SafetyResult<*, *> =
   if (config.backendConfig.backend == Backend.NONE) {
@@ -325,7 +326,7 @@ private fun preVerificationLogging(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ) {
   if (config.outputConfig.enableOutput) {
     try {
@@ -385,7 +386,7 @@ private fun postVerificationLogging(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ) {
   if (config.outputConfig.enableOutput) {
     try {

@@ -111,4 +111,12 @@ class OcExtraPasses :
     )
   )
 
-class Btor2Pass() : ProcedurePassManager(listOf(EmptyEdgeRemovalPass()))
+class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
+  listOf(
+    NormalizePass(),
+    DeterministicPass(),
+    EmptyEdgeRemovalPass(),
+    UnusedLocRemovalPass(),
+    SimplifyExprsPass(parseContext)
+  )
+)

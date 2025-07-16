@@ -68,10 +68,6 @@ abstract class Btor2Node(id: UInt, btor2Sort: Btor2Sort? = null) {
 
   abstract fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R
 
-  // Constants give back a BvLitExpr
-  // Operations give back an Expr<BvType> vagyish sokfélét de az kell nekik
-  // Statefuls give back RefExpr
-  // Properties Expr<BoolType>
   abstract fun getExpr(): Expr<*>
 }
 

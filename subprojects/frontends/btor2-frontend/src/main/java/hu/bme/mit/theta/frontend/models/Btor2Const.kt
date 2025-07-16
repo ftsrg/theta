@@ -15,8 +15,10 @@
  */
 package hu.bme.mit.theta.frontend.models
 
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 
@@ -25,12 +27,14 @@ data class Btor2Const(
   val value: BooleanArray,
   override val sort: Btor2Sort,
 ) : Btor2Node(nid, sort) {
+  val declsVar = Decls.Var("const_$nid", BvExprs.BvType(sort.width.toInt()))
+
   override fun getVar(): VarDecl<*>? {
-    return null
+    return declsVar
   }
 
   override fun getExpr(): Expr<BvType> {
-    return BvLitExpr.of(value)
+    return declsVar.ref as Expr<BvType>
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {

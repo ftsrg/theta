@@ -33,7 +33,7 @@ fun portfolio(
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ): STM {
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }

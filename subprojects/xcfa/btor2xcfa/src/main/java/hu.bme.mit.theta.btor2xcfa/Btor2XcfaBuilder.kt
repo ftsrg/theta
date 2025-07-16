@@ -15,17 +15,20 @@
  */
 package hu.bme.mit.theta.btor2xcfa
 
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.Btor2Pass
+import hu.bme.mit.theta.xcfa.passes.Btor2Passes
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.AssignStmtLabel
 
 object Btor2XcfaBuilder {
   private var i: Int = 1
 
-  fun btor2xcfa(): XCFA {
+  fun btor2xcfa(uniqueWarningLogger: UniqueWarningLogger): XCFA {
     check(Btor2Circuit.properties.size != 0, { "Circuit has no error property" })
     check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
     val ops = Btor2Circuit.ops.values.toList()
@@ -38,7 +41,7 @@ object Btor2XcfaBuilder {
     }
 
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
-    val procBuilder = XcfaProcedureBuilder("main", Btor2Pass())
+    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(ParseContext(), uniqueWarningLogger))
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
 
@@ -46,10 +49,27 @@ object Btor2XcfaBuilder {
       it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) }
     }
 
-    // Initializations
     var lastLoc = procBuilder.initLoc
     var newLoc = nextLoc(false, false, false)
 
+    // add values to constants
+    val constEdge =
+      XcfaEdge(
+        lastLoc,
+        newLoc,
+        SequenceLabel(
+          Btor2Circuit.constants
+            .map { AssignStmtLabel(it.value.getVar()!!.ref, BvLitExpr.of(it.value.value), metadata = EmptyMetaData) }
+            .toList()
+        ),
+        EmptyMetaData,
+      )
+    procBuilder.addEdge(constEdge)
+    i++
+    lastLoc = newLoc
+
+    // Initializations
+    newLoc = nextLoc(false, false, false)
     procBuilder.addLoc(newLoc)
 
     val edge =

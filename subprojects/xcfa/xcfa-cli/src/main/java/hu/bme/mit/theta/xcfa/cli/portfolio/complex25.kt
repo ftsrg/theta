@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
@@ -56,7 +57,7 @@ fun complexPortfolio25(
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ): STM {
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }

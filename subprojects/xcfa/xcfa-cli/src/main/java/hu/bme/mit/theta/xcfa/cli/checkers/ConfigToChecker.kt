@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -36,7 +37,7 @@ fun getChecker(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
     InProcessChecker(xcfa, config, parseContext, logger)

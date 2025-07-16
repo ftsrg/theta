@@ -42,7 +42,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
@@ -51,7 +51,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
@@ -60,7 +60,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           complexPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
@@ -69,7 +69,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
@@ -78,7 +78,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
@@ -87,7 +87,7 @@ class XcfaCliPortfolioTest {
           parseContext: ParseContext,
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
-          uniqueLogger: Logger ->
+          uniqueLogger: UniqueWarningLogger ->
           hornPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
       )
@@ -104,7 +104,7 @@ class XcfaCliPortfolioTest {
         parseContext: ParseContext,
         portfolioConfig: XcfaConfig<*, *>,
         logger: Logger,
-        uniqueLogger: Logger,
+        uniqueLogger: UniqueWarningLogger,
       ) -> STM
   ) {
     val stm =

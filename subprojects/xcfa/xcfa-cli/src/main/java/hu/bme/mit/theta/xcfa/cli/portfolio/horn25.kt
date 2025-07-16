@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -33,7 +34,7 @@ fun hornPortfolio25(
   parseContext: ParseContext,
   portfolioConfig: XcfaConfig<*, *>,
   logger: Logger,
-  uniqueLogger: Logger,
+  uniqueLogger: UniqueWarningLogger,
 ): STM {
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
