@@ -29,7 +29,7 @@ object Btor2XcfaBuilder {
   private var i: Int = 1
 
   fun btor2xcfa(uniqueWarningLogger: UniqueWarningLogger): XCFA {
-    check(Btor2Circuit.properties.size != 0, { "Circuit has no error property" })
+    check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
     check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
     val ops = Btor2Circuit.ops.values.toList()
     for (i in 1 until ops.size) {
@@ -95,8 +95,9 @@ object Btor2XcfaBuilder {
       )
     procBuilder.addEdge(edge)
     lastLoc = newLoc
+    val loopHeadLoc = newLoc
 
-    // Havoc initial value of variables
+    // Havoc initial value of input variables
     if (
       Btor2Circuit.states
         .filter { it.value.getVar()?.name?.startsWith("input_") == true }
@@ -160,14 +161,13 @@ object Btor2XcfaBuilder {
     // Close circuit (update state values with nexts, havoc otherwise)
     var nexts =
       Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
-    val firstLoc = procBuilder.getLocs().elementAt(1)
 
     nexts.forEach {
       newLoc = nextLoc(false, false, false)
       procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.second.getStmt()), EmptyMetaData))
       lastLoc = newLoc
     }
-    procBuilder.addEdge(XcfaEdge(lastLoc, firstLoc, metadata = EmptyMetaData))
+    procBuilder.addEdge(XcfaEdge(lastLoc, loopHeadLoc, metadata = EmptyMetaData))
     return xcfaBuilder.build()
   }
 

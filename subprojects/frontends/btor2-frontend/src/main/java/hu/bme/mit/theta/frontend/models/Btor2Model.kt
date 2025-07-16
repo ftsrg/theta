@@ -56,12 +56,23 @@ object Btor2Circuit {
   private val _states = mutableMapOf<UInt, Btor2Stateful>()
   private val _properties = mutableMapOf<UInt, Btor2Bad>()
 
-  val nodes: Map<UInt, Btor2Node> get() = _nodes
-  val sorts: Map<UInt, Btor2Sort> get() = _sorts
-  val constants: Map<UInt, Btor2Const> get() = _constants
-  val ops: Map<UInt, Btor2Operation> get() = _ops
-  val states: Map<UInt, Btor2Stateful> get() = _states
-  val properties: Map<UInt, Btor2Bad> get() = _properties
+  val nodes: Map<UInt, Btor2Node>
+    get() = _nodes
+
+  val sorts: Map<UInt, Btor2Sort>
+    get() = _sorts
+
+  val constants: Map<UInt, Btor2Const>
+    get() = _constants
+
+  val ops: Map<UInt, Btor2Operation>
+    get() = _ops
+
+  val states: Map<UInt, Btor2Stateful>
+    get() = _states
+
+  val properties: Map<UInt, Btor2Bad>
+    get() = _properties
 
   fun addSort(sort: Btor2Sort) {
     _sorts[sort.sid] = sort
