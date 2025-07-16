@@ -110,3 +110,5 @@ class OcExtraPasses :
       LoopUnrollPass(2), // force loop unroll for BMC
     )
   )
+
+class Btor2Pass() : ProcedurePassManager(listOf(EmptyEdgeRemovalPass()))

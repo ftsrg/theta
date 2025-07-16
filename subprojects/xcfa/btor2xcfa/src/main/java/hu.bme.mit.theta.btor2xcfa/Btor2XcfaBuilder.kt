@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.frontend.models.Btor2Circuit
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.Btor2Pass
 
 object Btor2XcfaBuilder {
   private var i: Int = 1
@@ -98,7 +98,6 @@ object Btor2XcfaBuilder {
       lastLoc = newLoc
     }
 
-
     // Add operations
     Btor2Circuit.ops.forEach() {
       val loc = nextLoc(false, false, false)
@@ -152,8 +151,4 @@ object Btor2XcfaBuilder {
     i++
     return loc
   }
-}
-
-class Btor2Pass() : ProcedurePassManager() {
-  // No optimization for now c:
 }
