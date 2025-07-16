@@ -257,6 +257,6 @@ private fun parseBTOR2(
   context.accept(visitor)
 
   val xcfa = Btor2XcfaBuilder.btor2xcfa(Btor2Circuit)
-  logger.write( Logger.Level.MAINSTEP, "XCFA built, result: " + xcfa.toDot() + "\n")
+  logger.write( Logger.Level.MAINSTEP, "XCFA built successfully")
   return xcfa
 }

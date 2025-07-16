@@ -46,6 +46,6 @@ data class Btor2Bad(override val nid: UInt, override val sort: Btor2Sort?, val o
     }
 
     fun getStmt(): Stmt {
-        return AssumeStmt.of(BoolExprs.Not(getExpr()))
+        return AssumeStmt.of(getExpr())
     }
 }

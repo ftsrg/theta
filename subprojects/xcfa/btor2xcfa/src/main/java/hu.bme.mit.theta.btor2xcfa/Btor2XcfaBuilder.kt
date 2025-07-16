@@ -5,6 +5,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
@@ -14,6 +15,8 @@ import hu.bme.mit.theta.frontend.models.Btor2Operation
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 object Btor2XcfaBuilder{
+    private var i : Int = 1
+
     fun btor2xcfa(circuit: Btor2Circuit) : XCFA {
     // checks fontos: nodes, ops, properties csak 1 legyen
         check(Btor2Circuit.properties.size != 0, { "Circuit has no error property" })
@@ -27,7 +30,6 @@ object Btor2XcfaBuilder{
             check(nodes[i].nid > nodes[i - 1].nid, { "Nodes are not in increasing order" })
         }
 
-        var i : Int = 1
         val xcfaBuilder = XcfaBuilder("Btor2XCFA")
         val procBuilder = XcfaProcedureBuilder("main", Btor2Pass())
         xcfaBuilder.addEntryPoint(procBuilder, emptyList())
@@ -41,7 +43,7 @@ object Btor2XcfaBuilder{
 ///////////////////////////////////////////////
         // Initek
         var lastLoc = procBuilder.initLoc
-        var newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+        var newLoc = nextLoc(false,false,false)
         // initekhez
         procBuilder.addLoc(newLoc)
 
@@ -61,7 +63,7 @@ object Btor2XcfaBuilder{
         // Havoc változók
         // Miután felvettük az initeket mehetnek a havoc változók
         if(Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("input_") == true }.isNotEmpty()){
-            newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+            newLoc = nextLoc(false, false, false)
             procBuilder.addLoc(newLoc)
             val edge = XcfaEdge(lastLoc, newLoc,
                 SequenceLabel(
@@ -73,7 +75,6 @@ object Btor2XcfaBuilder{
                 ), EmptyMetaData
             )
             procBuilder.addEdge(edge)
-            i++
             lastLoc=newLoc
         }
 
@@ -81,40 +82,46 @@ object Btor2XcfaBuilder{
         // Végigmegyünk az operationökön
 
         Btor2Circuit.ops.forEach() {
-            val loc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+            val loc = nextLoc(false, false, false)
 
             procBuilder.addLoc(loc)
 
             val edge = XcfaEdge(lastLoc, loc, StmtLabel(it.value.getStmt()), EmptyMetaData)
             procBuilder.addEdge(edge)
-            i++
             lastLoc=loc
         }
         procBuilder.createErrorLoc()
-        // Errorkezelése
-        // Egyzserű pédáink vannak tehát egyelőre csak bad van benne
-        // CSak egy lesz -> Legyen hiba ha több a bad
+        // Error kezelése
+        // Egyszerű példáink vannak, tehát egyelőre csak bad van benne
+        // Csak egy lesz -> Legyen hiba, ha több a bad
         val bad = Btor2Circuit.properties.values.first()
 
         procBuilder.addEdge(XcfaEdge(lastLoc, procBuilder.errorLoc.get(), StmtLabel(AssumeStmt.of(bad.getExpr())),EmptyMetaData))
-        newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
-        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(bad.getStmt()),EmptyMetaData))
+        newLoc = nextLoc(false, false, false)
+        procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(AssumeStmt.of(BoolExprs.Not(bad.getExpr()))),EmptyMetaData))
         lastLoc = newLoc
-        //Circuit folytatása
+
+        // Circuit folytatása
         // ha nincsen next akkor azt el kell havocolni
         var nexts = Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
         val firstLoc = procBuilder.getLocs().elementAt(1)
 
         nexts.forEach {
-            newLoc = XcfaLocation("l${i}", false, false, false, EmptyMetaData)
+            newLoc = nextLoc(false, false, false)
             procBuilder.addEdge(XcfaEdge(lastLoc, newLoc, StmtLabel(it.second.getStmt()),EmptyMetaData))
-            i++
             lastLoc=newLoc
         }
         procBuilder.addEdge(XcfaEdge(lastLoc, firstLoc, metadata=EmptyMetaData))
         return xcfaBuilder.build()
     }
+
+    private fun nextLoc(initial : Boolean, final : Boolean, error : Boolean) : XcfaLocation {
+        val loc = XcfaLocation("l${i}", initial, final, error, EmptyMetaData)
+        i++
+        return loc
+    }
 }
+
 
 class Btor2Pass() : ProcedurePassManager() {
     // No optimization for now c:
