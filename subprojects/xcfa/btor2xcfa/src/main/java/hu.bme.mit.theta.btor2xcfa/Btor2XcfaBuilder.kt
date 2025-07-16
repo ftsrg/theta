@@ -29,7 +29,7 @@ import hu.bme.mit.theta.xcfa.passes.Btor2Passes
 object Btor2XcfaBuilder {
   private var i: Int = 1
 
-  fun btor2xcfa(uniqueWarningLogger: UniqueWarningLogger): XCFA {
+  fun btor2xcfa(parseContext: ParseContext, uniqueWarningLogger: UniqueWarningLogger): XCFA {
     check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
     check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
     val ops = Btor2Circuit.ops.values.toList()
@@ -42,10 +42,9 @@ object Btor2XcfaBuilder {
     }
 
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
-    val context = ParseContext()
-    context.addArithmeticTrait(ArithmeticTrait.BITWISE)
+    parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
 
-    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(context, uniqueWarningLogger))
+    val procBuilder = XcfaProcedureBuilder("main", Btor2Passes(parseContext, uniqueWarningLogger))
     xcfaBuilder.addEntryPoint(procBuilder, emptyList())
     procBuilder.createInitLoc()
 

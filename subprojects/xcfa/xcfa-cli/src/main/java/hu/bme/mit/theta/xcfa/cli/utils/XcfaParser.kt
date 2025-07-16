@@ -104,7 +104,7 @@ fun getXcfa(
       }
 
       InputType.BTOR2 -> {
-        parseBTOR2(config.inputConfig.input!!, logger, uniqueWarningLogger)
+        parseBTOR2(config.inputConfig.input!!, parseContext, logger, uniqueWarningLogger)
       }
     }
   } catch (e: Exception) {
@@ -235,6 +235,7 @@ private fun parseChc(
 
 private fun parseBTOR2(
   input: File,
+  parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: UniqueWarningLogger,
 ): XCFA {
@@ -251,7 +252,7 @@ private fun parseBTOR2(
 
   context.accept(visitor)
 
-  val xcfa = Btor2XcfaBuilder.btor2xcfa(uniqueWarningLogger)
+  val xcfa = Btor2XcfaBuilder.btor2xcfa(parseContext, uniqueWarningLogger)
   logger.write(Logger.Level.MAINSTEP, "XCFA built successfully")
   return xcfa
 }
