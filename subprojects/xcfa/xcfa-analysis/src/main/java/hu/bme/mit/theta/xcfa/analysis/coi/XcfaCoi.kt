@@ -117,7 +117,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
     val toVisit = edge.target.outgoingEdges.toMutableList()
     val visited = mutableSetOf<XcfaEdge>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       visited.add(visiting)
       val currentVars = visiting.collectVarsWithAccessType()
       addEdgeIfObserved(

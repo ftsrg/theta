@@ -52,7 +52,7 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
     val possiblePathPoints = mutableListOf(GlobalEdge(from))
     val visited = mutableSetOf<GlobalEdge>()
     while (possiblePathPoints.isNotEmpty()) {
-      val current = possiblePathPoints.removeFirst()
+      val current = possiblePathPoints.removeAt(0)
       if (!visited.add(current)) continue
       if (current.pid == to.pid && reachableEdges[current.pid]!!.reachable(current, to.edge))
         return true
@@ -88,7 +88,7 @@ private class ReachableEdges(procedure: XcfaProcedure) {
     val toVisit = mutableListOf(null to procedure.initLoc)
     val initials = mutableListOf<Pair<Int, Int>>()
     while (toVisit.isNotEmpty()) { // assumes xcfa contains no cycles (an OC checker requirement)
-      val edge = toVisit.removeFirst()
+      val edge = toVisit.removeAt(0)
       val id = ids.size
       ids[edge] = id
 
@@ -118,7 +118,7 @@ private class ReachableEdges(procedure: XcfaProcedure) {
   private fun close(initials: List<Pair<Int, Int>>) {
     val toClose = initials.toMutableList()
     while (toClose.isNotEmpty()) {
-      val (from, to) = toClose.removeFirst()
+      val (from, to) = toClose.removeAt(0)
       if (reachable[from][to]) continue
 
       reachable[from][to] = true

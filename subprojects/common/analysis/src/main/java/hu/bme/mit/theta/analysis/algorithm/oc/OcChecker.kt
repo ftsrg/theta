@@ -117,7 +117,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     if (from == to) return reason // cycle (self-loop) found
     val toClose = mutableListOf(from to to to reason)
     while (toClose.isNotEmpty()) {
-      val (fromTo, r) = toClose.removeFirst()
+      val (fromTo, r) = toClose.removeAt(0)
       val (i1, i2) = fromTo
       check(i1 != i2)
       if (rels[i1][i2] != null) continue
@@ -160,7 +160,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     val unassignedCopy = unassignedWss.toMutableList()
     val pairs = mutableListOf<Pair<Relation<E>, Relation<E>>>()
     while (unassignedCopy.isNotEmpty()) {
-      val ws = unassignedCopy.removeFirst()
+      val ws = unassignedCopy.removeAt(0)
       val pair = unassignedCopy.find { it.from == ws.to || it.to == ws.from }
       if (pair != null) {
         pairs.add(ws to pair)

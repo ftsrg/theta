@@ -182,7 +182,7 @@ inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<String>
     val acquired = mutableSetOf<String>()
     val toVisit = mutableListOf<Pair<XcfaEdge, Set<String>>>(this to setOf())
     while (toVisit.isNotEmpty()) {
-      val (visiting, mutexes) = toVisit.removeFirst()
+      val (visiting, mutexes) = toVisit.removeAt(0)
       val newMutexes = mutexes.toMutableSet()
       acquired.addAll(
         visiting.getFlatLabels().flatMap { fence ->
@@ -334,7 +334,7 @@ private fun XcfaEdge.collectGlobalVarsWithTraversal(
   val edgesToExplore = mutableListOf<XcfaEdge>()
   edgesToExplore.add(this)
   while (edgesToExplore.isNotEmpty()) {
-    val exploring = edgesToExplore.removeFirst()
+    val exploring = edgesToExplore.removeAt(0)
     exploring.label.collectGlobalVars(globalVars).forEach { (varDecl, access) ->
       vars[varDecl] = vars[varDecl].merge(access)
     }

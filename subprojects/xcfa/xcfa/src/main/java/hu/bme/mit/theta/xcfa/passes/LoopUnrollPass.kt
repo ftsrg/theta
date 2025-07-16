@@ -312,7 +312,7 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
         val edges = mutableListOf<XcfaEdge>()
         val toVisit = mutableListOf(startLoc)
         while (toVisit.isNotEmpty()) {
-          val current = toVisit.removeFirst()
+          val current = toVisit.removeAt(0)
           if (current == loopStart) continue
           if (current.incomingEdges.size == 0) return@backSearch null // not part of the loop
           if (locs.add(current)) {
