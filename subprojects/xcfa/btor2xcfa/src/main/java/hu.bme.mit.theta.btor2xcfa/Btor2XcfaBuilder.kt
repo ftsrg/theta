@@ -26,7 +26,6 @@ object Btor2XcfaBuilder {
   private var i: Int = 1
 
   fun btor2xcfa(): XCFA {
-    // checks fontos: nodes, ops, properties csak 1 legyen
     check(Btor2Circuit.properties.size != 0, { "Circuit has no error property" })
     check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
     val ops = Btor2Circuit.ops.values.toList()
@@ -46,11 +45,11 @@ object Btor2XcfaBuilder {
     Btor2Circuit.nodes.forEach() {
       it.value.getVar()?.let { varDecl -> procBuilder.addVar(varDecl) }
     }
-    ///////////////////////////////////////////////
-    // Initek
+
+    // Initializations
     var lastLoc = procBuilder.initLoc
     var newLoc = nextLoc(false, false, false)
-    // initekhez
+
     procBuilder.addLoc(newLoc)
 
     val edge =
@@ -71,9 +70,8 @@ object Btor2XcfaBuilder {
     procBuilder.addEdge(edge)
     i++
     lastLoc = newLoc
-    ///////////////////////////////////////////////
-    // Havoc változók
-    // Miután felvettük az initeket mehetnek a havoc változók
+
+    // Havoc initial value of variables
     if (
       Btor2Circuit.states
         .filter { it.value.getVar()?.name?.startsWith("input_") == true }
@@ -100,9 +98,8 @@ object Btor2XcfaBuilder {
       lastLoc = newLoc
     }
 
-    /////////////////////////////////////////////
-    // Végigmegyünk az operationökön
 
+    // Add operations
     Btor2Circuit.ops.forEach() {
       val loc = nextLoc(false, false, false)
 
@@ -113,9 +110,8 @@ object Btor2XcfaBuilder {
       lastLoc = loc
     }
     procBuilder.createErrorLoc()
-    // Error kezelése
-    // Egyszerű példáink vannak, tehát egyelőre csak bad van benne
-    // Csak egy lesz -> Legyen hiba, ha több a bad
+
+    // Add Property
     val bad = Btor2Circuit.properties.values.first()
 
     procBuilder.addEdge(
@@ -137,8 +133,7 @@ object Btor2XcfaBuilder {
     )
     lastLoc = newLoc
 
-    // Circuit folytatása
-    // ha nincsen next akkor azt el kell havocolni
+    // Close circuit (update state values with nexts, havoc otherwise)
     var nexts =
       Btor2Circuit.states.filter { it.value.getVar()?.name?.startsWith("next_") == true }.toList()
     val firstLoc = procBuilder.getLocs().elementAt(1)
