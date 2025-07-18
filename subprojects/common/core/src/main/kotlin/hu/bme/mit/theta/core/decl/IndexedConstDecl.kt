@@ -84,9 +84,9 @@ data class IndexedConstDecl<DeclType : Type>(
         }
 
         IndexedConstDecl(
-          varDecl = varDecl ?: error("Missing varDecl"),
-          index = index ?: error("Missing index"),
-          id = id ?: error("Missing id"),
+          varDecl = varDecl ?: throw SerializationException("Missing varDecl"),
+          index = index ?: throw SerializationException("Missing index"),
+          id = id ?: throw SerializationException("Missing id"),
         )
       }
   }

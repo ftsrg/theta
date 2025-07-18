@@ -17,10 +17,7 @@ package hu.bme.mit.theta.core.decl
 
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.UniqueIdProvider
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -71,14 +68,14 @@ data class BasicConstDecl<DeclType : Type>(
             1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
             2 -> id = decodeIntElement(descriptor, 2)
             CompositeDecoder.DECODE_DONE -> break
-            else -> error("Unexpected index: $index")
+            else -> throw SerializationException("Unexpected index: $index")
           }
         }
 
         BasicConstDecl(
-          name = name ?: error("Missing name"),
-          type = type ?: error("Missing type"),
-          id = id ?: error("Missing id"),
+          name = name ?: throw SerializationException("Missing name"),
+          type = type ?: throw SerializationException("Missing type"),
+          id = id ?: throw SerializationException("Missing id"),
         )
       }
   }

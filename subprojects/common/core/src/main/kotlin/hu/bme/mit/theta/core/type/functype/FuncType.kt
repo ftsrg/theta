@@ -18,10 +18,7 @@ package hu.bme.mit.theta.core.type.functype
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.type.DomainSize
 import hu.bme.mit.theta.core.type.Type
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -87,13 +84,13 @@ data class FuncType<ParamType : Type, ResultType : Type>(
               resultType =
                 decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
             CompositeDecoder.DECODE_DONE -> break
-            else -> error("Unexpected index: $index")
+            else -> throw SerializationException("Unexpected index: $index")
           }
         }
 
         FuncType(
-          paramType = paramType ?: error("Missing paramType"),
-          resultType = resultType ?: error("Missing resultType"),
+          paramType = paramType ?: throw SerializationException("Missing paramType"),
+          resultType = resultType ?: throw SerializationException("Missing resultType"),
         )
       }
   }

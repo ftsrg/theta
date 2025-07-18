@@ -86,14 +86,14 @@ data class VarDecl<DeclType : Type>(
             1 -> type = decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
             2 -> id = decodeIntElement(descriptor, 2)
             CompositeDecoder.DECODE_DONE -> break
-            else -> error("Unexpected index: $index")
+            else -> throw SerializationException("Unexpected index: $index")
           }
         }
 
         VarDecl(
-          name = name ?: error("Missing name"),
-          type = type ?: error("Missing type"),
-          id = id ?: error("Missing id"),
+          name = name ?: throw SerializationException("Missing name"),
+          type = type ?: throw SerializationException("Missing type"),
+          id = id ?: throw SerializationException("Missing id"),
         )
       }
   }

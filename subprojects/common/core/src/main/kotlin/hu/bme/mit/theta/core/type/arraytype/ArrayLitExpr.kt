@@ -23,10 +23,7 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.ExprSimplifier
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -131,14 +128,14 @@ data class ArrayLitExpr<IndexType : Type, ElemType : Type>(
                 decodeSerializableElement(descriptor, 2, PolymorphicSerializer(Type::class))
                   as ArrayType<Type, Type>
             CompositeDecoder.DECODE_DONE -> break
-            else -> error("Unexpected index: $index")
+            else -> throw SerializationException("Unexpected index: $index")
           }
         }
 
         ArrayLitExpr(
-          elements = elements ?: error("Missing elements"),
-          elseElem = elseElem ?: error("Missing elseElem"),
-          type = type ?: error("Missing type"),
+          elements = elements ?: throw SerializationException("Missing elements"),
+          elseElem = elseElem ?: throw SerializationException("Missing elseElem"),
+          type = type ?: throw SerializationException("Missing type"),
         )
       }
   }

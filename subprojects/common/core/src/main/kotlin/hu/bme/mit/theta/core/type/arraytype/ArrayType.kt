@@ -22,10 +22,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.Equational
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -98,13 +95,13 @@ data class ArrayType<IndexType : Type, ElemType : Type>(
               elemType =
                 decodeSerializableElement(descriptor, 1, PolymorphicSerializer(Type::class))
             CompositeDecoder.DECODE_DONE -> break
-            else -> error("Unexpected index: $index")
+            else -> throw SerializationException("Unexpected index: $index")
           }
         }
 
         ArrayType(
-          indexType = indexType ?: error("Missing indexType"),
-          elemType = elemType ?: error("Missing elemType"),
+          indexType = indexType ?: throw SerializationException("Missing indexType"),
+          elemType = elemType ?: throw SerializationException("Missing elemType"),
         )
       }
   }
