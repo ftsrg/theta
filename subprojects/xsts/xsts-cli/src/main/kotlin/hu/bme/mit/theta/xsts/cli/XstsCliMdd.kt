@@ -30,12 +30,12 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
+import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 class XstsCliMdd :
-  XstsCliBaseCommand(
+  XstsCliMonolithicBaseCommand(
     name = "MDD",
     help = "Model checking of XSTS using MDDs (Multi-value Decision Diagrams)",
   ) {
@@ -46,7 +46,7 @@ class XstsCliMdd :
       .default(MddChecker.IterationStrategy.GSAT)
 
   private fun printResult(
-    status: SafetyResult<MddProof, Trace<ExplState, XstsAction>>,
+    status: SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>,
     xsts: XSTS,
     totalTimeMs: Long,
   ) {
@@ -80,13 +80,31 @@ class XstsCliMdd :
     registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
+    val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val result =
-      SolverPool(solverFactory).use {
-        val checker = XstsMddChecker.create(xsts, it, logger, iterationStrategy)
+      SolverPool(solverFactory).use { solverPool ->
+        val checker =
+          wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
+            MddChecker.create(
+              it,
+              it.vars,
+              solverPool,
+              logger,
+              MddChecker.IterationStrategy.GSAT,
+              it.valToState,
+              it.biValToAction,
+              !reversed,
+            )
+          }
         checker.check(null)
       }
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printResult(
+      result as SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>,
+      xsts,
+      sw.elapsed(TimeUnit.MILLISECONDS),
+    )
+    writeCex(result, xsts)
   }
 }

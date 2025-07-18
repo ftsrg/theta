@@ -20,7 +20,11 @@ import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -35,6 +39,7 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final Expr<BoolType> expr;
     private final Function<Object, Decl> extractDecl;
     private final SolverPool solverPool;
+    private final boolean transExpr;
 
     private static Solver lazySolver;
 
@@ -49,15 +54,27 @@ public class MddExpressionTemplate implements MddNode.Template {
     }
 
     private MddExpressionTemplate(
-            Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
+        this.transExpr = transExpr;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false);
+    }
+
+    public static MddExpressionTemplate of(
+            Expr<BoolType> expr,
+            Function<Object, Decl> extractDecl,
+            SolverPool solverPool,
+            boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr);
     }
 
     @Override
@@ -95,15 +112,49 @@ public class MddExpressionTemplate implements MddNode.Template {
                                 .get()
                                 .checkInNode(
                                         new MddExpressionTemplate(
-                                                canonizedExpr, o -> (Decl) o, solverPool));
+                                                canonizedExpr,
+                                                o -> (Decl) o,
+                                                solverPool,
+                                                transExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
-                    canonizedExpr, decl, mddVariable, solverPool, childNode);
+                    canonizedExpr, decl, mddVariable, solverPool, childNode, transExpr);
         }
 
-        return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
+        if (transExpr
+                && decl instanceof IndexedConstDecl<?> constDecl
+                && constDecl.getIndex() == 0
+                && mddVariable.getLower().isPresent()
+                && mddVariable.getLower().get().getLower().isPresent()) {
+            final Substitution sub =
+                    BasicSubstitution.builder()
+                            .put(
+                                    extractDecl.apply(mddVariable.getLower().get().getTraceInfo()),
+                                    decl.getRef())
+                            .build();
+            final Expr<BoolType> identityContinuationExpr =
+                    ExprUtils.simplify(sub.apply(canonizedExpr));
+            if (!ExprUtils.getConstants(identityContinuationExpr).contains(decl)) {
+                final var cont =
+                        mddVariable
+                                .getLower()
+                                .get()
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        new MddExpressionTemplate(
+                                                identityContinuationExpr,
+                                                extractDecl,
+                                                solverPool,
+                                                transExpr));
+                return new IdentityRepresentation(cont);
+            }
+        }
+
+        return MddExpressionRepresentation.of(
+                canonizedExpr, decl, mddVariable, solverPool, transExpr);
     }
 }

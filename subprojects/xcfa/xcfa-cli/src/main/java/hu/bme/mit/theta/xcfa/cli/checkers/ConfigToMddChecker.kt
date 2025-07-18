@@ -18,17 +18,26 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
 import hu.bme.mit.theta.analysis.algorithm.bounded.createReversed
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
@@ -36,6 +45,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
@@ -68,33 +78,82 @@ fun getMddChecker(
           it.copy(propExpr = True()).createMonolithicL2S()
         else it
       }
-      .let {
-        if (mddConfig.cegar) {
-          TODO("MDD cannot return traces, and thus, --cegar won't work yet.")
-        } else it
-      }
       .let { if (mddConfig.reversed) it.createReversed() else it }
 
   val stmts =
     xcfa.procedures
       .flatMap { it.edges.flatMap { xcfaEdge -> xcfaEdge.getFlatLabels().map { it.toStmt() } } }
       .toSet()
-  val variableOrder = orderVarsFromRandomStartingPoints(monolithicExpr.vars, stmts, 20)
   val solverPool = SolverPool(refinementSolverFactory)
   val iterationStrategy = mddConfig.iterationStrategy
 
-  val checker =
-    MddChecker.create<ExprState, ExprAction>(
-      monolithicExpr,
-      variableOrder,
+  val baseChecker = { abstractME: MonolithicExpr ->
+    MddChecker.create(
+      abstractME,
+      orderVarsFromRandomStartingPoints(
+        abstractME.vars,
+        stmts
+          .map {
+            object : Event {
+              override fun getAffectedVars(): Set<VarDecl<*>> = StmtUtils.getWrittenVars(it)
+            }
+          }
+          .toSet(),
+        20,
+      ),
       solverPool,
       logger,
       iterationStrategy,
-      monolithicExpr.valToState,
-      monolithicExpr.biValToAction,
+      abstractME.valToState,
+      abstractME.biValToAction,
+      true,
     )
-  return SafetyChecker<LocationInvariants, Trace<ExprState, ExprAction>, UnitPrec> { input ->
-    val result = checker.check(input)
+  }
+
+  val checker: SafetyChecker<MddProof, Trace<ExprState, ExprAction>, UnitPrec> =
+    (if (mddConfig.cegar) {
+      val cegarChecker =
+        MonolithicExprCegarChecker(
+          monolithicExpr,
+          baseChecker,
+          logger,
+          getSolver(mddConfig.solver, false),
+        )
+      object :
+        SafetyChecker<
+          MddProof,
+          Trace<XcfaState<PtrState<PredState>>, XcfaAction>,
+          XcfaPrec<PtrPrec<PredPrec>>,
+        > {
+        override fun check(
+          initPrec: XcfaPrec<PtrPrec<PredPrec>>
+        ): SafetyResult<MddProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
+          val result =
+            cegarChecker.check(initPrec.p.innerPrec) // states are PredState, actions are XcfaAction
+          if (result.isUnsafe) {
+            val cex = result.asUnsafe().cex as Trace<PredState, XcfaAction>
+            val locs =
+              (0 until cex.length()).map { i -> cex.actions[i].source } +
+                cex.actions[cex.length() - 1].target
+            val states = locs.mapIndexed { i, it -> XcfaState(xcfa, it, PtrState(cex.states[i])) }
+            return SafetyResult.unsafe(Trace.of(states, cex.actions), result.proof)
+          } else
+            return result
+              as SafetyResult<MddProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>>
+        }
+
+        override fun check():
+          SafetyResult<MddProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
+          return check(mddConfig.initPrec.predPrec(xcfa))
+        }
+      }
+    } else {
+      baseChecker(monolithicExpr)
+    })
+      as SafetyChecker<MddProof, Trace<ExprState, ExprAction>, UnitPrec>
+
+  return SafetyChecker<LocationInvariants, Trace<ExprState, ExprAction>, UnitPrec> {
+    val result = checker.check()
     if (result.isUnsafe) {
       SafetyResult.unsafe(result.asUnsafe().cex, LocationInvariants())
     } else {

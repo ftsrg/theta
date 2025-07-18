@@ -20,8 +20,8 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddSinglePathExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public final class TraceProvider implements MddGraph.CleanupListener {
     public static boolean verbose = false;
@@ -48,10 +48,10 @@ public final class TraceProvider implements MddGraph.CleanupListener {
             MddHandle initialStates,
             MddVariableHandle highestAffectedVariable) {
 
-        MddHandle alreadyExplored = targetStates;
         MddHandle currentState = targetStates;
-        final List<MddHandle> states = new ArrayList<>();
-        states.add(targetStates);
+        MddHandle alreadyExplored = currentState;
+        final Stack<MddHandle> states = new Stack<>();
+        states.push(currentState);
 
         while (MddInterpreter.calculateNonzeroCount(currentState.intersection(initialStates))
                 <= 0) {
@@ -62,9 +62,14 @@ public final class TraceProvider implements MddGraph.CleanupListener {
                                     reversedNextStateRelation,
                                     highestAffectedVariable)
                             .minus(alreadyExplored);
-            currentState = MddSinglePathExtractor.INSTANCE.transform((MddHandle) newLayer);
-            states.add(currentState);
-            alreadyExplored = (MddHandle) alreadyExplored.union(currentState);
+            if (MddInterpreter.calculateNonzeroCount(newLayer) > 0) {
+                currentState = MddSinglePathExtractor.INSTANCE.transform((MddHandle) newLayer);
+                states.push(currentState);
+                alreadyExplored = (MddHandle) alreadyExplored.union(currentState);
+            } else {
+                states.pop();
+                currentState = states.peek();
+            }
         }
 
         return Lists.reverse(states);
