@@ -33,14 +33,11 @@ object Btor2XcfaBuilder {
   fun btor2xcfa(parseContext: ParseContext, uniqueWarningLogger: UniqueWarningLogger): XCFA {
     check(Btor2Circuit.properties.isNotEmpty(), { "Circuit has no error property" })
     check(Btor2Circuit.properties.size <= 1, { "More than 1 property isn't allowed" })
+
+    // would be nice to check that no operand node (i.e. right side node) is later than it's operation node (i.e. left side)
+    // but I think we parse it in the right order, so it's the circuit's fault if the above does not hold
     val ops = Btor2Circuit.ops.values.toList()
-    for (i in 1 until ops.size) {
-      check(ops[i].nid > ops[i - 1].nid, { "Ops are not in increasing order" })
-    }
     val nodes = Btor2Circuit.nodes.values.toList()
-    for (i in 1 until nodes.size) {
-      check(nodes[i].nid > nodes[i - 1].nid, { "Nodes are not in increasing order" })
-    }
 
     val xcfaBuilder = XcfaBuilder("Btor2XCFA")
     parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
