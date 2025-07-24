@@ -62,6 +62,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
+import kotlin.jvm.optionals.getOrNull
 import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
@@ -123,7 +124,17 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
             )
           )
         }
-        .toList()
+        .toList() + 
+        (proc.errorLoc.getOrNull()?.let { errorLoc ->
+        listOf(
+          SequenceStmt.of(
+            listOf(
+              AssumeStmt.of(Eq(locVar.ref, int(locMap[errorLoc]!!))),
+              AssignStmt.of(locVar, cast(int(locMap[errorLoc]!!), locVar.type)),
+            )
+          )
+        )
+      } ?: emptyList<Stmt>())
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
