@@ -1,0 +1,10 @@
+PROCEDURE
+
+(* Two constraints, uses po and rf only *)
+
+procedure intersection_acyclic(A, B) =
+    acyclic A | B
+end
+
+call intersection_acyclic(po, rf)
+call intersection_acyclic(po, po^-1)

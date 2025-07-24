@@ -1,0 +1,5 @@
+NOLOSS
+
+procedure noSendLost(W, IW, T, rf) =
+    empty ((W\IW) & T) \ domain(rf) as noSendLost
+end

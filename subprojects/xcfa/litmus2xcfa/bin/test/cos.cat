@@ -1,0 +1,9 @@
+COS
+
+let coi = co & int
+let coe = co & ext
+
+let invrf = rf^-1
+let fr = (invrf ; co) \ id
+let fri = fr & int
+let fre = fr & ext

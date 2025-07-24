@@ -1,0 +1,7 @@
+main process cfa {
+	var x : int
+
+	init loc L1
+
+    L1 -> L1 { x := 2 * x }
+}

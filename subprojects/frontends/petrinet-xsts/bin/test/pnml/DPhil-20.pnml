@@ -1,0 +1,1648 @@
+<?xml version="1.0"?>
+<pnml>
+  <net id="net1" type="EPNML11">
+    <name>
+      <text>DPhil-20</text>
+    </name>
+    <place id="idwl1">
+      <name>
+        <value>WaitLeft1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr1">
+      <name>
+        <value>WaitRight1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl1">
+      <name>
+        <value>HasLeft1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr1">
+      <name>
+        <value>HasRight1</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid1">
+      <name>
+        <value>Idle1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv1">
+      <name>
+        <value>Fork1</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge1">
+      <name>
+        <value>GoEat1</value>
+      </name>
+    </transition>
+    <transition id="idgl1">
+      <name>
+        <value>GetLeft1</value>
+      </name>
+    </transition>
+    <transition id="idgr1">
+      <name>
+        <value>GetRight1</value>
+      </name>
+    </transition>
+    <transition id="idrl1">
+      <name>
+        <value>Release1</value>
+      </name>
+    </transition>
+    <arc id="ida1" source="idge1" target="idwl1" />
+    <arc id="idb1" source="idge1" target="idwr1" />
+    <arc id="idc1" source="idwl1" target="idgl1" />
+    <arc id="idd1" source="idwr1" target="idgr1" />
+    <arc id="ide1" source="idgl1" target="idhl1" />
+    <arc id="idf1" source="idgr1" target="idhr1" />
+    <arc id="idg1" source="idhl1" target="idrl1" />
+    <arc id="idh1" source="idhr1" target="idrl1" />
+    <arc id="idi1" source="idrl1" target="idv1" />
+    <arc id="idj1" source="idv1" target="idgr1" />
+    <arc id="idk1" source="idrl1" target="idv2" />
+    <arc id="idl1" source="idv2" target="idgl1" />
+    <arc id="idm1" source="idrl1" target="idid1" />
+    <arc id="idn1" source="idid1" target="idge1" />
+    <place id="idwl2">
+      <name>
+        <value>WaitLeft2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr2">
+      <name>
+        <value>WaitRight2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl2">
+      <name>
+        <value>HasLeft2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr2">
+      <name>
+        <value>HasRight2</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid2">
+      <name>
+        <value>Idle2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv2">
+      <name>
+        <value>Fork2</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge2">
+      <name>
+        <value>GoEat2</value>
+      </name>
+    </transition>
+    <transition id="idgl2">
+      <name>
+        <value>GetLeft2</value>
+      </name>
+    </transition>
+    <transition id="idgr2">
+      <name>
+        <value>GetRight2</value>
+      </name>
+    </transition>
+    <transition id="idrl2">
+      <name>
+        <value>Release2</value>
+      </name>
+    </transition>
+    <arc id="ida2" source="idge2" target="idwl2" />
+    <arc id="idb2" source="idge2" target="idwr2" />
+    <arc id="idc2" source="idwl2" target="idgl2" />
+    <arc id="idd2" source="idwr2" target="idgr2" />
+    <arc id="ide2" source="idgl2" target="idhl2" />
+    <arc id="idf2" source="idgr2" target="idhr2" />
+    <arc id="idg2" source="idhl2" target="idrl2" />
+    <arc id="idh2" source="idhr2" target="idrl2" />
+    <arc id="idi2" source="idrl2" target="idv2" />
+    <arc id="idj2" source="idv2" target="idgr2" />
+    <arc id="idk2" source="idrl2" target="idv3" />
+    <arc id="idl2" source="idv3" target="idgl2" />
+    <arc id="idm2" source="idrl2" target="idid2" />
+    <arc id="idn2" source="idid2" target="idge2" />
+    <place id="idwl3">
+      <name>
+        <value>WaitLeft3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr3">
+      <name>
+        <value>WaitRight3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl3">
+      <name>
+        <value>HasLeft3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr3">
+      <name>
+        <value>HasRight3</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid3">
+      <name>
+        <value>Idle3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv3">
+      <name>
+        <value>Fork3</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge3">
+      <name>
+        <value>GoEat3</value>
+      </name>
+    </transition>
+    <transition id="idgl3">
+      <name>
+        <value>GetLeft3</value>
+      </name>
+    </transition>
+    <transition id="idgr3">
+      <name>
+        <value>GetRight3</value>
+      </name>
+    </transition>
+    <transition id="idrl3">
+      <name>
+        <value>Release3</value>
+      </name>
+    </transition>
+    <arc id="ida3" source="idge3" target="idwl3" />
+    <arc id="idb3" source="idge3" target="idwr3" />
+    <arc id="idc3" source="idwl3" target="idgl3" />
+    <arc id="idd3" source="idwr3" target="idgr3" />
+    <arc id="ide3" source="idgl3" target="idhl3" />
+    <arc id="idf3" source="idgr3" target="idhr3" />
+    <arc id="idg3" source="idhl3" target="idrl3" />
+    <arc id="idh3" source="idhr3" target="idrl3" />
+    <arc id="idi3" source="idrl3" target="idv3" />
+    <arc id="idj3" source="idv3" target="idgr3" />
+    <arc id="idk3" source="idrl3" target="idv4" />
+    <arc id="idl3" source="idv4" target="idgl3" />
+    <arc id="idm3" source="idrl3" target="idid3" />
+    <arc id="idn3" source="idid3" target="idge3" />
+    <place id="idwl4">
+      <name>
+        <value>WaitLeft4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr4">
+      <name>
+        <value>WaitRight4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl4">
+      <name>
+        <value>HasLeft4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr4">
+      <name>
+        <value>HasRight4</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid4">
+      <name>
+        <value>Idle4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv4">
+      <name>
+        <value>Fork4</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge4">
+      <name>
+        <value>GoEat4</value>
+      </name>
+    </transition>
+    <transition id="idgl4">
+      <name>
+        <value>GetLeft4</value>
+      </name>
+    </transition>
+    <transition id="idgr4">
+      <name>
+        <value>GetRight4</value>
+      </name>
+    </transition>
+    <transition id="idrl4">
+      <name>
+        <value>Release4</value>
+      </name>
+    </transition>
+    <arc id="ida4" source="idge4" target="idwl4" />
+    <arc id="idb4" source="idge4" target="idwr4" />
+    <arc id="idc4" source="idwl4" target="idgl4" />
+    <arc id="idd4" source="idwr4" target="idgr4" />
+    <arc id="ide4" source="idgl4" target="idhl4" />
+    <arc id="idf4" source="idgr4" target="idhr4" />
+    <arc id="idg4" source="idhl4" target="idrl4" />
+    <arc id="idh4" source="idhr4" target="idrl4" />
+    <arc id="idi4" source="idrl4" target="idv4" />
+    <arc id="idj4" source="idv4" target="idgr4" />
+    <arc id="idk4" source="idrl4" target="idv5" />
+    <arc id="idl4" source="idv5" target="idgl4" />
+    <arc id="idm4" source="idrl4" target="idid4" />
+    <arc id="idn4" source="idid4" target="idge4" />
+    <place id="idwl5">
+      <name>
+        <value>WaitLeft5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr5">
+      <name>
+        <value>WaitRight5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl5">
+      <name>
+        <value>HasLeft5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr5">
+      <name>
+        <value>HasRight5</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid5">
+      <name>
+        <value>Idle5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv5">
+      <name>
+        <value>Fork5</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge5">
+      <name>
+        <value>GoEat5</value>
+      </name>
+    </transition>
+    <transition id="idgl5">
+      <name>
+        <value>GetLeft5</value>
+      </name>
+    </transition>
+    <transition id="idgr5">
+      <name>
+        <value>GetRight5</value>
+      </name>
+    </transition>
+    <transition id="idrl5">
+      <name>
+        <value>Release5</value>
+      </name>
+    </transition>
+    <arc id="ida5" source="idge5" target="idwl5" />
+    <arc id="idb5" source="idge5" target="idwr5" />
+    <arc id="idc5" source="idwl5" target="idgl5" />
+    <arc id="idd5" source="idwr5" target="idgr5" />
+    <arc id="ide5" source="idgl5" target="idhl5" />
+    <arc id="idf5" source="idgr5" target="idhr5" />
+    <arc id="idg5" source="idhl5" target="idrl5" />
+    <arc id="idh5" source="idhr5" target="idrl5" />
+    <arc id="idi5" source="idrl5" target="idv5" />
+    <arc id="idj5" source="idv5" target="idgr5" />
+    <arc id="idk5" source="idrl5" target="idv6" />
+    <arc id="idl5" source="idv6" target="idgl5" />
+    <arc id="idm5" source="idrl5" target="idid5" />
+    <arc id="idn5" source="idid5" target="idge5" />
+    <place id="idwl6">
+      <name>
+        <value>WaitLeft6</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr6">
+      <name>
+        <value>WaitRight6</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl6">
+      <name>
+        <value>HasLeft6</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr6">
+      <name>
+        <value>HasRight6</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid6">
+      <name>
+        <value>Idle6</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv6">
+      <name>
+        <value>Fork6</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge6">
+      <name>
+        <value>GoEat6</value>
+      </name>
+    </transition>
+    <transition id="idgl6">
+      <name>
+        <value>GetLeft6</value>
+      </name>
+    </transition>
+    <transition id="idgr6">
+      <name>
+        <value>GetRight6</value>
+      </name>
+    </transition>
+    <transition id="idrl6">
+      <name>
+        <value>Release6</value>
+      </name>
+    </transition>
+    <arc id="ida6" source="idge6" target="idwl6" />
+    <arc id="idb6" source="idge6" target="idwr6" />
+    <arc id="idc6" source="idwl6" target="idgl6" />
+    <arc id="idd6" source="idwr6" target="idgr6" />
+    <arc id="ide6" source="idgl6" target="idhl6" />
+    <arc id="idf6" source="idgr6" target="idhr6" />
+    <arc id="idg6" source="idhl6" target="idrl6" />
+    <arc id="idh6" source="idhr6" target="idrl6" />
+    <arc id="idi6" source="idrl6" target="idv6" />
+    <arc id="idj6" source="idv6" target="idgr6" />
+    <arc id="idk6" source="idrl6" target="idv7" />
+    <arc id="idl6" source="idv7" target="idgl6" />
+    <arc id="idm6" source="idrl6" target="idid6" />
+    <arc id="idn6" source="idid6" target="idge6" />
+    <place id="idwl7">
+      <name>
+        <value>WaitLeft7</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr7">
+      <name>
+        <value>WaitRight7</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl7">
+      <name>
+        <value>HasLeft7</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr7">
+      <name>
+        <value>HasRight7</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid7">
+      <name>
+        <value>Idle7</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv7">
+      <name>
+        <value>Fork7</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge7">
+      <name>
+        <value>GoEat7</value>
+      </name>
+    </transition>
+    <transition id="idgl7">
+      <name>
+        <value>GetLeft7</value>
+      </name>
+    </transition>
+    <transition id="idgr7">
+      <name>
+        <value>GetRight7</value>
+      </name>
+    </transition>
+    <transition id="idrl7">
+      <name>
+        <value>Release7</value>
+      </name>
+    </transition>
+    <arc id="ida7" source="idge7" target="idwl7" />
+    <arc id="idb7" source="idge7" target="idwr7" />
+    <arc id="idc7" source="idwl7" target="idgl7" />
+    <arc id="idd7" source="idwr7" target="idgr7" />
+    <arc id="ide7" source="idgl7" target="idhl7" />
+    <arc id="idf7" source="idgr7" target="idhr7" />
+    <arc id="idg7" source="idhl7" target="idrl7" />
+    <arc id="idh7" source="idhr7" target="idrl7" />
+    <arc id="idi7" source="idrl7" target="idv7" />
+    <arc id="idj7" source="idv7" target="idgr7" />
+    <arc id="idk7" source="idrl7" target="idv8" />
+    <arc id="idl7" source="idv8" target="idgl7" />
+    <arc id="idm7" source="idrl7" target="idid7" />
+    <arc id="idn7" source="idid7" target="idge7" />
+    <place id="idwl8">
+      <name>
+        <value>WaitLeft8</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr8">
+      <name>
+        <value>WaitRight8</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl8">
+      <name>
+        <value>HasLeft8</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr8">
+      <name>
+        <value>HasRight8</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid8">
+      <name>
+        <value>Idle8</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv8">
+      <name>
+        <value>Fork8</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge8">
+      <name>
+        <value>GoEat8</value>
+      </name>
+    </transition>
+    <transition id="idgl8">
+      <name>
+        <value>GetLeft8</value>
+      </name>
+    </transition>
+    <transition id="idgr8">
+      <name>
+        <value>GetRight8</value>
+      </name>
+    </transition>
+    <transition id="idrl8">
+      <name>
+        <value>Release8</value>
+      </name>
+    </transition>
+    <arc id="ida8" source="idge8" target="idwl8" />
+    <arc id="idb8" source="idge8" target="idwr8" />
+    <arc id="idc8" source="idwl8" target="idgl8" />
+    <arc id="idd8" source="idwr8" target="idgr8" />
+    <arc id="ide8" source="idgl8" target="idhl8" />
+    <arc id="idf8" source="idgr8" target="idhr8" />
+    <arc id="idg8" source="idhl8" target="idrl8" />
+    <arc id="idh8" source="idhr8" target="idrl8" />
+    <arc id="idi8" source="idrl8" target="idv8" />
+    <arc id="idj8" source="idv8" target="idgr8" />
+    <arc id="idk8" source="idrl8" target="idv9" />
+    <arc id="idl8" source="idv9" target="idgl8" />
+    <arc id="idm8" source="idrl8" target="idid8" />
+    <arc id="idn8" source="idid8" target="idge8" />
+    <place id="idwl9">
+      <name>
+        <value>WaitLeft9</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr9">
+      <name>
+        <value>WaitRight9</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl9">
+      <name>
+        <value>HasLeft9</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr9">
+      <name>
+        <value>HasRight9</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid9">
+      <name>
+        <value>Idle9</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv9">
+      <name>
+        <value>Fork9</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge9">
+      <name>
+        <value>GoEat9</value>
+      </name>
+    </transition>
+    <transition id="idgl9">
+      <name>
+        <value>GetLeft9</value>
+      </name>
+    </transition>
+    <transition id="idgr9">
+      <name>
+        <value>GetRight9</value>
+      </name>
+    </transition>
+    <transition id="idrl9">
+      <name>
+        <value>Release9</value>
+      </name>
+    </transition>
+    <arc id="ida9" source="idge9" target="idwl9" />
+    <arc id="idb9" source="idge9" target="idwr9" />
+    <arc id="idc9" source="idwl9" target="idgl9" />
+    <arc id="idd9" source="idwr9" target="idgr9" />
+    <arc id="ide9" source="idgl9" target="idhl9" />
+    <arc id="idf9" source="idgr9" target="idhr9" />
+    <arc id="idg9" source="idhl9" target="idrl9" />
+    <arc id="idh9" source="idhr9" target="idrl9" />
+    <arc id="idi9" source="idrl9" target="idv9" />
+    <arc id="idj9" source="idv9" target="idgr9" />
+    <arc id="idk9" source="idrl9" target="idv10" />
+    <arc id="idl9" source="idv10" target="idgl9" />
+    <arc id="idm9" source="idrl9" target="idid9" />
+    <arc id="idn9" source="idid9" target="idge9" />
+    <place id="idwl10">
+      <name>
+        <value>WaitLeft10</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr10">
+      <name>
+        <value>WaitRight10</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl10">
+      <name>
+        <value>HasLeft10</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr10">
+      <name>
+        <value>HasRight10</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid10">
+      <name>
+        <value>Idle10</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv10">
+      <name>
+        <value>Fork10</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge10">
+      <name>
+        <value>GoEat10</value>
+      </name>
+    </transition>
+    <transition id="idgl10">
+      <name>
+        <value>GetLeft10</value>
+      </name>
+    </transition>
+    <transition id="idgr10">
+      <name>
+        <value>GetRight10</value>
+      </name>
+    </transition>
+    <transition id="idrl10">
+      <name>
+        <value>Release10</value>
+      </name>
+    </transition>
+    <arc id="ida10" source="idge10" target="idwl10" />
+    <arc id="idb10" source="idge10" target="idwr10" />
+    <arc id="idc10" source="idwl10" target="idgl10" />
+    <arc id="idd10" source="idwr10" target="idgr10" />
+    <arc id="ide10" source="idgl10" target="idhl10" />
+    <arc id="idf10" source="idgr10" target="idhr10" />
+    <arc id="idg10" source="idhl10" target="idrl10" />
+    <arc id="idh10" source="idhr10" target="idrl10" />
+    <arc id="idi10" source="idrl10" target="idv10" />
+    <arc id="idj10" source="idv10" target="idgr10" />
+    <arc id="idk10" source="idrl10" target="idv11" />
+    <arc id="idl10" source="idv11" target="idgl10" />
+    <arc id="idm10" source="idrl10" target="idid10" />
+    <arc id="idn10" source="idid10" target="idge10" />
+    <place id="idwl11">
+      <name>
+        <value>WaitLeft11</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr11">
+      <name>
+        <value>WaitRight11</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl11">
+      <name>
+        <value>HasLeft11</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr11">
+      <name>
+        <value>HasRight11</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid11">
+      <name>
+        <value>Idle11</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv11">
+      <name>
+        <value>Fork11</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge11">
+      <name>
+        <value>GoEat11</value>
+      </name>
+    </transition>
+    <transition id="idgl11">
+      <name>
+        <value>GetLeft11</value>
+      </name>
+    </transition>
+    <transition id="idgr11">
+      <name>
+        <value>GetRight11</value>
+      </name>
+    </transition>
+    <transition id="idrl11">
+      <name>
+        <value>Release11</value>
+      </name>
+    </transition>
+    <arc id="ida11" source="idge11" target="idwl11" />
+    <arc id="idb11" source="idge11" target="idwr11" />
+    <arc id="idc11" source="idwl11" target="idgl11" />
+    <arc id="idd11" source="idwr11" target="idgr11" />
+    <arc id="ide11" source="idgl11" target="idhl11" />
+    <arc id="idf11" source="idgr11" target="idhr11" />
+    <arc id="idg11" source="idhl11" target="idrl11" />
+    <arc id="idh11" source="idhr11" target="idrl11" />
+    <arc id="idi11" source="idrl11" target="idv11" />
+    <arc id="idj11" source="idv11" target="idgr11" />
+    <arc id="idk11" source="idrl11" target="idv12" />
+    <arc id="idl11" source="idv12" target="idgl11" />
+    <arc id="idm11" source="idrl11" target="idid11" />
+    <arc id="idn11" source="idid11" target="idge11" />
+    <place id="idwl12">
+      <name>
+        <value>WaitLeft12</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr12">
+      <name>
+        <value>WaitRight12</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl12">
+      <name>
+        <value>HasLeft12</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr12">
+      <name>
+        <value>HasRight12</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid12">
+      <name>
+        <value>Idle12</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv12">
+      <name>
+        <value>Fork12</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge12">
+      <name>
+        <value>GoEat12</value>
+      </name>
+    </transition>
+    <transition id="idgl12">
+      <name>
+        <value>GetLeft12</value>
+      </name>
+    </transition>
+    <transition id="idgr12">
+      <name>
+        <value>GetRight12</value>
+      </name>
+    </transition>
+    <transition id="idrl12">
+      <name>
+        <value>Release12</value>
+      </name>
+    </transition>
+    <arc id="ida12" source="idge12" target="idwl12" />
+    <arc id="idb12" source="idge12" target="idwr12" />
+    <arc id="idc12" source="idwl12" target="idgl12" />
+    <arc id="idd12" source="idwr12" target="idgr12" />
+    <arc id="ide12" source="idgl12" target="idhl12" />
+    <arc id="idf12" source="idgr12" target="idhr12" />
+    <arc id="idg12" source="idhl12" target="idrl12" />
+    <arc id="idh12" source="idhr12" target="idrl12" />
+    <arc id="idi12" source="idrl12" target="idv12" />
+    <arc id="idj12" source="idv12" target="idgr12" />
+    <arc id="idk12" source="idrl12" target="idv13" />
+    <arc id="idl12" source="idv13" target="idgl12" />
+    <arc id="idm12" source="idrl12" target="idid12" />
+    <arc id="idn12" source="idid12" target="idge12" />
+    <place id="idwl13">
+      <name>
+        <value>WaitLeft13</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr13">
+      <name>
+        <value>WaitRight13</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl13">
+      <name>
+        <value>HasLeft13</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr13">
+      <name>
+        <value>HasRight13</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid13">
+      <name>
+        <value>Idle13</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv13">
+      <name>
+        <value>Fork13</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge13">
+      <name>
+        <value>GoEat13</value>
+      </name>
+    </transition>
+    <transition id="idgl13">
+      <name>
+        <value>GetLeft13</value>
+      </name>
+    </transition>
+    <transition id="idgr13">
+      <name>
+        <value>GetRight13</value>
+      </name>
+    </transition>
+    <transition id="idrl13">
+      <name>
+        <value>Release13</value>
+      </name>
+    </transition>
+    <arc id="ida13" source="idge13" target="idwl13" />
+    <arc id="idb13" source="idge13" target="idwr13" />
+    <arc id="idc13" source="idwl13" target="idgl13" />
+    <arc id="idd13" source="idwr13" target="idgr13" />
+    <arc id="ide13" source="idgl13" target="idhl13" />
+    <arc id="idf13" source="idgr13" target="idhr13" />
+    <arc id="idg13" source="idhl13" target="idrl13" />
+    <arc id="idh13" source="idhr13" target="idrl13" />
+    <arc id="idi13" source="idrl13" target="idv13" />
+    <arc id="idj13" source="idv13" target="idgr13" />
+    <arc id="idk13" source="idrl13" target="idv14" />
+    <arc id="idl13" source="idv14" target="idgl13" />
+    <arc id="idm13" source="idrl13" target="idid13" />
+    <arc id="idn13" source="idid13" target="idge13" />
+    <place id="idwl14">
+      <name>
+        <value>WaitLeft14</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr14">
+      <name>
+        <value>WaitRight14</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl14">
+      <name>
+        <value>HasLeft14</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr14">
+      <name>
+        <value>HasRight14</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid14">
+      <name>
+        <value>Idle14</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv14">
+      <name>
+        <value>Fork14</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge14">
+      <name>
+        <value>GoEat14</value>
+      </name>
+    </transition>
+    <transition id="idgl14">
+      <name>
+        <value>GetLeft14</value>
+      </name>
+    </transition>
+    <transition id="idgr14">
+      <name>
+        <value>GetRight14</value>
+      </name>
+    </transition>
+    <transition id="idrl14">
+      <name>
+        <value>Release14</value>
+      </name>
+    </transition>
+    <arc id="ida14" source="idge14" target="idwl14" />
+    <arc id="idb14" source="idge14" target="idwr14" />
+    <arc id="idc14" source="idwl14" target="idgl14" />
+    <arc id="idd14" source="idwr14" target="idgr14" />
+    <arc id="ide14" source="idgl14" target="idhl14" />
+    <arc id="idf14" source="idgr14" target="idhr14" />
+    <arc id="idg14" source="idhl14" target="idrl14" />
+    <arc id="idh14" source="idhr14" target="idrl14" />
+    <arc id="idi14" source="idrl14" target="idv14" />
+    <arc id="idj14" source="idv14" target="idgr14" />
+    <arc id="idk14" source="idrl14" target="idv15" />
+    <arc id="idl14" source="idv15" target="idgl14" />
+    <arc id="idm14" source="idrl14" target="idid14" />
+    <arc id="idn14" source="idid14" target="idge14" />
+    <place id="idwl15">
+      <name>
+        <value>WaitLeft15</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr15">
+      <name>
+        <value>WaitRight15</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl15">
+      <name>
+        <value>HasLeft15</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr15">
+      <name>
+        <value>HasRight15</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid15">
+      <name>
+        <value>Idle15</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv15">
+      <name>
+        <value>Fork15</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge15">
+      <name>
+        <value>GoEat15</value>
+      </name>
+    </transition>
+    <transition id="idgl15">
+      <name>
+        <value>GetLeft15</value>
+      </name>
+    </transition>
+    <transition id="idgr15">
+      <name>
+        <value>GetRight15</value>
+      </name>
+    </transition>
+    <transition id="idrl15">
+      <name>
+        <value>Release15</value>
+      </name>
+    </transition>
+    <arc id="ida15" source="idge15" target="idwl15" />
+    <arc id="idb15" source="idge15" target="idwr15" />
+    <arc id="idc15" source="idwl15" target="idgl15" />
+    <arc id="idd15" source="idwr15" target="idgr15" />
+    <arc id="ide15" source="idgl15" target="idhl15" />
+    <arc id="idf15" source="idgr15" target="idhr15" />
+    <arc id="idg15" source="idhl15" target="idrl15" />
+    <arc id="idh15" source="idhr15" target="idrl15" />
+    <arc id="idi15" source="idrl15" target="idv15" />
+    <arc id="idj15" source="idv15" target="idgr15" />
+    <arc id="idk15" source="idrl15" target="idv16" />
+    <arc id="idl15" source="idv16" target="idgl15" />
+    <arc id="idm15" source="idrl15" target="idid15" />
+    <arc id="idn15" source="idid15" target="idge15" />
+    <place id="idwl16">
+      <name>
+        <value>WaitLeft16</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr16">
+      <name>
+        <value>WaitRight16</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl16">
+      <name>
+        <value>HasLeft16</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr16">
+      <name>
+        <value>HasRight16</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid16">
+      <name>
+        <value>Idle16</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv16">
+      <name>
+        <value>Fork16</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge16">
+      <name>
+        <value>GoEat16</value>
+      </name>
+    </transition>
+    <transition id="idgl16">
+      <name>
+        <value>GetLeft16</value>
+      </name>
+    </transition>
+    <transition id="idgr16">
+      <name>
+        <value>GetRight16</value>
+      </name>
+    </transition>
+    <transition id="idrl16">
+      <name>
+        <value>Release16</value>
+      </name>
+    </transition>
+    <arc id="ida16" source="idge16" target="idwl16" />
+    <arc id="idb16" source="idge16" target="idwr16" />
+    <arc id="idc16" source="idwl16" target="idgl16" />
+    <arc id="idd16" source="idwr16" target="idgr16" />
+    <arc id="ide16" source="idgl16" target="idhl16" />
+    <arc id="idf16" source="idgr16" target="idhr16" />
+    <arc id="idg16" source="idhl16" target="idrl16" />
+    <arc id="idh16" source="idhr16" target="idrl16" />
+    <arc id="idi16" source="idrl16" target="idv16" />
+    <arc id="idj16" source="idv16" target="idgr16" />
+    <arc id="idk16" source="idrl16" target="idv17" />
+    <arc id="idl16" source="idv17" target="idgl16" />
+    <arc id="idm16" source="idrl16" target="idid16" />
+    <arc id="idn16" source="idid16" target="idge16" />
+    <place id="idwl17">
+      <name>
+        <value>WaitLeft17</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr17">
+      <name>
+        <value>WaitRight17</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl17">
+      <name>
+        <value>HasLeft17</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr17">
+      <name>
+        <value>HasRight17</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid17">
+      <name>
+        <value>Idle17</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv17">
+      <name>
+        <value>Fork17</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge17">
+      <name>
+        <value>GoEat17</value>
+      </name>
+    </transition>
+    <transition id="idgl17">
+      <name>
+        <value>GetLeft17</value>
+      </name>
+    </transition>
+    <transition id="idgr17">
+      <name>
+        <value>GetRight17</value>
+      </name>
+    </transition>
+    <transition id="idrl17">
+      <name>
+        <value>Release17</value>
+      </name>
+    </transition>
+    <arc id="ida17" source="idge17" target="idwl17" />
+    <arc id="idb17" source="idge17" target="idwr17" />
+    <arc id="idc17" source="idwl17" target="idgl17" />
+    <arc id="idd17" source="idwr17" target="idgr17" />
+    <arc id="ide17" source="idgl17" target="idhl17" />
+    <arc id="idf17" source="idgr17" target="idhr17" />
+    <arc id="idg17" source="idhl17" target="idrl17" />
+    <arc id="idh17" source="idhr17" target="idrl17" />
+    <arc id="idi17" source="idrl17" target="idv17" />
+    <arc id="idj17" source="idv17" target="idgr17" />
+    <arc id="idk17" source="idrl17" target="idv18" />
+    <arc id="idl17" source="idv18" target="idgl17" />
+    <arc id="idm17" source="idrl17" target="idid17" />
+    <arc id="idn17" source="idid17" target="idge17" />
+    <place id="idwl18">
+      <name>
+        <value>WaitLeft18</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr18">
+      <name>
+        <value>WaitRight18</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl18">
+      <name>
+        <value>HasLeft18</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr18">
+      <name>
+        <value>HasRight18</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid18">
+      <name>
+        <value>Idle18</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv18">
+      <name>
+        <value>Fork18</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge18">
+      <name>
+        <value>GoEat18</value>
+      </name>
+    </transition>
+    <transition id="idgl18">
+      <name>
+        <value>GetLeft18</value>
+      </name>
+    </transition>
+    <transition id="idgr18">
+      <name>
+        <value>GetRight18</value>
+      </name>
+    </transition>
+    <transition id="idrl18">
+      <name>
+        <value>Release18</value>
+      </name>
+    </transition>
+    <arc id="ida18" source="idge18" target="idwl18" />
+    <arc id="idb18" source="idge18" target="idwr18" />
+    <arc id="idc18" source="idwl18" target="idgl18" />
+    <arc id="idd18" source="idwr18" target="idgr18" />
+    <arc id="ide18" source="idgl18" target="idhl18" />
+    <arc id="idf18" source="idgr18" target="idhr18" />
+    <arc id="idg18" source="idhl18" target="idrl18" />
+    <arc id="idh18" source="idhr18" target="idrl18" />
+    <arc id="idi18" source="idrl18" target="idv18" />
+    <arc id="idj18" source="idv18" target="idgr18" />
+    <arc id="idk18" source="idrl18" target="idv19" />
+    <arc id="idl18" source="idv19" target="idgl18" />
+    <arc id="idm18" source="idrl18" target="idid18" />
+    <arc id="idn18" source="idid18" target="idge18" />
+    <place id="idwl19">
+      <name>
+        <value>WaitLeft19</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr19">
+      <name>
+        <value>WaitRight19</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl19">
+      <name>
+        <value>HasLeft19</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr19">
+      <name>
+        <value>HasRight19</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid19">
+      <name>
+        <value>Idle19</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv19">
+      <name>
+        <value>Fork19</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge19">
+      <name>
+        <value>GoEat19</value>
+      </name>
+    </transition>
+    <transition id="idgl19">
+      <name>
+        <value>GetLeft19</value>
+      </name>
+    </transition>
+    <transition id="idgr19">
+      <name>
+        <value>GetRight19</value>
+      </name>
+    </transition>
+    <transition id="idrl19">
+      <name>
+        <value>Release19</value>
+      </name>
+    </transition>
+    <arc id="ida19" source="idge19" target="idwl19" />
+    <arc id="idb19" source="idge19" target="idwr19" />
+    <arc id="idc19" source="idwl19" target="idgl19" />
+    <arc id="idd19" source="idwr19" target="idgr19" />
+    <arc id="ide19" source="idgl19" target="idhl19" />
+    <arc id="idf19" source="idgr19" target="idhr19" />
+    <arc id="idg19" source="idhl19" target="idrl19" />
+    <arc id="idh19" source="idhr19" target="idrl19" />
+    <arc id="idi19" source="idrl19" target="idv19" />
+    <arc id="idj19" source="idv19" target="idgr19" />
+    <arc id="idk19" source="idrl19" target="idv20" />
+    <arc id="idl19" source="idv20" target="idgl19" />
+    <arc id="idm19" source="idrl19" target="idid19" />
+    <arc id="idn19" source="idid19" target="idge19" />
+    <place id="idwl20">
+      <name>
+        <value>WaitLeft20</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idwr20">
+      <name>
+        <value>WaitRight20</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhl20">
+      <name>
+        <value>HasLeft20</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idhr20">
+      <name>
+        <value>HasRight20</value>
+      </name>
+      <initialMarking>
+        <text>0</text>
+      </initialMarking>
+    </place>
+    <place id="idid20">
+      <name>
+        <value>Idle20</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <place id="idv20">
+      <name>
+        <value>Fork20</value>
+      </name>
+      <initialMarking>
+        <text>1</text>
+      </initialMarking>
+    </place>
+    <transition id="idge20">
+      <name>
+        <value>GoEat20</value>
+      </name>
+    </transition>
+    <transition id="idgl20">
+      <name>
+        <value>GetLeft20</value>
+      </name>
+    </transition>
+    <transition id="idgr20">
+      <name>
+        <value>GetRight20</value>
+      </name>
+    </transition>
+    <transition id="idrl20">
+      <name>
+        <value>Release20</value>
+      </name>
+    </transition>
+    <arc id="ida20" source="idge20" target="idwl20" />
+    <arc id="idb20" source="idge20" target="idwr20" />
+    <arc id="idc20" source="idwl20" target="idgl20" />
+    <arc id="idd20" source="idwr20" target="idgr20" />
+    <arc id="ide20" source="idgl20" target="idhl20" />
+    <arc id="idf20" source="idgr20" target="idhr20" />
+    <arc id="idg20" source="idhl20" target="idrl20" />
+    <arc id="idh20" source="idhr20" target="idrl20" />
+    <arc id="idi20" source="idrl20" target="idv20" />
+    <arc id="idj20" source="idv20" target="idgr20" />
+    <arc id="idk20" source="idrl20" target="idv1" />
+    <arc id="idl20" source="idv1" target="idgl20" />
+    <arc id="idm20" source="idrl20" target="idid20" />
+    <arc id="idn20" source="idid20" target="idge20" />
+  </net>
+</pnml>

@@ -1,0 +1,392 @@
+{
+  "name": "",
+  "vars": [],
+  "procedures": [
+    {
+      "name": "reach_error",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "reach_error_ret",
+              "type": "(Bv 1)"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "reach_error_ret",
+          "type": "(Bv 1)"
+        }
+      ],
+      "locs": [
+        {
+          "name": "reach_error_init",
+          "initial": true,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}"
+            }
+          }
+        },
+        {
+          "name": "reach_error_final",
+          "initial": false,
+          "final": true,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "reach_error_init",
+          "target": "reach_error_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "main_ret",
+              "type": "(Bv 32)"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "main_ret",
+          "type": "(Bv 32)"
+        },
+        {
+          "name": "main::f",
+          "type": "(Fp 8 24)"
+        },
+        {
+          "name": "main::d",
+          "type": "(Fp 11 53)"
+        },
+        {
+          "name": "main::ld",
+          "type": "(Fp 15 113)"
+        },
+        {
+          "name": "call___VERIFIER_nondet_float_ret54",
+          "type": "(Fp 8 24)"
+        },
+        {
+          "name": "call_reach_error_ret55",
+          "type": "(Bv 1)"
+        }
+      ],
+      "locs": [
+        {
+          "name": "main_init",
+          "initial": true,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 3,
+              "colNumberStart": 0,
+              "lineNumberStop": 8,
+              "colNumberStop": 0,
+              "offsetStart": 61,
+              "offsetEnd": 205,
+              "astNodes": [],
+              "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
+            }
+          }
+        },
+        {
+          "name": "main_final",
+          "initial": false,
+          "final": true,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 3,
+              "colNumberStart": 0,
+              "lineNumberStop": 8,
+              "colNumberStop": 0,
+              "offsetStart": 61,
+              "offsetEnd": 205,
+              "astNodes": [],
+              "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
+            }
+          }
+        },
+        {
+          "name": "__loc_801",
+          "initial": false,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "astNodes": [],
+              "sourceText": ""
+            }
+          }
+        },
+        {
+          "name": "main_error",
+          "initial": false,
+          "final": false,
+          "error": true,
+          "metadata": {
+            "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+            "content": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "__loc_801",
+          "target": "main_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 7,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 7,
+                    "colNumberStop": 46,
+                    "offsetStart": 161,
+                    "offsetEnd": 203,
+                    "astNodes": [],
+                    "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
+                  }
+                },
+                "content": "((assume (\u003d (ite (and (/\u003d #b00000000000000000000000000000000 (ite (\u003e main::ld (#b0 #b011111111111101 #b0001111010111000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000)) (/\u003d #b00000000000000000000000000000000 (ite (\u003c main::ld (#b0 #b011111111111101 #b0100011110101110000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000)))[choiceType\u003dALTERNATIVE_PATH]"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 3,
+              "colNumberStart": 0,
+              "lineNumberStop": 8,
+              "colNumberStop": 46,
+              "offsetStart": 61,
+              "offsetEnd": 205,
+              "astNodes": [],
+              "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}"
+            }
+          }
+        },
+        {
+          "source": "__loc_801",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 7,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 7,
+                    "colNumberStop": 46,
+                    "offsetStart": 161,
+                    "offsetEnd": 203,
+                    "astNodes": [],
+                    "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
+                  }
+                },
+                "content": "((assume (/\u003d (ite (and (/\u003d #b00000000000000000000000000000000 (ite (\u003e main::ld (#b0 #b011111111111101 #b0001111010111000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000)) (/\u003d #b00000000000000000000000000000000 (ite (\u003c main::ld (#b0 #b011111111111101 #b0100011110101110000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000)))[choiceType\u003dMAIN_PATH]"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 7,
+              "colNumberStart": 4,
+              "lineNumberStop": 7,
+              "colNumberStop": 46,
+              "offsetStart": 161,
+              "offsetEnd": 203,
+              "astNodes": [],
+              "sourceText": "if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();reach_error();reach_error();reach_error();reach_error();"
+            }
+          }
+        },
+        {
+          "source": "main_init",
+          "target": "__loc_801",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 39,
+                    "offsetStart": 78,
+                    "offsetEnd": 113,
+                    "astNodes": [],
+                    "sourceText": "float f \u003d __VERIFIER_nondet_float();"
+                  }
+                },
+                "content": "(havoc main::f)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 39,
+                    "offsetStart": 78,
+                    "offsetEnd": 113,
+                    "astNodes": [],
+                    "sourceText": "float f \u003d __VERIFIER_nondet_float();"
+                  }
+                },
+                "content": "(assume true)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 16,
+                    "offsetStart": 119,
+                    "offsetEnd": 131,
+                    "astNodes": [],
+                    "sourceText": "double d \u003d f;"
+                  }
+                },
+                "content": "(assign main::d (fptofp[11,53] main::f))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 6,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 6,
+                    "colNumberStop": 22,
+                    "offsetStart": 137,
+                    "offsetEnd": 155,
+                    "astNodes": [],
+                    "sourceText": "long double ld \u003d d;"
+                  }
+                },
+                "content": "(assign main::ld (fptofp[15,113] main::d))"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 3,
+              "colNumberStart": 0,
+              "lineNumberStop": 8,
+              "colNumberStop": 46,
+              "offsetStart": 61,
+              "offsetEnd": 205,
+              "astNodes": [],
+              "sourceText": "int main() {\n    float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();\n}float f \u003d __VERIFIER_nondet_float();\n    double d \u003d f;\n    long double ld \u003d d;\n    if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();float f \u003d __VERIFIER_nondet_float();double d \u003d f;double d \u003d f;double d \u003d f;double d \u003d f;long double ld \u003d d;long double ld \u003d d;long double ld \u003d d;long double ld \u003d d;if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();if(ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f) reach_error();"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "initProcedures": [
+    {
+      "params": [],
+      "procedure": "main"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+AArch64 LB+data+data-pos
+"DpDatadW Rfe DpDatadW PosWW Rfe"
+Prefetch=0:x=F,0:y=W,1:y=F,1:x=W
+Com=Rf Rf
+Orig=DpDatadW Rfe DpDatadW PosWW Rfe
+{
+0:X1=x;
+1:X1=x;
+}
+ P0           | P1           ;
+ STR W0,[X1]  | LDR W0,[X1]  ;
+ EOR W0,W0,W0 | ;
+ STR W0,[X1]  |  ;
+exists
+(x=2 /\ 0:X0=2 /\ 1:X0=1)

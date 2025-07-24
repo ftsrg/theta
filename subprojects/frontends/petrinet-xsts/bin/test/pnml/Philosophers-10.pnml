@@ -1,0 +1,663 @@
+<?xml version="1.0"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+<net id="Philosophers-PT-000010" type="http://www.pnml.org/version-2009/grammar/ptnet">
+<page id="page0">
+<name>
+<text>DefaultPage</text>
+</name>
+<place id="Think_1">
+<name>
+<text>Think_1</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_2">
+<name>
+<text>Think_2</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_3">
+<name>
+<text>Think_3</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_4">
+<name>
+<text>Think_4</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_5">
+<name>
+<text>Think_5</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_6">
+<name>
+<text>Think_6</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_7">
+<name>
+<text>Think_7</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_8">
+<name>
+<text>Think_8</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_9">
+<name>
+<text>Think_9</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Think_10">
+<name>
+<text>Think_10</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_1">
+<name>
+<text>Fork_1</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_2">
+<name>
+<text>Fork_2</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_3">
+<name>
+<text>Fork_3</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_5">
+<name>
+<text>Fork_5</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_4">
+<name>
+<text>Fork_4</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_7">
+<name>
+<text>Fork_7</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_6">
+<name>
+<text>Fork_6</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_9">
+<name>
+<text>Fork_9</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Fork_8">
+<name>
+<text>Fork_8</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Catch1_1">
+<name>
+<text>Catch1_1</text>
+</name>
+</place>
+<place id="Fork_10">
+<name>
+<text>Fork_10</text>
+</name>
+<initialMarking>
+<text>1</text>
+</initialMarking>
+</place>
+<place id="Catch1_3">
+<name>
+<text>Catch1_3</text>
+</name>
+</place>
+<place id="Catch1_2">
+<name>
+<text>Catch1_2</text>
+</name>
+</place>
+<place id="Catch1_5">
+<name>
+<text>Catch1_5</text>
+</name>
+</place>
+<place id="Catch1_4">
+<name>
+<text>Catch1_4</text>
+</name>
+</place>
+<place id="Catch1_7">
+<name>
+<text>Catch1_7</text>
+</name>
+</place>
+<place id="Catch1_6">
+<name>
+<text>Catch1_6</text>
+</name>
+</place>
+<place id="Catch1_9">
+<name>
+<text>Catch1_9</text>
+</name>
+</place>
+<place id="Catch1_8">
+<name>
+<text>Catch1_8</text>
+</name>
+</place>
+<place id="Catch2_2">
+<name>
+<text>Catch2_2</text>
+</name>
+</place>
+<place id="Catch2_3">
+<name>
+<text>Catch2_3</text>
+</name>
+</place>
+<place id="Catch1_10">
+<name>
+<text>Catch1_10</text>
+</name>
+</place>
+<place id="Catch2_1">
+<name>
+<text>Catch2_1</text>
+</name>
+</place>
+<place id="Catch2_6">
+<name>
+<text>Catch2_6</text>
+</name>
+</place>
+<place id="Catch2_7">
+<name>
+<text>Catch2_7</text>
+</name>
+</place>
+<place id="Catch2_4">
+<name>
+<text>Catch2_4</text>
+</name>
+</place>
+<place id="Catch2_5">
+<name>
+<text>Catch2_5</text>
+</name>
+</place>
+<place id="Catch2_10">
+<name>
+<text>Catch2_10</text>
+</name>
+</place>
+<place id="Eat_1">
+<name>
+<text>Eat_1</text>
+</name>
+</place>
+<place id="Catch2_8">
+<name>
+<text>Catch2_8</text>
+</name>
+</place>
+<place id="Catch2_9">
+<name>
+<text>Catch2_9</text>
+</name>
+</place>
+<place id="Eat_4">
+<name>
+<text>Eat_4</text>
+</name>
+</place>
+<place id="Eat_5">
+<name>
+<text>Eat_5</text>
+</name>
+</place>
+<place id="Eat_2">
+<name>
+<text>Eat_2</text>
+</name>
+</place>
+<place id="Eat_3">
+<name>
+<text>Eat_3</text>
+</name>
+</place>
+<place id="Eat_9">
+<name>
+<text>Eat_9</text>
+</name>
+</place>
+<place id="Eat_8">
+<name>
+<text>Eat_8</text>
+</name>
+</place>
+<place id="Eat_7">
+<name>
+<text>Eat_7</text>
+</name>
+</place>
+<place id="Eat_6">
+<name>
+<text>Eat_6</text>
+</name>
+</place>
+<place id="Eat_10">
+<name>
+<text>Eat_10</text>
+</name>
+</place>
+<transition id="FF1a_3">
+<name>
+<text>FF1a_3</text>
+</name>
+</transition>
+<transition id="FF1a_2">
+<name>
+<text>FF1a_2</text>
+</name>
+</transition>
+<transition id="FF1a_1">
+<name>
+<text>FF1a_1</text>
+</name>
+</transition>
+<transition id="FF1a_7">
+<name>
+<text>FF1a_7</text>
+</name>
+</transition>
+<transition id="FF1a_6">
+<name>
+<text>FF1a_6</text>
+</name>
+</transition>
+<transition id="FF1a_5">
+<name>
+<text>FF1a_5</text>
+</name>
+</transition>
+<transition id="FF1a_4">
+<name>
+<text>FF1a_4</text>
+</name>
+</transition>
+<transition id="FF1b_1">
+<name>
+<text>FF1b_1</text>
+</name>
+</transition>
+<transition id="FF1a_10">
+<name>
+<text>FF1a_10</text>
+</name>
+</transition>
+<transition id="FF1a_9">
+<name>
+<text>FF1a_9</text>
+</name>
+</transition>
+<transition id="FF1a_8">
+<name>
+<text>FF1a_8</text>
+</name>
+</transition>
+<transition id="FF1b_6">
+<name>
+<text>FF1b_6</text>
+</name>
+</transition>
+<transition id="FF1b_7">
+<name>
+<text>FF1b_7</text>
+</name>
+</transition>
+<transition id="FF1b_8">
+<name>
+<text>FF1b_8</text>
+</name>
+</transition>
+<transition id="FF1b_9">
+<name>
+<text>FF1b_9</text>
+</name>
+</transition>
+<transition id="FF1b_2">
+<name>
+<text>FF1b_2</text>
+</name>
+</transition>
+<transition id="FF1b_3">
+<name>
+<text>FF1b_3</text>
+</name>
+</transition>
+<transition id="FF1b_4">
+<name>
+<text>FF1b_4</text>
+</name>
+</transition>
+<transition id="FF1b_5">
+<name>
+<text>FF1b_5</text>
+</name>
+</transition>
+<transition id="FF2a_4">
+<name>
+<text>FF2a_4</text>
+</name>
+</transition>
+<transition id="FF2a_5">
+<name>
+<text>FF2a_5</text>
+</name>
+</transition>
+<transition id="FF2a_6">
+<name>
+<text>FF2a_6</text>
+</name>
+</transition>
+<transition id="FF2a_7">
+<name>
+<text>FF2a_7</text>
+</name>
+</transition>
+<transition id="FF1b_10">
+<name>
+<text>FF1b_10</text>
+</name>
+</transition>
+<transition id="FF2a_1">
+<name>
+<text>FF2a_1</text>
+</name>
+</transition>
+<transition id="FF2a_2">
+<name>
+<text>FF2a_2</text>
+</name>
+</transition>
+<transition id="FF2a_3">
+<name>
+<text>FF2a_3</text>
+</name>
+</transition>
+<transition id="FF2b_3">
+<name>
+<text>FF2b_3</text>
+</name>
+</transition>
+<transition id="FF2b_2">
+<name>
+<text>FF2b_2</text>
+</name>
+</transition>
+<transition id="FF2b_5">
+<name>
+<text>FF2b_5</text>
+</name>
+</transition>
+<transition id="FF2b_4">
+<name>
+<text>FF2b_4</text>
+</name>
+</transition>
+<transition id="FF2a_9">
+<name>
+<text>FF2a_9</text>
+</name>
+</transition>
+<transition id="FF2a_8">
+<name>
+<text>FF2a_8</text>
+</name>
+</transition>
+<transition id="FF2b_1">
+<name>
+<text>FF2b_1</text>
+</name>
+</transition>
+<transition id="FF2a_10">
+<name>
+<text>FF2a_10</text>
+</name>
+</transition>
+<transition id="End_1">
+<name>
+<text>End_1</text>
+</name>
+</transition>
+<transition id="FF2b_10">
+<name>
+<text>FF2b_10</text>
+</name>
+</transition>
+<transition id="End_3">
+<name>
+<text>End_3</text>
+</name>
+</transition>
+<transition id="End_2">
+<name>
+<text>End_2</text>
+</name>
+</transition>
+<transition id="FF2b_7">
+<name>
+<text>FF2b_7</text>
+</name>
+</transition>
+<transition id="FF2b_6">
+<name>
+<text>FF2b_6</text>
+</name>
+</transition>
+<transition id="FF2b_9">
+<name>
+<text>FF2b_9</text>
+</name>
+</transition>
+<transition id="FF2b_8">
+<name>
+<text>FF2b_8</text>
+</name>
+</transition>
+<transition id="End_10">
+<name>
+<text>End_10</text>
+</name>
+</transition>
+<transition id="End_8">
+<name>
+<text>End_8</text>
+</name>
+</transition>
+<transition id="End_9">
+<name>
+<text>End_9</text>
+</name>
+</transition>
+<transition id="End_6">
+<name>
+<text>End_6</text>
+</name>
+</transition>
+<transition id="End_7">
+<name>
+<text>End_7</text>
+</name>
+</transition>
+<transition id="End_4">
+<name>
+<text>End_4</text>
+</name>
+</transition>
+<transition id="End_5">
+<name>
+<text>End_5</text>
+</name>
+</transition>
+<arc id="cId-8093597281709475572258" source="Fork_8" target="FF1a_9"/>      <arc id="cId-8095249769221126996259" source="FF1a_9" target="Catch1_9"/>      <arc id="cId-8095249769221126996256" source="FF1a_8" target="Catch1_8"/>      <arc id="cId-8095249769221126996257" source="Think_9" target="FF1a_9"/>      <arc id="cId-8095249769221126996262" source="FF1a_10" target="Catch1_10"/>      <arc id="cId-8095249769221126996260" source="Think_10" target="FF1a_10"/>      <arc id="cId-8095249769221126996261" source="Fork_9" target="FF1a_10"/>      <arc id="cId-8095249769221126996103" source="Eat_1" target="End_1"/>      <arc id="cId-8095249769221126996110" source="End_2" target="Fork_1"/>      <arc id="cId-8095249769221126996111" source="Eat_3" target="End_3"/>      <arc id="cId-8095249769221126996108" source="End_2" target="Think_2"/>      <arc id="cId-8095249769221126996109" source="End_2" target="Fork_2"/>      <arc id="cId-8095249769221126996106" source="End_1" target="Fork_10"/>      <arc id="cId-8095249769221126996107" source="Eat_2" target="End_2"/>      <arc id="cId-8095249769221126996104" source="End_1" target="Think_1"/>      <arc id="cId-8095249769221126996105" source="End_1" target="Fork_1"/>      <arc id="cId-8096902252437811124119" source="Eat_5" target="End_5"/>      <arc id="cId-8096902252437811124118" source="End_4" target="Fork_3"/>      <arc id="cId-8096902252437811124117" source="End_4" target="Fork_4"/>      <arc id="cId-8096902252437811124116" source="End_4" target="Think_4"/>      <arc id="cId-8096902252437811124115" source="Eat_4" target="End_4"/>      <arc id="cId-8096902252437811124114" source="End_3" target="Fork_2"/>      <arc id="cId-8096902252437811124113" source="End_3" target="Fork_3"/>      <arc id="cId-8096902252437811124112" source="End_3" target="Think_3"/>      <arc id="cId-8096902252437811124127" source="Eat_7" target="End_7"/>      <arc id="cId-8096902252437811124126" source="End_6" target="Fork_5"/>      <arc id="cId-8096902252437811124125" source="End_6" target="Fork_6"/>      <arc id="cId-8096902252437811124124" source="End_6" target="Think_6"/>      <arc id="cId-8096902252437811124123" source="Eat_6" target="End_6"/>      <arc id="cId-8096902252437811124122" source="End_5" target="Fork_4"/>      <arc id="cId-8096902252437811124121" source="End_5" target="Fork_5"/>      <arc id="cId-8096902252437811124120" source="End_5" target="Think_5"/>      <arc id="cId-8096902252437811124137" source="End_9" target="Fork_9"/>      <arc id="cId-8096902252437811124136" source="End_9" target="Think_9"/>      <arc id="cId-8096902252437811124139" source="Eat_10" target="End_10"/>      <arc id="cId-8096902252437811124138" source="End_9" target="Fork_8"/>      <arc id="cId-8096902252437811124141" source="End_10" target="Fork_10"/>      <arc id="cId-8096902252437811124140" source="End_10" target="Think_10"/>      <arc id="cId-8096902252437811124143" source="Fork_10" target="FF2b_1"/>      <arc id="cId-8096902252437811124142" source="End_10" target="Fork_9"/>      <arc id="cId-8096902252437811124129" source="End_7" target="Fork_7"/>      <arc id="cId-8105164672816199060128" source="End_7" target="Think_7"/>      <arc id="cId-8105164672816199060131" source="Eat_8" target="End_8"/>      <arc id="cId-8105164672816199060130" source="End_7" target="Fork_6"/>      <arc id="cId-8105164672816199060133" source="End_8" target="Fork_8"/>      <arc id="cId-8105164672816199060132" source="End_8" target="Think_8"/>      <arc id="cId-8105164672816199060135" source="Eat_9" target="End_9"/>      <arc id="cId-8105164672816199060134" source="End_8" target="Fork_7"/>      <arc id="cId-8105164672816199060152" source="Fork_3" target="FF2b_4"/>      <arc id="cId-8105164672816199060153" source="Catch2_4" target="FF2b_4"/>      <arc id="cId-8105164672816199060154" source="FF2b_4" target="Eat_4"/>      <arc id="cId-8105164672816199060155" source="Fork_4" target="FF2b_5"/>      <arc id="cId-8105164672816199060156" source="Catch2_5" target="FF2b_5"/>      <arc id="cId-8105164672816199060157" source="FF2b_5" target="Eat_5"/>      <arc id="cId-8105164672816199060158" source="Fork_5" target="FF2b_6"/>      <arc id="cId-8105164672816199060159" source="Catch2_6" target="FF2b_6"/>      <arc id="cId-8105164672816199060144" source="Catch2_1" target="FF2b_1"/>      <arc id="cId-8105164672816199060145" source="FF2b_1" target="Eat_1"/>      <arc id="cId-8105164672816199060146" source="Fork_1" target="FF2b_2"/>      <arc id="cId-8105164672816199060147" source="Catch2_2" target="FF2b_2"/>      <arc id="cId-8105164672816199060148" source="FF2b_2" target="Eat_2"/>      <arc id="cId-8105164672816199060149" source="Fork_2" target="FF2b_3"/>      <arc id="cId-8105164672816199060150" source="Catch2_3" target="FF2b_3"/>      <arc id="cId-8105164672816199060151" source="FF2b_3" target="Eat_3"/>      <arc id="cId-8106817156032883188171" source="Catch2_10" target="FF2b_10"/>      <arc id="cId-8106817156032883188170" source="Fork_9" target="FF2b_10"/>      <arc id="cId-8106817156032883188169" source="FF2b_9" target="Eat_9"/>      <arc id="cId-8106817156032883188168" source="Catch2_9" target="FF2b_9"/>      <arc id="cId-8106817156032883188175" source="FF2a_1" target="Eat_1"/>      <arc id="cId-8106817156032883188174" source="Catch1_1" target="FF2a_1"/>      <arc id="cId-8106817156032883188173" source="Fork_1" target="FF2a_1"/>      <arc id="cId-8106817156032883188172" source="FF2b_10" target="Eat_10"/>      <arc id="cId-8106817156032883188163" source="FF2b_7" target="Eat_7"/>      <arc id="cId-8106817156032883188162" source="Catch2_7" target="FF2b_7"/>      <arc id="cId-8106817156032883188161" source="Fork_6" target="FF2b_7"/>      <arc id="cId-8106817156032883188160" source="FF2b_6" target="Eat_6"/>      <arc id="cId-8106817156032883188167" source="Fork_8" target="FF2b_9"/>      <arc id="cId-8106817156032883188166" source="FF2b_8" target="Eat_8"/>      <arc id="cId-8106817156032883188165" source="Catch2_8" target="FF2b_8"/>      <arc id="cId-8106817156032883188164" source="Fork_7" target="FF2b_8"/>      <arc id="cId-8106817156032883188186" source="Catch1_5" target="FF2a_5"/>      <arc id="cId-8106817156032883188187" source="FF2a_5" target="Eat_5"/>      <arc id="cId-8106817156032883188184" source="FF2a_4" target="Eat_4"/>      <arc id="cId-8106817156032883188185" source="Fork_5" target="FF2a_5"/>      <arc id="cId-8106817156032883188190" source="FF2a_6" target="Eat_6"/>      <arc id="cId-8106817156032883188191" source="Fork_7" target="FF2a_7"/>      <arc id="cId-8106817156032883188188" source="Fork_6" target="FF2a_6"/>      <arc id="cId-8101859706382830804189" source="Catch1_6" target="FF2a_6"/>      <arc id="cId-8101859706382830804178" source="FF2a_2" target="Eat_2"/>      <arc id="cId-8101859706382830804179" source="Fork_3" target="FF2a_3"/>      <arc id="cId-8101859706382830804176" source="Fork_2" target="FF2a_2"/>      <arc id="cId-8101859706382830804177" source="Catch1_2" target="FF2a_2"/>      <arc id="cId-8101859706382830804182" source="Fork_4" target="FF2a_4"/>      <arc id="cId-8101859706382830804183" source="Catch1_4" target="FF2a_4"/>      <arc id="cId-8101859706382830804180" source="Catch1_3" target="FF2a_3"/>      <arc id="cId-8101859706382830804181" source="FF2a_3" target="Eat_3"/>      <arc id="cId-8101859706382830804205" source="FF1b_1" target="Catch2_1"/>      <arc id="cId-8101859706382830804204" source="Fork_1" target="FF1b_1"/>      <arc id="cId-8101859706382830804207" source="Fork_2" target="FF1b_2"/>      <arc id="cId-8101859706382830804206" source="Think_2" target="FF1b_2"/>      <arc id="cId-8101859706382830804201" source="Catch1_10" target="FF2a_10"/>      <arc id="cId-8101859706382830804200" source="Fork_10" target="FF2a_10"/>      <arc id="cId-8101859706382830804203" source="Think_1" target="FF1b_1"/>      <arc id="cId-8101859706382830804202" source="FF2a_10" target="Eat_10"/>      <arc id="cId-8101859706382830804197" source="Fork_9" target="FF2a_9"/>      <arc id="cId-8101859706382830804196" source="FF2a_8" target="Eat_8"/>      <arc id="cId-8101859706382830804199" source="FF2a_9" target="Eat_9"/>      <arc id="cId-8101859706382830804198" source="Catch1_9" target="FF2a_9"/>      <arc id="cId-8101859706382830804193" source="FF2a_7" target="Eat_7"/>      <arc id="cId-8101859706382830804192" source="Catch1_7" target="FF2a_7"/>      <arc id="cId-8101859706382830804195" source="Catch1_8" target="FF2a_8"/>      <arc id="cId-8103512189599514932194" source="Fork_8" target="FF2a_8"/>      <arc id="cId-8103512189599514932220" source="FF1b_6" target="Catch2_6"/>      <arc id="cId-8103512189599514932221" source="Think_7" target="FF1b_7"/>      <arc id="cId-8103512189599514932222" source="Fork_7" target="FF1b_7"/>      <arc id="cId-8103512189599514932223" source="FF1b_7" target="Catch2_7"/>      <arc id="cId-8103512189599514932216" source="Fork_5" target="FF1b_5"/>      <arc id="cId-8103512189599514932217" source="FF1b_5" target="Catch2_5"/>      <arc id="cId-8103512189599514932218" source="Think_6" target="FF1b_6"/>      <arc id="cId-8103512189599514932219" source="Fork_6" target="FF1b_6"/>      <arc id="cId-8103512189599514932212" source="Think_4" target="FF1b_4"/>      <arc id="cId-8103512189599514932213" source="Fork_4" target="FF1b_4"/>      <arc id="cId-8103512189599514932214" source="FF1b_4" target="Catch2_4"/>      <arc id="cId-8103512189599514932215" source="Think_5" target="FF1b_5"/>      <arc id="cId-8103512189599514932208" source="FF1b_2" target="Catch2_2"/>      <arc id="cId-8103512189599514932209" source="Think_3" target="FF1b_3"/>      <arc id="cId-8103512189599514932210" source="Fork_3" target="FF1b_3"/>      <arc id="cId-8103512189599514932211" source="FF1b_3" target="Catch2_3"/>      <arc id="cId-8103512189599514932239" source="Think_3" target="FF1a_3"/>      <arc id="cId-8103512189599514932238" source="FF1a_2" target="Catch1_2"/>      <arc id="cId-8103512189599514932237" source="Fork_1" target="FF1a_2"/>      <arc id="cId-8103512189599514932236" source="Think_2" target="FF1a_2"/>      <arc id="cId-8103512189599514932235" source="FF1a_1" target="Catch1_1"/>      <arc id="cId-8103512189599514932234" source="Fork_10" target="FF1a_1"/>      <arc id="cId-8103512189599514932233" source="Think_1" target="FF1a_1"/>      <arc id="cId-8164654094386631445232" source="FF1b_10" target="Catch2_10"/>      <arc id="cId-8164654094386631445231" source="Fork_10" target="FF1b_10"/>      <arc id="cId-8164654094386631445230" source="Think_10" target="FF1b_10"/>      <arc id="cId-8164654094386631445229" source="FF1b_9" target="Catch2_9"/>      <arc id="cId-8164654094386631445228" source="Fork_9" target="FF1b_9"/>      <arc id="cId-8164654094386631445227" source="Think_9" target="FF1b_9"/>      <arc id="cId-8164654094386631445226" source="FF1b_8" target="Catch2_8"/>      <arc id="cId-8164654094386631445225" source="Fork_8" target="FF1b_8"/>      <arc id="cId-8164654094386631445224" source="Think_8" target="FF1b_8"/>      <arc id="cId-8164654094386631445254" source="Think_8" target="FF1a_8"/>      <arc id="cId-8164654094386631445255" source="Fork_7" target="FF1a_8"/>      <arc id="cId-8164654094386631445252" source="Fork_6" target="FF1a_7"/>      <arc id="cId-8164654094386631445253" source="FF1a_7" target="Catch1_7"/>      <arc id="cId-8164654094386631445250" source="FF1a_6" target="Catch1_6"/>      <arc id="cId-8164654094386631445251" source="Think_7" target="FF1a_7"/>      <arc id="cId-8164654094386631445248" source="Think_6" target="FF1a_6"/>      <arc id="cId-8164654094386631445249" source="Fork_5" target="FF1a_6"/>      <arc id="cId-8164654094386631445246" source="Fork_4" target="FF1a_5"/>      <arc id="cId-8164654094386631445247" source="FF1a_5" target="Catch1_5"/>      <arc id="cId-8164654094386631445244" source="FF1a_4" target="Catch1_4"/>      <arc id="cId-8164654094386631445245" source="Think_5" target="FF1a_5"/>      <arc id="cId-8164654094386631445242" source="Think_4" target="FF1a_4"/>      <arc id="cId-8164654094386631445243" source="Fork_3" target="FF1a_4"/>      <arc id="cId-8164654094386631445240" source="Fork_2" target="FF1a_3"/>      <arc id="cId-8166306577603315573241" source="FF1a_3" target="Catch1_3"/>
+<toolspecific tool="nupn" version="1.1">
+<size places="50" transitions="50" arcs="160"/>
+<structure units="21" root="u0" safe="true">
+<unit id="u0">
+<places/>
+<subunits>u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20</subunits>
+</unit>
+<unit id="u1">
+<places>Fork_1 Catch1_2 Catch2_1 Eat_1 Eat_2</places>
+<subunits/>
+</unit>
+<unit id="u2">
+<places>Fork_2 Catch1_3 Catch2_2</places>
+<subunits/>
+</unit>
+<unit id="u3">
+<places>Fork_3 Catch1_4 Catch2_3 Eat_4 Eat_3</places>
+<subunits/>
+</unit>
+<unit id="u4">
+<places>Fork_4 Catch1_5 Catch2_4</places>
+<subunits/>
+</unit>
+<unit id="u5">
+<places>Fork_5 Catch1_6 Catch2_5 Eat_5 Eat_6</places>
+<subunits/>
+</unit>
+<unit id="u6">
+<places>Fork_6 Catch1_7 Catch2_6</places>
+<subunits/>
+</unit>
+<unit id="u7">
+<places>Fork_7 Catch1_8 Catch2_7 Eat_8 Eat_7</places>
+<subunits/>
+</unit>
+<unit id="u8">
+<places>Fork_8 Catch1_9 Catch2_8</places>
+<subunits/>
+</unit>
+<unit id="u9">
+<places>Fork_9 Catch1_10 Catch2_9 Eat_9 Eat_10</places>
+<subunits/>
+</unit>
+<unit id="u10">
+<places>Catch1_1 Fork_10 Catch2_10</places>
+<subunits/>
+</unit>
+<unit id="u11">
+<places>Think_1</places>
+<subunits/>
+</unit>
+<unit id="u12">
+<places>Think_2</places>
+<subunits/>
+</unit>
+<unit id="u13">
+<places>Think_3</places>
+<subunits/>
+</unit>
+<unit id="u14">
+<places>Think_4</places>
+<subunits/>
+</unit>
+<unit id="u15">
+<places>Think_5</places>
+<subunits/>
+</unit>
+<unit id="u16">
+<places>Think_6</places>
+<subunits/>
+</unit>
+<unit id="u17">
+<places>Think_7</places>
+<subunits/>
+</unit>
+<unit id="u18">
+<places>Think_8</places>
+<subunits/>
+</unit>
+<unit id="u19">
+<places>Think_9</places>
+<subunits/>
+</unit>
+<unit id="u20">
+<places>Think_10</places>
+<subunits/>
+</unit>
+</structure>
+</toolspecific>
+</page>
+<name>
+<text>Philosophers-PT-000010</text>
+</name>
+</net>
+</pnml>

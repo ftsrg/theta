@@ -1,0 +1,11 @@
+SVCOMP
+
+(* Define co (and fr) *)
+include "cos.cat"
+
+(* All communication relations *)
+let com = (rf | fr | co)
+
+(* Sequential consistency *)
+let hb = po | (com & int) | (rmw^-1? ; (com & ext))
+acyclic hb as sc

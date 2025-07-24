@@ -1,0 +1,387 @@
+{
+  "name": "",
+  "vars": [],
+  "procedures": [
+    {
+      "name": "reach_error",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "reach_error_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "reach_error_ret",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        {
+          "name": "reach_error_init",
+          "initial": true,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}"
+            }
+          }
+        },
+        {
+          "name": "reach_error_final",
+          "initial": false,
+          "final": true,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "reach_error_init",
+          "target": "reach_error_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 1,
+              "colNumberStart": 0,
+              "lineNumberStop": 1,
+              "colNumberStop": 19,
+              "offsetStart": 0,
+              "offsetEnd": 19,
+              "astNodes": [],
+              "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "main_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "main_ret",
+          "type": "Int"
+        },
+        {
+          "name": "main::ush",
+          "type": "Int"
+        },
+        {
+          "name": "main::c",
+          "type": "Int"
+        },
+        {
+          "name": "call___VERIFIER_nondet_ushort_ret69",
+          "type": "Int"
+        },
+        {
+          "name": "call_reach_error_ret70",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        {
+          "name": "main_init",
+          "initial": true,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 5,
+              "colNumberStart": 0,
+              "lineNumberStop": 10,
+              "colNumberStop": 1,
+              "offsetStart": 73,
+              "offsetEnd": 179,
+              "astNodes": [],
+              "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
+            }
+          }
+        },
+        {
+          "name": "main_final",
+          "initial": false,
+          "final": true,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 5,
+              "colNumberStart": 0,
+              "lineNumberStop": 10,
+              "colNumberStop": 1,
+              "offsetStart": 73,
+              "offsetEnd": 179,
+              "astNodes": [],
+              "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
+            }
+          }
+        },
+        {
+          "name": "__loc_1073",
+          "initial": false,
+          "final": false,
+          "error": false,
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "astNodes": [],
+              "sourceText": ""
+            }
+          }
+        },
+        {
+          "name": "main_error",
+          "initial": false,
+          "final": false,
+          "error": true,
+          "metadata": {
+            "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+            "content": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "__loc_1073",
+          "target": "main_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 9,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 9,
+                    "colNumberStop": 25,
+                    "offsetStart": 155,
+                    "offsetEnd": 176,
+                    "astNodes": [],
+                    "sourceText": "if(ush) reach_error();"
+                  }
+                },
+                "content": "((assume (\u003d main::ush 0)))[choiceType\u003dALTERNATIVE_PATH]"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 5,
+              "colNumberStart": 0,
+              "lineNumberStop": 10,
+              "colNumberStop": 25,
+              "offsetStart": 73,
+              "offsetEnd": 179,
+              "astNodes": [],
+              "sourceText": "if(ush) reach_error();if(ush) reach_error();int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }"
+            }
+          }
+        },
+        {
+          "source": "__loc_1073",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 9,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 9,
+                    "colNumberStop": 25,
+                    "offsetStart": 155,
+                    "offsetEnd": 176,
+                    "astNodes": [],
+                    "sourceText": "if(ush) reach_error();"
+                  }
+                },
+                "content": "((assume (/\u003d main::ush 0)))[choiceType\u003dMAIN_PATH]"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 9,
+              "colNumberStart": 4,
+              "lineNumberStop": 9,
+              "colNumberStop": 25,
+              "offsetStart": 155,
+              "offsetEnd": 176,
+              "astNodes": [],
+              "sourceText": "if(ush) reach_error();reach_error();reach_error();reach_error();reach_error();"
+            }
+          }
+        },
+        {
+          "source": "main_init",
+          "target": "__loc_1073",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "astNodes": [],
+                    "sourceText": ""
+                  }
+                },
+                "content": "((assume (and (\u003e\u003d main::ush -32768) (\u003c\u003d main::ush 32767))))[choiceType\u003dMAIN_PATH]"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "astNodes": [],
+                    "sourceText": ""
+                  }
+                },
+                "content": "((assume (and (\u003e\u003d main::c -9223372036854775808) (\u003c\u003d main::c 9223372036854775807))))[choiceType\u003dMAIN_PATH]"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 8,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 8,
+                    "colNumberStop": 36,
+                    "offsetStart": 117,
+                    "offsetEnd": 149,
+                    "astNodes": [],
+                    "sourceText": "ush \u003d __VERIFIER_nondet_ushort();"
+                  }
+                },
+                "content": "(havoc call___VERIFIER_nondet_ushort_ret69)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 8,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 8,
+                    "colNumberStop": 36,
+                    "offsetStart": 117,
+                    "offsetEnd": 149,
+                    "astNodes": [],
+                    "sourceText": "ush \u003d __VERIFIER_nondet_ushort();"
+                  }
+                },
+                "content": "(assume (and (\u003e\u003d call___VERIFIER_nondet_ushort_ret69 0) (\u003c\u003d call___VERIFIER_nondet_ushort_ret69 65535)))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "astNodes": [],
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assign main::ush (ite (\u003e\u003d call___VERIFIER_nondet_ushort_ret69 32768) (- call___VERIFIER_nondet_ushort_ret69 65536) call___VERIFIER_nondet_ushort_ret69))"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+            "content": {
+              "lineNumberStart": 0,
+              "colNumberStart": 0,
+              "lineNumberStop": 10,
+              "colNumberStop": 36,
+              "offsetStart": 0,
+              "offsetEnd": 179,
+              "astNodes": [],
+              "sourceText": "int main() {\n    short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();\n }short ush;\n    long c;\n    ush \u003d __VERIFIER_nondet_ushort();\n    if(ush) reach_error();short ush;long c;ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();ush \u003d __VERIFIER_nondet_ushort();if(ush) reach_error();if(ush) reach_error();if(ush) reach_error();"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "initProcedures": [
+    {
+      "params": [],
+      "procedure": "main"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+TCP
+
+include "no-reordering.cat"
+call sc(rf, co, id, po)
+
+include "global-no-dup.cat"
+call nodup(rf, id)
+
+include "no-loss.cat"
+call noSendLost(W, IW, T, rf)
+
+
+include "synchronous.cat"
+call sync(rf, co, id, po)
+
+
+include "blocking.cat"
+call blocking(R, T, rf)

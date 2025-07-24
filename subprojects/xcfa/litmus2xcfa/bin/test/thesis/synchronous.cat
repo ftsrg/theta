@@ -1,0 +1,7 @@
+SYNCHRONOUS
+
+procedure sync(rf, co, id, po) =
+    let po-com = po | co | rf | fr
+    let po-com-chain = (po-com*)\ rf
+    empty (rf | rf^-1) & po-com-chain as allRWCoincide
+end

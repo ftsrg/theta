@@ -1,0 +1,5 @@
+CAUSALITY
+
+procedure causality(po, rf) =
+    acyclic (po | rf) as causality
+end

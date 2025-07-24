@@ -1,0 +1,105 @@
+type Weather : { Sunny , Cloudy , Rainy, Foggy }
+type TimeOfDay : { Morning , Noon, Afternoon, Night }
+type Clothing : { Nothing, Shorts, Warm, Waterproof }
+var isWet : boolean = false
+var looksOut : boolean = false
+var isClever : boolean = false
+var weather : Weather = Sunny
+var time : TimeOfDay
+var clothing  : Clothing = Nothing
+
+trans {
+    choice {
+        assume time == Morning;
+        choice {
+            assume (looksOut == false && isClever == false);
+            havoc clothing;
+        } or {
+            assume (looksOut == true && isClever == false);
+            choice {
+                assume weather == Sunny;
+                clothing := Shorts;
+            } or {
+                assume (weather == Cloudy || weather == Foggy);
+                clothing := Warm;
+            } or {
+                assume weather == Rainy;
+                clothing := Waterproof;
+            }
+        } or {
+            assume (isClever == true);
+            choice {
+                assume weather == Sunny;
+                clothing := Shorts;
+            } or {
+                assume (weather == Cloudy || weather == Rainy);
+                clothing := Waterproof;
+            } or {
+                assume weather == Foggy;
+                clothing := Warm;
+            }
+        }
+    } or {
+        assume time == Noon;
+        if (isWet == true) looksOut := true;
+    } or {
+        assume time == Afternoon;
+    } or {
+        assume time == Night;
+        if (isWet == true) isClever := true;
+        clothing := Nothing;
+    }
+}
+
+init {
+    havoc weather;
+    time := Morning;
+}
+
+env {
+        if (clothing != Waterproof && weather == Rainy) isWet := true;
+        if (time == Noon || time == Night) isWet := false;
+        choice {
+            assume time == Morning;
+            time := Noon;
+        } or {
+            assume time == Noon;
+            time := Afternoon;
+        } or {
+            assume time == Afternoon;
+            time := Night;
+        } or {
+            assume time == Night;
+            time := Morning;
+        }
+
+        choice {
+            assume time != Noon;
+            choice {
+                assume (weather == Sunny || weather == Cloudy || weather == Foggy);
+                choice {
+                    weather := Cloudy;
+                } or {
+                    weather := Sunny;
+                } or {
+                    assume weather == Cloudy;
+                    weather := Rainy;
+                }
+            } or {
+                assume (weather == Rainy);
+                choice {
+                    weather := Rainy;
+                } or {
+                    weather := Sunny;
+                }
+            } or {
+                assume time == Morning;
+                weather := Foggy;
+            }
+        } or {
+            assume time == Noon;
+        }
+
+}
+prop{true}
+ltl{G(time = TimeOfDay.Noon -> X(time = TimeOfDay.Noon or time = TimeOfDay.Afternoon))}
