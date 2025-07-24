@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -53,6 +54,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
@@ -117,12 +119,16 @@ fun XCFA.toMonolithicExpr(
         )
       }
       .toList() +
-      SequenceStmt.of(
+      (proc.errorLoc.getOrNull()?.let { errorLoc ->
         listOf(
-          AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
-          AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
+          SequenceStmt.of(
+            listOf(
+              AssumeStmt.of(Eq(locVar.ref, int(locMap[errorLoc]!!))),
+              AssignStmt.of(locVar, cast(int(locMap[errorLoc]!!), locVar.type)),
+            )
+          )
         )
-      )
+      } ?: emptyList<Stmt>())
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
