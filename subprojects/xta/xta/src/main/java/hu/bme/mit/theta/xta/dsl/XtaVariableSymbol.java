@@ -28,21 +28,20 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
-import hu.bme.mit.theta.xta.utils.RangeType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 final class XtaVariableSymbol implements Symbol {
 
@@ -155,13 +154,7 @@ final class XtaVariableSymbol implements Symbol {
 
 	private static <T extends Type> LitExpr<T> defaultValueFor(final T type) {
 		checkArgument(isSupportedDataType(type));
-		if (type instanceof BoolType) {
-			return (LitExpr<T>) cast(False(), type);
-		} else if (type instanceof IntType) {
-			return (LitExpr<T>) cast(Int(0), type);
-		} else {
-			throw new AssertionError();
-		}
+		return TypeUtils.getDefaultValue(type);
 	}
 
 	private static boolean isChanArrayType(final Type type) {

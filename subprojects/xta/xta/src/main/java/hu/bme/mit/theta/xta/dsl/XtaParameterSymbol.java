@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ParameterIdContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
-import hu.bme.mit.theta.xta.utils.RangeType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 final class XtaParameterSymbol implements Symbol {
 

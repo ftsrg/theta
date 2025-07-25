@@ -16,12 +16,14 @@
 package hu.bme.mit.theta.core.type.anytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -44,7 +46,12 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
 	@Override
 	public DeclType getType() {
-		return decl.getType();
+		final DeclType type = decl.getType();
+		if (type instanceof RangeType) {
+			@SuppressWarnings("unchecked") final DeclType intType = (DeclType) Int();
+			return intType;
+		}
+		return type;
 	}
 
 	@Override

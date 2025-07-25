@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.ClockType;
-import hu.bme.mit.theta.xta.utils.RangeType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 import java.util.List;
 

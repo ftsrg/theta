@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xta.utils;
+package hu.bme.mit.theta.core.type.rangetype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -21,11 +21,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
-public final class RangeType implements Type {
+public final class RangeType extends IntType {
 	private static final int HASH_SEED = 5441;
 	private volatile int hashCode = 0;
 
@@ -33,6 +33,7 @@ public final class RangeType implements Type {
 	private final int upper;
 
 	private RangeType(final int lower, final int upper) {
+		super();
 		checkArgument(lower <= upper);
 		this.lower = lower;
 		this.upper = upper;

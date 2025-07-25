@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import org.kframework.mpfr.BigFloat;
@@ -182,6 +183,9 @@ public final class TypeUtils {
 		if(type instanceof BoolType) {
 			return (LitExpr<T>) cast(BoolExprs.False(), type);
 		} else if(type instanceof IntType) {
+			if(type instanceof final RangeType range) {
+				return (LitExpr<T>) cast(IntExprs.Int(range.getLower()), type);
+			}
 			return (LitExpr<T>) cast(IntExprs.Int(0), type);
 		} else if(type instanceof RatType) {
 			return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
