@@ -168,6 +168,7 @@ public abstract class XtaAction extends StmtAction {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
 				addClocksNonNegative(builder, getClockVars());
 				addInvariants(builder, getSourceLocs());
+				addSelections(builder, edge);
 				addGuards(builder, edge);
 				addUpdates(builder, edge);
 				addInvariants(builder, targetLocs);
@@ -212,8 +213,8 @@ public abstract class XtaAction extends StmtAction {
 
 		@Override
 		public String toString() {
-			return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(edge.getGuards())
-					.addAll(edge.getUpdates()).toString();
+			return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(edge.getSelections())
+					.addAll(edge.getGuards()).addAll(edge.getUpdates()).toString();
 		}
 
 	}
@@ -292,6 +293,8 @@ public abstract class XtaAction extends StmtAction {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
 				addClocksNonNegative(builder, getClockVars());
 				addInvariants(builder, getSourceLocs());
+				addSelections(builder, emitEdge);
+				addSelections(builder, recvEdge);
 				addSync(builder, emitEdge, recvEdge);
 				addGuards(builder, emitEdge);
 				addGuards(builder, recvEdge);
@@ -341,7 +344,8 @@ public abstract class XtaAction extends StmtAction {
 
 		@Override
 		public String toString() {
-			return Utils.lispStringBuilder(getClass().getSimpleName()).add(emitEdge.getSync().get())
+			return Utils.lispStringBuilder(getClass().getSimpleName())
+					.add(emitEdge.getSelections()).add(recvEdge.getSelections()).add(emitEdge.getSync().get())
 					.add(recvEdge.getSync().get()).body().addAll(emitEdge.getGuards()).addAll(recvEdge.getGuards())
 					.addAll(emitEdge.getUpdates()).addAll(recvEdge.getUpdates()).toString();
 		}
@@ -469,6 +473,8 @@ public abstract class XtaAction extends StmtAction {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
 				addClocksNonNegative(builder, getClockVars());
 				addInvariants(builder, getSourceLocs());
+				addSelections(builder, emitEdge);
+				recvEdges.stream().forEachOrdered(recvEdge -> addSelections(builder, recvEdge));
 				recvEdges.stream().forEachOrdered(recvEdge -> addSync(builder, emitEdge, recvEdge));
 				addGuards(builder, emitEdge);
 				recvEdges.stream().forEachOrdered(recvEdge -> addGuards(builder, recvEdge));
@@ -525,6 +531,8 @@ public abstract class XtaAction extends StmtAction {
 		public String toString() {
 			final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
 
+			builder.add(emitEdge.getSelections());
+
 			builder.add(emitEdge.getSync().get()).body();
 
 			builder.addAll(emitEdge.getGuards());
@@ -533,6 +541,7 @@ public abstract class XtaAction extends StmtAction {
 					Utils.lispStringBuilder("enabled")
 							.add(edge.getSync().get())
 							.body()
+							.add(edge.getSelections())
 							.addAll(edge.getGuards())));
 
 			builder.addAll(nonRecvEdges.stream().flatMap(edges ->
@@ -557,6 +566,10 @@ public abstract class XtaAction extends StmtAction {
 
 	private static void addInvariants(final ImmutableList.Builder<Stmt> builder, final List<Loc> locs) {
 		locs.forEach(l -> l.getInvars().forEach(i -> builder.add(Assume(i.toExpr()))));
+	}
+
+	private static void addSelections(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
+		edge.getSelections().forEach(s -> builder.add(s.toStmt()));
 	}
 
 	private static void addSync(final Builder<Stmt> builder, final Edge emitEdge, final Edge recvEdge) {

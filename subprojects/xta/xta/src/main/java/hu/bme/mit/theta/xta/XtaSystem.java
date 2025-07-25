@@ -124,7 +124,7 @@ public final class XtaSystem {
 		process.setInitLoc(initloc);
 		Loc errorLoc = process.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
 		final Collection<Expr<BoolType>> guards = ExprUtils.getConjuncts(ExprUtils.simplify(prop));
-		process.createEdge(initloc, errorLoc, guards, Optional.empty(), Collections.emptyList());
+		process.createEdge(initloc, errorLoc, Collections.emptyList(), guards, Optional.empty(), Collections.emptyList());
 
 		//Edges to ErrorLocations from COMMITTED locations
 
@@ -133,7 +133,7 @@ public final class XtaSystem {
 				Loc own_errorLoc = proc.createLoc("ErrorLoc", XtaProcess.LocKind.ERROR, invars);
 				for (Loc loc:proc.getLocs() ) {
 					if(loc.getKind().equals(XtaProcess.LocKind.COMMITTED))
-						proc.createEdge(loc, own_errorLoc, guards, Optional.empty(),Collections.emptyList());
+						proc.createEdge(loc, own_errorLoc, Collections.emptyList(), guards, Optional.empty(),Collections.emptyList());
 				}
 			}
 

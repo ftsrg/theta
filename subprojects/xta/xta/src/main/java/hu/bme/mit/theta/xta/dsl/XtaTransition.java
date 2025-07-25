@@ -31,11 +31,14 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import hu.bme.mit.theta.xta.Selection;
 import hu.bme.mit.theta.xta.Sync;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
@@ -119,6 +122,11 @@ final class XtaTransition implements Scope {
 		final Loc source = (Loc) env.eval(sourceSymbol);
 		final Loc target = (Loc) env.eval(targetSymbol);
 
+		final Collection<Selection> selections = this.selections.stream().map(iteratorSymbol -> {
+			final VarDecl<RangeType> varDecl = iteratorSymbol.instantiate(env);
+			return Selection.create(varDecl);
+		}).collect(toList());
+
 		final Collection<Expr<BoolType>> guards = this.guards.stream().flatMap(guard -> {
 			final Expr<?> expr = guard.instantiate(env);
 			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
@@ -129,7 +137,7 @@ final class XtaTransition implements Scope {
 		final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env)).collect(toList());
 		final Optional<Sync> label = sync.map(s -> s.instantiate(env));
 
-		process.createEdge(source, target, guards, label, assignments);
+		process.createEdge(source, target, selections, guards, label, assignments);
 	}
 
 	////

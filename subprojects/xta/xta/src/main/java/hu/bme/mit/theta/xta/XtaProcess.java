@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
@@ -96,8 +97,9 @@ public final class XtaProcess {
         return loc;
     }
 
-    public Edge createEdge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-                           final Optional<Sync> sync, final List<Stmt> updates) {
+    public Edge createEdge(final Loc source, final Loc target, final Collection<Selection> selections,
+                           final Collection<Expr<BoolType>> guards, final Optional<Sync> sync,
+                           final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
         if(!name.equals("ErrorProc") && !target.getKind().equals(LocKind.ERROR)) {
@@ -115,7 +117,7 @@ public final class XtaProcess {
                 } else break;
             }
         }
-        final Edge edge = new Edge(source, target, guards, sync, updates);
+        final Edge edge = new Edge(source, target, selections, guards, sync, updates);
         source.outEdges.add(edge);
         target.inEdges.add(edge);
 
@@ -124,7 +126,8 @@ public final class XtaProcess {
 
     ////
 
-    private Collection<Guard> createGuards(final Collection<Expr<BoolType>> exprs) {
+    private Collection<Guard> createGuards(final Collection<Expr<BoolType>> exprs, Collection<VarDecl<?>> dataVars,
+                                           Collection<VarDecl<RatType>> clockVars) {
         checkNotNull(exprs);
 
         final ImmutableList.Builder<Guard> builder = ImmutableList.builder();
@@ -134,9 +137,9 @@ public final class XtaProcess {
             boolean dataExpr = false;
             boolean clockExpr = false;
             for (final VarDecl<?> varDecl : vars) {
-                if (system.getDataVars().contains(varDecl)) {
+                if (dataVars.contains(varDecl)) {
                     dataExpr = true;
-                } else if (system.getClockVars().contains(varDecl)) {
+                } else if (clockVars.contains(varDecl)) {
                     clockExpr = true;
                 } else {
                     throw new IllegalArgumentException("Undeclared variable: " + varDecl.getName());
@@ -156,7 +159,8 @@ public final class XtaProcess {
         return builder.build();
     }
 
-    private List<Update> createUpdates(final List<Stmt> stmts) {
+    private List<Update> createUpdates(final List<Stmt> stmts, Collection<VarDecl<?>> dataVars,
+                                       Collection<VarDecl<RatType>> clockVars) {
         checkNotNull(stmts);
 
         final ImmutableList.Builder<Update> builder = ImmutableList.builder();
@@ -165,9 +169,9 @@ public final class XtaProcess {
             boolean dataStmt = false;
             boolean clockStmt = false;
             for (final VarDecl<?> varDecl : varsDecls) {
-                if (system.getDataVars().contains(varDecl)) {
+                if (dataVars.contains(varDecl)) {
                     dataStmt = true;
-                } else if (system.getClockVars().contains(varDecl)) {
+                } else if (clockVars.contains(varDecl)) {
                     clockStmt = true;
                 } else {
                     throw new IllegalArgumentException("Undeclared variable: " + varDecl.getName());
@@ -180,7 +184,7 @@ public final class XtaProcess {
             } else if (!dataStmt && clockStmt) {
                 update = Update.clockUpdate(stmt);
             } else {
-                throw new UnsupportedOperationException();
+                throw new MixedDataTimeNotSupportedException(stmt.toString());
             }
             builder.add(update);
         }
@@ -208,7 +212,7 @@ public final class XtaProcess {
             outEdges = new ArrayList<>();
             this.name = checkNotNull(name);
             this.kind = checkNotNull(kind);
-            this.invars = createGuards(invars);
+            this.invars = createGuards(invars, system.getDataVars(), system.getClockVars());
 
             unmodInEdges = Collections.unmodifiableCollection(inEdges);
             unmodOutEdges = Collections.unmodifiableCollection(outEdges);
@@ -245,17 +249,21 @@ public final class XtaProcess {
     public final class Edge {
         private final Loc source;
         private final Loc target;
+        private final Collection<Selection> selections;
         private final Collection<Guard> guards;
         private final Optional<Sync> sync;
         private final List<Update> updates;
 
-        private Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-                     final Optional<Sync> sync, final List<Stmt> updates) {
+        private Edge(final Loc source, final Loc target, final Collection<Selection> selections,
+                     final Collection<Expr<BoolType>> guards, final Optional<Sync> sync, final List<Stmt> updates) {
             this.source = checkNotNull(source);
             this.target = checkNotNull(target);
-            this.guards = createGuards(guards);
+            this.selections = checkNotNull(selections);
+            final Collection<VarDecl<?>> dataVars = new ArrayList<>(system.getDataVars());
+            dataVars.addAll(selections.stream().map(Selection::getVarDecl).toList());
+            this.guards = createGuards(guards, dataVars, system.getClockVars());
             this.sync = checkNotNull(sync);
-            this.updates = createUpdates(updates);
+            this.updates = createUpdates(updates, dataVars, system.getClockVars());
         }
 
         public Loc getSource() {
@@ -264,6 +272,10 @@ public final class XtaProcess {
 
         public Loc getTarget() {
             return target;
+        }
+
+        public Collection<Selection> getSelections() {
+            return selections;
         }
 
         public Collection<Guard> getGuards() {
