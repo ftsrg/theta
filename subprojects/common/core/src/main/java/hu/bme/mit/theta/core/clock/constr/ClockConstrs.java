@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
@@ -193,52 +194,92 @@ public final class ClockConstrs {
 		}
 
 		private ClockConstr transformLt(final RatLtExpr expr) {
-			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-			final int rhs = extractConstrRhs(expr);
-			if (lhs.size() == 1) {
-				return Lt(lhs.get(0), rhs);
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Lt(lhs.get(0), rhs);
+				} else {
+					return Lt(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformGt(RatExprs.Gt(rightOp, leftOp));
 			} else {
-				return Lt(lhs.get(0), lhs.get(1), rhs);
+				throw new IllegalArgumentException();
 			}
 		}
 
 		private ClockConstr transformLeq(final RatLeqExpr expr) {
-			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-			final int rhs = extractConstrRhs(expr);
-			if (lhs.size() == 1) {
-				return Leq(lhs.get(0), rhs);
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Leq(lhs.get(0), rhs);
+				} else {
+					return Leq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformGeq(RatExprs.Geq(rightOp, leftOp));
 			} else {
-				return Leq(lhs.get(0), lhs.get(1), rhs);
+				throw new IllegalArgumentException();
 			}
 		}
 
 		private ClockConstr transformGt(final RatGtExpr expr) {
-			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-			final int rhs = extractConstrRhs(expr);
-			if (lhs.size() == 1) {
-				return Gt(lhs.get(0), rhs);
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Gt(lhs.get(0), rhs);
+				} else {
+					return Gt(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformLt(RatExprs.Lt(rightOp, leftOp));
 			} else {
-				return Gt(lhs.get(0), lhs.get(1), rhs);
+				throw new IllegalArgumentException();
 			}
 		}
 
 		private ClockConstr transformGeq(final RatGeqExpr expr) {
-			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-			final int rhs = extractConstrRhs(expr);
-			if (lhs.size() == 1) {
-				return Geq(lhs.get(0), rhs);
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Geq(lhs.get(0), rhs);
+				} else {
+					return Geq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformLeq(RatExprs.Leq(rightOp, leftOp));
 			} else {
-				return Geq(lhs.get(0), lhs.get(1), rhs);
+				throw new IllegalArgumentException();
 			}
 		}
 
 		private ClockConstr transformEq(final RatEqExpr expr) {
-			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
-			final int rhs = extractConstrRhs(expr);
-			if (lhs.size() == 1) {
-				return Eq(lhs.get(0), rhs);
+			final Expr<RatType> leftOp = expr.getLeftOp();
+			final Expr<RatType> rightOp = expr.getRightOp();
+			if (containsClock(leftOp)) {
+				final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
+				final int rhs = extractConstrRhs(expr);
+				if (lhs.size() == 1) {
+					return Eq(lhs.get(0), rhs);
+				} else {
+					return Eq(lhs.get(0), lhs.get(1), rhs);
+				}
+			} else if (containsClock(rightOp)) {
+				return transformEq(expr.with(rightOp, leftOp));
 			} else {
-				return Eq(lhs.get(0), lhs.get(1), rhs);
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -298,6 +339,13 @@ public final class ClockConstrs {
 			}
 
 			throw new IllegalArgumentException();
+		}
+
+		private static boolean containsClock(final Expr<?> expr) {
+			return (expr instanceof RefExpr<?> refExpr && refExpr.getType() instanceof RatType) ||
+					(expr instanceof RatSubExpr ratSubExpr
+							&& ratSubExpr.getLeftOp() instanceof RefExpr
+							&& ratSubExpr.getRightOp() instanceof RefExpr);
 		}
 
 	}
