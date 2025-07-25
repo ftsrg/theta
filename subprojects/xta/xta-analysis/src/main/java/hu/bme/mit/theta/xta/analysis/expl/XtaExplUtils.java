@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Guard.DataGuard;
+import hu.bme.mit.theta.xta.Selection;
 import hu.bme.mit.theta.xta.Update;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
@@ -105,12 +106,15 @@ public final class XtaExplUtils {
 		final Edge edge = action.getEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
-		if (!checkGuards(edge, val)) {
+		final MutableValuation succVal = MutableValuation.copyOf(val);
+
+		applySelections(edge, succVal);
+
+		if (!checkGuards(edge, succVal)) {
 			return ExplState.bottom();
 		}
 
-		final MutableValuation succVal = MutableValuation.copyOf(val);
-		applyDataUpdates(action.getEdge(), succVal);
+		applyDataUpdates(edge, succVal);
 
 		if (!checkDataInvariants(targetLocs, succVal)) {
 			return ExplState.bottom();
@@ -124,19 +128,23 @@ public final class XtaExplUtils {
 		final Edge recvEdge = action.getRecvEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
-		if (!checkSync(emitEdge, recvEdge, val)) {
-			return ExplState.bottom();
-		}
-
-		if (!checkGuards(emitEdge, val)) {
-			return ExplState.bottom();
-		}
-
-		if (!checkGuards(recvEdge, val)) {
-			return ExplState.bottom();
-		}
-
 		final MutableValuation succVal = MutableValuation.copyOf(val);
+
+		applySelections(emitEdge, succVal);
+		applySelections(recvEdge, succVal);
+
+		if (!checkSync(emitEdge, recvEdge, succVal)) {
+			return ExplState.bottom();
+		}
+
+		if (!checkGuards(emitEdge, succVal)) {
+			return ExplState.bottom();
+		}
+
+		if (!checkGuards(recvEdge, succVal)) {
+			return ExplState.bottom();
+		}
+
 		applyDataUpdates(emitEdge, succVal);
 		applyDataUpdates(recvEdge, succVal);
 
@@ -153,26 +161,29 @@ public final class XtaExplUtils {
 		final List<Collection<Edge>> nonRecvEdges = action.getNonRecvEdges();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
+		final MutableValuation succVal = MutableValuation.copyOf(val);
+
+		applySelections(emitEdge, succVal);
+		recvEdges.stream().forEachOrdered(recvEdge -> applySelections(recvEdge, succVal));
+
 		if (recvEdges.stream().anyMatch(recvEdge ->
-				!checkSync(emitEdge, recvEdge, val))) {
+				!checkSync(emitEdge, recvEdge, succVal))) {
 			return ExplState.bottom();
 		}
 
-		if (!checkGuards(emitEdge, val)) {
+		if (!checkGuards(emitEdge, succVal)) {
 			return ExplState.bottom();
 		}
 
 		if (recvEdges.stream().anyMatch(recvEdge ->
-				!checkGuards(recvEdge, val))) {
+				!checkGuards(recvEdge, succVal))) {
 			return ExplState.bottom();
 		}
 
 		if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(nonRecvEdge ->
-				nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, val)))) {
+				nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, succVal)))) {
 			return ExplState.bottom();
 		}
-
-		final MutableValuation succVal = MutableValuation.copyOf(val);
 
 		applyDataUpdates(emitEdge, succVal);
 		recvEdges.stream().forEachOrdered(recvEdge -> applyDataUpdates(recvEdge, succVal));
@@ -259,6 +270,12 @@ public final class XtaExplUtils {
 		}
 	}
 
+	private static void applySelections(final Edge edge, final MutableValuation val) {
+		for (final Selection selection : edge.getSelections()) {
+			val.remove(selection.getVarDecl());
+		}
+	}
+
 	////
 
 	public static Expr<BoolType> pre(final Expr<BoolType> expr, final XtaAction action) {
@@ -281,7 +298,8 @@ public final class XtaExplUtils {
 		final WpState wp0 = WpState.of(expr);
 		final WpState wp1 = applyInverseUpdates(wp0, edge);
 		final WpState wp2 = applyGuards(wp1, edge);
-		return wp2.getExpr();
+		final WpState wp3 = applySelections(wp2, edge);
+		return wp3.getExpr();
 	}
 
 	private static Expr<BoolType> preForBinaryAction(final Expr<BoolType> expr, final BinaryXtaAction action) {
@@ -293,7 +311,9 @@ public final class XtaExplUtils {
 		final WpState wp3 = applyGuards(wp2, recvEdge);
 		final WpState wp4 = applyGuards(wp3, emitEdge);
 		final WpState wp5 = applySync(wp4, emitEdge, recvEdge);
-		return wp5.getExpr();
+		final WpState wp6 = applySelections(wp5, recvEdge);
+		final WpState wp7 = applySelections(wp6, emitEdge);
+		return wp7.getExpr();
 	}
 
 	private static Expr<BoolType> preForBroadcastAction(final Expr<BoolType> expr, final BroadcastXtaAction action) {
@@ -328,7 +348,13 @@ public final class XtaExplUtils {
 			}
 		}
 
-		return wp6.getExpr();
+		WpState wp7 = wp6;
+		for (final Edge recvEdge : reverseRecvEdges) {
+			wp7 = applySelections(wp7, recvEdge);
+		}
+		final WpState wp8 = applySelections(wp7, emitEdge);
+
+		return wp8.getExpr();
 	}
 
 	private static WpState applyInverseUpdates(final WpState state, final Edge edge) {
@@ -337,6 +363,14 @@ public final class XtaExplUtils {
 			if (update.isDataUpdate()) {
 				res = res.wep(update.asDataUpdate().toStmt());
 			}
+		}
+		return res;
+	}
+
+	private static WpState applySelections(final WpState state, final Edge edge) {
+		WpState res = state;
+		for (final Selection selection : edge.getSelections()) {
+			res = res.wep(selection.toStmt());
 		}
 		return res;
 	}

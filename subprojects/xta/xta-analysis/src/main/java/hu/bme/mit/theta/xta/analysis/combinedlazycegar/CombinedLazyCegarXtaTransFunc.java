@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.xta.Guard;
+import hu.bme.mit.theta.xta.Selection;
 import hu.bme.mit.theta.xta.Update;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
@@ -60,6 +61,7 @@ public class CombinedLazyCegarXtaTransFunc<S extends State, P extends Prec> impl
         return applyStmtsToState(
             state,
             Streams.concat(
+                selectionsToStmt(action.getEdge().getSelections()),
                 guardsToStmt(action.getEdge().getGuards()),
                 dataUpdatesToStmt(action.getEdge().getUpdates()),
                 dataInvariantsToStmt(action.getTargetLocs())
@@ -73,6 +75,8 @@ public class CombinedLazyCegarXtaTransFunc<S extends State, P extends Prec> impl
             state,
             Streams.concat(
                 syncToStmt(action.getEmitEdge(), action.getRecvEdge()),
+                selectionsToStmt(action.getEmitEdge().getSelections()),
+                selectionsToStmt(action.getRecvEdge().getSelections()),
                 guardsToStmt(action.getEmitEdge().getGuards()),
                 guardsToStmt(action.getRecvEdge().getGuards()),
                 dataUpdatesToStmt(action.getEmitEdge().getUpdates()),
@@ -90,6 +94,9 @@ public class CombinedLazyCegarXtaTransFunc<S extends State, P extends Prec> impl
             Streams.concat(
                 action.getRecvEdges().stream()
                     .flatMap(recvEdge -> syncToStmt(action.getEmitEdge(), recvEdge)),
+                selectionsToStmt(action.getEmitEdge().getSelections()),
+                action.getRecvEdges().stream()
+                    .flatMap(recvEdge -> selectionsToStmt(recvEdge.getSelections())),
                 guardsToStmt(action.getEmitEdge().getGuards()),
                 action.getRecvEdges().stream()
                     .flatMap(recvEdge -> guardsToStmt(recvEdge.getGuards())),
@@ -107,6 +114,11 @@ public class CombinedLazyCegarXtaTransFunc<S extends State, P extends Prec> impl
 
     private Collection<? extends S> applyStmtsToState(final S state, final List<Stmt> stmts, final P prec) {
         return transFunc.getSuccStates(state, new BasicStmtAction(stmts), prec);
+    }
+
+    private static Stream<? extends Stmt> selectionsToStmt(final Collection<Selection> selections) {
+        return selections.stream()
+            .map(Selection::toStmt);
     }
 
     private static Stream<? extends Stmt> guardsToStmt(final Collection<Guard> guards) {

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
@@ -159,8 +160,12 @@ public final class WpState {
 		}
 
 		@Override
-		public WpState visit(SequenceStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
+		public WpState visit(final SequenceStmt stmt, WpState state) {
+			WpState res = state;
+			for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+				res = subStmt.accept(this, state);
+			}
+			return res;
 		}
 
 		@Override
@@ -219,8 +224,12 @@ public final class WpState {
 		}
 
 		@Override
-		public WpState visit(SequenceStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
+		public WpState visit(final SequenceStmt stmt, WpState state) {
+			WpState res = state;
+			for (final Stmt subStmt : Lists.reverse(stmt.getStmts())) {
+				res = subStmt.accept(this, state);
+			}
+			return res;
 		}
 
 		@Override
