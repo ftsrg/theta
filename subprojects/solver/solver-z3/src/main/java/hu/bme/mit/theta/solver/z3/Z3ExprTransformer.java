@@ -128,6 +128,8 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -259,6 +261,10 @@ final class Z3ExprTransformer {
 				.addCase(IntLtExpr.class, this::transformIntLt)
 
 				.addCase(IntToRatExpr.class, this::transformIntToRat)
+
+				// Ranges
+
+				.addCase(InRangeExpr.class, this::transformInRange)
 
 				// Bitvectors
 
@@ -719,14 +725,28 @@ final class Z3ExprTransformer {
 		return context.mkLt(leftOpTerm, rightOpTerm);
 	}
 
-	/*
-	 * Bitvectors
-	 */
-
 	private com.microsoft.z3.Expr transformIntToRat(final IntToRatExpr expr) {
 		final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
 		return context.mkInt2Real(opTerm);
 	}
+
+	/*
+	 * Ranges
+	 */
+
+	private com.microsoft.z3.Expr transformInRange(final InRangeExpr expr) {
+		final RangeType range = expr.getRange();
+		final com.microsoft.z3.ArithExpr op = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
+
+		return context.mkAnd(
+				context.mkLe(context.mkInt(range.getLower()), op),
+				context.mkLe(op, context.mkInt(range.getUpper()))
+		);
+	}
+
+	/*
+	 * Bitvectors
+	 */
 
 	private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
 		return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());

@@ -37,6 +37,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
@@ -124,6 +125,9 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rangetype.InRangeExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -145,6 +149,10 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 	private static final int CACHE_SIZE = 1000;
@@ -254,6 +262,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 				.addCase(IntLtExpr.class, this::transformIntLt)
 
 				.addCase(IntToRatExpr.class, this::transformIntToRat)
+
+				// Ranges
+
+				.addCase(InRangeExpr.class, this::transformInRange)
 
 				// Bitvectors
 
@@ -702,6 +714,21 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
 	protected String transformIntToRat(final IntToRatExpr expr) {
 		return String.format("(to_real %s)", toTerm(expr.getOp()));
+	}
+
+	/*
+	 * Ranges
+	 */
+
+	protected String transformInRange(final InRangeExpr expr) {
+		final Expr<IntType> op = expr.getOp();
+
+		final RangeType range = expr.getRange();
+		final Expr<IntType> lower = Int(range.getLower());
+		final Expr<IntType> upper = Int(range.getUpper());
+
+		final Expr<BoolType> asBoolExpr = And(Leq(lower, op), Leq(op, upper));
+		return toTerm(asBoolExpr);
 	}
 
 	/*
