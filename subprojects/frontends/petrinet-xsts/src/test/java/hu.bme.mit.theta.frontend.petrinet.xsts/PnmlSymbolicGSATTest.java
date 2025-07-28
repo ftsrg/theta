@@ -40,7 +40,7 @@ public class PnmlSymbolicGSATTest {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
-                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-10.pnml", "");
+                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-5.pnml", "");
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
@@ -60,8 +60,10 @@ public class PnmlSymbolicGSATTest {
                             valuation -> monolithicExpr.getValToState().invoke(valuation),
                             (Valuation v1, Valuation v2) ->
                                     monolithicExpr.getBiValToAction().invoke(v1, v2),
-                            true);
+                            true,
+                            10);
             status = checker.check();
+            logger.mainStep(status.toString());
             logger.mainStep(
                     "State space size: "
                             + ((MddAnalysisStatistics) status.getStats().get())

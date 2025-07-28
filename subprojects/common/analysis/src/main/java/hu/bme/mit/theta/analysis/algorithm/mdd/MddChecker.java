@@ -39,6 +39,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinit
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -55,6 +56,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -69,6 +71,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
     private final Function<Valuation, S> valToState;
     private final BiFunction<Valuation, Valuation, A> biValToAction;
     private final boolean forwardTrace;
+    private final long traceTimeout;
 
     public enum IterationStrategy {
         BFS,
@@ -84,7 +87,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             IterationStrategy iterationStrategy,
             Function<Valuation, S> valToState,
             BiFunction<Valuation, Valuation, A> biValToAction,
-            boolean forwardTrace) {
+            boolean forwardTrace,
+            long traceTimeout) {
         this.monolithicExpr = monolithicExpr;
         this.variableOrdering = variableOrdering;
         this.solverPool = solverPool;
@@ -93,6 +97,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         this.valToState = valToState;
         this.biValToAction = biValToAction;
         this.forwardTrace = forwardTrace;
+        this.traceTimeout = traceTimeout;
     }
 
     public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
@@ -111,7 +116,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 IterationStrategy.GSAT,
                 valToState,
                 biValToAction,
-                forwardTrace);
+                forwardTrace,
+                10);
     }
 
     public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
@@ -122,7 +128,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
             IterationStrategy iterationStrategy,
             Function<Valuation, S> valToState,
             BiFunction<Valuation, Valuation, A> biValToAction,
-            boolean forwardTrace) {
+            boolean forwardTrace,
+            long traceTimeout) {
         return new MddChecker<S, A>(
                 monolithicExpr,
                 variableOrdering,
@@ -131,7 +138,8 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                 iterationStrategy,
                 valToState,
                 biValToAction,
-                forwardTrace);
+                forwardTrace,
+                traceTimeout);
     }
 
     @Override
@@ -214,7 +222,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
         final AbstractNextStateDescriptor targetedNextStates =
                 OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
 
-        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
+        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation\n");
 
         final StateSpaceEnumerationProvider stateSpaceProvider;
         switch (iterationStrategy) {
@@ -235,17 +243,17 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                         targetedNextStates,
                         stateSig.getTopVariableHandle());
 
-        logger.write(Level.INFO, "Enumerated state-space");
+        logger.write(Level.INFO, "Enumerated state-space\n");
 
         final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
 
-        logger.write(Level.INFO, "Calculated violating states");
+        logger.write(Level.INFO, "Calculated violating states\n");
 
         final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
-        logger.write(Level.INFO, "States violating the property: " + violatingSize);
+        logger.write(Level.INFO, "States violating the property: " + violatingSize + "\n");
 
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
-        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
+        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize + "\n");
 
         final MddAnalysisStatistics statistics =
                 new MddAnalysisStatistics(
@@ -262,49 +270,76 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
 
         final SafetyResult<MddProof, Trace<S, A>> result;
         if (violatingSize != 0) {
-            var reversedDescriptors = new ArrayList<AbstractNextStateDescriptor>();
-            for (var transNode : transNodes) {
-                final var explTrans =
-                        MddExplicitRepresentationExtractor.INSTANCE.transform(
-                                transNode, transSig.getTopVariableHandle());
-                reversedDescriptors.add(ReverseNextStateDescriptor.of(stateSpace, explTrans));
-            }
-            final var orReversed = OrNextStateDescriptor.create(reversedDescriptors);
 
-            final TraceProvider traceProvider = new TraceProvider(stateSig.getVariableOrder());
-            final var mddTrace =
-                    traceProvider.compute(
-                            propViolating, orReversed, initNode, stateSig.getTopVariableHandle());
-            final var valuations =
-                    mddTrace.stream()
-                            .map(
-                                    it ->
-                                            PathUtils.extractValuation(
-                                                    MddValuationCollector.collect(it).stream()
-                                                            .findFirst()
-                                                            .orElseThrow(),
-                                                    0))
-                            .toList();
-            final List<S> states = new ArrayList<>();
-            final List<A> actions = new ArrayList<>();
-            for (int i = 0; i < valuations.size(); ++i) {
-                states.add(valToState.apply(valuations.get(i)));
-                if (i > 0) {
-                    actions.add(biValToAction.apply(valuations.get(i - 1), valuations.get(i)));
-                }
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Trace<S, A>> future =
+                    executor.submit(
+                            () -> {
+                                var reversedDescriptors =
+                                        new ArrayList<AbstractNextStateDescriptor>();
+                                for (var transNode : transNodes) {
+                                    final var explTrans =
+                                            MddExplicitRepresentationExtractor.INSTANCE.transform(
+                                                    transNode, transSig.getTopVariableHandle());
+                                    reversedDescriptors.add(
+                                            ReverseNextStateDescriptor.of(stateSpace, explTrans));
+                                }
+                                final var orReversed =
+                                        OrNextStateDescriptor.create(reversedDescriptors);
+
+                                final TraceProvider traceProvider =
+                                        new TraceProvider(stateSig.getVariableOrder());
+                                final var mddTrace =
+                                        traceProvider.compute(
+                                                propViolating,
+                                                orReversed,
+                                                initNode,
+                                                stateSig.getTopVariableHandle());
+                                final var valuations =
+                                        mddTrace.stream()
+                                                .map(
+                                                        it ->
+                                                                PathUtils.extractValuation(
+                                                                        MddValuationCollector
+                                                                                .collect(it)
+                                                                                .stream()
+                                                                                .findFirst()
+                                                                                .orElseThrow(),
+                                                                        0))
+                                                .toList();
+                                final List<S> states = new ArrayList<>();
+                                final List<A> actions = new ArrayList<>();
+                                for (int i = 0; i < valuations.size(); ++i) {
+                                    states.add(valToState.apply(valuations.get(i)));
+                                    if (i > 0) {
+                                        actions.add(
+                                                biValToAction.apply(
+                                                        valuations.get(i - 1), valuations.get(i)));
+                                    }
+                                }
+
+                                if (forwardTrace) {
+                                    return Trace.of(states, actions);
+                                } else {
+                                    return Trace.of(Lists.reverse(states), Lists.reverse(actions));
+                                }
+                            });
+
+            try {
+                logger.mainStep("Starting trace generation.\n");
+                final Trace<S, A> trace = future.get(traceTimeout, TimeUnit.SECONDS);
+                return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
+            } catch (TimeoutException | InterruptedException | ExecutionException e) {
+                logger.mainStep("Trace generation timed out, returning empty trace!\n");
+                future.cancel(true);
+                return SafetyResult.unsafe(
+                        Trace.of(List.of(valToState.apply(ExplState.top())), List.of()),
+                        MddProof.of(stateSpace),
+                        statistics);
+            } finally {
+                executor.shutdownNow();
             }
 
-            if (forwardTrace) {
-                result =
-                        SafetyResult.unsafe(
-                                Trace.of(states, actions), MddProof.of(stateSpace), statistics);
-            } else {
-                result =
-                        SafetyResult.unsafe(
-                                Trace.of(Lists.reverse(states), Lists.reverse(actions)),
-                                MddProof.of(stateSpace),
-                                statistics);
-            }
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }

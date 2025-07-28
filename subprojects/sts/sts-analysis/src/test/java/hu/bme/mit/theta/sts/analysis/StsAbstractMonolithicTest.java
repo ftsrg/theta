@@ -185,7 +185,8 @@ public class StsAbstractMonolithicTest {
                                     valuation -> abstractMe.getValToState().invoke(valuation),
                                     (Valuation v1, Valuation v2) ->
                                             abstractMe.getBiValToAction().invoke(v1, v2),
-                                    true));
+                                    true,
+                                    10));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
