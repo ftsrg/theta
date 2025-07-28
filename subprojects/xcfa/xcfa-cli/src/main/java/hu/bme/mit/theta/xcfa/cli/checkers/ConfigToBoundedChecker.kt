@@ -27,7 +27,10 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -38,6 +41,7 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.math.BigInteger
 
 fun getBoundedChecker(
   xcfa: XCFA,
@@ -140,6 +144,13 @@ fun getBoundedChecker(
       val reverseLocMap = monExprResult.locMap.reverseMapping()
       val locVar = monolithicExpr.ctrlVars.first { it.name == "__loc_" }
 
+      val locVarConstr =
+        if (locVar.type is IntType) IntLitExpr::of
+        else
+          { bigInt: BigInteger ->
+            BvUtils.bigIntegerToNeutralBvLitExpr(bigInt, (locVar.type as BvType).size)
+          }
+
       SafetyResult.safe(
         LocationInvariants(
           reverseLocMap
@@ -150,7 +161,9 @@ fun getBoundedChecker(
                   PredState.of(
                     ExprUtils.simplify(
                       expr,
-                      ImmutableValuation.builder().put(locVar, Int(it.key)).build(),
+                      ImmutableValuation.builder()
+                        .put(locVar, locVarConstr(BigInteger.valueOf(it.key.toLong())))
+                        .build(),
                     )
                   )
                 ),
