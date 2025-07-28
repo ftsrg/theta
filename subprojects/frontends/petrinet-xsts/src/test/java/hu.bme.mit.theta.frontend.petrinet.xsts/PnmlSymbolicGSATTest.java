@@ -44,7 +44,9 @@ public class PnmlSymbolicGSATTest {
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
-            xsts = PetriNetToXSTS.createXSTS(petriNet, propStream);
+            xsts =
+                    PetriNetToXSTS.createXSTS(
+                            petriNet, propStream, PetriNetToXSTS.PropType.DEADLOCK);
         }
 
         final SafetyResult<?, ?> status;
@@ -60,8 +62,10 @@ public class PnmlSymbolicGSATTest {
                             valuation -> monolithicExpr.getValToState().invoke(valuation),
                             (Valuation v1, Valuation v2) ->
                                     monolithicExpr.getBiValToAction().invoke(v1, v2),
-                            true);
+                            true,
+                            10);
             status = checker.check();
+            logger.mainStep(status.toString());
             logger.mainStep(
                     "State space size: "
                             + ((MddAnalysisStatistics) status.getStats().get())

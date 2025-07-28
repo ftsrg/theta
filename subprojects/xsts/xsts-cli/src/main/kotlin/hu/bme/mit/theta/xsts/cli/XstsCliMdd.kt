@@ -95,6 +95,7 @@ class XstsCliMdd :
               it.valToState,
               it.biValToAction,
               !reversed,
+              10,
             )
           }
         checker.check(null)
