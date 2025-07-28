@@ -231,7 +231,8 @@ public class XstsMddCheckerTest {
                             valuation -> monolithicExpr.getValToState().invoke(valuation),
                             (Valuation v1, Valuation v2) ->
                                     monolithicExpr.getBiValToAction().invoke(v1, v2),
-                            true);
+                            true,
+                            100);
             status = checker.check(null);
             logger.mainStep(status.toString());
         }

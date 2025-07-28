@@ -44,9 +44,7 @@ public class PnmlSymbolicGSATTest {
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
-            xsts =
-                    PetriNetToXSTS.createXSTS(
-                            petriNet, propStream);
+            xsts = PetriNetToXSTS.createXSTS(petriNet, propStream);
         }
 
         final SafetyResult<?, ?> status;
