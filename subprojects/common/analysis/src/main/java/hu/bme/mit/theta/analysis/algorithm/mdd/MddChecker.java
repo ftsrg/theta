@@ -337,7 +337,7 @@ public class MddChecker<S extends ExprState, A extends ExprAction>
                         MddProof.of(stateSpace),
                         statistics);
             } finally {
-                executor.shutdown();
+                executor.shutdownNow();
             }
 
         } else {
