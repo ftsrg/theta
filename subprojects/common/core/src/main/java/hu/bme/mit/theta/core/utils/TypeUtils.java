@@ -183,7 +183,9 @@ public final class TypeUtils {
 			return (LitExpr<T>) cast(BoolExprs.False(), type);
 		} else if(type instanceof IntType) {
 			if(type instanceof final RangeType range) {
-				return (LitExpr<T>) cast(IntExprs.Int(range.getLower()), type);
+				final boolean zeroInRange = range.getLower() <= 0 && 0 <= range.getUpper();
+				final int rangeDefault = zeroInRange ? 0 : range.getLower();
+				return (LitExpr<T>) cast(IntExprs.Int(rangeDefault), type);
 			}
 			return (LitExpr<T>) cast(IntExprs.Int(0), type);
 		} else if(type instanceof RatType) {
