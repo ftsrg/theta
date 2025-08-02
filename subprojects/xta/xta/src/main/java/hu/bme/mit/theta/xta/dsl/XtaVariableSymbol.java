@@ -45,7 +45,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 final class XtaVariableSymbol implements Symbol {
 
-	//private final String name;
 	private String name;
 	private final boolean constant;
 	private final boolean broadcast;
@@ -66,6 +65,19 @@ final class XtaVariableSymbol implements Symbol {
 		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
 				: null;
 	}
+
+    private XtaVariableSymbol(final String name, final XtaVariableSymbol toCopy) {
+        this.name = name;
+        constant = toCopy.constant;
+        broadcast = toCopy.broadcast;
+        type = toCopy.type;
+        initialiser = toCopy.initialiser;
+    }
+
+    public XtaVariableSymbol copy(String prefix) {
+        return new XtaVariableSymbol(prefix + name, this);
+    }
+
 	private XtaVariableSymbol(String _name){
 		name = _name;
 		constant = false;
@@ -73,12 +85,15 @@ final class XtaVariableSymbol implements Symbol {
 		type = null;
 		initialiser = null;
 	}
+
 	public static XtaVariableSymbol forcedCreate(String name){
 		return new XtaVariableSymbol(name);
 	}
+
 	public void setGlobal(){
 		global = true;
 	}
+
 	public boolean isGlobal(){
 		return global;
 	}

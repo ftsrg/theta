@@ -45,12 +45,10 @@ import static java.util.stream.Collectors.toList;
 
 final class XtaProcessSymbol implements Symbol, Scope {
 
-
 	private SymbolTable system_symbolTable;
 
 	private final XtaSpecification scope;
 	private final SymbolTable symbolTable;
-
 
 	private final String name;
 	private final String initState;
@@ -64,7 +62,6 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
 		this.scope = checkNotNull(scope);
 		symbolTable = new SymbolTable();
-		//this.system_symbolTable = _system_symbolictable;
 		name = context.fId.getText();
 		initState = context.fProcessBody.fInit.fId.getText();
 		parameters = new ArrayList<>();
@@ -128,44 +125,33 @@ final class XtaProcessSymbol implements Symbol, Scope {
             if (variable.isConstant()) {
                 // do nothing; will be defined lazily on first occurrence
             } else {
+                final String prefix = process.getName() + "_";
+                final XtaVariableSymbol globalCopyOfVariable = variable.copy(prefix);
 
-
-                final InstantiateResult instantiateResult = variable.instantiate(process.getName() + "_", env);
+                final InstantiateResult instantiateResult = variable.instantiate(prefix, env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
-					env.define_in_parent(variable, label);
+                    env.defineInParent(globalCopyOfVariable, label);
                 } else if (instantiateResult.isClockVariable()) {
                     final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
-					env.define_in_parent(variable, varDecl);
+                    env.defineInParent(globalCopyOfVariable, varDecl);
                     process.getSystem().addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
                     final VarDecl<?> varDecl = instantiateResult.asDataVariable().getVarDecl();
                     final LitExpr<?> initValue = instantiateResult.asDataVariable().getInitValue();
                     env.define(variable, varDecl);
-					env.define_in_parent(variable, varDecl);
+                    env.defineInParent(globalCopyOfVariable, varDecl);
                     process.getSystem().addDataVar(varDecl, initValue);
                 } else {
                     throw new AssertionError();
                 }
-				String backupname = variable.getName();
-				variable.setName(process.getName() + "_" + variable.getName());
-				if(!system_symbolTable.get(variable.getName()).isPresent()){
-					system_symbolTable.add(variable);
-				}
-				variable.setName(backupname);
+                system_symbolTable.add(globalCopyOfVariable);
             }
 
         }
 	}
-
-	/*private void addSymboltoGlobalScope(XtaProcess process, XtaVariableSymbol var, VarDecl<?> decl){
-		if(!system_symbolTable.get(var.getName()).isPresent()){
-			var.setName(process.getName() + "_" + var.getName());
-			system_symbolTable.add(var);
-		}
-	}*/
 
 	private void createAllStates(final XtaProcess process, final Env env) {
 
@@ -179,14 +165,14 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			XtaStateSymbol temp = state.copyAndChangeName(loc.getName());
 			env.define(state, loc);
 			if(!system_symbolTable.get(temp.getName()).isPresent()){
-				env.define_in_parent(temp, loc);
+				env.defineInParent(temp, loc);
 				system_symbolTable.add(temp);
 				String varname = loc.getVarName();
 				XtaVariableSymbol variableSymbol = XtaVariableSymbol.forcedCreate(varname);
 				system_symbolTable.add(variableSymbol);
 
 				VarDecl varDecl = Decls.Var(varname, BoolType.getInstance());
-				env.define_in_parent(variableSymbol, varDecl);
+				env.defineInParent(variableSymbol, varDecl);
 				final LitExpr<BoolType> initValue = BoolLitExpr.of(initloc);
 				process.getSystem().addDataVar(varDecl, initValue);
 			}
@@ -245,7 +231,6 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext, variableIdContext);
 			variables.add(variableSymbol);
 			symbolTable.add(variableSymbol);
-			//system_symbolTable.add(variableSymbol);
 		}
 	}
 

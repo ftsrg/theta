@@ -58,7 +58,7 @@ public final class Env {
 	public Object eval(final Symbol symbol) {
 		checkNotNull(symbol);
 		final Object value = currentFrame.eval(symbol);
-		checkArgument(symbol != null, "Symbol " + symbol.getName() + " is undefined");
+		checkArgument(value != null, "Symbol " + symbol.getName() + " is undefined");
 		return value;
 	}
 
@@ -75,7 +75,7 @@ public final class Env {
 		return value;
 	}
 
-	public void define_in_parent(final Symbol symbol, final Object value){
+	public void defineInParent(final Symbol symbol, final Object value){
 		checkNotNull(symbol);
 		checkNotNull(value);
 		currentFrame.parent.define(symbol, value);
@@ -91,9 +91,8 @@ public final class Env {
 		}
 
 		public void define(final Symbol symbol, final Object value) {
-			//checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
-			if(eval(symbol) == null)
-				symbolToValue.put(symbol, value);
+			checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
+			symbolToValue.put(symbol, value);
 		}
 
 		public Object eval(final Symbol symbol) {
