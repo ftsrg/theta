@@ -148,7 +148,10 @@ final class XtaVariableSymbol implements Symbol {
 		}
 	}
 
-	private static boolean isSupportedDataType(Type type) {
+	private static boolean isSupportedDataType(final Type type) {
+		if (type instanceof final ArrayType<?, ?> arrayType) {
+			return (arrayType.getIndexType() instanceof IntType) && isSupportedDataType(arrayType.getElemType());
+		}
 		return type instanceof BoolType || type instanceof IntType;
 	}
 
