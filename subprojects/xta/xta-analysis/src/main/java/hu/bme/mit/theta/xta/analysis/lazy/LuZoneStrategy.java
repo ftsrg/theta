@@ -48,7 +48,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 		checkNotNull(system);
 		this.lens = checkNotNull(lens);
 		final ZonePrec zonePrec = ZonePrec.of(system.getClockVars());
-		analysis = PrecMappingAnalysis.create(LuZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> zonePrec);
+		analysis = PrecMappingAnalysis.create(LuZoneAnalysis.create(XtaZoneAnalysis.create(system.getInitLocs())), p -> zonePrec);
 		projection = s -> unit();
 	}
 

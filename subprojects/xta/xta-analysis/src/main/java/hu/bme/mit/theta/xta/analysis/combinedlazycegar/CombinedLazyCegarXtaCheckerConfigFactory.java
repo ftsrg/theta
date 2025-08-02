@@ -228,7 +228,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     private Analysis createConcrClockAnalysis() {
         return switch (clockStrategy) {
-            case LU, FWITP, BWITP -> XtaZoneAnalysis.getInstance();
+            case LU, FWITP, BWITP -> XtaZoneAnalysis.create(system.getInitLocs());
         };
     }
 

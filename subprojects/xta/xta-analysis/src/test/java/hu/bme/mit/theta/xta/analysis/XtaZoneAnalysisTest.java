@@ -77,7 +77,7 @@ public final class XtaZoneAnalysisTest {
 
 		final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
 		final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(system);
-		final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
+		final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.create(system.getInitLocs());
 		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
 				.create(explAnalysis, zoneAnalysis);
 		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis

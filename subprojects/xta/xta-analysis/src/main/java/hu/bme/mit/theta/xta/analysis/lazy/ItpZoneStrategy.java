@@ -48,7 +48,7 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
 		checkNotNull(system);
 		this.lens = checkNotNull(lens);
 		prec = ZonePrec.of(system.getClockVars());
-		analysis = PrecMappingAnalysis.create(ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> prec);
+		analysis = PrecMappingAnalysis.create(ItpZoneAnalysis.create(XtaZoneAnalysis.create(system.getInitLocs())), p -> prec);
 		projection = s -> unit();
 	}
 

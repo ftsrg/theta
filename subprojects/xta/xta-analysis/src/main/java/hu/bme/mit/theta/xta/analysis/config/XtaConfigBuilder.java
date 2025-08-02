@@ -188,7 +188,7 @@ public class XtaConfigBuilder {
             }
             final Analysis<Prod2State<PredState, ZoneState>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> prod2Analysis = Prod2Analysis.create(
                     PredAnalysis.create(analysisSolver, predAbstractor, xta.getInitVal().toExpr()),
-                    XtaZoneAnalysis.getInstance()
+                    XtaZoneAnalysis.create(xta.getInitLocs())
             );
             //miért nem kell xtaprec-be becsomagolni
             final Analysis<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, Prod2Prec<PredPrec, ZonePrec>> analysis = XtaAnalysis.create(xta,prod2Analysis);

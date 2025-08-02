@@ -23,22 +23,28 @@ import java.util.Collections;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.xta.XtaProcess;
 
 final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 
-	private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
+	private final Collection<XtaProcess.Loc> initLocs;
 
-	private XtaZoneInitFunc() {
+	private XtaZoneInitFunc(final Collection<XtaProcess.Loc> initLocs) {
+		this.initLocs = initLocs;
 	}
 
-	static XtaZoneInitFunc getInstance() {
-		return INSTANCE;
+	static XtaZoneInitFunc create(final Collection<XtaProcess.Loc> initLocs) {
+		return new XtaZoneInitFunc(initLocs);
 	}
 
 	@Override
 	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
 		checkNotNull(prec);
-		return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
+		ZoneState initZone = ZoneState.zero(prec.getVars());
+		if (initLocs.stream().allMatch(l -> l.getKind() == XtaProcess.LocKind.NORMAL)) {
+			initZone = initZone.transform().up().build();
+		}
+		return Collections.singleton(initZone);
 	}
 
 }

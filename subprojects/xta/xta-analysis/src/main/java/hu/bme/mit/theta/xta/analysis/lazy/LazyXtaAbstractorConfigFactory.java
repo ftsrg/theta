@@ -175,7 +175,7 @@ public final class LazyXtaAbstractorConfigFactory {
                 case FWITP:
                 case BWITP:
                 case LU:
-                    return XtaZoneAnalysis.getInstance();
+                    return XtaZoneAnalysis.create(system.getInitLocs());
                 default:
                     throw new AssertionError();
             }
