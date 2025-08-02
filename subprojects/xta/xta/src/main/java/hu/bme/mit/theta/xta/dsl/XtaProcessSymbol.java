@@ -181,7 +181,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			if(!system_symbolTable.get(temp.getName()).isPresent()){
 				env.define_in_parent(temp, loc);
 				system_symbolTable.add(temp);
-				String varname = "__" +  loc.getName();
+				String varname = loc.getVarName();
 				XtaVariableSymbol variableSymbol = XtaVariableSymbol.forcedCreate(varname);
 				system_symbolTable.add(variableSymbol);
 

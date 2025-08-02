@@ -106,11 +106,11 @@ public final class XtaProcess {
             int count = 0;
             for (VarDecl<?> var : system.getDataVars()) {
                 if (!target.equals(source) || count == 2) {
-                    if (var.getName().contains(target.name)) {
+                    if (var.getName().equals(target.getVarName())) {
                         updates.add(AssignStmt.create(var, BoolLitExpr.of(true)));
                         count++;
                     }
-                    if (var.getName().contains(source.name)) {
+                    if (var.getName().equals(source.getVarName())) {
                         updates.add(AssignStmt.create(var, BoolLitExpr.of(false)));
                         count++;
                     }
@@ -204,6 +204,7 @@ public final class XtaProcess {
         private final LocKind kind;
         private final Collection<Guard> invars;
 
+        private final String varName;
         private final Collection<Edge> unmodInEdges;
         private final Collection<Edge> unmodOutEdges;
 
@@ -214,6 +215,7 @@ public final class XtaProcess {
             this.kind = checkNotNull(kind);
             this.invars = createGuards(invars, system.getDataVars(), system.getClockVars());
 
+            varName = "__" +  name;
             unmodInEdges = Collections.unmodifiableCollection(inEdges);
             unmodOutEdges = Collections.unmodifiableCollection(outEdges);
         }
@@ -228,6 +230,10 @@ public final class XtaProcess {
 
         public String getName() {
             return name;
+        }
+
+        public String getVarName() {
+            return varName;
         }
 
         public LocKind getKind() {
