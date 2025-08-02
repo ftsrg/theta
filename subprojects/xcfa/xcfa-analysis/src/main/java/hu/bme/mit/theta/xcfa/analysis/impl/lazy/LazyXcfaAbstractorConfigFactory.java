@@ -167,7 +167,7 @@ public class LazyXcfaAbstractorConfigFactory {
             final Lens lens = createDataLens(abstrDom);
             final Concretizer concretizer = createDataConcretizer(concrDom, abstrDom);
             if (itpStrategy == DataStrategy2.ItpStrategy.NONE) {
-                return new BasicLazyStrategy<>(lens, concretizer);
+                return new IdentityAbstractionLazyStrategy<>(lens, concretizer);
             }
             final Lattice abstrLattice = createDataLattice(abstrDom);
             if (itpStrategy == DataStrategy2.ItpStrategy.SEQ) {

@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class BasicLazyStrategy<SConcr extends State, S extends State, A extends Action> implements LazyStrategy<SConcr, SConcr, S, A> {
+public final class IdentityAbstractionLazyStrategy<SConcr extends State, S extends State, A extends Action> implements LazyStrategy<SConcr, SConcr, S, A> {
 
     private final Lens<S, SConcr> lens;
     private final PartialOrd<SConcr> partialOrd;
@@ -20,7 +20,7 @@ public final class BasicLazyStrategy<SConcr extends State, S extends State, A ex
     private final Concretizer<SConcr, SConcr> concretizer;
     private final InitAbstractor<SConcr, SConcr> initAbstractor;
 
-    public BasicLazyStrategy(final Lens<S, SConcr> lens, final Concretizer<SConcr, SConcr> concretizer) {
+    public IdentityAbstractionLazyStrategy(final Lens<S, SConcr> lens, final Concretizer<SConcr, SConcr> concretizer) {
         this.lens = checkNotNull(lens);
         this.concretizer = checkNotNull(concretizer);
         partialOrd = (s1, s2) -> s1.isBottom() || s1.equals(s2);

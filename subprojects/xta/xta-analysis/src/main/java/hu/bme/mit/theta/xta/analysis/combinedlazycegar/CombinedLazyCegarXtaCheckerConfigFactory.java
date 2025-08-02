@@ -247,18 +247,12 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     }
 
     private LazyStrategy createDataStrategy2() {
-        return new BasicLazyStrategy<>(
-            createDataLens(),
-            createDataConcretizer()
-        );
-    }
-
-    private Lens createDataLens() {
-        return LazyXtaLensUtils.createConcrDataLens();
-    }
-
-    private Concretizer createDataConcretizer() {
-        return BasicConcretizer.create(ExplOrd.getInstance());
+        final Lens lens = LazyXtaLensUtils.createConcrDataLens();
+        final PartialOrd partialOrd = switch (dataDomain) {
+            case EXPL -> ExplOrd.getInstance();
+            case PRED_BOOL, PRED_CART, PRED_SPLIT -> PredOrd.create(solverFactory.createSolver());
+        };
+        return new SameAbstractionLazyStrategy(lens, partialOrd);
     }
 
     private LazyStrategy createClockStrategy() {
