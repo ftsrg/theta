@@ -29,10 +29,13 @@ import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.dsl.XtaExpression.ExpressionInstantiationVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ArrayAssignmentExpressionContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.AssignmentExpressionContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.AssignmentOpContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ExpressionContext;
@@ -74,10 +77,36 @@ final class XtaUpdate {
 				if (op.fAssignOp != null) {
 					return Stmts.Assign(varDecl, rightOp);
 				} else {
-					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException();
 				}
 			}
+		}
+
+		@Override
+		public AssignStmt<?> visitArrayAssignmentExpression(final ArrayAssignmentExpressionContext ctx) {
+			if (ctx.fOper == null) {
+				return visitChildren(ctx);
+			} else {
+				final AssignmentOpContext op = ctx.fOper;
+				if (op.fAssignOp != null) {
+					return arrayAssignStmt(ctx);
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			}
+		}
+
+		private <IndexType extends Type, ElemType extends Type> AssignStmt<ArrayType<IndexType, ElemType>> arrayAssignStmt(final ArrayAssignmentExpressionContext ctx) {
+			@SuppressWarnings("unchecked") final RefExpr<ArrayType<IndexType, ElemType>> array =
+					(RefExpr<ArrayType<IndexType, ElemType>>) ctx.fArrayId.accept(visitor);
+			final VarDecl<ArrayType<IndexType, ElemType>> arrayVarDecl =
+					(VarDecl<ArrayType<IndexType, ElemType>>) array.getDecl();
+
+			@SuppressWarnings("unchecked") final Expr<IndexType> index = (Expr<IndexType>) ctx.fArrayAccess.fExpression.accept(visitor);
+			@SuppressWarnings("unchecked") final Expr<ElemType> rightOp = (Expr<ElemType>) ctx.fRightOp.accept(visitor);
+			final ArrayWriteExpr<IndexType, ElemType> arrayWrite = ArrayWriteExpr.of(array, index, rightOp);
+
+			return Stmts.Assign(arrayVarDecl, arrayWrite);
 		}
 
 		@Override

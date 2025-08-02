@@ -405,9 +405,14 @@ textAndExpression
 	;
 
 textNotExpression
-	:	assignmentExpression
+	:	arrayAssignmentExpression
+	|	assignmentExpression
 	|	textNotOp fOp=textNotExpression
 	;
+
+arrayAssignmentExpression
+    :   fArrayId=conditionalExpression (fArrayAccess=arrayAccessOp fOper=assignmentOp fRightOp=arrayAssignmentExpression)?
+    ;
 
 assignmentExpression
 	:	fLeftOp=conditionalExpression (fOper=assignmentOp fRightOp=assignmentExpression)?
