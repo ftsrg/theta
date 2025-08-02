@@ -59,7 +59,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
 	@Override
 	public ArrayType<IndexType, ElemType> getType() {
-		return type;
+		return type.getCorrectedType();
 	}
 
 	@Override

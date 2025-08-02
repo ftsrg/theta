@@ -60,6 +60,10 @@ public final class RangeType extends IntType {
 		return upper;
 	}
 
+	public IntType getCorrectedType() {
+		return IntType.getInstance();
+	}
+
 	@Override
 	public int hashCode() {
 		int result = hashCode;

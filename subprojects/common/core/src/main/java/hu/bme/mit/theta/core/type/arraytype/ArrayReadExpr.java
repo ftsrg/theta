@@ -22,13 +22,11 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
@@ -70,12 +68,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 
 	@Override
 	public ElemType getType() {
-		final ElemType elemType = array.getType().getElemType();
-		if (elemType instanceof RangeType) {
-			@SuppressWarnings("unchecked") final ElemType intType = (ElemType) Int();
-			return intType;
-		}
-		return elemType;
+		return array.getType().getCorrectedType().getElemType();
 	}
 
 	@Override

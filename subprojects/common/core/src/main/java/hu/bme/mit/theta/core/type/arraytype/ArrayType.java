@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
@@ -23,6 +24,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 public final class ArrayType<IndexType extends Type, ElemType extends Type>
 		implements Equational<ArrayType<IndexType, ElemType>> {
@@ -63,6 +65,12 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
 	public NeqExpr<ArrayType<IndexType, ElemType>> Neq(final Expr<ArrayType<IndexType, ElemType>> leftOp,
 													   final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		return ArrayExprs.Neq(leftOp, rightOp);
+	}
+
+	public ArrayType<IndexType, ElemType> getCorrectedType() {
+		@SuppressWarnings("unchecked") final IndexType correctedIndexType = (indexType instanceof RangeType) ? (IndexType) Int() : indexType;
+		@SuppressWarnings("unchecked") final ElemType correctedElemType = (elemType instanceof RangeType) ? (ElemType) Int() : elemType;
+		return ArrayType.of(correctedIndexType, correctedElemType);
 	}
 
 	@Override

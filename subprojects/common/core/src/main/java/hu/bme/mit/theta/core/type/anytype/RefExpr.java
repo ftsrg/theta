@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.rangetype.RangeType;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
@@ -47,9 +48,12 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 	@Override
 	public DeclType getType() {
 		final DeclType type = decl.getType();
-		if (type instanceof RangeType) {
-			@SuppressWarnings("unchecked") final DeclType intType = (DeclType) Int();
-			return intType;
+		if (type instanceof RangeType rangeType) {
+			@SuppressWarnings("unchecked") final DeclType correctedType = (DeclType) rangeType.getCorrectedType();
+			return correctedType;
+		} else if (type instanceof final ArrayType<?, ?> arrayType) {
+			@SuppressWarnings("unchecked") final DeclType correctedType = (DeclType) arrayType.getCorrectedType();
+			return correctedType;
 		}
 		return type;
 	}
