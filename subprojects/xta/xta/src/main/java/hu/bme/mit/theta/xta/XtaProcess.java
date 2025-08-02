@@ -120,6 +120,7 @@ public final class XtaProcess {
         final Edge edge = new Edge(source, target, selections, guards, sync, updates);
         source.outEdges.add(edge);
         target.inEdges.add(edge);
+        edges.add(edge);
 
         return edge;
     }

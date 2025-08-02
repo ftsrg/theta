@@ -5,19 +5,25 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
+import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewAtomsAutoExpl;
 import hu.bme.mit.theta.analysis.pred.*;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod2.Prod2Ord;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
 import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.Lens;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
@@ -30,17 +36,19 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
 
+import java.util.Set;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaUtils.forceCast;
 import static hu.bme.mit.theta.xta.analysis.lazy.LazyXtaLensUtils.createConcrProd2Lens;
+import static java.util.stream.Collectors.toSet;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class CombinedLazyCegarXtaCheckerConfigFactory {
 
     public enum DataDomain {
-        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
+        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT
     }
 
     @SuppressWarnings("unused")
@@ -169,6 +177,15 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                 new CombinedLazyCegarXtaPrecRefiner(switch (dataDomain) {
                     case EXPL -> new ItpRefToExplPrec();
                     case PRED_BOOL, PRED_CART, PRED_SPLIT -> new ItpRefToPredPrec(predSplit.splitter);
+                    case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> {
+                        final Set<Expr<BoolType>> atoms = system.getProcesses().stream()
+                                .flatMap(process -> process.getEdges().stream())
+                                .flatMap(edge -> edge.getGuards().stream())
+                                .flatMap(guard -> ExprUtils.getAtoms(guard.toExpr()).stream())
+                                .collect(toSet());
+                        final AutoExpl autoExpl = new NewAtomsAutoExpl(Set.of(), atoms, 0);
+                        yield AutomaticItpRefToProd2ExplPredPrec.create(autoExpl, predSplit.splitter);
+                    }
                 }),
                 pruneStrategy,
                 logger
@@ -202,27 +219,48 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     private Analysis createConcrDataAnalysis() {
         return CombinedLazyCegarXtaAnalysis.create(
             forceCast(switch (dataDomain) {
-                case EXPL -> ExplStmtAnalysis.create(
-                    solverFactory.createSolver(),
-                    system.getInitVal().toExpr(),
-                    maxEnum
-                );
-                case PRED_BOOL -> PredAnalysis.create(
-                    solverFactory.createSolver(),
-                    PredAbstractors.booleanAbstractor(solverFactory.createSolver()),
-                    system.getInitVal().toExpr()
-                );
-                case PRED_CART -> PredAnalysis.create(
-                    solverFactory.createSolver(),
-                    PredAbstractors.cartesianAbstractor(solverFactory.createSolver()),
-                    system.getInitVal().toExpr()
-                );
-                case PRED_SPLIT -> PredAnalysis.create(
-                    solverFactory.createSolver(),
-                    PredAbstractors.booleanSplitAbstractor(solverFactory.createSolver()),
-                    system.getInitVal().toExpr()
-                );
+                case EXPL -> createExplAnalysis();
+                case PRED_BOOL, PRED_CART, PRED_SPLIT -> createPredAnalysis(solverFactory.createSolver());
+                case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> createExplPredAnalysis(solverFactory.createSolver());
             })
+        );
+    }
+
+    private Analysis createExplAnalysis() {
+        return ExplStmtAnalysis.create(
+                solverFactory.createSolver(),
+                system.getInitVal().toExpr(),
+                maxEnum
+        );
+    }
+
+    private Analysis createPredAnalysis(final Solver solver) {
+        return switch (dataDomain) {
+            case PRED_BOOL, EXPL_PRED_BOOL -> PredAnalysis.create(
+                    solver,
+                    PredAbstractors.booleanAbstractor(solver),
+                    system.getInitVal().toExpr()
+            );
+            case PRED_CART, EXPL_PRED_CART -> PredAnalysis.create(
+                    solver,
+                    PredAbstractors.cartesianAbstractor(solver),
+                    system.getInitVal().toExpr()
+            );
+            case PRED_SPLIT, EXPL_PRED_SPLIT -> PredAnalysis.create(
+                    solver,
+                    PredAbstractors.booleanSplitAbstractor(solver),
+                    system.getInitVal().toExpr()
+            );
+            default -> throw new AssertionError();
+        };
+    }
+
+    private Analysis createExplPredAnalysis(final Solver solver) {
+        return Prod2ExplPredAnalysis.create(
+                createExplAnalysis(),
+                createPredAnalysis(solver),
+                Prod2ExplPredStrengtheningOperator.create(solver),
+                Prod2ExplPredAbstractors.booleanAbstractor(solver)
         );
     }
 
@@ -251,6 +289,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         final PartialOrd partialOrd = switch (dataDomain) {
             case EXPL -> ExplOrd.getInstance();
             case PRED_BOOL, PRED_CART, PRED_SPLIT -> PredOrd.create(solverFactory.createSolver());
+            case EXPL_PRED_CART, EXPL_PRED_BOOL, EXPL_PRED_SPLIT -> Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solverFactory.createSolver()));
         };
         return new SameAbstractionLazyStrategy(lens, partialOrd);
     }
@@ -296,6 +335,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         return switch (dataDomain) {
             case EXPL -> ExplPrec.empty();
             case PRED_BOOL, PRED_CART, PRED_SPLIT -> PredPrec.of();
+            case EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT -> Prod2Prec.of(ExplPrec.empty(), PredPrec.of());
         };
     }
 
