@@ -20,11 +20,10 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -193,9 +192,16 @@ public final class TypeUtils {
 			return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
 		} else if(type instanceof FpType) {
 			return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
+		} else if (type instanceof final ArrayType<?, ?> arrayType) {
+			return (LitExpr<T>) cast(defaultArrayValue(arrayType), type);
 		} else {
 			throw new AssertionError();
 		}
 	}
 
+	private static <IT extends Type, ET extends Type> ArrayLitExpr<IT, ET> defaultArrayValue(final ArrayType<IT, ET> arrayType) {
+		final ET elemType = arrayType.getElemType();
+		final LitExpr<ET> defaultElem = getDefaultValue(elemType);
+		return ArrayLitExpr.of(List.of(), defaultElem, arrayType);
+	}
 }
