@@ -107,6 +107,7 @@ fun getMddChecker(
       abstractME.valToState,
       abstractME.biValToAction,
       true,
+      10,
     )
   }
 
