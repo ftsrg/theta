@@ -46,7 +46,8 @@ public final class TraceProvider implements MddGraph.CleanupListener {
             MddHandle targetStates,
             AbstractNextStateDescriptor reversedNextStateRelation,
             MddHandle initialStates,
-            MddVariableHandle highestAffectedVariable) {
+            MddVariableHandle highestAffectedVariable)
+            throws InterruptedException {
 
         MddHandle currentState = targetStates;
         MddHandle alreadyExplored = currentState;
@@ -55,6 +56,8 @@ public final class TraceProvider implements MddGraph.CleanupListener {
 
         while (MddInterpreter.calculateNonzeroCount(currentState.intersection(initialStates))
                 <= 0) {
+            if (Thread.interrupted()) throw new InterruptedException();
+
             final var newLayer =
                     singleStepProvider
                             .compute(
