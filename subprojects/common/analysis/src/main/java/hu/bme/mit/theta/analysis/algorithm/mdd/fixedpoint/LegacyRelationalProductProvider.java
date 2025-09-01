@@ -23,6 +23,7 @@ import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
@@ -152,6 +153,13 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
                         c.key(),
                         terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode()));
 
+                if (offDiagonal.defaultValue() != null
+                        && offDiagonal.defaultValue().defaultValue() != null) {
+                    throw new NotSolvableException();
+                }
+                if (offDiagonal.get(c.key()).defaultValue() != null) {
+                    System.out.println();
+                }
                 for (IntObjCursor<? extends AbstractNextStateDescriptor> next =
                                 offDiagonal.get(c.key()).cursor();
                         next.moveNext(); ) {

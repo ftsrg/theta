@@ -69,8 +69,9 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
         this.target = Preconditions.checkNotNull(target);
         this.killSwitch = killSwitch;
         if (target.isTerminal() && !target.isTerminalZero()) {
-            System.out.println("Stopping state space enumeration, violating state reached.");
-            killSwitch.setKilled(true);
+            //            System.out.println("Stopping state space enumeration, violating state
+            // reached.");
+            //            killSwitch.setKilled(true);
         }
     }
 
@@ -110,10 +111,25 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
                                 new IntObjMapViews.Transforming<>(
                                         it,
                                         (descriptor, key) -> {
-                                            if (key == null)
+                                            final MddHandle targetContinutation;
+                                            if (key == null) {
                                                 return AbstractNextStateDescriptor.terminalEmpty();
+                                                //
+                                                // var childTarget = target.defaultValue();
+                                                //
+                                                // for (var cursor = target.cursor();
+                                                // cursor.moveNext();) {
+                                                //
+                                                //  childTarget = (MddHandle)
+                                                // childTarget.union(cursor.value());
+                                                //                                                }
+                                                //
+                                                // targetContinutation = childTarget;
+                                            } else {
+                                                targetContinutation = target.get(key);
+                                            }
                                             return OnTheFlyReachabilityNextStateDescriptor.of(
-                                                    descriptor, target.get(key), killSwitch);
+                                                    descriptor, targetContinutation, killSwitch);
                                         }));
     }
 

@@ -23,6 +23,8 @@ import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -258,7 +260,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 dfire.getOffDiagonal(stateSpaceInfo);
 
         final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
-        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+        if ((lhsSkipped || (n.defaultValue() != null /*&& n.isEmpty()*/))
+                && !variable.isBounded()) {
             final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
             // We use the keyset of the ANSD to trim
             lhsInterpreter =
@@ -269,7 +272,38 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                     variable.getNodeInterpreter(
                             n); // using the interpreter might cause a performance overhead
         }
+        if (lhsInterpreter.defaultValue() != null) {
+            // catch if both lhs and x of rhs skip
+            System.out.println("asd");
+        }
         for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
+            if (offDiagonal.get(cFrom.key()).defaultValue()
+                    != AbstractNextStateDescriptor.terminalEmpty()) {
+                // if x' of rhs skips
+
+                if (verbose) {
+                    System.out.println("Potential step with level skip");
+                }
+
+                final var dsatContinuations = new ArrayList<AbstractNextStateDescriptor>();
+                for (var cursor = dsat.getDiagonal(stateSpaceInfo).cursor(); cursor.moveNext(); ) {
+                    dsatContinuations.add(cursor.value());
+                }
+
+                MddNode s =
+                        relProd(
+                                cFrom.value(),
+                                OrNextStateDescriptor.create(dsatContinuations),
+                                offDiagonal.get(cFrom.key()).defaultValue(),
+                                variable.getLower().orElse(null),
+                                cache.getLower());
+
+                if (s != terminalZeroNode) {
+                    confirm(variable, -1); // TODO
+
+                    templateBuilder.setDefault(terminalZeroToNull(s));
+                }
+            }
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo =
                             offDiagonal.get(cFrom.key()).cursor();
                     cTo.moveNext(); ) {
@@ -370,7 +404,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 dfire.getOffDiagonal(stateSpaceInfo);
 
         final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
-        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+        if ((lhsSkipped || (n.defaultValue() != null /*&& n.isEmpty()*/))
+                && !variable.isBounded()) {
             final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
             // We use the keyset of the ANSD to trim
             lhsInterpreter =
@@ -407,6 +442,11 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                                     unionChildren(templateBuilder.get(cFrom.key()), s, variable)));
                 }
             }
+
+            //            if (offDiagonal.get(cFrom.key()).defaultValue() !=
+            // AbstractNextStateDescriptor.terminalEmpty()) {
+            //                System.out.println();
+            //            }
 
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo =
                             offDiagonal.get(cFrom.key()).cursor();

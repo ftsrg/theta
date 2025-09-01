@@ -1,0 +1,13 @@
+var a : integer = 0
+var res: boolean = false
+
+trans{
+    havoc a;
+} or {
+    assume (a == 2);
+    res:=true;
+}
+
+init{}
+
+env{}
