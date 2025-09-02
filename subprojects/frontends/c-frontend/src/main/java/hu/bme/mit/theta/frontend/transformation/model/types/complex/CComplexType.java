@@ -214,23 +214,23 @@ public abstract class CComplexType {
                         case "bool":
                             return new CBool(null, parseContext);
                         case "short":
-                            return ((BvType) type).getSigned()
+                            return ((BvType) type).isSigned()
                                     ? new CSignedShort(null, parseContext)
                                     : new CUnsignedShort(null, parseContext);
                         case "int":
-                            return ((BvType) type).getSigned()
+                            return ((BvType) type).isSigned()
                                     ? new CSignedInt(null, parseContext)
                                     : new CUnsignedInt(null, parseContext);
                         case "long":
-                            return ((BvType) type).getSigned()
+                            return ((BvType) type).isSigned()
                                     ? new CSignedLong(null, parseContext)
                                     : new CUnsignedLong(null, parseContext);
                         case "longlong":
-                            return ((BvType) type).getSigned()
+                            return ((BvType) type).isSigned()
                                     ? new CSignedLongLong(null, parseContext)
                                     : new CUnsignedLongLong(null, parseContext);
                         case "__int128":
-                            return ((BvType) type).getSigned()
+                            return ((BvType) type).isSigned()
                                     ? new CSigned128(null, parseContext)
                                     : new CUnsigned128(null, parseContext);
                     }

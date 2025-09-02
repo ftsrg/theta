@@ -20,7 +20,9 @@ import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmts.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type

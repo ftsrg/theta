@@ -18,7 +18,10 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmts.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
+import hu.bme.mit.theta.core.stmt.Stmts.Skip
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.model.*

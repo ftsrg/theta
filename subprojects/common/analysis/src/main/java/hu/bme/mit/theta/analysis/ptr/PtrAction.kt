@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.ptr
 
-import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -64,26 +63,25 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
       val postList = ArrayList<Stmt>()
 
       for ((deref, type) in stmt.dereferencesWithAccessTypes) {
-        Preconditions.checkState(
-          deref.uniquenessIdx.isPresent,
-          "Incomplete dereferences (missing uniquenessIdx) are not handled properly.",
-        )
+        requireNotNull(deref.uniquenessIdx) {
+          "Incomplete dereferences (missing uniquenessIdx) are not handled properly."
+        }
         val expr = deref.getIte(nextWriteTriples)
         if (type == AccessType.WRITE) {
           val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
           nextWriteTriples
             .getOrPut(deref.type) { ArrayList() }
-            .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx.get()))
+            .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx!!))
           postList.add(
             Stmts.Assume(
               ExprUtils.simplify(
-                BoolExprs.And(listOf(AbstractExprs.Eq(writeExpr, deref.uniquenessIdx.get())))
+                BoolExprs.And(listOf(AbstractExprs.Eq(writeExpr, deref.uniquenessIdx!!)))
               )
             )
           )
         } else {
           preList.add(
-            Stmts.Assume(ExprUtils.simplify(AbstractExprs.Eq(expr, deref.uniquenessIdx.get())))
+            Stmts.Assume(ExprUtils.simplify(AbstractExprs.Eq(expr, deref.uniquenessIdx!!)))
           )
         }
         //                postList.add(Stmts.Assume(Eq(vargen("value", deref.type).ref, deref))) //

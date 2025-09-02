@@ -40,45 +40,35 @@ class MultiAnalysisTest {
 
   class NumberedState(val num: Int) : ExprState {
 
-    override fun toExpr(): Expr<BoolType?>? = True()
+    override fun toExpr(): Expr<BoolType> = True()
 
     override fun isBottom(): Boolean = false
   }
 
   class NumberedAction() : StmtAction() {
 
-    override fun getStmts(): List<Stmt?>? {
+    override fun getStmts(): List<Stmt> {
       return listOf(SkipStmt.getInstance())
     }
   }
 
   class NumberedAnalysis : Analysis<NumberedState, NumberedAction, UnitPrec> {
 
-    override fun getPartialOrd(): PartialOrd<NumberedState>? =
-      object : PartialOrd<NumberedState> {
-        override fun isLeq(state1: NumberedState?, state2: NumberedState?): Boolean =
-          state1!!.num <= state2!!.num
-      }
+    override fun getPartialOrd(): PartialOrd<NumberedState> =
+      PartialOrd<NumberedState> { state1, state2 -> state1.num <= state2.num }
 
-    override fun getInitFunc(): InitFunc<NumberedState?, UnitPrec?>? =
-      object : InitFunc<NumberedState?, UnitPrec?> {
-        override fun getInitStates(prec: UnitPrec?): Collection<NumberedState?>? =
-          listOf<NumberedState>(NumberedState(0))
-      }
+    override fun getInitFunc(): InitFunc<NumberedState, UnitPrec> =
+      InitFunc<NumberedState, UnitPrec> { listOf(NumberedState(0)) }
 
-    override fun getTransFunc(): TransFunc<NumberedState?, NumberedAction?, UnitPrec?>? =
-      object : TransFunc<NumberedState?, NumberedAction?, UnitPrec?> {
-        override fun getSuccStates(
-          state: NumberedState?,
-          action: NumberedAction?,
-          prec: UnitPrec?,
-        ): Collection<NumberedState?>? = listOf(NumberedState(state!!.num + 1))
+    override fun getTransFunc(): TransFunc<NumberedState, NumberedAction, UnitPrec> =
+      TransFunc<NumberedState, NumberedAction, UnitPrec> { state, action, prec ->
+        listOf(NumberedState(state.num + 1))
       }
   }
 
   class NumberedLTS : LTS<NumberedState, NumberedAction> {
 
-    override fun getEnabledActionsFor(state: NumberedState?): Collection<NumberedAction?>? =
+    override fun getEnabledActionsFor(state: NumberedState): Collection<NumberedAction> =
       listOf(NumberedAction())
   }
 
@@ -96,10 +86,7 @@ class MultiAnalysisTest {
       > =
       MultiAnalysisSide(
         NumberedAnalysis(),
-        object : InitFunc<NumberedState, UnitPrec> {
-          override fun getInitStates(prec: UnitPrec?): Collection<NumberedState?>? =
-            listOf(NumberedState(0))
-        },
+        { listOf(NumberedState(0)) },
         { c: NumberedState, _: UnitState -> c },
         { c: NumberedState -> c },
         { c: NumberedState -> UnitState.getInstance() },
@@ -114,10 +101,7 @@ class MultiAnalysisTest {
             if (ms.sourceSide == MultiSide.RIGHT || ms.leftState.num % 2 == 1) MultiSide.LEFT
             else MultiSide.RIGHT
           },
-          object : InitFunc<UnitState, UnitPrec> {
-            override fun getInitStates(prec: UnitPrec?): Collection<UnitState?>? =
-              listOf(UnitState.getInstance())
-          },
+          { listOf(UnitState.getInstance()) },
         )
 
     val multiAnalysis = builderResult.side.analysis

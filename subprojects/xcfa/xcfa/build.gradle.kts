@@ -16,9 +16,11 @@
 plugins {
     id("kotlin-common")
     id("kaml-serialization")
+    id("kotlinx-serialization")
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-grammar"))

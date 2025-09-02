@@ -397,7 +397,7 @@ public final class ExprWriter {
     private String arrayLit(final ArrayLitExpr<?, ?> expr) {
         return "["
                 + expr.getElements().stream()
-                        .map(e -> write(e.get1()) + " <- " + write(e.get2()))
+                        .map(e -> write(e.getFirst()) + " <- " + write(e.getSecond()))
                         .collect(Collectors.joining(", "))
                 + "<"
                 + expr.getType().getIndexType().toString()
@@ -410,7 +410,7 @@ public final class ExprWriter {
     private String arrayInit(final ArrayInitExpr<?, ?> expr) {
         return "["
                 + expr.getElements().stream()
-                        .map(e -> write(e.get1()) + " <- " + write(e.get2()))
+                        .map(e -> write(e.getFirst()) + " <- " + write(e.getSecond()))
                         .collect(Collectors.joining(", "))
                 + "<"
                 + expr.getType().getIndexType().toString()

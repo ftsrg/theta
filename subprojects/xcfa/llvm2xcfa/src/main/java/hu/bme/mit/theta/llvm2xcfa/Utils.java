@@ -43,15 +43,12 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.LocalArgument;
 import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.RegArgument;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
-import hu.bme.mit.theta.xcfa.model.NopLabel;
-import hu.bme.mit.theta.xcfa.model.StmtLabel;
-import hu.bme.mit.theta.xcfa.model.XcfaEdge;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.*;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import kotlin.Pair;
 
 public class Utils {
     private static final int doublePrecision = 1 << 8;
@@ -158,7 +155,7 @@ public class Utils {
         else if (type instanceof ArrayType)
             return ArrayLitExpr.of(
                     List.of(
-                            Tuple2.of(
+                            new Pair<>(
                                     IntLitExpr.of(BigInteger.ZERO),
                                     cast(
                                             getDefaultValue(((ArrayType<?, ?>) type).getElemType()),

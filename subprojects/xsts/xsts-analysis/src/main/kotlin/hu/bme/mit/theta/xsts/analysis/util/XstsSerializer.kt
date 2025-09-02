@@ -67,7 +67,7 @@ object XstsSerializer : StmtVisitor<Void?, String> {
     return ExprWriter.instance().write(expr)
   }
 
-  override fun visit(stmt: SkipStmt?, param: Void?): String {
+  override fun visit(stmt: SkipStmt, param: Void?): String {
     return ""
   }
 
@@ -75,11 +75,11 @@ object XstsSerializer : StmtVisitor<Void?, String> {
     return "assume (${serializeExpr(stmt.cond)});"
   }
 
-  override fun <DeclType : Type?> visit(stmt: AssignStmt<DeclType>, param: Void?): String {
+  override fun <DeclType : Type> visit(stmt: AssignStmt<DeclType>, param: Void?): String {
     return "${stmt.varDecl.name} := (${serializeExpr(stmt.expr)});"
   }
 
-  override fun <DeclType : Type?> visit(stmt: HavocStmt<DeclType>, param: Void?): String {
+  override fun <DeclType : Type> visit(stmt: HavocStmt<DeclType>, param: Void?): String {
     return "havoc ${stmt.varDecl.name};"
   }
 
@@ -91,7 +91,7 @@ object XstsSerializer : StmtVisitor<Void?, String> {
     return "choice ${stmt.stmts.joinToString(" or ") { "{\n${it.accept(this, null)}\n}" }}"
   }
 
-  override fun visit(stmt: OrtStmt?, param: Void?): String {
+  override fun visit(stmt: OrtStmt, param: Void?): String {
     TODO("Not yet implemented")
   }
 
@@ -119,8 +119,8 @@ object XstsSerializer : StmtVisitor<Void?, String> {
       .trimIndent()
   }
 
-  override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
+  override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
+    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>,
     param: Void?,
   ): String {
     TODO("Not yet implemented")

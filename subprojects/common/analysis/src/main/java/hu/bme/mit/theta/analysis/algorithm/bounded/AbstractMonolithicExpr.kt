@@ -27,10 +27,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.IffExpr
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import java.util.HashMap
 
 fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
   // TODO: handle initOffsetIndex in abstract initExpr
@@ -101,7 +102,7 @@ fun MonolithicExpr.createAbstract(prec: PredPrec): MonolithicExpr {
           .map {
             when ((it.value as BoolLitExpr).value) {
               true -> literalToPred[it.key]
-              false -> Not(literalToPred[it.key])
+              false -> Not(literalToPred[it.key]!!)
             }
           }
           .toList()

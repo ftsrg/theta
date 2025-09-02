@@ -22,7 +22,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 
 import hu.bme.mit.theta.common.DispatchTable2;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -48,6 +47,7 @@ import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import java.math.BigInteger;
 import java.util.*;
+import kotlin.Pair;
 import org.kframework.mpfr.BigFloat;
 
 public final class ExprSimplifier {
@@ -305,13 +305,13 @@ public final class ExprSimplifier {
     private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>> simplifyArrayInit(
             final ArrayInitExpr<IT, ET> t, final Valuation val) {
         boolean nonLiteralFound = false;
-        List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
+        List<Pair<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
         Expr<ET> newElseElem = simplify(t.getElseElem(), val);
         if (!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
-        for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
-            Expr<IT> newIndex = simplify(element.get1(), val);
-            Expr<ET> newElement = simplify(element.get2(), val);
-            newElements.add(Tuple2.of(newIndex, newElement));
+        for (Pair<Expr<IT>, Expr<ET>> element : t.getElements()) {
+            Expr<IT> newIndex = simplify(element.getFirst(), val);
+            Expr<ET> newElement = simplify(element.getSecond(), val);
+            newElements.add(new Pair(newIndex, newElement));
             if (!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr))
                 nonLiteralFound = true;
         }

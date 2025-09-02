@@ -29,8 +29,9 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
@@ -39,7 +40,6 @@ import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.*
-import kotlin.collections.plus
 
 /**
  * A checker for bounded model checking.
@@ -310,7 +310,7 @@ constructor(
           if (needProof) {
             // we enumerate all states explored by previous iteration of BMC
             val expr =
-              SmartBoolExprs.And(
+              And(
                 exprs.subList(0, exprs.size - 1) +
                   //                  loopfree.subList(0, loopfree.size - 1) +
                   unfoldedInitExpr

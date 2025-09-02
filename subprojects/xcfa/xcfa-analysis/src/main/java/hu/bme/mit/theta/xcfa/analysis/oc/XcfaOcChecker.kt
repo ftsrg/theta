@@ -40,7 +40,11 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -52,7 +56,7 @@ import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
@@ -471,7 +475,7 @@ class XcfaOcChecker(
       .filter { it.assignment != null }
       .forEach { event ->
         if (event.guard.isEmpty()) solver.add(event.assignment)
-        else solver.add(Imply(event.guardExpr, event.assignment))
+        else solver.add(Imply(event.guardExpr, event.assignment!!))
       }
 
     // Branching conditions
@@ -490,7 +494,11 @@ class XcfaOcChecker(
               And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
             if (v == memoryDecl) {
               conseq =
-                And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
+                And(
+                  conseq,
+                  Eq(rel.from.array!!, rel.to.array!!),
+                  Eq(rel.from.offset!!, rel.to.offset!!),
+                )
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }

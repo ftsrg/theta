@@ -23,10 +23,12 @@ import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
