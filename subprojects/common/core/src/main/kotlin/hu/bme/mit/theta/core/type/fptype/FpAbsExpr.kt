@@ -25,6 +25,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("FpAbs")
 data class FpAbsExpr(override val op: Expr<FpType>) : UnaryExpr<FpType, FpType>() {
+
   companion object {
     private const val OPERATOR_LABEL = "fpabs"
 

@@ -27,6 +27,10 @@ import kotlinx.serialization.Serializable
 @SerialName("BvZExt")
 data class BvZExtExpr(val op: Expr<BvType>, val extendType: BvType) : Expr<BvType> {
 
+  init {
+    check(extendType.size >= op.type.size)
+  }
+
   companion object {
 
     private const val OPERATOR_LABEL = "bv_zero_extend"

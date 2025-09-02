@@ -28,6 +28,7 @@ import org.kframework.mpfr.BinaryMathContext
 @SerialName("FpRoundToIntegral")
 data class FpRoundToIntegralExpr(val roundingMode: FpRoundingMode, override val op: Expr<FpType>) :
   UnaryExpr<FpType, FpType>() {
+
   companion object {
     private const val OPERATOR_LABEL = "fproundtoint"
 

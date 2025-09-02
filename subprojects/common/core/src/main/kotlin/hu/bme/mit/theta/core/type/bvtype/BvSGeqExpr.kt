@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -28,6 +29,10 @@ import kotlinx.serialization.Serializable
 @SerialName("BvSGeq")
 data class BvSGeqExpr(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
   GeqExpr<BvType>() {
+
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
 
   companion object {
 

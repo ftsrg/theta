@@ -23,12 +23,17 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("FpIsInfinite")
 data class FpIsInfiniteExpr(override val op: Expr<FpType>) : UnaryExpr<FpType, BoolType>() {
+
+  init {
+    checkAllTypesEqual(op)
+  }
 
   companion object {
     private const val OPERATOR_LABEL = "isinfinite"

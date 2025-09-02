@@ -30,6 +30,7 @@ data class FpDivExpr(
   override val leftOp: Expr<FpType>,
   override val rightOp: Expr<FpType>,
 ) : DivExpr<FpType>() {
+
   init {
     checkAllTypesEqual(leftOp, rightOp)
   }

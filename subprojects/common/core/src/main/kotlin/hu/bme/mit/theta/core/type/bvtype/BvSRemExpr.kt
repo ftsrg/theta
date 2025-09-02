@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.RemExpr
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,6 +27,11 @@ import kotlinx.serialization.Serializable
 @SerialName("BvSRem")
 data class BvSRemExpr(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
   RemExpr<BvType>() {
+
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
+
   companion object {
     private const val OPERATOR_LABEL = "bvsrem"
 

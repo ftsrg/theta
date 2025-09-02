@@ -26,6 +26,10 @@ import kotlinx.serialization.Serializable
 @SerialName("BvConcat")
 data class BvConcatExpr(override val ops: List<Expr<BvType>>) : Expr<BvType> {
 
+  init {
+    check(ops.isNotEmpty())
+  }
+
   companion object {
 
     private const val OPERATOR_LABEL = "++"

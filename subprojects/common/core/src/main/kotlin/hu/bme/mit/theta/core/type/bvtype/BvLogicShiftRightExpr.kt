@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.BinaryExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -28,6 +29,10 @@ data class BvLogicShiftRightExpr(
   override val leftOp: Expr<BvType>,
   override val rightOp: Expr<BvType>,
 ) : BinaryExpr<BvType, BvType>() {
+
+  init {
+    checkAllTypesEqual(leftOp, rightOp)
+  }
 
   companion object {
     private const val OPERATOR_LABEL = "bvlshr"

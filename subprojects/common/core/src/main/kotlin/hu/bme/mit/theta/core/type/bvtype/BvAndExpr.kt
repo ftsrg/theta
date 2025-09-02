@@ -19,12 +19,17 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.MultiaryExpr
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvAnd")
 data class BvAndExpr(override val ops: List<Expr<BvType>>) : MultiaryExpr<BvType, BvType>() {
+
+  init {
+    checkAllTypesEqual(ops)
+  }
 
   companion object {
     private const val OPERATOR_LABEL = "bvand"

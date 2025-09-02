@@ -28,6 +28,7 @@ import kotlinx.serialization.Serializable
 @SerialName("FpLeq")
 data class FpLeqExpr(override val leftOp: Expr<FpType>, override val rightOp: Expr<FpType>) :
   LeqExpr<FpType>() {
+
   init {
     checkAllTypesEqual(leftOp, rightOp)
   }

@@ -19,12 +19,17 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BvMul")
 data class BvMulExpr(override val ops: List<Expr<BvType>>) : MulExpr<BvType>() {
+
+  init {
+    checkAllTypesEqual(ops)
+  }
 
   companion object {
     private const val OPERATOR_LABEL = "bvmul"

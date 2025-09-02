@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import java.math.BigInteger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -29,6 +30,12 @@ import kotlinx.serialization.Serializable
 @SerialName("BvExtract")
 data class BvExtractExpr(val bitvec: Expr<BvType>, val from: IntLitExpr, val until: IntLitExpr) :
   Expr<BvType> {
+
+  init {
+    check(from.value >= BigInteger.ZERO)
+    check(until.value >= BigInteger.ZERO)
+    check(until.value > from.value)
+  }
 
   companion object {
 

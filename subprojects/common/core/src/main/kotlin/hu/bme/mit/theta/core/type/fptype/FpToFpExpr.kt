@@ -32,6 +32,7 @@ data class FpToFpExpr(
   val expBits: Int,
   val signBits: Int,
 ) : UnaryExpr<FpType, FpType>() {
+
   companion object {
     private const val OPERATOR_LABEL = "fptofp"
 
