@@ -279,7 +279,8 @@ public class XstsAbstractMddCheckerTest {
                                                     abstractMe.getValToState().invoke(valuation),
                                             (Valuation v1, Valuation v2) ->
                                                     abstractMe.getBiValToAction().invoke(v1, v2),
-                                            true),
+                                            true,
+                                            10),
                             logger,
                             Z3LegacySolverFactory.getInstance());
 
