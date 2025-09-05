@@ -13,26 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd;
+package hu.bme.mit.theta.analysis.algorithm.mdd
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
-import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprVarOrderingKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.action
+import hu.bme.mit.theta.analysis.algorithm.bounded.orderVars
+import hu.bme.mit.theta.analysis.algorithm.bounded.split
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -40,266 +34,253 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitReprese
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 
-public class MddChecker implements SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
+class MddChecker
+@JvmOverloads
+constructor(
+    private val monolithicExpr: MonolithicExpr,
+    private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
+    private val solverPool: SolverPool,
+    private val logger: Logger,
+    private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+    private val traceTimeout: Long = 10
+) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
-    private final MonolithicExpr monolithicExpr;
-    private final List<VarDecl<?>> variableOrdering;
-    private final SolverPool solverPool;
-    private final Logger logger;
-    private final IterationStrategy iterationStrategy;
-    private final long traceTimeout;
-
-    public enum IterationStrategy {
+    enum class IterationStrategy {
         BFS,
         SAT,
         GSAT
     }
+    override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
+        val mddGraph =
+            JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
 
-    private MddChecker(
-            MonolithicExpr monolithicExpr,
-            List<VarDecl<?>> variableOrdering,
-            SolverPool solverPool,
-            Logger logger,
-            IterationStrategy iterationStrategy,
-            long traceTimeout) {
-        this.monolithicExpr = monolithicExpr;
-        this.variableOrdering = variableOrdering;
-        this.solverPool = solverPool;
-        this.logger = logger;
-        this.iterationStrategy = iterationStrategy;
-        this.traceTimeout = traceTimeout;
-    }
+        val stateOrder =
+            JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
+        val transOrder =
+            JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
 
-    public static MddChecker create(
-            MonolithicExpr monolithicExpr,
-            List<VarDecl<?>> variableOrdering,
-            SolverPool solverPool,
-            Logger logger) {
-        return new MddChecker(
-                monolithicExpr, variableOrdering, solverPool, logger, IterationStrategy.GSAT, 10);
-    }
+        variableOrdering.forEach {
+            Preconditions.checkArgument(
+                monolithicExpr.vars.contains(it),
+                "Variable ordering contains variable not present in vars List"
+            )
+        }
 
-    public static MddChecker create(
-            MonolithicExpr monolithicExpr,
-            List<VarDecl<?>> variableOrdering,
-            SolverPool solverPool,
-            Logger logger,
-            IterationStrategy iterationStrategy,
-            long traceTimeout) {
-        return new MddChecker(
-                monolithicExpr,
-                variableOrdering,
-                solverPool,
-                logger,
-                iterationStrategy,
-                traceTimeout);
-    }
-
-    @Override
-    public SafetyResult<MddProof, Trace<ExplState, ExprAction>> check(UnitPrec prec) {
-
-        final MddGraph<Expr> mddGraph =
-                JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
-
-        final MddVariableOrder stateOrder =
-                JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
-        final MddVariableOrder transOrder =
-                JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
-
-        variableOrdering.forEach(
-                v ->
-                        checkArgument(
-                                monolithicExpr.getVars().contains(v),
-                                "Variable ordering contains variable not present in vars List"));
-
-        checkArgument(
-                variableOrdering.size() == Containers.createSet(variableOrdering).size(),
-                "Variable ordering contains duplicates");
-        final var identityExprs = new ArrayList<Expr<BoolType>>();
-        final var orderedVars = MonolithicExprVarOrderingKt.orderVars(monolithicExpr);
-        for (var v : Lists.reverse(orderedVars)) {
-            // TODO handle domain size properly
-            //            var domainSize =
-            // Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
+        Preconditions.checkArgument(
+            variableOrdering.size == Containers.createSet(variableOrdering).size,
+            "Variable ordering contains duplicates"
+        )
+        val identityExprs = mutableListOf<Expr<BoolType>>()
+        for (v in variableOrdering.reversed()) {
+            var domainSize: Int // = max(v.type.domainSize.finiteSize.toInt().toDouble(), 0.0).toInt()
 
             //     if (domainSize > 100) {
-            final int domainSize = 0;
+            domainSize = 0
+
             //     }
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize))
 
-            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
-
-            final var index = monolithicExpr.getTransOffsetIndex().get(v);
+            val index = monolithicExpr.transOffsetIndex[v]
             if (index > 0) {
                 transOrder.createOnTop(
-                        MddVariableDescriptor.create(
-                                v.getConstDecl(monolithicExpr.getTransOffsetIndex().get(v)),
-                                domainSize));
+                    MddVariableDescriptor.create(
+                        v.getConstDecl(monolithicExpr.transOffsetIndex[v]),
+                        domainSize
+                    )
+                )
             } else {
-                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize));
-                identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
+                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize))
+                identityExprs.add(Eq(v.getConstDecl(0).ref, v.getConstDecl(1).ref))
             }
 
-            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
+            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize))
         }
 
-        final var stateSig = stateOrder.getDefaultSetSignature();
-        final var transSig = transOrder.getDefaultSetSignature();
+        val stateSig = stateOrder.defaultSetSignature
+        val transSig = transOrder.defaultSetSignature
 
-        final Expr<BoolType> initExpr = PathUtils.unfold(monolithicExpr.getInitExpr(), 0);
-        final MddHandle initNode =
-                stateSig.getTopVariableHandle()
-                        .checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
+        val initExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
+        val initNode =
+            stateSig.topVariableHandle
+                .checkInNode(
+                    MddExpressionTemplate.of(
+                        initExpr,
+                        { it as Decl<*> }, solverPool
+                    )
+                )
 
-        logger.write(Level.INFO, "Created initial node\n");
+        logger.write(Logger.Level.INFO, "Created initial node\n")
 
-        final var transNodes = new ArrayList<MddHandle>();
-        final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
-        for (var expr : MonolithicExprKt.split(monolithicExpr)) {
-            final Expr<BoolType> transExpr =
-                    And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs));
-            final MddHandle transitionNode =
-                    transSig.getTopVariableHandle()
-                            .checkInNode(
-                                    MddExpressionTemplate.of(
-                                            transExpr, o -> (Decl) o, solverPool, true));
-            transNodes.add(transitionNode);
-            descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
+        val transNodes = mutableListOf<MddHandle>()
+        val descriptors = mutableListOf<AbstractNextStateDescriptor>()
+        for (expr in monolithicExpr.split()) {
+            val transExpr =
+                And(
+                    PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), SmartBoolExprs.And(identityExprs)
+                )
+            val transitionNode =
+                transSig.topVariableHandle
+                    .checkInNode(
+                        MddExpressionTemplate.of(
+                            transExpr,
+                            { it as Decl<*> }, solverPool, true
+                        )
+                    )
+            transNodes.add(transitionNode)
+            descriptors.add(MddNodeNextStateDescriptor.of(transitionNode))
         }
-        final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
+        val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
-        final Expr<BoolType> negatedPropExpr =
-                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
-        final MddHandle propNode =
-                stateSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(
-                                        negatedPropExpr, o -> (Decl) o, solverPool));
-        final AbstractNextStateDescriptor targetedNextStates =
-                OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
+        val negatedPropExpr =
+            PathUtils.unfold(Not(monolithicExpr.propExpr), 0)
+        val propNode =
+            stateSig.topVariableHandle
+                .checkInNode(
+                    MddExpressionTemplate.of(
+                        negatedPropExpr,
+                        { it as Decl<*> }, solverPool
+                    )
+                )
+        val targetedNextStates =
+            OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
-        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation\n");
-
-        final StateSpaceEnumerationProvider stateSpaceProvider;
-        switch (iterationStrategy) {
-            case BFS -> {
-                stateSpaceProvider = new BfsProvider(stateSig.getVariableOrder());
+        logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
+        val stateSpaceProvider = when (iterationStrategy) {
+            IterationStrategy.BFS -> {
+                BfsProvider(stateSig.variableOrder)
             }
-            case SAT -> {
-                stateSpaceProvider = new SimpleSaturationProvider(stateSig.getVariableOrder());
+            IterationStrategy.SAT -> {
+                SimpleSaturationProvider(stateSig.variableOrder)
             }
-            case GSAT -> {
-                stateSpaceProvider = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+            IterationStrategy.GSAT -> {
+                GeneralizedSaturationProvider(stateSig.variableOrder)
             }
-            default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
-        final MddHandle stateSpace =
-                stateSpaceProvider.compute(
-                        MddNodeInitializer.of(initNode),
-                        targetedNextStates,
-                        stateSig.getTopVariableHandle());
+        val stateSpace =
+            stateSpaceProvider.compute(
+                MddNodeInitializer.of(initNode),
+                targetedNextStates,
+                stateSig.topVariableHandle
+            )
 
-        logger.write(Level.INFO, "Enumerated state-space\n");
+        logger.write(Logger.Level.INFO, "Enumerated state-space\n")
 
-        final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
+        val propViolating = stateSpace.intersection(propNode) as MddHandle
 
-        logger.write(Level.INFO, "Calculated violating states\n");
+        logger.write(Logger.Level.INFO, "Calculated violating states\n")
 
-        final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
-        logger.write(Level.INFO, "States violating the property: " + violatingSize + "\n");
+        val violatingSize = MddInterpreter.calculateNonzeroCount(propViolating)
+        logger.write(
+            Logger.Level.INFO,
+            "States violating the property: $violatingSize\n"
+        )
 
-        final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
-        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize + "\n");
+        val stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace)
+        logger.write(Logger.Level.DETAIL, "State space size: $stateSpaceSize\n")
 
-        final MddAnalysisStatistics statistics =
-                new MddAnalysisStatistics(
-                        violatingSize,
-                        stateSpaceSize,
-                        stateSpaceProvider.getHitCount(),
-                        stateSpaceProvider.getQueryCount(),
-                        stateSpaceProvider.getCacheSize());
+        val statistics =
+            MddAnalysisStatistics(
+                violatingSize,
+                stateSpaceSize,
+                stateSpaceProvider.hitCount,
+                stateSpaceProvider.queryCount,
+                stateSpaceProvider.cacheSize
+            )
 
-        logger.write(Level.MAINSTEP, "%s\n", statistics);
+        logger.write(Logger.Level.MAINSTEP, "%s\n", statistics)
 
-        final SafetyResult<MddProof, Trace<ExplState, ExprAction>> result;
-        if (violatingSize != 0) {
+        // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
+        // transSig.getTopVariableHandle());
+        val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
+        if (violatingSize != 0L) {
+            val executor = Executors.newSingleThreadExecutor()
+            val future =
+                executor.submit<Trace<ExplState, ExprAction>> {
+                    val reversedDescriptors =
+                        mutableListOf<AbstractNextStateDescriptor>()
+                    for (transNode in transNodes) {
+                        val explTrans =
+                            MddExplicitRepresentationExtractor.transform(
+                                transNode, transSig.topVariableHandle
+                            )
+                        reversedDescriptors.add(
+                            ReverseNextStateDescriptor.of(stateSpace, explTrans)
+                        )
+                    }
+                    val orReversed =
+                        OrNextStateDescriptor.create(reversedDescriptors)
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future<Trace<ExplState, ExprAction>> future =
-                    executor.submit(
-                            () -> {
-                                var reversedDescriptors =
-                                        new ArrayList<AbstractNextStateDescriptor>();
-                                for (var transNode : transNodes) {
-                                    final var explTrans =
-                                            MddExplicitRepresentationExtractor.INSTANCE.transform(
-                                                    transNode, transSig.getTopVariableHandle());
-                                    reversedDescriptors.add(
-                                            ReverseNextStateDescriptor.of(stateSpace, explTrans));
-                                }
-                                final var orReversed =
-                                        OrNextStateDescriptor.create(reversedDescriptors);
-
-                                final TraceProvider traceProvider =
-                                        new TraceProvider(stateSig.getVariableOrder());
-                                final var mddTrace =
-                                        traceProvider.compute(
-                                                propViolating,
-                                                orReversed,
-                                                initNode,
-                                                stateSig.getTopVariableHandle());
-                                final var valuations =
-                                        mddTrace.stream()
-                                                .map(
-                                                        it ->
-                                                                PathUtils.extractValuation(
-                                                                        MddValuationCollector
-                                                                                .collect(it)
-                                                                                .stream()
-                                                                                .findFirst()
-                                                                                .orElseThrow(),
-                                                                        0))
-                                                .toList();
-
-                                return Trace.of(
-                                        valuations.stream().map(ExplState::of).toList(),
-                                        MonolithicExprKt.action(monolithicExpr));
-                            });
+                    val traceProvider =
+                        TraceProvider(stateSig.variableOrder)
+                    val mddTrace =
+                        traceProvider.compute(
+                            propViolating,
+                            orReversed,
+                            initNode,
+                            stateSig.topVariableHandle
+                        )
+                    val valuations =
+                        mddTrace
+                            .map {PathUtils.extractValuation(
+                                    MddValuationCollector
+                                        .collect(it)
+                                        .stream()
+                                        .findFirst()
+                                        .orElseThrow(),
+                                    0
+                                )
+                            }
+                            .toList()
+                    return@submit Trace.of(
+                        valuations.stream().map(ExplState::of).toList(),
+                        monolithicExpr.action())
+                }
 
             try {
-                logger.mainStep("Starting trace generation.\n");
-                final Trace<ExplState, ExprAction> trace =
-                        future.get(traceTimeout, TimeUnit.SECONDS);
-                return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
-            } catch (TimeoutException | InterruptedException | ExecutionException e) {
-                logger.mainStep("Trace generation timed out, returning empty trace!\n");
-                future.cancel(true);
+                logger.mainStep("Starting trace generation.\n")
+                val trace = future.get(traceTimeout, TimeUnit.SECONDS)
+                return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics)
+            } catch (e: TimeoutException) {
+                logger.mainStep("Trace generation timed out, returning empty trace!\n")
+                future.cancel(true)
                 return SafetyResult.unsafe(
-                        Trace.of(List.of(ExplState.top()), List.of()),
-                        MddProof.of(stateSpace),
-                        statistics);
+                    Trace.of(listOf(ExplState.top()), listOf()),
+                    MddProof.of(stateSpace),
+                    statistics
+                )
+            } catch (e: InterruptedException) {
+                logger.mainStep("Trace generation timed out, returning empty trace!\n")
+                future.cancel(true)
+                return SafetyResult.unsafe(
+                    Trace.of(listOf(ExplState.top()), listOf()),
+                    MddProof.of(stateSpace),
+                    statistics
+                )
+            } catch (e: ExecutionException) {
+                throw RuntimeException(e)
             } finally {
-                executor.shutdownNow();
+                executor.shutdownNow()
             }
-
         } else {
-            result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
+            result = SafetyResult.safe(MddProof.of(stateSpace), statistics)
         }
-        return result;
+        return result
     }
 }
