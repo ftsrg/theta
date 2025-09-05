@@ -90,7 +90,7 @@ public class XstsSpecification implements DynamicScope {
         }
 
         final Set<VarDecl<?>> stateVars =
-                context.variableDeclarations.stream()
+                Containers.createSet(context.variableDeclarations.stream()
                         .map(
                                 varDeclContext -> {
                                     final String varName = varDeclContext.name.getText();
@@ -169,7 +169,7 @@ public class XstsSpecification implements DynamicScope {
                                     env.define(symbol, var);
                                     return var;
                                 })
-                        .collect(Collectors.toUnmodifiableSet());
+                        .toList());
 
         final NonDetStmt tranSet =
                 new XstsTransitionSet(this, typeTable, context.tran.transitionSet())
