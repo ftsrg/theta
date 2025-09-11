@@ -37,6 +37,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(checkOverflow),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      ClockLabelPass(),
       CLibraryFunctionsPass(),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
