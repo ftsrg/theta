@@ -18,7 +18,6 @@ package hu.bme.mit.theta.analysis.utils;
 import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
-import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
@@ -94,10 +93,7 @@ public class MddNodeVisualizer {
         return graph;
     }
 
-    private void traverse(
-            final Graph graph,
-            final MddNode node,
-            final Set<MddNode> traversed) {
+    private void traverse(final Graph graph, final MddNode node, final Set<MddNode> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -152,7 +148,7 @@ public class MddNodeVisualizer {
                             .build();
             graph.addEdge(sourceId, targetId, eAttributes);
         } else {
-            for (var cursor = node.cursor();cursor.moveNext();) {
+            for (var cursor = node.cursor(); cursor.moveNext(); ) {
                 traverse(graph, cursor.value(), traversed);
 
                 final String sourceId = NODE_ID_PREFIX + idFor(node);
@@ -171,8 +167,8 @@ public class MddNodeVisualizer {
     }
 
     private static String nodeToString(MddNode node) {
-        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?> || node.getRepresentation() instanceof IdentityRepresentation)
-            return "";
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>
+                || node.getRepresentation() instanceof IdentityRepresentation) return "";
         return node instanceof MddNode.Terminal
                 ? ((MddNode.Terminal<?>) node).getTerminalData().toString()
                 : node.getRepresentation().toString();

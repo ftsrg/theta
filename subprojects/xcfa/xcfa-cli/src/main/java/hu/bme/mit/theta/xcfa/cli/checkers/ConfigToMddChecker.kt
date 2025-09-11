@@ -72,7 +72,8 @@ fun getMddChecker(
         stmts
           .map {
             object : Event {
-              override fun getAffectedVars(): List<VarDecl<*>> = StmtUtils.getWrittenVars(it).toList()
+              override fun getAffectedVars(): List<VarDecl<*>> =
+                StmtUtils.getWrittenVars(it).toList()
             }
           }
           .toList(),

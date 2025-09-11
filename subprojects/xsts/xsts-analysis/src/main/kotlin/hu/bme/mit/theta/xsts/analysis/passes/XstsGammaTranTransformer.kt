@@ -22,7 +22,7 @@ object XstsGammaTranTransformer {
 
   fun transform(xsts: XSTS): XSTS {
 
-//    return xsts
+    //    return xsts
 
     /*
     Transforms XSTS of the form

@@ -15,17 +15,12 @@
  */
 package hu.bme.mit.theta.xsts.analysis
 
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.IfStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.utils.StmtUtils
-import hu.bme.mit.theta.xsts.XSTS
 
-//fun XSTS.orderVars(): List<VarDecl<*>> {
+// fun XSTS.orderVars(): List<VarDecl<*>> {
 //  val flattened = flattenStmts(tran)
 //  val events =
 //    flattened
@@ -38,7 +33,7 @@ import hu.bme.mit.theta.xsts.XSTS
 //  val orderedVars = orderVarsFromRandomStartingPoints(this.stateVars.toList(), events)
 //  return orderedVars.filter { it.name.contains("Timeout") } +
 //    orderedVars.filter { !it.name.contains("Timeout") }
-//}
+// }
 
 fun cartesianProduct(vararg sets: Set<*>): Set<List<*>> =
   sets

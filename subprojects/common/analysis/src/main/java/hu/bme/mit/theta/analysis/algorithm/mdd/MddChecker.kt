@@ -148,18 +148,12 @@ constructor(
         }
         val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
-        val negatedPropExpr =
-            PathUtils.unfold(Not(monolithicExpr.propExpr), 0)
-        val propNode =
-            stateSig.topVariableHandle
-                .checkInNode(
-                    MddExpressionTemplate.of(
-                        negatedPropExpr,
-                        { it as Decl<*> }, solverPool
-                    )
-                )
-        val targetedNextStates =
-            OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
+    val negatedPropExpr = PathUtils.unfold(Not(monolithicExpr.propExpr), 0)
+    val propNode =
+      stateSig.topVariableHandle.checkInNode(
+        MddExpressionTemplate.of(negatedPropExpr, { it as Decl<*> }, solverPool)
+      )
+    val targetedNextStates = OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode)
 
         logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
         val stateSpaceProvider = when (iterationStrategy) {
