@@ -13,27 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+package hu.bme.mit.theta.frontend.transformation.model.types.complex;
 
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
-public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
+public class CClock extends CComplexType {
 
-    public static final NullValueVisitor instance = new NullValueVisitor();
+    public CClock(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+    }
 
-    @Override
-    public LitExpr<?> visit(CInteger type, Void param) {
-        return Int(0);
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
     }
 
     @Override
-    public LitExpr<?> visit(CClock type, Void param) {
-        return Rat(0, 1);
+    public CComplexType getSmallestCommonType(CComplexType type) {
+        if (type instanceof CInteger) {
+            return this;
+        } else {
+            return type.getSmallestCommonType(this);
+        }
+    }
+
+    @Override
+    public String getTypeName() {
+        return "__clock";
     }
 }

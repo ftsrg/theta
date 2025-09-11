@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -26,6 +27,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Sign
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     private final ParseContext parseContext;
@@ -63,5 +66,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     @Override
     public Type visit(CVoid type, Void param) {
         return BvType.of(1, false);
+    }
+
+    @Override
+    public Type visit(CClock type, Void param) {
+        return Rat();
     }
 }

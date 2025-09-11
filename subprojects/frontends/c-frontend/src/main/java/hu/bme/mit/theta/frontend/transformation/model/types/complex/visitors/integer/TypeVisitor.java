@@ -16,8 +16,10 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -34,5 +36,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     @Override
     public Type visit(CVoid type, Void param) {
         return Int();
+    }
+
+    @Override
+    public Type visit(CClock type, Void param) {
+        return Rat();
     }
 }

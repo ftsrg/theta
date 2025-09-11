@@ -44,7 +44,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     private final Logger uniqueWarningLogger;
 
     private static final List<String> standardTypes =
-            List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
+            List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool", "__clock");
     private static final List<String> shorthandTypes =
             List.of("long", "__int128", "short", "unsigned", "_Bool");
 
