@@ -90,7 +90,7 @@ public class StsMddCheckerTest {
                     new StsPipelineChecker<>(
                             sts,
                             monolithicExpr ->
-                                    MddChecker.create(
+                                    new MddChecker<>(
                                             monolithicExpr,
                                             solverPool,
                                             logger));

@@ -38,7 +38,6 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -285,12 +284,10 @@ public class XstsAbstractMddCheckerTest {
                             new XstsPipelineChecker<>(
                                     xsts,
                                     monolithicExpr ->
-                                            MddChecker.create(
+                                            new MddChecker<>(
                                                     monolithicExpr,
                                                     solverPool,
-                                                    logger,
-                                                    MddChecker.IterationStrategy.GSAT,
-                                                    10),
+                                                    logger),
                                     passes);
             var status = checker.check();
             logger.mainStep(status.toString());
