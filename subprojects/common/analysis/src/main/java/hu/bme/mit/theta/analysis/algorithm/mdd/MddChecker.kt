@@ -55,11 +55,11 @@ class MddChecker
 @JvmOverloads
 constructor(
     private val monolithicExpr: MonolithicExpr,
-    private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars(),
     private val solverPool: SolverPool,
     private val logger: Logger,
     private val iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
-    private val traceTimeout: Long = 10
+    private val traceTimeout: Long = 10,
+    private val variableOrdering: List<VarDecl<*>> = monolithicExpr.orderVars()
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
     enum class IterationStrategy {

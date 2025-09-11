@@ -66,11 +66,8 @@ public class PnmlSymbolicGSATTest {
                                     monolithicExpr ->
                                             MddChecker.create(
                                                     monolithicExpr,
-                                                    List.copyOf(monolithicExpr.getVars()),
                                                     solverPool,
-                                                    logger,
-                                                    MddChecker.IterationStrategy.GSAT,
-                                                    10));
+                                                    logger));
             status = pipeline.check();
             logger.mainStep(status.toString());
             logger.mainStep(

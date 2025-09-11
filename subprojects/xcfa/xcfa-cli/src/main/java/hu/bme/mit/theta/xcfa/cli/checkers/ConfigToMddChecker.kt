@@ -67,21 +67,21 @@ fun getMddChecker(
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     MddChecker(
       monolithicExpr,
-      orderVarsFromRandomStartingPoints(
-        monolithicExpr.vars,
-        stmts
-          .map {
-            object : Event {
-              override fun getAffectedVars(): List<VarDecl<*>> =
-                StmtUtils.getWrittenVars(it).toList()
-            }
-          }
-          .toList(),
-        20,
-      ),
       solverPool,
-      logger,
-      iterationStrategy
+        logger,
+        iterationStrategy,
+        orderVarsFromRandomStartingPoints(
+            monolithicExpr.vars,
+            stmts
+                .map {
+                    object : Event {
+                        override fun getAffectedVars(): List<VarDecl<*>> =
+                            StmtUtils.getWrittenVars(it).toList()
+                    }
+                }
+                .toList(),
+            20,
+        )
     )
   }
 

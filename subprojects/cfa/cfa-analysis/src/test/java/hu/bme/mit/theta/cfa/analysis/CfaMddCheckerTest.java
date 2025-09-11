@@ -94,11 +94,8 @@ public class CfaMddCheckerTest {
                                 monolithicExpr ->
                                         MddChecker.create(
                                                 monolithicExpr,
-                                                monolithicExpr.getVars(),
                                                 solverPool,
-                                                logger,
-                                                MddChecker.IterationStrategy.GSAT,
-                                                10));
+                                                logger));
                 status = checker.check(null);
             }
 

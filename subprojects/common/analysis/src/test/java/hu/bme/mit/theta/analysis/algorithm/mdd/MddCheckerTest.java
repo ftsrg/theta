@@ -178,11 +178,9 @@ public class MddCheckerTest {
             final MddChecker checker =
                     MddChecker.create(
                             monolithicExpr,
-                            List.copyOf(ExprUtils.getVars(List.of(initExpr, tranExpr, propExpr))),
                             solverPool,
                             logger,
-                            iterationStrategy,
-                            10);
+                            iterationStrategy);
             status = checker.check(null);
         }
 

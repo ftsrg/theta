@@ -284,10 +284,9 @@ public class XstsAbstractMddCheckerTest {
                     checker =
                             new XstsPipelineChecker<>(
                                     xsts,
-                                    monolithicExpr2 ->
+                                    monolithicExpr ->
                                             MddChecker.create(
-                                                    monolithicExpr2,
-                                                    List.copyOf(monolithicExpr2.getVars()),
+                                                    monolithicExpr,
                                                     solverPool,
                                                     logger,
                                                     MddChecker.IterationStrategy.GSAT,

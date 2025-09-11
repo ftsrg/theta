@@ -160,14 +160,12 @@ public class StsCli {
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
                     getCheckerFactory(SolverFactory solverFactory, Logger logger) {
-                return (monolithicExpr2 ->
+                return (monolithicExpr ->
                         MddChecker.create(
-                                monolithicExpr2,
-                                List.copyOf(monolithicExpr2.getVars()),
+                                monolithicExpr,
                                 new SolverPool(solverFactory),
                                 logger,
-                                MddChecker.IterationStrategy.GSAT,
-                                10));
+                                iterationStrategy));
             }
         },
         IC3 {
@@ -255,6 +253,11 @@ public class StsCli {
             names = {"--liveness-to-safety"},
             description = "Use liveness to safety transformation")
     Boolean livenessToSafety = false;
+
+    @Parameter(
+            names = {"--iteration-strategy"},
+            description = "MDD iteration strategy")
+    MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
 
     @Parameter(
             names = {"--smt-home"},

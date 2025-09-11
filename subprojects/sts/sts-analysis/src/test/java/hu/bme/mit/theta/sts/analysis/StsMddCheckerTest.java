@@ -92,11 +92,8 @@ public class StsMddCheckerTest {
                             monolithicExpr ->
                                     MddChecker.create(
                                             monolithicExpr,
-                                            List.copyOf(sts.getVars()),
                                             solverPool,
-                                            logger,
-                                            IterationStrategy.GSAT,
-                                            10));
+                                            logger));
             status = checker.check(null);
         }
 
