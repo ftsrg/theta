@@ -183,7 +183,7 @@ public final class ClockOps {
         public ClockOp visit(final AssumeStmt stmt, final Void param) {
             try {
                 final Expr<BoolType> cond = stmt.getCond();
-                final ClockConstr constr = ClockConstrs.formExpr(cond);
+                final ClockConstr constr = ClockConstrs.fromExpr(cond);
                 return Guard(constr);
 
             } catch (final IllegalArgumentException e) {

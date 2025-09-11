@@ -57,7 +57,7 @@ public final class ClockConstrs {
 
     ////
 
-    public static ClockConstr formExpr(final Expr<BoolType> expr) {
+    public static ClockConstr fromExpr(final Expr<BoolType> expr) {
         return FromExprHelper.INSTANCE.transform(expr);
     }
 
