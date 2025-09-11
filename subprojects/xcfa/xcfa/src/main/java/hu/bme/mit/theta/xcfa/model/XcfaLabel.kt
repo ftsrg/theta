@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.core.clock.op.ClockOp
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
@@ -248,6 +249,25 @@ object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
 
   override fun toString(): String {
     return "Nop"
+  }
+}
+
+data class ClockOpLabel(
+  val op : ClockOp,
+  override val metadata: MetaData,
+) :
+  XcfaLabel(metadata = metadata) {
+
+  override fun toString(): String {
+    return op.toString()
+  }
+}
+
+data class ClockDelayLabel(override val metadata: MetaData) :
+  XcfaLabel(metadata = metadata) {
+
+  override fun toString(): String {
+    return "ClockDelay"
   }
 }
 
