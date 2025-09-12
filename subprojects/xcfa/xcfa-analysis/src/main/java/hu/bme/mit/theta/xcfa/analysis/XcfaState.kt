@@ -209,7 +209,7 @@ constructor(
       )
 
     val pid = pidCnt++
-    val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
+    val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "", true)
     newThreadLookup[startLabel.pidVar] = pid
     newProcesses[pid] =
       XcfaProcessState(
@@ -432,8 +432,15 @@ data class XcfaProcessState(
       proc: XcfaProcedure,
       threadPrefix: String,
       procPrefix: String,
-    ): Map<VarDecl<*>, VarDecl<*>> =
-      listOf(proc.params.map { it.first }, proc.vars)
+      includeThreadLocals: Boolean = false
+    ): Map<VarDecl<*>, VarDecl<*>> {
+
+      val varDecls = mutableListOf(proc.params.map { it.first }, proc.vars)
+      if (includeThreadLocals) {
+        varDecls.add(proc.parent.globalVars.filter { it.threadLocal }.map { it.wrappedVar })
+      }
+
+      return varDecls
         .flatten()
         .associateWith {
           val sj = StringJoiner("::")
@@ -444,6 +451,7 @@ data class XcfaProcessState(
           if (name != it.name) Var(sj.toString(), it.type) else it
         }
         .filter { it.key != it.value }
+    }
   }
 }
 

@@ -105,7 +105,7 @@ data class XcfaProcedure(
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
 ) {
 
-  internal lateinit var parent: XCFA
+  lateinit var parent: XCFA
 }
 
 data class XcfaLocation
