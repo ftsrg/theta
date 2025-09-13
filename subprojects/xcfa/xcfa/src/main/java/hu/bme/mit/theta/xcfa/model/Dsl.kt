@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
+import hu.bme.mit.theta.core.clock.op.ClockOp
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.*
@@ -287,6 +288,18 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     }
 
     fun skip(): SequenceLabel {
+      return SequenceLabel(labelList)
+    }
+
+    fun clockOp(op: ClockOp): SequenceLabel {
+      val label = ClockOpLabel(op, EmptyMetaData)
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun clockDelay(): SequenceLabel {
+      val label = ClockDelayLabel(EmptyMetaData)
+      labelList.add(label)
       return SequenceLabel(labelList)
     }
   }
