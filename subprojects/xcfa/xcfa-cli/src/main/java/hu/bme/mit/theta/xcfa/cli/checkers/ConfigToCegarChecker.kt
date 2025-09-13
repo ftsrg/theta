@@ -192,6 +192,9 @@ fun getCegarChecker(
                           it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
                         }
                         .reduce { a, b -> a + b }
+                        // TODO: Right now, it filters out threadLocal variables as the current witness format is not
+                        //       able to handle them
+                        .filter { !xcfa.globalVars.filter { it.threadLocal }.map { it.wrappedVar }.contains(it.value) }
                     when (s) {
                       is ExplState -> {
                         if (s.isBottom) {
