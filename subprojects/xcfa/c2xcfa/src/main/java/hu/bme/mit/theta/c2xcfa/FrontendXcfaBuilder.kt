@@ -146,6 +146,7 @@ class FrontendXcfaBuilder(
         XcfaGlobalVar(
           globalDeclaration.get2(),
           type.nullValue,
+          threadLocal = globalDeclaration.get1().type.isThreadLocal,
           atomic = globalDeclaration.get1().type.isAtomic,
         )
       )
