@@ -254,7 +254,7 @@ object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
 
 data class ClockOpLabel(
   val op : ClockOp,
-  override val metadata: MetaData,
+  override val metadata: MetaData = EmptyMetaData,
 ) :
   XcfaLabel(metadata = metadata) {
 
@@ -263,7 +263,7 @@ data class ClockOpLabel(
   }
 }
 
-data class ClockDelayLabel(override val metadata: MetaData) :
+data class ClockDelayLabel(override val metadata: MetaData = EmptyMetaData) :
   XcfaLabel(metadata = metadata) {
 
   override fun toString(): String {
