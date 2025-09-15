@@ -104,7 +104,6 @@ class ClockLabelPass() : ProcedurePass {
                                     ClockOpLabel(ClockOps.Guard(ClockConstrs.Geq(threadClock, minTime)), metadata),
                                     ClockOpLabel(ClockOps.Guard(ClockConstrs.Leq(threadClock, maxTime)), metadata),
                                     ClockOpLabel(ClockOps.Reset(threadClock, 0), metadata),
-                                    ClockDelayLabel(metadata)
                                 )
                             }
 
