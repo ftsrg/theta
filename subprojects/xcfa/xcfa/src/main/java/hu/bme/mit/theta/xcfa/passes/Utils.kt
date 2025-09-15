@@ -190,3 +190,9 @@ fun combineMetadata(vararg metaData: MetaData): MetaData = combineMetadata(metaD
 
 fun combineMetadata(metaData: Collection<MetaData>): MetaData =
   metaData.reduce { i1, i2 -> i1.combine(i2) }
+
+fun addLabelToEdge(edge : XcfaEdge, newLabel: XcfaLabel) : XcfaEdge {
+  val newLabels = ArrayList((edge.label as SequenceLabel).labels)
+  newLabels.add(newLabel)
+  return edge.withLabel(SequenceLabel(newLabels))
+}
