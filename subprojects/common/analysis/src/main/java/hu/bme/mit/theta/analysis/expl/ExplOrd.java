@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ public final class ExplOrd implements PartialOrd<ExplState> {
         private static final ExplOrd INSTANCE = new ExplOrd();
     }
 
-    private ExplOrd() {
-    }
+    private ExplOrd() {}
 
     public static ExplOrd getInstance() {
         return LazyHolder.INSTANCE;
@@ -35,5 +34,4 @@ public final class ExplOrd implements PartialOrd<ExplState> {
     public boolean isLeq(final ExplState state1, final ExplState state2) {
         return state1.isLeq(state2);
     }
-
 }

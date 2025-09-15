@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -25,12 +24,21 @@ public class CFor extends CStatement {
     private final CStatement guard;
     private final CStatement increment;
 
-    public CFor(CStatement body, CStatement init, CStatement guard, CStatement increment, ParseContext parseContext) {
+    public CFor(
+            CStatement body,
+            CStatement init,
+            CStatement guard,
+            CStatement increment,
+            ParseContext parseContext) {
         super(parseContext);
         this.body = body;
+        if (body != null) body.setParent(this);
         this.init = init;
+        if (init != null) init.setParent(this);
         this.guard = guard;
+        if (guard != null) guard.setParent(this);
         this.increment = increment;
+        if (increment != null) increment.setParent(this);
     }
 
     public CStatement getIncrement() {

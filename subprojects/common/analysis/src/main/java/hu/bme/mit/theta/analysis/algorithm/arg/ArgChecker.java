@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
@@ -31,6 +27,9 @@ import hu.bme.mit.theta.analysis.expr.ExprOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStateUtils;
 import hu.bme.mit.theta.solver.Solver;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
 
 public final class ArgChecker {
 
@@ -76,18 +75,19 @@ public final class ArgChecker {
     ////
 
     private boolean nodeIsWellLabeledForCoverage(final ArgNode<? extends ExprState, ?> node) {
-        final Optional<? extends ArgNode<? extends ExprState, ?>> optCoveringNode = node.getCoveringNode();
+        final Optional<? extends ArgNode<? extends ExprState, ?>> optCoveringNode =
+                node.getCoveringNode();
         if (optCoveringNode.isPresent()) {
             final ArgNode<? extends ExprState, ?> coveringNode = optCoveringNode.get();
             return isCoveredBy(node, coveringNode) && !coveringNode.isExcluded();
         } else {
             return true;
         }
-
     }
 
-    private boolean isCoveredBy(final ArgNode<? extends ExprState, ?> node,
-                                final ArgNode<? extends ExprState, ?> coveringNode) {
+    private boolean isCoveredBy(
+            final ArgNode<? extends ExprState, ?> node,
+            final ArgNode<? extends ExprState, ?> coveringNode) {
         return partialOrd.isLeq(node.getState(), coveringNode.getState());
     }
 
@@ -107,8 +107,10 @@ public final class ArgChecker {
         return hasSuccStates(state, action, succStates);
     }
 
-    private boolean hasSuccStates(final ExprState state, final ExprAction action,
-                                  final Collection<? extends ExprState> succStates) {
+    private boolean hasSuccStates(
+            final ExprState state,
+            final ExprAction action,
+            final Collection<? extends ExprState> succStates) {
         return !ExprStateUtils.anyUncoveredSuccessor(state, action, succStates, solver).isPresent();
     }
 
@@ -121,9 +123,9 @@ public final class ArgChecker {
 
     private static <S extends State, A extends Action> Collection<S> getSuccStatesOfNodeForAction(
             final ArgNode<? extends S, ? extends A> node, final A action) {
-        return node.outEdges.stream().filter(e -> e.getAction().equals(action))
+        return node.outEdges.stream()
+                .filter(e -> e.getAction().equals(action))
                 .map(e -> e.getTarget().getState())
                 .collect(toList());
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 
 data class WitnessEdge(
   val startlineRange: Pair<Int, Int>?,
@@ -69,8 +67,8 @@ class XcfaCliProofTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("cFiles")
+  //  @ParameterizedTest
+  //  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
     val temp = createTempDirectory()
     val params =

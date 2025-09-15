@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.core.type.Expr;
-
 import java.math.BigInteger;
 
 public final class IntExprs {
 
-    private IntExprs() {
-    }
+    private IntExprs() {}
 
     public static IntType Int() {
         return IntType.getInstance();
@@ -110,20 +107,25 @@ public final class IntExprs {
         return IntAddExpr.of(ImmutableList.of(op1, op2));
     }
 
-    public static IntAddExpr Add(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3) {
+    public static IntAddExpr Add(
+            final Expr<IntType> op1, final Expr<IntType> op2, final Expr<IntType> op3) {
         return IntAddExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
-    public static IntAddExpr Add(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3,
-                                 final Expr<IntType> op4) {
+    public static IntAddExpr Add(
+            final Expr<IntType> op1,
+            final Expr<IntType> op2,
+            final Expr<IntType> op3,
+            final Expr<IntType> op4) {
         return IntAddExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
-    public static IntAddExpr Add(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3,
-                                 final Expr<IntType> op4, final Expr<IntType> op5) {
+    public static IntAddExpr Add(
+            final Expr<IntType> op1,
+            final Expr<IntType> op2,
+            final Expr<IntType> op3,
+            final Expr<IntType> op4,
+            final Expr<IntType> op5) {
         return IntAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 
@@ -133,21 +135,25 @@ public final class IntExprs {
         return IntMulExpr.of(ImmutableList.of(op1, op2));
     }
 
-    public static IntMulExpr Mul(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3) {
+    public static IntMulExpr Mul(
+            final Expr<IntType> op1, final Expr<IntType> op2, final Expr<IntType> op3) {
         return IntMulExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
-    public static IntMulExpr Mul(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3,
-                                 final Expr<IntType> op4) {
+    public static IntMulExpr Mul(
+            final Expr<IntType> op1,
+            final Expr<IntType> op2,
+            final Expr<IntType> op3,
+            final Expr<IntType> op4) {
         return IntMulExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
-    public static IntMulExpr Mul(final Expr<IntType> op1, final Expr<IntType> op2,
-                                 final Expr<IntType> op3,
-                                 final Expr<IntType> op4, final Expr<IntType> op5) {
+    public static IntMulExpr Mul(
+            final Expr<IntType> op1,
+            final Expr<IntType> op2,
+            final Expr<IntType> op3,
+            final Expr<IntType> op4,
+            final Expr<IntType> op5) {
         return IntMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
-
 }

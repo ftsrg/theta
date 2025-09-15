@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa
 
 import hu.bme.mit.theta.common.dsl.MutableScope
@@ -23,31 +22,28 @@ import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
 class XcfaScope(
-    private val symbolTable: SymbolTable = SymbolTable(),
-    private val enclosingScope: Scope? = null,
+  private val symbolTable: SymbolTable = SymbolTable(),
+  private val enclosingScope: Scope? = null,
 ) : MutableScope {
 
-    override fun enclosingScope(): Optional<out Scope> {
-        return Optional.ofNullable(enclosingScope)
-    }
+  override fun enclosingScope(): Optional<out Scope> {
+    return Optional.ofNullable(enclosingScope)
+  }
 
-    override fun resolve(name: String?): Optional<out Symbol> {
-        val resolved = symbolTable[name]
-        return if (resolved.isEmpty)
-            enclosingScope?.resolve(name) ?: Optional.empty()
-        else
-            resolved
-    }
+  override fun resolve(name: String?): Optional<out Symbol> {
+    val resolved = symbolTable[name]
+    return if (resolved.isEmpty) enclosingScope?.resolve(name) ?: Optional.empty() else resolved
+  }
 
-    override fun add(symbol: Symbol) {
-        symbolTable.add(symbol)
-    }
+  override fun add(symbol: Symbol) {
+    symbolTable.add(symbol)
+  }
 
-    override fun addAll(symbols: Iterable<Symbol>) {
-        symbolTable.addAll(symbols)
-    }
+  override fun addAll(symbols: Iterable<Symbol>) {
+    symbolTable.addAll(symbols)
+  }
 
-    override fun toString(): String {
-        return "Scope{\nenclosingScope: ${enclosingScope}\nsymbolTable: $symbolTable }"
-    }
+  override fun toString(): String {
+    return "Scope{\nenclosingScope: ${enclosingScope}\nsymbolTable: $symbolTable }"
+  }
 }

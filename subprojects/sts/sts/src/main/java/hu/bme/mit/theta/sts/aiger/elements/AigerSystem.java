@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import java.util.List;
 
 /**
  * Represents an AIGER system, which is a collection of @link {@link AigerNode}s (connected with
- * <p>
- * {@link AigerWire}s) and an {@link OutputVar}.
+ *
+ * <p>{@link AigerWire}s) and an {@link OutputVar}.
  */
 public class AigerSystem {
 
@@ -39,5 +39,4 @@ public class AigerSystem {
     public OutputVar getOutput() {
         return output;
     }
-
 }

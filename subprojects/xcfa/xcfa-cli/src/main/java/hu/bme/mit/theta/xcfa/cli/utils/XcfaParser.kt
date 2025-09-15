@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
+import hu.bme.mit.theta.cfa.CFA
+import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
@@ -29,13 +31,15 @@ import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
+import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import org.antlr.v4.runtime.CharStreams
 
@@ -81,6 +85,16 @@ fun getXcfa(
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         kotlinEngine.eval(FileReader(config.inputConfig.input!!)) as XCFA
       }
+
+      InputType.CFA -> {
+        FileInputStream(config.inputConfig.input!!).use { inputStream ->
+          try {
+            return CfaDslManager.createCfa(inputStream).toXcfa()
+          } catch (ex: java.lang.Exception) {
+            throw java.lang.Exception("Could not parse CFA: " + ex.message, ex)
+          }
+        }
+      }
     }
   } catch (e: Exception) {
     if (config.debugConfig.stacktrace) e.printStackTrace()
@@ -89,6 +103,43 @@ fun getXcfa(
     logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
     exitProcess(ExitCodes.FRONTEND_FAILED.code)
   }
+
+private fun CFA.toXcfa(): XCFA {
+  val xcfaBuilder = XcfaBuilder("chc")
+  val builder = XcfaProcedureBuilder("main", ProcedurePassManager())
+  this.vars.forEach(builder::addVar)
+
+  builder.createInitLoc()
+  builder.createErrorLoc()
+  builder.createFinalLoc()
+
+  val initLocation = builder.initLoc
+  val errorLocation = builder.errorLoc.get()
+  val finalLocation = builder.finalLoc.get()
+
+  val locs =
+    locs.associateWith {
+      when {
+        this.initLoc == it -> initLocation
+        this.finalLoc.getOrNull() == it -> finalLocation
+        this.errorLoc.getOrNull() == it -> errorLocation
+        else -> XcfaLocation(it.name, metadata = EmptyMetaData).also { builder.addLoc(it) }
+      }
+    }
+  edges.forEach {
+    XcfaEdge(
+        locs[it.source]!!,
+        locs[it.target]!!,
+        StmtLabel(stmt = it.stmt, metadata = EmptyMetaData),
+        metadata = EmptyMetaData,
+      )
+      .apply { builder.addEdge(this) }
+  }
+
+  xcfaBuilder.addProcedure(builder)
+  xcfaBuilder.addEntryPoint(builder, ArrayList())
+  return xcfaBuilder.build()
+}
 
 private fun parseC(
   input: File,

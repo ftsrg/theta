@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 package hu.bme.mit.theta.common.visualization.writer;
 
 import hu.bme.mit.theta.common.visualization.Graph;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
-/**
- * Base class for writing graphs.
- */
+/** Base class for writing graphs. */
 public abstract class AbstractGraphWriter implements GraphWriter {
 
     @Override
@@ -36,12 +33,10 @@ public abstract class AbstractGraphWriter implements GraphWriter {
         writeFile(graph, file);
     }
 
-    public final void writeFile(final Graph graph, final File file)
-            throws FileNotFoundException {
+    public final void writeFile(final Graph graph, final File file) throws FileNotFoundException {
         try (PrintWriter printWriter = new PrintWriter(file)) {
             final String graphAsString = writeString(graph);
             printWriter.write(graphAsString);
         }
     }
-
 }

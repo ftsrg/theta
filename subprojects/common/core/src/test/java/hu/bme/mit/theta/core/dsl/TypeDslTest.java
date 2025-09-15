@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,13 +20,12 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class TypeDslTest {
@@ -37,30 +36,26 @@ public class TypeDslTest {
     @Parameterized.Parameter(value = 1)
     public Type expected;
 
-
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"int", IntExprs.Int()},
-
-                {"rat", RatExprs.Rat()},
-
-                {"bool", BoolExprs.Bool()},
-
-                {"[int] -> bool", ArrayExprs.Array(IntExprs.Int(), BoolExprs.Bool())},
-
-                {"[bool] -> rat", ArrayExprs.Array(BoolExprs.Bool(), RatExprs.Rat())},
-
-                {"[bool] -> [int] -> rat",
-                        ArrayExprs.Array(BoolExprs.Bool(),
-                                ArrayExprs.Array(IntExprs.Int(), RatExprs.Rat()))},
-
-                {"[[bool] -> int] -> rat",
-                        ArrayExprs.Array(ArrayExprs.Array(BoolExprs.Bool(), IntExprs.Int()),
-                                RatExprs.Rat())},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"int", IntExprs.Int()},
+                    {"rat", RatExprs.Rat()},
+                    {"bool", BoolExprs.Bool()},
+                    {"[int] -> bool", ArrayExprs.Array(IntExprs.Int(), BoolExprs.Bool())},
+                    {"[bool] -> rat", ArrayExprs.Array(BoolExprs.Bool(), RatExprs.Rat())},
+                    {
+                        "[bool] -> [int] -> rat",
+                        ArrayExprs.Array(
+                                BoolExprs.Bool(), ArrayExprs.Array(IntExprs.Int(), RatExprs.Rat()))
+                    },
+                    {
+                        "[[bool] -> int] -> rat",
+                        ArrayExprs.Array(
+                                ArrayExprs.Array(BoolExprs.Bool(), IntExprs.Int()), RatExprs.Rat())
+                    },
+                });
     }
 
     @Test

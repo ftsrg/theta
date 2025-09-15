@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,43 +47,29 @@ public final class LispLexerTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"", of()},
-
-                {";", of()},
-
-                {";;", of()},
-
-                {"; comment", of()},
-
-                {"atom1", of(ATOM1)},
-
-                {"(", of(LPAREN)},
-
-                {")", of(RPAREN)},
-
-                {"()", of(LPAREN, RPAREN)},
-
-                {"( )", of(LPAREN, RPAREN)},
-
-                {"( )", of(LPAREN, RPAREN)},
-
-                {"() ; comment", of(LPAREN, RPAREN)},
-
-                {"(atom1)", of(LPAREN, ATOM1, RPAREN)},
-
-                {"(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN)},
-
-                {"(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
-
-                {"(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
-
-                {"(atom1 (atom2 atom3))", of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN)},
-
-                {"(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN)},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"", of()},
+                    {";", of()},
+                    {";;", of()},
+                    {"; comment", of()},
+                    {"atom1", of(ATOM1)},
+                    {"(", of(LPAREN)},
+                    {")", of(RPAREN)},
+                    {"()", of(LPAREN, RPAREN)},
+                    {"( )", of(LPAREN, RPAREN)},
+                    {"( )", of(LPAREN, RPAREN)},
+                    {"() ; comment", of(LPAREN, RPAREN)},
+                    {"(atom1)", of(LPAREN, ATOM1, RPAREN)},
+                    {"(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN)},
+                    {"(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
+                    {"(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
+                    {
+                        "(atom1 (atom2 atom3))",
+                        of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN)
+                    },
+                    {"(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN)},
+                });
     }
 
     @Test
@@ -105,5 +90,4 @@ public final class LispLexerTest {
         // Assert
         assertEquals(tokens, actTokens);
     }
-
 }

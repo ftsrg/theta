@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class CfaAction extends StmtAction {
 
@@ -39,8 +38,9 @@ public final class CfaAction extends StmtAction {
         this.source = checkNotNull(source);
         this.target = checkNotNull(target);
         this.edges = Collections.unmodifiableList(checkNotNull(edges));
-        this.stmts = Collections.unmodifiableList(
-                edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
+        this.stmts =
+                Collections.unmodifiableList(
+                        edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
     }
 
     public static CfaAction create(final Edge edge) {

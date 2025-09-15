@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,26 +14,6 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.utils;
-
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -84,6 +64,25 @@ import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Test;
 
 public class ExprSimplifierTest {
 
@@ -149,8 +148,8 @@ public class ExprSimplifierTest {
     public void testAnd() {
         assertEquals(x, simplify(And(True(), x, True())));
         assertEquals(False(), simplify(And(True(), x, False())));
-        assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
-        assertEquals(And(x, z), simplify(And(x, And(True(), z))));
+        assertEquals(x, simplify(And(x, And(x, x))));
+        assertEquals(x, simplify(And(x, And(True(), x))));
         assertEquals(False(), simplify(And(x, And(False(), z))));
         assertEquals(True(), simplify(And(True(), True())));
     }
@@ -159,9 +158,9 @@ public class ExprSimplifierTest {
     public void testOr() {
         assertEquals(x, simplify(Or(False(), x, False())));
         assertEquals(True(), simplify(Or(False(), x, True())));
-        assertEquals(Or(x, y, z), simplify(Or(x, Or(y, z))));
+        assertEquals(x, simplify(Or(x, Or(x, x))));
         assertEquals(True(), simplify(Or(x, Or(True(), z))));
-        assertEquals(Or(x, z), simplify(Or(x, Or(False(), z))));
+        assertEquals(x, simplify(Or(x, Or(False(), x))));
     }
 
     // Rational
@@ -264,8 +263,8 @@ public class ExprSimplifierTest {
         assertEquals(Add(a, Int(4)), simplify(Add(Int(1), Add(a, Int(3)))));
         assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
         assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
-        assertEquals(Int("4294967294"),
-                simplify(Add(Int(Integer.MAX_VALUE), Int(Integer.MAX_VALUE))));
+        assertEquals(
+                Int("4294967294"), simplify(Add(Int(Integer.MAX_VALUE), Int(Integer.MAX_VALUE))));
     }
 
     @Test
@@ -377,339 +376,288 @@ public class ExprSimplifierTest {
     @Test
     public void testBvAdd() {
         assertEquals(
-                Bv(new boolean[]{false, false, true, true}),
-                simplify(BvExprs.Add(List.of(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, false, false, true})
-                )))
-        );
+                Bv(new boolean[] {false, false, true, true}),
+                simplify(
+                        BvExprs.Add(
+                                List.of(
+                                        Bv(new boolean[] {false, false, true, false}),
+                                        Bv(new boolean[] {false, false, false, true})))));
         assertEquals(
-                BvExprs.Add(List.of(
-                        e,
-                        Bv(new boolean[]{false, false, true, true})
-                )),
-                simplify(BvExprs.Add(List.of(
-                        Bv(new boolean[]{false, false, true, false}),
-                        e,
-                        Bv(new boolean[]{false, false, false, true})
-                )))
-        );
+                BvExprs.Add(List.of(e, Bv(new boolean[] {false, false, true, true}))),
+                simplify(
+                        BvExprs.Add(
+                                List.of(
+                                        Bv(new boolean[] {false, false, true, false}),
+                                        e,
+                                        Bv(new boolean[] {false, false, false, true})))));
     }
 
     @Test
     public void testBvSub() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.Sub(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, false, false, true})
-                ))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.Sub(
+                                Bv(new boolean[] {false, false, true, false}),
+                                Bv(new boolean[] {false, false, false, true}))));
         assertEquals(
-                BvExprs.Sub(
-                        e,
-                        Bv(new boolean[]{false, false, true, true})
-                ),
-                simplify(BvExprs.Sub(
-                        e,
-                        BvExprs.Add(List.of(
-                                Bv(new boolean[]{false, false, true, false}),
-                                Bv(new boolean[]{false, false, false, true})
-                        ))
-                ))
-        );
+                BvExprs.Sub(e, Bv(new boolean[] {false, false, true, true})),
+                simplify(
+                        BvExprs.Sub(
+                                e,
+                                BvExprs.Add(
+                                        List.of(
+                                                Bv(new boolean[] {false, false, true, false}),
+                                                Bv(new boolean[] {false, false, false, true}))))));
     }
 
     @Test
     public void testBvNeg() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.Neg(Bv(new boolean[]{true, true, true, true})))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(BvExprs.Neg(Bv(new boolean[] {true, true, true, true}))));
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.Neg(BvExprs.Neg(Bv(new boolean[]{false, false, false, true}))))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(BvExprs.Neg(BvExprs.Neg(Bv(new boolean[] {false, false, false, true})))));
     }
 
     @Test
     public void testBvMul() {
         assertEquals(
-                Bv(new boolean[]{false, true, true, false}),
-                simplify(BvExprs.Mul(List.of(
-                        Bv(new boolean[]{false, false, true, true}),
-                        Bv(new boolean[]{false, false, true, false})
-                )))
-        );
+                Bv(new boolean[] {false, true, true, false}),
+                simplify(
+                        BvExprs.Mul(
+                                List.of(
+                                        Bv(new boolean[] {false, false, true, true}),
+                                        Bv(new boolean[] {false, false, true, false})))));
         assertEquals(
-                BvExprs.Mul(List.of(
-                        Bv(new boolean[]{false, true, true, false}),
-                        e
-                )),
-                simplify(BvExprs.Mul(List.of(
-                        e,
-                        Bv(new boolean[]{false, false, true, true}),
-                        Bv(new boolean[]{false, false, true, false})
-                )))
-        );
+                BvExprs.Mul(List.of(Bv(new boolean[] {false, true, true, false}), e)),
+                simplify(
+                        BvExprs.Mul(
+                                List.of(
+                                        e,
+                                        Bv(new boolean[] {false, false, true, true}),
+                                        Bv(new boolean[] {false, false, true, false})))));
     }
 
     @Test
     public void testBvDiv() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.UDiv(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, true})
-                ))
-        );
-        assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.UDiv(e, e))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        assertEquals(Bv(new boolean[] {false, false, false, true}), simplify(BvExprs.UDiv(e, e)));
     }
 
     @Test
     public void testBvMod() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.SMod(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, true})
-                ))
-        );
-        assertEquals(
-                Bv(new boolean[]{false, false, false, false}),
-                simplify(BvExprs.SMod(e, e))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.SMod(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        assertEquals(Bv(new boolean[] {false, false, false, false}), simplify(BvExprs.SMod(e, e)));
     }
 
     @Test
     public void testBvRem() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.URem(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, true})
-                ))
-        );
-        assertEquals(
-                Bv(new boolean[]{false, false, false, false}),
-                simplify(BvExprs.URem(e, e))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        assertEquals(Bv(new boolean[] {false, false, false, false}), simplify(BvExprs.URem(e, e)));
     }
 
     @Test
     public void testBvAnd() {
         assertEquals(
-                Bv(new boolean[]{false, true, false, false}),
-                simplify(BvExprs.And(List.of(
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                Bv(new boolean[] {false, true, false, false}),
+                simplify(
+                        BvExprs.And(
+                                List.of(
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
         assertEquals(
-                BvExprs.And(List.of(
-                        e,
-                        Bv(new boolean[]{false, true, false, false})
-                )),
-                simplify(BvExprs.And(List.of(
-                        e,
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                BvExprs.And(List.of(e, Bv(new boolean[] {false, true, false, false}))),
+                simplify(
+                        BvExprs.And(
+                                List.of(
+                                        e,
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
     }
 
     @Test
     public void testBvOr() {
         assertEquals(
-                Bv(new boolean[]{false, true, true, true}),
-                simplify(BvExprs.Or(List.of(
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                Bv(new boolean[] {false, true, true, true}),
+                simplify(
+                        BvExprs.Or(
+                                List.of(
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
         assertEquals(
-                BvExprs.Or(List.of(
-                        e,
-                        Bv(new boolean[]{false, true, true, true})
-                )),
-                simplify(BvExprs.Or(List.of(
-                        e,
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                BvExprs.Or(List.of(e, Bv(new boolean[] {false, true, true, true}))),
+                simplify(
+                        BvExprs.Or(
+                                List.of(
+                                        e,
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
     }
 
     @Test
     public void testBvXor() {
         assertEquals(
-                Bv(new boolean[]{false, false, true, true}),
-                simplify(BvExprs.Xor(List.of(
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                Bv(new boolean[] {false, false, true, true}),
+                simplify(
+                        BvExprs.Xor(
+                                List.of(
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
         assertEquals(
-                BvExprs.Xor(List.of(
-                        e,
-                        Bv(new boolean[]{false, false, true, true})
-                )),
-                simplify(BvExprs.Xor(List.of(
-                        e,
-                        Bv(new boolean[]{false, true, false, true}),
-                        Bv(new boolean[]{false, true, true, false})
-                )))
-        );
+                BvExprs.Xor(List.of(e, Bv(new boolean[] {false, false, true, true}))),
+                simplify(
+                        BvExprs.Xor(
+                                List.of(
+                                        e,
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, true, false})))));
     }
 
     @Test
     public void testBvNot() {
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.Not(Bv(new boolean[]{true, true, true, false})))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(BvExprs.Not(Bv(new boolean[] {true, true, true, false}))));
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.Not(BvExprs.Not(Bv(new boolean[]{false, false, false, true}))))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(BvExprs.Not(BvExprs.Not(Bv(new boolean[] {false, false, false, true})))));
     }
 
     @Test
     public void testBvShift() {
         assertEquals(
-                Bv(new boolean[]{false, true, false, false}),
-                simplify(BvExprs.ShiftLeft(
-                        Bv(new boolean[]{false, false, false, true}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                Bv(new boolean[] {false, true, false, false}),
+                simplify(
+                        BvExprs.ShiftLeft(
+                                Bv(new boolean[] {false, false, false, true}),
+                                Bv(new boolean[] {false, false, true, false}))));
 
         assertEquals(
-                Bv(new boolean[]{false, false, false, true}),
-                simplify(BvExprs.ArithShiftRight(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.ArithShiftRight(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, false}))));
 
         assertEquals(
-                Bv(new boolean[]{true, true, true, false}),
-                simplify(BvExprs.ArithShiftRight(
-                        Bv(new boolean[]{true, true, false, false}),
-                        Bv(new boolean[]{false, false, false, true})
-                ))
-        );
+                Bv(new boolean[] {true, true, true, false}),
+                simplify(
+                        BvExprs.ArithShiftRight(
+                                Bv(new boolean[] {true, true, false, false}),
+                                Bv(new boolean[] {false, false, false, true}))));
     }
 
     @Test
     public void testBvEq() {
         assertEquals(
                 True(),
-                simplify(BvExprs.Eq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, true, false, false})
-                ))
-        );
+                simplify(
+                        BvExprs.Eq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, true, false, false}))));
         assertEquals(
                 False(),
-                simplify(BvExprs.Eq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.Eq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
     public void testBvNeq() {
         assertEquals(
                 False(),
-                simplify(BvExprs.Neq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, true, false, false})
-                ))
-        );
+                simplify(
+                        BvExprs.Neq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, true, false, false}))));
         assertEquals(
                 True(),
-                simplify(BvExprs.Neq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.Neq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
     public void testBvGeq() {
         assertEquals(
                 True(),
-                simplify(BvExprs.UGeq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                simplify(
+                        BvExprs.UGeq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, false}))));
         assertEquals(
                 False(),
-                simplify(BvExprs.UGeq(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.UGeq(
+                                Bv(new boolean[] {false, false, true, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
     public void testBvGt() {
         assertEquals(
                 True(),
-                simplify(BvExprs.UGt(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                simplify(
+                        BvExprs.UGt(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, false}))));
         assertEquals(
                 False(),
-                simplify(BvExprs.UGt(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.UGt(
+                                Bv(new boolean[] {false, false, true, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
     public void testBvLeq() {
         assertEquals(
                 False(),
-                simplify(BvExprs.ULeq(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                simplify(
+                        BvExprs.ULeq(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, false}))));
         assertEquals(
                 True(),
-                simplify(BvExprs.ULeq(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.ULeq(
+                                Bv(new boolean[] {false, false, true, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
     public void testBvLt() {
         assertEquals(
                 False(),
-                simplify(BvExprs.ULt(
-                        Bv(new boolean[]{false, true, false, false}),
-                        Bv(new boolean[]{false, false, true, false})
-                ))
-        );
+                simplify(
+                        BvExprs.ULt(
+                                Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, false, true, false}))));
         assertEquals(
                 True(),
-                simplify(BvExprs.ULt(
-                        Bv(new boolean[]{false, false, true, false}),
-                        Bv(new boolean[]{false, true, false, true})
-                ))
-        );
+                simplify(
+                        BvExprs.ULt(
+                                Bv(new boolean[] {false, false, true, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     // Others
@@ -766,8 +714,10 @@ public class ExprSimplifierTest {
         var arr = ArrayInit(elems, Int(100), Array(Int(), Int()));
         var newArr = simplify(arr);
         assertTrue(newArr instanceof ArrayInitExpr);
-        assertEquals(Int(1),
-                Read(newArr, Int(2)).eval(ImmutableValuation.builder().put(noname, Int(0)).build()));
+        assertEquals(
+                Int(1),
+                Read(newArr, Int(2))
+                        .eval(ImmutableValuation.builder().put(noname, Int(0)).build()));
         assertFalse(simplify(Read(newArr, Int(2))) instanceof LitExpr);
         assertTrue(simplify(Read(newArr, Int(2))) instanceof ArrayReadExpr);
     }

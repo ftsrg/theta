@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.cli.optiongroup
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
@@ -23,16 +22,20 @@ import java.io.File
 
 class PetrinetDependencyOutputOptions : OptionGroup() {
 
-    val depGxl: File? by option(
+  val depGxl: File? by
+    option(
         help = "Generate GXL representation of (extended) dependency graph for variable ordering"
-    ).file(mustExist = false, canBeDir = false, mustBeWritable = true)
-    val depGxlGsat: File? by option(
+      )
+      .file(mustExist = false, canBeDir = false, mustBeWritable = true)
+  val depGxlGsat: File? by
+    option(
         help = "Generate GXL representation of (extended) dependency graph for variable ordering"
-    ).file(mustExist = false, canBeDir = false, mustBeWritable = true)
-    val depMat: File? by option(help = "Generate dependency matrix from the model as a CSV file").file(
-        mustExist = false, canBeDir = false, mustBeWritable = true
-    )
-    val depMatPng: File? by option(help = "Generate dependency matrix from the model as a PNG file").file(
-        mustExist = false, canBeDir = false, mustBeWritable = true
-    )
+      )
+      .file(mustExist = false, canBeDir = false, mustBeWritable = true)
+  val depMat: File? by
+    option(help = "Generate dependency matrix from the model as a CSV file")
+      .file(mustExist = false, canBeDir = false, mustBeWritable = true)
+  val depMatPng: File? by
+    option(help = "Generate dependency matrix from the model as a PNG file")
+      .file(mustExist = false, canBeDir = false, mustBeWritable = true)
 }

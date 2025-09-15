@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,5 +22,4 @@ public interface PreStrengtheningOperator<S1 extends State, S2 extends State> {
     S1 strengthenState1(final Prod2State<S1, S2> state);
 
     S2 strengthenState2(final Prod2State<S1, S2> state);
-
 }

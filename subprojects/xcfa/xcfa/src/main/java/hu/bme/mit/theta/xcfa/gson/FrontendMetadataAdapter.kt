@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.gson
 
 import com.google.gson.Gson
@@ -25,106 +24,105 @@ import hu.bme.mit.theta.frontend.FrontendMetadata
 
 class FrontendMetadataAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<FrontendMetadata>() {
 
-    private lateinit var gson: Gson
-    override fun write(writer: JsonWriter, value: FrontendMetadata) {
-        initGson()
-        writer.beginArray()
+  private lateinit var gson: Gson
 
-        for ((owner, tup) in value.lookupKeyValue.entries) {
-            writer.beginObject()
-            writer.name("owner").value(owner)
-            writer.name("values").beginArray()
-            for ((key, _val) in tup.entries) {
-                writer.beginObject()
-                if (_val is String) {
-                    writer.name(key).value(_val)
-                }
-                if (_val is Boolean) {
-                    writer.name(key).value(_val)
-                }
-                writer.endObject()
-            }
-            writer.endArray()
-            writer.endObject()
+  override fun write(writer: JsonWriter, value: FrontendMetadata) {
+    initGson()
+    writer.beginArray()
+
+    for ((owner, tup) in value.lookupKeyValue.entries) {
+      writer.beginObject()
+      writer.name("owner").value(owner)
+      writer.name("values").beginArray()
+      for ((key, _val) in tup.entries) {
+        writer.beginObject()
+        if (_val is String) {
+          writer.name(key).value(_val)
         }
-
-        writer.endArray()
-    }
-
-    override fun read(reader: JsonReader): FrontendMetadata {
-        initGson()
-
-        val lookupKeyValue = mutableMapOf<Int, Map<String, Any>>()
-
-        reader.beginArray()
-        while (reader.hasNext()) {
-            reader.beginObject()
-
-            var owner: Int? = null
-            var values: Map<String, Any>? = null
-
-            while (reader.hasNext()) {
-                when (reader.nextName()) {
-                    "owner" -> {
-                        owner = reader.nextInt()
-                    }
-
-                    "values" -> {
-                        values = readValuesArray(reader)
-                    }
-
-                    else -> {
-                        reader.skipValue()
-                    }
-                }
-            }
-
-            reader.endObject()
-
-            if (owner != null && values != null) {
-                lookupKeyValue[owner] = values
-            }
+        if (_val is Boolean) {
+          writer.name(key).value(_val)
         }
-        reader.endArray()
-
-        return FrontendMetadata(lookupKeyValue)
+        writer.endObject()
+      }
+      writer.endArray()
+      writer.endObject()
     }
 
-    private fun readValuesArray(reader: JsonReader): Map<String, Any> {
-        val values = mutableMapOf<String, Any>()
+    writer.endArray()
+  }
 
-        reader.beginArray()
-        while (reader.peek() != JsonToken.END_ARRAY) {
-            reader.beginObject()
-            if (reader.hasNext()) {
-                val key = reader.nextName()
-                val value = readValue(reader)
-                if (value != null) {
-                    values[key] = value
-                }
-            }
+  override fun read(reader: JsonReader): FrontendMetadata {
+    initGson()
 
-            reader.endObject()
+    val lookupKeyValue = mutableMapOf<Int, Map<String, Any>>()
 
+    reader.beginArray()
+    while (reader.hasNext()) {
+      reader.beginObject()
+
+      var owner: Int? = null
+      var values: Map<String, Any>? = null
+
+      while (reader.hasNext()) {
+        when (reader.nextName()) {
+          "owner" -> {
+            owner = reader.nextInt()
+          }
+
+          "values" -> {
+            values = readValuesArray(reader)
+          }
+
+          else -> {
+            reader.skipValue()
+          }
         }
-        reader.endArray()
+      }
 
-        return values
+      reader.endObject()
+
+      if (owner != null && values != null) {
+        lookupKeyValue[owner] = values
+      }
     }
+    reader.endArray()
 
-    private fun readValue(reader: JsonReader): Any? {
-        return when {
-            reader.peek() == JsonToken.STRING -> reader.nextString()
-            reader.peek() == JsonToken.BOOLEAN -> reader.nextBoolean()
-            else -> {
-                reader.skipValue()
-                null
-            }
+    return FrontendMetadata(lookupKeyValue)
+  }
+
+  private fun readValuesArray(reader: JsonReader): Map<String, Any> {
+    val values = mutableMapOf<String, Any>()
+
+    reader.beginArray()
+    while (reader.peek() != JsonToken.END_ARRAY) {
+      reader.beginObject()
+      if (reader.hasNext()) {
+        val key = reader.nextName()
+        val value = readValue(reader)
+        if (value != null) {
+          values[key] = value
         }
-    }
+      }
 
-    private fun initGson() {
-        if (!this::gson.isInitialized) gson = gsonSupplier()
+      reader.endObject()
     }
+    reader.endArray()
 
+    return values
+  }
+
+  private fun readValue(reader: JsonReader): Any? {
+    return when {
+      reader.peek() == JsonToken.STRING -> reader.nextString()
+      reader.peek() == JsonToken.BOOLEAN -> reader.nextBoolean()
+      else -> {
+        reader.skipValue()
+        null
+      }
+    }
+  }
+
+  private fun initGson() {
+    if (!this::gson.isInitialized) gson = gsonSupplier()
+  }
 }

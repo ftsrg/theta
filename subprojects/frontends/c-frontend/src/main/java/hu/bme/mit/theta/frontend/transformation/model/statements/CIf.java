@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -24,11 +23,18 @@ public class CIf extends CStatement {
     private final CStatement body;
     private final CStatement elseStatement;
 
-    public CIf(CStatement guard, CStatement body, CStatement elseStatement, ParseContext parseContext) {
+    public CIf(
+            CStatement guard,
+            CStatement body,
+            CStatement elseStatement,
+            ParseContext parseContext) {
         super(parseContext);
         this.guard = guard;
+        if (guard != null) guard.setParent(this);
         this.body = body;
+        if (body != null) body.setParent(this);
         this.elseStatement = elseStatement;
+        if (elseStatement != null) elseStatement.setParent(this);
     }
 
     public CStatement getElseStatement() {

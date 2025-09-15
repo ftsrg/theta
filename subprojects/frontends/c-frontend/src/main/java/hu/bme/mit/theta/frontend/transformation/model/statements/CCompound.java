@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CCompound extends CStatement {
@@ -31,8 +30,21 @@ public class CCompound extends CStatement {
         cStatementList = new ArrayList<>();
     }
 
+    /**
+     * @return Unmodifiable list of statements
+     */
     public List<CStatement> getcStatementList() {
-        return cStatementList;
+        return Collections.unmodifiableList(cStatementList);
+    }
+
+    public void insertCStatementsToFront(List<CStatement> cStatements) {
+        cStatementList.addAll(0, cStatements);
+        cStatementList.forEach(e -> e.setParent(this));
+    }
+
+    public void addCStatement(CStatement cStatement) {
+        cStatementList.add(cStatement);
+        cStatement.setParent(this);
     }
 
     @Override
@@ -43,16 +55,17 @@ public class CCompound extends CStatement {
     @Override
     public void setPostStatements(CStatement postStatements) {
         this.postStatements = postStatements;
+        if (postStatements != null) postStatements.setParent(this);
     }
 
     @Override
     public void setPreStatements(CStatement preStatements) {
         this.preStatements = preStatements;
+        if (preStatements != null) preStatements.setParent(this);
     }
 
     @Override
     public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
         return visitor.visit(this, param);
     }
-
 }

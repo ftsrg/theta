@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -136,6 +136,12 @@ fun hornPortfolio25(
         baseConfig.adaptConfig(inProcess = inProcess, timeoutMs = 100_000),
         checker,
       )
+    val configZ3native =
+      ConfigNode(
+        "Z3native-$inProcess",
+        baseConfig.adaptConfig(inProcess = inProcess, solver = "Z3:4.13", timeoutMs = 100_000),
+        checker,
+      )
     val configEldarica =
       ConfigNode(
         "Eldarica-$inProcess",
@@ -149,7 +155,8 @@ fun hornPortfolio25(
         checker,
       )
 
-    edges.add(Edge(configZ3, configEldarica, anyError))
+    edges.add(Edge(configZ3, configZ3native, anyError))
+    edges.add(Edge(configZ3native, configEldarica, anyError))
     edges.add(Edge(configEldarica, configGolem, anyError))
 
     return STM(configZ3, edges)

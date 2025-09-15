@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.analysis.expr.refinement;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -54,7 +61,6 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,23 +70,18 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toUnmodifiableMap;
-
 /**
- * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described in
- * Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
- * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on Foundations
- * of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing Machinery, New York, NY, USA,
- * 487-497. DOI:https://doi.org/10.1145/3106237.3106307
+ * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described
+ * in Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
+ * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on
+ * Foundations of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing
+ * Machinery, New York, NY, USA, 487-497. DOI:https://doi.org/10.1145/3106237.3106307
  */
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
-    private enum AssertionGeneratorMethod {SP, WP}
+    private enum AssertionGeneratorMethod {
+        SP,
+        WP
+    }
 
     private final UCSolver solver;
     private final Expr<BoolType> init;
@@ -92,9 +93,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private final boolean LV; // Whether to project the assertions to live variables
 
     private ExprTraceNewtonChecker(
-            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver,
-            boolean it, AssertionGeneratorMethod sPorWP, boolean lv
-    ) {
+            final Expr<BoolType> init,
+            final Expr<BoolType> target,
+            final UCSolver solver,
+            boolean it,
+            AssertionGeneratorMethod sPorWP,
+            boolean lv) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
@@ -105,14 +109,14 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static ExprTraceNewtonCheckerITBuilder create(
-            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
-    ) {
+            final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         return new ExprTraceNewtonCheckerITBuilder(solver, init, target);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+    public ExprTraceStatus<ItpRefutation> check(
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         try {
             return check2((Trace<? extends ExprState, ? extends StmtAction>) trace);
@@ -121,8 +125,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         }
     }
 
-    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
-        var ftrace = flattenTrace(trace); // Moves the expressions in the states to the corresponting actions as assumptions
+    private ExprTraceStatus<ItpRefutation> check2(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+        var ftrace =
+                flattenTrace(
+                        trace); // Moves the expressions in the states to the corresponting actions
+        // as assumptions
 
         final int stateCount = ftrace.getStates().size();
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
@@ -137,7 +145,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                 var curIndexing = indexings.get(i - 1);
                 for (var stmt : ftrace.getAction(i - 1).getStmts()) {
                     var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
-                    solver.track(PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing));
+                    solver.track(
+                            PathUtils.unfold(
+                                    stmtUnfoldResult.getExprs().iterator().next(), curIndexing));
                     curIndexing = curIndexing.add(stmtUnfoldResult.getIndexing());
                 }
                 indexings.add(curIndexing);
@@ -168,7 +178,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return getClass().getSimpleName();
     }
 
-    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
         final var flattenedActions = new ArrayList<StmtAction>(stateCount - 1);
 
@@ -178,23 +189,25 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                             ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
                             : Stream.<AssumeStmt>empty();
 
-            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
+            var stateStream =
+                    ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream()
+                            .map(AssumeStmt::of);
 
             var actionStream = trace.getAction(i - 1).getStmts().stream();
 
             var targetStream =
                     (i == stateCount - 1)
                             ? Stream.concat(
-                            ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream().map(AssumeStmt::of),
-                            ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of)
-                    )
+                                    ExprUtils.getConjuncts(trace.getState(i).toExpr()).stream()
+                                            .map(AssumeStmt::of),
+                                    ExprUtils.getConjuncts(target).stream().map(AssumeStmt::of))
                             : Stream.<AssumeStmt>empty();
 
             flattenedActions.add(
                     NewtonAction.of(
-                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e).collect(toList())
-                    )
-            );
+                            Stream.of(initStream, stateStream, actionStream, targetStream)
+                                    .flatMap(e -> e)
+                                    .collect(toList())));
         }
 
         return ExprTraceUtils.traceFrom(flattenedActions);
@@ -203,8 +216,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private ExprTraceStatus.Feasible<ItpRefutation> createCounterexample(
             final Valuation model,
             final List<VarIndexing> indexings,
-            final Trace<? extends ExprState, ? extends ExprAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
         for (final VarIndexing indexing : indexings) {
             builder.add(PathUtils.extractValuation(model, indexing));
@@ -215,8 +227,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private ExprTraceStatus.Infeasible<ItpRefutation> createRefinement(
             final Collection<Expr<BoolType>> unsatCore,
             final List<VarIndexing> indexings,
-            Trace<? extends ExprState, ? extends StmtAction> trace
-    ) {
+            Trace<? extends ExprState, ? extends StmtAction> trace) {
         if (IT) {
             trace = computeAbstractTrace(unsatCore, trace);
         }
@@ -239,8 +250,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
     private Trace<? extends ExprState, ? extends StmtAction> computeAbstractTrace(
             final Collection<Expr<BoolType>> unsatCore,
-            final Trace<? extends ExprState, ? extends StmtAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
         var curIndexing = VarIndexingFactory.indexing(0);
 
@@ -250,7 +260,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             final var stmts = new ArrayList<Stmt>();
             for (final var stmt : trace.getAction(i - 1).getStmts()) {
                 final var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
-                final var stmtExpr = PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing);
+                final var stmtExpr =
+                        PathUtils.unfold(
+                                stmtUnfoldResult.getExprs().iterator().next(), curIndexing);
 
                 if (unsatCore.contains(stmtExpr)) {
                     stmts.add(stmt);
@@ -267,56 +279,64 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     private Stmt computeAbstractStmt(Stmt stmt) {
-        return stmt.accept(new StmtVisitor<Void, Stmt>() {
-            @Override
-            public Stmt visit(SkipStmt stmt, Void param) {
-                return SkipStmt.getInstance();
-            }
+        return stmt.accept(
+                new StmtVisitor<Void, Stmt>() {
+                    @Override
+                    public Stmt visit(SkipStmt stmt, Void param) {
+                        return SkipStmt.getInstance();
+                    }
 
-            @Override
-            public Stmt visit(AssumeStmt stmt, Void param) {
-                return AssumeStmt.of(True());
-            }
+                    @Override
+                    public Stmt visit(AssumeStmt stmt, Void param) {
+                        return AssumeStmt.of(True());
+                    }
 
-            @Override
-            public <DeclType extends Type> Stmt visit(AssignStmt<DeclType> stmt, Void param) {
-                return HavocStmt.of(stmt.getVarDecl());
-            }
+                    @Override
+                    public <DeclType extends Type> Stmt visit(
+                            AssignStmt<DeclType> stmt, Void param) {
+                        return HavocStmt.of(stmt.getVarDecl());
+                    }
 
-            @Override
-            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Stmt visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
-                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
-            }
+                    @Override
+                    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                            Stmt visit(
+                                    MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                                    Void param) {
+                        throw new UnsupportedOperationException(
+                                "MemoryAssignStmt not supported (yet)");
+                    }
 
-            @Override
-            public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Void param) {
-                return HavocStmt.of(stmt.getVarDecl());
-            }
+                    @Override
+                    public <DeclType extends Type> Stmt visit(
+                            HavocStmt<DeclType> stmt, Void param) {
+                        return HavocStmt.of(stmt.getVarDecl());
+                    }
 
-            @Override
-            public Stmt visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Stmt visit(SequenceStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Stmt visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Stmt visit(NonDetStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Stmt visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Stmt visit(OrtStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Stmt visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Stmt visit(LoopStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            public Stmt visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-        }, null);
+                    public Stmt visit(IfStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
+                },
+                null);
     }
 
     /*
@@ -324,8 +344,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     private List<Expr<BoolType>> computeAssertionsFromTraceWithStrongestPostcondition(
-            final Trace<? extends ExprState, ? extends StmtAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final int stateCount = trace.getStates().size();
         final List<Expr<BoolType>> assertions = new ArrayList<>(stateCount);
 
@@ -344,7 +363,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             var allVariables = collectVariablesInTrace(trace);
             var futureLiveVariables = collectFutureLiveVariablesForTrace(trace);
             return IntStream.range(0, assertions.size())
-                    .mapToObj(i -> existentialProjection(assertions.get(i), futureLiveVariables.get(i), allVariables))
+                    .mapToObj(
+                            i ->
+                                    existentialProjection(
+                                            assertions.get(i),
+                                            futureLiveVariables.get(i),
+                                            allVariables))
                     .collect(Collectors.toUnmodifiableList());
         } else {
             return assertions;
@@ -352,10 +376,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     private List<Expr<BoolType>> computeAssertionsFromTraceWithWeakestPrecondition(
-            final Trace<? extends ExprState, ? extends StmtAction> trace
-    ) {
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final int stateCount = trace.getStates().size();
-        final List<Expr<BoolType>> assertions = new ArrayList<>(Collections.nCopies(stateCount, null));
+        final List<Expr<BoolType>> assertions =
+                new ArrayList<>(Collections.nCopies(stateCount, null));
 
         assertions.set(stateCount - 1, True());
         var constCount = 0;
@@ -364,7 +388,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             for (var stmt : Lists.reverse(trace.getAction(i).getStmts())) {
                 wpState = wpState.wep(stmt);
             }
-            assertions.set(i, exprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
+            assertions.set(
+                    i, exprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
             constCount = wpState.getConstCount();
         }
 
@@ -372,7 +397,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             var allVariables = collectVariablesInTrace(trace);
             var pastLiveVariables = collectPastLiveVariablesForTrace(trace);
             return IntStream.range(0, assertions.size())
-                    .mapToObj(i -> universalProjection(assertions.get(i), pastLiveVariables.get(i), allVariables))
+                    .mapToObj(
+                            i ->
+                                    universalProjection(
+                                            assertions.get(i),
+                                            pastLiveVariables.get(i),
+                                            allVariables))
                     .collect(Collectors.toUnmodifiableList());
         } else {
             return assertions;
@@ -383,7 +413,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      * Live variable collection
      */
 
-    private Collection<VarDecl<?>> collectVariablesInTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Collection<VarDecl<?>> collectVariablesInTrace(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         var variables = new HashSet<VarDecl<?>>();
 
         for (var state : trace.getStates()) {
@@ -397,179 +428,211 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     private Collection<VarDecl<?>> stmtReadsVariables(final Stmt stmt) {
-        return stmt.accept(new StmtVisitor<Void, Collection<VarDecl<?>>>() {
-            @Override
-            public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
-                return Collections.emptySet();
-            }
+        return stmt.accept(
+                new StmtVisitor<Void, Collection<VarDecl<?>>>() {
+                    @Override
+                    public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
-                return ExprUtils.getVars(stmt.getCond());
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
+                        return ExprUtils.getVars(stmt.getCond());
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
-                return ExprUtils.getVars(stmt.getExpr());
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            AssignStmt<DeclType> stmt, Void param) {
+                        return ExprUtils.getVars(stmt.getExpr());
+                    }
 
-            @Override
-            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
-                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
-            }
+                    @Override
+                    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                            Collection<VarDecl<?>> visit(
+                                    MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                                    Void param) {
+                        throw new UnsupportedOperationException(
+                                "MemoryAssignStmt not supported (yet)");
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
-                return Collections.emptySet();
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            HavocStmt<DeclType> stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-        }, null);
+                    public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
+                },
+                null);
     }
 
     private Collection<VarDecl<?>> stmtWritesVariables(final Stmt stmt) {
-        return stmt.accept(new StmtVisitor<Void, Collection<VarDecl<?>>>() {
-            @Override
-            public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
-                return Collections.emptySet();
-            }
+        return stmt.accept(
+                new StmtVisitor<Void, Collection<VarDecl<?>>>() {
+                    @Override
+                    public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
-                return Collections.emptySet();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
-                return Collections.singletonList(stmt.getVarDecl());
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            AssignStmt<DeclType> stmt, Void param) {
+                        return Collections.singletonList(stmt.getVarDecl());
+                    }
 
-            @Override
-            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
-                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
-            }
+                    @Override
+                    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                            Collection<VarDecl<?>> visit(
+                                    MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                                    Void param) {
+                        throw new UnsupportedOperationException(
+                                "MemoryAssignStmt not supported (yet)");
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
-                return Collections.emptySet();
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            HavocStmt<DeclType> stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-        }, null);
+                    public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
+                },
+                null);
     }
 
     private Collection<VarDecl<?>> stmtHavocsVariables(final Stmt stmt) {
-        return stmt.accept(new StmtVisitor<Void, Collection<VarDecl<?>>>() {
-            @Override
-            public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
-                return Collections.emptySet();
-            }
+        return stmt.accept(
+                new StmtVisitor<Void, Collection<VarDecl<?>>>() {
+                    @Override
+                    public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
-                return Collections.emptySet();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
-                return Collections.emptySet();
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            AssignStmt<DeclType> stmt, Void param) {
+                        return Collections.emptySet();
+                    }
 
-            @Override
-            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
-                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
-            }
+                    @Override
+                    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                            Collection<VarDecl<?>> visit(
+                                    MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                                    Void param) {
+                        throw new UnsupportedOperationException(
+                                "MemoryAssignStmt not supported (yet)");
+                    }
 
-            @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
-                return Collections.singletonList(stmt.getVarDecl());
-            }
+                    @Override
+                    public <DeclType extends Type> Collection<VarDecl<?>> visit(
+                            HavocStmt<DeclType> stmt, Void param) {
+                        return Collections.singletonList(stmt.getVarDecl());
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            @Override
-            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
+                    @Override
+                    public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
 
-            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-                throw new UnsupportedOperationException();
-            }
-        }, null);
+                    public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                        throw new UnsupportedOperationException();
+                    }
+                },
+                null);
     }
 
     private Collection<VarDecl<?>> actionReadsVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtReadsVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream()
+                .flatMap(stmt -> stmtReadsVariables(stmt).stream())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private Collection<VarDecl<?>> actionWritesVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtWritesVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream()
+                .flatMap(stmt -> stmtWritesVariables(stmt).stream())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private Collection<VarDecl<?>> actionHavocsVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtHavocsVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream()
+                .flatMap(stmt -> stmtHavocsVariables(stmt).stream())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
-    private List<Collection<VarDecl<?>>> collectFutureLiveVariablesForTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private List<Collection<VarDecl<?>>> collectFutureLiveVariablesForTrace(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
-        final var futureLiveVariables = new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
+        final var futureLiveVariables =
+                new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
 
         futureLiveVariables.set(stateCount - 1, Collections.emptySet());
         for (var i = stateCount - 2; i >= 0; i--) {
@@ -583,9 +646,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return futureLiveVariables;
     }
 
-    private List<Collection<VarDecl<?>>> collectPastLiveVariablesForTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private List<Collection<VarDecl<?>>> collectPastLiveVariablesForTrace(
+            final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
-        final var pastLiveVariables = new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
+        final var pastLiveVariables =
+                new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
 
         pastLiveVariables.set(0, Collections.emptySet());
         for (var i = 1; i < stateCount; i++) {
@@ -606,38 +671,52 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private Expr<BoolType> existentialProjection(
             final Expr<BoolType> expr,
             final Collection<VarDecl<?>> variables,
-            final Collection<VarDecl<?>> allVariables
-    ) {
-        var params = allVariables.stream()
-                .filter(e -> !variables.contains(e))
-                .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
-                .collect(Collectors.toUnmodifiableSet());
+            final Collection<VarDecl<?>> allVariables) {
+        var params =
+                allVariables.stream()
+                        .filter(e -> !variables.contains(e))
+                        .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
+                        .collect(Collectors.toUnmodifiableSet());
 
-        var substitution = BasicSubstitution.builder()
-                .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
-                .build();
+        var substitution =
+                BasicSubstitution.builder()
+                        .putAll(
+                                params.stream()
+                                        .collect(
+                                                toUnmodifiableMap(
+                                                        Tuple2::get1, e -> e.get2().getRef())))
+                        .build();
 
         return params.size() > 0
-                ? Exists(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
+                ? Exists(
+                        params.stream().map(Tuple2::get2).collect(toList()),
+                        substitution.apply(expr))
                 : expr;
     }
 
     private Expr<BoolType> universalProjection(
             final Expr<BoolType> expr,
             final Collection<VarDecl<?>> variables,
-            final Collection<VarDecl<?>> allVariables
-    ) {
-        var params = allVariables.stream()
-                .filter(e -> !variables.contains(e))
-                .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
-                .collect(Collectors.toUnmodifiableSet());
+            final Collection<VarDecl<?>> allVariables) {
+        var params =
+                allVariables.stream()
+                        .filter(e -> !variables.contains(e))
+                        .map(e -> Tuple2.of(e, Param(e.getName(), e.getType())))
+                        .collect(Collectors.toUnmodifiableSet());
 
-        var substitution = BasicSubstitution.builder()
-                .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
-                .build();
+        var substitution =
+                BasicSubstitution.builder()
+                        .putAll(
+                                params.stream()
+                                        .collect(
+                                                toUnmodifiableMap(
+                                                        Tuple2::get1, e -> e.get2().getRef())))
+                        .build();
 
         return params.size() > 0
-                ? Forall(params.stream().map(Tuple2::get2).collect(toList()), substitution.apply(expr))
+                ? Forall(
+                        params.stream().map(Tuple2::get2).collect(toList()),
+                        substitution.apply(expr))
                 : expr;
     }
 
@@ -650,7 +729,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
-        public ExprTraceNewtonCheckerITBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target) {
+        public ExprTraceNewtonCheckerITBuilder(
+                UCSolver solver, Expr<BoolType> init, Expr<BoolType> target) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -672,7 +752,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         private final boolean IT;
 
-        public ExprTraceNewtonCheckerAssertBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
+        public ExprTraceNewtonCheckerAssertBuilder(
+                UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -680,11 +761,13 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         }
 
         public ExprTraceNewtonCheckerLVBuilder withSP() {
-            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT, AssertionGeneratorMethod.SP);
+            return new ExprTraceNewtonCheckerLVBuilder(
+                    solver, init, target, IT, AssertionGeneratorMethod.SP);
         }
 
         public ExprTraceNewtonCheckerLVBuilder withWP() {
-            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT, AssertionGeneratorMethod.WP);
+            return new ExprTraceNewtonCheckerLVBuilder(
+                    solver, init, target, IT, AssertionGeneratorMethod.WP);
         }
     }
 
@@ -696,7 +779,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         private final boolean IT;
         private final AssertionGeneratorMethod SPorWP;
 
-        public ExprTraceNewtonCheckerLVBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
+        public ExprTraceNewtonCheckerLVBuilder(
+                UCSolver solver,
+                Expr<BoolType> init,
+                Expr<BoolType> target,
+                boolean it,
+                AssertionGeneratorMethod sPorWP) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -735,7 +823,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName())
+                    .body()
+                    .addAll(stmts)
+                    .toString();
         }
     }
 }

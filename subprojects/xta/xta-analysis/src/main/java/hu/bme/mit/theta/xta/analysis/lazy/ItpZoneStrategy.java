@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Unit.unit;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collection;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
@@ -36,6 +33,8 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
+import java.util.Collection;
+import java.util.function.Function;
 
 abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, ItpZoneState> {
 
@@ -48,8 +47,9 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
         checkNotNull(system);
         this.lens = checkNotNull(lens);
         prec = ZonePrec.of(system.getClockVars());
-        analysis = PrecMappingAnalysis.create(ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()),
-                p -> prec);
+        analysis =
+                PrecMappingAnalysis.create(
+                        ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> prec);
         projection = s -> unit();
     }
 
@@ -64,17 +64,19 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
     }
 
     @Override
-    public final boolean mightCover(final ArgNode<S, XtaAction> coveree,
-                                    final ArgNode<S, XtaAction> coverer) {
+    public final boolean mightCover(
+            final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
         final ZoneState covereeZone = lens.get(coveree.getState()).getConcrState();
         final ZoneState covererZone = lens.get(coverer.getState()).getAbstrState();
         return covereeZone.isLeq(covererZone);
     }
 
     @Override
-    public final void cover(final ArgNode<S, XtaAction> coveree,
-                            final ArgNode<S, XtaAction> coverer,
-                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public final void cover(
+            final ArgNode<S, XtaAction> coveree,
+            final ArgNode<S, XtaAction> coverer,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         stats.startCloseZoneRefinement();
         final ItpZoneState covererState = lens.get(coverer.getState());
         final Collection<ZoneState> complementZones = covererState.getAbstrState().complement();
@@ -85,9 +87,12 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
     }
 
     @Override
-    public final void block(final ArgNode<S, XtaAction> node, final XtaAction action,
-                            final S succState,
-                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    public final void block(
+            final ArgNode<S, XtaAction> node,
+            final XtaAction action,
+            final S succState,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats) {
         assert lens.get(succState).isBottom();
         stats.startExpandZoneRefinement();
         final ZoneState preImage = pre(ZoneState.top(), action);
@@ -97,8 +102,11 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
 
     ////
 
-    protected abstract ZoneState blockZone(final ArgNode<S, XtaAction> node, final ZoneState zone,
-                                           final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
+    protected abstract ZoneState blockZone(
+            final ArgNode<S, XtaAction> node,
+            final ZoneState zone,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes,
+            final Builder stats);
 
     protected final Lens<S, ItpZoneState> getLens() {
         return lens;
@@ -122,19 +130,21 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
         node.setState(newState);
     }
 
-    protected final void maintainCoverage(final ArgNode<S, XtaAction> node,
-                                          final ZoneState interpolant,
-                                          final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
-        final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
-                .filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
+    protected final void maintainCoverage(
+            final ArgNode<S, XtaAction> node,
+            final ZoneState interpolant,
+            final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+        final Collection<ArgNode<S, XtaAction>> uncovered =
+                node.getCoveredNodes()
+                        .filter(covered -> shouldUncover(covered, interpolant))
+                        .collect(toList());
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, XtaAction> covered,
-                                  final ZoneState interpolant) {
+    private boolean shouldUncover(
+            final ArgNode<S, XtaAction> covered, final ZoneState interpolant) {
         final ItpZoneState coveredState = lens.get(covered.getState());
         return !coveredState.getAbstrState().isLeq(interpolant);
     }
-
 }

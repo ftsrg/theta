@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package hu.bme.mit.theta.xta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singleton;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
+import java.util.Collection;
 
 final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
 
@@ -38,12 +37,11 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
     }
 
     @Override
-    public Collection<ExplState> getSuccStates(final ExplState state, final XtaAction action,
-                                               final UnitPrec prec) {
+    public Collection<ExplState> getSuccStates(
+            final ExplState state, final XtaAction action, final UnitPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
         return singleton(XtaExplUtils.post(state, action));
     }
-
 }

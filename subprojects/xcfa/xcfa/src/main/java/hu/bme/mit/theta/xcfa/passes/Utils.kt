@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,8 +49,10 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)
-  for (i in 2..(newLabels.size)) {
-    locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData))
+  for (i in 2..(newLabels.size)) { // potentially metadata is off-by-one (i-2 might be suitable?)
+    locations.add(
+      XcfaLocation("loc" + XcfaLocation.uniqueCounter(), metadata = newLabels[i - 1].metadata)
+    )
   }
   locations.add(target)
 
@@ -64,7 +66,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 fun Stmt.flatten(): List<Stmt> {
   return when (this) {
     is SequenceStmt -> stmts.map { it.flatten() }.flatten()
-    is NonDetStmt -> error("Not possible")
+    is NonDetStmt -> listOf(this) // error prone because it might contain sequence stmts
     else -> listOf(this)
   }
 }

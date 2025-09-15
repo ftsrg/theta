@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
 package hu.bme.mit.theta.solver;
 
 import com.google.common.base.Preconditions;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverFactory;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class SolverPool implements AutoCloseable {
 
-    private final static int STARTING_SIZE = 10;
-    private final static int GROWING = 5;
+    private static final int STARTING_SIZE = 10;
+    private static final int GROWING = 5;
 
     private int created = 0;
 
@@ -64,8 +61,9 @@ public class SolverPool implements AutoCloseable {
     }
 
     public void returnSolver(Solver solver) {
-        Preconditions.checkState(solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
-//        System.out.println("Returned solver");
+        Preconditions.checkState(
+                solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
+        //        System.out.println("Returned solver");
         this.available.add(solver);
     }
 
@@ -75,8 +73,8 @@ public class SolverPool implements AutoCloseable {
             this.available.add(solver);
             this.all.add(solver);
         }
-//        System.out.println(created + " solvers created");
-//        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
+        //        System.out.println(created + " solvers created");
+        //        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }
 
@@ -86,13 +84,13 @@ public class SolverPool implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-//        System.out.println(all.size() - available.size() + " solvers not returned");
+        //        System.out.println(all.size() - available.size() + " solvers not returned");
         if (closingMode == ClosingMode.ALL) {
             for (Solver solver : all) solver.close();
-//            System.out.println("Closed " + all.size() + " solvers");
+            //            System.out.println("Closed " + all.size() + " solvers");
         } else {
             for (Solver solver : available) solver.close();
-//            System.out.println("Closed " + available.size() + " solvers");
+            //            System.out.println("Closed " + available.size() + " solvers");
         }
         this.available.clear();
         this.all.clear();

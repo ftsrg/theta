@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.solver.Solver;
+import java.util.Collection;
+import java.util.Collections;
 
 public final class ExplTransFunc implements TransFunc<ExplState, ExprAction, ExplPrec> {
 
@@ -39,16 +38,18 @@ public final class ExplTransFunc implements TransFunc<ExplState, ExprAction, Exp
     }
 
     @Override
-    public Collection<? extends ExplState> getSuccStates(final ExplState state,
-                                                         final ExprAction action,
-                                                         final ExplPrec prec) {
+    public Collection<? extends ExplState> getSuccStates(
+            final ExplState state, final ExprAction action, final ExplPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
-        final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
-                BoolExprs.And(state.toExpr(), action.toExpr()), 0, prec::createState,
-                action.nextIndexing());
+        final Collection<ExplState> succStates =
+                ExprStates.createStatesForExpr(
+                        solver,
+                        BoolExprs.And(state.toExpr(), action.toExpr()),
+                        0,
+                        prec::createState,
+                        action.nextIndexing());
         return succStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : succStates;
     }
-
 }

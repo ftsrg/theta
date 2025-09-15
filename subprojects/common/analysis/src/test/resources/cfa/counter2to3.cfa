@@ -1,0 +1,16 @@
+main process cfa {
+	var x : int
+
+	init loc I
+	loc L0
+	loc L1
+    loc IS2
+    loc IS3
+
+    I -> L0 { x := 0 }
+	L0 -> L1 { assume x < 2 }
+    L1 -> L0 { x := x + 1 }
+    L0 -> IS2 { assume x = 2 }
+    IS2 -> IS3 { x := x + 1 }
+    IS3 -> IS2 { x := x - 1 }
+}

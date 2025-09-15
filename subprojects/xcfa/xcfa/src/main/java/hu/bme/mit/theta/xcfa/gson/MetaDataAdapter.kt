@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,35 +13,41 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.gson
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.MetaData
 
 class MetaDataAdapter : TypeAdapter<MetaData>() {
 
-    private val gson = GsonBuilder().create()
+  private val gson: Gson
 
-    override fun write(writer: JsonWriter, value: MetaData) {
-        writer.beginObject()
-        writer.name("type").value(value.javaClass.name)
-        writer.name("content")
-        gson.toJson(gson.toJsonTree(value), writer)
-        writer.endObject()
-    }
+  init {
+    val builder = GsonBuilder()
+    builder.registerTypeHierarchyAdapter(CStatement::class.java, CStatementAdapter())
+    gson = builder.create()
+  }
 
-    override fun read(reader: JsonReader): MetaData {
-        reader.beginObject()
-        check(reader.nextName() == "type")
-        val typeName = reader.nextString()
-        check(reader.nextName() == "content")
-        val content: MetaData = gson.fromJson(reader, Class.forName(typeName))
-        reader.endObject()
-        return content
-    }
+  override fun write(writer: JsonWriter, value: MetaData) {
+    writer.beginObject()
+    writer.name("type").value(value.javaClass.name)
+    writer.name("content")
+    gson.toJson(gson.toJsonTree(value), writer)
+    writer.endObject()
+  }
 
+  override fun read(reader: JsonReader): MetaData {
+    reader.beginObject()
+    check(reader.nextName() == "type")
+    val typeName = reader.nextString()
+    check(reader.nextName() == "content")
+    val content: MetaData = gson.fromJson(reader, Class.forName(typeName))
+    reader.endObject()
+    return content
+  }
 }

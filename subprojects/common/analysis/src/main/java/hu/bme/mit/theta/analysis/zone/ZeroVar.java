@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,11 +25,9 @@ final class ZeroVar {
 
     private static final VarDecl<RatType> ZERO_VAR = Var("_zero", Rat());
 
-    private ZeroVar() {
-    }
+    private ZeroVar() {}
 
     static VarDecl<RatType> getInstance() {
         return ZERO_VAR;
     }
-
 }

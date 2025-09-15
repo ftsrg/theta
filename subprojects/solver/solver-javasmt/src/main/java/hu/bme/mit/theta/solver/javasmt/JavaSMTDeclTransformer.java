@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import java.util.List;
 import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.SolverContext;
-
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 final class JavaSMTDeclTransformer {
 
@@ -37,8 +36,10 @@ final class JavaSMTDeclTransformer {
 
     private int symbolCount;
 
-    JavaSMTDeclTransformer(final JavaSMTTransformationManager transformer, final JavaSMTSymbolTable symbolTable,
-                           final SolverContext context) {
+    JavaSMTDeclTransformer(
+            final JavaSMTTransformationManager transformer,
+            final JavaSMTSymbolTable symbolTable,
+            final SolverContext context) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
         this.context = context;
@@ -66,10 +67,8 @@ final class JavaSMTDeclTransformer {
             final Type returnType = extractedTypes.get2();
 
             final FormulaType<?> returnSort = transformer.toSort(returnType);
-            final List<? extends FormulaType<?>> paramSorts = paramTypes.stream()
-                    .map(transformer::toSort)
-                    .toList();
-
+            final List<? extends FormulaType<?>> paramSorts =
+                    paramTypes.stream().map(transformer::toSort).toList();
 
             if (!paramSorts.isEmpty()) {
                 throw new JavaSMTSolverException("Function consts not yet supported.");
@@ -77,7 +76,12 @@ final class JavaSMTDeclTransformer {
 
             // Enums can't be yet handled by formulamanager directly
             if (returnSort.isEnumerationType()) {
-                symbol = context.getFormulaManager().getEnumerationFormulaManager().makeVariable(symbolNameFor(decl), (FormulaType.EnumerationFormulaType) returnSort);
+                symbol =
+                        context.getFormulaManager()
+                                .getEnumerationFormulaManager()
+                                .makeVariable(
+                                        symbolNameFor(decl),
+                                        (FormulaType.EnumerationFormulaType) returnSort);
             } else {
                 symbol = context.getFormulaManager().makeVariable(returnSort, symbolNameFor(decl));
             }
@@ -99,8 +103,8 @@ final class JavaSMTDeclTransformer {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
-                    .addAll(paramTypes).build();
+            final List<Type> newParamTypes =
+                    ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
             return Tuple2.of(newParamTypes, newResultType);
         } else {
             return Tuple2.of(ImmutableList.of(), type);
@@ -110,5 +114,4 @@ final class JavaSMTDeclTransformer {
     private String symbolNameFor(final Decl<?> decl) {
         return String.format("%s_%d", decl.getName(), symbolCount++);
     }
-
 }

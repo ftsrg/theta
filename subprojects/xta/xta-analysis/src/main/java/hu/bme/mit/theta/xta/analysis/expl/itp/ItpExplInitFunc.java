@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package hu.bme.mit.theta.xta.analysis.expl.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 final class ItpExplInitFunc implements InitFunc<ItpExplState, UnitPrec> {
 
@@ -55,5 +54,4 @@ final class ItpExplInitFunc implements InitFunc<ItpExplState, UnitPrec> {
             return result;
         }
     }
-
 }

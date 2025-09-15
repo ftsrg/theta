@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
 fun MonolithicExpr.createReversed(): MonolithicExpr {
   return MonolithicExpr(
@@ -25,7 +24,17 @@ fun MonolithicExpr.createReversed(): MonolithicExpr {
     transExpr = ExprUtils.reverse(transExpr, transOffsetIndex),
     propExpr = Not(initExpr),
     transOffsetIndex = transOffsetIndex,
-    initOffsetIndex = VarIndexingFactory.indexing(0),
+    initOffsetIndex = initOffsetIndex,
     vars = vars,
+    valToState = valToState,
+    biValToAction = { valuation1, valuation2 ->
+      val revAction = biValToAction(valuation2, valuation1)
+      if (revAction is ReversibleAction) {
+        revAction.reverse()
+      } else {
+        biValToAction(valuation1, valuation2)
+      }
+    },
+    ctrlVars = ctrlVars,
   )
 }

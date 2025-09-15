@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -207,6 +207,7 @@ enum class ErrorDetection {
   MEMSAFETY,
   MEMCLEANUP,
   NO_ERROR,
+  TERMINATION,
 }
 
 fun getXcfaErrorPredicate(
@@ -250,6 +251,8 @@ fun getXcfaErrorPredicate(
 
     ErrorDetection.NO_ERROR,
     ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+
+    ErrorDetection.TERMINATION -> error("Termination only supports BOUNDED backend right now.")
   }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@ package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -29,6 +26,8 @@ import hu.bme.mit.theta.xta.Sync;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SyncContext;
 import hu.bme.mit.theta.xta.utils.ChanType;
 import hu.bme.mit.theta.xta.utils.LabelExpr;
+import java.util.ArrayList;
+import java.util.List;
 
 final class XtaSync {
 
@@ -43,7 +42,8 @@ final class XtaSync {
     }
 
     public enum SyncKind {
-        EMIT, RECV
+        EMIT,
+        RECV
     }
 
     public Sync instantiate(final Env env) {
@@ -76,5 +76,4 @@ final class XtaSync {
             throw new AssertionError();
         }
     }
-
 }

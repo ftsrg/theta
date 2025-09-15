@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.common.Tuple4;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -57,7 +55,13 @@ public interface SSAProvider {
      * VarType: Variable type *if argument is a variable*, empty otherwise
      * VarName: Variable name *if argument is a variable*, `type SPACE value` if constant, `value` if anything else (block, function, etc)
      */
-    List<Tuple4<String, Optional<Tuple2<String, String>>, List<Tuple2<Optional<String>, String>>, Integer>> getInstructions(String funcName, String blockName);
+    List<
+                    Tuple4<
+                            String,
+                            Optional<Tuple2<String, String>>,
+                            List<Tuple2<Optional<String>, String>>,
+                            Integer>>
+            getInstructions(String funcName, String blockName);
 
     // Analysis results
     /*

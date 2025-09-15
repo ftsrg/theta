@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ public final class FileLogger extends BaseLogger {
     private final PrintWriter pw;
     private final boolean instantFlush;
 
-    public FileLogger(final Level minLevel, final String fileName, final boolean instantFlush,
-                      final boolean append)
+    public FileLogger(
+            final Level minLevel,
+            final String fileName,
+            final boolean instantFlush,
+            final boolean append)
             throws FileNotFoundException {
         super(minLevel);
         pw = new PrintWriter(new FileOutputStream(fileName, append));
@@ -43,5 +46,4 @@ public final class FileLogger extends BaseLogger {
             pw.flush();
         }
     }
-
 }

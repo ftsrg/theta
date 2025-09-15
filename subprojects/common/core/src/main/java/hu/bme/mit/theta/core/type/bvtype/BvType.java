@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.DomainSize;
@@ -23,19 +26,18 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
+public class BvType
+        implements Additive<BvType>,
+                Multiplicative<BvType>,
+                Divisible<BvType>,
+                Equational<BvType>,
+                Ordered<BvType>,
+                Castable<BvType> {
 
-public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>,
-        Equational<BvType>, Ordered<BvType>,
-        Castable<BvType> {
-
-    private final static int HASH_SEED = 5674;
-    private final static String TYPE_LABEL = "Bv";
+    private static final int HASH_SEED = 5674;
+    private static final String TYPE_LABEL = "Bv";
 
     private final int size;
     private final Boolean signed;
@@ -131,7 +133,8 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
     public <TargetType extends Type> Expr<TargetType> Cast(Expr<BvType> op, TargetType type) {
         if (type instanceof FpType && signed != null) {
             //noinspection unchecked
-            return (Expr<TargetType>) FromBv(FpRoundingMode.RTZ, op, (FpType) type, signed);
+            return (Expr<TargetType>)
+                    FromBv(FpRoundingMode.getDefaultRoundingMode(), op, (FpType) type, signed);
         }
         throw new ClassCastException("Bv cannot be cast to " + type);
     }

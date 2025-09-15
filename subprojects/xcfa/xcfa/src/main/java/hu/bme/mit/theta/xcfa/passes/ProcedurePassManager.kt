@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,6 +73,48 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     //        listOf(FetchExecuteWriteback(parseContext)),
   )
 
+class NontermValidationPasses(
+  checkOverflow: Boolean,
+  parseContext: ParseContext,
+  uniqueWarningLogger: Logger,
+) :
+  ProcedurePassManager(
+    listOf(
+      // formatting
+      NormalizePass(),
+      DeterministicPass(),
+      // removing redundant elements
+      UnusedLocRemovalPass(),
+      // handling intrinsics
+      ErrorLocationPass(checkOverflow),
+      FinalLocationPass(checkOverflow),
+      SvCompIntrinsicsPass(),
+      FpFunctionsToExprsPass(parseContext),
+      CLibraryFunctionsPass(),
+    ),
+    listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
+    listOf(
+      // optimizing
+      UnusedLocRemovalPass()
+    ),
+    listOf(
+      // trying to inline procedures
+      InlineProceduresPass(parseContext),
+      EliminateSelfLoops(),
+    ),
+    listOf(
+      // handling remaining function calls
+      MemsafetyPass(parseContext),
+      NoSideEffectPass(parseContext),
+      NondetFunctionPass(),
+      HavocPromotionAndRange(parseContext),
+      // Final cleanup
+      UnusedVarPass(uniqueWarningLogger),
+      UnusedLocRemovalPass(),
+    ),
+    //        listOf(FetchExecuteWriteback(parseContext)),
+  )
+
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
@@ -87,13 +129,13 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass(parseContext),
+      //      InlineProceduresPass(parseContext),
       RemoveDeadEnds(parseContext),
-      EliminateSelfLoops(),
+      //      EliminateSelfLoops(),
       // handling remaining function calls
-      LbePass(parseContext),
-      NormalizePass(), // needed after lbe, TODO
-      DeterministicPass(), // needed after lbe, TODO
+      //      LbePass(parseContext),
+      //      NormalizePass(), // needed after lbe, TODO
+      //      DeterministicPass(), // needed after lbe, TODO
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
     ),

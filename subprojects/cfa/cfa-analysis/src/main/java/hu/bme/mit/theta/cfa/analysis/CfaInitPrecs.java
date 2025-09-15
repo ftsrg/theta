@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,20 +20,17 @@ import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-
-import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.Set;
 
 public final class CfaInitPrecs {
 
-    private CfaInitPrecs() {
-    }
+    private CfaInitPrecs() {}
 
     public static LocalCfaPrec<PredPrec> collectAssumesLocal(CFA cfa) {
         Map<CFA.Loc, PredPrec> precs = Containers.createMap();

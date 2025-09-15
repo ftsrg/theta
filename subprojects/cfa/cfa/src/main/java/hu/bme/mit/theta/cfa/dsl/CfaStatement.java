@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,15 +91,15 @@ final class CfaStatement {
             final Expr<?> expr = expression.instantiate(env);
 
             if (expr.getType().equals(var.getType())) {
-                @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
-                @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
+                @SuppressWarnings("unchecked")
+                final VarDecl<Type> tVar = (VarDecl<Type>) var;
+                @SuppressWarnings("unchecked")
+                final Expr<Type> tExpr = (Expr<Type>) expr;
                 return Assign(tVar, tExpr);
             } else {
                 throw new IllegalArgumentException(
                         "Type of " + var + " is incompatilbe with " + expr);
             }
         }
-
     }
-
 }

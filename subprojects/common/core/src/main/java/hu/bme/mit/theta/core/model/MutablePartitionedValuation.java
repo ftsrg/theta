@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,11 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /**
  * Mutable implementation of a partitioned valuation. A partitioned valuation contains orthogonal
@@ -65,13 +64,12 @@ public final class MutablePartitionedValuation extends Valuation {
         return partitions.size() - 1;
     }
 
-
     public List<Map<Decl<?>, LitExpr<?>>> getPartitions() {
         return Collections.unmodifiableList(partitions);
     }
 
-    public MutablePartitionedValuation put(final int id, final Decl<?> decl,
-                                           final LitExpr<?> value) {
+    public MutablePartitionedValuation put(
+            final int id, final Decl<?> decl, final LitExpr<?> value) {
         checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
         checkArgument(partitions.size() > id, "Index out of bounds");
         partitions.get(id).put(decl, value);
@@ -135,8 +133,8 @@ public final class MutablePartitionedValuation extends Valuation {
     public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
         checkNotNull(decl);
         for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
-            @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(
-                    decl);
+            @SuppressWarnings("unchecked")
+            final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(decl);
             if (val != null) {
                 return Optional.of(val);
             }
@@ -146,8 +144,10 @@ public final class MutablePartitionedValuation extends Valuation {
 
     @Override
     public Expr<BoolType> toExpr() {
-        return SmartBoolExprs.And(getDecls().stream().map(e -> Eq(e.getRef(), eval(e).get()))
-                .collect(toImmutableList()));
+        return SmartBoolExprs.And(
+                getDecls().stream()
+                        .map(e -> Eq(e.getRef(), eval(e).get()))
+                        .collect(toImmutableList()));
     }
 
     @Override
@@ -158,5 +158,4 @@ public final class MutablePartitionedValuation extends Valuation {
         }
         return Collections.unmodifiableMap(ret);
     }
-
 }

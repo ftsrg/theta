@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
 public final class Z3SolverFactory implements SolverFactory {
 
     private static final Z3SolverFactory INSTANCE;
@@ -33,8 +31,7 @@ public final class Z3SolverFactory implements SolverFactory {
         INSTANCE = new Z3SolverFactory();
     }
 
-    private Z3SolverFactory() {
-    }
+    private Z3SolverFactory() {}
 
     public static Z3SolverFactory getInstance() {
         return INSTANCE;
@@ -60,12 +57,12 @@ public final class Z3SolverFactory implements SolverFactory {
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3Solver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
 
     @Override
@@ -74,12 +71,12 @@ public final class Z3SolverFactory implements SolverFactory {
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3Solver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
 
     @Override
@@ -88,12 +85,12 @@ public final class Z3SolverFactory implements SolverFactory {
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3ItpSolver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3ItpSolver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
 
     public HornSolver createHornSolver() {
@@ -102,12 +99,11 @@ public final class Z3SolverFactory implements SolverFactory {
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSolver("HORN");
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
-        final Z3TransformationManager transformationManager = new Z3TransformationManager(
-                symbolTable, z3Context);
+        final Z3TransformationManager transformationManager =
+                new Z3TransformationManager(symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3HornSolver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        return new Z3HornSolver(
+                symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
     }
-
 }

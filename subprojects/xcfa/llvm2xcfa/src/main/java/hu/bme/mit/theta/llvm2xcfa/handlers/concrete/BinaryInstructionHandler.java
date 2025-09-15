@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.llvm2xcfa.handlers.concrete;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
@@ -26,18 +34,13 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
-
 public class BinaryInstructionHandler extends BaseInstructionHandler {
     @Override
-    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    public void handleInstruction(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         switch (instruction.getOpName()) {
             case "add":
                 add(instruction, globalState, functionState, blockState);
@@ -75,10 +78,13 @@ public class BinaryInstructionHandler extends BaseInstructionHandler {
                 super.handleInstruction(instruction, globalState, functionState, blockState);
                 break;
         }
-
     }
 
-    private void frem(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void frem(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
@@ -87,10 +93,16 @@ public class BinaryInstructionHandler extends BaseInstructionHandler {
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
         // TODO: semantics of FREM?
         throw new RuntimeException("Frem semantics is not yet implemented!");
-        //foldExpression(instruction, functionState, blockState, null, RatExprs.Rem(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()), cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+        // foldExpression(instruction, functionState, blockState, null,
+        // RatExprs.Rem(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()),
+        // cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
     }
 
-    private void rem(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void rem(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
@@ -98,87 +110,190 @@ public class BinaryInstructionHandler extends BaseInstructionHandler {
         checkState(op2.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
 
-        foldExpression(instruction, functionState, blockState, null, Rem(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Rem(
+                        cast(op1.getExpr(functionState.getValues()), IntType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), IntType.getInstance())),
+                0);
     }
 
-    private void fdiv(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fdiv(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == RatType.getInstance(), "Fdiv only supports rational types!");
         checkState(op2.getType() == RatType.getInstance(), "Fdiv only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, RatExprs.Div(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()), cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                RatExprs.Div(
+                        cast(op1.getExpr(functionState.getValues()), RatType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), RatType.getInstance())),
+                0);
     }
 
-    private void div(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void div(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == IntType.getInstance(), "Div only supports integer types!");
         checkState(op2.getType() == IntType.getInstance(), "Div only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Div(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Div(
+                        cast(op1.getExpr(functionState.getValues()), IntType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), IntType.getInstance())),
+                0);
     }
 
-    private void fmul(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fmul(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == RatType.getInstance(), "Fmul only supports rational types!");
         checkState(op2.getType() == RatType.getInstance(), "Fmul only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, RatExprs.Mul(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()), cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                RatExprs.Mul(
+                        cast(op1.getExpr(functionState.getValues()), RatType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), RatType.getInstance())),
+                0);
     }
 
-    private void mul(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void mul(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == IntType.getInstance(), "Mul only supports integer types!");
         checkState(op2.getType() == IntType.getInstance(), "Mul only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Mul(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Mul(
+                        cast(op1.getExpr(functionState.getValues()), IntType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), IntType.getInstance())),
+                0);
     }
 
-    private void fsub(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fsub(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == RatType.getInstance(), "Fsub only supports rational types!");
         checkState(op2.getType() == RatType.getInstance(), "Fsub only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, RatExprs.Sub(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()), cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                RatExprs.Sub(
+                        cast(op1.getExpr(functionState.getValues()), RatType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), RatType.getInstance())),
+                0);
     }
 
-    private void sub(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void sub(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == IntType.getInstance(), "Sub only supports integer types!");
         checkState(op2.getType() == IntType.getInstance(), "Sub only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Sub(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Sub(
+                        cast(op1.getExpr(functionState.getValues()), IntType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), IntType.getInstance())),
+                0);
     }
 
-    private void fadd(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void fadd(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == RatType.getInstance(), "Fadd only supports rational types!");
         checkState(op2.getType() == RatType.getInstance(), "Fadd only supports rational types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, RatExprs.Add(cast(op1.getExpr(functionState.getValues()), RatType.getInstance()), cast(op2.getExpr(functionState.getValues()), RatType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                RatExprs.Add(
+                        cast(op1.getExpr(functionState.getValues()), RatType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), RatType.getInstance())),
+                0);
     }
 
-    private void add(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void add(
+            Instruction instruction,
+            GlobalState globalState,
+            FunctionState functionState,
+            BlockState blockState) {
         Argument op1 = instruction.getArguments().get(0);
         Argument op2 = instruction.getArguments().get(1);
 
         checkState(op1.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(op2.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        foldExpression(instruction, functionState, blockState, null, Add(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
+        foldExpression(
+                instruction,
+                functionState,
+                blockState,
+                null,
+                Add(
+                        cast(op1.getExpr(functionState.getValues()), IntType.getInstance()),
+                        cast(op2.getExpr(functionState.getValues()), IntType.getInstance())),
+                0);
     }
-
 }

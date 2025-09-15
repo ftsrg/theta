@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,10 +36,13 @@ internal typealias E = XcfaEvent
 internal typealias R = Relation<XcfaEvent>
 
 @Suppress("unused")
-enum class OcDecisionProcedureType(internal val checker: () -> OcChecker<E>) {
+enum class OcDecisionProcedureType(
+  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>
+) {
 
-  BASIC({ BasicOcChecker() }),
-  PROPAGATOR({ UserPropagatorOcChecker() }),
+  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
+  BASIC({ solver, _ -> BasicOcChecker(solver) }),
+  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
 }
 
 /** Important! Empty collection is converted to true (not false). */
@@ -60,6 +63,24 @@ internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> =
     1 -> first()
     else -> setOf(Or(map { it.toAnd() }))
   }
+
+/** Takes a relation matrix and a list of initial pairs in the relation and closes the relation. */
+internal fun close(
+  relation: Array<Array<Boolean>>,
+  initials: List<Pair<Int, Int>>,
+  cycleAllowed: Boolean = true,
+) {
+  val toClose = initials.toMutableList()
+  while (toClose.isNotEmpty()) {
+    val (from, to) = toClose.removeFirst()
+    check(cycleAllowed || from != to) { "Self-loop not allowed." }
+    if (relation[from][to]) continue
+
+    relation[from][to] = true
+    relation[to].forEachIndexed { i, b -> if (b && !relation[from][i]) toClose.add(from to i) }
+    relation.forEachIndexed { i, b -> if (b[from] && !relation[i][to]) toClose.add(i to to) }
+  }
+}
 
 internal class XcfaEvent(
   const: IndexedConstDecl<*>,
@@ -97,7 +118,6 @@ internal class XcfaEvent(
   }
 
   // A (memory) event is only considered enabled if the array and offset expressions are also known
-  // values
   override fun enabled(valuation: Valuation): Boolean? {
     when (val e = super.enabled(valuation)) {
       null,
@@ -105,13 +125,13 @@ internal class XcfaEvent(
       true -> {
         if (array != null) {
           arrayLit = tryOrNull { array.eval(valuation) }
-          if (arrayLit == null) enabled = null
+          if (arrayLit == null) return null
         }
         if (offset != null) {
           offsetLit = tryOrNull { offset.eval(valuation) }
-          if (offsetLit == null) enabled = null
+          if (offsetLit == null) return null
         }
-        return enabled
+        return true
       }
     }
   }
@@ -152,6 +172,26 @@ internal class XcfaEvent(
     return listOfNotNull(arrayEq, offsetEq).toAnd()
   }
 }
+
+@Suppress("UNCHECKED_CAST")
+internal val Reason.from: E
+  get() =
+    when (this) {
+      is RelationReason<*> -> (this as RelationReason<E>).relation.from
+      is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
+      is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
+      else -> error("Unsupported reason type.")
+    }
+
+@Suppress("UNCHECKED_CAST")
+internal val Reason.to: E
+  get() =
+    when (this) {
+      is RelationReason<*> -> (this as RelationReason<E>).relation.to
+      is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
+      is FromReadReason<*> -> (this as FromReadReason<E>).w
+      else -> error("Unsupported reason type.")
+    }
 
 internal data class Violation(
   val errorLoc: XcfaLocation,

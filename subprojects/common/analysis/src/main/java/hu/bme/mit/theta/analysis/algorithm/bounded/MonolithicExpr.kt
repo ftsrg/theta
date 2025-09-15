@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import java.util.*
 
 data class MonolithicExpr
 @JvmOverloads
@@ -46,3 +51,21 @@ constructor(
   },
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
 )
+
+fun MonolithicExpr.action() =
+  object : ExprAction {
+    override fun toExpr(): Expr<BoolType> = transExpr
+
+    override fun nextIndexing(): VarIndexing = transOffsetIndex
+  }
+
+fun MonolithicExpr.split(): List<Expr<BoolType>> {
+  var simplifiedTransExpr = ExprUtils.simplify(transExpr)
+  if (simplifiedTransExpr is OrExpr) {
+    return simplifiedTransExpr.ops
+  } else return listOf(simplifiedTransExpr)
+}
+
+/** Only keep decls in the valuation that are contained within the parameter */
+fun Valuation.filterVars(vars: Collection<Decl<*>>) =
+  ImmutableValuation.from(toMap().filter { it.key in vars })

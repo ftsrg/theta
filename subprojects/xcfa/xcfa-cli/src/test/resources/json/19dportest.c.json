@@ -49,6 +49,7 @@
               "colNumberStop": 19,
               "offsetStart": 29546,
               "offsetEnd": 29565,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -67,6 +68,7 @@
               "colNumberStop": 19,
               "offsetStart": 29546,
               "offsetEnd": 29565,
+              "astNodes": [],
               "sourceText": "void reach_error(){}"
             }
           }
@@ -93,6 +95,7 @@
               "colNumberStop": 19,
               "offsetStart": 29546,
               "offsetEnd": 29565,
+              "astNodes": [],
               "sourceText": "void reach_error(){}void reach_error(){}void reach_error(){}"
             }
           }
@@ -158,6 +161,7 @@
               "colNumberStop": 0,
               "offsetStart": 29580,
               "offsetEnd": 29989,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -176,6 +180,7 @@
               "colNumberStop": 0,
               "offsetStart": 29580,
               "offsetEnd": 29989,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -194,6 +199,7 @@
               "colNumberStop": 10,
               "offsetStart": 29981,
               "offsetEnd": 29987,
+              "astNodes": [],
               "sourceText": "x +\u003d i;"
             }
           }
@@ -221,6 +227,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 29606,
                     "offsetEnd": 29615,
+                    "astNodes": [],
                     "sourceText": "int i \u003d 0;"
                   }
                 },
@@ -237,6 +244,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29621,
                     "offsetEnd": 29624,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -253,6 +261,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29630,
                     "offsetEnd": 29633,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -269,6 +278,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29639,
                     "offsetEnd": 29642,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -285,6 +295,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29648,
                     "offsetEnd": 29651,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -301,6 +312,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29657,
                     "offsetEnd": 29660,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -317,6 +329,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29666,
                     "offsetEnd": 29669,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -333,6 +346,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29675,
                     "offsetEnd": 29678,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -349,6 +363,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29684,
                     "offsetEnd": 29687,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -365,6 +380,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29693,
                     "offsetEnd": 29696,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -381,6 +397,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29702,
                     "offsetEnd": 29705,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -397,6 +414,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29711,
                     "offsetEnd": 29714,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -413,6 +431,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29720,
                     "offsetEnd": 29723,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -429,6 +448,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29729,
                     "offsetEnd": 29732,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -445,6 +465,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29738,
                     "offsetEnd": 29741,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -461,6 +482,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29747,
                     "offsetEnd": 29750,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -477,6 +499,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29756,
                     "offsetEnd": 29759,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -493,6 +516,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29765,
                     "offsetEnd": 29768,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -509,6 +533,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29774,
                     "offsetEnd": 29777,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -525,6 +550,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29783,
                     "offsetEnd": 29786,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -541,6 +567,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29792,
                     "offsetEnd": 29795,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -557,6 +584,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29801,
                     "offsetEnd": 29804,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -573,6 +601,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29810,
                     "offsetEnd": 29813,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -589,6 +618,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29819,
                     "offsetEnd": 29822,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -605,6 +635,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29828,
                     "offsetEnd": 29831,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -621,6 +652,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29837,
                     "offsetEnd": 29840,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -637,6 +669,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29846,
                     "offsetEnd": 29849,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -653,6 +686,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29855,
                     "offsetEnd": 29858,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -669,6 +703,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29864,
                     "offsetEnd": 29867,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -685,6 +720,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29873,
                     "offsetEnd": 29876,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -701,6 +737,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29882,
                     "offsetEnd": 29885,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -717,6 +754,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29891,
                     "offsetEnd": 29894,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -733,6 +771,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29900,
                     "offsetEnd": 29903,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -749,6 +788,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29909,
                     "offsetEnd": 29912,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -765,6 +805,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29918,
                     "offsetEnd": 29921,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -781,6 +822,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29927,
                     "offsetEnd": 29930,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -797,6 +839,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29936,
                     "offsetEnd": 29939,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -813,6 +856,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29945,
                     "offsetEnd": 29948,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -829,6 +873,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29954,
                     "offsetEnd": 29957,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -845,6 +890,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29963,
                     "offsetEnd": 29966,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -861,6 +907,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 29972,
                     "offsetEnd": 29975,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -877,6 +924,7 @@
               "colNumberStop": 13,
               "offsetStart": 29580,
               "offsetEnd": 29989,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;int i \u003d 0;int i \u003d 0;int i \u003d 0;int i \u003d 0;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;x +\u003d i;x +\u003d i;x +\u003d i;"
             }
           }
@@ -896,6 +944,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -912,6 +961,7 @@
               "colNumberStop": 0,
               "offsetStart": 0,
               "offsetEnd": 29989,
+              "astNodes": [],
               "sourceText": "void *thr1(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -977,6 +1027,7 @@
               "colNumberStop": 0,
               "offsetStart": 29992,
               "offsetEnd": 30401,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -995,6 +1046,7 @@
               "colNumberStop": 0,
               "offsetStart": 29992,
               "offsetEnd": 30401,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -1013,6 +1065,7 @@
               "colNumberStop": 10,
               "offsetStart": 30393,
               "offsetEnd": 30399,
+              "astNodes": [],
               "sourceText": "x +\u003d i;"
             }
           }
@@ -1040,6 +1093,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 30018,
                     "offsetEnd": 30027,
+                    "astNodes": [],
                     "sourceText": "int i \u003d 0;"
                   }
                 },
@@ -1056,6 +1110,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30033,
                     "offsetEnd": 30036,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1072,6 +1127,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30042,
                     "offsetEnd": 30045,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1088,6 +1144,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30051,
                     "offsetEnd": 30054,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1104,6 +1161,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30060,
                     "offsetEnd": 30063,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1120,6 +1178,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30069,
                     "offsetEnd": 30072,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1136,6 +1195,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30078,
                     "offsetEnd": 30081,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1152,6 +1212,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30087,
                     "offsetEnd": 30090,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1168,6 +1229,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30096,
                     "offsetEnd": 30099,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1184,6 +1246,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30105,
                     "offsetEnd": 30108,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1200,6 +1263,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30114,
                     "offsetEnd": 30117,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1216,6 +1280,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30123,
                     "offsetEnd": 30126,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1232,6 +1297,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30132,
                     "offsetEnd": 30135,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1248,6 +1314,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30141,
                     "offsetEnd": 30144,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1264,6 +1331,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30150,
                     "offsetEnd": 30153,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1280,6 +1348,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30159,
                     "offsetEnd": 30162,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1296,6 +1365,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30168,
                     "offsetEnd": 30171,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1312,6 +1382,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30177,
                     "offsetEnd": 30180,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1328,6 +1399,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30186,
                     "offsetEnd": 30189,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1344,6 +1416,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30195,
                     "offsetEnd": 30198,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1360,6 +1433,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30204,
                     "offsetEnd": 30207,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1376,6 +1450,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30213,
                     "offsetEnd": 30216,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1392,6 +1467,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30222,
                     "offsetEnd": 30225,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1408,6 +1484,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30231,
                     "offsetEnd": 30234,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1424,6 +1501,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30240,
                     "offsetEnd": 30243,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1440,6 +1518,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30249,
                     "offsetEnd": 30252,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1456,6 +1535,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30258,
                     "offsetEnd": 30261,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1472,6 +1552,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30267,
                     "offsetEnd": 30270,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1488,6 +1569,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30276,
                     "offsetEnd": 30279,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1504,6 +1586,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30285,
                     "offsetEnd": 30288,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1520,6 +1603,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30294,
                     "offsetEnd": 30297,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1536,6 +1620,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30303,
                     "offsetEnd": 30306,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1552,6 +1637,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30312,
                     "offsetEnd": 30315,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1568,6 +1654,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30321,
                     "offsetEnd": 30324,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1584,6 +1671,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30330,
                     "offsetEnd": 30333,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1600,6 +1688,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30339,
                     "offsetEnd": 30342,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1616,6 +1705,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30348,
                     "offsetEnd": 30351,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1632,6 +1722,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30357,
                     "offsetEnd": 30360,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1648,6 +1739,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30366,
                     "offsetEnd": 30369,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1664,6 +1756,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30375,
                     "offsetEnd": 30378,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1680,6 +1773,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 30384,
                     "offsetEnd": 30387,
+                    "astNodes": [],
                     "sourceText": "i++;"
                   }
                 },
@@ -1696,6 +1790,7 @@
               "colNumberStop": 13,
               "offsetStart": 29992,
               "offsetEnd": 30401,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;int i \u003d 0;int i \u003d 0;int i \u003d 0;int i \u003d 0;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;i++;x +\u003d i;x +\u003d i;x +\u003d i;"
             }
           }
@@ -1715,6 +1810,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1731,6 +1827,7 @@
               "colNumberStop": 0,
               "offsetStart": 0,
               "offsetEnd": 30401,
+              "astNodes": [],
               "sourceText": "void *thr2(void *_) {\n    int i \u003d 0;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    i++;\n    x +\u003d i;\n}"
             }
           }
@@ -1803,6 +1900,7 @@
               "colNumberStop": 0,
               "offsetStart": 30404,
               "offsetEnd": 30644,
+              "astNodes": [],
               "sourceText": "int main() {\n//  for(int i \u003d 0; i \u003c 16; ++i) {\n    pthread_t t1, t2;\n    pthread_create(\u0026t1, 0, thr1, 0);\n    pthread_create(\u0026t2, 0, thr2, 0);\n  if(x \u003e 41) reach_error();\n    pthread_join(t1, 0);\n    pthread_join(t2, 0);\n//  }\n\n  return 0;\n}"
             }
           }
@@ -1821,6 +1919,7 @@
               "colNumberStop": 0,
               "offsetStart": 30404,
               "offsetEnd": 30644,
+              "astNodes": [],
               "sourceText": "int main() {\n//  for(int i \u003d 0; i \u003c 16; ++i) {\n    pthread_t t1, t2;\n    pthread_create(\u0026t1, 0, thr1, 0);\n    pthread_create(\u0026t2, 0, thr2, 0);\n  if(x \u003e 41) reach_error();\n    pthread_join(t1, 0);\n    pthread_join(t2, 0);\n//  }\n\n  return 0;\n}"
             }
           }
@@ -1833,6 +1932,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -1845,6 +1945,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -1857,6 +1958,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -1869,6 +1971,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -1881,6 +1984,7 @@
           "metadata": {
             "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
             "content": {
+              "astNodes": [],
               "sourceText": ""
             }
           }
@@ -1920,6 +2024,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1930,6 +2035,7 @@
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
+                    "astNodes": [],
                     "sourceText": ""
                   }
                 },
@@ -1946,6 +2052,7 @@
               "colNumberStop": 35,
               "offsetStart": 30404,
               "offsetEnd": 30644,
+              "astNodes": [],
               "sourceText": "int main() {\n//  for(int i \u003d 0; i \u003c 16; ++i) {\n    pthread_t t1, t2;\n    pthread_create(\u0026t1, 0, thr1, 0);\n    pthread_create(\u0026t2, 0, thr2, 0);\n  if(x \u003e 41) reach_error();\n    pthread_join(t1, 0);\n    pthread_join(t2, 0);\n//  }\n\n  return 0;\n}pthread_t t1, t2;\n    pthread_create(\u0026t1, 0, thr1, 0);\n    pthread_create(\u0026t2, 0, thr2, 0);\n  if(x \u003e 41) reach_error();\n    pthread_join(t1, 0);\n    pthread_join(t2, 0);\n//  }\n\n  return 0;pthread_t t1, t2;pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t1, 0, thr1, 0);"
             }
           }
@@ -1971,6 +2078,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 30477,
                     "offsetEnd": 30508,
+                    "astNodes": [],
                     "sourceText": "pthread_create(\u0026t1, 0, thr1, 0);"
                   }
                 },
@@ -1987,6 +2095,7 @@
               "colNumberStop": 35,
               "offsetStart": 30477,
               "offsetEnd": 30545,
+              "astNodes": [],
               "sourceText": "pthread_create(\u0026t1, 0, thr1, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);pthread_create(\u0026t2, 0, thr2, 0);"
             }
           }
@@ -2012,6 +2121,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 30514,
                     "offsetEnd": 30545,
+                    "astNodes": [],
                     "sourceText": "pthread_create(\u0026t2, 0, thr2, 0);"
                   }
                 },
@@ -2028,6 +2138,7 @@
               "colNumberStop": 35,
               "offsetStart": 30514,
               "offsetEnd": 30573,
+              "astNodes": [],
               "sourceText": "pthread_create(\u0026t2, 0, thr2, 0);if(x \u003e 41) reach_error();if(x \u003e 41) reach_error();if(x \u003e 41) reach_error();"
             }
           }
@@ -2053,6 +2164,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 30549,
                     "offsetEnd": 30573,
+                    "astNodes": [],
                     "sourceText": "if(x \u003e 41) reach_error();"
                   }
                 },
@@ -2069,6 +2181,7 @@
               "colNumberStop": 26,
               "offsetStart": 30549,
               "offsetEnd": 30573,
+              "astNodes": [],
               "sourceText": "if(x \u003e 41) reach_error();reach_error();reach_error();reach_error();reach_error();"
             }
           }
@@ -2094,6 +2207,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 30549,
                     "offsetEnd": 30573,
+                    "astNodes": [],
                     "sourceText": "if(x \u003e 41) reach_error();"
                   }
                 },
@@ -2110,6 +2224,7 @@
               "colNumberStop": 26,
               "offsetStart": 30549,
               "offsetEnd": 30598,
+              "astNodes": [],
               "sourceText": "if(x \u003e 41) reach_error();if(x \u003e 41) reach_error();pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);pthread_join(t1, 0);"
             }
           }
@@ -2135,6 +2250,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 30579,
                     "offsetEnd": 30598,
+                    "astNodes": [],
                     "sourceText": "pthread_join(t1, 0);"
                   }
                 },
@@ -2151,6 +2267,7 @@
               "colNumberStop": 23,
               "offsetStart": 30579,
               "offsetEnd": 30623,
+              "astNodes": [],
               "sourceText": "pthread_join(t1, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);pthread_join(t2, 0);"
             }
           }
@@ -2176,6 +2293,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 30604,
                     "offsetEnd": 30623,
+                    "astNodes": [],
                     "sourceText": "pthread_join(t2, 0);"
                   }
                 },
@@ -2192,6 +2310,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 30634,
                     "offsetEnd": 30642,
+                    "astNodes": [],
                     "sourceText": "return 0;"
                   }
                 },
@@ -2208,6 +2327,7 @@
               "colNumberStop": 23,
               "offsetStart": 30604,
               "offsetEnd": 30642,
+              "astNodes": [],
               "sourceText": "pthread_join(t2, 0);return 0;return 0;return 0;return 0;"
             }
           }

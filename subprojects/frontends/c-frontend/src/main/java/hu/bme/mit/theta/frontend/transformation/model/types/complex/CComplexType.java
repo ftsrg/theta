@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex;
+
+import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.*;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -54,12 +55,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.*;
 
 public abstract class CComplexType {
     private final CSimpleType origin;
@@ -125,7 +123,8 @@ public abstract class CComplexType {
         return parseContext.getArchitecture().getBitWidth(getTypeName());
     }
 
-    public static CComplexType getSmallestCommonType(List<CComplexType> types, ParseContext parseContext) {
+    public static CComplexType getSmallestCommonType(
+            List<CComplexType> types, ParseContext parseContext) {
         CComplexType ret = getSignedInt(parseContext);
         for (int i = 0; i < types.size(); i++) {
             ret = ret.getSmallestCommonType(types.get(i));
@@ -170,7 +169,7 @@ public abstract class CComplexType {
             return ((CSimpleType) cTypeOptional.get()).getActualType();
         } else {
             return getType(expr.getType(), parseContext);
-//            throw new RuntimeException("Type not known for expression: " + expr);
+            //            throw new RuntimeException("Type not known for expression: " + expr);
         }
     }
 
@@ -182,27 +181,32 @@ public abstract class CComplexType {
         } else if (type instanceof BoolType) {
             return new CBool(null, parseContext);
         } else if (type instanceof FpType) {
-            final var doubleType = FpType.of(
-                    parseContext.getArchitecture().getBitWidth("double_e"),
-                    parseContext.getArchitecture().getBitWidth("double_s"));
+            final var doubleType =
+                    FpType.of(
+                            parseContext.getArchitecture().getBitWidth("double_e"),
+                            parseContext.getArchitecture().getBitWidth("double_s"));
             if (doubleType.equals(type)) {
                 return new CDouble(null, parseContext);
             }
-            final var floatType = FpType.of(
-                    parseContext.getArchitecture().getBitWidth("float_e"),
-                    parseContext.getArchitecture().getBitWidth("float_s"));
+            final var floatType =
+                    FpType.of(
+                            parseContext.getArchitecture().getBitWidth("float_e"),
+                            parseContext.getArchitecture().getBitWidth("float_s"));
             if (floatType.equals(type)) {
                 return new CFloat(null, parseContext);
             }
-            final var longDoubleType = FpType.of(
-                    parseContext.getArchitecture().getBitWidth("longdouble_e"),
-                    parseContext.getArchitecture().getBitWidth("longdouble_s"));
+            final var longDoubleType =
+                    FpType.of(
+                            parseContext.getArchitecture().getBitWidth("longdouble_e"),
+                            parseContext.getArchitecture().getBitWidth("longdouble_s"));
             if (longDoubleType.equals(type)) {
                 return new CFloat(null, parseContext);
             }
-            throw new UnsupportedFrontendElementException("No suitable size found for type: " + type);
+            throw new UnsupportedFrontendElementException(
+                    "No suitable size found for type: " + type);
         } else if (type instanceof BvType) {
-            for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
+            for (Entry<String, Integer> entry :
+                    parseContext.getArchitecture().standardTypeSizes.entrySet()) {
                 String s = entry.getKey();
                 Integer integer = entry.getValue();
                 if (integer == ((BvType) type).getSize()) {
@@ -210,24 +214,34 @@ public abstract class CComplexType {
                         case "bool":
                             return new CBool(null, parseContext);
                         case "short":
-                            return ((BvType) type).getSigned() ? new CSignedShort(null, parseContext) : new CUnsignedShort(null, parseContext);
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedShort(null, parseContext)
+                                    : new CUnsignedShort(null, parseContext);
                         case "int":
-                            return ((BvType) type).getSigned() ? new CSignedInt(null, parseContext) : new CUnsignedInt(null, parseContext);
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedInt(null, parseContext)
+                                    : new CUnsignedInt(null, parseContext);
                         case "long":
-                            return ((BvType) type).getSigned() ? new CSignedLong(null, parseContext) : new CUnsignedLong(null, parseContext);
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedLong(null, parseContext)
+                                    : new CUnsignedLong(null, parseContext);
                         case "longlong":
-                            return ((BvType) type).getSigned() ? new CSignedLongLong(null, parseContext) : new CUnsignedLongLong(null, parseContext);
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedLongLong(null, parseContext)
+                                    : new CUnsignedLongLong(null, parseContext);
                         case "__int128":
-                            return ((BvType) type).getSigned() ? new CSigned128(null, parseContext) : new CUnsigned128(null, parseContext);
+                            return ((BvType) type).getSigned()
+                                    ? new CSigned128(null, parseContext)
+                                    : new CUnsigned128(null, parseContext);
                     }
                 }
             }
-            throw new UnsupportedFrontendElementException("No suitable width found for type: " + type);
+            throw new UnsupportedFrontendElementException(
+                    "No suitable width found for type: " + type);
         } else {
             throw new UnsupportedFrontendElementException("Not yet implemented for type: " + type);
         }
     }
-
 
     public void setThreadLocal() {
         threadLocal = true;
@@ -299,7 +313,12 @@ public abstract class CComplexType {
 
     public static class CComplexTypeVisitor<T, R> {
         public R visit(CComplexType type, T param) {
-            throw new UnsupportedFrontendElementException("Not (yet) implemented (" + type.getClass().getSimpleName() + " in " + this.getClass().getName() + ")");
+            throw new UnsupportedFrontendElementException(
+                    "Not (yet) implemented ("
+                            + type.getClass().getSimpleName()
+                            + " in "
+                            + this.getClass().getName()
+                            + ")");
         }
 
         public R visit(CVoid type, T param) {
@@ -426,5 +445,4 @@ public abstract class CComplexType {
             return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
     }
-
 }

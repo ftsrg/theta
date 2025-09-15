@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
 import static java.lang.Math.min;
 
+import hu.bme.mit.theta.common.IntMatrix;
 import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
-
-import hu.bme.mit.theta.common.IntMatrix;
 
 final class BasicDbm {
 
@@ -269,8 +268,8 @@ final class BasicDbm {
         for (int k = 0; k <= nClocks; k++) {
             for (int i = 0; i <= nClocks; i++) {
                 for (int j = 0; j <= nClocks; j++) {
-                    final int newBound = min(matrix.get(i, j),
-                            add(matrix.get(i, k), matrix.get(k, j)));
+                    final int newBound =
+                            min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j)));
                     if (i == j && newBound < Leq(0)) {
                         matrix.set(0, 0, Leq(-1));
                         return;
@@ -369,5 +368,4 @@ final class BasicDbm {
     private boolean isNonZeroClock(final int x) {
         return x >= 1 && x <= nClocks;
     }
-
 }

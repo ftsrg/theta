@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -118,9 +118,9 @@ internal class XcfaOcTraceExtractor(
     val valuation = model.toMap()
     val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
-    val relations = ocChecker.getRelations()!!
+    val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
-      Array(relations.size) { i -> Array(relations.size) { j -> relations[j][i] } }
+      Array(relations.size) { i -> Array(relations.size) { j -> relations[j, i] } }
     val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
 
     val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()

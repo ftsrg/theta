@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ class ConfigNode(
 
   override fun execute(): Pair<Any, Any> {
     println("Current configuration: $config")
-    return Pair(config, check(config))
+    return Pair(Pair(name, config), check(config))
   }
 
   override fun visualize(): String =

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.cfa.analysis.prec;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Streams;
@@ -25,7 +27,6 @@ import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -34,8 +35,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents an immutable local precision that can assign a precision to each location. A refiner
@@ -67,8 +66,8 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
         return new LocalCfaPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
     }
 
-    public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping,
-                                                          final P defaultPrec) {
+    public static <P extends Prec> LocalCfaPrec<P> create(
+            final Map<Loc, P> mapping, final P defaultPrec) {
         return new LocalCfaPrec<>(mapping, Optional.of(defaultPrec));
     }
 
@@ -114,7 +113,11 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
             builder.add(Utils.lispStringBuilder("default").add(defaultPrec.get()).toString());
         }
         mapping.entrySet()
-                .forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
+                .forEach(
+                        e ->
+                                builder.add(
+                                        Utils.lispStringBuilder(e.getKey() + "")
+                                                .add(e.getValue())));
         return builder.toString();
     }
 
@@ -137,8 +140,12 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 
     @Override
     public Collection<VarDecl<?>> getUsedVars() {
-        return mapping.values().stream().map(Prec::getUsedVars).reduce(
-                (varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream())
-                        .collect(Collectors.toSet())).orElse(Set.of());
+        return mapping.values().stream()
+                .map(Prec::getUsedVars)
+                .reduce(
+                        (varDecls, varDecls2) ->
+                                Streams.concat(varDecls.stream(), varDecls2.stream())
+                                        .collect(Collectors.toSet()))
+                .orElse(Set.of());
     }
 }

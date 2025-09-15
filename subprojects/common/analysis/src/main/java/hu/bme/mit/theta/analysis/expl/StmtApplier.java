@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.analysis.expl;
+
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -39,24 +41,22 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-
 public final class StmtApplier {
 
     public enum ApplyResult {
-        FAILURE, SUCCESS, BOTTOM
+        FAILURE,
+        SUCCESS,
+        BOTTOM
     }
 
-    private StmtApplier() {
-    }
+    private StmtApplier() {}
 
-    public static ApplyResult apply(final Stmt stmt, final MutableValuation val,
-                                    final boolean approximate) {
+    public static ApplyResult apply(
+            final Stmt stmt, final MutableValuation val, final boolean approximate) {
         if (stmt instanceof AssignStmt) {
             final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
             return applyAssign(assignStmt, val, approximate);
@@ -90,26 +90,29 @@ public final class StmtApplier {
         }
     }
 
-    private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?, ?> stmt, MutableValuation val, boolean approximate) {
+    private static ApplyResult applyMemAssign(
+            MemoryAssignStmt<?, ?, ?> stmt, MutableValuation val, boolean approximate) {
         final var expr = ExprUtils.simplify(stmt.getDeref(), val);
         final var deref = stmt.getDeref();
         final var newOffset = ExprUtils.simplify(deref.getOffset(), val);
-//        if (expr instanceof LitExpr<?> litExpr && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
-//            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
-//            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
-//            val.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
-//            return ApplyResult.SUCCESS;
-//        } else if (approximate && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
-//            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
-//            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
-//            val.remove(varDecl.getConstDecl(intLitOffset.getValue().intValue()));
-//            return ApplyResult.SUCCESS;
-//        }
+        //        if (expr instanceof LitExpr<?> litExpr && deref.getArray() instanceof RefExpr<?>
+        // refExpr && newOffset instanceof LitExpr<?> litOffset) {
+        //            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
+        //            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
+        //            val.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
+        //            return ApplyResult.SUCCESS;
+        //        } else if (approximate && deref.getArray() instanceof RefExpr<?> refExpr &&
+        // newOffset instanceof LitExpr<?> litOffset) {
+        //            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
+        //            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
+        //            val.remove(varDecl.getConstDecl(intLitOffset.getValue().intValue()));
+        //            return ApplyResult.SUCCESS;
+        //        }
         return ApplyResult.FAILURE;
     }
 
-    private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
-                                           final boolean approximate) {
+    private static ApplyResult applyAssign(
+            final AssignStmt<?> stmt, final MutableValuation val, final boolean approximate) {
         final VarDecl<?> varDecl = stmt.getVarDecl();
         final Expr<?> expr = ExprUtils.simplify(stmt.getExpr(), val);
         if (expr instanceof LitExpr<?>) {
@@ -124,8 +127,8 @@ public final class StmtApplier {
         }
     }
 
-    private static ApplyResult applyAssume(final AssumeStmt stmt, final MutableValuation val,
-                                           final boolean approximate) {
+    private static ApplyResult applyAssume(
+            final AssumeStmt stmt, final MutableValuation val, final boolean approximate) {
         final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), val);
         if (cond instanceof BoolLitExpr) {
             final BoolLitExpr condLit = (BoolLitExpr) cond;
@@ -146,8 +149,8 @@ public final class StmtApplier {
     }
 
     // Helper function to evaluate assumptions of form [x = 1] or [not x != 1]
-    private static boolean checkAssumeVarEqualsLit(final Expr<BoolType> cond,
-                                                   final MutableValuation val) {
+    private static boolean checkAssumeVarEqualsLit(
+            final Expr<BoolType> cond, final MutableValuation val) {
         RefExpr<?> ref = null;
         LitExpr<?> lit = null;
 
@@ -204,8 +207,8 @@ public final class StmtApplier {
         return ApplyResult.SUCCESS;
     }
 
-    private static ApplyResult applySequence(final SequenceStmt stmt, final MutableValuation val,
-                                             final boolean approximate) {
+    private static ApplyResult applySequence(
+            final SequenceStmt stmt, final MutableValuation val, final boolean approximate) {
         MutableValuation copy = MutableValuation.copyOf(val);
         for (Stmt subStmt : stmt.getStmts()) {
             ApplyResult res = apply(subStmt, copy, approximate);
@@ -218,14 +221,14 @@ public final class StmtApplier {
         return ApplyResult.SUCCESS;
     }
 
-    private static ApplyResult applyLoop(final LoopStmt stmt, final MutableValuation val,
-                                         final boolean approximate) {
+    private static ApplyResult applyLoop(
+            final LoopStmt stmt, final MutableValuation val, final boolean approximate) {
         throw new UnsupportedOperationException(
                 String.format("Loop statement %s was not unrolled", stmt));
     }
 
-    private static ApplyResult applyNonDet(final NonDetStmt stmt, final MutableValuation val,
-                                           final boolean approximate) {
+    private static ApplyResult applyNonDet(
+            final NonDetStmt stmt, final MutableValuation val, final boolean approximate) {
         List<MutableValuation> valuations = new ArrayList<MutableValuation>();
         int successIndex = -1;
         for (int i = 0; i < stmt.getStmts().size(); i++) {
@@ -265,8 +268,8 @@ public final class StmtApplier {
         }
     }
 
-    private static ApplyResult applyIf(final IfStmt stmt, final MutableValuation val,
-                                       final boolean approximate) {
+    private static ApplyResult applyIf(
+            final IfStmt stmt, final MutableValuation val, final boolean approximate) {
         final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), val);
 
         if (cond instanceof BoolLitExpr) {
@@ -292,22 +295,23 @@ public final class StmtApplier {
             }
 
             if (thenResult == ApplyResult.SUCCESS && elzeResult == ApplyResult.BOTTOM) {
-                SequenceStmt seq = SequenceStmt.of(
-                        ImmutableList.of(AssumeStmt.of(cond), stmt.getThen()));
+                SequenceStmt seq =
+                        SequenceStmt.of(ImmutableList.of(AssumeStmt.of(cond), stmt.getThen()));
                 return apply(seq, val, approximate);
             }
 
             if (thenResult == ApplyResult.BOTTOM && elzeResult == ApplyResult.SUCCESS) {
-                SequenceStmt seq = SequenceStmt.of(
-                        ImmutableList.of(AssumeStmt.of(Not(cond)), stmt.getElze()));
+                SequenceStmt seq =
+                        SequenceStmt.of(ImmutableList.of(AssumeStmt.of(Not(cond)), stmt.getElze()));
                 return apply(seq, val, approximate);
             }
 
             if (approximate) {
                 apply(stmt.getThen(), val, approximate);
-                var toRemove = val.getDecls().stream()
-                        .filter(it -> !val.eval(it).equals(elzeVal.eval(it)))
-                        .collect(Collectors.toSet());
+                var toRemove =
+                        val.getDecls().stream()
+                                .filter(it -> !val.eval(it).equals(elzeVal.eval(it)))
+                                .collect(Collectors.toSet());
                 for (Decl<?> decl : toRemove) {
                     val.remove(decl);
                 }
@@ -318,9 +322,8 @@ public final class StmtApplier {
         }
     }
 
-    private static ApplyResult applyOrt(final OrtStmt stmt, final MutableValuation val,
-                                        final boolean approximate) {
+    private static ApplyResult applyOrt(
+            final OrtStmt stmt, final MutableValuation val, final boolean approximate) {
         throw new UnsupportedOperationException();
     }
-
 }

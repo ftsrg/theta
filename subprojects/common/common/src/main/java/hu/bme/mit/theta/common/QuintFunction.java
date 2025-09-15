@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.common;
 
-import java.util.function.Function;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.function.Function;
 
 @FunctionalInterface
 public interface QuintFunction<T, U, V, W, X, R> {
@@ -27,7 +27,7 @@ public interface QuintFunction<T, U, V, W, X, R> {
     default <RR> QuintFunction<T, U, V, W, X, RR> andThen(
             final Function<? super R, ? extends RR> after) {
         checkNotNull(after);
-        return (final T t, final U u, final V v, final W w, final X x) -> after.apply(
-                apply(t, u, v, w, x));
+        return (final T t, final U u, final V v, final W w, final X x) ->
+                after.apply(apply(t, u, v, w, x));
     }
 }

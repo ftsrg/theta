@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 public abstract class Update {
 
-    private Update() {
-    }
+    private Update() {}
 
     static DataUpdate dataUpdate(final Stmt stmt) {
         return new DataUpdate(stmt);
@@ -81,7 +80,6 @@ public abstract class Update {
         public String toString() {
             return stmt.toString();
         }
-
     }
 
     public static final class ClockUpdate extends Update {
@@ -125,7 +123,5 @@ public abstract class Update {
         public String toString() {
             return clockOp.toString();
         }
-
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ fun <S : ExprState, A : ExprAction> buildIMC(
   biValToAction: (Valuation, Valuation) -> A,
   logger: Logger,
   shouldGiveUp: (Int) -> Boolean = { false },
-  bmcEnabled: () -> Boolean = { true },
+  bmcEnabled: () -> Boolean = { false },
   lfPathOnly: () -> Boolean = { true },
   imcEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {

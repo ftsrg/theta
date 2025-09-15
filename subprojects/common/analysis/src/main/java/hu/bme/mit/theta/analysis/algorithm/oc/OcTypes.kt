@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,17 +48,24 @@ abstract class Event(
   val pid: Int,
   val clkId: Int,
 ) {
+  companion object {
+    var clkSize = 0
+      private set
+  }
+
+  init {
+    if (clkId >= clkSize) {
+      clkSize = clkId + 1
+    }
+  }
 
   val guardExpr: Expr<BoolType>
     get() = guard.toAnd()
 
   var assignment: Expr<BoolType>? = null
-  var enabled: Boolean? = null
 
-  open fun enabled(valuation: Valuation): Boolean? {
-    val e = tryOrNull { (guardExpr.eval(valuation) as? BoolLitExpr)?.value }
-    enabled = e
-    return e
+  open fun enabled(valuation: Valuation): Boolean? = tryOrNull {
+    (guardExpr.eval(valuation) as? BoolLitExpr)?.value
   }
 
   open fun sameMemory(other: Event): Boolean {
@@ -94,16 +101,12 @@ data class Relation<E : Event>(val type: RelationType, val from: E, val to: E) {
       BoolExprs.Bool(),
     )
   val declRef: RefExpr<BoolType> = RefExpr.of(decl)
-  var enabled: Boolean? = null
 
   override fun toString() =
     "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
 
-  fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
-    enabled =
-      if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
-    return enabled
-  }
+  fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? =
+    if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
 }
 
 /** Reason(s) of an enabled relation. */
@@ -178,3 +181,5 @@ class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, val wBeforeRf: 
 
 class FromReadReason<E : Event>(rf: Relation<E>, w: E, val wAfterRf: Reason) :
   DerivedReason<E>(rf, w, wAfterRf, "FR")
+
+object UndetailedReason : Reason()

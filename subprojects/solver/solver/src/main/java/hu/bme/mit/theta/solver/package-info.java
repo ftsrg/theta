@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 /**
  * This package contains the generic interfaces for SMT solvers. Use a concrete implementation of
  * {@link hu.bme.mit.theta.solver.SolverFactory} to create a {@link hu.bme.mit.theta.solver.Solver}
- * or an {@link hu.bme.mit.theta.solver.ItpSolver} for interpolation. See
- * {@link hu.bme.mit.theta.solver.Solver} for more information about using solvers.
+ * or an {@link hu.bme.mit.theta.solver.ItpSolver} for interpolation. See {@link
+ * hu.bme.mit.theta.solver.Solver} for more information about using solvers.
  */
-
 package hu.bme.mit.theta.solver;

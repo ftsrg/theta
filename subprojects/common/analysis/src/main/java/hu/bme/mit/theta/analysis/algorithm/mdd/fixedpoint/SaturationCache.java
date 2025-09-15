@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,19 @@ import hu.bme.mit.delta.java.mdd.TernaryOperationCache;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
 public final class SaturationCache implements Cache {
-    private final BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode> saturateCache = new BinaryOperationCache<>();
-    private final TernaryOperationCache<MddNode, AbstractNextStateDescriptor, AbstractNextStateDescriptor, MddNode> relProdCache = new TernaryOperationCache<>();
+    private final BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>
+            saturateCache = new BinaryOperationCache<>();
+    private final TernaryOperationCache<
+                    MddNode, AbstractNextStateDescriptor, AbstractNextStateDescriptor, MddNode>
+            relProdCache = new TernaryOperationCache<>();
 
     public BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode> getSaturateCache() {
         return saturateCache;
     }
 
-    public TernaryOperationCache<MddNode, AbstractNextStateDescriptor, AbstractNextStateDescriptor, MddNode> getRelProdCache() {
+    public TernaryOperationCache<
+                    MddNode, AbstractNextStateDescriptor, AbstractNextStateDescriptor, MddNode>
+            getRelProdCache() {
         return relProdCache;
     }
 

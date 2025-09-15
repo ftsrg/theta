@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collections;
-import java.util.List;
-
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.ArrayTypeContext;
@@ -34,13 +31,14 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.FuncTypeContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.IntTypeContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.RatTypeContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TypeListContext;
+import java.util.Collections;
+import java.util.List;
 
 final class StsTypeCreatorVisitor extends StsDslBaseVisitor<Type> {
 
     private static final StsTypeCreatorVisitor INSTANCE = new StsTypeCreatorVisitor();
 
-    StsTypeCreatorVisitor() {
-    }
+    StsTypeCreatorVisitor() {}
 
     public static StsTypeCreatorVisitor getInstance() {
         return INSTANCE;

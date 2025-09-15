@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-
 import java.util.function.Predicate;
 
-public class XstsStatePredicate<P extends Predicate, S extends ExprState> implements
-        Predicate<XstsState<S>> {
+public class XstsStatePredicate<P extends Predicate, S extends ExprState>
+        implements Predicate<XstsState<S>> {
 
     private final P pred;
 

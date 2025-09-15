@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.*
@@ -53,6 +55,10 @@ fun getPortfolioChecker(
 > = SafetyChecker { _ ->
   val sw = Stopwatch.createStarted()
   val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
+  val chcModels =
+    if (config.frontendConfig.inputType == InputType.CHC)
+      (config.frontendConfig.specConfig as CHCFrontendConfig).model
+    else false
 
   val portfolioStm =
     when (portfolioName) {
@@ -70,6 +76,10 @@ fun getPortfolioChecker(
       "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "CHC-COMP" ->
+        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",
@@ -93,12 +103,13 @@ fun getPortfolioChecker(
       }
     }
 
-  val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
+  val result = portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
   logger.write(
     Logger.Level.RESULT,
-    "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
+    "Config ${result.first.second} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
   )
+  logger.write(Logger.Level.RESULT, "success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<

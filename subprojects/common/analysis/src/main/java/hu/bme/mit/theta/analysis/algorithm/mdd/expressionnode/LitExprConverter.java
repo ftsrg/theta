@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import java.math.BigInteger;
 
@@ -54,7 +56,9 @@ public class LitExprConverter {
             var ret = BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue();
             return ret;
         }
-        if (litExpr instanceof ArrayLitExpr<?, ?> || litExpr instanceof FpLitExpr) {
+        if (litExpr instanceof ArrayLitExpr<?, ?>
+                || litExpr instanceof FpLitExpr
+                || litExpr instanceof RatLitExpr) {
             if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
@@ -82,7 +86,7 @@ public class LitExprConverter {
             return BvUtils.bigIntegerToNeutralBvLitExpr(
                     BigInteger.valueOf(integer), ((BvType) type).getSize());
         }
-        if (type instanceof ArrayType<?, ?> || type instanceof FpType) {
+        if (type instanceof ArrayType<?, ?> || type instanceof FpType || type instanceof RatType) {
             return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         if (type instanceof EnumType) {

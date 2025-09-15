@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend;
 
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
-
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -43,8 +41,7 @@ public class ParseContext {
             final Set<ArithmeticTrait> arithmeticTraits,
             final ArchitectureType architecture,
             final Boolean multiThreading,
-            final ArithmeticType arithmetic
-    ) {
+            final ArithmeticType arithmetic) {
         this.metadata = metadata;
         this.cStmtCounter = cStmtCounter;
         this.arithmeticTraits = arithmeticTraits;

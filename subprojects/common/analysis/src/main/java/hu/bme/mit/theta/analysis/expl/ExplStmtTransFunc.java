@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static java.util.Collections.singleton;
+
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
@@ -28,14 +33,8 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
-
 import java.util.Collection;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static java.util.Collections.singleton;
 
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
@@ -54,13 +53,13 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
     }
 
     @Override
-    public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action,
-                                               final ExplPrec prec) {
+    public Collection<ExplState> getSuccStates(
+            final ExplState state, final StmtAction action, final ExplPrec prec) {
         return getSuccStates(state, action.getStmts(), prec);
     }
 
-    Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
-                                        final ExplPrec prec) {
+    Collection<ExplState> getSuccStates(
+            final ExplState state, final List<Stmt> stmts, final ExplPrec prec) {
         final MutableValuation val = MutableValuation.copyOf(state);
         boolean triedSolver = false;
 
@@ -75,16 +74,16 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
             } else if (applyResult == ApplyResult.FAILURE) {
                 triedSolver = true;
                 final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
-                final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts,
-                        VarIndexingFactory.indexing(0));
+                final StmtUnfoldResult toExprResult =
+                        StmtUtils.toExpr(remainingStmts, VarIndexingFactory.indexing(0));
                 final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
                 final VarIndexing nextIdx = toExprResult.getIndexing();
                 // We query (max + 1) states from the solver to see if there
                 // would be more than max
                 final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
-                final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
-                        expr, 0,
-                        prec::createState, nextIdx, maxToQuery);
+                final Collection<ExplState> succStates =
+                        ExprStates.createStatesForExpr(
+                                solver, expr, 0, prec::createState, nextIdx, maxToQuery);
 
                 if (succStates.isEmpty()) {
                     return singleton(ExplState.bottom());
@@ -100,5 +99,4 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
         final ExplState abstracted = prec.createState(val);
         return singleton(abstracted);
     }
-
 }

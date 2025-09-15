@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -39,6 +30,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ExplStatePredicateTest {
@@ -57,19 +55,25 @@ public class ExplStatePredicateTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {True(), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
-
-                {Leq(x.getRef(), Int(5)),
-                        ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
-
-                {Leq(x.getRef(), Int(5)),
-                        ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()), false},
-
-                {Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {
+                        True(),
+                        ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()),
+                        true
+                    },
+                    {
+                        Leq(x.getRef(), Int(5)),
+                        ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()),
+                        true
+                    },
+                    {
+                        Leq(x.getRef(), Int(5)),
+                        ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()),
+                        false
+                    },
+                    {Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true},
+                });
     }
 
     @Test

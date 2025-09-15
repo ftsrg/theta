@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
+
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -51,11 +55,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
     private final ParseContext parseContext;
 
@@ -70,27 +69,34 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         }
         if (that instanceof CReal) {
             //noinspection unchecked
-            return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), true);
+            return FpExprs.ToBv(
+                    FpRoundingMode.RTZ, // truncate
+                    (Expr<FpType>) param,
+                    type.width(),
+                    true);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
                 if (that instanceof Unsigned) {
-                    return BvExprs.ZExt(cast(param, BvType.of(that.width())),
-                            BvType.of(type.width(), true));
+                    return BvExprs.ZExt(
+                            cast(param, BvType.of(that.width())), BvType.of(type.width(), true));
                 }
-                return BvExprs.SExt(cast(param, BvType.of(that.width())),
-                        BvType.of(type.width(), true));
+                return BvExprs.SExt(
+                        cast(param, BvType.of(that.width())), BvType.of(type.width(), true));
             } else if (that.width() > type.width()) {
-                return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
-                        Int(type.width()));
+                return BvExprs.Extract(
+                        cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
             } else { // width equals
                 if (that instanceof Unsigned) {
-                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), true));
+                    return BvSignChangeExpr.of(
+                            (Expr<BvType>) param,
+                            BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
                     return param;
                 }
             }
         } else {
-            throw new UnsupportedFrontendElementException("Compound types are not directly supported!");
+            throw new UnsupportedFrontendElementException(
+                    "Compound types are not directly supported!");
         }
     }
 
@@ -101,26 +107,34 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         }
         if (that instanceof CReal) {
             //noinspection unchecked
-            return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
+            return FpExprs.ToBv(
+                    FpRoundingMode.RTZ, // truncate()
+                    (Expr<FpType>) param,
+                    type.width(),
+                    false);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
                 if (that instanceof Signed) {
-                    return BvExprs.SExt(cast(param, BvType.of(that.width())),
-                            BvType.of(type.width(), false));
+                    return BvExprs.SExt(
+                            cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
                 }
-                return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
+                return BvExprs.ZExt(
+                        cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
             } else if (that.width() > type.width()) {
-                return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
-                        Int(type.width()));
+                return BvExprs.Extract(
+                        cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
             } else { // width equals
                 if (that instanceof Signed) {
-                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), false));
+                    return BvSignChangeExpr.of(
+                            (Expr<BvType>) param,
+                            BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
                     return param;
                 }
             }
         } else {
-            throw new UnsupportedFrontendElementException("Compound types are not directly supported!");
+            throw new UnsupportedFrontendElementException(
+                    "Compound types are not directly supported!");
         }
     }
 
@@ -129,18 +143,23 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (that instanceof CReal) {
             FpType fpType = (FpType) type.getSmtType();
             //noinspection unchecked
-            return ToFp(FpRoundingMode.RTZ, (Expr<FpType>) param, fpType.getExponent(),
+            return ToFp(
+                    FpRoundingMode.getDefaultRoundingMode(),
+                    (Expr<FpType>) param,
+                    fpType.getExponent(),
                     fpType.getSignificand());
         } else if (that instanceof CInteger) {
             boolean signed = that instanceof Signed;
             //noinspection unchecked
-            return FromBv(FpRoundingMode.RTZ, (Expr<BvType>) param, (FpType) type.getSmtType(),
+            return FromBv(
+                    FpRoundingMode.getDefaultRoundingMode(),
+                    (Expr<BvType>) param,
+                    (FpType) type.getSmtType(),
                     signed);
         } else {
             throw new UnsupportedOperationException("Bad type!");
         }
     }
-
 
     @Override
     public Expr<?> visit(CSignedShort type, Expr<?> param) {
@@ -190,7 +209,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     @Override
     public Expr<?> visit(CSignedInt type, Expr<?> param) {
         return handleSignedConversion(type, param);
-
     }
 
     @Override
@@ -234,7 +252,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return param.withOps(param.getOps());
         }
         return handleFp(type, param);
-
     }
 
     @Override
@@ -244,6 +261,5 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return param.withOps(param.getOps());
         }
         return handleFp(type, param);
-
     }
 }

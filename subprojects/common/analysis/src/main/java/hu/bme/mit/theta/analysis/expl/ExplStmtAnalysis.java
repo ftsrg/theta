@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
     private final InitFunc<ExplState, ExplPrec> initFunc;
     private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
-    private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr,
-                             final int maxSuccToEnumerate) {
+    private ExplStmtAnalysis(
+            final Solver solver, final Expr<BoolType> initExpr, final int maxSuccToEnumerate) {
         checkNotNull(solver);
         checkNotNull(initExpr);
         this.partialOrd = ExplOrd.getInstance();
@@ -41,8 +41,8 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
         this.transFunc = ExplStmtTransFunc.create(solver, maxSuccToEnumerate);
     }
 
-    public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
-                                          final int maxSuccToEnumerate) {
+    public static ExplStmtAnalysis create(
+            final Solver solver, final Expr<BoolType> initExpr, final int maxSuccToEnumerate) {
         return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
     }
 
@@ -64,5 +64,4 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
     public TransFunc<ExplState, StmtAction, ExplPrec> getTransFunc() {
         return transFunc;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.common.table;
 
 import java.io.PrintStream;
 
-/**
- * A table writer that prints tables to a PrintStream in HTML format.
- */
+/** A table writer that prints tables to a PrintStream in HTML format. */
 public class HtmlTableWriter implements TableWriter {
 
     private final PrintStream stream;

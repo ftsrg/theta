@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.bvtype;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvMulExpr extends MulExpr<BvType> {
 
@@ -53,11 +51,12 @@ public final class BvMulExpr extends MulExpr<BvType> {
 
     @Override
     public BvLitExpr eval(final Valuation val) {
-        return getOps().stream().skip(1).reduce(
-                (BvLitExpr) getOps().get(0).eval(val),
-                (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
-                BvLitExpr::mul
-        );
+        return getOps().stream()
+                .skip(1)
+                .reduce(
+                        (BvLitExpr) getOps().get(0).eval(val),
+                        (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
+                        BvLitExpr::mul);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.common;
 
 import com.google.common.collect.ImmutableList;
-
 import java.util.List;
 
 public final class TupleN<T> extends Tuple {
@@ -35,38 +34,44 @@ public final class TupleN<T> extends Tuple {
     }
 
     public static <T> TupleN<T> of(final Tuple2<T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public static <T> TupleN<T> of(final Tuple3<T, T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public static <T> TupleN<T> of(final Tuple4<T, T, T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public static <T> TupleN<T> of(final Tuple5<T, T, T, T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public static <T> TupleN<T> of(final Tuple6<T, T, T, T, T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public static <T> TupleN<T> of(final Tuple7<T, T, T, T, T, T, T> tuple) {
-        @SuppressWarnings("unchecked") TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
+        @SuppressWarnings("unchecked")
+        TupleN<T> ret = new TupleN<>((List<T>) tuple.toList());
         return ret;
     }
 
     public T get(int i) {
-        @SuppressWarnings("unchecked") final T result = (T) elem(i);
+        @SuppressWarnings("unchecked")
+        final T result = (T) elem(i);
         return result;
     }
-
 }

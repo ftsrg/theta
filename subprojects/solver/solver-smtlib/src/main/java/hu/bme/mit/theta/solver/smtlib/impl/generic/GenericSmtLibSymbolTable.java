@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,24 +15,31 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
-
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import java.util.regex.Pattern;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
-    private static final String problematicCharactersRegex = "[:#]";
-    private static final String problematicCharactersReplacement = "\\$";
+    static final Pattern problematicCharactersRegex = Pattern.compile("[:#]");
+
+    public static String encodeSymbol(String name) {
+        if (problematicCharactersRegex.matcher(name).find()) {
+            return "|%s|".formatted(name);
+        } else {
+            return name;
+        }
+    }
 
     private final BiMap<ConstDecl<?>, String> constToSymbol;
     private final BiMap<ConstDecl<?>, String> constToDeclaration;
@@ -60,8 +67,7 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     @Override
     public boolean definesSymbol(final String symbol) {
-        return constToSymbol.inverse().containsKey(
-                symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        return constToSymbol.inverse().containsKey(symbol);
     }
 
     @Override
@@ -98,10 +104,8 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         checkNotNull(symbol);
         checkNotNull(declaration);
         checkState(!constToSymbol.containsKey(constDecl), "Constant not found.");
-        constToSymbol.put(constDecl,
-                symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
-        constToDeclaration.put(constDecl,
-                declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        constToSymbol.put(constDecl, symbol);
+        constToDeclaration.put(constDecl, declaration);
     }
 
     @Override

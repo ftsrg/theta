@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.analysis;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.LispStringBuilder;
-import hu.bme.mit.theta.common.Utils;
-
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.LispStringBuilder;
+import hu.bme.mit.theta.common.Utils;
+import java.util.List;
 
 /**
  * Represents an immutable, alternating trace in the form of a (State, Action, State, ..., State,
@@ -48,14 +47,12 @@ public final class Trace<S, A> implements Cex {
      * Create a trace. The size of states must be at least one, and the size of the actions must be
      * one less than the number of states.
      */
-    public static <S, A> Trace<S, A> of(final List<? extends S> states,
-                                        final List<? extends A> actions) {
+    public static <S, A> Trace<S, A> of(
+            final List<? extends S> states, final List<? extends A> actions) {
         return new Trace<>(states, actions);
     }
 
-    /**
-     * Gets the length of the trace, which is the number of actions.
-     */
+    /** Gets the length of the trace, which is the number of actions. */
     @Override
     public int length() {
         return actions.size();
@@ -138,5 +135,4 @@ public final class Trace<S, A> implements Cex {
         sb.add(states.get(length()));
         return sb.toString();
     }
-
 }

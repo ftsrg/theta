@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import hu.bme.mit.theta.solver.HornSolver;
@@ -23,7 +22,6 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
-
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -39,19 +37,27 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         this(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
     }
 
-    protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
-                                         EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
+    protected GenericSmtLibSolverFactory(
+            Path solverPath,
+            String[] args,
+            EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
         this(solverPath, args, solverOverride, SmtLibEnumStrategy.SORTS);
     }
 
-    protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
-                                         SmtLibEnumStrategy enumStrategy) {
-        this(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class), enumStrategy);
+    protected GenericSmtLibSolverFactory(
+            Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy) {
+        this(
+                solverPath,
+                args,
+                EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class),
+                enumStrategy);
     }
 
-    protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
-                                         EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride,
-                                         SmtLibEnumStrategy enumStrategy) {
+    protected GenericSmtLibSolverFactory(
+            Path solverPath,
+            String[] args,
+            EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride,
+            SmtLibEnumStrategy enumStrategy) {
         this.solverPath = solverPath;
         this.args = args;
         this.solverOverride = solverOverride;
@@ -62,7 +68,8 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         return new GenericSmtLibSolverFactory(solverPath, args);
     }
 
-    public static GenericSmtLibSolverFactory create(Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy) {
+    public static GenericSmtLibSolverFactory create(
+            Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy, Path yicesPath) {
         return new GenericSmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 
@@ -73,8 +80,13 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                false, enumStrategy);
+        return new SmtLibSolver(
+                symbolTable,
+                transformationManager,
+                termTransformer,
+                solverBinary,
+                false,
+                enumStrategy);
     }
 
     @Override
@@ -84,8 +96,8 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                true);
+        return new SmtLibSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary, true);
     }
 
     @Override
@@ -101,6 +113,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
-        return new GenericSmtLibHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new GenericSmtLibHornSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary);
     }
 }

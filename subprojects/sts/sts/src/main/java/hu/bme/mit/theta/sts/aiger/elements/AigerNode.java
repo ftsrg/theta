@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package hu.bme.mit.theta.sts.aiger.elements;
 
 import java.util.Collection;
 
-/**
- * Base class for nodes in an {@link AigerSystem}.
- */
+/** Base class for nodes in an {@link AigerSystem}. */
 public abstract class AigerNode {
 
     private final String name;

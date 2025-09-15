@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,42 +27,51 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprVarOrderingKt;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
-import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExplicitRepresentationExtractor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, Void> {
+public class MddChecker<S extends ExprState, A extends ExprAction>
+        implements SafetyChecker<MddProof, Trace<S, A>, UnitPrec> {
 
-    private final Expr<BoolType> initRel;
-    private final VarIndexing initIndexing;
-    private final A transRel;
-    private final Expr<BoolType> safetyProperty;
+    private final MonolithicExpr monolithicExpr;
     private final List<VarDecl<?>> variableOrdering;
     private final SolverPool solverPool;
     private final Logger logger;
-    private IterationStrategy iterationStrategy = IterationStrategy.GSAT;
+    private final IterationStrategy iterationStrategy;
+    private final Function<Valuation, S> valToState;
+    private final BiFunction<Valuation, Valuation, A> biValToAction;
+    private final boolean forwardTrace;
+    private final long traceTimeout;
 
     public enum IterationStrategy {
         BFS,
@@ -71,65 +80,70 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
     }
 
     private MddChecker(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
+            MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
-            IterationStrategy iterationStrategy) {
-        this.initRel = initRel;
-        this.initIndexing = initIndexing;
-        this.transRel = transRel;
+            IterationStrategy iterationStrategy,
+            Function<Valuation, S> valToState,
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace,
+            long traceTimeout) {
+        this.monolithicExpr = monolithicExpr;
         this.variableOrdering = variableOrdering;
-        this.safetyProperty = safetyProperty;
         this.solverPool = solverPool;
         this.logger = logger;
         this.iterationStrategy = iterationStrategy;
+        this.valToState = valToState;
+        this.biValToAction = biValToAction;
+        this.forwardTrace = forwardTrace;
+        this.traceTimeout = traceTimeout;
     }
 
-    public static <A extends ExprAction> MddChecker<A> create(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
-            List<VarDecl<?>> variableOrdering,
-            SolverPool solverPool,
-            Logger logger) {
-        return new MddChecker<A>(
-                initRel,
-                initIndexing,
-                transRel,
-                safetyProperty,
-                variableOrdering,
-                solverPool,
-                logger,
-                IterationStrategy.GSAT);
-    }
-
-    public static <A extends ExprAction> MddChecker<A> create(
-            Expr<BoolType> initRel,
-            VarIndexing initIndexing,
-            A transRel,
-            Expr<BoolType> safetyProperty,
+    public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
+            MonolithicExpr monolithicExpr,
             List<VarDecl<?>> variableOrdering,
             SolverPool solverPool,
             Logger logger,
-            IterationStrategy iterationStrategy) {
-        return new MddChecker<A>(
-                initRel,
-                initIndexing,
-                transRel,
-                safetyProperty,
+            Function<Valuation, S> valToState,
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace) {
+        return new MddChecker<S, A>(
+                monolithicExpr,
                 variableOrdering,
                 solverPool,
                 logger,
-                iterationStrategy);
+                IterationStrategy.GSAT,
+                valToState,
+                biValToAction,
+                forwardTrace,
+                10);
+    }
+
+    public static <S extends ExprState, A extends ExprAction> MddChecker<S, A> create(
+            MonolithicExpr monolithicExpr,
+            List<VarDecl<?>> variableOrdering,
+            SolverPool solverPool,
+            Logger logger,
+            IterationStrategy iterationStrategy,
+            Function<Valuation, S> valToState,
+            BiFunction<Valuation, Valuation, A> biValToAction,
+            boolean forwardTrace,
+            long traceTimeout) {
+        return new MddChecker<S, A>(
+                monolithicExpr,
+                variableOrdering,
+                solverPool,
+                logger,
+                iterationStrategy,
+                valToState,
+                biValToAction,
+                forwardTrace,
+                traceTimeout);
     }
 
     @Override
-    public SafetyResult<MddProof, MddCex> check(Void input) {
+    public SafetyResult<MddProof, Trace<S, A>> check(UnitPrec prec) {
 
         final MddGraph<Expr> mddGraph =
                 JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
@@ -139,25 +153,32 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddVariableOrder transOrder =
                 JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
+        variableOrdering.forEach(
+                v ->
+                        checkArgument(
+                                monolithicExpr.getVars().contains(v),
+                                "Variable ordering contains variable not present in vars List"));
+
         checkArgument(
                 variableOrdering.size() == Containers.createSet(variableOrdering).size(),
                 "Variable ordering contains duplicates");
         final var identityExprs = new ArrayList<Expr<BoolType>>();
-        for (var v : Lists.reverse(variableOrdering)) {
+        final var orderedVars = MonolithicExprVarOrderingKt.orderVars(monolithicExpr);
+        for (var v : Lists.reverse(orderedVars)) {
             var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
 
-            if (domainSize > 100) {
-                domainSize = 0;
-            }
+            //     if (domainSize > 100) {
+            domainSize = 0;
+            //     }
 
-            stateOrder.createOnTop(
-                    MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
-            final var index = transRel.nextIndexing().get(v);
+            final var index = monolithicExpr.getTransOffsetIndex().get(v);
             if (index > 0) {
                 transOrder.createOnTop(
                         MddVariableDescriptor.create(
-                                v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
+                                v.getConstDecl(monolithicExpr.getTransOffsetIndex().get(v)),
+                                domainSize));
             } else {
                 transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize));
                 identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
@@ -169,25 +190,39 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final var stateSig = stateOrder.getDefaultSetSignature();
         final var transSig = transOrder.getDefaultSetSignature();
 
-        final Expr<BoolType> initExpr = PathUtils.unfold(initRel, initIndexing);
+        final Expr<BoolType> initExpr = PathUtils.unfold(monolithicExpr.getInitExpr(), 0);
         final MddHandle initNode =
                 stateSig.getTopVariableHandle()
                         .checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
 
         logger.write(Level.INFO, "Created initial node\n");
 
-        final Expr<BoolType> transExpr =
-                And(
-                        PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0)),
-                        And(identityExprs));
-        final MddHandle transitionNode =
-                transSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
-        final AbstractNextStateDescriptor nextStates =
-                MddNodeNextStateDescriptor.of(transitionNode);
+        final var transNodes = new ArrayList<MddHandle>();
+        final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
+        for (var expr : MonolithicExprKt.split(monolithicExpr)) {
+            final Expr<BoolType> transExpr =
+                    And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs));
+            final MddHandle transitionNode =
+                    transSig.getTopVariableHandle()
+                            .checkInNode(
+                                    MddExpressionTemplate.of(
+                                            transExpr, o -> (Decl) o, solverPool, true));
+            transNodes.add(transitionNode);
+            descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
+        }
+        final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
 
-        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
+        final Expr<BoolType> negatedPropExpr =
+                PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0);
+        final MddHandle propNode =
+                stateSig.getTopVariableHandle()
+                        .checkInNode(
+                                MddExpressionTemplate.of(
+                                        negatedPropExpr, o -> (Decl) o, solverPool));
+        final AbstractNextStateDescriptor targetedNextStates =
+                OnTheFlyReachabilityNextStateDescriptor.of(nextStates, propNode);
+
+        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation\n");
 
         final StateSpaceEnumerationProvider stateSpaceProvider;
         switch (iterationStrategy) {
@@ -205,27 +240,20 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
         final MddHandle stateSpace =
                 stateSpaceProvider.compute(
                         MddNodeInitializer.of(initNode),
-                        nextStates,
+                        targetedNextStates,
                         stateSig.getTopVariableHandle());
 
-        logger.write(Level.INFO, "Enumerated state-space");
-
-        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
-        final MddHandle propNode =
-                stateSig.getTopVariableHandle()
-                        .checkInNode(
-                                MddExpressionTemplate.of(
-                                        negatedPropExpr, o -> (Decl) o, solverPool));
+        logger.write(Level.INFO, "Enumerated state-space\n");
 
         final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
 
-        logger.write(Level.INFO, "Calculated violating states");
+        logger.write(Level.INFO, "Calculated violating states\n");
 
         final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
-        logger.write(Level.INFO, "States violating the property: " + violatingSize);
+        logger.write(Level.INFO, "States violating the property: " + violatingSize + "\n");
 
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
-        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
+        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize + "\n");
 
         final MddAnalysisStatistics statistics =
                 new MddAnalysisStatistics(
@@ -237,15 +265,84 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof,
 
         logger.write(Level.MAINSTEP, "%s\n", statistics);
 
-        final SafetyResult<MddProof, MddCex> result;
+        // var explTrans = MddExplicitRepresentationExtractor.INSTANCE.transform(transitionNode,
+        // transSig.getTopVariableHandle());
+
+        final SafetyResult<MddProof, Trace<S, A>> result;
         if (violatingSize != 0) {
-            result =
-                    SafetyResult.unsafe(
-                            MddCex.of(propViolating), MddProof.of(stateSpace), statistics);
+
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Trace<S, A>> future =
+                    executor.submit(
+                            () -> {
+                                var reversedDescriptors =
+                                        new ArrayList<AbstractNextStateDescriptor>();
+                                for (var transNode : transNodes) {
+                                    final var explTrans =
+                                            MddExplicitRepresentationExtractor.INSTANCE.transform(
+                                                    transNode, transSig.getTopVariableHandle());
+                                    reversedDescriptors.add(
+                                            ReverseNextStateDescriptor.of(stateSpace, explTrans));
+                                }
+                                final var orReversed =
+                                        OrNextStateDescriptor.create(reversedDescriptors);
+
+                                final TraceProvider traceProvider =
+                                        new TraceProvider(stateSig.getVariableOrder());
+                                final var mddTrace =
+                                        traceProvider.compute(
+                                                propViolating,
+                                                orReversed,
+                                                initNode,
+                                                stateSig.getTopVariableHandle());
+                                final var valuations =
+                                        mddTrace.stream()
+                                                .map(
+                                                        it ->
+                                                                PathUtils.extractValuation(
+                                                                        MddValuationCollector
+                                                                                .collect(it)
+                                                                                .stream()
+                                                                                .findFirst()
+                                                                                .orElseThrow(),
+                                                                        0))
+                                                .toList();
+                                final List<S> states = new ArrayList<>();
+                                final List<A> actions = new ArrayList<>();
+                                for (int i = 0; i < valuations.size(); ++i) {
+                                    states.add(valToState.apply(valuations.get(i)));
+                                    if (i > 0) {
+                                        actions.add(
+                                                biValToAction.apply(
+                                                        valuations.get(i - 1), valuations.get(i)));
+                                    }
+                                }
+
+                                if (forwardTrace) {
+                                    return Trace.of(states, actions);
+                                } else {
+                                    return Trace.of(Lists.reverse(states), Lists.reverse(actions));
+                                }
+                            });
+
+            try {
+                logger.mainStep("Starting trace generation.\n");
+                final Trace<S, A> trace = future.get(traceTimeout, TimeUnit.SECONDS);
+                return SafetyResult.unsafe(trace, MddProof.of(stateSpace), statistics);
+            } catch (TimeoutException | InterruptedException | ExecutionException e) {
+                logger.mainStep("Trace generation timed out, returning empty trace!\n");
+                future.cancel(true);
+                return SafetyResult.unsafe(
+                        Trace.of(List.of(valToState.apply(ExplState.top())), List.of()),
+                        MddProof.of(stateSpace),
+                        statistics);
+            } finally {
+                executor.shutdownNow();
+            }
+
         } else {
             result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }
-        logger.write(Level.RESULT, "%s\n", result);
         return result;
     }
 }

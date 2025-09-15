@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package hu.bme.mit.theta.cfa.dsl;
 
+import hu.bme.mit.theta.cfa.CFA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-
-import hu.bme.mit.theta.cfa.CFA;
 
 @RunWith(Parameterized.class)
 public final class CfaDslManagerTest {
@@ -49,24 +47,17 @@ public final class CfaDslManagerTest {
 
     @Parameters()
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"/locking.cfa", 3, 9, 10, 10},
-
-                {"/counter5_true.cfa", 1, 6, 6, 6},
-
-                {"/bv.cfa", 1, 6, 6, 6},
-
-                {"/bv2.cfa", 1, 6, 6, 6},
-
-                {"/bv3.cfa", 1, 6, 6, 6},
-
-                {"/bv4.cfa", 2, 7, 8, 8},
-
-                {"/fp1.cfa", 4, 7, 6, 6},
-
-                {"/fp2.cfa", 4, 7, 6, 6}
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"/locking.cfa", 3, 9, 10, 10},
+                    {"/counter5_true.cfa", 1, 6, 6, 6},
+                    {"/bv.cfa", 1, 6, 6, 6},
+                    {"/bv2.cfa", 1, 6, 6, 6},
+                    {"/bv3.cfa", 1, 6, 6, 6},
+                    {"/bv4.cfa", 2, 7, 8, 8},
+                    {"/fp1.cfa", 4, 7, 6, 6},
+                    {"/fp2.cfa", 4, 7, 6, 6}
+                });
     }
 
     @Test
@@ -78,5 +69,4 @@ public final class CfaDslManagerTest {
         Assert.assertEquals(edgeCount, cfa.getEdges().size());
         Assert.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
     }
-
 }

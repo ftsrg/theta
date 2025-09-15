@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * Assignment statement of the form VARIABLE := EXPRESSION. The statement updates the VARIABLE with
@@ -44,14 +44,15 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
         this.expr = checkNotNull(expr);
     }
 
-    public static <DeclType extends Type> AssignStmt<DeclType> of(final VarDecl<DeclType> lhs,
-                                                                  final Expr<DeclType> rhs) {
+    public static <DeclType extends Type> AssignStmt<DeclType> of(
+            final VarDecl<DeclType> lhs, final Expr<DeclType> rhs) {
         return new AssignStmt<>(lhs, rhs);
     }
 
-    public static <DeclType extends Type> AssignStmt<?> create(final VarDecl<?> lhs,
-                                                               final Expr<?> rhs) {
-        @SuppressWarnings("unchecked") final VarDecl<DeclType> newLhs = (VarDecl<DeclType>) lhs;
+    public static <DeclType extends Type> AssignStmt<?> create(
+            final VarDecl<?> lhs, final Expr<?> rhs) {
+        @SuppressWarnings("unchecked")
+        final VarDecl<DeclType> newLhs = (VarDecl<DeclType>) lhs;
         final Expr<DeclType> newRhs = cast(rhs, newLhs.getType());
         return AssignStmt.of(newLhs, newRhs);
     }
@@ -87,8 +88,8 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final AssignStmt<?> that = (AssignStmt<?>) obj;
-            return this.getVarDecl().equals(that.getVarDecl()) && this.getExpr()
-                    .equals(that.getExpr());
+            return this.getVarDecl().equals(that.getVarDecl())
+                    && this.getExpr().equals(that.getExpr());
         } else {
             return false;
         }

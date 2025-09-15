@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
-import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
+import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS.PropType
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
@@ -44,6 +45,8 @@ class InputOptions :
     option(help = "Input property as a string. Ignored if --property is defined")
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
+  private val pnProperty: PropType by
+    option(help = "Property type for Petri-nets").enum<PropType>().default(PropType.TARGET_MARKING)
 
   fun isPnml() = model.path.endsWith("pnml")
 
@@ -55,12 +58,13 @@ class InputOptions :
         else null)
     if (isPnml()) {
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
-      return PetriNetToXSTS.createXSTS(petriNet, propertyStream)
+      return PetriNetToXSTS.createXSTS(petriNet, propertyStream, pnProperty)
     }
     return XstsDslManager.createXsts(
       SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
     )
   }
 
-  fun loadPetriNet(): MutableList<PetriNet> = PetriNetParser.loadPnml(model).parsePTNet()
+  fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/
+    mutableListOf(XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking))
 }

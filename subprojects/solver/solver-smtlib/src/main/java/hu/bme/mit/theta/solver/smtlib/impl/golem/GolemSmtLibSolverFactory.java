@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
-
 import java.nio.file.Path;
+import java.util.Map;
 
 public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
@@ -53,9 +53,10 @@ public class GolemSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args);
+        final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args, Map.of());
 
-        return new GenericHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new GenericHornSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary);
     }
 
     @Override

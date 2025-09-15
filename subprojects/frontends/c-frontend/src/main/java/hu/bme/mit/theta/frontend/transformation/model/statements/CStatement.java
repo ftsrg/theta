@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import java.util.Optional;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
@@ -26,6 +27,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
  * XcfaLocation, which can be used when jumping to this named location via a _goto_ instruction
  */
 public abstract class CStatement {
+    private Optional<CStatement> parent = Optional.empty();
     protected final ParseContext parseContext;
     private String id;
     protected static int counter = 0;
@@ -51,6 +53,14 @@ public abstract class CStatement {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Optional<CStatement> getParent() {
+        return parent;
+    }
+
+    public void setParent(CStatement parent) {
+        this.parent = Optional.of(parent);
     }
 
     /**

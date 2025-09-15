@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,18 +32,25 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getSafetyChecker(
-  xcfa: XCFA,
-  mcm: MCM,
+  xcfa: XCFA?,
+  mcm: MCM?,
   config: XcfaConfig<*, *>,
-  parseContext: ParseContext,
+  parseContext: ParseContext?,
   logger: Logger,
   uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
+    xcfa!!
+    mcm!!
+    parseContext!!
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.BMC,
+      Backend.KIND,
+      Backend.IMC,
+      Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
@@ -59,6 +66,9 @@ fun getSafetyChecker(
           SafetyResult.unknown()
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
+      Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
+      Backend.LASSO_VALIDATION ->
+        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"
@@ -67,10 +77,10 @@ fun getSafetyChecker(
   }
 
 fun getChecker(
-  xcfa: XCFA,
-  mcm: MCM,
+  xcfa: XCFA?,
+  mcm: MCM?,
   config: XcfaConfig<*, *>,
-  parseContext: ParseContext,
+  parseContext: ParseContext?,
   logger: Logger,
   uniqueLogger: Logger,
 ): Checker<*, XcfaPrec<*>> =
@@ -78,27 +88,7 @@ fun getChecker(
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
     when (config.backendConfig.backend) {
-      Backend.TRACEGEN -> getTracegenChecker(xcfa, mcm, config, logger)
-      Backend.CEGAR ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for safety analysis instead of getChecker"
-        )
-      Backend.BOUNDED ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for safety analysis instead of getChecker"
-        )
-      Backend.OC ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for safety analysis instead of getChecker"
-        )
-      Backend.LAZY ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
-        )
-      Backend.PORTFOLIO ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
-        )
+      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, mcm, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
@@ -107,14 +97,9 @@ fun getChecker(
         > { _ ->
           SafetyResult.unknown()
         }
-      Backend.CHC ->
+      else ->
         throw RuntimeException(
           "Use getSafetyChecker method for safety analysis instead of getChecker"
-        )
-
-      Backend.MDD ->
-        throw RuntimeException(
-          "Use getSafetyChecker method for portfolio safety analysis instead of getChecker"
         )
     }
   }

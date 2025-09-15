@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -42,15 +45,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class StmtSimplifier {
 
@@ -61,7 +59,8 @@ public class StmtSimplifier {
     }
 
     private enum SimplifyStatus {
-        SUCCESS, BOTTOM
+        SUCCESS,
+        BOTTOM
     }
 
     public static class SimplifyResult {
@@ -87,8 +86,8 @@ public class StmtSimplifier {
         }
     }
 
-    public static class StmtSimplifierVisitor implements
-            StmtVisitor<MutableValuation, SimplifyResult> {
+    public static class StmtSimplifierVisitor
+            implements StmtVisitor<MutableValuation, SimplifyResult> {
 
         @Override
         public SimplifyResult visit(final SkipStmt stmt, final MutableValuation valuation) {
@@ -109,8 +108,8 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <DeclType extends Type> SimplifyResult visit(final AssignStmt<DeclType> stmt,
-                                                            final MutableValuation valuation) {
+        public <DeclType extends Type> SimplifyResult visit(
+                final AssignStmt<DeclType> stmt, final MutableValuation valuation) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
             if (expr instanceof LitExpr<?>) {
@@ -123,19 +122,30 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> SimplifyResult visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, MutableValuation valuation) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type>
+                SimplifyResult visit(
+                        MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt,
+                        MutableValuation valuation) {
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
-            final Dereference<PtrType, OffsetType, DeclType> deref = (Dereference<PtrType, OffsetType, DeclType>) ExprUtils.simplify(stmt.getDeref(), valuation);
+            final Dereference<PtrType, OffsetType, DeclType> deref =
+                    (Dereference<PtrType, OffsetType, DeclType>)
+                            ExprUtils.simplify(stmt.getDeref(), valuation);
 
-            if (expr instanceof LitExpr<?> litExpr && deref.getOffset() instanceof LitExpr<OffsetType> litOffset && deref.getArray() instanceof RefExpr<PtrType> ref) {
+            if (expr instanceof LitExpr<?> litExpr
+                    && deref.getOffset() instanceof LitExpr<OffsetType> litOffset
+                    && deref.getArray() instanceof RefExpr<PtrType> ref) {
                 if (litOffset instanceof IntLitExpr) {
                     IntLitExpr intLitOffset = (IntLitExpr) litOffset;
                     VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
-                    valuation.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
+                    valuation.put(
+                            varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
                 } else if (litOffset instanceof BvLitExpr) {
                     BvLitExpr bvLitExpr = (BvLitExpr) litOffset;
                     VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
-                    valuation.put(varDecl.getConstDecl(BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue()), litExpr);
+                    valuation.put(
+                            varDecl.getConstDecl(
+                                    BvUtils.neutralBvLitExprToBigInteger(bvLitExpr).intValue()),
+                            litExpr);
                 }
             }
 
@@ -143,8 +153,8 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <DeclType extends Type> SimplifyResult visit(final HavocStmt<DeclType> stmt,
-                                                            final MutableValuation valuation) {
+        public <DeclType extends Type> SimplifyResult visit(
+                final HavocStmt<DeclType> stmt, final MutableValuation valuation) {
             final VarDecl<?> varDecl = stmt.getVarDecl();
             valuation.remove(varDecl);
             return SimplifyResult.of(stmt, SimplifyStatus.SUCCESS);
@@ -152,13 +162,18 @@ public class StmtSimplifier {
 
         @Override
         public SimplifyResult visit(final SequenceStmt stmt, final MutableValuation valuation) {
-            final var subStmtsUnrolled = stmt.getStmts().stream()
-                    .map(subStmt -> subStmt.accept(this, valuation)).collect(Collectors.toList());
-            final var simplifiedStmt = SequenceStmt.of(
-                    subStmtsUnrolled.stream().map(result -> result.stmt)
-                            .collect(Collectors.toList()));
-            final boolean anyBottom = subStmtsUnrolled.stream()
-                    .anyMatch(result -> result.status == SimplifyStatus.BOTTOM);
+            final var subStmtsUnrolled =
+                    stmt.getStmts().stream()
+                            .map(subStmt -> subStmt.accept(this, valuation))
+                            .collect(Collectors.toList());
+            final var simplifiedStmt =
+                    SequenceStmt.of(
+                            subStmtsUnrolled.stream()
+                                    .map(result -> result.stmt)
+                                    .collect(Collectors.toList()));
+            final boolean anyBottom =
+                    subStmtsUnrolled.stream()
+                            .anyMatch(result -> result.status == SimplifyStatus.BOTTOM);
             if (anyBottom) {
                 return SimplifyResult.of(AssumeStmt.of(False()), SimplifyStatus.BOTTOM);
             } else {
@@ -199,7 +214,6 @@ public class StmtSimplifier {
                 }
                 return SimplifyResult.of(NonDetStmt.of(successfulSubStmts), SimplifyStatus.SUCCESS);
             }
-
         }
 
         @Override
@@ -217,18 +231,18 @@ public class StmtSimplifier {
                 var fromValue = ((IntLitExpr) fromUnrolled).getValue();
                 var toValue = ((IntLitExpr) toUnrolled).getValue();
                 var stmts = new ArrayList<Stmt>();
-                for (BigInteger bi = fromValue; bi.compareTo(toValue) < 0;
-                     bi = bi.add(BigInteger.ONE)) {
+                for (BigInteger bi = fromValue;
+                        bi.compareTo(toValue) < 0;
+                        bi = bi.add(BigInteger.ONE)) {
                     var assignToLoopVar = AssignStmt.of(stmt.getLoopVariable(), Int(bi));
-                    var loopVarIncAndSubStmt = SequenceStmt.of(
-                            ImmutableList.of(assignToLoopVar, stmt.getStmt()));
+                    var loopVarIncAndSubStmt =
+                            SequenceStmt.of(ImmutableList.of(assignToLoopVar, stmt.getStmt()));
                     var result = loopVarIncAndSubStmt.accept(this, valuation);
                     if (result.status == SimplifyStatus.SUCCESS) {
                         stmts.add(result.stmt);
                     } else {
                         return SimplifyResult.of(AssumeStmt.of(False()), SimplifyStatus.BOTTOM);
                     }
-
                 }
                 return SimplifyResult.of(SequenceStmt.of(stmts), SimplifyStatus.SUCCESS);
             }
@@ -261,30 +275,30 @@ public class StmtSimplifier {
                 if (thenResult.status == SimplifyStatus.SUCCESS
                         && elzeResult.status == SimplifyStatus.BOTTOM) {
                     final AssumeStmt assume = AssumeStmt.of(cond);
-                    final SequenceStmt assumeAndThen = SequenceStmt.of(
-                            ImmutableList.of(assume, stmt.getThen()));
+                    final SequenceStmt assumeAndThen =
+                            SequenceStmt.of(ImmutableList.of(assume, stmt.getThen()));
                     return assumeAndThen.accept(this, valuation);
                 }
 
                 if (thenResult.status == SimplifyStatus.BOTTOM
                         && elzeResult.status == SimplifyStatus.SUCCESS) {
                     final AssumeStmt assumeNot = AssumeStmt.of(Not(cond));
-                    final SequenceStmt assumeAndElze = SequenceStmt.of(
-                            ImmutableList.of(assumeNot, stmt.getElze()));
+                    final SequenceStmt assumeAndElze =
+                            SequenceStmt.of(ImmutableList.of(assumeNot, stmt.getElze()));
                     return assumeAndElze.accept(this, valuation);
                 }
 
                 stmt.getThen().accept(this, valuation);
-                var toRemove = valuation.getDecls().stream()
-                        .filter(it -> !valuation.eval(it).equals(elzeVal.eval(it)))
-                        .collect(Collectors.toSet());
+                var toRemove =
+                        valuation.getDecls().stream()
+                                .filter(it -> !valuation.eval(it).equals(elzeVal.eval(it)))
+                                .collect(Collectors.toSet());
                 for (Decl<?> decl : toRemove) {
                     valuation.remove(decl);
                 }
-                return SimplifyResult.of(IfStmt.of(cond, thenResult.stmt, elzeResult.stmt),
-                        SimplifyStatus.SUCCESS);
+                return SimplifyResult.of(
+                        IfStmt.of(cond, thenResult.stmt, elzeResult.stmt), SimplifyStatus.SUCCESS);
             }
         }
     }
-
 }

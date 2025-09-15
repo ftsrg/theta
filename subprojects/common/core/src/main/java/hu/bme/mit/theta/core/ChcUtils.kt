@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,20 +40,17 @@ head_name(grounds) // facts
 !head_name(vars) with exprs(vars)  // queries
  */
 
-open class Relation(val name: String, vararg paramTypes: Type) {
-  companion object {
-
-    private fun funcType(params: List<Type>, finalType: Type): FuncType<*, *> {
-      return if (params.size == 1) {
-        FuncType.of(params[0], finalType)
-      } else if (params.size > 1) {
-        FuncType.of(params[0], funcType(params.subList(1, params.size), finalType))
-      } else {
-        error("Nullary functions aren't handled here.")
-      }
-    }
+fun funcType(params: List<Type>, finalType: Type): FuncType<*, *> {
+  return if (params.size == 1) {
+    FuncType.of(params[0], finalType)
+  } else if (params.size > 1) {
+    FuncType.of(params[0], funcType(params.subList(1, params.size), finalType))
+  } else {
+    error("Nullary functions aren't handled here.")
   }
+}
 
+open class Relation(val name: String, vararg paramTypes: Type) {
   val arity: Int = paramTypes.size
   val rules: MutableList<Rule> = LinkedList()
   val constDecl = Const(name, funcType(paramTypes.toList(), Bool()))

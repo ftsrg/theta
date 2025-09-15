@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.arg;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
@@ -30,11 +22,10 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ArgCexTest {
 
@@ -59,8 +50,8 @@ public class ArgCexTest {
         final ArgNode<State, Action> n4 = arg.createSuccNode(n2, act, s4, true);
         final ArgNode<State, Action> n5 = arg.createSuccNode(n2, act, s5, false);
         final ArgNode<State, Action> n6 = arg.createSuccNode(n3, act, s6, false);
-        @SuppressWarnings("unused") final ArgNode<State, Action> n7 = arg.createSuccNode(n3, act,
-                s7, true);
+        @SuppressWarnings("unused")
+        final ArgNode<State, Action> n7 = arg.createSuccNode(n3, act, s7, true);
         final ArgNode<State, Action> n8 = arg.createSuccNode(n5, act, s8, true);
 
         n6.setCoveringNode(n2);
@@ -69,14 +60,13 @@ public class ArgCexTest {
         Assert.assertEquals(8, arg.getNodes().count());
         Assert.assertEquals(2, arg.getUnsafeNodes().count());
 
-        final List<Trace<State, Action>> cexs = arg.getCexs().map(e -> e.toTrace())
-                .collect(Collectors.toList());
+        final List<Trace<State, Action>> cexs =
+                arg.getCexs().map(e -> e.toTrace()).collect(Collectors.toList());
 
         Assert.assertEquals(2, cexs.size());
         Assert.assertTrue(
                 cexs.contains(Trace.of(ImmutableList.of(s1, s2, s4), ImmutableList.of(act, act))));
         Assert.assertTrue(
                 cexs.contains(Trace.of(ImmutableList.of(s1, s3, s7), ImmutableList.of(act, act))));
-
     }
 }

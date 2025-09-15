@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     if (outputOptions.benchmarkMode) NullLogger.getInstance()
     else ConsoleLogger(outputOptions.logLevel)
   }
-  protected val writer =
-    BasicTableWriter(System.out, ",", "\"", "\"") // TODO shouldn't this be done through logger??
+  protected val writer = BasicTableWriter(System.out, ",", "\"", "\"")
 
   fun printError(exception: Exception) {
     val message = exception.message ?: ""

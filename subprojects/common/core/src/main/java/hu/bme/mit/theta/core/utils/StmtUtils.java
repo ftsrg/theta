@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,19 +19,15 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Utility functions related to statements.
- */
+/** Utility functions related to statements. */
 public final class StmtUtils {
 
-    private StmtUtils() {
-    }
+    private StmtUtils() {}
 
     /**
      * Get variables appearing in a statement
@@ -58,9 +54,33 @@ public final class StmtUtils {
     }
 
     /**
+     * Get variables written in a statement
+     *
+     * @param stmt Statement
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getWrittenVars(final Stmt stmt) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmt.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars);
+        return vars;
+    }
+
+    /**
+     * Get variables written by statements
+     *
+     * @param stmts Statements
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getWrittenVars(final Iterable<? extends Stmt> stmts) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmts.forEach(s -> s.accept(WrittenVarCollectorStmtVisitor.getInstance(), vars));
+        return vars;
+    }
+
+    /**
      * Unfold a statement into expressions with a given indexing
      *
-     * @param stmt     Statement
+     * @param stmt Statement
      * @param indexing Indexing
      * @return Expressions and new indexing
      */
@@ -71,12 +91,12 @@ public final class StmtUtils {
     /**
      * Unfold statements into expressions with a given indexing
      *
-     * @param stmts    Statements
+     * @param stmts Statements
      * @param indexing Indexing
      * @return Expressions and new indexing
      */
-    public static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts,
-                                          final VarIndexing indexing) {
+    public static StmtUnfoldResult toExpr(
+            final List<? extends Stmt> stmts, final VarIndexing indexing) {
         return StmtToExprTransformer.toExpr(stmts, indexing);
     }
 
@@ -85,5 +105,4 @@ public final class StmtUtils {
         varDecls.forEach(varDecl -> map.put(varDecl.getName(), varDecl));
         return VarChangerUtilsKt.changeVars(stmt, map);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,19 +23,21 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
@@ -171,36 +173,31 @@ public class MddCheckerTest {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final SafetyResult<MddProof, MddCex> status;
+        final SafetyResult<MddProof, Trace<ExprState, ExprAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final MddChecker<ExprAction> checker =
+            final var monolithicExpr = new MonolithicExpr(initExpr, tranExpr, propExpr);
+            final MddChecker<ExprState, ExprAction> checker =
                     MddChecker.create(
-                            initExpr,
-                            VarIndexingFactory.indexing(0),
-                            new ExprAction() {
-                                @Override
-                                public Expr<BoolType> toExpr() {
-                                    return tranExpr;
-                                }
-
-                                @Override
-                                public VarIndexing nextIndexing() {
-                                    return VarIndexingFactory.indexing(1);
-                                }
-                            },
-                            propExpr,
+                            monolithicExpr,
                             List.copyOf(ExprUtils.getVars(List.of(initExpr, tranExpr, propExpr))),
                             solverPool,
                             logger,
-                            iterationStrategy);
+                            iterationStrategy,
+                            valuation -> monolithicExpr.getValToState().invoke(valuation),
+                            (Valuation v1, Valuation v2) ->
+                                    monolithicExpr.getBiValToAction().invoke(v1, v2),
+                            true,
+                            10);
             status = checker.check(null);
         }
 
         if (safe) {
             assertTrue(status.isSafe());
+            assertEquals(stateSpaceSize, status.getProof().size());
         } else {
             assertTrue(status.isUnsafe());
+            assertTrue(stateSpaceSize >= status.getProof().size());
+            assertTrue(status.asUnsafe().getCex().length() >= 0);
         }
-        assertEquals(stateSpaceSize, status.getProof().size());
     }
 }

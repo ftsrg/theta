@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,37 +20,34 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
-import org.junit.jupiter.api.Test
 import java.io.FileInputStream
+import org.junit.jupiter.api.Test
 
 class XSTSVarChangerUnitTest {
 
-    @Test
-    fun `xsts variable changing`() {
-        var origXsts: XSTS
-        FileInputStream("src/test/resources/incrementors.xsts").use { inputStream ->
-            origXsts = XstsDslManager.createXsts(inputStream)
-        }
-        val newX = Decls.Var("x", IntType.getInstance())
-        val newY = Decls.Var("y", IntType.getInstance())
-        val newXsts = origXsts.copyWithReplacingVars(
-            listOf(newX, newY)
-                .associateBy { it.name }
-        )
-
-        val origVars = setOf(
-            StmtUtils.getVars(origXsts.init),
-            StmtUtils.getVars(origXsts.tran),
-            StmtUtils.getVars(origXsts.env)
-        )
-        val newVars = setOf(
-            StmtUtils.getVars(newXsts.init),
-            StmtUtils.getVars(newXsts.tran),
-            StmtUtils.getVars(newXsts.env)
-        )
-
-        assert(!newVars.any {
-            origVars.contains(it)
-        })
+  @Test
+  fun `xsts variable changing`() {
+    var origXsts: XSTS
+    FileInputStream("src/test/resources/incrementors.xsts").use { inputStream ->
+      origXsts = XstsDslManager.createXsts(inputStream)
     }
+    val newX = Decls.Var("x", IntType.getInstance())
+    val newY = Decls.Var("y", IntType.getInstance())
+    val newXsts = origXsts.copyWithReplacingVars(listOf(newX, newY).associateBy { it.name })
+
+    val origVars =
+      setOf(
+        StmtUtils.getVars(origXsts.init),
+        StmtUtils.getVars(origXsts.tran),
+        StmtUtils.getVars(origXsts.env),
+      )
+    val newVars =
+      setOf(
+        StmtUtils.getVars(newXsts.init),
+        StmtUtils.getVars(newXsts.tran),
+        StmtUtils.getVars(newXsts.env),
+      )
+
+    assert(!newVars.any { origVars.contains(it) })
+  }
 }

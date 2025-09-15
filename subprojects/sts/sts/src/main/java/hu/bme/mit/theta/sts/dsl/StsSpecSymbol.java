@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createConstDecl;
 import static hu.bme.mit.theta.sts.dsl.StsDslHelper.createVarDecl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -43,6 +37,11 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.PropDeclContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsDeclContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsSpecContext;
 import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.VarDeclContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 final class StsSpecSymbol implements ScopedSymbol {
 
@@ -103,8 +102,8 @@ final class StsSpecSymbol implements ScopedSymbol {
         final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
         final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
         // TODO Handle recursive constant definitions
-        final Substitution constAssignment = StsDslHelper.createConstDefs(this, binding,
-                stsSpecContext.constDecls);
+        final Substitution constAssignment =
+                StsDslHelper.createConstDefs(this, binding, stsSpecContext.constDecls);
         final Substitution assignment = NestedSubstitution.create(binding, constAssignment);
         final StsSpec stsSpec = StsSpec.create(this, assignment);
         return stsSpec;
@@ -159,5 +158,4 @@ final class StsSpecSymbol implements ScopedSymbol {
         propDeclSymbols.add(symbol);
         symbolTable.add(symbol);
     }
-
 }

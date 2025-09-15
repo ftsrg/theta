@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ public abstract class LeqExpr<OpType extends Ordered<OpType>> extends BinaryExpr
         super(leftOp, rightOp);
     }
 
-    public static <OpType extends Ordered<OpType>> LeqExpr<?> create2(final Expr<?> leftOp,
-                                                                      final Expr<?> rightOp) {
-        @SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
+    public static <OpType extends Ordered<OpType>> LeqExpr<?> create2(
+            final Expr<?> leftOp, final Expr<?> rightOp) {
+        @SuppressWarnings("unchecked")
+        final OpType type = (OpType) leftOp.getType();
         final Expr<OpType> newLeftOp = cast(leftOp, type);
         final Expr<OpType> newRightOp = cast(rightOp, type);
         return type.Leq(newLeftOp, newRightOp);
     }
-
 }

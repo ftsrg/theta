@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.IntStatistics;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.delta.java.mdd.MddGraph;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.delta.java.mdd.MddVariable;
+import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.common.container.Containers;
@@ -43,6 +41,8 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
     private final MddVariable variable;
     private final MddNode mddNode;
 
+    private static BinaryOperationCache<MddVariable, MddNode, MddNode> cache =
+            new BinaryOperationCache<>();
     private MddNode structuralRepresentation = null;
 
     public MddStateSpaceInfo(final MddVariable variable, final MddNode mddNode) {
@@ -112,8 +112,14 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
     @Override
     public MddNode toStructuralRepresentation() {
         if (structuralRepresentation == null) {
+            var cached = cache.getOrNull(variable, mddNode);
+            if (cached != null) {
+                structuralRepresentation = cached;
+                return structuralRepresentation;
+            }
             final BoundsCollector boundsCollector = new BoundsCollector(mddNode, variable);
             structuralRepresentation = representBounds(variable, boundsCollector);
+            cache.addToCache(variable, mddNode, structuralRepresentation);
         }
         return structuralRepresentation;
     }

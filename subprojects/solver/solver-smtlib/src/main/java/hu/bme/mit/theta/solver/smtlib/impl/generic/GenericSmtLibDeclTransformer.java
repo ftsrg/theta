@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -24,10 +27,7 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibDeclTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
 
@@ -36,8 +36,8 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
 
     private int symbolCount;
 
-    public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer,
-                                        final SmtLibSymbolTable symbolTable) {
+    public GenericSmtLibDeclTransformer(
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
 
@@ -78,14 +78,14 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
         final Type returnType = extractedTypes.get2();
 
         final String returnSort = transformer.toSort(returnType);
-        final String[] paramSorts = paramTypes.stream().map(transformer::toSort)
-                .toArray(String[]::new);
+        final String[] paramSorts =
+                paramTypes.stream().map(transformer::toSort).toArray(String[]::new);
 
         final String symbolName = symbolNameFor(decl);
-        final String symbolDeclaration = String.format(
-                "(declare-fun %s (%s) %s)",
-                symbolName, String.join(" ", paramSorts), returnSort
-        );
+        final String symbolDeclaration =
+                String.format(
+                        "(declare-fun %s (%s) %s)",
+                        symbolName, String.join(" ", paramSorts), returnSort);
         symbolTable.put(decl, symbolName, symbolDeclaration);
     }
 
@@ -101,8 +101,8 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
-                    .addAll(paramTypes).build();
+            final List<Type> newParamTypes =
+                    ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;
@@ -112,7 +112,6 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     }
 
     private String symbolNameFor(final Decl<?> decl) {
-        return String.format("%s_%d", decl.getName(), symbolCount++);
+        return encodeSymbol(String.format("%s_%d", decl.getName(), symbolCount++));
     }
-
 }

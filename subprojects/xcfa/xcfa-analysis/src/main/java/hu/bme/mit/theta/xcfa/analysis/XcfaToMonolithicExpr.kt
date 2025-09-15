@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -39,6 +40,8 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -60,7 +63,18 @@ private val LitExpr<*>.value: Int
       else -> error("Unknown integer type: $type")
     }
 
-fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = false): MonolithicExpr {
+data class XcfaToMonolithicExprResult(
+  val monolithicExpr: MonolithicExpr,
+  val locVar: VarDecl<*>,
+  val edgeVar: VarDecl<*>,
+  val locMap: Map<XcfaLocation, Int>,
+  val edgeMap: Map<XcfaEdge, Int>,
+)
+
+fun XCFA.toMonolithicExpr(
+  parseContext: ParseContext,
+  initValues: Boolean = false,
+): XcfaToMonolithicExprResult {
   val intType = CInt.getUnsignedInt(parseContext).smtType
 
   fun int(value: Int): Expr<*> =
@@ -77,7 +91,7 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
   Preconditions.checkArgument(
     proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
   )
-  Preconditions.checkArgument(proc.errorLoc.isPresent)
+  //  Preconditions.checkArgument(proc.errorLoc.isPresent)
 
   val locMap = mutableMapOf<XcfaLocation, Int>()
   for ((i, x) in proc.locs.withIndex()) {
@@ -102,7 +116,13 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
           )
         )
       }
-      .toList()
+      .toList() +
+      SequenceStmt.of(
+        listOf(
+          AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
+          AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
+        )
+      )
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
@@ -119,6 +139,7 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
                 it.ref,
                 BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
               )
+            is RatType -> Eq(it.ref, Rat(0, 1))
             is FpType ->
               FpAssign(
                 it.ref as Expr<FpType>,
@@ -134,20 +155,24 @@ fun XCFA.toMonolithicExpr(parseContext: ParseContext, initValues: Boolean = fals
         .let { And(it) }
     else True()
 
-  return MonolithicExpr(
-    initExpr =
-      And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
-    transExpr = And(transUnfold.exprs),
-    propExpr = Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!)),
-    transOffsetIndex = transUnfold.indexing,
-    vars =
-      StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
-        edgeVar +
-        locVar,
-    valToState = { valToState(it) },
-    biValToAction = { val1, val2 -> valToAction(val1, val2) },
-    ctrlVars = listOf(locVar, edgeVar),
-  )
+  val monExpr =
+    MonolithicExpr(
+      initExpr =
+        And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
+      transExpr = And(transUnfold.exprs),
+      propExpr =
+        if (proc.errorLoc.isPresent) Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))
+        else True(),
+      transOffsetIndex = transUnfold.indexing,
+      vars =
+        StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
+          edgeVar +
+          locVar,
+      valToState = { valToState(it) },
+      biValToAction = { val1, val2 -> valToAction(val1, val2) },
+      ctrlVars = listOf(locVar, edgeVar),
+    )
+  return XcfaToMonolithicExprResult(monExpr, locVar, edgeVar, locMap, edgeMap)
 }
 
 fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
@@ -186,11 +211,12 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
     PtrState(
       ExplState.of(
         ImmutableValuation.from(
-          val1
-            .toMap()
-            .filter { it.key.name != "__loc_" && !it.key.name.startsWith("__temp_") }
-            .map { Pair(Decls.Var("_" + "_" + it.key.name, it.key.type), it.value) }
-            .toMap()
+          val1.toMap().filter {
+            it.key.name != "__loc_" &&
+              it.key.name != "__edge_" &&
+              !it.key.name.startsWith("__temp_") &&
+              !it.key.name.startsWith("__saved_")
+          }
         )
       )
     ),

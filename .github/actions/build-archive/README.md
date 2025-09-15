@@ -27,7 +27,7 @@ Minimal necessary packages for Ubuntu 22.04 LTS:
 ├── specification-transformation - binaries for transforming various specifications to reachability (this includes cpachecker, but we do not use it for verification.)
 ├── specification-transformation.LICENSE - license for `specification-transformation`
 ├── theta-smtlib.jar - the jarfile for installing and managing smt solvers (not necessary unless different solver versions are required)
-├── theta-start.sh - the starting script of TOOL_NAME
+├── SCRIPTNAME - the starting script of TOOL_NAME
 └── theta.jar - the main jarfile of TOOL_NAME
 ```
 

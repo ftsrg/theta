@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.delta.collections.impl.MapUniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,8 +36,11 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
     private List<AbstractNextStateDescriptor> operands;
 
-    private Map<Object, IntObjMapView<AbstractNextStateDescriptor>> diagonalCache = HashObjObjMaps.newUpdatableMap();
-    //private IntObjMap<IntObjMapView<AbstractNextStateDescriptor>> offDiagonalCache = HashIntObjMaps.newUpdatableMap();
+    private Map<Object, IntObjMapView<AbstractNextStateDescriptor>> diagonalCache =
+            HashObjObjMaps.newUpdatableMap();
+
+    // private IntObjMap<IntObjMapView<AbstractNextStateDescriptor>> offDiagonalCache =
+    // HashIntObjMaps.newUpdatableMap();
 
     public static OrNextStateDescriptor create(final List<AbstractNextStateDescriptor> operands) {
         final ArrayList<AbstractNextStateDescriptor> ops = new ArrayList<>(operands);
@@ -52,7 +54,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
     }
 
     @Override
-    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(
+            final StateSpaceInfo localStateSpace) {
         class Diagonal implements IntObjMapView<AbstractNextStateDescriptor> {
             private final StateSpaceInfo localStateSpace;
             List<IntObjMapView<AbstractNextStateDescriptor>> diagonals = new ArrayList<>();
@@ -147,34 +150,37 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
             public IntObjCursor<? extends AbstractNextStateDescriptor> cursor() {
                 // TODO: Auto-generated method stub.
                 throw new UnsupportedOperationException("Not (yet) implemented.");
-                //return 0;
+                // return 0;
             }
 
             @Override
             public int size() {
                 // TODO: Auto-generated method stub.
                 throw new UnsupportedOperationException("Not (yet) implemented.");
-                //return 0;
+                // return 0;
             }
         }
         ;
 
-        IntObjMapView<AbstractNextStateDescriptor> ret = diagonalCache.computeIfAbsent(localStateSpace.getTraceInfo(),
-                (o) -> new Diagonal(operands,
-                        localStateSpace));
+        IntObjMapView<AbstractNextStateDescriptor> ret =
+                diagonalCache.computeIfAbsent(
+                        localStateSpace.getTraceInfo(),
+                        (o) -> new Diagonal(operands, localStateSpace));
 
         return ret;
     }
 
     @Override
-    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(final StateSpaceInfo localStateSpace) {
+    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+            final StateSpaceInfo localStateSpace) {
         // TODO: Auto-generated method stub.
         throw new UnsupportedOperationException("Not (yet) implemented.");
-        //return null;
+        // return null;
     }
 
     @Override
     public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        // TODO flatmap to handle hierarchical splitting
         return Optional.of(operands);
     }
 
@@ -210,7 +216,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public Cursor rootCursor() {
-        return RootOrCursor.of(operands.stream().map(AbstractNextStateDescriptor::rootCursor).toList());
+        return RootOrCursor.of(
+                operands.stream().map(AbstractNextStateDescriptor::rootCursor).toList());
     }
 
     public static class RootOrCursor implements AbstractNextStateDescriptor.Cursor {
@@ -253,7 +260,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
 
         @Override
         public Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
-            return OrCursor.of(cursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
+            return OrCursor.of(
+                    cursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
         }
 
         @Override
@@ -265,7 +273,6 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
         public Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
             return Optional.of(cursors);
         }
-
     }
 
     public static class OrCursor implements AbstractNextStateDescriptor.Cursor {
@@ -281,7 +288,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
             this.key = Optional.empty();
         }
 
-        public static AbstractNextStateDescriptor.Cursor of(final List<AbstractNextStateDescriptor.Cursor> cursors) {
+        public static AbstractNextStateDescriptor.Cursor of(
+                final List<AbstractNextStateDescriptor.Cursor> cursors) {
             if (cursors.size() == 1) return cursors.get(0);
             else return new OrCursor(cursors);
         }
@@ -300,7 +308,11 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
             } else if (activeCursors.size() == 1) {
                 ret = activeCursors.get(0).value();
             } else {
-                ret = OrNextStateDescriptor.create(activeCursors.stream().map(AbstractNextStateDescriptor.Cursor::value).toList());
+                ret =
+                        OrNextStateDescriptor.create(
+                                activeCursors.stream()
+                                        .map(AbstractNextStateDescriptor.Cursor::value)
+                                        .toList());
             }
             return ret;
         }
@@ -329,8 +341,10 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         @Override
-        public AbstractNextStateDescriptor.Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
-            return OrCursor.of(activeCursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
+        public AbstractNextStateDescriptor.Cursor valueCursor(
+                int from, StateSpaceInfo localStateSpace) {
+            return OrCursor.of(
+                    activeCursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.Collectors.toList;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.clock.constr.AndConstr;
@@ -27,15 +31,10 @@ import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
 import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
 
 public final class BoundFunc {
 
@@ -52,8 +51,9 @@ public final class BoundFunc {
         varToUpper = builder.varToUpper;
     }
 
-    private BoundFunc(final Map<VarDecl<RatType>, Integer> varToLower,
-                      final Map<VarDecl<RatType>, Integer> varToUpper) {
+    private BoundFunc(
+            final Map<VarDecl<RatType>, Integer> varToLower,
+            final Map<VarDecl<RatType>, Integer> varToUpper) {
         this.varToLower = varToLower;
         this.varToUpper = varToUpper;
     }
@@ -112,11 +112,13 @@ public final class BoundFunc {
         return isLeq(this.varToLower, that.varToLower) && isLeq(this.varToUpper, that.varToUpper);
     }
 
-    private static boolean isLeq(final Map<VarDecl<RatType>, Integer> map1,
-                                 final Map<VarDecl<RatType>, Integer> map2) {
+    private static boolean isLeq(
+            final Map<VarDecl<RatType>, Integer> map1, final Map<VarDecl<RatType>, Integer> map2) {
         return map1.entrySet().stream()
                 .allMatch(
-                        e1 -> map2.containsKey(e1.getKey()) && e1.getValue() <= map2.get(e1.getKey()));
+                        e1 ->
+                                map2.containsKey(e1.getKey())
+                                        && e1.getValue() <= map2.get(e1.getKey()));
     }
 
     @Override
@@ -137,8 +139,8 @@ public final class BoundFunc {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final BoundFunc that = (BoundFunc) obj;
-            return this.varToLower.equals(that.varToLower) && this.varToUpper.equals(
-                    that.varToUpper);
+            return this.varToLower.equals(that.varToLower)
+                    && this.varToUpper.equals(that.varToUpper);
         } else {
             return false;
         }
@@ -146,18 +148,26 @@ public final class BoundFunc {
 
     @Override
     public String toString() {
-        final String lowerToString = Utils.lispStringBuilder("L").addAll(
-                        varToLower.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
-                                .collect(toList()))
-                .toString();
+        final String lowerToString =
+                Utils.lispStringBuilder("L")
+                        .addAll(
+                                varToLower.entrySet().stream()
+                                        .map(e -> e.getKey().getName() + " <- " + e.getValue())
+                                        .collect(toList()))
+                        .toString();
 
-        final String UpperToString = Utils.lispStringBuilder("U").addAll(
-                        varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
-                                .collect(toList()))
-                .toString();
+        final String UpperToString =
+                Utils.lispStringBuilder("U")
+                        .addAll(
+                                varToUpper.entrySet().stream()
+                                        .map(e -> e.getKey().getName() + " <- " + e.getValue())
+                                        .collect(toList()))
+                        .toString();
 
-        return Utils.lispStringBuilder(this.getClass().getSimpleName()).add(lowerToString)
-                .add(UpperToString).toString();
+        return Utils.lispStringBuilder(this.getClass().getSimpleName())
+                .add(lowerToString)
+                .add(UpperToString)
+                .toString();
     }
 
     public static final class Builder {
@@ -205,13 +215,13 @@ public final class BoundFunc {
         }
     }
 
-    private static final class BoundFunctionVarConstrVisitor extends
-            FailClockConstrVisitor<Builder, Void> {
+    private static final class BoundFunctionVarConstrVisitor
+            extends FailClockConstrVisitor<Builder, Void> {
 
-        private static final BoundFunctionVarConstrVisitor INSTANCE = new BoundFunctionVarConstrVisitor();
+        private static final BoundFunctionVarConstrVisitor INSTANCE =
+                new BoundFunctionVarConstrVisitor();
 
-        private BoundFunctionVarConstrVisitor() {
-        }
+        private BoundFunctionVarConstrVisitor() {}
 
         @Override
         public Void visit(final UnitLtConstr constr, final Builder builder) {
@@ -260,5 +270,4 @@ public final class BoundFunc {
             return null;
         }
     }
-
 }

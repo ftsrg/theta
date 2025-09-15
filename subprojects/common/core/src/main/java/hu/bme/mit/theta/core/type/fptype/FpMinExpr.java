@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.utils.FpUtils;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public class FpMinExpr extends BinaryExpr<FpType, FpType> {
 
@@ -86,8 +86,8 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpMinExpr that = (FpMinExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                    .equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp())
+                    && this.getRightOp().equals(that.getRightOp());
         } else {
             return false;
         }
@@ -105,4 +105,3 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
         }
     }
 }
- 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,29 +15,33 @@
  */
 package hu.bme.mit.theta.analysis.multi.stmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.multi.MultiAction;
 import hu.bme.mit.theta.core.stmt.Stmt;
-
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-public final class StmtMultiAction<L extends StmtAction, R extends StmtAction> extends StmtAction implements MultiAction<L, R> {
+public final class StmtMultiAction<L extends StmtAction, R extends StmtAction> extends StmtAction
+        implements MultiAction<L, R> {
     private final L leftAction;
     private final R rightAction;
 
     private StmtMultiAction(L lAction, R rAction) {
-        checkArgument((lAction != null && rAction == null) || (rAction != null && lAction == null), "One of the actions should be null while the other not");
+        checkArgument(
+                (lAction != null && rAction == null) || (rAction != null && lAction == null),
+                "One of the actions should be null while the other not");
         leftAction = lAction;
         rightAction = rAction;
     }
 
-    public static <L extends StmtAction, R extends StmtAction> StmtMultiAction<L, R> ofLeftStmtAction(L action) {
+    public static <L extends StmtAction, R extends StmtAction>
+            StmtMultiAction<L, R> ofLeftStmtAction(L action) {
         return new StmtMultiAction<>(action, null);
     }
 
-    public static <L extends StmtAction, R extends StmtAction> StmtMultiAction<L, R> ofRightStmtAction(R action) {
+    public static <L extends StmtAction, R extends StmtAction>
+            StmtMultiAction<L, R> ofRightStmtAction(R action) {
         return new StmtMultiAction<>(null, action);
     }
 
@@ -47,10 +51,12 @@ public final class StmtMultiAction<L extends StmtAction, R extends StmtAction> e
 
     @Override
     public String toString() {
-        return "ExprMultiAction{" +
-                "leftAction=" + leftAction +
-                ", rightAction=" + rightAction +
-                '}';
+        return "ExprMultiAction{"
+                + "leftAction="
+                + leftAction
+                + ", rightAction="
+                + rightAction
+                + '}';
     }
 
     @Override

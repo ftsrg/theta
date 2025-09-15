@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -27,10 +29,7 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
-
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class SmtLibValuation extends Valuation {
 
@@ -45,8 +44,8 @@ public final class SmtLibValuation extends Valuation {
     public SmtLibValuation(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibModel model
-    ) {
+            final SmtLibTermTransformer termTransformer,
+            final SmtLibModel model) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -82,7 +81,8 @@ public final class SmtLibValuation extends Valuation {
             }
         }
 
-        @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+        @SuppressWarnings("unchecked")
+        final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
         return Optional.ofNullable(tVal);
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package hu.bme.mit.theta.common.visualization;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.container.Containers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -94,8 +92,8 @@ public final class Graph {
      * @param targetId
      * @param attributes
      */
-    public void addEdge(final String sourceId, final String targetId,
-                        final EdgeAttributes attributes) {
+    public void addEdge(
+            final String sourceId, final String targetId, final EdgeAttributes attributes) {
         checkArgument(nodes.containsKey(sourceId), "Source node does not exist!");
         checkArgument(nodes.containsKey(targetId), "Target node does not exist!");
         final Node source = nodes.get(sourceId);

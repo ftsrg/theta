@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,25 +24,28 @@ import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 
 final class DataStrategies {
 
-    private DataStrategies() {
-    }
+    private DataStrategies() {}
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<ExplState, S>>, ExplState> createExplStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<ExplState, S>>, ExplState> createExplStrategy(
+                    final XtaSystem system) {
         return new ExplStrategy<>(system, createLeftLens());
     }
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<ItpExplState, S>>, ItpExplState> createFwItpStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<ItpExplState, S>>, ItpExplState>
+                    createFwItpStrategy(final XtaSystem system) {
         return new FwItpExplStrategy<>(system, createLeftLens());
     }
 
-    public static <S extends State> AlgorithmStrategy<XtaState<Prod2State<ItpExplState, S>>, ItpExplState> createBwItpStrategy(
-            final XtaSystem system) {
+    public static <S extends State>
+            AlgorithmStrategy<XtaState<Prod2State<ItpExplState, S>>, ItpExplState>
+                    createBwItpStrategy(final XtaSystem system) {
         return new BwItpExplStrategy<>(system, createLeftLens());
     }
 
-    private static <S1 extends State, S2 extends State> Lens<XtaState<Prod2State<S1, S2>>, S1> createLeftLens() {
+    private static <S1 extends State, S2 extends State>
+            Lens<XtaState<Prod2State<S1, S2>>, S1> createLeftLens() {
         return new Lens<XtaState<Prod2State<S1, S2>>, S1>() {
             @Override
             public S1 get(final XtaState<Prod2State<S1, S2>> state) {
@@ -50,8 +53,8 @@ final class DataStrategies {
             }
 
             @Override
-            public XtaState<Prod2State<S1, S2>> set(final XtaState<Prod2State<S1, S2>> state,
-                                                    final S1 s1) {
+            public XtaState<Prod2State<S1, S2>> set(
+                    final XtaState<Prod2State<S1, S2>> state, final S1 s1) {
                 final Prod2State<S1, S2> prodState = state.getState();
                 final Prod2State<S1, S2> newProdState = prodState.with1(s1);
                 final XtaState<Prod2State<S1, S2>> newState = state.withState(newProdState);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpMarkerTree;
 import hu.bme.mit.theta.solver.ItpPattern;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
-public class JavaSMTItpPattern implements ItpPattern.Binary<JavaSMTItpMarker>,
-        ItpPattern.Sequence<JavaSMTItpMarker>, ItpPattern.Tree<JavaSMTItpMarker> {
+public class JavaSMTItpPattern
+        implements ItpPattern.Binary<JavaSMTItpMarker>,
+                ItpPattern.Sequence<JavaSMTItpMarker>,
+                ItpPattern.Tree<JavaSMTItpMarker> {
 
     final ItpMarkerTree<JavaSMTItpMarker> markerTree;
 
@@ -89,11 +90,10 @@ public class JavaSMTItpPattern implements ItpPattern.Binary<JavaSMTItpMarker>,
     }
 
     private boolean isBinary() {
-        return
-                markerTree != null &&
-                        markerTree.getChildrenNumber() == 1 &&
-                        markerTree.getChild(0) != null &&
-                        markerTree.getChild(0).getChildrenNumber() == 0;
+        return markerTree != null
+                && markerTree.getChildrenNumber() == 1
+                && markerTree.getChild(0) != null
+                && markerTree.getChild(0).getChildrenNumber() == 0;
     }
 
     private boolean isSequence() {

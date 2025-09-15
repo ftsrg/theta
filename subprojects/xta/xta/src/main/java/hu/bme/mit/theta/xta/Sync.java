@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.xta;
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.zip;
 import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
 import static hu.bme.mit.theta.xta.Sync.Kind.RECV;
+
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import java.util.List;
 
 public final class Sync {
 
@@ -35,7 +34,8 @@ public final class Sync {
     private volatile int hashCode = 0;
 
     public enum Kind {
-        EMIT, RECV
+        EMIT,
+        RECV
     }
 
     private final Label label;
@@ -99,8 +99,9 @@ public final class Sync {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final Sync that = (Sync) obj;
-            return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(
-                    that.args);
+            return this.label.equals(that.label)
+                    && this.kind.equals(that.kind)
+                    && this.args.equals(that.args);
         } else {
             return false;
         }
@@ -108,8 +109,9 @@ public final class Sync {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args)
+        return Utils.lispStringBuilder(label.getName())
+                .add(kind == EMIT ? "!" : "?")
+                .addAll(args)
                 .toString();
     }
-
 }

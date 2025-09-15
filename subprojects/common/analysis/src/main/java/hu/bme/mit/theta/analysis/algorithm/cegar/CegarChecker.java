@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;
+
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);

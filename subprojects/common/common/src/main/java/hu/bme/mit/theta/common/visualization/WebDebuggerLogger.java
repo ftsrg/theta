@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,7 @@ public class WebDebuggerLogger {
     private final ArrayList<String> traces = new ArrayList<String>();
     private String title = "Cfa";
 
-    private WebDebuggerLogger() {
-    }
+    private WebDebuggerLogger() {}
 
     public static void enableWebDebuggerLogger() {
         enabled = true;
@@ -47,7 +46,11 @@ public class WebDebuggerLogger {
     public void addIteration(int iteration, String arg, String prec) {
         if (enabled) {
             StringBuilder sb = new StringBuilder();
-            sb.append("{").append(System.lineSeparator()).append("\"iteration\": ").append(iteration).append(",");
+            sb.append("{")
+                    .append(System.lineSeparator())
+                    .append("\"iteration\": ")
+                    .append(iteration)
+                    .append(",");
             sb.append("\"arg\": ").append(arg).append(",");
             sb.append("\"precision\": \"").append(prec).append("\"");
             sb.append("}");
@@ -63,7 +66,10 @@ public class WebDebuggerLogger {
         StringBuilder sb = new StringBuilder();
         sb.append("{").append(System.lineSeparator());
         sb.append("\"title\": \"").append(title).append("\",").append(System.lineSeparator());
-        sb.append("\"date\": \"").append(java.time.LocalDateTime.now()).append("\",").append(System.lineSeparator());
+        sb.append("\"date\": \"")
+                .append(java.time.LocalDateTime.now())
+                .append("\",")
+                .append(System.lineSeparator());
         sb.append("\"iterations\": [");
         for (String iteration : iterations) {
             sb.append(iteration).append(",");

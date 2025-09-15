@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
@@ -34,6 +31,8 @@ import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.CommitContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.StateDeclContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.UrgentContext;
+import java.util.Collection;
+import java.util.Collections;
 
 final class XtaStateSymbol implements Symbol {
 
@@ -41,13 +40,17 @@ final class XtaStateSymbol implements Symbol {
     private final LocKind kind;
     private final XtaExpression expression;
 
-    public XtaStateSymbol(final XtaProcessSymbol scope, final StateDeclContext context,
-                          final UrgentContext urgent,
-                          final CommitContext commit) {
+    public XtaStateSymbol(
+            final XtaProcessSymbol scope,
+            final StateDeclContext context,
+            final UrgentContext urgent,
+            final CommitContext commit) {
         checkNotNull(context);
         name = context.fId.getText();
-        kind = isCommited(name, commit) ? LocKind.COMMITTED
-                : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
+        kind =
+                isCommited(name, commit)
+                        ? LocKind.COMMITTED
+                        : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
         expression =
                 context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
     }
@@ -58,7 +61,6 @@ final class XtaStateSymbol implements Symbol {
         } else {
             return urgent.fStateList.fIds.stream().anyMatch(id -> id.getText().equals(name));
         }
-
     }
 
     private static boolean isCommited(final String name, final CommitContext commit) {
@@ -88,5 +90,4 @@ final class XtaStateSymbol implements Symbol {
         final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);
         return loc;
     }
-
 }

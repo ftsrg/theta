@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverBase;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.UCSolver;
-import org.sosy_lab.common.configuration.InvalidConfigurationException;
-import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import org.sosy_lab.common.configuration.InvalidConfigurationException;
+import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 
 public final class JavaSMTSolverManager extends SolverManager {
 
@@ -38,8 +37,7 @@ public final class JavaSMTSolverManager extends SolverManager {
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
 
-    private JavaSMTSolverManager() {
-    }
+    private JavaSMTSolverManager() {}
 
     public static JavaSMTSolverManager create() {
         return new JavaSMTSolverManager();
@@ -57,7 +55,8 @@ public final class JavaSMTSolverManager extends SolverManager {
         final var solverName = matcher.group(1);
         final var solver = Solvers.valueOf(solverName);
 
-        return new ManagedFactory(JavaSMTSolverFactory.create(solver, new String[]{"--nonLinearArithmetic=USE"}));
+        return new ManagedFactory(
+                JavaSMTSolverFactory.create(solver, new String[] {"--nonLinearArithmetic=USE"}));
     }
 
     @Override

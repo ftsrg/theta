@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.xta.analysis.zone;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
 
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
@@ -30,20 +33,15 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BroadcastXtaAction;
-
 import java.util.Collection;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
-
 public final class XtaZoneUtils {
 
-    private XtaZoneUtils() {
-    }
+    private XtaZoneUtils() {}
 
-    public static ZoneState post(final ZoneState state, final XtaAction action,
-                                 final ZonePrec prec) {
+    public static ZoneState post(
+            final ZoneState state, final XtaAction action, final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -59,8 +57,8 @@ public final class XtaZoneUtils {
         }
     }
 
-    private static ZoneState postForBasicAction(final ZoneState state, final BasicXtaAction action,
-                                                final ZonePrec prec) {
+    private static ZoneState postForBasicAction(
+            final ZoneState state, final BasicXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -79,9 +77,8 @@ public final class XtaZoneUtils {
         return succState;
     }
 
-    private static ZoneState postForBinaryAction(final ZoneState state,
-                                                 final BinaryXtaAction action,
-                                                 final ZonePrec prec) {
+    private static ZoneState postForBinaryAction(
+            final ZoneState state, final BinaryXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -104,9 +101,8 @@ public final class XtaZoneUtils {
         return succState;
     }
 
-    private static ZoneState postForBroadcastAction(final ZoneState state,
-                                                    final BroadcastXtaAction action,
-                                                    final ZonePrec prec) {
+    private static ZoneState postForBroadcastAction(
+            final ZoneState state, final BroadcastXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -120,13 +116,15 @@ public final class XtaZoneUtils {
 
         if (recvEdges.stream().anyMatch(XtaZoneUtils::hasClockGuards)) {
             throw new UnsupportedOperationException(
-                    "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not"
+                            + " supported.");
         }
 
         if (nonRecvEdgeCols.stream()
                 .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
             throw new UnsupportedOperationException(
-                    "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not"
+                            + " supported.");
         }
 
         applyUpdates(succStateBuilder, emitEdge);
@@ -147,8 +145,8 @@ public final class XtaZoneUtils {
 
     ////
 
-    public static ZoneState pre(final ZoneState state, final XtaAction action,
-                                final ZonePrec prec) {
+    public static ZoneState pre(
+            final ZoneState state, final XtaAction action, final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -164,8 +162,8 @@ public final class XtaZoneUtils {
         }
     }
 
-    private static ZoneState preForBasicAction(final ZoneState state, final BasicXtaAction action,
-                                               final ZonePrec prec) {
+    private static ZoneState preForBasicAction(
+            final ZoneState state, final BasicXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -184,8 +182,8 @@ public final class XtaZoneUtils {
         return preState;
     }
 
-    private static ZoneState preForBinaryAction(final ZoneState state, final BinaryXtaAction action,
-                                                final ZonePrec prec) {
+    private static ZoneState preForBinaryAction(
+            final ZoneState state, final BinaryXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -207,9 +205,8 @@ public final class XtaZoneUtils {
         return succState;
     }
 
-    private static ZoneState preForBroadcastAction(final ZoneState state,
-                                                   final BroadcastXtaAction action,
-                                                   final ZonePrec prec) {
+    private static ZoneState preForBroadcastAction(
+            final ZoneState state, final BroadcastXtaAction action, final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -229,12 +226,14 @@ public final class XtaZoneUtils {
         if (nonRecvEdgeCols.stream()
                 .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
             throw new UnsupportedOperationException(
-                    "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not"
+                            + " supported.");
         }
 
         if (reverseRecvEdges.stream().anyMatch(XtaZoneUtils::hasClockGuards)) {
             throw new UnsupportedOperationException(
-                    "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not"
+                            + " supported.");
         }
 
         applyGuards(preStateBuilder, emitEdge);
@@ -260,8 +259,8 @@ public final class XtaZoneUtils {
         builder.nonnegative();
     }
 
-    private static void applyInvariants(final ZoneState.Builder builder,
-                                        final Collection<Loc> locs) {
+    private static void applyInvariants(
+            final ZoneState.Builder builder, final Collection<Loc> locs) {
         for (final Loc target : locs) {
             for (final Guard invar : target.getInvars()) {
                 if (invar.isClockGuard()) {
@@ -301,5 +300,4 @@ public final class XtaZoneUtils {
             }
         }
     }
-
 }

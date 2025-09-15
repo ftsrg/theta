@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,25 +21,24 @@ import hu.bme.mit.theta.solver.ItpSolver;
 
 public final class ExprTraceCombinedCheckers {
 
-    private ExprTraceCombinedCheckers() {
-    }
+    private ExprTraceCombinedCheckers() {}
 
-    public static ExprTraceChecker<ItpRefutation> createBwFwMinPrune(final Expr<BoolType> init,
-                                                                     final Expr<BoolType> target, final ItpSolver solver) {
-        final ExprTraceBwBinItpChecker bwChecker = ExprTraceBwBinItpChecker.create(init, target,
-                solver);
-        final ExprTraceFwBinItpChecker fwChecker = ExprTraceFwBinItpChecker.create(init, target,
-                solver);
+    public static ExprTraceChecker<ItpRefutation> createBwFwMinPrune(
+            final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
+        final ExprTraceBwBinItpChecker bwChecker =
+                ExprTraceBwBinItpChecker.create(init, target, solver);
+        final ExprTraceFwBinItpChecker fwChecker =
+                ExprTraceFwBinItpChecker.create(init, target, solver);
         final ExprTraceStatusMerger<ItpRefutation> merger = ExprTraceStatusMergers.minPruneIndex();
         return ExprTraceCombinedChecker.create(bwChecker, fwChecker, merger);
     }
 
-    public static ExprTraceChecker<ItpRefutation> createBwFwMaxPrune(final Expr<BoolType> init,
-                                                                     final Expr<BoolType> target, final ItpSolver solver) {
-        final ExprTraceBwBinItpChecker bwChecker = ExprTraceBwBinItpChecker.create(init, target,
-                solver);
-        final ExprTraceFwBinItpChecker fwChecker = ExprTraceFwBinItpChecker.create(init, target,
-                solver);
+    public static ExprTraceChecker<ItpRefutation> createBwFwMaxPrune(
+            final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
+        final ExprTraceBwBinItpChecker bwChecker =
+                ExprTraceBwBinItpChecker.create(init, target, solver);
+        final ExprTraceFwBinItpChecker fwChecker =
+                ExprTraceFwBinItpChecker.create(init, target, solver);
         final ExprTraceStatusMerger<ItpRefutation> merger = ExprTraceStatusMergers.maxPruneIndex();
         return ExprTraceCombinedChecker.create(bwChecker, fwChecker, merger);
     }

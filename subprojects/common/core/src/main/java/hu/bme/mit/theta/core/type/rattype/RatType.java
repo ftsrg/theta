@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,14 +23,16 @@ import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 
 public final class RatType
-        implements Additive<RatType>, Multiplicative<RatType>, Equational<RatType>, Ordered<RatType> {
+        implements Additive<RatType>,
+                Multiplicative<RatType>,
+                Equational<RatType>,
+                Ordered<RatType> {
 
     private static final RatType INSTANCE = new RatType();
     private static final int HASH_SEED = 385863;
     private static final String TYPE_LABEL = "Rat";
 
-    private RatType() {
-    }
+    private RatType() {}
 
     public static RatType getInstance() {
         return INSTANCE;

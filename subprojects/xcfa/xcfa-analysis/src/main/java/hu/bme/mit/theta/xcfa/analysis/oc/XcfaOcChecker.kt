@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
@@ -60,15 +61,19 @@ private val Expr<*>.vars
 class XcfaOcChecker(
   xcfa: XCFA,
   decisionProcedure: OcDecisionProcedureType,
+  smtSolver: String,
   private val logger: Logger,
   conflictInput: String?,
   private val outputConflictClauses: Boolean,
   nonPermissiveValidation: Boolean,
-  private val autoConflictConfig: AutoConflictFinderConfig,
+  autoConflictConfig: AutoConflictFinderConfig,
+  autoConflictBound: Int,
+  private val memoryModel: XcfaOcMemoryConsistencyModel = SC,
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+  private val autoConflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
@@ -78,55 +83,49 @@ class XcfaOcChecker(
   private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
   private val violations = mutableListOf<Violation>() // OR!
   private val branchingConditions = mutableListOf<Expr<BoolType>>()
-  private val pos = mutableListOf<R>()
+  private val pos = mutableListOf<R>() // not transitively closed!
   private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
-  private val wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
+  private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
   private val ocChecker: OcChecker<E> =
-    if (conflictInput == null) decisionProcedure.checker()
-    else
-      XcfaOcCorrectnessValidator(
-        decisionProcedure,
-        conflictInput,
-        threads,
-        !nonPermissiveValidation,
-        logger,
-      )
+    decisionProcedure.checker(smtSolver, memoryModel).let { ocChecker ->
+      if (conflictInput == null) ocChecker
+      else XcfaOcCorrectnessValidator(ocChecker, conflictInput, !nonPermissiveValidation, logger)
+    }
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
         if (xcfa.initProcedures.size > 1) exit("multiple entry points")
 
-        logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
+        logger.mainStep("Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
         addCrossThreadRelations()
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
+        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
 
         // "Manually" add some conflicts
-        logger.writeln(
-          Logger.Level.INFO,
+        logger.info(
           "Auto conflict time (ms): " +
             measureTime {
-                val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig, logger)
+                val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
                 ocChecker.solver.add(conflicts.map { Not(it.expr) })
-                logger.writeln(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}")
+                logger.info("Auto conflicts: ${conflicts.size}")
               }
-              .inWholeMilliseconds,
+              .inWholeMilliseconds
         )
 
-        logger.writeln(Logger.Level.MAINSTEP, "Start checking...")
+        logger.mainStep("Start checking...")
         val status: SolverStatus?
-        val checkerTime = measureTime { status = ocChecker.check(events, pos, rfs, wss) }
+        val checkerTime = measureTime {
+          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
+        }
         if (ocChecker !is XcfaOcCorrectnessValidator)
-          logger.writeln(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}")
-        logger.writeln(
-          Logger.Level.INFO,
-          "Propagated clauses: ${ocChecker.getPropagatedClauses().size}",
-        )
+          logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
         ocChecker.solver.statistics.let {
-          logger.writeln(Logger.Level.INFO, "Solver statistics:")
-          it.forEach { (k, v) -> logger.writeln(Logger.Level.INFO, "$k: $v") }
+          logger.info("Solver statistics:")
+          it.forEach { (k, v) -> logger.info("$k: $v") }
         }
         when {
           status?.isUnsat == true -> {
@@ -144,22 +143,23 @@ class XcfaOcChecker(
           status?.isSat == true -> {
             if (ocChecker is XcfaOcCorrectnessValidator)
               return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-            val trace =
-              XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-            SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+            if (memoryModel == SC) {
+              val trace =
+                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+            } else {
+              SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
+            }
           }
 
           else -> SafetyResult.unknown()
         }
       }
       .also {
-        logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it")
+        logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
-          logger.writeln(
-            Logger.Level.MAINSTEP,
-            "Incomplete loop unroll used: safe result is unreliable.",
-          )
-          logger.writeln(Logger.Level.RESULT, SafetyResult.unknown<EmptyProof, Cex>().toString())
+          logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+          logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }

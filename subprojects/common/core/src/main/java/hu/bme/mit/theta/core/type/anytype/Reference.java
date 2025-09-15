@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.type.anytype;
+
+import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -22,11 +23,8 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-
 import java.util.List;
 import java.util.Objects;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public final class Reference<A extends Type, T extends Type> implements Expr<A> {
 
@@ -71,7 +69,10 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
     @Override
     public Expr<A> withOps(List<? extends Expr<?>> ops) {
         checkState(ops.size() == 1);
-        checkState(ops.get(0) instanceof RefExpr<?> && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>, "Don't transform references to constants.");
+        checkState(
+                ops.get(0) instanceof RefExpr<?>
+                        && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>,
+                "Don't transform references to constants.");
         return Reference.of((Expr<T>) ops.get(0), type);
     }
 
@@ -83,15 +84,13 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Reference<?, ?> that) {
-            return Objects.equals(this.expr, that.expr) &&
-                    Objects.equals(this.type, that.type);
+            return Objects.equals(this.expr, that.expr) && Objects.equals(this.type, that.type);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getExpr()).add(type)
-                .toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getExpr()).add(type).toString();
     }
 }

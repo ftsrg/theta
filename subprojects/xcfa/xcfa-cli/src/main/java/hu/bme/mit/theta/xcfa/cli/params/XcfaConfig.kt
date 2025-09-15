@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
 
@@ -139,6 +141,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.JSON -> null
         InputType.DSL -> null
         InputType.LITMUS -> null
+        InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
       }
   }
@@ -162,7 +165,9 @@ data class CHCFrontendConfig(
     names = ["--chc-transformation"],
     description = "Direction of transformation from CHC to XCFA",
   )
-  var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO
+  var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
+  @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
+  var model: Boolean = false,
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config
@@ -180,6 +185,11 @@ data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
   @Parameter(
+    names = ["--parse-in-process"],
+    description = "Parse input in process instead of passing intermediate",
+  )
+  var parseInProcess: Boolean = false,
+  @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
   )
@@ -191,6 +201,20 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
+        Backend.BMC ->
+          BoundedConfig(
+            indConfig = InductionConfig(disable = true),
+            itpConfig = InterpolationConfig(disable = true),
+          )
+            as T
+        Backend.KIND -> BoundedConfig(itpConfig = InterpolationConfig(disable = true)) as T
+        Backend.IMC ->
+          BoundedConfig(
+            bmcConfig = BMCConfig(disable = true),
+            indConfig = InductionConfig(disable = true),
+          )
+            as T
+        Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
@@ -198,7 +222,9 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
+        Backend.LASSO_VALIDATION -> LassoValidationConfig() as T
         Backend.NONE -> null
+        Backend.IC3 -> Ic3Config() as T
       }
   }
 }
@@ -291,6 +317,23 @@ data class HornConfig(
       "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
   )
   var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--ranking-function-constraint"],
+    description = "What relation to use for the ranking function.",
+  )
+  var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
+) : SpecBackendConfig
+
+data class LassoValidationConfig(
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
+  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(
@@ -390,6 +433,15 @@ data class OcConfig(
     description = "Level of manual conflict detection before verification",
   )
   var autoConflict: AutoConflictFinderConfig = AutoConflictFinderConfig.NONE,
+  @Parameter(
+    names = ["--auto-conflict-bound"],
+    description = "Number of non-trivial happens-before edges for auto conflict detection",
+  )
+  var autoConflictBound: Int = -1,
+  @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
+  var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
+  @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
+  var smtSolver: String = "Z3:4.13",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
@@ -411,6 +463,23 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
+  var reversed: Boolean = false,
+  @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var cegar: Boolean = false,
+  @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
+  var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+data class Ic3Config(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

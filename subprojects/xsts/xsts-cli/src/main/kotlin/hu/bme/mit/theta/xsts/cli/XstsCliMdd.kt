@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,20 +19,23 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 class XstsCliMdd :
-  XstsCliBaseCommand(
+  XstsCliMonolithicBaseCommand(
     name = "MDD",
     help = "Model checking of XSTS using MDDs (Multi-value Decision Diagrams)",
   ) {
@@ -42,8 +45,15 @@ class XstsCliMdd :
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
 
-  private fun printResult(status: SafetyResult<MddProof, MddCex>, xsts: XSTS, totalTimeMs: Long) {
-    if (!outputOptions.benchmarkMode) return
+  private fun printResult(
+    status: SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>,
+    xsts: XSTS,
+    totalTimeMs: Long,
+  ) {
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     val stats = status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0)) as MddAnalysisStatistics
     listOf(
@@ -70,13 +80,32 @@ class XstsCliMdd :
     registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
+    val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val result =
-      SolverPool(solverFactory).use {
-        val checker = XstsMddChecker.create(xsts, it, logger, iterationStrategy)
+      SolverPool(solverFactory).use { solverPool ->
+        val checker =
+          wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
+            MddChecker.create(
+              it,
+              it.vars,
+              solverPool,
+              logger,
+              MddChecker.IterationStrategy.GSAT,
+              it.valToState,
+              it.biValToAction,
+              !reversed,
+              10,
+            )
+          }
         checker.check(null)
       }
     sw.stop()
-    printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    printResult(
+      result as SafetyResult<MddProof, Trace<XstsState<ExplState>, XstsAction>>,
+      xsts,
+      sw.elapsed(TimeUnit.MILLISECONDS),
+    )
+    writeCex(result, xsts)
   }
 }

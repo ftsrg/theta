@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,11 +42,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import kotlin.Pair;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -75,13 +71,16 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
     public Object visitFun_decl(CHCParser.Fun_declContext ctx) {
         String name = ctx.symbol().getText();
         if (ctx.symbol().quotedSymbol() != null) name = name.replaceAll("\\|", "");
-        XcfaProcedureBuilder builder = createProcedure(name);
+        var paramList = new LinkedList<VarDecl<?>>();
+        XcfaProcedureBuilder builder = createProcedure(name, paramList);
 
         int i = 0;
         for (CHCParser.SortContext sort : ctx.sort()) {
             String varName = name + "_" + i++;
             Type type = transformSort(sort);
-            builder.addParam(Decls.Var(varName, type), ParamDirection.IN);
+            VarDecl<Type> var = Decls.Var(varName, type);
+            builder.addParam(var, ParamDirection.IN);
+            paramList.add(var);
             transformConst(Decls.Const(varName, type), true);
         }
 
@@ -95,7 +94,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
         XcfaProcedureBuilder procedure;
         if (ctx.chc_tail() != null) {
             procedure = procedures.get(ctx.chc_head().u_pred_atom().u_predicate().getText());
-            Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl());
+            Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl(), false);
             int i = 0;
             for (Pair<VarDecl<?>, ParamDirection> param : procedure.getParams()) {
                 if (param.getSecond() != ParamDirection.OUT)
@@ -137,10 +136,10 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
     @Override
     public Object visitChc_query(CHCParser.Chc_queryContext ctx) {
-        XcfaProcedureBuilder mainProcedure = createProcedure("query");
+        XcfaProcedureBuilder mainProcedure = createProcedure("query", Collections.emptyList());
         xcfaBuilder.addEntryPoint(mainProcedure, new ArrayList<>());
 
-        Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl());
+        Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl(), false);
         XcfaLocation middle = createLocation(mainProcedure);
         XcfaEdge edge =
                 new XcfaEdge(
@@ -166,11 +165,13 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
         return location;
     }
 
-    private XcfaProcedureBuilder createProcedure(String procName) {
+    private XcfaProcedureBuilder createProcedure(String procName, List<VarDecl<?>> paramList) {
         XcfaProcedureBuilder builder = new XcfaProcedureBuilder(procName, procedurePassManager);
         builder.setName(procName);
         builder.addParam(Decls.Var(procName + "_ret", Bool()), ParamDirection.OUT);
 
+        //        builder.createInitLoc(new ChcMetadata(procName, paramList, true)); TODO: figure
+        // out how to get model out of ARG.
         builder.createInitLoc();
         builder.createErrorLoc();
         builder.createFinalLoc();

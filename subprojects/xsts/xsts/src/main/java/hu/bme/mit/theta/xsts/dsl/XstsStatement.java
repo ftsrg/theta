@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,21 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
+import static com.google.common.base.Preconditions.*;
+import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParseException;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
-import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -31,16 +38,8 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.*;
-import static hu.bme.mit.theta.core.stmt.Stmts.*;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class XstsStatement {
 
@@ -48,8 +47,8 @@ public class XstsStatement {
     private final SymbolTable typeTable;
     private final StmtContext context;
 
-    public XstsStatement(final DynamicScope scope, final SymbolTable typeTable,
-                         final StmtContext context) {
+    public XstsStatement(
+            final DynamicScope scope, final SymbolTable typeTable, final StmtContext context) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
@@ -71,8 +70,8 @@ public class XstsStatement {
         private final SymbolTable typeTable;
         private final Env env;
 
-        public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable,
-                                  final Env env) {
+        public StmtCreatorVisitor(
+                final DynamicScope scope, final SymbolTable typeTable, final Env env) {
             this.currentScope = checkNotNull(scope);
             this.typeTable = checkNotNull(typeTable);
             this.env = checkNotNull(env);
@@ -84,8 +83,8 @@ public class XstsStatement {
         }
 
         private void pop() {
-            checkState(currentScope.enclosingScope().isPresent(),
-                    "Enclosing scope is not present.");
+            checkState(
+                    currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
             currentScope = currentScope.enclosingScope().get();
             env.pop();
         }
@@ -116,23 +115,28 @@ public class XstsStatement {
 
                 if (var.getType() instanceof EnumType enumType) {
                     env.push();
-                    enumType.getValues().forEach(literal -> CustomTypeDeclarationUtil.declareTypeWithShortName(currentScope, enumType, literal, env));
+                    enumType.getValues()
+                            .forEach(
+                                    literal ->
+                                            CustomTypeDeclarationUtil.declareTypeWithShortName(
+                                                    currentScope, enumType, literal, env));
                 }
-                final XstsExpression expression = new XstsExpression(currentScope, typeTable,
-                        ctx.value);
+                final XstsExpression expression =
+                        new XstsExpression(currentScope, typeTable, ctx.value);
                 final Expr<?> expr = expression.instantiate(env);
-                if (var.getType() instanceof EnumType)
-                    env.pop();
+                if (var.getType() instanceof EnumType) env.pop();
                 if (expr.getType().equals(var.getType())) {
-                    @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
-                    @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
+                    @SuppressWarnings("unchecked")
+                    final VarDecl<Type> tVar = (VarDecl<Type>) var;
+                    @SuppressWarnings("unchecked")
+                    final Expr<Type> tExpr = (Expr<Type>) expr;
                     return Assign(tVar, tExpr);
                 } else {
                     throw new IllegalArgumentException(
                             "Type of " + var + " is incompatilbe with " + expr);
                 }
             } catch (Exception e) {
-                throw new ParseException(ctx, e.getMessage());
+                throw new ParseException(ctx, e.getMessage(), e);
             }
         }
 
@@ -160,11 +164,13 @@ public class XstsStatement {
                 final XstsExpression value = new XstsExpression(currentScope, typeTable, ctx.value);
                 final Expr<?> valueExpr = value.instantiate(env);
 
-                final Expr<?> arrayWriteExpr = createArrayWriteExpr(var.getRef(), indexExpr,
-                        valueExpr);
+                final Expr<?> arrayWriteExpr =
+                        createArrayWriteExpr(var.getRef(), indexExpr, valueExpr);
                 if (arrayWriteExpr.getType().equals(var.getType())) {
-                    @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
-                    @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) arrayWriteExpr;
+                    @SuppressWarnings("unchecked")
+                    final VarDecl<Type> tVar = (VarDecl<Type>) var;
+                    @SuppressWarnings("unchecked")
+                    final Expr<Type> tExpr = (Expr<Type>) arrayWriteExpr;
                     return Assign(tVar, tExpr);
                 } else {
                     throw new IllegalArgumentException(
@@ -175,9 +181,10 @@ public class XstsStatement {
             }
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(Expr<?> var,
-                                                                                Expr<?> indexExpr, Expr<?> valueExpr) {
-            @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) var;
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(
+                Expr<?> var, Expr<?> indexExpr, Expr<?> valueExpr) {
+            @SuppressWarnings("unchecked")
+            final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) var;
             final Expr<T1> index = cast(indexExpr, array.getType().getIndexType());
             final Expr<T2> value = cast(valueExpr, array.getType().getElemType());
             return Write(array, index, value);
@@ -189,19 +196,24 @@ public class XstsStatement {
 
             final String loopVarId = ctx.loopVar.getText();
             if (currentScope.resolve(loopVarId).isPresent()) {
-                throw new ParseException(ctx,
-                        String.format("Loop variable %s is already declared in this scope.",
-                                loopVarId));
+                throw new ParseException(
+                        ctx,
+                        String.format(
+                                "Loop variable %s is already declared in this scope.", loopVarId));
             }
             final var decl = Decls.Var(loopVarId, Int());
             final Symbol symbol = DeclSymbol.of(decl);
             currentScope.declare(symbol);
             env.define(symbol, decl);
 
-            final Expr<IntType> from = cast(
-                    new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env), Int());
-            final Expr<IntType> to = cast(
-                    new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env), Int());
+            final Expr<IntType> from =
+                    cast(
+                            new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env),
+                            Int());
+            final Expr<IntType> to =
+                    cast(
+                            new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env),
+                            Int());
             final Stmt stmt = ctx.subStmt.accept(this);
 
             pop();
@@ -213,8 +225,7 @@ public class XstsStatement {
         @SuppressWarnings("unchecked")
         public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
             final String name = ctx.name.getText();
-            final Type type = new XstsType(typeTable,
-                    ctx.ttype).instantiate(env);
+            final Type type = new XstsType(typeTable, ctx.ttype).instantiate(env);
             final var decl = Decls.Var(name, type);
             final Symbol symbol = DeclSymbol.of(decl);
 
@@ -222,11 +233,13 @@ public class XstsStatement {
             if (ctx.initValue == null) {
                 result = SkipStmt.getInstance();
             } else {
-                var expr = new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(
-                        env);
+                var expr =
+                        new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(env);
                 if (expr.getType().equals(decl.getType())) {
-                    @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
-                    @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
+                    @SuppressWarnings("unchecked")
+                    final VarDecl<Type> tVar = (VarDecl<Type>) decl;
+                    @SuppressWarnings("unchecked")
+                    final Expr<Type> tExpr = (Expr<Type>) expr;
                     result = Assign(tVar, tExpr);
                 } else {
                     throw new IllegalArgumentException(
@@ -276,5 +289,4 @@ public class XstsStatement {
             }
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,10 +110,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       callStmt: InvokeLabel ->
       handleIsnan(builder, callStmt)
     }
-    addHandler(arrayOf("trunc")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+    addHandler(arrayOf("trunc", "truncf", "truncl")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
       handleTrunc(builder, callStmt)
     }
-    addHandler(arrayOf("ceil")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+    addHandler(arrayOf("ceil", "ceilf", "ceill")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
       handleCeil(builder, callStmt)
     }
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->

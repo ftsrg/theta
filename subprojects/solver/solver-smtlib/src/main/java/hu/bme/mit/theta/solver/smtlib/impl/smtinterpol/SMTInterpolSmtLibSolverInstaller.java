@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -46,13 +45,17 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
     protected void installSolver(final Path installDir, final String version)
             throws SmtLibSolverInstallerException {
 
-        try (
-                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-                final var outputChannel = new FileOutputStream(
-                        installDir.resolve(getSolverBinaryName(version)).toAbsolutePath()
-                                .toString()).getChannel()
-        ) {
-            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n",
+        try (final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
+                final var outputChannel =
+                        new FileOutputStream(
+                                        installDir
+                                                .resolve(getSolverBinaryName(version))
+                                                .toAbsolutePath()
+                                                .toString())
+                                .getChannel()) {
+            logger.write(
+                    Logger.Level.MAINSTEP,
+                    "Starting download (%s)...\n",
                     getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
@@ -69,41 +72,50 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[]{"-smt2", "-q"};
+        return new String[] {"-smt2", "-q"};
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version,
-                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+    public SolverFactory getSolverFactory(
+            final Path installDir,
+            final String version,
+            final Path solverPath,
+            final String[] solverArgs)
+            throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
-        return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs, getEnumStrategyForVersion(version));
+        return SMTInterpolSmtLibSolverFactory.create(
+                solverFilePath, solverArgs, getEnumStrategyForVersion(version));
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        //TODO download won't work on 2.5-1301 yet, so in order for 'latest' to work, order has to stay like this for now
-        return Arrays.asList("2.5-1256", "2.5-1301", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
+        // TODO download won't work on 2.5-1301 yet, so in order for 'latest' to work, order has to
+        // stay like this for now
+        return Arrays.asList(
+                "2.5-1256", "2.5-1301", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
     }
 
     private URL getDownloadUrl(final String version)
             throws SmtLibSolverInstallerException, MalformedURLException {
-        final String fileName = switch (version) {
+        final String fileName =
+                switch (version) {
+                    case "2.5-1301" -> "2.5-1301-g2c871e40";
+                    case "2.5-1256" -> "2.5-1256-g55d6ba76";
+                    case "2.5-1230" -> "2.5-1230-g3eafb46a";
+                    case "2.5-916" -> "2.5-916-ga5843d8b";
+                    case "2.5-663" -> "2.5-663-gf15aa217";
+                    case "2.5-479" -> "2.5-479-ga49e50b1";
+                    case "2.5-7" -> "2.5-7-g64ec65d";
+                    default ->
+                            throw new SmtLibSolverInstallerException("Unsupported solver version.");
+                };
 
-            case "2.5-1301" -> "2.5-1301-g2c871e40";
-            case "2.5-1256" -> "2.5-1256-g55d6ba76";
-            case "2.5-1230" -> "2.5-1230-g3eafb46a";
-            case "2.5-916" -> "2.5-916-ga5843d8b";
-            case "2.5-663" -> "2.5-663-gf15aa217";
-            case "2.5-479" -> "2.5-479-ga49e50b1";
-            case "2.5-7" -> "2.5-7-g64ec65d";
-            default -> throw new SmtLibSolverInstallerException("Unsupported solver version.");
-        };
-
-        return URI.create(String.format(
-                "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",
-                fileName
-        )).toURL();
+        return URI.create(
+                        String.format(
+                                "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",
+                                fileName))
+                .toURL();
     }
 
     private String getSolverBinaryName(final String version) {

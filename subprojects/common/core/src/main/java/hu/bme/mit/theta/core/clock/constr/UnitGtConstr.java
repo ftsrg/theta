@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class UnitGtConstr extends UnitConstr {
 
@@ -47,8 +47,8 @@ public final class UnitGtConstr extends UnitConstr {
     }
 
     @Override
-    public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-                           final P param) {
+    public <P, R> R accept(
+            final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
         return visitor.visit(this, param);
     }
 
@@ -73,5 +73,4 @@ public final class UnitGtConstr extends UnitConstr {
     protected String getOperatorLabel() {
         return OPERATOR_LABEL;
     }
-
 }

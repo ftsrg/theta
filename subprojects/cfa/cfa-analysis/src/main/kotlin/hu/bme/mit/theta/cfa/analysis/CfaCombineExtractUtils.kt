@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.cfa.analysis
 
 import hu.bme.mit.theta.analysis.Prec
@@ -23,17 +22,17 @@ import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 
 fun <S : ExprState> cfaCombineStates(cfaState: CfaState<UnitState>, dataState: S): CfaState<S> {
-    return CfaState.of(cfaState.loc, dataState)
+  return CfaState.of(cfaState.loc, dataState)
 }
 
 fun cfaExtractControlState(cfaState: CfaState<*>): CfaState<UnitState> {
-    return CfaState.of(cfaState.loc, UnitState.getInstance())
+  return CfaState.of(cfaState.loc, UnitState.getInstance())
 }
 
 fun <S : ExprState> cfaExtractDataState(cfaState: CfaState<S>): S {
-    return cfaState.state
+  return cfaState.state
 }
 
 fun cfaExtractControlPrec(p: CfaPrec<out Prec>): CfaPrec<UnitPrec> {
-    return GlobalCfaPrec.create(UnitPrec.getInstance())
+  return GlobalCfaPrec.create(UnitPrec.getInstance())
 }

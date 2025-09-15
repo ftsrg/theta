@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.bounded;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.*;
@@ -28,10 +28,12 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -92,7 +94,9 @@ public class MonolithicExprCegarChecker<W extends Proof>
 
                 final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker =
                         ExprTraceFwBinItpChecker.create(
-                                True(), True(), solverFactory.createItpSolver());
+                                model.getInitExpr(),
+                                Not(model.getPropExpr()),
+                                solverFactory.createItpSolver());
 
                 if (trace != null) {
                     logger.write(Logger.Level.VERBOSE, "\tFound trace: %s\n", trace);
@@ -101,13 +105,30 @@ public class MonolithicExprCegarChecker<W extends Proof>
                     if (concretizationResult.isFeasible()) {
                         logger.write(Logger.Level.MAINSTEP, "Model is unsafe, stopping CEGAR\n");
 
-                        return SafetyResult.unsafe(trace, result.getProof());
+                        final var valuations =
+                                concretizationResult.asFeasible().getValuations().getStates();
+                        final List<ExprState> states = new ArrayList<>();
+                        final List<ExprAction> actions = new ArrayList<>();
+                        for (int i = 0; i < valuations.size(); ++i) {
+                            states.add(model.getValToState().invoke(valuations.get(i)));
+                            if (i > 0) {
+                                actions.add(
+                                        model.getBiValToAction()
+                                                .invoke(valuations.get(i - 1), valuations.get(i)));
+                            }
+                        }
+
+                        return SafetyResult.Unsafe.unsafe(
+                                Trace.of(states, actions), result.getProof());
                     } else {
                         final var ref = concretizationResult.asInfeasible().getRefutation();
                         final var newPred = ref.get(ref.getPruneIndex());
-                        final var newPrec = PredPrec.of(newPred);
-                        predPrec = predPrec.join(newPrec);
-                        logger.write(Logger.Level.INFO, "Added new predicate " + newPrec + "\n");
+                        for (var splitPred : ExprSplitters.conjuncts().apply(newPred)) {
+                            final var newPrec = PredPrec.of(splitPred);
+                            predPrec = predPrec.join(newPrec);
+                        }
+
+                        logger.write(Logger.Level.INFO, "Added new predicate " + newPred + "\n");
                     }
                 }
             }

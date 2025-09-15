@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import hu.bme.mit.theta.core.type.booltype.OrExpr;
 final class ExprCnfChecker {
 
     private enum CnfStatus {
-        START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);
+        START(0),
+        INSIDE_AND(1),
+        INSIDE_OR(2),
+        INSIDE_NOT(3);
         final int value;
 
         private CnfStatus(final int value) {
@@ -38,8 +41,7 @@ final class ExprCnfChecker {
         }
     }
 
-    private ExprCnfChecker() {
-    }
+    private ExprCnfChecker() {}
 
     static boolean isExprCnf(final Expr<BoolType> expr) {
         return isExprCnf(expr, CnfStatus.START);

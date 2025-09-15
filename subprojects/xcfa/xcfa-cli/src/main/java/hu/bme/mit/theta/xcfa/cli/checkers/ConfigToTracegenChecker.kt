@@ -40,7 +40,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getTracegenChecker(
   xcfa: XCFA,
-  mcm: MCM,
+  mcm: MCM?,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {

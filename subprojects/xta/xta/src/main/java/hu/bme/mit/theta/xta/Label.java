@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package hu.bme.mit.theta.xta;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.core.type.Type;
+import java.util.List;
 
 public final class Label {
 
@@ -32,15 +30,15 @@ public final class Label {
     private final List<Type> paramTypes;
     private final boolean broadcast;
 
-    private Label(final String name, final List<? extends Type> paramTypes,
-                  final boolean broadcast) {
+    private Label(
+            final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
         this.name = checkNotNull(name);
         this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
         this.broadcast = broadcast;
     }
 
-    public static Label of(final String name, final List<? extends Type> paramTypes,
-                           final boolean broadcast) {
+    public static Label of(
+            final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
         return new Label(name, paramTypes, broadcast);
     }
 
@@ -78,5 +76,4 @@ public final class Label {
     public String toString() {
         return name;
     }
-
 }

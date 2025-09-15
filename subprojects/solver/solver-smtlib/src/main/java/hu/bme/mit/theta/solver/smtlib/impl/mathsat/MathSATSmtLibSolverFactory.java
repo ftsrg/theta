@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
-
 import java.nio.file.Path;
 
 public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
@@ -35,8 +34,8 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         this.itpSupported = itpSupported;
     }
 
-    public static MathSATSmtLibSolverFactory create(Path solverPath, String[] args,
-                                                    boolean itpSupported) {
+    public static MathSATSmtLibSolverFactory create(
+            Path solverPath, String[] args, boolean itpSupported) {
         return new MathSATSmtLibSolverFactory(solverPath, args, itpSupported);
     }
 
@@ -47,8 +46,8 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                false);
+        return new SmtLibSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary, false);
     }
 
     @Override
@@ -58,8 +57,8 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                true);
+        return new SmtLibSolver(
+                symbolTable, transformationManager, termTransformer, solverBinary, true);
     }
 
     @Override
@@ -70,8 +69,8 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
             final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
             final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
-            return new MathSATSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                    solverBinary);
+            return new MathSATSmtLibItpSolver(
+                    symbolTable, transformationManager, termTransformer, solverBinary);
         } else {
             throw new UnsupportedOperationException("MathSAT interpolation supported above 5.4.0");
         }

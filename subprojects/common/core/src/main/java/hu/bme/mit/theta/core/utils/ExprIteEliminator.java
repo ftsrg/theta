@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,19 +21,17 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 final class ExprIteEliminator {
 
-    private ExprIteEliminator() {
-    }
+    private ExprIteEliminator() {}
 
     static <T extends Type> Expr<T> eliminateIte(final Expr<T> expr) {
         return removeIte(propagateIte(expr));
@@ -50,8 +48,8 @@ final class ExprIteEliminator {
                 final Expr<BoolType> cond = removeIte(iteExpr.getCond());
                 final Expr<BoolType> then = TypeUtils.cast(removeIte(iteExpr.getThen()), Bool());
                 final Expr<BoolType> elze = TypeUtils.cast(removeIte(iteExpr.getElse()), Bool());
-                @SuppressWarnings("unchecked") final Expr<T> result = (Expr<T>) And(
-                        Or(Not(cond), then), Or(cond, elze));
+                @SuppressWarnings("unchecked")
+                final Expr<T> result = (Expr<T>) And(Or(Not(cond), then), Or(cond, elze));
                 return result;
             } else {
                 return expr;
@@ -82,8 +80,8 @@ final class ExprIteEliminator {
         final List<? extends Expr<?>> ops = expr.getOps();
 
         // Get the first operand that is an ITE
-        final Optional<? extends Expr<?>> optIte = ops.stream().filter(op -> op instanceof IteExpr)
-                .findFirst();
+        final Optional<? extends Expr<?>> optIte =
+                ops.stream().filter(op -> op instanceof IteExpr).findFirst();
 
         // Nothing to do if none of the operands are ITE
         if (!optIte.isPresent()) {
@@ -112,5 +110,4 @@ final class ExprIteEliminator {
 
         return Ite(ite.getCond(), pushIte(expr.withOps(thenOps)), pushIte(expr.withOps(elseOps)));
     }
-
 }

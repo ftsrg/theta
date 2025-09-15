@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ public final class CfaOrd<S extends ExprState> implements PartialOrd<CfaState<S>
 
     @Override
     public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
-        return state1.getLoc().equals(state2.getLoc()) && partialOrd.isLeq(state1.getState(),
-                state2.getState());
+        return state1.getLoc().equals(state2.getLoc())
+                && partialOrd.isLeq(state1.getState(), state2.getState());
     }
-
 }

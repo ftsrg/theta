@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,28 +17,41 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import static org.junit.Assert.assertTrue;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class XstsMddCheckerTest {
 
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
+                    //                                        {
+                    //
+                    // "src/test/resources/model/spacecraft.xsts",
+                    //
+                    //
+                    // "src/test/resources/property/transmitting_battery_40.prop",
+                    //                                            false
+                    //                                        },
 
                     //                { "src/test/resources/model/trafficlight.xsts",
                     // "src/test/resources/property/green_and_red.prop", true},
@@ -69,11 +82,13 @@ public class XstsMddCheckerTest {
                         true
                     },
 
-                    //                { "src/test/resources/model/cross_with.xsts",
-                    // "src/test/resources/property/cross.prop", false},
-
-                    //                { "src/test/resources/model/cross_without.xsts",
-                    // "src/test/resources/property/cross.prop", false},
+                    //                                    {
+                    // "src/test/resources/model/cross_with.xsts",
+                    //                     "src/test/resources/property/cross.prop", false},
+                    //
+                    //                                    {
+                    // "src/test/resources/model/cross_without.xsts",
+                    //                     "src/test/resources/property/cross.prop", false},
 
                     {
                         "src/test/resources/model/choices.xsts",
@@ -97,18 +112,20 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/sequential2.prop",
                         false
                     },
-                    //                    {
-                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    //                                        {
                     //
-                    // "src/test/resources/property/on_off_statemachine.prop",
-                    //                        false
-                    //                    },
-                    //                    {
-                    //                        "src/test/resources/model/on_off_statemachine.xsts",
+                    // "src/test/resources/model/on_off_statemachine.xsts",
                     //
-                    // "src/test/resources/property/on_off_statemachine2.prop",
-                    //                        true
-                    //                    },
+                    //                     "src/test/resources/property/on_off_statemachine.prop",
+                    //                                            false
+                    //                                        },
+                    //                                        {
+                    //
+                    // "src/test/resources/model/on_off_statemachine.xsts",
+                    //
+                    //                     "src/test/resources/property/on_off_statemachine2.prop",
+                    //                                            true
+                    //                                        },
                     //                    {
                     //                        "src/test/resources/model/on_off_statemachine.xsts",
                     //
@@ -116,15 +133,21 @@ public class XstsMddCheckerTest {
                     //                        false
                     //                    },
 
-                    //                {"src/test/resources/model/counter50.xsts",
-                    // "src/test/resources/property/x_eq_5.prop", false},
-                    //
-                    //                {"src/test/resources/model/counter50.xsts",
-                    // "src/test/resources/property/x_eq_50.prop", false},
-                    //
-                    //                {"src/test/resources/model/counter50.xsts",
-                    // "src/test/resources/property/x_eq_51.prop", true},
-
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_5.prop",
+                        false
+                    },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_50.prop",
+                        false
+                    },
+                    {
+                        "src/test/resources/model/counter50.xsts",
+                        "src/test/resources/property/x_eq_51.prop",
+                        true
+                    },
                     {
                         "src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down.prop",
@@ -140,12 +163,16 @@ public class XstsMddCheckerTest {
                         "src/test/resources/property/count_up_down2.prop",
                         true
                     },
-
-                    //                {"src/test/resources/model/bhmr2007.xsts",
-                    // "src/test/resources/property/bhmr2007.prop", true},
-                    //
-                    //                {"src/test/resources/model/css2003.xsts",
-                    // "src/test/resources/property/css2003.prop", true},
+                    {
+                        "src/test/resources/model/bhmr2007.xsts",
+                        "src/test/resources/property/bhmr2007.prop",
+                        true
+                    },
+                    //                    {
+                    //                        "src/test/resources/model/css2003.xsts",
+                    //                        "src/test/resources/property/css2003.prop",
+                    //                        true
+                    //                    },
                     //
                     //                { "src/test/resources/model/array_counter.xsts",
                     // "src/test/resources/property/array_10.prop", false},
@@ -191,17 +218,30 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final SafetyResult<MddProof, MddCex> status;
+        final SafetyResult<MddProof, Trace<ExprState, ExprAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final XstsMddChecker checker =
-                    XstsMddChecker.create(xsts, solverPool, logger, iterationStrategy);
+            var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
+            var checker =
+                    MddChecker.create(
+                            monolithicExpr,
+                            List.copyOf(monolithicExpr.getVars()),
+                            solverPool,
+                            logger,
+                            MddChecker.IterationStrategy.GSAT,
+                            valuation -> monolithicExpr.getValToState().invoke(valuation),
+                            (Valuation v1, Valuation v2) ->
+                                    monolithicExpr.getBiValToAction().invoke(v1, v2),
+                            true,
+                            100);
             status = checker.check(null);
+            logger.mainStep(status.toString());
         }
 
         if (safe) {
             assertTrue(status.isSafe());
         } else {
             assertTrue(status.isUnsafe());
+            assertTrue(status.asUnsafe().getCex().length() > 0);
         }
     }
 }

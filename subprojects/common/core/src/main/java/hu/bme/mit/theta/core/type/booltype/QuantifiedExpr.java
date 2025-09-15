@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static java.util.stream.Collectors.joining;
 
 public abstract class QuantifiedExpr implements Expr<BoolType> {
 
@@ -37,8 +36,8 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
 
     private volatile int hashCode = 0;
 
-    protected QuantifiedExpr(final Iterable<? extends ParamDecl<?>> paramDecls,
-                             final Expr<BoolType> op) {
+    protected QuantifiedExpr(
+            final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
         this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
         this.op = checkNotNull(op);
     }
@@ -88,10 +87,15 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
 
     @Override
     public final String toString() {
-        final String paramString = paramDecls.stream()
-                .map(p -> "(" + p.getName() + " " + p.getType() + ")")
-                .collect(joining(" ", "(", ")"));
-        return Utils.lispStringBuilder(getOperatorLabel()).body().add(paramString).add(op).toString();
+        final String paramString =
+                paramDecls.stream()
+                        .map(p -> "(" + p.getName() + " " + p.getType() + ")")
+                        .collect(joining(" ", "(", ")"));
+        return Utils.lispStringBuilder(getOperatorLabel())
+                .body()
+                .add(paramString)
+                .add(op)
+                .toString();
     }
 
     public abstract QuantifiedExpr with(final Expr<BoolType> op);
@@ -99,5 +103,4 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
     protected abstract int getHashSeed();
 
     protected abstract String getOperatorLabel();
-
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.container.Containers;
@@ -33,7 +32,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
 import java.util.Set;
 
 public class StmtAtomCollector {
@@ -44,8 +42,8 @@ public class StmtAtomCollector {
         return atoms;
     }
 
-    private static class AllAssumesAndAssignsCollector implements
-            StmtVisitor<Set<Expr<BoolType>>, Void> {
+    private static class AllAssumesAndAssignsCollector
+            implements StmtVisitor<Set<Expr<BoolType>>, Void> {
 
         @Override
         public Void visit(SkipStmt stmt, Set<Expr<BoolType>> atoms) {
@@ -59,23 +57,24 @@ public class StmtAtomCollector {
         }
 
         @Override
-        public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
-                                                  Set<Expr<BoolType>> atoms) {
+        public <DeclType extends Type> Void visit(
+                AssignStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
             final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
         }
 
         @Override
-        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Void visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Set<Expr<BoolType>> atoms) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Void visit(
+                MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Set<Expr<BoolType>> atoms) {
             final Expr<BoolType> eq = EqExpr.create2(stmt.getDeref(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
         }
 
         @Override
-        public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
-                                                  Set<Expr<BoolType>> atoms) {
+        public <DeclType extends Type> Void visit(
+                HavocStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
             return null;
         }
 
@@ -109,5 +108,4 @@ public class StmtAtomCollector {
             return null;
         }
     }
-
 }

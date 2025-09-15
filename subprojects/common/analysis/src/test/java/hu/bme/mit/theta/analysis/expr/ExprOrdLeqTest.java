@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,21 +23,19 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class ExprOrdLeqTest {
@@ -55,19 +53,14 @@ public final class ExprOrdLeqTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {PredState.of(), PredState.of(), true},
-
-                {PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
-
-                {PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
-
-                {PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
-
-                {PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {PredState.of(), PredState.of(), true},
+                    {PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
+                    {PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
+                    {PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
+                    {PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
+                });
     }
 
     @Test
@@ -76,5 +69,4 @@ public final class ExprOrdLeqTest {
         final PartialOrd<ExprState> ord = ExprOrd.create(solver);
         assertEquals(ord.isLeq(state1, state2), leq);
     }
-
 }

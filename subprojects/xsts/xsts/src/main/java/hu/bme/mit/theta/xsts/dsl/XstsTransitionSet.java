@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.common.dsl.DynamicScope;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -22,10 +24,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.TransitionSetContext;
-
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XstsTransitionSet {
 
@@ -33,8 +32,10 @@ public class XstsTransitionSet {
     private final SymbolTable typeTable;
     private final TransitionSetContext context;
 
-    public XstsTransitionSet(final DynamicScope scope, final SymbolTable typeTable,
-                             final TransitionSetContext context) {
+    public XstsTransitionSet(
+            final DynamicScope scope,
+            final SymbolTable typeTable,
+            final TransitionSetContext context) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
@@ -60,12 +61,14 @@ public class XstsTransitionSet {
 
         @Override
         public NonDetStmt visitTransitionSet(TransitionSetContext ctx) {
-            final List<Stmt> stmts = ctx.stmts.stream()
-                    .map((stmtContext ->
-                            new XstsStatement(scope, typeTable, stmtContext)
-                                    .instantiate(env))).toList();
+            final List<Stmt> stmts =
+                    ctx.stmts.stream()
+                            .map(
+                                    (stmtContext ->
+                                            new XstsStatement(scope, typeTable, stmtContext)
+                                                    .instantiate(env)))
+                            .toList();
             return NonDetStmt.of(stmts);
         }
     }
-
 }

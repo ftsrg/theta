@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package hu.bme.mit.theta.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-import java.util.List;
-
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.XtaSystem;
+import java.util.Collection;
+import java.util.List;
 
 final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, P> {
 
@@ -36,8 +35,8 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
         this.initFunc = checkNotNull(initFunc);
     }
 
-    public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(final XtaSystem system,
-                                                                             final InitFunc<S, ? super P> initFunc) {
+    public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(
+            final XtaSystem system, final InitFunc<S, ? super P> initFunc) {
         return new XtaInitFunc<>(system, initFunc);
     }
 
@@ -48,5 +47,4 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
         final Collection<? extends S> initStates = initFunc.getInitStates(prec);
         return XtaState.collectionOf(initLocs, initStates);
     }
-
 }

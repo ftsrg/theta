@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,31 +15,27 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
+import java.util.Collection;
 
 final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
 
-    private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
+    private static final XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
 
-    private XtaZoneTransFunc() {
-    }
+    private XtaZoneTransFunc() {}
 
     static XtaZoneTransFunc getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action,
-                                               final ZonePrec prec) {
+    public Collection<ZoneState> getSuccStates(
+            final ZoneState state, final XtaAction action, final ZonePrec prec) {
         final ZoneState succState = XtaZoneUtils.post(state, action, prec);
         return ImmutableList.of(succState);
     }
-
 }

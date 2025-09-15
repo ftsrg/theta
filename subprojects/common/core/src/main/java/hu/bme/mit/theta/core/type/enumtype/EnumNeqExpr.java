@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.enumtype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import java.util.Objects;
 
 public final class EnumNeqExpr extends NeqExpr<EnumType> {
 
@@ -73,6 +74,20 @@ public final class EnumNeqExpr extends NeqExpr<EnumType> {
 
     @Override
     public LitExpr<BoolType> eval(Valuation val) {
-        return EnumLitExpr.neq((EnumLitExpr) getLeftOp().eval(val), (EnumLitExpr) getRightOp().eval(val));
+        return EnumLitExpr.neq(
+                (EnumLitExpr) getLeftOp().eval(val), (EnumLitExpr) getRightOp().eval(val));
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final EnumNeqExpr that = (EnumNeqExpr) obj;
+            return Objects.equals(this.getLeftOp(), that.getLeftOp())
+                    && Objects.equals(this.getRightOp(), that.getRightOp());
+        } else {
+            return false;
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,21 +13,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
 
 public class CWhile extends CStatement {
 
-    //TODO: guard should not be multiple compounds inside!
+    // TODO: guard should not be multiple compounds inside!
     private final CStatement body;
     private final CStatement guard;
 
     public CWhile(CStatement body, CStatement guard, ParseContext parseContext) {
         super(parseContext);
         this.body = body;
+        if (body != null) body.setParent(this);
         this.guard = guard;
+        if (guard != null) guard.setParent(this);
     }
 
     public CStatement getBody() {

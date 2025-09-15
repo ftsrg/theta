@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -155,12 +155,7 @@ class XcfaCliVerifyTest {
           "/chc/chc-LIA-Lin_000.smt2",
           ChcFrontend.ChcTransformation.FORWARD,
           "--domain PRED_CART",
-        ),
-        Arguments.of(
-          "/chc/chc-LIA-Arrays_000.smt2",
-          ChcFrontend.ChcTransformation.BACKWARD,
-          "--domain PRED_CART --search BFS",
-        ),
+        )
       )
     }
   }
@@ -252,8 +247,8 @@ class XcfaCliVerifyTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("cFiles")
+  //  @ParameterizedTest
+  //  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
     val params =

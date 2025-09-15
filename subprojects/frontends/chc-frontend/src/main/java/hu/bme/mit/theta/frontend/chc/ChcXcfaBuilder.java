@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.frontend.chc;
 
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCParser;
-import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
 
 public interface ChcXcfaBuilder {

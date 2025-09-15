@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -28,21 +32,13 @@ import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-
 import java.util.Collection;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-
-/**
- * Utility functions related to paths.
- */
+/** Utility functions related to paths. */
 public class PathUtils {
 
-    private PathUtils() {
-    }
+    private PathUtils() {}
 
     ////
 
@@ -55,7 +51,7 @@ public class PathUtils {
     /**
      * Transform an expression by substituting variables with indexed constants.
      *
-     * @param expr     Original expression
+     * @param expr Original expression
      * @param indexing Indexing for the variables
      * @return Transformed expression
      */
@@ -66,7 +62,8 @@ public class PathUtils {
         return helper.unfold(expr, 0);
     }
 
-    public static <T extends Type> Expr<T> unfoldReverse(final Expr<T> expr, final VarIndexing indexing) {
+    public static <T extends Type> Expr<T> unfoldReverse(
+            final Expr<T> expr, final VarIndexing indexing) {
         checkNotNull(expr);
         checkNotNull(indexing);
         final VarIndexing primes = countPrimes(expr);
@@ -78,7 +75,7 @@ public class PathUtils {
      * Transform an expression by substituting variables with indexed constants.
      *
      * @param expr Original expression
-     * @param i    Index
+     * @param i Index
      * @return Transformed expression
      */
     public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
@@ -89,7 +86,7 @@ public class PathUtils {
     /**
      * Transform an expression by substituting indexed constants with variables.
      *
-     * @param expr     Original expression
+     * @param expr Original expression
      * @param indexing Indexing for the variables
      * @return Transformed expression
      */
@@ -104,7 +101,7 @@ public class PathUtils {
      * Transform an expression by substituting indexed constants with variables.
      *
      * @param expr Original expression
-     * @param i    Index
+     * @param i Index
      * @return Transformed expression
      */
     public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
@@ -113,11 +110,10 @@ public class PathUtils {
     }
 
     /**
-     * Extract values from a model for a given indexing. If you know the set of
-     * variables to be extracted, use that overload because it is more
-     * efficient.
+     * Extract values from a model for a given indexing. If you know the set of variables to be
+     * extracted, use that overload because it is more efficient.
      *
-     * @param model    Model
+     * @param model Model
      * @param indexing Indexing
      * @return Values
      */
@@ -137,12 +133,11 @@ public class PathUtils {
     }
 
     /**
-     * Extract values from a model for a given index. If you know the set of
-     * variables to be extracted, use that overload because it is more
-     * efficient.
+     * Extract values from a model for a given index. If you know the set of variables to be
+     * extracted, use that overload because it is more efficient.
      *
      * @param model Model
-     * @param i     Index
+     * @param i Index
      * @return Values
      */
     public static Valuation extractValuation(final Valuation model, final int i) {
@@ -151,16 +146,17 @@ public class PathUtils {
     }
 
     /**
-     * Extract values from a model for a given indexing and given variables. If
-     * a variable has no value in the model, it will not be included in the
-     * return value.
+     * Extract values from a model for a given indexing and given variables. If a variable has no
+     * value in the model, it will not be included in the return value.
      *
-     * @param model    Model
+     * @param model Model
      * @param indexing Indexing
      * @return Values
      */
-    public static Valuation extractValuation(final Valuation model, final VarIndexing indexing,
-                                             final Collection<? extends VarDecl<?>> varDecls) {
+    public static Valuation extractValuation(
+            final Valuation model,
+            final VarIndexing indexing,
+            final Collection<? extends VarDecl<?>> varDecls) {
         final ImmutableValuation.Builder builder = ImmutableValuation.builder();
         for (final VarDecl<?> varDecl : varDecls) {
             final int index = indexing.get(varDecl);
@@ -174,16 +170,15 @@ public class PathUtils {
     }
 
     /**
-     * Extract values from a model for a given index and given variables. If a
-     * variable has no value in the model, it will not be included in the return
-     * value.
+     * Extract values from a model for a given index and given variables. If a variable has no value
+     * in the model, it will not be included in the return value.
      *
      * @param model Model
-     * @param i     Index
+     * @param i Index
      * @return Values
      */
-    public static Valuation extractValuation(final Valuation model, final int i,
-                                             final Collection<? extends VarDecl<?>> varDecls) {
+    public static Valuation extractValuation(
+            final Valuation model, final int i, final Collection<? extends VarDecl<?>> varDecls) {
         checkArgument(i >= 0);
         return extractValuation(model, VarIndexingFactory.indexing(i), varDecls);
     }
@@ -226,7 +221,8 @@ public class PathUtils {
         private final VarIndexing indexing;
         private final VarIndexing primes;
 
-        private <T extends Type> ReverseUnfoldHelper(final VarIndexing indexing, final VarIndexing primes) {
+        private <T extends Type> ReverseUnfoldHelper(
+                final VarIndexing indexing, final VarIndexing primes) {
             this.indexing = indexing;
             this.primes = primes;
         }
@@ -286,5 +282,4 @@ public class PathUtils {
             return expr.map(this::foldin);
         }
     }
-
 }

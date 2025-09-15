@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,9 +64,17 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     }
 
     private static AbstractNextStateDescriptor of(MddNode node, MddVariableHandle variableHandle) {
-        return (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
-                ? AbstractNextStateDescriptor.terminalEmpty()
-                : new MddNodeNextStateDescriptor(node, variableHandle);
+        if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode())
+            return AbstractNextStateDescriptor.terminalEmpty();
+        if (node.getRepresentation()
+                instanceof IdentityRepresentation identityExpressionRepresentation) {
+            final var cont = identityExpressionRepresentation.getContinuation();
+            return IdentityNextStateDescriptor.withChild(
+                    MddNodeNextStateDescriptor.of(
+                            cont,
+                            variableHandle.getLower().orElseThrow().getLower().orElseThrow()));
+        }
+        return new MddNodeNextStateDescriptor(node, variableHandle);
     }
 
     public static AbstractNextStateDescriptor of(MddHandle handle) {

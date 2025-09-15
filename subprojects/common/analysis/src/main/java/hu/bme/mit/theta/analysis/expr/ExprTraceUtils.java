@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ import static hu.bme.mit.theta.analysis.expr.ExprStateUtils.anyUncoveredSuccesso
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static java.util.Collections.singleton;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.solver.Solver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.solver.Solver;
-
 public final class ExprTraceUtils {
 
-    private ExprTraceUtils() {
-    }
+    private ExprTraceUtils() {}
 
     public static <A extends ExprAction> Trace<ExprState, A> traceFrom(
             final List<? extends A> actions) {
@@ -43,21 +41,19 @@ public final class ExprTraceUtils {
         return Trace.of(states, actions);
     }
 
-    public static boolean isInductive(final Trace<? extends ExprState, ? extends ExprAction> trace,
-                                      final Solver solver) {
+    public static boolean isInductive(
+            final Trace<? extends ExprState, ? extends ExprAction> trace, final Solver solver) {
         for (int i = 0; i < trace.length(); i++) {
             final ExprState sourceState = trace.getState(i);
             final ExprAction action = trace.getAction(i);
             final ExprState targetState = trace.getState(i + 1);
 
-            final Optional<Valuation> uncoveredSuccessor = anyUncoveredSuccessor(sourceState,
-                    action,
-                    singleton(targetState), solver);
+            final Optional<Valuation> uncoveredSuccessor =
+                    anyUncoveredSuccessor(sourceState, action, singleton(targetState), solver);
             if (uncoveredSuccessor.isPresent()) {
                 return false;
             }
         }
         return true;
     }
-
 }

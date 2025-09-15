@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,31 +16,29 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.model.*
-import java.util.stream.Collectors
 
 class EliminateSelfLoops : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val selfLoops: Set<XcfaEdge> =
-      builder
-        .getEdges()
-        .stream()
-        .filter { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }
-        .collect(Collectors.toSet())
-    for (selfLoop in selfLoops) {
-      builder.removeEdge(selfLoop)
-      val source = selfLoop.source
-      val target =
-        XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData)
-      builder.addLoc(target)
-      for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
-        builder.removeEdge(outgoingEdge)
+    while (true) {
+      val selfLoop =
+        builder.getEdges().firstOrNull { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }
+      if (selfLoop != null) {
+        builder.removeEdge(selfLoop)
+        val source = selfLoop.source
+        val target =
+          XcfaLocation(
+            source.name + "_selfloop_" + XcfaLocation.uniqueCounter(),
+            metadata = source.metadata,
+          )
+        builder.addLoc(target)
+        builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))
         builder.addEdge(
-          XcfaEdge(target, outgoingEdge.target, outgoingEdge.label, outgoingEdge.metadata)
+          XcfaEdge(target, source, SequenceLabel(listOf(NopLabel)), selfLoop.metadata)
         )
+      } else {
+        break
       }
-      builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))
-      builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel)), selfLoop.metadata))
     }
     builder.metaData["noSelfLoops"] = Unit
     return builder

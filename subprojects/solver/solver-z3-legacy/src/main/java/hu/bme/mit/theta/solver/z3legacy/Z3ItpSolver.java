@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,15 +32,10 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 final class Z3ItpSolver implements ItpSolver, Solver {
 
@@ -50,18 +49,20 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
     private final Stack<Z3ItpMarker> markers;
 
-    public Z3ItpSolver(final Z3SymbolTable symbolTable,
-                       final Z3TransformationManager transformationManager,
-                       final Z3TermTransformer termTransformer,
-                       final com.microsoft.z3legacy.InterpolationContext z3Context,
-                       final com.microsoft.z3legacy.Solver z3Solver) {
+    public Z3ItpSolver(
+            final Z3SymbolTable symbolTable,
+            final Z3TransformationManager transformationManager,
+            final Z3TermTransformer termTransformer,
+            final com.microsoft.z3legacy.InterpolationContext z3Context,
+            final com.microsoft.z3legacy.Solver z3Solver) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.z3Context = z3Context;
         this.z3Solver = z3Solver;
 
-        solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-                z3Solver);
+        solver =
+                new Z3Solver(
+                        symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
 
         markers = new StackImpl<>();
     }
@@ -85,15 +86,16 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         checkNotNull(assertion);
         checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
         final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
-        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
-                assertion);
+        final com.microsoft.z3legacy.BoolExpr term =
+                (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(assertion);
         solver.add(assertion, term);
         z3Marker.add(term);
     }
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(solver.getStatus() == SolverStatus.UNSAT,
+        checkState(
+                solver.getStatus() == SolverStatus.UNSAT,
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof Z3ItpPattern);
         final Z3ItpPattern z3ItpPattern = (Z3ItpPattern) pattern;
@@ -102,12 +104,13 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         final com.microsoft.z3legacy.Expr term = patternToTerm(z3ItpPattern.getRoot());
         final com.microsoft.z3legacy.Params params = z3Context.mkParams();
 
-        final com.microsoft.z3legacy.BoolExpr[] itpArray = z3Context.GetInterpolant(proof, term, params);
+        final com.microsoft.z3legacy.BoolExpr[] itpArray =
+                z3Context.GetInterpolant(proof, term, params);
         final List<Expr<BoolType>> itpList = new LinkedList<>();
 
         for (final com.microsoft.z3legacy.BoolExpr itpTerm : itpArray) {
-            @SuppressWarnings("unchecked") final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(
-                    itpTerm);
+            @SuppressWarnings("unchecked")
+            final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(itpTerm);
             itpList.add(itpExpr);
         }
 
@@ -117,7 +120,8 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         return new Z3Interpolant(itpMap);
     }
 
-    private com.microsoft.z3legacy.BoolExpr patternToTerm(final ItpMarkerTree<Z3ItpMarker> markerTree) {
+    private com.microsoft.z3legacy.BoolExpr patternToTerm(
+            final ItpMarkerTree<Z3ItpMarker> markerTree) {
         final Collection<com.microsoft.z3legacy.BoolExpr> opTerms = new LinkedList<>();
 
         final Z3ItpMarker marker = (Z3ItpMarker) markerTree.getMarker();
@@ -128,15 +132,17 @@ final class Z3ItpSolver implements ItpSolver, Solver {
             opTerms.add(childTerm);
         }
 
-        final com.microsoft.z3legacy.BoolExpr andTerm = z3Context
-                .mkAnd(opTerms.toArray(new com.microsoft.z3legacy.BoolExpr[opTerms.size()]));
+        final com.microsoft.z3legacy.BoolExpr andTerm =
+                z3Context.mkAnd(
+                        opTerms.toArray(new com.microsoft.z3legacy.BoolExpr[opTerms.size()]));
         final com.microsoft.z3legacy.BoolExpr term = z3Context.MkInterpolant(andTerm);
         return term;
     }
 
-    private void buildItpMapFormList(final ItpMarkerTree<Z3ItpMarker> pattern,
-                                     final List<Expr<BoolType>> itpList,
-                                     final Map<ItpMarker, Expr<BoolType>> itpMap) {
+    private void buildItpMapFormList(
+            final ItpMarkerTree<Z3ItpMarker> pattern,
+            final List<Expr<BoolType>> itpList,
+            final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<Z3ItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }

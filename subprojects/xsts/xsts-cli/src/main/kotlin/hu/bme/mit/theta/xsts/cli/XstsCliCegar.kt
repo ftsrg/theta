@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
@@ -65,7 +66,10 @@ class XstsCliCegar :
     xsts: XSTS,
     totalTimeMs: Long,
   ) {
-    if (!outputOptions.benchmarkMode) return
+    if (!outputOptions.benchmarkMode) {
+      logger.writeln(Logger.Level.RESULT, status.toString())
+      return
+    }
     printCommonResult(status, xsts, totalTimeMs)
     val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
     listOf(

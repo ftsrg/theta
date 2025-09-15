@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,17 +60,24 @@ enum class InputType {
   DSL,
   CHC,
   LITMUS,
+  CFA,
 }
 
 enum class Backend {
   CEGAR,
   BOUNDED,
+  BMC,
+  KIND,
+  IMC,
+  KINDIMC,
   CHC,
   OC,
   LAZY,
   PORTFOLIO,
   TRACEGEN,
   MDD,
+  IC3,
+  LASSO_VALIDATION,
   NONE,
 }
 

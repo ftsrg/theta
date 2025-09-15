@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ fun XCFA.toC(
   """         
     extern void abort();
     extern unsigned short __VERIFIER_nondet_ushort();
+    extern char __VERIFIER_nondet_char();
     extern short __VERIFIER_nondet_short();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -33,11 +32,10 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 
     private static final class LazyHolder {
 
-        private final static StmtCounterVisitor INSTANCE = new StmtCounterVisitor();
+        private static final StmtCounterVisitor INSTANCE = new StmtCounterVisitor();
     }
 
-    private StmtCounterVisitor() {
-    }
+    private StmtCounterVisitor() {}
 
     public static StmtCounterVisitor getInstance() {
         return StmtCounterVisitor.LazyHolder.INSTANCE;
@@ -59,7 +57,8 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
     }
 
     @Override
-    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Integer visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
+    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Integer visit(
+            MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
         return 1;
     }
 
@@ -102,8 +101,6 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 
     @Override
     public Integer visit(IfStmt stmt, Void param) {
-        return stmt.getThen().accept(this, null)
-                + stmt.getElze().accept(this, null)
-                + 1;
+        return stmt.getThen().accept(this, null) + stmt.getElze().accept(this, null) + 1;
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,15 +24,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
 import com.google.common.primitives.Ints;
-
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.parser.SExpr;
 import hu.bme.mit.theta.common.parser.SExpr.SAtom;
@@ -74,10 +66,16 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class CoreInterpreter {
 
@@ -155,8 +153,8 @@ public class CoreInterpreter {
         env.define(symbol, expr);
     }
 
-    public void defineExpr(final String symbol,
-                           final BiFunction<Env, List<SExpr>, Expr<?>> function) {
+    public void defineExpr(
+            final String symbol, final BiFunction<Env, List<SExpr>, Expr<?>> function) {
         final Function<List<SExpr>, Expr<?>> interpretation = sexprs -> function.apply(env, sexprs);
         env.define(symbol, interpretation);
     }
@@ -235,7 +233,8 @@ public class CoreInterpreter {
         if (head.isAtom()) {
             final String symbol = head.asAtom().getAtom();
             final Object object = env.eval(symbol);
-            @SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+            @SuppressWarnings("unchecked")
+            final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
             final Object value = interpretation.apply(tail);
             return value;
         } else if (head.isList()) {
@@ -358,5 +357,4 @@ public class CoreInterpreter {
             return HavocStmt.of(varDecl);
         };
     }
-
 }
