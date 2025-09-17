@@ -51,6 +51,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -72,6 +73,7 @@ class FrontendXcfaBuilder(
   val uniqueWarningLogger: Logger,
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
+  private val timed : Boolean = parseContext.metadata.types.values.any{ it is CClock }
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   private var ptrCnt = 1 // counts up, uses 3k+1
     get() = field.also { field += 3 }
@@ -258,7 +260,7 @@ class FrontendXcfaBuilder(
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
+      XcfaProcedureBuilder(funcDecl.name, CPasses(timed, checkOverflow, parseContext, uniqueWarningLogger))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {

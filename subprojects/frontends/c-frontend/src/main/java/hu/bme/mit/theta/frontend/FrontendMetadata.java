@@ -76,6 +76,10 @@ public class FrontendMetadata {
         return new LinkedHashMap<>(lookupKeyValue);
     }
 
+    public Map<Tuple2<Expr<?>, Integer>, CComplexType> getTypes() {
+        return new LinkedHashMap<>(types);
+    }
+
     private static int getHashCode(Object object) {
         if (object instanceof String) {
             return object.hashCode();

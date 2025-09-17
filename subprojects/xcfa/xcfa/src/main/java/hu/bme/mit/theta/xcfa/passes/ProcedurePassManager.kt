@@ -23,7 +23,7 @@ open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
   constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
 }
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(timed : Boolean, checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -37,7 +37,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(checkOverflow),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      ClockLabelPass(),
+      ClockLabelPass(timed),
       CLibraryFunctionsPass(),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
@@ -65,8 +65,8 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
-      DelayPass(),
-      PropagateClockAssumptionsPass(),
+      DelayPass(timed),
+      PropagateClockAssumptionsPass(timed),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),

@@ -36,7 +36,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
-class ClockLabelPass() : ProcedurePass {
+class ClockLabelPass(val timed : Boolean) : ProcedurePass {
 
     private val supportedFunctions =
         setOf(
@@ -47,71 +47,73 @@ class ClockLabelPass() : ProcedurePass {
         )
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        checkNotNull(builder.metaData["deterministic"])
-        for (edge in ArrayList(builder.getEdges())) {
-            val edges = edge.splitIf(this::predicate)
-            if (edges.size > 1 ||
+        if (timed) {
+            checkNotNull(builder.metaData["deterministic"])
+            for (edge in ArrayList(builder.getEdges())) {
+                val edges = edge.splitIf(this::predicate)
+                if (edges.size > 1 ||
                     (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
-                builder.removeEdge(edge)
-                edges.forEach {
-                    if (predicate((it.label as SequenceLabel).labels[0])) {
-                        val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val metadata = invokeLabel.metadata
-                        val labels: List<XcfaLabel> = when (invokeLabel.name) {
-                            "theta_clock_reset" -> {
-                                val clockRef = invokeLabel.params[1]
-                                check(clockRef is RefExpr && clockRef.type is RatType)
-                                val clockVar = clockRef.decl as VarDecl<RatType>
+                    builder.removeEdge(edge)
+                    edges.forEach {
+                        if (predicate((it.label as SequenceLabel).labels[0])) {
+                            val invokeLabel = it.label.labels[0] as InvokeLabel
+                            val metadata = invokeLabel.metadata
+                            val labels: List<XcfaLabel> = when (invokeLabel.name) {
+                                "theta_clock_reset" -> {
+                                    val clockRef = invokeLabel.params[1]
+                                    check(clockRef is RefExpr && clockRef.type is RatType)
+                                    val clockVar = clockRef.decl as VarDecl<RatType>
 
-                                val value = invokeLabel.params[2]
-                                check(value.type is IntType)
-                                val intValue = (simplify(value) as IntLitExpr).value.intValueExact()
+                                    val value = invokeLabel.params[2]
+                                    check(value.type is IntType)
+                                    val intValue = (simplify(value) as IntLitExpr).value.intValueExact()
 
-                                listOf(ClockOpLabel(ClockOps.Reset(clockVar, intValue), metadata))
-                            }
-
-                            "theta_clock_assume" -> {
-                                val expr = invokeLabel.params[1]
-                                val clockExpr = if (expr is IteExpr) {
-                                    check(expr.then.equals(IntExprs.Int(1)) && expr.`else`.equals(IntExprs.Int(0)))
-                                    expr.cond
-                                } else {
-                                    expr
+                                    listOf(ClockOpLabel(ClockOps.Reset(clockVar, intValue), metadata))
                                 }
-                                check(clockExpr.type is BoolType && clockExpr.ops.all { it.type is RatType })
-                                val clockConstr = ClockConstrs.fromExpr(clockExpr as Expr<BoolType>)
 
-                                listOf(ClockOpLabel(ClockOps.Guard(clockConstr), metadata))
+                                "theta_clock_assume" -> {
+                                    val expr = invokeLabel.params[1]
+                                    val clockExpr = if (expr is IteExpr) {
+                                        check(expr.then.equals(IntExprs.Int(1)) && expr.`else`.equals(IntExprs.Int(0)))
+                                        expr.cond
+                                    } else {
+                                        expr
+                                    }
+                                    check(clockExpr.type is BoolType && clockExpr.ops.all { it.type is RatType })
+                                    val clockConstr = ClockConstrs.fromExpr(clockExpr as Expr<BoolType>)
+
+                                    listOf(ClockOpLabel(ClockOps.Guard(clockConstr), metadata))
+                                }
+
+                                "theta_clock_delay" -> {
+                                    listOf(ClockDelayLabel(metadata))
+                                }
+
+                                "theta_elapsed_time" -> {
+                                    val clockRef = invokeLabel.params[1]
+                                    check(clockRef is RefExpr && clockRef.type is RatType)
+                                    val threadClock = clockRef.decl as VarDecl<RatType>
+                                    check(threadClock.name == "thread_clock")
+
+                                    val minTimeExpr = invokeLabel.params[2]
+                                    val maxTimeExpr = invokeLabel.params[3]
+                                    check(minTimeExpr.type is IntType && maxTimeExpr.type is IntType)
+                                    val minTime = (simplify(minTimeExpr) as IntLitExpr).value.intValueExact()
+                                    val maxTime = (simplify(maxTimeExpr) as IntLitExpr).value.intValueExact()
+
+                                    listOf(
+                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Geq(threadClock, minTime)), metadata),
+                                        ClockOpLabel(ClockOps.Guard(ClockConstrs.Leq(threadClock, maxTime)), metadata),
+                                        ClockOpLabel(ClockOps.Reset(threadClock, 0), metadata),
+                                    )
+                                }
+
+                                else -> error("Unsupported clock function ${invokeLabel.name}")
                             }
-
-                            "theta_clock_delay" -> {
-                                listOf(ClockDelayLabel(metadata))
-                            }
-
-                            "theta_elapsed_time" -> {
-                                val clockRef = invokeLabel.params[1]
-                                check(clockRef is RefExpr && clockRef.type is RatType)
-                                val threadClock = clockRef.decl as VarDecl<RatType>
-                                check(threadClock.name == "thread_clock")
-
-                                val minTimeExpr = invokeLabel.params[2]
-                                val maxTimeExpr = invokeLabel.params[3]
-                                check(minTimeExpr.type is IntType && maxTimeExpr.type is IntType)
-                                val minTime = (simplify(minTimeExpr) as IntLitExpr).value.intValueExact()
-                                val maxTime = (simplify(maxTimeExpr) as IntLitExpr).value.intValueExact()
-
-                                listOf(
-                                    ClockOpLabel(ClockOps.Guard(ClockConstrs.Geq(threadClock, minTime)), metadata),
-                                    ClockOpLabel(ClockOps.Guard(ClockConstrs.Leq(threadClock, maxTime)), metadata),
-                                    ClockOpLabel(ClockOps.Reset(threadClock, 0), metadata),
-                                )
-                            }
-
-                            else -> error("Unsupported clock function ${invokeLabel.name}")
+                            builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(labels), metadata))
+                        } else {
+                            builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
                         }
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(labels), metadata))
-                    } else {
-                        builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
                     }
                 }
             }

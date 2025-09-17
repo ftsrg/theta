@@ -19,13 +19,15 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.xcfa.model.ClockDelayLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
-class DelayPass : ProcedurePass {
+class DelayPass(val timed : Boolean) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        for (edge in ArrayList(builder.getEdges())) {
-            builder.removeEdge(edge)
-            val withDelay = addLabelToEdge(edge, ClockDelayLabel())
-            builder.addEdge(withDelay)
+        if (timed) {
+            for (edge in ArrayList(builder.getEdges())) {
+                builder.removeEdge(edge)
+                val withDelay = addLabelToEdge(edge, ClockDelayLabel())
+                builder.addEdge(withDelay)
+            }
         }
         return builder
     }

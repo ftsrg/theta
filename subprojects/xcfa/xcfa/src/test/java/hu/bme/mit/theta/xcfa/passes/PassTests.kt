@@ -426,7 +426,7 @@ class PassTests {
   fun testCPipeline() {
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+        procedure("main", CPasses(false, false, parseContext, NullLogger.getInstance())) {
           (init to final) { "proc1"() }
         }
         procedure("proc1") { (init to final) { assume("1 == 1") } }
@@ -445,7 +445,7 @@ class PassTests {
     lateinit var edge: XcfaEdge
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+        procedure("main", CPasses(false, false, parseContext, NullLogger.getInstance())) {
           edge = (init to final) {
             assume("1 == 1")
             "proc1"()

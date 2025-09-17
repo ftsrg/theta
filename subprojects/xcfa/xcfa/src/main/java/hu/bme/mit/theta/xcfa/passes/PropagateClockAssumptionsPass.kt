@@ -31,16 +31,18 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import java.util.LinkedList
 import java.util.Queue
 
-class PropagateClockAssumptionsPass : ProcedurePass {
+class PropagateClockAssumptionsPass(val timed : Boolean) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val invariants : Map<XcfaLocation, ClockConstr> = collectInvariants(builder.getLocs())
-        for ((location, invariant) in invariants) {
-            val invariantLabel = ClockOpLabel(ClockOps.Guard(invariant))
-            for (incomingEdge in location.incomingEdges) {
-                val newIncomingEdge = addLabelToEdge(incomingEdge, invariantLabel)
-                builder.removeEdge(incomingEdge)
-                builder.addEdge(newIncomingEdge)
+        if (timed) {
+            val invariants: Map<XcfaLocation, ClockConstr> = collectInvariants(builder.getLocs())
+            for ((location, invariant) in invariants) {
+                val invariantLabel = ClockOpLabel(ClockOps.Guard(invariant))
+                for (incomingEdge in location.incomingEdges) {
+                    val newIncomingEdge = addLabelToEdge(incomingEdge, invariantLabel)
+                    builder.removeEdge(incomingEdge)
+                    builder.addEdge(newIncomingEdge)
+                }
             }
         }
         return builder
