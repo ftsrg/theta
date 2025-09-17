@@ -32,6 +32,9 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.PrecReuse
+import hu.bme.mit.theta.analysis.utils.PrecReuseMode
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -52,6 +55,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.WitnessPrecSerializerConfig
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
@@ -123,7 +127,16 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     if (cegarConfig.initPrec == InitPrec.REUSE) {
       cegarConfig.precFile?.let { precFilename ->
         val precFile = File(precFilename)
-        if (precFile.exists()) PrecReuse.setInput(precFile)
+        if (precFile.exists()) {
+          PrecReuse.setInput(precFile)
+          PrecReuse.precReuseMode = when (precFile.extension) {
+            "yml" -> PrecReuseMode.WITNESS
+            "txt" -> PrecReuseMode.PROPRIETARY
+            else -> PrecReuseMode.PROPRIETARY.also {
+              logger.write(Logger.Level.INFO, "Precision reuse selected, but provided precision file format not recognised. Proceeding with empty initial precision.\n")
+            }
+          }
+        }
         else logger.write(Logger.Level.INFO, "Precision reuse selected, but provided precision file does not exist. Proceeding with empty initial precision.\n")
       } ?: logger.write(Logger.Level.INFO, "Precision reuse selected, but no precision file specified. Use the --prec-file to provide the precision. Proceeding with empty initial precision.\n")
     }
