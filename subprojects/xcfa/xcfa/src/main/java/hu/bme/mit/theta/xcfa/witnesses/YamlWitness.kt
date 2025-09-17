@@ -54,6 +54,7 @@ val WitnessYamlConfig =
 data class YamlWitness(
   @SerialName("entry_type") val entryType: EntryType,
   val metadata: Metadata,
+  val declarations: List<String> = listOf(),
   val content: List<ContentItem>,
 )
 
@@ -61,6 +62,7 @@ data class YamlWitness(
 enum class EntryType {
   @SerialName("violation_sequence") VIOLATION,
   @SerialName("invariant_set") INVARIANTS,
+  @SerialName("precision_set") PRECISION,
 }
 
 /**
@@ -166,7 +168,7 @@ enum class Language {
  *   a mapping that describes one invariant.
  */
 @Serializable
-data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null) {
+data class ContentItem(val segment: Segment? = null, val invariant: Invariant? = null, val precision: Precision? = null) {
 
   constructor(wpContent: WaypointContent) : this(listOf(Waypoint(wpContent)))
 }
@@ -322,4 +324,31 @@ data class Invariant(
 enum class InvariantType {
   @SerialName("loop_invariant") LOOP_INVARIANT,
   @SerialName("location_invariant") LOCATION_INVARIANT,
+}
+
+@Serializable
+data class Precision(
+  val format: Format,
+  val scope: PrecisionScope,
+  val type: PrecisionType,
+  val values: List<String>,
+)
+
+enum class PrecisionType {
+  @SerialName("predicate") PREDICATE,
+  @SerialName("explicit") EXPLICIT,
+}
+
+@Serializable
+data class PrecisionScope(
+  val type: PrecisionScopeType,
+  val functionName: String? = null,
+  val location: Location? = null,
+)
+
+enum class PrecisionScopeType {
+  @SerialName("global") GLOBAL,
+  @SerialName("function") FUNCTION,
+  @SerialName("loop_location") LOOP_LOCATION,
+  @SerialName("location") LOCATION,
 }

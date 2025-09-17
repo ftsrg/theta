@@ -50,11 +50,17 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 
+enum class PrecReuseMode {
+    PROPRIETARY,
+    WITNESS
+}
+
 object PrecReuse {
     private var isEnabled = false
     private var inputFile: File? = null
     private var serializer: PrecSerializer<Prec>? = null
     private var toSave: Prec? = null
+    var precReuseMode = PrecReuseMode.PROPRIETARY
 
     fun enable(precSerializer: PrecSerializer<*>) {
         isEnabled = true
@@ -82,7 +88,11 @@ object PrecReuse {
         assert(serializer != null)
         if (!isEnabled) return
 
-        val outputFile = File(outputFolder, "prec.txt")
+        val outputFileName = when (precReuseMode) {
+            PrecReuseMode.PROPRIETARY -> "prec.txt"
+            PrecReuseMode.WITNESS -> "prec.yml"
+        }
+        val outputFile = File(outputFolder, outputFileName)
         outputFile.writeText(toSave?.let{ serializer!!.serialize(it) } ?: "")
     }
 
