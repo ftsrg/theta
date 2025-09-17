@@ -37,6 +37,7 @@ class CPasses(timed : Boolean, checkOverflow: Boolean, parseContext: ParseContex
       FinalLocationPass(checkOverflow),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      CollectClockVarsPass(timed, parseContext),
       ClockLabelPass(timed),
       CLibraryFunctionsPass(),
     ),

@@ -144,14 +144,18 @@ class FrontendXcfaBuilder(
           "Not handling init expression of struct array ${globalDeclaration.get1()}",
         )
       }
-      builder.addVar(
-        XcfaGlobalVar(
-          globalDeclaration.get2(),
-          type.nullValue,
-          threadLocal = globalDeclaration.get1().type.isThreadLocal,
-          atomic = globalDeclaration.get1().type.isAtomic,
-        )
+      val globalVar = XcfaGlobalVar(
+        globalDeclaration.get2(),
+        type.nullValue,
+        threadLocal = globalDeclaration.get1().type.isThreadLocal,
+        atomic = globalDeclaration.get1().type.isAtomic,
       )
+      builder.addVar(
+        globalVar
+      )
+      if (type is CClock) {
+        builder.addClock(globalVar)
+      }
       if (type is CArray) {
         initStmtList.add(
           StmtLabel(

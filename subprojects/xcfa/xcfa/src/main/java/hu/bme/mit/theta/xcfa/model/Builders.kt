@@ -30,6 +30,7 @@ class XcfaBuilder
 constructor(
   var name: String,
   private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
+  private val clocks: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
   val heapMap: MutableMap<Triple<Int, Int, Type>, VarDecl<*>> = LinkedHashMap(),
   private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
@@ -46,6 +47,7 @@ constructor(
     return XCFA(
       name = name,
       globalVars = vars,
+      clocks = clocks,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
     )
@@ -53,6 +55,10 @@ constructor(
 
   fun addVar(toAdd: XcfaGlobalVar) {
     vars.add(toAdd)
+  }
+
+  fun addClock(toAdd: XcfaGlobalVar) {
+    clocks.add(toAdd)
   }
 
   fun addProcedure(toAdd: XcfaProcedureBuilder) {
@@ -75,6 +81,7 @@ constructor(
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
+  private val clocks: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -171,6 +178,7 @@ constructor(
         name = optimized.name,
         params = optimized.params,
         vars = optimized.vars,
+        clocks = optimized.clocks,
         locs = optimized.locs,
         edges = optimized.edges,
         initLoc = optimized.initLoc,
@@ -201,6 +209,13 @@ constructor(
       "Cannot add/remove/modify elements after optimization passes!"
     }
     atomicVars.add(v)
+  }
+
+  fun addClock(toAdd: VarDecl<*>) {
+    check(!this::optimized.isInitialized) {
+      "Cannot add/remove new elements after optimization passes!"
+    }
+    clocks.add(toAdd)
   }
 
   fun removeVar(toRemove: VarDecl<*>) {

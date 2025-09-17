@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
@@ -168,5 +169,10 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
     @Override
     public AssumeStmt visit(CBool type, Expr<?> param) {
         return Assume(And(Geq(param, Int(0)), Leq(param, Int(1))));
+    }
+
+    @Override
+    public AssumeStmt visit(CClock type, Expr<?> param) {
+        return Assume(Geq(param, Int(0)));
     }
 }

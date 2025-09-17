@@ -24,6 +24,7 @@ import java.util.*
 class XCFA(
   val name: String,
   val globalVars: Set<XcfaGlobalVar>, // global variables
+  val clocks: Set<XcfaGlobalVar> = emptySet(),
   val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
   val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList(),
   var unsafeUnrollUsed: Boolean = false,
@@ -98,6 +99,7 @@ data class XcfaProcedure(
   val name: String,
   val params: List<Pair<VarDecl<*>, ParamDirection>>, // procedure params
   val vars: Set<VarDecl<*>>, // local variables
+  val clocks: Set<VarDecl<*>> = emptySet(),
   val locs: Set<XcfaLocation>, // locations
   val edges: Set<XcfaEdge>, // edges
   val initLoc: XcfaLocation, // initial location

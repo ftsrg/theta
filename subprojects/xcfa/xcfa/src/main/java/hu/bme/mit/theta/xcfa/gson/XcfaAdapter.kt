@@ -212,6 +212,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
             name,
             params,
             vars,
+            emptySet(), // TODO - clocks are RatType variables
             locs.values.toSet(),
             edges,
             initLoc,
