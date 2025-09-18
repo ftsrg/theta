@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.frontend.petrinet.model
+package hu.bme.mit.theta.frontend.petrinet.model;
 
-enum class PropType {
+public enum PropType {
     TARGET_MARKING,
     DEADLOCK,
     PN_SAFE,

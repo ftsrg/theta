@@ -23,7 +23,6 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
-import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.xsts.XSTS
