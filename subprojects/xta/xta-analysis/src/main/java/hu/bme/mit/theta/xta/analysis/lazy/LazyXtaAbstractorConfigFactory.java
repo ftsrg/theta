@@ -6,7 +6,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.lazy.*;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expl.ExplTransFunc;
-import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprAnalysis;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprInvTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.expr.ExprTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.lazy.itp.*;
@@ -30,6 +29,7 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expr.XtaExprActionPost;
+import hu.bme.mit.theta.xta.analysis.expr.XtaExprAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneInvTransFunc;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneTransFunc;
@@ -164,7 +164,7 @@ public final class LazyXtaAbstractorConfigFactory {
                     return ExplAnalysis.create(system.getInitVal(), XtaExplUtils::post);
                 case EXPR:
                     final Solver solver = solverFactory.createSolver();
-                    return ExprAnalysis.create(system.getInitVal(), solver);
+                    return XtaExprAnalysis.create(system, solver);
                 default:
                     throw new AssertionError();
             }
