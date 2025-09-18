@@ -22,7 +22,6 @@ import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait.*
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
@@ -44,6 +43,7 @@ import hu.bme.mit.theta.xcfa.cli.params.POR.*
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.NWT_IT_WP
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -271,7 +271,7 @@ fun complexPortfolio25(
     return if (portfolioConfig.debugConfig.debug) notinproc.innerSTM else STM(inproc, edges)
   }
 
-  fun getStm(trait: ArithmeticTrait, inProcess: Boolean): STM {
+  fun getStm(trait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
     val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
       ConfigNode(
@@ -1145,10 +1145,10 @@ fun complexPortfolio25(
   val mainTrait =
     when {
       parseContext.multiThreading -> MULTITHREAD
-      FLOAT in parseContext.arithmeticTraits -> FLOAT
-      ARR in parseContext.arithmeticTraits -> ARR
-      BITWISE in parseContext.arithmeticTraits -> BITWISE
-      NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
+      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
+      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ARR
+      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> BITWISE
+      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
       else -> LIN_INT
     }
 

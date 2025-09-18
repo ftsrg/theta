@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -115,7 +116,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = 1000,
+  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
   @Parameter(
     names = ["--force-unroll"],
     description =

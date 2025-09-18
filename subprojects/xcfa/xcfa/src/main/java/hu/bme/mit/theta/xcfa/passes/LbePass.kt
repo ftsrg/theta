@@ -23,7 +23,6 @@ import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import kotlin.collections.set
 
 /**
  * This pass simplifies the XCFA by joining certain edges to single edges.
@@ -38,8 +37,10 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
 
+    val defaultLevel = LbeLevel.NO_LBE
+
     /** The level of LBE that specifies which type of graph transformations to apply. */
-    var level = LbeLevel.NO_LBE
+    var level = defaultLevel
   }
 
   /** LBE modes. */

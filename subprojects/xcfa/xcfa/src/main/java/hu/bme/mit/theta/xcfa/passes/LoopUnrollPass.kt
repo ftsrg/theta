@@ -80,7 +80,7 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
         unroll(builder, count, true)
       } else if (forceUnrollLimit != -1) {
         builder.setUnsafeUnroll()
-        unroll(builder, FORCE_UNROLL_LIMIT, false)
+        unroll(builder, forceUnrollLimit, false)
       }
     }
 
