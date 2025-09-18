@@ -151,8 +151,6 @@ val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label 
 
 val anyError = ExceptionTrigger(label = "Anything")
 
-
-
 fun XcfaConfig<*, CegarConfig>.adaptConfig(
   initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
   timeoutMs: Long = this.backendConfig.timeoutMs,

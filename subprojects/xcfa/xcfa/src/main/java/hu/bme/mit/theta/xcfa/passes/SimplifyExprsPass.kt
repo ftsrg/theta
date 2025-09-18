@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
@@ -47,25 +48,10 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
       builder.parent
         .getVars()
         .map { it.wrappedVar }
-        .filter { v ->
-          var firstWrite: XcfaEdge? = null
-          (builder.parent.getProcedures().sumOf { p ->
-              p.getEdges().count { e ->
-                e.getFlatLabels()
-                  .any { l ->
-                    l.collectVarsWithAccessType().any { it.value.isWritten && it.key == v }
-                  }
-                  .also { written -> if (written && firstWrite == null) firstWrite = e }
-              }
-            } > 1)
-            .also { modified ->
-              if (!modified && firstWrite != null) {
-                val valuation = MutableValuation()
-                firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
-                valuation.toMap()[v]?.let { constValuation.put(v, it) }
-              }
-            }
-        }
+        .separateConstAndModifiedVariables(builder.parent.getProcedures(), constValuation)
+
+    builder.getVars().separateConstAndModifiedVariables(setOf(builder), constValuation)
+
     lateinit var lastEdges: LinkedHashSet<XcfaEdge>
     do {
       lastEdges = edges
@@ -120,5 +106,30 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     return ImmutableValuation.from(
       v1map.filter { v2map.containsKey(it.key) && v2map[it.key] == it.value }
     )
+  }
+
+  /**
+   * Separates the variables in this collection. The constant variables are added to the given
+   * valuation with their values. Modified variables are returned as a list.
+   */
+  private fun Collection<VarDecl<*>>.separateConstAndModifiedVariables(
+    acessingProcedures: Set<XcfaProcedureBuilder>,
+    constValuation: MutableValuation,
+  ): List<VarDecl<*>> = filter { v ->
+    var firstWrite: XcfaEdge? = null
+    (acessingProcedures.sumOf { p ->
+        p.getEdges().count { e ->
+          e.getFlatLabels()
+            .any { l -> l.collectVarsWithAccessType().any { it.value.isWritten && it.key == v } }
+            .also { written -> if (written && firstWrite == null) firstWrite = e }
+        }
+      } > 1)
+      .also { modified ->
+        if (!modified && firstWrite != null) {
+          val valuation = MutableValuation()
+          firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
+          valuation.toMap()[v]?.let { constValuation.put(v, it) }
+        }
+      }
   }
 }

@@ -126,10 +126,9 @@ fun complexPortfolio26(
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
-      baseConfig
-        .copy(
-          backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
-        )
+      baseConfig.copy(
+        backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
+      )
   }
 
   if (!xcfa.isInlined) {
@@ -160,7 +159,7 @@ fun complexPortfolio26(
   fun getStm(trait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
-    return when(trait) {
+    return when (trait) {
       BITWISE -> {
         val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
           ConfigNode(
@@ -335,7 +334,9 @@ fun complexPortfolio26(
             ),
             checker,
           )
-        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_EXPL_NWT_IT_WP_Z3, solverError))
+        edges.add(
+          Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_EXPL_NWT_IT_WP_Z3, solverError)
+        )
         val config_FLOAT_EXPL_NWT_IT_WP_mathsat =
           ConfigNode(
             "FLOAT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
@@ -402,7 +403,11 @@ fun complexPortfolio26(
             checker,
           )
         edges.add(
-          Edge(config_FLOAT_PRED_CART_SEQ_ITP_mathsat, config_FLOAT_PRED_CART_SEQ_ITP_cvc5, solverError)
+          Edge(
+            config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
+            config_FLOAT_PRED_CART_SEQ_ITP_cvc5,
+            solverError,
+          )
         )
         val config_FLOAT_EXPL_SEQ_ITP_mathsat =
           ConfigNode(
@@ -445,7 +450,9 @@ fun complexPortfolio26(
             ),
             checker,
           )
-        edges.add(Edge(config_FLOAT_EXPL_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_cvc5, solverError))
+        edges.add(
+          Edge(config_FLOAT_EXPL_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_cvc5, solverError)
+        )
 
         STM(config_FLOAT_EXPL_NWT_IT_WP_cvc5, edges)
       }
@@ -837,7 +844,9 @@ fun complexPortfolio26(
             ),
             checker,
           )
-        edges.add(Edge(config_ARR_PRED_CART_SEQ_ITP_Z3, config_ARR_PRED_CART_SEQ_ITP_z3, solverError))
+        edges.add(
+          Edge(config_ARR_PRED_CART_SEQ_ITP_Z3, config_ARR_PRED_CART_SEQ_ITP_z3, solverError)
+        )
         val config_ARR_PRED_CART_SEQ_ITP_princess =
           ConfigNode(
             "ARR_PRED_CART_SEQ_ITP_princess:2023-06-19-$inProcess",
@@ -879,7 +888,11 @@ fun complexPortfolio26(
             checker,
           )
         edges.add(
-          Edge(config_ARR_PRED_CART_SEQ_ITP_princess, config_ARR_PRED_CART_SEQ_ITP_cvc5, solverError)
+          Edge(
+            config_ARR_PRED_CART_SEQ_ITP_princess,
+            config_ARR_PRED_CART_SEQ_ITP_cvc5,
+            solverError,
+          )
         )
 
         STM(config_ARR_EXPL_NWT_IT_WP_cvc5, edges)
@@ -913,7 +926,11 @@ fun complexPortfolio26(
             checker,
           )
         edges.add(
-          Edge(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, config_MULTITHREAD_EXPL_SEQ_ITP_mathsat, solverError)
+          Edge(
+            config_MULTITHREAD_EXPL_SEQ_ITP_Z3,
+            config_MULTITHREAD_EXPL_SEQ_ITP_mathsat,
+            solverError,
+          )
         )
         val config_MULTITHREAD_EXPL_NWT_IT_WP_z3 =
           ConfigNode(
@@ -1032,19 +1049,20 @@ fun complexPortfolio26(
         val cegarStm = STM(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, edges)
 
         if (baseConfig.inputConfig.property == ERROR_LOCATION) {
-          val config_OC = XcfaConfig<CFrontendConfig, OcConfig>(
-            inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(xcfa, mcm, parseContext)),
-            backendConfig =
-              BackendConfig(
-                backend = OC,
-                solverHome = baseConfig.backendConfig.solverHome,
-                timeoutMs = 500_000,
-                inProcess = inProcess,
-                specConfig = OcConfig(autoConflict = SIMPLE),
-              ),
-            outputConfig = baseConfig.outputConfig,
-            debugConfig = baseConfig.debugConfig,
-          )
+          val config_OC =
+            XcfaConfig<CFrontendConfig, OcConfig>(
+              inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(xcfa, mcm, parseContext)),
+              backendConfig =
+                BackendConfig(
+                  backend = OC,
+                  solverHome = baseConfig.backendConfig.solverHome,
+                  timeoutMs = 500_000,
+                  inProcess = inProcess,
+                  specConfig = OcConfig(autoConflict = SIMPLE),
+                ),
+              outputConfig = baseConfig.outputConfig,
+              debugConfig = baseConfig.debugConfig,
+            )
           val oc = ConfigNode("MULTITHREAD_OC-$inProcess", config_OC, checker)
           val cegar = HierarchicalNode("MULTITHREAD_CEGAR-$inProcess", cegarStm)
           val exitOcEdge = Edge(oc, cegar, ExceptionTrigger(label = "Anything"))
@@ -1067,7 +1085,13 @@ fun complexPortfolio26(
             baseConfig.adaptConfig(inProcess = inProcess, domain = PRED_CART),
             checker,
           )
-        edges.add(Edge(config_EXPL, config_PRED_CART, if (inProcess) timeoutOrNotSolvableError else anyError))
+        edges.add(
+          Edge(
+            config_EXPL,
+            config_PRED_CART,
+            if (inProcess) timeoutOrNotSolvableError else anyError,
+          )
+        )
         STM(config_EXPL, edges)
       }
     }
