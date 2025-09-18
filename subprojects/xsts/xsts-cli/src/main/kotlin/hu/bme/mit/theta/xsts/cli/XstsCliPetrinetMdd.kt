@@ -28,6 +28,7 @@ import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.mdd.LatticeDefinition
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
@@ -101,8 +102,21 @@ class XstsCliPetrinetMdd :
     ssgTimer.stop()
     totalTimer.stop()
 
-    val unionProvider = variableOrder.defaultUnionProvider
-    listOf(
+    if (!outputOptions.benchmarkMode) {
+      val statistics =
+        MddAnalysisStatistics(
+          0,
+          MddInterpreter.calculateNonzeroCount(stateSpace),
+          provider.hitCount,
+          provider.queryCount,
+          provider.cacheSize,
+        )
+      logger.writeln(Logger.Level.MAINSTEP, statistics.toString())
+      logger.writeln(Logger.Level.RESULT, "(SafetyResult Safe)")
+
+    } else {
+      val unionProvider = variableOrder.defaultUnionProvider
+      listOf(
         id,
         inputOptions.model.path,
         system.name,
@@ -115,21 +129,22 @@ class XstsCliPetrinetMdd :
         unionProvider.queryCount,
         unionProvider.hitCount,
       )
-      .forEach(writer::cell)
-    if (
-      iterationStrategy in
+        .forEach(writer::cell)
+      if (
+        iterationStrategy in
         setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-    ) {
+      ) {
+        listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
+      }
       listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
-    }
-    listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
-    if (
-      iterationStrategy in
+      if (
+        iterationStrategy in
         setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-    ) {
-      val collector: MutableSet<MddNode> = mutableSetOf()
-      provider.clear()
-      listOf(collector.size).forEach(writer::cell)
+      ) {
+        val collector: MutableSet<MddNode> = mutableSetOf()
+        provider.clear()
+        listOf(collector.size).forEach(writer::cell)
+      }
     }
   }
 

@@ -164,7 +164,7 @@ public class PetriNetToXSTS {
                 propExpr = cast(dslManager.parseExpr(property), Bool());
             }
         } else if (propType == PropType.FULL_EXPLORATION) {
-            propExpr = False();
+            propExpr = True();
         } else {
             propExpr = True();
         }
