@@ -45,13 +45,6 @@ public class PetriNetToXSTS {
 
     private PetriNetToXSTS() {}
 
-    public enum PropType {
-        TARGET_MARKING,
-        DEADLOCK,
-        PN_SAFE,
-        FULL_EXPLORATION
-    }
-
     public static XSTS createXSTS(final PetriNet net, final InputStream propStream) {
         return createXSTS(net, propStream, PropType.FULL_EXPLORATION);
     }

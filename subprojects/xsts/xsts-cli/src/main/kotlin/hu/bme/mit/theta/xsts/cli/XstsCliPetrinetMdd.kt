@@ -20,6 +20,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
+import com.google.common.base.Preconditions.checkArgument
 import com.google.common.base.Stopwatch
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
@@ -35,6 +36,7 @@ import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
 import hu.bme.mit.theta.frontend.petrinet.model.Place
+import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.xsts.cli.optiongroup.PetrinetDependencyOutputOptions
 import java.io.File
 import java.io.PrintStream
@@ -68,6 +70,10 @@ class XstsCliPetrinetMdd :
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
   private fun petrinetAnalysis() {
+    checkArgument(inputOptions.pnProperty == PropType.FULL_EXPLORATION) {
+      "Only full exploration is supported for dedicated PN mode. Use XSTS-based analysis for other properties."
+    }
+
     val totalTimer = Stopwatch.createStarted()
     val petriNet = inputOptions.loadPetriNet()[0]
     val effectiveOrdering = loadOrdering(petriNet)
