@@ -23,6 +23,7 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
+import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.xsts.XSTS
@@ -46,7 +47,9 @@ class InputOptions :
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
   val pnProperty: PropType by
-    option(help = "Property type for Petri-nets").enum<PropType>().default(PropType.FULL_EXPLORATION)
+    option(help = "Property type for Petri-nets")
+      .enum<PropType>()
+      .default(PropType.FULL_EXPLORATION)
 
   fun isPnml() = model.path.endsWith("pnml")
 
