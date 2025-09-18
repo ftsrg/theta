@@ -27,6 +27,7 @@ import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS.PropType
 import hu.bme.mit.theta.xsts.XSTS
+import hu.bme.mit.theta.xsts.analysis.passes.XstsGammaTranTransformer
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 
@@ -47,7 +48,7 @@ class InputOptions :
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
   private val pnProperty: PropType by
-    option(help = "Property type for Petri-nets").enum<PropType>().default(PropType.TARGET_MARKING)
+    option(help = "Property type for Petri-nets").enum<PropType>().default(PropType.FULL_EXPLORATION)
 
   fun isPnml() = model.path.endsWith("pnml")
 
