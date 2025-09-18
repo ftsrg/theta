@@ -51,9 +51,10 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.getLoopElements
+import org.kframework.mpfr.BigFloat
 import java.math.BigInteger
 import java.util.*
-import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
   get() =
@@ -65,8 +66,8 @@ private val LitExpr<*>.value: Int
 
 data class XcfaToMonolithicExprResult(
   val monolithicExpr: MonolithicExpr,
-  val locVar: VarDecl<*>,
-  val edgeVar: VarDecl<*>,
+  val locVars: Collection<VarDecl<*>>,
+  val edgeVars: Collection<VarDecl<*>>,
   val locMap: Map<XcfaLocation, Int>,
   val edgeMap: Map<XcfaEdge, Int>,
 )
@@ -87,49 +88,74 @@ fun XCFA.toMonolithicExpr(
     }
 
   Preconditions.checkArgument(this.initProcedures.size == 1)
-  val proc = this.initProcedures.stream().findFirst().orElse(null).first
-  Preconditions.checkArgument(
-    proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
-  )
-  //  Preconditions.checkArgument(proc.errorLoc.isPresent)
+  val threads = this.staticThreadProcedureMap
+  var pid = 0
+  val threadIds = threads.keys.associateWith { pid++ }
 
   val locMap = mutableMapOf<XcfaLocation, Int>()
-  for ((i, x) in proc.locs.withIndex()) {
-    locMap[x] = i
+  for ((_, proc) in threads) {
+    for ((i, x) in proc.locs.withIndex()) {
+      locMap[x] = i
+    }
   }
   val edgeMap = mutableMapOf<XcfaEdge, Int>()
-  for ((i, x) in proc.edges.withIndex()) {
-    edgeMap[x] = i
+  for ((_, proc) in threads) {
+    for ((i, x) in proc.edges.withIndex()) {
+      edgeMap[x] = i
+    }
   }
-  val locVar = Decls.Var("__loc_", intType)
-  val edgeVar = Decls.Var("__edge_", intType)
+
+  val locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
+  val edgeVars = threads.keys.associateWith { Decls.Var("__edge_t${threadIds[it]}", intType) }
+
   val tranList =
-    proc.edges
-      .map { edge: XcfaEdge ->
-        val (source, target, label) = edge
+    threads.flatMap { (label, proc) ->
+      val locVar = locVars[label]!!
+      val edgeVar = edgeVars[label]!!
+      proc.edges
+        .map { edge: XcfaEdge ->
+          val (source, target, label) = edge
+          SequenceStmt.of(
+            listOf(
+              AssumeStmt.of(Eq(locVar.ref, int(locMap[source]!!))),
+              label.toStmt(),
+              AssignStmt.of(locVar, cast(int(locMap[target]!!), locVar.type)),
+              AssignStmt.of(edgeVar, cast(int(edgeMap[edge]!!), edgeVar.type)),
+            ) + if (label is StartLabel) {
+              val startedLocVar = locVars[label]!!
+              val startedInitLoc = threads[label]!!.initLoc
+              listOf(
+                AssumeStmt.of(Eq(startedLocVar.ref, int(-1))),
+                AssignStmt.of(startedLocVar, cast(int(locMap[startedInitLoc]!!), startedLocVar.type)),
+              )
+            } else listOf()
+          )
+        }
+        .toList() +
         SequenceStmt.of(
           listOf(
-            AssumeStmt.of(Eq(locVar.ref, int(locMap[source]!!))),
-            label.toStmt(),
-            AssignStmt.of(locVar, cast(int(locMap[target]!!), locVar.type)),
-            AssignStmt.of(edgeVar, cast(int(edgeMap[edge]!!), edgeVar.type)),
+            AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
+            AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
           )
         )
-      }
-      .toList() +
-      SequenceStmt.of(
-        listOf(
-          AssumeStmt.of(Eq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))),
-          AssignStmt.of(locVar, cast(int(locMap[proc.errorLoc.get()]!!), locVar.type)),
-        )
-      )
+    }
   val trans = NonDetStmt.of(tranList)
   val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
+
+  val locDefaultValues = threads.map { (label, proc) ->
+    if (label == null) { // init procedure
+      Eq(locVars[label]!!.ref, int(locMap[proc.initLoc]!!))
+    } else {
+      Eq(locVars[label]!!.ref, int(-1)) // -1 means thread has not started yet
+    }
+  }.let { And(it) }
+
+  val edgeDefaultValues = edgeVars.values.map { Eq(it.ref, int(-1)) }.let { And(it) }
 
   val defaultValues =
     if (initValues)
       StmtUtils.getVars(trans)
-        .filter { !it.equals(locVar) and !it.equals(edgeVar) }
+        .filter { it !in locVars.values && it !in edgeVars.values }
         .map {
           when (it.type) {
             is IntType -> Eq(it.ref, int(0))
@@ -155,24 +181,27 @@ fun XCFA.toMonolithicExpr(
         .let { And(it) }
     else True()
 
+  val propExpr = threads.map { (label, proc) ->
+    if (proc.errorLoc.isPresent) Neq(locVars[label]!!.ref, int(locMap[proc.errorLoc.get()]!!))
+    else True()
+  }.let { And(it) }
+
   val monExpr =
     MonolithicExpr(
       initExpr =
-        And(Eq(locVar.ref, int(locMap[proc.initLoc]!!)), Eq(edgeVar.ref, int(-1)), defaultValues),
+        And(locDefaultValues, edgeDefaultValues, defaultValues),
       transExpr = And(transUnfold.exprs),
-      propExpr =
-        if (proc.errorLoc.isPresent) Neq(locVar.ref, int(locMap[proc.errorLoc.get()]!!))
-        else True(),
+      propExpr = propExpr,
       transOffsetIndex = transUnfold.indexing,
       vars =
-        StmtUtils.getVars(trans).filter { !it.equals(locVar) and !it.equals(edgeVar) }.toList() +
-          edgeVar +
-          locVar,
+        StmtUtils.getVars(trans).filter { it !in locVars.values && it !in edgeVars.values } +
+          edgeVars.values +
+          locVars.values,
       valToState = { valToState(it) },
       biValToAction = { val1, val2 -> valToAction(val1, val2) },
-      ctrlVars = listOf(locVar, edgeVar),
+      ctrlVars = locVars.values + edgeVars.values,
     )
-  return XcfaToMonolithicExprResult(monExpr, locVar, edgeVar, locMap, edgeMap)
+  return XcfaToMonolithicExprResult(monExpr, locVars.values, edgeVars.values, locMap, edgeMap)
 }
 
 fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
@@ -221,4 +250,48 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
       )
     ),
   )
+}
+
+private val XCFA.staticThreadProcedureMap: Map<StartLabel?, XcfaProcedure> get() {
+  val initProc = this.initProcedures.first().first
+  return mapOf(null to initProc) + staticThreadProcedureMap(setOf(initProc))
+}
+
+private fun XCFA.staticThreadProcedureMap(startedProcedures: Set<XcfaProcedure>): Map<StartLabel, XcfaProcedure> {
+  val procedure = startedProcedures.last()
+  val loopEdges = procedure.loopEdges
+  check(loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel } })
+  val nonLoopEdges = procedure.edges - loopEdges
+  val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
+  check(nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel })
+  val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
+
+  val threads = mutableMapOf<StartLabel, XcfaProcedure>()
+  startLabels.forEach { startLabel ->
+    val startedProcedure = procedures.find { it.name == startLabel.name }!!
+    check(startedProcedure !in startedProcedures) { "Recursion is not allowed in static thread-procedure mapping!" }
+    threads[startLabel] = startedProcedure
+    threads.putAll(staticThreadProcedureMap(startedProcedures + startedProcedure))
+  }
+  return threads
+}
+
+private val XcfaProcedure.loopEdges: Set<XcfaEdge> get() {
+  val loopEdges = mutableSetOf<XcfaEdge>()
+  val visited = mutableSetOf<XcfaLocation>()
+  val stack = Stack<XcfaLocation>()
+  stack.push(this.initLoc)
+  while (stack.isNotEmpty()) {
+    val loc = stack.pop()
+    if (!visited.add(loc)) continue
+    for (edge in loc.outgoingEdges) {
+      if (edge.target in stack) {
+        val (_, es) = getLoopElements(edge)
+        loopEdges.addAll(es)
+      } else {
+        stack.push(edge.target)
+      }
+    }
+  }
+  return loopEdges
 }

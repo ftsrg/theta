@@ -1051,7 +1051,7 @@ fun complexPortfolio26(
         if (baseConfig.inputConfig.property == ERROR_LOCATION) {
           val config_OC =
             XcfaConfig<CFrontendConfig, OcConfig>(
-              inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(xcfa, mcm, parseContext)),
+              inputConfig = baseConfig.inputConfig,
               backendConfig =
                 BackendConfig(
                   backend = OC,
@@ -1065,7 +1065,7 @@ fun complexPortfolio26(
             )
           val oc = ConfigNode("MULTITHREAD_OC-$inProcess", config_OC, checker)
           val cegar = HierarchicalNode("MULTITHREAD_CEGAR-$inProcess", cegarStm)
-          val exitOcEdge = Edge(oc, cegar, ExceptionTrigger(label = "Anything"))
+          val exitOcEdge = Edge(oc, cegar, anyError)
           STM(oc, setOf(exitOcEdge))
         } else {
           cegarStm
@@ -1118,7 +1118,7 @@ fun complexPortfolio26(
   val notInProcessStm = getStm(mainTrait, false)
   val inProcess = HierarchicalNode("InProcess", inProcessStm)
   val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
-  val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
+  val fallbackEdge = Edge(inProcess, notInProcess, anyError)
 
   return STM(inProcess, setOf(fallbackEdge))
 }

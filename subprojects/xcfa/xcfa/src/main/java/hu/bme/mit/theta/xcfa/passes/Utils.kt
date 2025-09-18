@@ -190,3 +190,41 @@ fun combineMetadata(vararg metaData: MetaData): MetaData = combineMetadata(metaD
 
 fun combineMetadata(metaData: Collection<MetaData>): MetaData =
   metaData.reduce { i1, i2 -> i1.combine(i2) }
+
+/**
+ * Find loop locations and edges starting from the loop head. The loop head is the target of the given backward edge.
+ */
+fun getLoopElements(backEdge: XcfaEdge): Pair<Set<XcfaLocation>, Set<XcfaEdge>> {
+  val loopStart = backEdge.target
+  val backSearch: (XcfaLocation) -> Pair<Set<XcfaLocation>, List<XcfaEdge>>? =
+    backSearch@{ startLoc ->
+      val locs = mutableSetOf<XcfaLocation>()
+      val edges = mutableListOf<XcfaEdge>()
+      val toVisit = mutableListOf(startLoc)
+      while (toVisit.isNotEmpty()) {
+        val current = toVisit.removeFirst()
+        if (current == loopStart) continue
+        if (current.incomingEdges.isEmpty()) return@backSearch null // not part of the loop
+        if (locs.add(current)) {
+          edges.addAll(current.incomingEdges)
+          toVisit.addAll(current.incomingEdges.map { it.source })
+        }
+      }
+      locs to edges
+    }
+
+  val locs = mutableSetOf(loopStart)
+  val edges = mutableSetOf<XcfaEdge>()
+  val nonLoopEdge = loopStart.incomingEdges.filter { it != backEdge }.let {
+    if (it.size != 1) null
+    else it.first()
+  }
+  loopStart.incomingEdges.forEach { incoming ->
+    if (incoming == nonLoopEdge) return@forEach
+    val (l, e) = backSearch(incoming.source) ?: return@forEach
+    locs.addAll(l)
+    edges.addAll(e)
+    edges.add(incoming)
+  }
+  return locs to edges
+}

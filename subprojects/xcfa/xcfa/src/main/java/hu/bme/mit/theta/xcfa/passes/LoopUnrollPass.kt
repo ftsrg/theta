@@ -209,7 +209,7 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
       } else {
         val edge = edgesToExplore.random()
         if (edge.target in stack) { // loop found
-          getLoop(edge.target)?.let {
+          getLoop(edge)?.let {
             return it
           }
         } else {
@@ -222,7 +222,8 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
   }
 
   /** Find a loop from the given start location that can be unrolled. */
-  private fun getLoop(loopStart: XcfaLocation): Loop? {
+  private fun getLoop(backEdge: XcfaEdge): Loop? {
+    val loopStart = backEdge.target
     var properlyUnrollable = true
     var loopCondStart = loopStart
     while (
@@ -238,7 +239,7 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
       properlyUnrollable = false // more than two outgoing edges from the loop start not supported
     }
 
-    val (loopLocations, loopEdges) = getLoopElements(loopStart)
+    val (loopLocations, loopEdges) = getLoopElements(backEdge)
     if (loopEdges.isEmpty()) return null // unsupported loop structure
 
     val loopCondEdges = loopCondStart.outgoingEdges.filter { it.target in loopLocations }
@@ -337,35 +338,5 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
         forceUnrollLimit = forceUnrollLimit,
       )
       .also { if (it in testedLoops) return null }
-  }
-
-  /** Find loop locations and edges. */
-  private fun getLoopElements(loopStart: XcfaLocation): Pair<Set<XcfaLocation>, Set<XcfaEdge>> {
-    val backSearch: (XcfaLocation) -> Pair<Set<XcfaLocation>, List<XcfaEdge>>? =
-      backSearch@{ startLoc ->
-        val locs = mutableSetOf<XcfaLocation>()
-        val edges = mutableListOf<XcfaEdge>()
-        val toVisit = mutableListOf(startLoc)
-        while (toVisit.isNotEmpty()) {
-          val current = toVisit.removeFirst()
-          if (current == loopStart) continue
-          if (current.incomingEdges.isEmpty()) return@backSearch null // not part of the loop
-          if (locs.add(current)) {
-            edges.addAll(current.incomingEdges)
-            toVisit.addAll(current.incomingEdges.map { it.source })
-          }
-        }
-        locs to edges
-      }
-
-    val locs = mutableSetOf(loopStart)
-    val edges = mutableSetOf<XcfaEdge>()
-    loopStart.incomingEdges.forEach { incoming ->
-      val (l, e) = backSearch(incoming.source) ?: return@forEach
-      locs.addAll(l)
-      edges.addAll(e)
-      edges.add(incoming)
-    }
-    return locs to edges
   }
 }
