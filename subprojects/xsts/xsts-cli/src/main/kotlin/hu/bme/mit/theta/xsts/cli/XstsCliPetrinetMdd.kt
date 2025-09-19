@@ -113,33 +113,32 @@ class XstsCliPetrinetMdd :
         )
       logger.writeln(Logger.Level.MAINSTEP, statistics.toString())
       logger.writeln(Logger.Level.RESULT, "(SafetyResult Safe)")
-
     } else {
       val unionProvider = variableOrder.defaultUnionProvider
       listOf(
-        id,
-        inputOptions.model.path,
-        system.name,
-        MddInterpreter.calculateNonzeroCount(stateSpace),
-        numberOfNodes(stateSpace),
-        totalTimer.elapsed(TimeUnit.MICROSECONDS),
-        ssgTimer.elapsed(TimeUnit.MICROSECONDS),
-        variableOrder.mddGraph.uniqueTableSize,
-        unionProvider.cacheSize,
-        unionProvider.queryCount,
-        unionProvider.hitCount,
-      )
+          id,
+          inputOptions.model.path,
+          system.name,
+          MddInterpreter.calculateNonzeroCount(stateSpace),
+          numberOfNodes(stateSpace),
+          totalTimer.elapsed(TimeUnit.MICROSECONDS),
+          ssgTimer.elapsed(TimeUnit.MICROSECONDS),
+          variableOrder.mddGraph.uniqueTableSize,
+          unionProvider.cacheSize,
+          unionProvider.queryCount,
+          unionProvider.hitCount,
+        )
         .forEach(writer::cell)
       if (
         iterationStrategy in
-        setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
+          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
       ) {
         listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
       }
       listOf(provider.cacheSize, provider.queryCount, provider.hitCount).forEach(writer::cell)
       if (
         iterationStrategy in
-        setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
+          setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
       ) {
         val collector: MutableSet<MddNode> = mutableSetOf()
         provider.clear()
