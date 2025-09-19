@@ -108,6 +108,7 @@ private fun convertToMonolithicExpr(
   val threads = xcfa.staticThreadProcedureMap
   var pid = 0
   val threadIds = threads.keys.associateWith { pid++ }
+  val pidVars = threads.keys.filterNotNull().associate { it.pidVar to Decls.Var(it.pidVar.name, intType) }
 
   val locMap = mutableMapOf<XcfaLocation, Int>()
   for ((_, proc) in threads) {
@@ -139,17 +140,50 @@ private fun convertToMonolithicExpr(
               AssignStmt.of(locVar, cast(int(locMap[target]!!), locVar.type)),
               AssignStmt.of(edgeVar, cast(int(edgeMap[edge]!!), edgeVar.type)),
             ) +
-              if (label is StartLabel) {
-                val startedLocVar = locVars[label]!!
-                val startedInitLoc = threads[label]!!.initLoc
-                listOf(
-                  AssumeStmt.of(Eq(startedLocVar.ref, int(-1))),
-                  AssignStmt.of(
-                    startedLocVar,
-                    cast(int(locMap[startedInitLoc]!!), startedLocVar.type),
-                  ),
-                )
-              } else listOf()
+              label.getFlatLabels().flatMap { l ->
+                when (l) {
+                  is StartLabel -> {
+                    val pidVar = pidVars[l.pidVar]!!
+                    val startedLocVar = locVars[l]!!
+                    val startedInitLoc = threads[l]!!.initLoc
+                    listOf(
+                      AssignStmt.of(pidVar, cast(int(threadIds[l]!!), pidVar.type)),
+                      AssumeStmt.of(Eq(startedLocVar.ref, int(-1))),
+                      AssignStmt.of(
+                        startedLocVar,
+                        cast(int(locMap[startedInitLoc]!!), startedLocVar.type),
+                      ),
+                    )
+                  }
+
+                  is JoinLabel -> {
+                    val pidVar = pidVars[l.pidVar]!!
+                    val potentialJoinedThreads = threadIds.entries.filter { (start, _) ->
+                      start != null && start.pidVar == l.pidVar
+                    }
+                    val joinCondition =
+                      if (potentialJoinedThreads.isEmpty()) error("No thread found for join with pid var ${l.pidVar}")
+                      else {
+                        And(potentialJoinedThreads.map { (startLabel, pid) ->
+                          val finalLoc = threads[startLabel]!!.finalLoc
+                          Imply(
+                            Eq(pidVar.ref, int(pid)),
+                            if (finalLoc.isPresent) {
+                              val finalLocValue = locMap[finalLoc.get()]!!
+                              val joinedThreadLocVar = locVars[startLabel]!!
+                              Eq(joinedThreadLocVar.ref, int(finalLocValue))
+                            } else {
+                              False()
+                            }
+                          )
+                        })
+                      }
+                    listOf(AssumeStmt.of(joinCondition))
+                  }
+
+                  else -> listOf()
+                }
+              }
           )
         }
         .toList() +
