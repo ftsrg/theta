@@ -216,7 +216,7 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   XcfaLabel(metadata = metadata) {
 
   override fun toStmt(): Stmt {
-    return SequenceStmt(labels.map { it.toStmt() })
+    return SequenceStmt(labels.filter { it !is NopLabel }.map { it.toStmt() })
   }
 
   override fun toString(): String {

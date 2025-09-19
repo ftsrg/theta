@@ -107,7 +107,7 @@ data class InputConfig(
 interface SpecFrontendConfig : Config
 
 data class FrontendConfig<T : SpecFrontendConfig>(
-  @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
+  @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_SEQ, LBE_FULL, LBE_LOCAL)")
   var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
   @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
   var staticCoi: Boolean = false,
@@ -232,8 +232,8 @@ data class BackendConfig<T : SpecBackendConfig>(
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
-  @Parameter(names = ["--por-level"], description = "POR dependency level")
-  var porLevel: POR = POR.NOPOR,
+  @Parameter(names = ["--por"], description = "POR algorithm type")
+  var por: POR = POR.NOPOR,
   @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
   var porRandomSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")

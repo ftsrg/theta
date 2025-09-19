@@ -73,7 +73,7 @@ fun complexPortfolio25(
         ),
       frontendConfig =
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -86,7 +86,7 @@ fun complexPortfolio25(
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
-              porLevel = NOPOR,
+              por = NOPOR,
               porRandomSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
@@ -153,7 +153,7 @@ fun complexPortfolio25(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
-        porLevel = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        por = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =

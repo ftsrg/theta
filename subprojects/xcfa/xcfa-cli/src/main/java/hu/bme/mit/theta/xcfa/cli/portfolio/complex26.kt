@@ -122,7 +122,7 @@ fun complexPortfolio26(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
-        porLevel = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        por = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =

@@ -36,7 +36,6 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -73,9 +72,9 @@ fun getCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val lts = cegarConfig.coi.getLts(xcfa, ignoredVarRegistry, cegarConfig.porLevel)
+  val lts = cegarConfig.coi.getLts(xcfa, ignoredVarRegistry, cegarConfig.por)
   val waitlist =
-    if (cegarConfig.porLevel.isDynamic) {
+    if (cegarConfig.por.isDynamic) {
       (cegarConfig.coi.porLts as XcfaDporLts).waitlist
     } else {
       PriorityWaitlist.create<ArgNode<out XcfaState<PtrState<ExprState>>, XcfaAction>>(
@@ -100,7 +99,7 @@ fun getCegarChecker(
       logger,
       lts,
       config.inputConfig.property,
-      if (cegarConfig.porLevel.isDynamic) {
+      if (cegarConfig.por.isDynamic) {
         XcfaDporLts.getPartialOrder(corePartialOrd)
       } else {
         corePartialOrd
@@ -119,7 +118,7 @@ fun getCegarChecker(
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
   val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
     if (cegarConfig.refinerConfig.refinement == Refinement.MULTI_SEQ)
-      if (cegarConfig.porLevel == POR.AASPOR)
+      if (cegarConfig.por == POR.AASPOR)
         MultiExprTraceRefiner.create(
           ref,
           precRefiner,
@@ -134,7 +133,7 @@ fun getCegarChecker(
           cegarConfig.refinerConfig.pruneStrategy,
           logger,
         )
-    else if (cegarConfig.porLevel == POR.AASPOR)
+    else if (cegarConfig.por == POR.AASPOR)
       XcfaSingleExprTraceRefiner.create(
         ref,
         precRefiner,
@@ -151,7 +150,7 @@ fun getCegarChecker(
       )
 
   val cegarChecker =
-    if (cegarConfig.porLevel == POR.AASPOR)
+    if (cegarConfig.por == POR.AASPOR)
       ArgCegarChecker.create(
         abstractor,
         AasporRefiner.create(refiner, cegarConfig.refinerConfig.pruneStrategy, ignoredVarRegistry),

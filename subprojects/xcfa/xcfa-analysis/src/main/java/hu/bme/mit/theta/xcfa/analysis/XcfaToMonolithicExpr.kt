@@ -51,7 +51,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.getLoopElements
+import hu.bme.mit.theta.xcfa.passes.*
 import org.kframework.mpfr.BigFloat
 import java.math.BigInteger
 import java.util.*
@@ -75,7 +75,24 @@ data class XcfaToMonolithicExprResult(
 fun XCFA.toMonolithicExpr(
   parseContext: ParseContext,
   initValues: Boolean = false,
+): XcfaToMonolithicExprResult = convertToMonolithicExpr(this, parseContext, initValues)
+
+private fun convertToMonolithicExpr(
+  originalXcfa: XCFA,
+  parseContext: ParseContext,
+  initValues: Boolean = false,
 ): XcfaToMonolithicExprResult {
+  val xcfa = originalXcfa.optimizeFurther(
+    ProcedurePassManager(
+      listOf(
+        EliminateSelfLoops(),
+        RemoveAbortBranchesPass(),
+        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+        RemoveUnnecessaryAtomicBlocksPass(),
+        MutexToVarPass(),
+      )
+    )
+  )
   val intType = CInt.getUnsignedInt(parseContext).smtType
 
   fun int(value: Int): Expr<*> =
@@ -87,8 +104,8 @@ fun XCFA.toMonolithicExpr(
       else -> error("Unknown integer type: $intType")
     }
 
-  Preconditions.checkArgument(this.initProcedures.size == 1)
-  val threads = this.staticThreadProcedureMap
+  Preconditions.checkArgument(xcfa.initProcedures.size == 1)
+  val threads = xcfa.staticThreadProcedureMap
   var pid = 0
   val threadIds = threads.keys.associateWith { pid++ }
 
@@ -176,6 +193,7 @@ fun XCFA.toMonolithicExpr(
                 it.ref,
                 BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
               )
+
             is RatType -> Eq(it.ref, Rat(0, 1))
             is FpType ->
               FpAssign(
@@ -185,6 +203,7 @@ fun XCFA.toMonolithicExpr(
                   it.type as FpType,
                 ),
               )
+
             else -> throw IllegalArgumentException("Unsupported type")
           }
         }
@@ -210,8 +229,8 @@ fun XCFA.toMonolithicExpr(
         StmtUtils.getVars(trans).filter { it !in locVars.values && it !in edgeVars.values } +
           edgeVars.values +
           locVars.values,
-      valToState = { valToState(it) },
-      biValToAction = { val1, val2 -> valToAction(val1, val2) },
+      valToState = { xcfa.valToState(it) },
+      biValToAction = { val1, val2 -> xcfa.valToAction(val1, val2) },
       ctrlVars = locVars.values + edgeVars.values,
     )
   return XcfaToMonolithicExprResult(monExpr, locVars.values, edgeVars.values, locMap, edgeMap)
@@ -276,10 +295,10 @@ private fun XCFA.staticThreadProcedureMap(
 ): Map<StartLabel, XcfaProcedure> {
   val procedure = startedProcedures.last()
   val loopEdges = procedure.loopEdges
-  check(loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel } })
+  check(loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel || it is NopLabel } })
   val nonLoopEdges = procedure.edges - loopEdges
   val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
-  check(nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel })
+  check(nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel })
   val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
 
   val threads = mutableMapOf<StartLabel, XcfaProcedure>()

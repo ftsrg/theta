@@ -21,8 +21,10 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.acquiredMutex
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.releasedMutex
 
 /**
  * Replaces mutexes (except the atomic block mutexes) with boolean variables. mutex_lock(mutex_var)
@@ -70,17 +72,8 @@ class MutexToVarPass : ProcedurePass {
         val actions = mutableListOf<XcfaLabel>()
 
         labels.forEach { l ->
-          if (l == "pthread_exit") {
+          if (l in listOf("pthread_exit", "ATOMIC_BEGIN", "ATOMIC_END")) {
             actions.add(FenceLabel(setOf(l)))
-            return@forEach
-          }
-
-          if (l == "ATOMIC_BEGIN") {
-            actions.add(FenceLabel(setOf("ATOMIC_BEGIN")))
-            return@forEach
-          }
-          if (l == "ATOMIC_END") {
-            actions.add(FenceLabel(setOf("ATOMIC_END")))
             return@forEach
           }
 

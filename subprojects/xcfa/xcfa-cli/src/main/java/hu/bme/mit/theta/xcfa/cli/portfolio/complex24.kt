@@ -53,7 +53,7 @@ fun complexPortfolio24(
         ),
       frontendConfig =
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
@@ -66,7 +66,7 @@ fun complexPortfolio24(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
+              por = POR.NOPOR,
               porRandomSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
@@ -113,7 +113,7 @@ fun complexPortfolio24(
           if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
             ConeOfInfluenceMode.NO_COI
           else ConeOfInfluenceMode.COI,
-        porLevel =
+        por =
           if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
       )

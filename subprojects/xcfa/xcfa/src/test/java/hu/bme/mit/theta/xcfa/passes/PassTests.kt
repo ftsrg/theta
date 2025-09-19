@@ -89,7 +89,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_SEQ },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_SEQ),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -109,7 +109,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_FULL },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_FULL),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }

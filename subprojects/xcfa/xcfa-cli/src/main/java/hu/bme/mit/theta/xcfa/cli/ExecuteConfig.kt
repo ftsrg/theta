@@ -33,7 +33,8 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.*
+import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -98,7 +99,7 @@ fun runConfig(
 
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
-  LbePass.level = config.frontendConfig.lbeLevel
+  LbePass.defaultLevel = config.frontendConfig.lbeLevel
   StaticCoiPass.enabled = config.frontendConfig.staticCoi
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig
@@ -125,17 +126,20 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 }
 
 private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+  rule("NoLbeFullWhenCegar") {
+    config.backendConfig.backend == Backend.CEGAR && (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL || config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_LOCAL_FULL)
+  }
   rule("NoCoiWhenDataRace") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property == ErrorDetection.DATA_RACE
   }
   rule("NoAaporWhenDataRace") {
-    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isAbstractionAware == true &&
+    (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property == ErrorDetection.DATA_RACE
   }
   rule("DPORWithoutDFS") {
-    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
+    (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
       (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
   }
   rule("SensibleLoopUnrollLimits") {
