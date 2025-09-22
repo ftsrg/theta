@@ -52,7 +52,7 @@ import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
@@ -323,7 +323,7 @@ class XcfaOcChecker(
                       }
                     }
                     stmt.cond.toEvents(consts, false)
-                    if (edge.source.outgoingEdges.size == 1 && asAssign) {
+                    if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
                       last.first().assignment = condWithConsts
                     }
                   }

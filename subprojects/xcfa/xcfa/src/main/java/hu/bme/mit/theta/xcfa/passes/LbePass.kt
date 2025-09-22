@@ -63,7 +63,9 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
     /** Applies sequential collapsing on atomic blocks and consecutive local operations. */
     LBE_LOCAL(true, false),
 
-    /** Applies sequential and parallel collapsing on atomic blocks and consecutive local operations. */
+    /**
+     * Applies sequential and parallel collapsing on atomic blocks and consecutive local operations.
+     */
     LBE_LOCAL_FULL(true, true),
   }
 
@@ -73,11 +75,12 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
    * **Warning! Multiple parallel running of this pass instance does not work correctly!**
    */
   private var atomicPhase = false
-  val level: LbeLevel = when {
-    parseContext.multiThreading && level == LbeLevel.LBE_SEQ -> LbeLevel.LBE_LOCAL
-    parseContext.multiThreading && level == LbeLevel.LBE_FULL -> LbeLevel.LBE_LOCAL_FULL
-    else -> level
-  }
+  val level: LbeLevel =
+    when {
+      parseContext.multiThreading && level == LbeLevel.LBE_SEQ -> LbeLevel.LBE_LOCAL
+      parseContext.multiThreading && level == LbeLevel.LBE_FULL -> LbeLevel.LBE_LOCAL_FULL
+      else -> level
+    }
   lateinit var builder: XcfaProcedureBuilder
 
   /**
@@ -191,18 +194,25 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
     locationsToVisit: MutableList<XcfaLocation>,
     strict: Boolean,
   ) {
-    location.outgoingEdges.groupBy { it.target }.forEach { (target, edgesToTarget) ->
-      if (edgesToTarget.size <= 1) return@forEach
-      val nondetLabel = NondetLabel(edgesToTarget.flatMap { edge ->
-        builder.removeEdge(edge)
-        getNonDetBranch(edge.getFlatLabels())
-      }.toSet())
-      val combinedMetadata = combineMetadata(edgesToTarget.map(XcfaEdge::metadata))
-      builder.addEdge(XcfaEdge(location, target, nondetLabel, combinedMetadata))
-      if (!strict && edgesToTarget.size >= 2 && target !in locationsToVisit) {
-        locationsToVisit.add(target)
+    location.outgoingEdges
+      .groupBy { it.target }
+      .forEach { (target, edgesToTarget) ->
+        if (edgesToTarget.size <= 1) return@forEach
+        val nondetLabel =
+          NondetLabel(
+            edgesToTarget
+              .flatMap { edge ->
+                builder.removeEdge(edge)
+                getNonDetBranch(edge.getFlatLabels())
+              }
+              .toSet()
+          )
+        val combinedMetadata = combineMetadata(edgesToTarget.map(XcfaEdge::metadata))
+        builder.addEdge(XcfaEdge(location, target, nondetLabel, combinedMetadata))
+        if (!strict && edgesToTarget.size >= 2 && target !in locationsToVisit) {
+          locationsToVisit.add(target)
+        }
       }
-    }
   }
 
   /**

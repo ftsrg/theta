@@ -232,8 +232,7 @@ data class BackendConfig<T : SpecBackendConfig>(
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
-  @Parameter(names = ["--por"], description = "POR algorithm type")
-  var por: POR = POR.NOPOR,
+  @Parameter(names = ["--por"], description = "POR algorithm type") var por: POR = POR.NOPOR,
   @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
   var porRandomSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")

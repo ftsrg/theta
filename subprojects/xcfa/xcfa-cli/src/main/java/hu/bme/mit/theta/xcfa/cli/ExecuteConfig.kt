@@ -127,7 +127,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 
 private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   rule("NoLbeFullWhenCegar") {
-    config.backendConfig.backend == Backend.CEGAR && (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL || config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_LOCAL_FULL)
+    config.backendConfig.backend == Backend.CEGAR &&
+      (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL ||
+        config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_LOCAL_FULL)
   }
   rule("NoCoiWhenDataRace") {
     config.backendConfig.backend == Backend.CEGAR &&

@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -44,10 +43,15 @@ class RemoveUnnecessaryAtomicBlocksPass : ProcedurePass {
     return builder
   }
 
-  private fun XcfaLabel.removeLabels(labelsToRemove: Collection<XcfaLabel>): XcfaLabel = when (this) {
-    in labelsToRemove -> NopLabel
-    is SequenceLabel -> SequenceLabel(labels.map { it.removeLabels(labelsToRemove) }.filter { it !is NopLabel })
-    is NondetLabel -> NondetLabel(labels.map { it.removeLabels(labelsToRemove) }.filter { it !is NopLabel }.toSet())
-    else -> this
-  }
+  private fun XcfaLabel.removeLabels(labelsToRemove: Collection<XcfaLabel>): XcfaLabel =
+    when (this) {
+      in labelsToRemove -> NopLabel
+      is SequenceLabel ->
+        SequenceLabel(labels.map { it.removeLabels(labelsToRemove) }.filter { it !is NopLabel })
+      is NondetLabel ->
+        NondetLabel(
+          labels.map { it.removeLabels(labelsToRemove) }.filter { it !is NopLabel }.toSet()
+        )
+      else -> this
+    }
 }

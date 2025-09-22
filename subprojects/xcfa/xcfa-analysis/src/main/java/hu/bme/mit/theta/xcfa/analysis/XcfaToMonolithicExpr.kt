@@ -82,17 +82,18 @@ private fun convertToMonolithicExpr(
   parseContext: ParseContext,
   initValues: Boolean = false,
 ): XcfaToMonolithicExprResult {
-  val xcfa = originalXcfa.optimizeFurther(
-    ProcedurePassManager(
-      listOf(
-        EliminateSelfLoops(),
-        RemoveAbortBranchesPass(),
-        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
-        RemoveUnnecessaryAtomicBlocksPass(),
-        MutexToVarPass(),
+  val xcfa =
+    originalXcfa.optimizeFurther(
+      ProcedurePassManager(
+        listOf(
+          EliminateSelfLoops(),
+          RemoveAbortBranchesPass(),
+          LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+          RemoveUnnecessaryAtomicBlocksPass(),
+          MutexToVarPass(),
+        )
       )
     )
-  )
   val intType = CInt.getUnsignedInt(parseContext).smtType
 
   fun int(value: Int): Expr<*> =
@@ -108,7 +109,8 @@ private fun convertToMonolithicExpr(
   val threads = xcfa.staticThreadProcedureMap
   var pid = 0
   val threadIds = threads.keys.associateWith { pid++ }
-  val pidVars = threads.keys.filterNotNull().associate { it.pidVar to Decls.Var(it.pidVar.name, intType) }
+  val pidVars =
+    threads.keys.filterNotNull().associate { it.pidVar to Decls.Var(it.pidVar.name, intType) }
 
   val locMap = mutableMapOf<XcfaLocation, Int>()
   for ((_, proc) in threads) {
@@ -158,25 +160,29 @@ private fun convertToMonolithicExpr(
 
                   is JoinLabel -> {
                     val pidVar = pidVars[l.pidVar]!!
-                    val potentialJoinedThreads = threadIds.entries.filter { (start, _) ->
-                      start != null && start.pidVar == l.pidVar
-                    }
+                    val potentialJoinedThreads =
+                      threadIds.entries.filter { (start, _) ->
+                        start != null && start.pidVar == l.pidVar
+                      }
                     val joinCondition =
-                      if (potentialJoinedThreads.isEmpty()) error("No thread found for join with pid var ${l.pidVar}")
+                      if (potentialJoinedThreads.isEmpty())
+                        error("No thread found for join with pid var ${l.pidVar}")
                       else {
-                        And(potentialJoinedThreads.map { (startLabel, pid) ->
-                          val finalLoc = threads[startLabel]!!.finalLoc
-                          Imply(
-                            Eq(pidVar.ref, int(pid)),
-                            if (finalLoc.isPresent) {
-                              val finalLocValue = locMap[finalLoc.get()]!!
-                              val joinedThreadLocVar = locVars[startLabel]!!
-                              Eq(joinedThreadLocVar.ref, int(finalLocValue))
-                            } else {
-                              False()
-                            }
-                          )
-                        })
+                        And(
+                          potentialJoinedThreads.map { (startLabel, pid) ->
+                            val finalLoc = threads[startLabel]!!.finalLoc
+                            Imply(
+                              Eq(pidVar.ref, int(pid)),
+                              if (finalLoc.isPresent) {
+                                val finalLocValue = locMap[finalLoc.get()]!!
+                                val joinedThreadLocVar = locVars[startLabel]!!
+                                Eq(joinedThreadLocVar.ref, int(finalLocValue))
+                              } else {
+                                False()
+                              },
+                            )
+                          }
+                        )
                       }
                     listOf(AssumeStmt.of(joinCondition))
                   }
@@ -332,7 +338,9 @@ private fun XCFA.staticThreadProcedureMap(
   check(loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel || it is NopLabel } })
   val nonLoopEdges = procedure.edges - loopEdges
   val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
-  check(nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel })
+  check(
+    nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel }
+  )
   val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
 
   val threads = mutableMapOf<StartLabel, XcfaProcedure>()
