@@ -19,21 +19,16 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
-import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.sts.STS
@@ -96,26 +91,11 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
     val passes =
       mutableListOf<MonolithicExprPass<InvariantProof>>(
         PredicateAbstractionMEPass(
-          { monolithicExpr: MonolithicExpr? ->
-            ExprTraceFwBinItpChecker.create(
-              monolithicExpr!!.initExpr,
-              BoolExprs.Not(monolithicExpr.propExpr),
-              Z3LegacySolverFactory.getInstance().createItpSolver(),
-            )
-          },
-          { monolithicExpr: MonolithicExpr ->
-            PredPrec.of(listOf(monolithicExpr.initExpr, monolithicExpr.propExpr))
-          },
-        ) { prec: PredPrec?, expr: Expr<BoolType>? ->
-          prec!!.join(PredPrec.of(expr))
-        }
+          createFwBinItpCheckerFactory(Z3LegacySolverFactory.getInstance())
+        )
       )
 
-    val checker =
-      StsPipelineChecker(
-        sts,
-        MEPipelineCheckerConstructorArguments(checkerBuilderFunction, passes, logger = logger),
-      )
+    val checker = StsPipelineChecker(sts, checkerBuilderFunction, passes, logger = logger)
 
     Assert.assertEquals(expectedResult, checker.check().isSafe())
   }

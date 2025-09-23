@@ -16,18 +16,16 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt.buildBMC;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -232,25 +230,19 @@ public class XstsAbstractBoundedCheckerTest {
         final List<MonolithicExprPass<InvariantProof>> passes =
                 List.of(
                         new PredicateAbstractionMEPass<>(
-                                monolithicExpr ->
-                                        ExprTraceFwBinItpChecker.create(
-                                                monolithicExpr.getInitExpr(),
-                                                Not(monolithicExpr.getPropExpr()),
-                                                Z3LegacySolverFactory.getInstance()
-                                                        .createItpSolver())));
+                                ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                        Z3LegacySolverFactory.getInstance())));
         final SafetyChecker<
                         InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>, UnitPrec>
                 checker =
                         new XstsPipelineChecker<>(
                                 xsts,
-                                new MEPipelineCheckerConstructorArguments<>(
-                                        monolithicExpr ->
-                                                buildBMC(
-                                                        monolithicExpr,
-                                                        Z3LegacySolverFactory.getInstance()
-                                                                .createSolver(),
-                                                        logger),
-                                        passes));
+                                monolithicExpr ->
+                                        buildBMC(
+                                                monolithicExpr,
+                                                Z3LegacySolverFactory.getInstance().createSolver(),
+                                                logger),
+                                passes);
 
         final SafetyResult<?, ?> status = checker.check(null);
 

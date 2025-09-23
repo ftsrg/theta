@@ -28,12 +28,11 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
@@ -89,17 +88,7 @@ fun getMddChecker(
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
 
   if (mddConfig.cegar) {
-    passes.add(
-      PredicateAbstractionMEPass(
-        traceCheckerFactory = { model: MonolithicExpr ->
-          ExprTraceFwBinItpChecker.create(
-            model.initExpr,
-            Not(model.propExpr),
-            refinementSolverFactory.createItpSolver(),
-          )
-        }
-      )
-    )
+    passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(refinementSolverFactory)))
   }
   if (mddConfig.reversed) {
     passes.add(ReverseMEPass())

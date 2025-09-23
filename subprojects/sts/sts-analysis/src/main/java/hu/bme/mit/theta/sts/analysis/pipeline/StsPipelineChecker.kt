@@ -15,20 +15,36 @@
  */
 package hu.bme.mit.theta.sts.analysis.pipeline
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassPipelineChecker
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassValidator
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.sts.STS
 import hu.bme.mit.theta.sts.analysis.StsAction
 import hu.bme.mit.theta.sts.analysis.StsToMonolithicAdapter
 
-class StsPipelineChecker<Pr : InvariantProof>(
+class StsPipelineChecker<Pr : InvariantProof>
+@JvmOverloads
+constructor(
   sts: STS,
-  pipelineArguments: MEPipelineCheckerConstructorArguments<Pr>,
+  checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
+  passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
+  validators: List<MonolithicExprPassValidator<in Pr>> =
+    MonolithicExprPassPipelineChecker.defaultValidators(),
+  logger: Logger = NullLogger.getInstance(),
 ) :
   FormalismPipelineChecker<STS, ExplState, StsAction, Pr, InvariantProof>(
     sts,
     StsToMonolithicAdapter(),
-    pipelineArguments,
+    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
   )

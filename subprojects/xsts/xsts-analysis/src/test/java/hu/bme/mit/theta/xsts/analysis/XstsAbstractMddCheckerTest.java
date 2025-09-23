@@ -15,19 +15,16 @@
  */
 package hu.bme.mit.theta.xsts.analysis;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -277,17 +274,9 @@ public class XstsAbstractMddCheckerTest {
             final List<MonolithicExprPass<InvariantProof>> passes =
                     List.of(
                             new PredicateAbstractionMEPass<>(
-                                    monolithicExpr ->
-                                            ExprTraceFwBinItpChecker.create(
-                                                    monolithicExpr.getInitExpr(),
-                                                    Not(monolithicExpr.getPropExpr()),
-                                                    Z3LegacySolverFactory.getInstance()
-                                                            .createItpSolver()),
-                                    (monolithicExpr ->
-                                            PredPrec.of(
-                                                    List.of(
-                                                            monolithicExpr.getInitExpr(),
-                                                            monolithicExpr.getPropExpr())))));
+                                    ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
+                                            Z3LegacySolverFactory.getInstance())));
+
             SafetyChecker<
                             InvariantProof,
                             Trace<XstsState<? extends ExprState>, XstsAction>,
@@ -295,16 +284,15 @@ public class XstsAbstractMddCheckerTest {
                     checker =
                             new XstsPipelineChecker<>(
                                     xsts,
-                                    new MEPipelineCheckerConstructorArguments<>(
-                                            monolithicExpr2 ->
-                                                    MddChecker.create(
-                                                            monolithicExpr2,
-                                                            List.copyOf(monolithicExpr2.getVars()),
-                                                            solverPool,
-                                                            logger,
-                                                            MddChecker.IterationStrategy.GSAT,
-                                                            10),
-                                            passes));
+                                    monolithicExpr2 ->
+                                            MddChecker.create(
+                                                    monolithicExpr2,
+                                                    List.copyOf(monolithicExpr2.getVars()),
+                                                    solverPool,
+                                                    logger,
+                                                    MddChecker.IterationStrategy.GSAT,
+                                                    10),
+                                    passes);
             var status = checker.check();
             logger.mainStep(status.toString());
 

@@ -43,7 +43,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
-/** Predicate abstraction by substituting predicates into the expressions. */
+/** Implicit predicate abstraction. */
 class PredicateAbstractionMEPass<Pr : InvariantProof>
 @JvmOverloads
 constructor(

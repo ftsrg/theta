@@ -43,6 +43,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
+/** Liveness-to-safety transformation for MonolithicExpr. */
 class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
 
   private lateinit var vars: List<VarDecl<*>>

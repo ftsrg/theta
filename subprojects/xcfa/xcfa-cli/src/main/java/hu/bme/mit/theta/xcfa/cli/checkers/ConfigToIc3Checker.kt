@@ -19,19 +19,18 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassPipelineChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -73,17 +72,7 @@ fun getIc3Checker(
     passes.add(L2SMEPass())
   }
   if (ic3Config.cegar) {
-    passes.add(
-      PredicateAbstractionMEPass(
-        traceCheckerFactory = { monolithicExpr ->
-          ExprTraceFwBinItpChecker.create(
-            monolithicExpr.initExpr,
-            BoolExprs.Not(monolithicExpr.propExpr),
-            solverFactory.createItpSolver(),
-          )
-        }
-      )
-    )
+    passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(solverFactory)))
   }
   if (ic3Config.reversed) {
     passes.add(ReverseMEPass())
@@ -92,9 +81,7 @@ fun getIc3Checker(
     FormalismPipelineChecker(
       model = parseContext,
       modelAdapter = XcfaToMonolithicAdapter(xcfa),
-      mePipelineFactory = { me ->
-        MonolithicExprPassPipelineChecker(me, baseChecker, passes, logger = logger)
-      },
+      MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
     )
 
   return checker

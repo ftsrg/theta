@@ -28,21 +28,26 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassPi
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 
 /**
- * A checker that uses a [MonolithicExprPassPipelineChecker] and a
- * [ProofConservingModelToMonolithicAdapter] to check the safety of a model with algorithms
- * available for monolithic expressions. The class is open to allow creation of convinience
- * subclasses for specific formalisms.
+ * A checker that uses a [MonolithicExprPassPipelineChecker] and a [ModelToMonolithicAdapter] to
+ * check the safety of a model with algorithms available for monolithic expressions. The class is
+ * open to allow creation of convenience subclasses for specific formalisms.
  */
-open class FormalismPipelineChecker<M, S : State, A : Action, Pr : InvariantProof, TPr : Proof>(
+open class FormalismPipelineChecker<
+  M,
+  S : State,
+  A : Action,
+  InnerPr : InvariantProof,
+  OuterPr : Proof,
+>(
   model: M,
-  val modelAdapter: ModelToMonolithicAdapter<M, S, A, TPr>,
-  mePipelineFactory: (MonolithicExpr) -> MonolithicExprPassPipelineChecker<Pr>,
-) : SafetyChecker<TPr, Trace<S, A>, UnitPrec> {
+  val modelAdapter: ModelToMonolithicAdapter<M, S, A, OuterPr>,
+  mePipelineFactory: (MonolithicExpr) -> MonolithicExprPassPipelineChecker<InnerPr>,
+) : SafetyChecker<OuterPr, Trace<S, A>, UnitPrec> {
 
   constructor(
     model: M,
-    modelAdapter: ModelToMonolithicAdapter<M, S, A, TPr>,
-    pipelineArguments: MEPipelineCheckerConstructorArguments<Pr>,
+    modelAdapter: ModelToMonolithicAdapter<M, S, A, OuterPr>,
+    pipelineArguments: MEPipelineCheckerConstructorArguments<InnerPr>,
   ) : this(
     model,
     modelAdapter,
@@ -52,7 +57,7 @@ open class FormalismPipelineChecker<M, S : State, A : Action, Pr : InvariantProo
   private val monolithicExpr = modelAdapter.modelToMonolithicExpr(model)
   private val pipeline = mePipelineFactory(monolithicExpr)
 
-  override fun check(input: UnitPrec?): SafetyResult<TPr, Trace<S, A>> {
+  override fun check(input: UnitPrec?): SafetyResult<OuterPr, Trace<S, A>> {
     val result = pipeline.check(input)
     if (result.isSafe) {
       return SafetyResult.safe(

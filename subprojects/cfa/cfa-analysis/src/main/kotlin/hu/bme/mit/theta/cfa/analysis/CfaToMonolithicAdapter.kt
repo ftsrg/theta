@@ -21,9 +21,9 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ProofConservingModelToMonolithicAdapter
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -48,15 +48,16 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.math.BigInteger
 
 class CfaToMonolithicAdapter :
-  ProofConservingModelToMonolithicAdapter<CFA, CfaState<out ExprState>, CfaAction> {
+  ProofConservingModelToMonolithicAdapter<CFA, CfaState<ExplState>, CfaAction> {
 
   lateinit var locationIndexes: Map<CFA.Loc, Int>
   lateinit var indexedEdges: Map<Pair<Int, Int>, CFA.Edge>
+  lateinit var locVar: VarDecl<IntType>
 
   override fun modelToMonolithicExpr(model: CFA): MonolithicExpr {
     Preconditions.checkArgument(model.errorLoc.isPresent)
     locationIndexes = model.locs.mapIndexed { index, loc -> loc to index }.toMap()
-    val locVar = Decls.Var("__loc__", Int())
+    locVar = Decls.Var("__loc__", Int())
     indexedEdges =
       model.edges.associateBy { edge ->
         Pair(locationIndexes[edge.source]!!, locationIndexes[edge.target]!!)
@@ -110,7 +111,7 @@ class CfaToMonolithicAdapter :
 
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
-  ): Trace<CfaState<out ExprState>, CfaAction> {
+  ): Trace<CfaState<ExplState>, CfaAction> {
     return Trace.of(
       trace.states.map(this::valToState),
       trace.states.windowed(2, 1).map { (from, to) -> valToAction(from, to) },
@@ -136,6 +137,10 @@ class CfaToMonolithicAdapter :
 
   fun extractLocationIndex(valuation: Valuation): Int {
     val valMap = valuation.toMap()
-    return (valMap.entries.first { it.key.name == "__loc_" }.value as IntLitExpr).value.toInt()
+    Preconditions.checkArgument(
+      valMap.containsKey(locVar),
+      "State assigns no value to __loc__, this variable must be tracked explicitly!",
+    )
+    return (valMap[locVar] as IntLitExpr).value.toInt()
   }
 }

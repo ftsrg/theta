@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cfa.analysis;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
@@ -28,7 +28,6 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import java.io.FileInputStream;
@@ -41,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
-public class CfaMddCheckerTest {
+public class CfaBoundedCheckerTest {
 
     @Parameterized.Parameter(value = 0)
     public String filePath;
@@ -87,20 +86,16 @@ public class CfaMddCheckerTest {
             CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
 
             final SafetyResult<InvariantProof, Trace<CfaState<ExplState>, CfaAction>> status;
-            try (var solverPool = new SolverPool(solverFactory)) {
-                final var checker =
-                        new CfaPipelineChecker<>(
-                                cfa,
-                                monolithicExpr ->
-                                        MddChecker.create(
-                                                monolithicExpr,
-                                                monolithicExpr.getVars(),
-                                                solverPool,
-                                                logger,
-                                                MddChecker.IterationStrategy.GSAT,
-                                                10));
-                status = checker.check(null);
-            }
+            final var checker =
+                    new CfaPipelineChecker<>(
+                            cfa,
+                            monolithicExpr ->
+                                    BoundedCheckerBuilderKt.buildKIND(
+                                            monolithicExpr,
+                                            solverFactory.createSolver(),
+                                            solverFactory.createSolver(),
+                                            logger));
+            status = checker.check(null);
 
             Assert.assertEquals(isSafe, status.isSafe());
         } finally {

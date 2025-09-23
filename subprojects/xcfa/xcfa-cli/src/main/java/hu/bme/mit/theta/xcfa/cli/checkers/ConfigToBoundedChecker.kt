@@ -26,12 +26,11 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -81,17 +80,12 @@ fun getBoundedChecker(
   if (boundedConfig.cegar) {
     passes.add(
       PredicateAbstractionMEPass(
-        traceCheckerFactory = { monolithicExpr ->
-          ExprTraceFwBinItpChecker.create(
-            monolithicExpr.initExpr,
-            BoolExprs.Not(monolithicExpr.propExpr),
-            tryGetSolver(
-                boundedConfig.bmcConfig.bmcSolver,
-                boundedConfig.bmcConfig.validateBMCSolver,
-              )!!
-              .createItpSolver(),
-          )
-        }
+        createFwBinItpCheckerFactory(
+          tryGetSolver(
+            boundedConfig.bmcConfig.bmcSolver,
+            boundedConfig.bmcConfig.validateBMCSolver,
+          )!!
+        )
       )
     )
   }

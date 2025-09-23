@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -244,13 +243,11 @@ public class XstsBoundedCheckerTest {
                 checker =
                         new XstsPipelineChecker<>(
                                 xsts,
-                                new MEPipelineCheckerConstructorArguments<>(
-                                        monolithicExpr1 ->
-                                                buildBMC(
-                                                        monolithicExpr1,
-                                                        Z3LegacySolverFactory.getInstance()
-                                                                .createSolver(),
-                                                        logger)));
+                                monolithicExpr1 ->
+                                        buildBMC(
+                                                monolithicExpr1,
+                                                Z3LegacySolverFactory.getInstance().createSolver(),
+                                                logger));
 
         final SafetyResult<?, ?> status = checker.check(null);
 

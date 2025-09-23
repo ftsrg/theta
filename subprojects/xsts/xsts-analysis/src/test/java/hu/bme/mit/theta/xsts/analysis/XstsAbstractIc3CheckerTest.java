@@ -21,9 +21,11 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -36,6 +38,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -266,17 +269,23 @@ public class XstsAbstractIc3CheckerTest {
                         new FileInputStream(filePath), new FileInputStream(propPath))) {
             xsts = XstsDslManager.createXsts(inputStream);
         }
+
+        final List<MonolithicExprPass<InvariantProof>> passes =
+                List.of(
+                        new PredicateAbstractionMEPass<>(
+                                ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
+                                        Z3LegacySolverFactory.getInstance())));
         final SafetyChecker<
                         InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>, UnitPrec>
                 checker =
                         new XstsPipelineChecker<>(
                                 xsts,
-                                new MEPipelineCheckerConstructorArguments<>(
-                                        monolithicExpr1 ->
-                                                new Ic3Checker(
-                                                        monolithicExpr1,
-                                                        Z3LegacySolverFactory.getInstance(),
-                                                        logger)));
+                                monolithicExpr1 ->
+                                        new Ic3Checker(
+                                                monolithicExpr1,
+                                                Z3LegacySolverFactory.getInstance(),
+                                                logger),
+                                passes);
 
         final SafetyResult<?, ?> status = checker.check(null);
 

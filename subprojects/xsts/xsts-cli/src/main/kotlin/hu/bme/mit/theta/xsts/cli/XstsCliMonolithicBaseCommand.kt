@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
@@ -29,9 +28,8 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.unit.UnitPrec
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
@@ -59,18 +57,8 @@ abstract class XstsCliMonolithicBaseCommand(name: String? = null, help: String =
       passes.add(ReverseMEPass())
     }
     if (cegar) {
-      passes.add(
-        PredicateAbstractionMEPass(
-          traceCheckerFactory = { model: MonolithicExpr ->
-            ExprTraceFwBinItpChecker.create(
-              model.initExpr,
-              Not(model.propExpr),
-              solverFactory.createItpSolver(),
-            )
-          }
-        )
-      )
+      passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(solverFactory)))
     }
-    return XstsPipelineChecker(xsts, MEPipelineCheckerConstructorArguments(checkerFactory, passes))
+    return XstsPipelineChecker(xsts, checkerFactory, passes)
   }
 }

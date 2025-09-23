@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.sts.cli;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -31,7 +29,6 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
@@ -42,7 +39,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
@@ -346,11 +343,8 @@ public class StsCli {
                 if (cegar) {
                     passes.add(
                             new PredicateAbstractionMEPass<>(
-                                    monolithicExpr ->
-                                            ExprTraceFwBinItpChecker.create(
-                                                    monolithicExpr.getInitExpr(),
-                                                    Not(monolithicExpr.getPropExpr()),
-                                                    solverFactory.createItpSolver())));
+                                    ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
+                                            solverFactory)));
                 }
                 if (reversed) {
                     passes.add(new ReverseMEPass<>());
@@ -359,13 +353,11 @@ public class StsCli {
                         formalismChecker =
                                 new StsPipelineChecker<>(
                                         sts,
-                                        new MEPipelineCheckerConstructorArguments<>(
-                                                monolithicExpr ->
-                                                        algorithm
-                                                                .getCheckerFactory(
-                                                                        solverFactory, logger)
-                                                                .apply(monolithicExpr),
-                                                passes));
+                                        monolithicExpr ->
+                                                algorithm
+                                                        .getCheckerFactory(solverFactory, logger)
+                                                        .apply(monolithicExpr),
+                                        passes);
                 status = formalismChecker.check(null);
             }
             sw.stop();

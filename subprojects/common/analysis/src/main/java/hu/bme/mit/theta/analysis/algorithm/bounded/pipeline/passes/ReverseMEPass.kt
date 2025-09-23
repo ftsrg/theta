@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 
+/** Reverses the model: swaps init and prop, and reverses the transition relation. */
 class ReverseMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
 
   lateinit var action: ExprAction

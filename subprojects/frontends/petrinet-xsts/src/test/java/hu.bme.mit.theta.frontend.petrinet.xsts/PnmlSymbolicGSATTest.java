@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -64,15 +63,14 @@ public class PnmlSymbolicGSATTest {
                     pipeline =
                             new XstsPipelineChecker<>(
                                     xsts,
-                                    new MEPipelineCheckerConstructorArguments<>(
-                                            monolithicExpr ->
-                                                    MddChecker.create(
-                                                            monolithicExpr,
-                                                            List.copyOf(monolithicExpr.getVars()),
-                                                            solverPool,
-                                                            logger,
-                                                            MddChecker.IterationStrategy.GSAT,
-                                                            10)));
+                                    monolithicExpr ->
+                                            MddChecker.create(
+                                                    monolithicExpr,
+                                                    List.copyOf(monolithicExpr.getVars()),
+                                                    solverPool,
+                                                    logger,
+                                                    MddChecker.IterationStrategy.GSAT,
+                                                    10));
             status = pipeline.check();
             logger.mainStep(status.toString());
             logger.mainStep(

@@ -18,13 +18,11 @@ package hu.bme.mit.theta.sts.analysis;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -33,6 +31,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
+import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
@@ -85,18 +84,19 @@ public class StsMddCheckerTest {
             sts = Utils.singleElementOf(spec.getAllSts());
         }
 
-        final SafetyResult<MddProof, Trace<ExplState, ExprAction>> status;
+        final SafetyResult<InvariantProof, Trace<ExplState, StsAction>> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final MonolithicExpr monolithicExpr =
-                    (new StsToMonolithicAdapter()).modelToMonolithicExpr(sts);
-            final MddChecker checker =
-                    MddChecker.create(
-                            monolithicExpr,
-                            List.copyOf(sts.getVars()),
-                            solverPool,
-                            logger,
-                            IterationStrategy.GSAT,
-                            10);
+            final var checker =
+                    new StsPipelineChecker<>(
+                            sts,
+                            monolithicExpr ->
+                                    MddChecker.create(
+                                            monolithicExpr,
+                                            List.copyOf(sts.getVars()),
+                                            solverPool,
+                                            logger,
+                                            IterationStrategy.GSAT,
+                                            10));
             status = checker.check(null);
         }
 

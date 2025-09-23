@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -260,19 +261,20 @@ public class XstsIc3CheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final var monolithicExpr = (new XstsToMonolithicAdapter()).modelToMonolithicExpr(xsts);
-        final var checker =
-                new Ic3Checker(
-                        monolithicExpr,
-                        Z3LegacySolverFactory.getInstance(),
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
-                        logger);
-
+        var checker =
+                new XstsPipelineChecker<>(
+                        xsts,
+                        monolithicExpr ->
+                                new Ic3Checker(
+                                        monolithicExpr,
+                                        Z3LegacySolverFactory.getInstance(),
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        logger));
         final SafetyResult<?, ?> status = checker.check(null);
 
         if (safe) {

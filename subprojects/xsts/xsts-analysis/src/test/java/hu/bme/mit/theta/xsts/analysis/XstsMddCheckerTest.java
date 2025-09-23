@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -220,8 +219,9 @@ public class XstsMddCheckerTest {
         final SafetyResult<InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>>
                 status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            MEPipelineCheckerConstructorArguments<InvariantProof> args =
-                    new MEPipelineCheckerConstructorArguments<>(
+            var checker =
+                    new XstsPipelineChecker<>(
+                            xsts,
                             monolithicExpr ->
                                     MddChecker.create(
                                             monolithicExpr,
@@ -230,7 +230,6 @@ public class XstsMddCheckerTest {
                                             logger,
                                             MddChecker.IterationStrategy.GSAT,
                                             100));
-            var checker = new XstsPipelineChecker<>(xsts, args);
             status = checker.check();
             logger.mainStep(status.toString());
         }

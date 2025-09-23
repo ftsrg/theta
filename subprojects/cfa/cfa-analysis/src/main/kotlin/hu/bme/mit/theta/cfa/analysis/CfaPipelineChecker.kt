@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.analysis.pipeline
+package hu.bme.mit.theta.cfa.analysis
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
@@ -26,27 +26,23 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassVa
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.XstsAction
-import hu.bme.mit.theta.xsts.analysis.XstsState
-import hu.bme.mit.theta.xsts.analysis.XstsToMonolithicAdapter
 
-class XstsPipelineChecker<Pr : InvariantProof>
+class CfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
 constructor(
-  xsts: XSTS,
+  cfa: CFA,
   checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   validators: List<MonolithicExprPassValidator<in Pr>> =
     MonolithicExprPassPipelineChecker.defaultValidators(),
   logger: Logger = NullLogger.getInstance(),
 ) :
-  FormalismPipelineChecker<XSTS, XstsState<out ExprState>, XstsAction, Pr, InvariantProof>(
-    xsts,
-    XstsToMonolithicAdapter(),
+  FormalismPipelineChecker<CFA, CfaState<ExplState>, CfaAction, Pr, InvariantProof>(
+    cfa,
+    CfaToMonolithicAdapter(),
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
   )
