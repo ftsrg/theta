@@ -25,7 +25,8 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
-import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.SIMPLE
+import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
+import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
 import hu.bme.mit.theta.xcfa.cli.params.Backend.OC
@@ -1056,9 +1057,13 @@ fun complexPortfolio26(
                 BackendConfig(
                   backend = OC,
                   solverHome = baseConfig.backendConfig.solverHome,
-                  timeoutMs = 500_000,
+                  timeoutMs = 250_000,
                   inProcess = inProcess,
-                  specConfig = OcConfig(autoConflict = SIMPLE),
+                  specConfig = OcConfig(
+                    decisionProcedure = OcDecisionProcedureType.BASIC,
+                    autoConflict = AutoConflictFinderConfig.GENERIC,
+                    autoConflictBound = 3,
+                  ),
                 ),
               outputConfig = baseConfig.outputConfig,
               debugConfig = baseConfig.debugConfig,
