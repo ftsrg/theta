@@ -152,16 +152,7 @@ class StsAbstractMonolithicTest(private val filePath: String, private val expect
       SolverPool(solverFactory).use { solverPool ->
         runTest(
           logger,
-          { monolithicExpr: MonolithicExpr? ->
-            MddChecker.create(
-              monolithicExpr,
-              monolithicExpr!!.vars,
-              solverPool,
-              logger,
-              MddChecker.IterationStrategy.GSAT,
-              10,
-            )
-          },
+          { monolithicExpr: MonolithicExpr? -> MddChecker(monolithicExpr!!, solverPool, logger) },
         )
       }
     } catch (e: Exception) {

@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import java.util.*
 
 data class MonolithicExpr
 @JvmOverloads
@@ -45,6 +44,7 @@ fun MonolithicExpr.action() =
     override fun nextIndexing(): VarIndexing = transOffsetIndex
   }
 
+// TODO: not this simple, can mess up STS with or
 fun MonolithicExpr.split(): List<Expr<BoolType>> {
   var simplifiedTransExpr = ExprUtils.simplify(transExpr)
   if (simplifiedTransExpr is OrExpr) {

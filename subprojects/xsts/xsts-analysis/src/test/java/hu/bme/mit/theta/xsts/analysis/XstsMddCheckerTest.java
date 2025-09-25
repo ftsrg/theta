@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class XstsMddCheckerTest {
 
@@ -222,14 +221,7 @@ public class XstsMddCheckerTest {
             var checker =
                     new XstsPipelineChecker<>(
                             xsts,
-                            monolithicExpr ->
-                                    MddChecker.create(
-                                            monolithicExpr,
-                                            List.copyOf(monolithicExpr.getVars()),
-                                            solverPool,
-                                            logger,
-                                            MddChecker.IterationStrategy.GSAT,
-                                            100));
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
             status = checker.check();
             logger.mainStep(status.toString());
         }

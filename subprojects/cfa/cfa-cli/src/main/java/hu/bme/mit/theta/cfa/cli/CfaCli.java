@@ -88,7 +88,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
                 throw new UnsupportedOperationException(
                         "CEGAR can't provide a checker factory as it is not to be used in ME"
                                 + " pipeline");
@@ -102,7 +102,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildBMC(
                                 monolithicExpr, solverFactory.createSolver(), logger));
@@ -116,7 +116,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildKIND(
                                 monolithicExpr,
@@ -133,7 +133,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildIMC(
                                 monolithicExpr,
@@ -150,15 +150,13 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
-                return (monolithicExpr2 ->
-                        MddChecker.create(
-                                monolithicExpr2,
-                                List.copyOf(monolithicExpr2.getVars()),
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new MddChecker(
+                                monolithicExpr,
                                 new SolverPool(solverFactory),
                                 logger,
-                                MddChecker.IterationStrategy.GSAT,
-                                10));
+                                cfaCli.iterationStrategy));
             }
         },
         IC3 {
@@ -169,7 +167,7 @@ public class CfaCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         new Ic3Checker(
                                 monolithicExpr,
@@ -188,7 +186,7 @@ public class CfaCli {
                         MonolithicExpr,
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
-                getCheckerFactory(SolverFactory solverFactory, Logger logger);
+                getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger);
     }
 
     @Parameter(
@@ -277,6 +275,11 @@ public class CfaCli {
             names = {"--liveness-to-safety"},
             description = "Use liveness to safety transformation")
     Boolean livenessToSafety = false;
+
+    @Parameter(
+            names = {"--iteration-strategy"},
+            description = "MDD iteration strategy")
+    MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
 
     @Parameter(names = "--loglevel", description = "Detailedness of logging")
     Logger.Level logLevel = Level.SUBSTEP;
@@ -420,7 +423,9 @@ public class CfaCli {
                                         monolithicExpr ->
                                                 algorithm
                                                         .getCheckerFactory(
-                                                                abstractionSolverFactory, logger)
+                                                                this,
+                                                                abstractionSolverFactory,
+                                                                logger)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);

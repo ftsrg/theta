@@ -284,14 +284,8 @@ public class XstsAbstractMddCheckerTest {
                     checker =
                             new XstsPipelineChecker<>(
                                     xsts,
-                                    monolithicExpr2 ->
-                                            MddChecker.create(
-                                                    monolithicExpr2,
-                                                    List.copyOf(monolithicExpr2.getVars()),
-                                                    solverPool,
-                                                    logger,
-                                                    MddChecker.IterationStrategy.GSAT,
-                                                    10),
+                                    monolithicExpr ->
+                                            new MddChecker(monolithicExpr, solverPool, logger),
                                     passes);
             var status = checker.check();
             logger.mainStep(status.toString());

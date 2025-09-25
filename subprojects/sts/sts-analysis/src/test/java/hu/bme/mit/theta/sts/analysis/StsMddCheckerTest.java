@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -37,7 +36,6 @@ import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -89,14 +87,7 @@ public class StsMddCheckerTest {
             final var checker =
                     new StsPipelineChecker<>(
                             sts,
-                            monolithicExpr ->
-                                    MddChecker.create(
-                                            monolithicExpr,
-                                            List.copyOf(sts.getVars()),
-                                            solverPool,
-                                            logger,
-                                            IterationStrategy.GSAT,
-                                            10));
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
             status = checker.check(null);
         }
 

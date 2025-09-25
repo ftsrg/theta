@@ -19,7 +19,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import kotlin.random.Random
 
 interface Event {
-  fun getAffectedVars(): Set<VarDecl<*>>
+  fun getAffectedVars(): List<VarDecl<*>>
 }
 
 /**
@@ -28,7 +28,7 @@ interface Event {
  */
 fun orderVarsFromRandomStartingPoints(
   vars: List<VarDecl<*>>,
-  events: Set<Event>,
+  events: List<Event>,
   numStartingPoints: Int = 5,
 ): List<VarDecl<*>> {
   val random = Random(0)
@@ -37,12 +37,12 @@ fun orderVarsFromRandomStartingPoints(
   return orderings.minBy { eventSpans(it, events) }
 }
 
-fun orderVars(vars: List<VarDecl<*>>, events: Set<Event>): List<VarDecl<*>> {
+fun orderVars(vars: List<VarDecl<*>>, events: List<Event>): List<VarDecl<*>> {
 
   val affectedVars = events.associateWith { it.getAffectedVars() }
 
   val affectingEvents =
-    vars.associateWith { varDecl -> events.filter { varDecl in affectedVars[it]!! }.toSet() }
+    vars.associateWith { varDecl -> events.filter { varDecl in affectedVars[it]!! }.toList() }
 
   var currentVarOrdering = vars.toList()
   var currentEventSpans = eventSpans(currentVarOrdering, events)
@@ -75,7 +75,7 @@ fun orderVars(vars: List<VarDecl<*>>, events: Set<Event>): List<VarDecl<*>> {
   return currentVarOrdering
 }
 
-private fun eventSpans(vars: List<VarDecl<*>>, events: Set<Event>) =
+private fun eventSpans(vars: List<VarDecl<*>>, events: List<Event>) =
   events
     .map { event ->
       event.getAffectedVars().let {

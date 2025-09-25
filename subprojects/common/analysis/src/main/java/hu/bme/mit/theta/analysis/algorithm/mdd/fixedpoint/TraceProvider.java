@@ -56,7 +56,11 @@ public final class TraceProvider implements MddGraph.CleanupListener {
 
         while (MddInterpreter.calculateNonzeroCount(currentState.intersection(initialStates))
                 <= 0) {
-            if (Thread.interrupted()) throw new InterruptedException();
+            if (Thread.interrupted()) {
+                System.out.println(
+                        "Trace computation interrupted after" + states.size() + " steps.");
+                throw new InterruptedException();
+            }
 
             final var newLayer =
                     singleStepProvider

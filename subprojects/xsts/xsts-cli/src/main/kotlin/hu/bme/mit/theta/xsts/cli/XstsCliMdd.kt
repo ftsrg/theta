@@ -84,7 +84,7 @@ class XstsCliMdd :
       SolverPool(solverFactory).use { solverPool ->
         val checker =
           createChecker(xsts, solverFactory) {
-            MddChecker.create(it, it.vars, solverPool, logger, iterationStrategy, 10)
+            MddChecker(it, solverPool, logger, iterationStrategy)
           }
         checker.check(null)
       }

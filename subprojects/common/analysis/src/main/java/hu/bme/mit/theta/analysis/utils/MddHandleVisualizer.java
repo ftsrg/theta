@@ -18,25 +18,25 @@ package hu.bme.mit.theta.analysis.utils;
 import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
-import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
-import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.core.decl.Decl;
 import java.awt.*;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public class MddNodeVisualizer {
+public class MddHandleVisualizer {
 
     private static final LineStyle CHILD_EDGE_STYLE = LineStyle.NORMAL;
     private static final LineStyle DEFAULT_EDGE_STYLE = LineStyle.DOTTED;
-    private static final LineStyle IDENTITY_EDGE_STYLE = LineStyle.DASHED;
     private static final String SYMBOLIC_NODE_LABEL = "";
     private static final String SYMBOLIC_NODE_ID = "symbolicnode";
     private static final String FONT = "courier";
@@ -44,56 +44,56 @@ public class MddNodeVisualizer {
     private static final Color FILL_COLOR = Color.WHITE;
     private static final Color LINE_COLOR = Color.BLACK;
 
-    private final Function<MddNode, String> nodeToString;
+    private final Function<MddHandle, String> nodeToString;
 
-    private static final Map<MddNode, Long> registry = new IdentityHashMap<>();
+    private static final Map<MddHandle, Long> registry = new HashMap<>();
     private static long nextId = 0;
 
-    public static long idFor(MddNode n) {
+    public static long idFor(MddHandle n) {
         Long l = registry.get(n);
         if (l == null) registry.put(n, l = nextId++);
         return l;
     }
 
     private static class LazyHolderDefault {
-        static final MddNodeVisualizer INSTANCE = create();
+        static final MddHandleVisualizer INSTANCE = create();
     }
 
     private static class LazyHolderStructureOnly {
-        static final MddNodeVisualizer INSTANCE = create(n -> "");
+        static final MddHandleVisualizer INSTANCE = create(n -> "");
     }
 
-    private MddNodeVisualizer(final Function<MddNode, String> nodeToString) {
+    private MddHandleVisualizer(final Function<MddHandle, String> nodeToString) {
         this.nodeToString = nodeToString;
     }
 
-    public static MddNodeVisualizer create(final Function<MddNode, String> nodeToString) {
-        return new MddNodeVisualizer(nodeToString);
+    public static MddHandleVisualizer create(final Function<MddHandle, String> nodeToString) {
+        return new MddHandleVisualizer(nodeToString);
     }
 
-    public static MddNodeVisualizer create() {
-        return new MddNodeVisualizer(MddNodeVisualizer::nodeToString);
+    public static MddHandleVisualizer create() {
+        return new MddHandleVisualizer(MddHandleVisualizer::nodeToString);
     }
 
-    public static MddNodeVisualizer getDefault() {
+    public static MddHandleVisualizer getDefault() {
         return LazyHolderDefault.INSTANCE;
     }
 
-    public static MddNodeVisualizer getStructureOnly() {
+    public static MddHandleVisualizer getStructureOnly() {
         return LazyHolderStructureOnly.INSTANCE;
     }
 
-    public Graph visualize(final MddNode rootNode) {
+    public Graph visualize(final MddHandle rootNode) {
         final Graph graph = new Graph(SYMBOLIC_NODE_ID, SYMBOLIC_NODE_LABEL);
 
-        final Set<MddNode> traversed = Containers.createSet();
+        final Set<MddHandle> traversed = Containers.createSet();
 
         traverse(graph, rootNode, traversed);
 
         return graph;
     }
 
-    private void traverse(final Graph graph, final MddNode node, final Set<MddNode> traversed) {
+    private void traverse(final Graph graph, final MddHandle node, final Set<MddHandle> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -119,58 +119,63 @@ public class MddNodeVisualizer {
 
         graph.addNode(nodeId, nAttributes);
 
-        if (node.getRepresentation() instanceof IdentityRepresentation identityRepresentation) {
-            final MddNode continuation = identityRepresentation.getContinuation();
-            traverse(graph, continuation, traversed);
-
-            final String sourceId = NODE_ID_PREFIX + idFor(node);
-            final String targetId = NODE_ID_PREFIX + idFor(continuation);
-            final EdgeAttributes eAttributes =
-                    EdgeAttributes.builder()
-                            .alignment(LEFT)
-                            .font(FONT)
-                            .color(LINE_COLOR)
-                            .lineStyle(IDENTITY_EDGE_STYLE)
-                            .build();
-            graph.addEdge(sourceId, targetId, eAttributes);
-        } else if (node.defaultValue() != null) {
-            final MddNode defaultValue = node.defaultValue();
-            traverse(graph, defaultValue, traversed);
-
-            final String sourceId = NODE_ID_PREFIX + idFor(node);
-            final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
-            final EdgeAttributes eAttributes =
-                    EdgeAttributes.builder()
-                            .alignment(LEFT)
-                            .font(FONT)
-                            .color(LINE_COLOR)
-                            .lineStyle(DEFAULT_EDGE_STYLE)
-                            .build();
-            graph.addEdge(sourceId, targetId, eAttributes);
-        } else {
-            for (var cursor = node.cursor(); cursor.moveNext(); ) {
-                traverse(graph, cursor.value(), traversed);
+        if (!node.isTerminal()) {
+            if (!node.defaultValue().isTerminalZero()) {
+                final MddHandle defaultValue = node.defaultValue();
+                traverse(graph, defaultValue, traversed);
 
                 final String sourceId = NODE_ID_PREFIX + idFor(node);
-                final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
+                final String targetId = NODE_ID_PREFIX + idFor(defaultValue);
                 final EdgeAttributes eAttributes =
                         EdgeAttributes.builder()
-                                .label(cursor.key() + "")
                                 .alignment(LEFT)
                                 .font(FONT)
                                 .color(LINE_COLOR)
-                                .lineStyle(CHILD_EDGE_STYLE)
+                                .lineStyle(DEFAULT_EDGE_STYLE)
                                 .build();
                 graph.addEdge(sourceId, targetId, eAttributes);
+            } else {
+                final var decl =
+                        node.getVariableHandle().getVariable().get().getTraceInfo(Decl.class);
+                for (var cursor = node.cursor(); cursor.moveNext(); ) {
+
+                    traverse(graph, cursor.value(), traversed);
+
+                    final String sourceId = NODE_ID_PREFIX + idFor(node);
+                    final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
+                    final EdgeAttributes eAttributes =
+                            EdgeAttributes.builder()
+                                    .label(
+                                            LitExprConverter.toLitExpr(cursor.key(), decl.getType())
+                                                    + "")
+                                    .alignment(LEFT)
+                                    .font(FONT)
+                                    .color(LINE_COLOR)
+                                    .lineStyle(CHILD_EDGE_STYLE)
+                                    .build();
+                    graph.addEdge(sourceId, targetId, eAttributes);
+                }
             }
         }
     }
 
-    private static String nodeToString(MddNode node) {
-        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>
-                || node.getRepresentation() instanceof IdentityRepresentation) return "";
-        return node instanceof MddNode.Terminal
-                ? ((MddNode.Terminal<?>) node).getTerminalData().toString()
-                : node.getRepresentation().toString();
+    private static String nodeToString(MddHandle node) {
+        final var varText =
+                node.getVariableHandle().getVariable().isPresent()
+                        ? node.getVariableHandle()
+                                .getVariable()
+                                .get()
+                                .getTraceInfo(Decl.class)
+                                .getName()
+                        : "";
+        if (node.isTerminal()) {
+            return node.getData().toString();
+        } else {
+            if (node.getNode().getRepresentation() instanceof MddExpressionRepresentation repr) {
+                return repr.toString();
+            } else {
+                return varText;
+            }
+        }
     }
 }

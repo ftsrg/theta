@@ -26,9 +26,10 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 
 fun MonolithicExpr.orderVars(): List<VarDecl<*>> {
-  val events = this.split().map { MonolithicExprEvent(it, this.transOffsetIndex) }.toSet()
+  val events = this.split().map { MonolithicExprEvent(it, this.transOffsetIndex) }.toList()
   val orderedVars = orderVarsFromRandomStartingPoints(this.vars, events)
-  return orderedVars
+  return orderedVars.filter { !it.name.contains("_messageQueueOf") } +
+    orderedVars.filter { it.name.contains("_messageQueueOf") }
 }
 
 // Filters affected variables
@@ -42,10 +43,10 @@ class MonolithicExprEvent : Event {
     }
     val identityRemovedExpr = ExprUtils.simplify(sub.build().apply(PathUtils.unfold(expr, 0)))
     val remainingConstants = ExprUtils.getConstants(identityRemovedExpr)
-    this.affectedVars = vars.filter { it.getConstDecl(0) in remainingConstants }.toSet()
+    this.affectedVars = vars.filter { it.getConstDecl(0) in remainingConstants }.toList()
   }
 
-  private val affectedVars: Set<VarDecl<*>>
+  private val affectedVars: List<VarDecl<*>>
 
-  override fun getAffectedVars(): Set<VarDecl<*>> = affectedVars
+  override fun getAffectedVars(): List<VarDecl<*>> = affectedVars
 }
