@@ -18,21 +18,26 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.bounded.*
-import hu.bme.mit.theta.analysis.algorithm.bounded.createMonolithicL2S
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker
-import hu.bme.mit.theta.analysis.pred.PredPrec
-import hu.bme.mit.theta.analysis.pred.PredState
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.Ic3Config
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
@@ -40,34 +45,18 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getIc3Checker(
   xcfa: XCFA,
-  mcm: MCM,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
-): SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>, UnitPrec> {
 
   val ic3Config = config.backendConfig.specConfig as Ic3Config
   val solverFactory: SolverFactory = getSolver(ic3Config.solver, ic3Config.validateSolver)
 
-  val monExprResult = xcfa.toMonolithicExpr(parseContext)
-  val monolithicExpr =
-    monExprResult.monolithicExpr
-      .let {
-        if (config.inputConfig.property == ErrorDetection.TERMINATION)
-          it.copy(propExpr = True()).createMonolithicL2S()
-        else it
-      }
-      .let { if (ic3Config.reversed) it.createReversed() else it }
-
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     Ic3Checker(
       /* monolithicExpr = */ monolithicExpr,
-      /* forwardTrace = */ !ic3Config.reversed,
       /* solverFactory = */ solverFactory,
-      /* valToState = */ { valuation -> monolithicExpr.valToState.invoke(valuation) },
-      /* biValToAction = */ { v1: Valuation, v2: Valuation ->
-        monolithicExpr.biValToAction.invoke(v1, v2)
-      },
       /* formerFramesOpt = */ true,
       /* unSatOpt = */ true,
       /* notBOpt = */ true,
@@ -78,46 +67,22 @@ fun getIc3Checker(
     )
   }
 
+  val passes = mutableListOf<MonolithicExprPass<EmptyProof>>()
+  if (config.inputConfig.property == ErrorDetection.TERMINATION) {
+    passes.add(L2SMEPass())
+  }
+  if (ic3Config.cegar) {
+    passes.add(PredicateAbstractionMEPass(createFwBinItpCheckerFactory(solverFactory)))
+  }
+  if (ic3Config.reversed) {
+    passes.add(ReverseMEPass())
+  }
   val checker =
-    if (ic3Config.cegar) {
-      val cegarChecker =
-        MonolithicExprCegarChecker(
-          monolithicExpr,
-          baseChecker,
-          logger,
-          getSolver(ic3Config.solver, false),
-        )
-      object :
-        SafetyChecker<
-          EmptyProof,
-          Trace<XcfaState<PtrState<PredState>>, XcfaAction>,
-          XcfaPrec<PtrPrec<PredPrec>>,
-        > {
-        override fun check(
-          initPrec: XcfaPrec<PtrPrec<PredPrec>>
-        ): SafetyResult<EmptyProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
-          val result = cegarChecker.check() // states are PredState, actions are XcfaAction
-          if (result.isUnsafe) {
-            val cex = result.asUnsafe().cex as Trace<PredState, XcfaAction>
-            val locs =
-              (0 until cex.length()).map { i -> cex.actions[i].source } +
-                cex.actions[cex.length() - 1].target
-            val states = locs.mapIndexed { i, it -> XcfaState(xcfa, it, PtrState(cex.states[i])) }
-            return SafetyResult.unsafe(Trace.of(states, cex.actions), result.proof)
-          } else
-            return result
-              as SafetyResult<EmptyProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>>
-        }
-
-        override fun check():
-          SafetyResult<EmptyProof, Trace<XcfaState<PtrState<PredState>>, XcfaAction>> {
-          return check(ic3Config.initPrec.predPrec(xcfa))
-        }
-      }
-    } else {
-      baseChecker(monolithicExpr)
-    }
+    FormalismPipelineChecker(
+      model = parseContext,
+      modelAdapter = XcfaToMonolithicAdapter(xcfa),
+      MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
+    )
 
   return checker
-    as SafetyChecker<EmptyProof, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 }

@@ -18,8 +18,8 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
@@ -39,7 +39,6 @@ import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.*
-import kotlin.collections.plus
 
 /**
  * A checker for bounded model checking.
@@ -58,14 +57,9 @@ import kotlin.collections.plus
  * @param imcEnabled A function determining whether IMC is enabled. Can be different per-iteration.
  * @param indSolver The solver for induction checking in KIND.
  * @param kindEnabled A function determining whether k-induction (KIND) is enabled.
- * @param valToState A function mapping valuations to expression states, used to construct a
- *   counterexample.
- * @param biValToAction A function mapping pairs of valuations to statements, used to construct a
- *   counterexample.
  * @param logger The logger for logging.
- * @param reverseTrace If 'true', reverse the trace in the counterexample.
  */
-class BoundedChecker<S : ExprState, A : ExprAction>
+class BoundedChecker
 @JvmOverloads
 constructor(
   private val monolithicExpr: MonolithicExpr,
@@ -77,18 +71,15 @@ constructor(
   private val imcEnabled: (Int) -> Boolean = { itpSolver != null },
   private val indSolver: Solver? = null,
   private val kindEnabled: (Int) -> Boolean = { indSolver != null },
-  private val valToState: (Valuation) -> S,
-  private val biValToAction: (Valuation, Valuation) -> A,
   private val logger: Logger,
-  private val reverseTrace: Boolean = false,
   private val needProof: Boolean = false,
-) : SafetyChecker<PredState, Trace<S, A>, UnitPrec> {
+) : SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> {
 
   private val vars = monolithicExpr.vars
   private val unfoldedInitExpr =
     PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
   private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
-  private val indices = mutableListOf(monolithicExpr.initOffsetIndex)
+  private val indices = mutableListOf(VarIndexingFactory.indexing(0))
   private val exprs = mutableListOf<Expr<BoolType>>()
   private var kindLastIterLookup = 0
   private var iteration = 0
@@ -99,7 +90,7 @@ constructor(
     check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
   }
 
-  override fun check(prec: UnitPrec?): SafetyResult<PredState, Trace<S, A>> {
+  override fun check(prec: UnitPrec?): SafetyResult<PredState, Trace<ExplState, ExprAction>> {
 
     iteration = 0
 
@@ -148,7 +139,7 @@ constructor(
     return SafetyResult.unknown(BoundedStatistics(iteration))
   }
 
-  private fun bmc(): SafetyResult<PredState, Trace<S, A>>? {
+  private fun bmc(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val bmcSolver = this.bmcSolver!!
     logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
 
@@ -214,7 +205,7 @@ constructor(
     }
   }
 
-  private fun kind(): SafetyResult<PredState, Trace<S, A>>? {
+  private fun kind(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val indSolver = this.indSolver!!
 
     logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
@@ -254,7 +245,7 @@ constructor(
     }
   }
 
-  private fun itp(): SafetyResult<PredState, Trace<S, A>>? {
+  private fun itp(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
     val itpSolver = this.itpSolver!!
     logger.write(Logger.Level.MAINSTEP, "\tStarting IMC\n")
 
@@ -371,26 +362,19 @@ constructor(
     return null
   }
 
-  private fun getTrace(model: Valuation): Trace<S, A> {
-    val stateList = LinkedList<S>()
-    val actionList = LinkedList<A>()
+  private fun getTrace(model: Valuation): Trace<ExplState, ExprAction> {
+    val stateList = LinkedList<ExplState>()
+    val actionList = LinkedList<ExprAction>()
     var lastValuation: Valuation? = null
     for (i in indices) {
       val valuation = PathUtils.extractValuation(model, i, vars)
-      stateList.add(valToState(valuation))
+      stateList.add(ExplState.of(valuation))
       if (lastValuation != null) {
-        actionList.add(biValToAction(lastValuation, valuation))
+        actionList.add(monolithicExpr.action())
       }
       lastValuation = valuation
     }
-    return if (reverseTrace) {
-      Trace.of(
-        stateList.reversed(),
-        actionList.reversed().map { if (it is ReversibleAction) it.reverse(it) else it },
-      )
-    } else {
-      Trace.of(stateList, actionList)
-    }
+    return Trace.of(stateList, actionList)
   }
 
   private fun extractModel(
