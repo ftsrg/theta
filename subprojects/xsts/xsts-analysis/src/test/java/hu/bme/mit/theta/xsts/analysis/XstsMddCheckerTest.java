@@ -221,11 +221,7 @@ public class XstsMddCheckerTest {
             var checker =
                     new XstsPipelineChecker<>(
                             xsts,
-                            monolithicExpr ->
-                                    new MddChecker<>(
-                                            monolithicExpr,
-                                            solverPool,
-                                            logger));
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
             status = checker.check();
             logger.mainStep(status.toString());
         }

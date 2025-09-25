@@ -97,7 +97,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 throw new UnsupportedOperationException(
                         "CEGAR can't provide a checker factory as it is not to be used in ME"
                                 + " pipeline");
@@ -111,7 +111,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildBMC(
                                 monolithicExpr, solverFactory.createSolver(), logger));
@@ -125,7 +125,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildKIND(
                                 monolithicExpr,
@@ -142,7 +142,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         BoundedCheckerBuilderKt.buildIMC(
                                 monolithicExpr,
@@ -159,13 +159,13 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
-                        MddChecker.create(
+                        new MddChecker(
                                 monolithicExpr,
                                 new SolverPool(solverFactory),
                                 logger,
-                                iterationStrategy));
+                                stsCli.iterationStrategy));
             }
         },
         IC3 {
@@ -176,7 +176,7 @@ public class StsCli {
                                     ? extends InvariantProof,
                                     Trace<ExplState, ExprAction>,
                                     UnitPrec>>
-                    getCheckerFactory(SolverFactory solverFactory, Logger logger) {
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
                 return (monolithicExpr ->
                         new Ic3Checker(
                                 monolithicExpr,
@@ -195,7 +195,7 @@ public class StsCli {
                         MonolithicExpr,
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
-                getCheckerFactory(SolverFactory solverFactory, Logger logger);
+                getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger);
     }
 
     @Parameter(
@@ -358,7 +358,8 @@ public class StsCli {
                                         sts,
                                         monolithicExpr ->
                                                 algorithm
-                                                        .getCheckerFactory(solverFactory, logger)
+                                                        .getCheckerFactory(
+                                                                this, solverFactory, logger)
                                                         .apply(monolithicExpr),
                                         passes);
                 status = formalismChecker.check(null);

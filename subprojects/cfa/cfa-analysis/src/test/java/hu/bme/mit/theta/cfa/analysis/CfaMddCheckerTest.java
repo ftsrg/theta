@@ -92,10 +92,7 @@ public class CfaMddCheckerTest {
                         new CfaPipelineChecker<>(
                                 cfa,
                                 monolithicExpr ->
-                                        MddChecker.create(
-                                                monolithicExpr,
-                                                solverPool,
-                                                logger));
+                                        new MddChecker(monolithicExpr, solverPool, logger));
                 status = checker.check(null);
             }
 

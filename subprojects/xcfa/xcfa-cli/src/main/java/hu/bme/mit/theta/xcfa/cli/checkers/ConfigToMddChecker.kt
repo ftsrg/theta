@@ -39,10 +39,10 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.utils.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -68,20 +68,21 @@ fun getMddChecker(
     MddChecker(
       monolithicExpr,
       solverPool,
-        logger,
-        iterationStrategy,
+      logger,
+      iterationStrategy,
+      variableOrdering =
         orderVarsFromRandomStartingPoints(
-            monolithicExpr.vars,
-            stmts
-                .map {
-                    object : Event {
-                        override fun getAffectedVars(): List<VarDecl<*>> =
-                            StmtUtils.getWrittenVars(it).toList()
-                    }
-                }
-                .toList(),
-            20,
-        )
+          monolithicExpr.vars,
+          stmts
+            .map {
+              object : Event {
+                override fun getAffectedVars(): List<VarDecl<*>> =
+                  StmtUtils.getWrittenVars(it).toList()
+              }
+            }
+            .toList(),
+          20,
+        ),
     )
   }
 
