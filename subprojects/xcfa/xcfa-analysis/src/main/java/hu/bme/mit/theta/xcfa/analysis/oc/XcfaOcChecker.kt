@@ -109,68 +109,68 @@ class XcfaOcChecker(
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
-      if (xcfa.initProcedures.size > 1) exit("multiple entry points")
+        if (xcfa.initProcedures.size > 1) exit("multiple entry points")
 
-      logger.mainStep("Adding constraints...")
-      xcfa.initProcedures.forEach {
-        ThreadProcessor(Thread(procedure = it.first), true).process()
-      }
-      addCrossThreadRelations()
-      if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
-      val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
+        logger.mainStep("Adding constraints...")
+        xcfa.initProcedures.forEach {
+          ThreadProcessor(Thread(procedure = it.first), true).process()
+        }
+        addCrossThreadRelations()
+        if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
+        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
 
-      // "Manually" add some conflicts
-      logger.info(
-        "Auto conflict time (ms): " +
-          measureTime {
-            val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
-            ocChecker.solver.add(conflicts.map { Not(it.expr) })
-            logger.info("Auto conflicts: ${conflicts.size}")
-          }
-            .inWholeMilliseconds
-      )
+        // "Manually" add some conflicts
+        logger.info(
+          "Auto conflict time (ms): " +
+            measureTime {
+                val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
+                ocChecker.solver.add(conflicts.map { Not(it.expr) })
+                logger.info("Auto conflicts: ${conflicts.size}")
+              }
+              .inWholeMilliseconds
+        )
 
-      logger.mainStep("Start checking...")
-      val status: SolverStatus?
-      val checkerTime = measureTime {
-        status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
-      }
-      if (ocChecker !is XcfaOcCorrectnessValidator)
-        logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
-      logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
+        logger.mainStep("Start checking...")
+        val status: SolverStatus?
+        val checkerTime = measureTime {
+          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
+        }
+        if (ocChecker !is XcfaOcCorrectnessValidator)
+          logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
-      ocChecker.solver.statistics.let {
-        logger.info("Solver statistics:")
-        it.forEach { (k, v) -> logger.info("$k: $v") }
-      }
-      when {
-        status?.isUnsat == true -> {
-          if (outputConflictClauses)
-            System.err.println(
-              "Conflict clause output time (ms): ${
+        ocChecker.solver.statistics.let {
+          logger.info("Solver statistics:")
+          it.forEach { (k, v) -> logger.info("$k: $v") }
+        }
+        when {
+          status?.isUnsat == true -> {
+            if (outputConflictClauses)
+              System.err.println(
+                "Conflict clause output time (ms): ${
                 measureTime {
                   ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
                 }.inWholeMilliseconds
               }"
-            )
-          SafetyResult.safe(EmptyProof.getInstance())
-        }
-
-        status?.isSat == true -> {
-          if (ocChecker is XcfaOcCorrectnessValidator)
-            return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-          if (memoryModel == SC) {
-            val trace =
-              XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-            SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
-          } else {
-            SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
+              )
+            SafetyResult.safe(EmptyProof.getInstance())
           }
-        }
 
-        else -> SafetyResult.unknown()
+          status?.isSat == true -> {
+            if (ocChecker is XcfaOcCorrectnessValidator)
+              return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+            if (memoryModel == SC) {
+              val trace =
+                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+            } else {
+              SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
+            }
+          }
+
+          else -> SafetyResult.unknown()
+        }
       }
-    }
       .also {
         logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
@@ -180,7 +180,10 @@ class XcfaOcChecker(
         }
       }
 
-  private inner class ThreadProcessor(private val thread: Thread, addMemoryGarbage: Boolean = false) {
+  private inner class ThreadProcessor(
+    private val thread: Thread,
+    addMemoryGarbage: Boolean = false,
+  ) {
 
     private val pid = thread.pid
     private var last = listOf<E>()
@@ -197,7 +200,10 @@ class XcfaOcChecker(
         val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
         val e = E(memoryGarbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
         memoryWrites.add(e)
-        events.getOrPut(memoryDecl) { mutableMapOf() }.getOrPut(thread.pid) { mutableListOf() }.add(e)
+        events
+          .getOrPut(memoryDecl) { mutableMapOf() }
+          .getOrPut(thread.pid) { mutableListOf() }
+          .add(e)
         last = listOf(e)
       }
     }
@@ -222,7 +228,11 @@ class XcfaOcChecker(
       return listOf(e)
     }
 
-    private fun memoryEvent(deref: Dereference<*, *, *>, consts: Map<Any, ConstDecl<*>>, type: EventType): List<E> {
+    private fun memoryEvent(
+      deref: Dereference<*, *, *>,
+      consts: Map<Any, ConstDecl<*>>,
+      type: EventType,
+    ): List<E> {
       check(!inEdge || last.size == 1)
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
@@ -424,8 +434,8 @@ class XcfaOcChecker(
                 ) {
                   if (
                     label.labels.size != 1 ||
-                    label.labels.first() != "pthread_exit" ||
-                    !edge.target.final
+                      label.labels.first() != "pthread_exit" ||
+                      !edge.target.final
                   ) {
                     exit("untransformed fence label: $label")
                   }

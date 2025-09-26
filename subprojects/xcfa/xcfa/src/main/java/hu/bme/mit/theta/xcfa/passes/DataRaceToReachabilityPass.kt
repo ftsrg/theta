@@ -176,15 +176,19 @@ class DataRaceToReachabilityPass : ProcedurePass {
       }
     val derefAssertions =
       dereferences.flatMap { (deref, access) ->
-        listOf(Or(
-          Neq(deref.array.derefArrayWriteFlag.ref, deref.array),
-          Neq(deref.offset.derefOffsetWriteFlag.ref, deref.offset),
-        )) +
+        listOf(
+          Or(
+            Neq(deref.array.derefArrayWriteFlag.ref, deref.array),
+            Neq(deref.offset.derefOffsetWriteFlag.ref, deref.offset),
+          )
+        ) +
           if (access.isWritten)
-            listOf(Or(
-              Neq(deref.array.derefArrayReadFlag.ref, deref.array),
-              Neq(deref.offset.derefOffsetReadFlag.ref, deref.offset),
-            ))
+            listOf(
+              Or(
+                Neq(deref.array.derefArrayReadFlag.ref, deref.array),
+                Neq(deref.offset.derefOffsetReadFlag.ref, deref.offset),
+              )
+            )
           else listOf()
       }
     val assertion =

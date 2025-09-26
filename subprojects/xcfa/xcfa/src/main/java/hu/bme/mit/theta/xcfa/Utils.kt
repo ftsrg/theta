@@ -499,9 +499,8 @@ val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
 val Stmt.dereferencesWithAccessType: DereferenceAccessMap
   get() =
     when (this) {
-      is MemoryAssignStmt<*, *, *> -> listOfNotNull(
-        expr.dereferences.associateWith { READ }, mapOf(deref to WRITE)
-      ).mergeDerefs()
+      is MemoryAssignStmt<*, *, *> ->
+        listOfNotNull(expr.dereferences.associateWith { READ }, mapOf(deref to WRITE)).mergeDerefs()
 
       is AssignStmt<*> -> expr.dereferences.associateWith { READ }
       is AssumeStmt -> cond.dereferences.associateWith { READ }

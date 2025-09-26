@@ -95,7 +95,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
+            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach { proc ->
