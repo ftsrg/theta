@@ -126,9 +126,7 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         if (transExpr
                 && decl instanceof IndexedConstDecl<?> constDecl
-                && constDecl.getIndex() == 0
-                && mddVariable.getLower().isPresent()
-                && mddVariable.getLower().get().getLower().isPresent()) {
+                && constDecl.getIndex() == 0) {
             final Substitution sub =
                     BasicSubstitution.builder()
                             .put(
@@ -138,18 +136,25 @@ public class MddExpressionTemplate implements MddNode.Template {
             final Expr<BoolType> identityContinuationExpr =
                     ExprUtils.simplify(sub.apply(canonizedExpr));
             if (!ExprUtils.getConstants(identityContinuationExpr).contains(decl)) {
-                final var cont =
-                        mddVariable
-                                .getLower()
-                                .get()
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        new MddExpressionTemplate(
-                                                identityContinuationExpr,
-                                                extractDecl,
-                                                solverPool,
-                                                transExpr));
+                final MddNode cont;
+                if (mddVariable.getLower().isPresent()
+                        && mddVariable.getLower().get().getLower().isPresent()) {
+                    cont =
+                            mddVariable
+                                    .getLower()
+                                    .get()
+                                    .getLower()
+                                    .get()
+                                    .checkInNode(
+                                            new MddExpressionTemplate(
+                                                    identityContinuationExpr,
+                                                    extractDecl,
+                                                    solverPool,
+                                                    transExpr));
+                } else {
+                    final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+                    cont = mddGraph.getNodeFor(identityContinuationExpr);
+                }
                 return new IdentityRepresentation(cont);
             }
         }
