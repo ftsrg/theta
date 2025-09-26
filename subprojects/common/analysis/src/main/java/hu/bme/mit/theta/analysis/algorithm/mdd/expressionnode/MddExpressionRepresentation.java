@@ -613,14 +613,16 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     }
                 }
 
-                if (childNode.isTerminal()) break;
+                if (childNode.isTerminal()) return;
 
                 // Preconditions.checkArgument(childNode.getRepresentation() instanceof
                 // MddExpressionRepresentation);
                 // TODO assert
                 var nextRepr = childNode.getRepresentation();
                 while (nextRepr instanceof IdentityRepresentation identity) {
-                    nextRepr = identity.getContinuation().getRepresentation();
+                    var cont = identity.getContinuation();
+                    if (cont.isTerminal()) return;
+                    nextRepr = cont.getRepresentation();
                 }
                 representation = (MddExpressionRepresentation) nextRepr;
             }
