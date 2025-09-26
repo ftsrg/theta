@@ -109,9 +109,7 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
     is SequenceLabel -> labels.map { it.collectVars() }.flatten()
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
     is JoinLabel -> setOf(pidVar)
-    is ReadLabel -> setOf(global, local)
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
-    is WriteLabel -> setOf(global, local)
     else -> emptySet()
   }
 
@@ -239,8 +237,6 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
     is StartLabel ->
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is JoinLabel -> mapOf(pidVar to READ)
-    is ReadLabel -> mapOf(global to READ, local to READ)
-    is WriteLabel -> mapOf(global to WRITE, local to WRITE)
     else -> emptyMap()
   }
 
@@ -487,7 +483,6 @@ val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, Acces
       is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
       is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
       is StmtLabel -> stmt.dereferencesWithAccessTypes
-
       else -> listOf()
     }
 

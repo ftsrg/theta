@@ -167,11 +167,9 @@ constructor(
 
           is NondetLabel -> true
           NopLabel -> false
-          is ReadLabel -> error("Read/Write labels not yet supported")
           is SequenceLabel -> true
           is StartLabel -> changes.add { state -> state.start(it) }.let { true }
           is StmtLabel -> true
-          is WriteLabel -> error("Read/Write labels not yet supported")
         }
       }
 

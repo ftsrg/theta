@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -43,6 +44,10 @@ class CLibraryFunctionsPass : ProcedurePass {
       "pthread_exit",
     )
 
+  companion object {
+    private var printfCounter = 0
+  }
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
     for (edge in ArrayList(builder.getEdges())) {
@@ -59,7 +64,15 @@ class CLibraryFunctionsPass : ProcedurePass {
             var target = it.target
             val labels: List<XcfaLabel> =
               when (invokeLabel.name) {
-                "printf" -> listOf(NopLabel)
+                "printf" -> {
+                  val printfCounter = printfCounter++
+                  (2 until invokeLabel.params.size).mapIndexed { index, param ->
+                    val expr = invokeLabel.params[param]
+                    val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
+                    builder.addVar(arg)
+                    AssignStmtLabel(arg, expr, metadata)
+                  }
+                }
                 "pthread_join" -> {
                   var handle = invokeLabel.params[1]
                   while (handle is Reference<*, *>) handle = handle.expr

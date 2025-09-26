@@ -30,7 +30,12 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
+  companion object {
+    var enabled = true
+  }
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!enabled) return builder
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()

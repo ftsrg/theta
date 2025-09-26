@@ -21,6 +21,8 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType.READ
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType.WRITE
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
@@ -89,6 +91,7 @@ class XcfaOcChecker(
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
   private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
+  private val memoryGarbage = memoryDecl.getNewIndexed() // this declaration is not constrained
 
   private val threads = mutableSetOf<Thread>()
   private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
@@ -109,7 +112,9 @@ class XcfaOcChecker(
       if (xcfa.initProcedures.size > 1) exit("multiple entry points")
 
       logger.mainStep("Adding constraints...")
-      xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
+      xcfa.initProcedures.forEach {
+        ThreadProcessor(Thread(procedure = it.first), true).process()
+      }
       addCrossThreadRelations()
       if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
       val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
@@ -175,7 +180,7 @@ class XcfaOcChecker(
         }
       }
 
-  private inner class ThreadProcessor(private val thread: Thread) {
+  private inner class ThreadProcessor(private val thread: Thread, addMemoryGarbage: Boolean = false) {
 
     private val pid = thread.pid
     private var last = listOf<E>()
@@ -187,60 +192,68 @@ class XcfaOcChecker(
     private var atomicBlock: Int? = null
     private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
-    fun event(d: VarDecl<*>, type: EventType, varPid: Int? = null): List<E> {
+    init {
+      if (addMemoryGarbage) {
+        val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
+        val e = E(memoryGarbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
+        memoryWrites.add(e)
+        events.getOrPut(memoryDecl) { mutableMapOf() }.getOrPut(thread.pid) { mutableListOf() }.add(e)
+        last = listOf(e)
+      }
+    }
+
+    private fun event(d: VarDecl<*>, type: EventType, varPid: Int? = null): List<E> {
       check(!inEdge || last.size == 1)
       val decl = d.threadVar(varPid ?: pid)
-      val clkId = when {
-        inEdge -> last.first().clkId
-        atomicBlock != null -> atomicBlock!!
-        else -> E.uniqueClkId()
-      }
+      val clkId =
+        when {
+          inEdge -> last.first().clkId
+          atomicBlock != null -> atomicBlock!!
+          else -> E.uniqueClkId()
+        }
       val e = E(decl.getNewIndexed(), type, guard, pid, edge, clkId)
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
-        EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
-        EventType.WRITE -> lastWrites[decl] = setOf(e)
+        READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
+        WRITE -> lastWrites[decl] = setOf(e)
       }
       events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
       return listOf(e)
     }
 
-    fun memoryEvent(
-      deref: Dereference<*, *, *>,
-      consts: Map<Any, ConstDecl<*>>,
-      type: EventType,
-    ): List<E> {
+    private fun memoryEvent(deref: Dereference<*, *, *>, consts: Map<Any, ConstDecl<*>>, type: EventType): List<E> {
       check(!inEdge || last.size == 1)
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
-      val clkId = when {
-        inEdge -> last.first().clkId
-        atomicBlock != null -> atomicBlock!!
-        else -> E.uniqueClkId()
-      }
+      val clkId =
+        when {
+          inEdge -> last.first().clkId
+          atomicBlock != null -> atomicBlock!!
+          else -> E.uniqueClkId()
+        }
       val e = E(memoryDecl.getNewIndexed(), type, guard, pid, edge, clkId, array, offset)
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
-        EventType.READ -> memoryWrites.forEach { rfs.add(RelationType.RF, it, e) }
-        EventType.WRITE -> memoryWrites.add(e)
+        READ -> memoryWrites.forEach { rfs.add(RelationType.RF, it, e) }
+        WRITE -> memoryWrites.add(e)
       }
       events.getOrPut(memoryDecl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
       return listOf(e)
     }
 
-    fun <T : Type> Expr<T>.toEvents(
+    private fun <T : Type> Expr<T>.toEvents(
       consts: Map<Any, ConstDecl<*>>? = null,
       update: Boolean = true,
     ): Map<Any, ConstDecl<*>> {
       val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
       vars.forEach {
-        last = event(it, EventType.READ)
+        last = event(it, READ)
         if (update) mutConsts[it] = last.first().const
       }
       dereferences.forEach {
-        last = memoryEvent(it, mutConsts, EventType.READ)
+        last = memoryEvent(it, mutConsts, READ)
         if (update) mutConsts[it] = last.first().const
       }
       return mutConsts
@@ -312,7 +325,7 @@ class XcfaOcChecker(
                 when (val stmt = label.stmt) {
                   is AssignStmt<*> -> {
                     val consts = stmt.expr.toEvents()
-                    last = event(stmt.varDecl, EventType.WRITE)
+                    last = event(stmt.varDecl, WRITE)
                     last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(consts))
                   }
 
@@ -341,7 +354,7 @@ class XcfaOcChecker(
                   }
 
                   is HavocStmt<*> -> {
-                    last = event(stmt.varDecl, EventType.WRITE)
+                    last = event(stmt.varDecl, WRITE)
                     last.first().assignment = True()
                   }
 
@@ -349,7 +362,7 @@ class XcfaOcChecker(
                     val exprConsts = stmt.expr.toEvents()
                     val arrayConsts = stmt.deref.array.toEvents(exprConsts)
                     val offsetConsts = stmt.deref.offset.toEvents(arrayConsts)
-                    last = memoryEvent(stmt.deref, arrayConsts + offsetConsts, EventType.WRITE)
+                    last = memoryEvent(stmt.deref, arrayConsts + offsetConsts, WRITE)
                     last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(exprConsts))
                   }
 
@@ -369,10 +382,10 @@ class XcfaOcChecker(
                 // assign parameter
                 val consts = label.params[1].toEvents()
                 val arg = procedure.params.first { it.second != ParamDirection.OUT }.first
-                last = event(arg, EventType.WRITE, newPid)
+                last = event(arg, WRITE, newPid)
                 last.first().assignment = Eq(last.first().const.ref, label.params[1].with(consts))
 
-                last = event(label.pidVar, EventType.WRITE)
+                last = event(label.pidVar, WRITE)
                 val pidVar = label.pidVar.threadVar(pid)
                 if (threads.any { it.pidVar == pidVar }) {
                   multipleUsePidVars.add(pidVar)
@@ -395,7 +408,7 @@ class XcfaOcChecker(
                 }
                 threadLookup[pidVar]?.forEach { (g, thread) ->
                   guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
-                  val joinEvent = event(label.pidVar, EventType.READ).first()
+                  val joinEvent = event(label.pidVar, READ).first()
                   thread.finalEvents.forEach { final -> po(final, joinEvent) }
                   lastEvents.add(joinEvent)
                   joinGuards.add(guard)
@@ -467,9 +480,9 @@ class XcfaOcChecker(
       if (map.values.all { it.all { e -> e.assignment == null } })
         exit("variable $v is not initialized")
       for ((pid1, list1) in map) for ((pid2, list2) in map) if (pid1 != pid2)
-        for (e1 in list1.filter { it.type == EventType.WRITE }) for (e2 in list2) {
-          if (e2.type == EventType.READ) rfs.add(RelationType.RF, e1, e2)
-          if (e2.type == EventType.WRITE) wss.add(RelationType.WS, e1, e2)
+        for (e1 in list1.filter { it.type == WRITE }) for (e2 in list2) {
+          if (e2.type == READ) rfs.add(RelationType.RF, e1, e2)
+          if (e2.type == WRITE) wss.add(RelationType.WS, e1, e2)
         }
     }
   }
@@ -498,11 +511,13 @@ class XcfaOcChecker(
         .groupBy { it.to }
         .forEach { (event, rels) ->
           rels.forEach { rel ->
-            var conseq =
-              And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
-            if (v == memoryDecl) {
-              conseq =
-                And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
+            var conseq = And(rel.from.guardExpr, rel.to.guardExpr)
+            if (rel.from.const != memoryGarbage) {
+              conseq = And(conseq, Eq(rel.from.const.ref, rel.to.const.ref))
+              if (v == memoryDecl) {
+                conseq =
+                  And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
+              }
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }

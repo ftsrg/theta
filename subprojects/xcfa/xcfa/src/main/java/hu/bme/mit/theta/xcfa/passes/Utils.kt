@@ -85,9 +85,6 @@ fun XcfaLabel.changeVars(
       is NondetLabel ->
         NondetLabel(labels.map { it.changeVars(varLut, parseContext) }.toSet(), metadata = metadata)
 
-      is ReadLabel ->
-        ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-
       is SequenceLabel ->
         SequenceLabel(labels.map { it.changeVars(varLut, parseContext) }, metadata = metadata)
 
@@ -105,9 +102,6 @@ fun XcfaLabel.changeVars(
           metadata = metadata,
           choiceType = this.choiceType,
         )
-
-      is WriteLabel ->
-        WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
 
