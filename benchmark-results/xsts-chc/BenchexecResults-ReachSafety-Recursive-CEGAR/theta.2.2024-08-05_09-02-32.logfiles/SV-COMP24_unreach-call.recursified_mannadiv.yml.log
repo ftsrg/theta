@@ -1,0 +1,2927 @@
+Theta/theta-start.sh sv-benchmarks/c/recursified_nla-digbench/recursified_mannadiv.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio CEGAR --input sv-benchmarks/c/recursified_nla-digbench/recursified_mannadiv.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/recursified_nla-digbench/recursified_mannadiv.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: [NONLIN_INT]
+Frontend finished:   (in 378 ms)
+ParsingResult Success
+Alias graph size: 9 -> [1, 1, 1, 1, 0, 1, 2, 3, 4]
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio NONLIN_INT
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret3, (ite
+server:   (=
+server:     (+
+server:       (+
+server:         (+
+server:           (+
+server:             (+
+server:               (+
+server:                 (+
+server:                   (+
+server:                     (*
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::y1 (mod 0 4294967296) Int))
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::x2 (mod 0 4294967296) Int)))))
+server:                 (+ (deref func_to_recursive_line_31_to_42_0::y2 (mod 0 4294967296) Int)))))
+server:           (+ (deref func_to_recursive_line_31_to_42_0::y3 (mod 0 4294967296) Int)))))
+server:     (+ (deref func_to_recursive_line_31_to_42_0::x1 (mod 0 4294967296) Int)))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@2cfbeac4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@12db3386, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@42c2f48c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@3005db4a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@425d5d46, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@198ef2ce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@4cbd03e7, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@52fc5eb1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@7a639ec5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fc88c0a8200@14151bc5) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret1 <- (var call_abort_ret1 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) func_to_recursive_line_31_to_42_0_ret <- (var func_to_recursive_line_31_to_42_0_ret Int) func_to_recursive_line_31_to_42_0::y2 <- (var func_to_recursive_line_31_to_42_0::y2 Int) func_to_recursive_line_31_to_42_0::x1 <- (var func_to_recursive_line_31_to_42_0::x1 Int) func_to_recursive_line_31_to_42_0::x2 <- (var func_to_recursive_line_31_to_42_0::x2 Int) func_to_recursive_line_31_to_42_0::y1 <- (var func_to_recursive_line_31_to_42_0::y1 Int) func_to_recursive_line_31_to_42_0::y3 <- (var func_to_recursive_line_31_to_42_0::y3 Int) call___VERIFIER_assert_ret3 <- (var call___VERIFIER_assert_ret3 Int) call_func_to_recursive_line_31_to_42_0_ret4 <- (var call_func_to_recursive_line_31_to_42_0_ret4 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret3, (ite
+server:   (=
+server:     (+
+server:       (+
+server:         (+
+server:           (+
+server:             (+
+server:               (+
+server:                 (+
+server:                   (+
+server:                     (*
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::y1 (mod 0 4294967296) Int))
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::x2 (mod 0 4294967296) Int)))))
+server:                 (+ (deref func_to_recursive_line_31_to_42_0::y2 (mod 0 4294967296) Int)))))
+server:           (+ (deref func_to_recursive_line_31_to_42_0::y3 (mod 0 4294967296) Int)))))
+server:     (+ (deref func_to_recursive_line_31_to_42_0::x1 (mod 0 4294967296) Int)))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@2cfbeac4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@12db3386, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@42c2f48c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@3005db4a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@425d5d46, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@198ef2ce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@4cbd03e7, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@52fc5eb1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@7a639ec5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f78b40a8200@14151bc5) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret1 <- (var call_abort_ret1 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) func_to_recursive_line_31_to_42_0_ret <- (var func_to_recursive_line_31_to_42_0_ret Int) func_to_recursive_line_31_to_42_0::y2 <- (var func_to_recursive_line_31_to_42_0::y2 Int) func_to_recursive_line_31_to_42_0::x1 <- (var func_to_recursive_line_31_to_42_0::x1 Int) func_to_recursive_line_31_to_42_0::x2 <- (var func_to_recursive_line_31_to_42_0::x2 Int) func_to_recursive_line_31_to_42_0::y1 <- (var func_to_recursive_line_31_to_42_0::y1 Int) func_to_recursive_line_31_to_42_0::y3 <- (var func_to_recursive_line_31_to_42_0::y3 Int) call___VERIFIER_assert_ret3 <- (var call___VERIFIER_assert_ret3 Int) call_func_to_recursive_line_31_to_42_0_ret4 <- (var call_func_to_recursive_line_31_to_42_0_ret4 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=200000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret3, (ite
+server:   (=
+server:     (+
+server:       (+
+server:         (+
+server:           (+
+server:             (+
+server:               (+
+server:                 (+
+server:                   (+
+server:                     (*
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::y1 (mod 0 4294967296) Int))
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::x2 (mod 0 4294967296) Int)))))
+server:                 (+ (deref func_to_recursive_line_31_to_42_0::y2 (mod 0 4294967296) Int)))))
+server:           (+ (deref func_to_recursive_line_31_to_42_0::y3 (mod 0 4294967296) Int)))))
+server:     (+ (deref func_to_recursive_line_31_to_42_0::x1 (mod 0 4294967296) Int)))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@2cfbeac4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@12db3386, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@42c2f48c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@3005db4a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@425d5d46, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@198ef2ce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@4cbd03e7, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@52fc5eb1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@7a639ec5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007fefb80a8200@14151bc5) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret1 <- (var call_abort_ret1 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) func_to_recursive_line_31_to_42_0_ret <- (var func_to_recursive_line_31_to_42_0_ret Int) func_to_recursive_line_31_to_42_0::y2 <- (var func_to_recursive_line_31_to_42_0::y2 Int) func_to_recursive_line_31_to_42_0::x1 <- (var func_to_recursive_line_31_to_42_0::x1 Int) func_to_recursive_line_31_to_42_0::x2 <- (var func_to_recursive_line_31_to_42_0::x2 Int) func_to_recursive_line_31_to_42_0::y1 <- (var func_to_recursive_line_31_to_42_0::y1 Int) func_to_recursive_line_31_to_42_0::y3 <- (var func_to_recursive_line_31_to_42_0::y3 Int) call___VERIFIER_assert_ret3 <- (var call___VERIFIER_assert_ret3 Int) call_func_to_recursive_line_31_to_42_0_ret4 <- (var call_func_to_recursive_line_31_to_42_0_ret4 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrSolverError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret3, (ite
+server:   (=
+server:     (+
+server:       (+
+server:         (+
+server:           (+
+server:             (+
+server:               (+
+server:                 (+
+server:                   (+
+server:                     (*
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::y1 (mod 0 4294967296) Int))
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::x2 (mod 0 4294967296) Int)))))
+server:                 (+ (deref func_to_recursive_line_31_to_42_0::y2 (mod 0 4294967296) Int)))))
+server:           (+ (deref func_to_recursive_line_31_to_42_0::y3 (mod 0 4294967296) Int)))))
+server:     (+ (deref func_to_recursive_line_31_to_42_0::x1 (mod 0 4294967296) Int)))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@2cfbeac4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@12db3386, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@42c2f48c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@3005db4a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@425d5d46, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@198ef2ce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@4cbd03e7, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@52fc5eb1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@7a639ec5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f9fec0a8200@14151bc5) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret1 <- (var call_abort_ret1 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) func_to_recursive_line_31_to_42_0_ret <- (var func_to_recursive_line_31_to_42_0_ret Int) func_to_recursive_line_31_to_42_0::y2 <- (var func_to_recursive_line_31_to_42_0::y2 Int) func_to_recursive_line_31_to_42_0::x1 <- (var func_to_recursive_line_31_to_42_0::x1 Int) func_to_recursive_line_31_to_42_0::x2 <- (var func_to_recursive_line_31_to_42_0::x2 Int) func_to_recursive_line_31_to_42_0::y1 <- (var func_to_recursive_line_31_to_42_0::y1 Int) func_to_recursive_line_31_to_42_0::y3 <- (var func_to_recursive_line_31_to_42_0::y3 Int) call___VERIFIER_assert_ret3 <- (var call___VERIFIER_assert_ret3 Int) call_func_to_recursive_line_31_to_42_0_ret4 <- (var call_func_to_recursive_line_31_to_42_0_ret4 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=cvc5:1.0.8, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=cvc5:1.0.8, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: Could not parse __VERIFIER_assert(call___VERIFIER_assert_ret3, (ite
+server:   (=
+server:     (+
+server:       (+
+server:         (+
+server:           (+
+server:             (+
+server:               (+
+server:                 (+
+server:                   (+
+server:                     (*
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::y1 (mod 0 4294967296) Int))
+server:                       (+ (deref func_to_recursive_line_31_to_42_0::x2 (mod 0 4294967296) Int)))))
+server:                 (+ (deref func_to_recursive_line_31_to_42_0::y2 (mod 0 4294967296) Int)))))
+server:           (+ (deref func_to_recursive_line_31_to_42_0::y3 (mod 0 4294967296) Int)))))
+server:     (+ (deref func_to_recursive_line_31_to_42_0::x1 (mod 0 4294967296) Int)))
+server:   1
+server:   0))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@5e4c8041, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@3bd40a57, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@cdc3aae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@7ef2d7a6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@5dcbb60, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@71391b3f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@2cfbeac4, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@12db3386, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@42c2f48c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@3005db4a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@425d5d46, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@198ef2ce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@4cbd03e7, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@52fc5eb1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@7a639ec5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$12/0x00007f59a40a8200@14151bc5) }
+server: env: Env( (Frame reach_error_ret <- (var reach_error_ret Int) call___assert_fail_ret0 <- (var call___assert_fail_ret0 Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret1 <- (var call_abort_ret1 Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::cond <- (var __VERIFIER_assert::cond Int) call_reach_error_ret2 <- (var call_reach_error_ret2 Int) func_to_recursive_line_31_to_42_0_ret <- (var func_to_recursive_line_31_to_42_0_ret Int) func_to_recursive_line_31_to_42_0::y2 <- (var func_to_recursive_line_31_to_42_0::y2 Int) func_to_recursive_line_31_to_42_0::x1 <- (var func_to_recursive_line_31_to_42_0::x1 Int) func_to_recursive_line_31_to_42_0::x2 <- (var func_to_recursive_line_31_to_42_0::x2 Int) func_to_recursive_line_31_to_42_0::y1 <- (var func_to_recursive_line_31_to_42_0::y1 Int) func_to_recursive_line_31_to_42_0::y3 <- (var func_to_recursive_line_31_to_42_0::y3 Int) call___VERIFIER_assert_ret3 <- (var call___VERIFIER_assert_ret3 Int) call_func_to_recursive_line_31_to_42_0_ret4 <- (var call_func_to_recursive_line_31_to_42_0_ret4 Int)) )
+server: type: InvokeLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: java.lang.NullPointerException
+server: 	at hu.bme.mit.theta.xcfa.model.InvokeLabel$Companion.fromString(XcfaLabel.kt:52)
+server: 	... 28 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=false, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist (Combinator TargetFirst (Combinator DepthOrder CreationOrder)))) (XcfaSingleExprTraceRefiner ExprTraceNewtonChecker XcfaPrecRefiner))
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 20 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 17
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 9...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 2
+| Checking abstraction...
+|  |  Starting ARG: 10 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 21 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 18
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 10...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 3
+| Checking abstraction...
+|  |  Starting ARG: 11 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 23 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 19
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 11...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 4
+| Checking abstraction...
+|  |  Starting ARG: 13 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...Process failed! (hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker$1.visit(ExprTraceNewtonChecker.java:288), java.lang.UnsupportedOperationException: MemoryAssignStmt not supported (yet))
+Caught exception: ErrorCodeException(code=202)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=false, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist (Combinator TargetFirst (Combinator DepthOrder CreationOrder)))) (XcfaSingleExprTraceRefiner ExprTraceSeqItpChecker XcfaPrecRefiner))
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 20 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 17
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 9...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 2
+| Checking abstraction...
+|  |  Starting ARG: 10 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 21 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 18
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 10...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 3
+| Checking abstraction...
+|  |  Starting ARG: 11 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 23 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 19
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 11...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 4
+| Checking abstraction...
+|  |  Starting ARG: 13 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 2...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 5
+| Checking abstraction...
+|  |  Starting ARG: 2 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 20 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 17
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 9...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 6
+| Checking abstraction...
+|  |  Starting ARG: 10 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 21 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 18
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 10...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 7
+| Checking abstraction...
+|  |  Starting ARG: 11 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 23 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 19
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+|  |  Pruning from index 11...Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 8
+| Checking abstraction...
+|  |  Starting ARG: 13 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 9
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 10
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 11
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 12
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 13
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 14
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 15
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 16
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 17
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 18
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 19
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 20
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 21
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 22
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 23
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 24
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 25
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 26
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 27
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 28
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 29
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 30
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 31
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 32
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 33
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 34
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 35
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 36
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 37
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 38
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 39
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 40
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 41
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 42
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 43
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 44
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 45
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 46
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 47
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 48
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 49
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 50
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 51
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 52
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 53
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 54
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 55
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 56
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 57
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 58
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 59
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 60
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 61
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 62
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 63
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 64
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 65
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 66
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 67
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 68
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 69
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 70
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 71
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 72
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 73
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 74
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 75
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 76
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 77
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 78
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 79
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 80
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 81
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 82
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 83
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 84
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 85
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 86
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 87
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 88
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 89
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 90
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 91
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 92
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 93
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 94
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 95
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 96
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 97
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 98
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 99
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 100
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 101
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 102
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 103
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 104
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 105
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 106
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 107
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 108
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 109
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 110
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 111
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 112
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 113
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 114
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 115
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 116
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 117
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 118
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 119
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 120
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 121
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 122
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 123
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 124
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 125
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 126
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 127
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 128
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 129
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 130
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 131
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 132
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 133
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 134
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 135
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 136
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 137
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 138
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 139
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 140
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 141
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 142
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 143
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 144
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 145
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 146
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 147
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 148
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 149
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 150
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 151
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 152
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 153
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 154
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 155
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 156
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 157
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 158
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 159
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 160
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 161
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 162
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 163
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 164
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 165
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 166
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 167
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 168
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 169
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 170
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 171
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 172
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 173
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 174
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 175
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 176
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 177
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 178
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 179
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 180
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 181
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 182
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 183
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 184
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 185
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 186
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 187
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 188
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 189
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 190
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 191
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 192
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 193
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 194
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 195
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 196
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 197
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 198
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 199
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 200
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 201
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 25 nodes, 2 incomplete, 1 unsafe
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Trace length: 20
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 12...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision did NOT change in this iteration
+Iteration 202
+| Checking abstraction...
+|  |  Starting ARG: 15 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...

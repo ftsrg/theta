@@ -1,0 +1,53 @@
+tool	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4
+run set	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	Parsing OK	10.237454	5.236752327999966	446.160896
+pthread-atomic/read_write_lock-1.yml	true	7.72322	3.3012225660000354	524.066816
+pthread-wmm/rfi003_tso.yml	true	13.064693	5.878165198000033	498.634752
+pthread/lazy01.yml	true	6.212343	2.893290400000012	508.747776
+pthread-wmm/mix000.oepc.yml	true	13.222106	5.915758212000014	494.628864
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml	true	9.078057	4.692957041999989	450.863104
+pthread-wmm/safe032_tso.yml	true	10.383253	4.978856512999982	461.611008
+goblint-regression/13-privatized_37-traces-ex-4_true.yml	true	9.648655	4.79957564700004	451.231744
+pthread-C-DAC/pthread-demo-datarace-3.yml	true	13.123318	5.910059936000039	503.214080
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml	true	9.294464	4.701471045000005	442.691584
+pthread-ext/31_simple_loop5_vs-pthread.yml	TIMEOUT	20.576583	9.070846689999996	2240.917504
+pthread-wmm/safe030_tso.yml	true	11.11426	4.9335057769999935	467.828736
+pthread-wmm/safe018_power.opt.yml	true	15.764304	6.450993779999976	573.083648
+pthread-wmm/safe026_tso.yml	true	11.302886	5.296576812000012	475.414528
+pthread/fib_safe-11.yml	true	13.555092	5.584162042000003	484.352000
+pthread-wmm/safe024_tso.yml	true	11.669127	5.1429274359999795	480.559104
+pthread-ext/08_rand_cas.yml	TIMEOUT	21.088052	7.492844348999995	752.975872
+goblint-regression/13-privatized_19-publish-precision_unknown_2_pos.yml	true	10.062987	4.79395318600001	454.344704
+pthread-wmm/mix057_power.oepc_pso.oepc_rmo.oepc.yml	true	15.301201	6.30313374900004	530.190336
+pthread-wmm/mix023_power.opt_pso.opt_rmo.opt.yml	true	14.980053	6.104247286999964	526.622720
+pthread-wmm/mix032.oepc.yml	true	13.915112	5.773465025999997	517.525504
+pthread-wmm/mix030_power.opt_pso.opt_rmo.opt.yml	true	13.721321	5.9095142630000055	512.749568
+pthread-wmm/mix036_pso.opt_tso.opt.yml	true	13.888313	5.9712725039999555	503.193600
+pthread-wmm/mix034_pso.opt_tso.opt.yml	true	13.97407	5.849731936000012	490.389504
+pthread-wmm/safe012_rmo.oepc.yml	true	14.505031	6.100973057000033	491.094016
+pthread-wmm/mix005.opt.yml	true	15.468535	6.403068182000084	531.140608
+pthread-wmm/rfi004.yml	true	13.672147	5.810797248999961	489.299968
+pthread-ext/11_fmaxsymopt-pthread.yml	TIMEOUT	20.532305	7.473890636000078	1080.037376
+pthread-wmm/mix019.opt.yml	true	14.994022	6.252535567999985	521.334784
+pthread-wmm/safe019_power.opt.yml	true	15.81639	6.477524946000017	544.550912
+pthread-wmm/safe031_power.oepc_pso.oepc_rmo.oepc.yml	true	14.229504	5.961562540000045	491.732992
+pthread/triangular-longest-2.yml	Parsing OK	13.14192	5.751964046000012	469.807104
+pthread-wmm/mix016_pso.opt_tso.opt.yml	true	14.867188	5.97547187300006	538.095616
+goblint-regression/28-race_reach_46-escape_racefree.yml	true	10.081441	4.760645437999983	455.970816
+pthread-wmm/mix019_power.oepc_pso.oepc_rmo.oepc.yml	true	14.254695	5.906356622999965	516.567040
+pthread-wmm/mix018_power.oepc_pso.oepc_rmo.oepc.yml	true	15.550017	6.220442502999958	541.544448
+pthread-wmm/safe007_pso.oepc_pso.opt_tso.oepc_tso.opt-thin001_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	11.295498	5.159642429999963	462.217216
+pthread-wmm/safe005_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	13.879945	5.766818488000013	491.753472
+pthread-ext/40_barrier_vf-pthread.yml	TIMEOUT	21.145221	9.452533545999927	1559.371776
+pthread-wmm/safe015_rmo.yml	true	15.588144	6.394130067999981	531.189760
+goblint-regression/13-privatized_18-first-reads_unknown_1_neg.yml	true	10.626542	4.988639238000019	456.294400
+pthread/fib_unsafe-11.yml	true	14.070554	5.84832664399994	489.168896
+pthread-lit/qw2004-2b.yml	true	9.164647	3.6874326759999576	542.244864
+pthread-wmm/mix055_tso.oepc.yml	true	14.855249	6.034026101999984	531.898368
+pthread-deagle/circular_buffer_ok.yml	true	16.627085	6.50417832800008	509.603840
+pthread-wmm/safe035_power.yml	true	16.592792	6.730976505999934	548.311040
+pthread-ext/14_spin2003.yml	TIMEOUT	20.145579	7.4691266229999655	2116.673536
+pthread/fib_safe-10.yml	true	13.340851	5.756874734999997	481.492992
+pthread-ext/45_monabsex1_vs.yml	true	7.801485	3.252319651999983	539.369472
+pthread-wmm/safe004_tso.yml	true	11.656146	5.373790263000046	461.463552

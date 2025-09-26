@@ -1,0 +1,8 @@
+Thorn/theta-start.sh sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'

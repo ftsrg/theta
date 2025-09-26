@@ -1,0 +1,8 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/bitvector/soft_float_2a.c.cil.c --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/bitvector/soft_float_2a.c.cil.c' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture ILP32'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'

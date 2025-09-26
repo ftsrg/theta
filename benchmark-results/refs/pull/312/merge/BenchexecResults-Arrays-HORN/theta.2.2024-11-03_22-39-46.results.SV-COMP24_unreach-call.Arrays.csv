@@ -1,0 +1,436 @@
+tool		Theta 6.6.5	Theta 6.6.5	Theta 6.6.5	Theta 6.6.5
+run set		SV-COMP24_unreach-call.Arrays	SV-COMP24_unreach-call.Arrays	SV-COMP24_unreach-call.Arrays	SV-COMP24_unreach-call.Arrays
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+array-examples/data_structures_set_multi_proc_ground-1.yml	false	Parsing OK	11.18907	5.8318144780000125	443.457536
+array-examples/data_structures_set_multi_proc_ground-2.yml	true	Parsing OK	11.257673	5.8130418870000256	449.474560
+array-examples/data_structures_set_multi_proc_trivial_ground.yml	true	Parsing OK	11.68897	5.934285866999971	441.225216
+array-examples/relax-2-2.yml	true	Parsing OK	12.774416	5.794857417999992	460.591104
+array-examples/sanfoundry_02_ground.yml	true	Parsing OK	10.116736	5.537713214000007	429.940736
+array-examples/sanfoundry_10_ground.yml	true	Parsing OK	10.785647	6.232140054000013	426.086400
+array-examples/sanfoundry_24-1.yml	true	Parsing OK	10.648807	5.616897241000004	460.791808
+array-examples/sanfoundry_27_ground.yml	true	Parsing OK	9.584967	5.154035421999993	441.360384
+array-examples/sanfoundry_43_ground.yml	true	true	2.507387	0.9653368529999966	221.712384
+array-examples/sorting_bubblesort_2_ground.yml	false	Parsing OK	10.230294	5.52047072299996	441.114624
+array-examples/sorting_bubblesort_ground-1.yml	true	Parsing OK	10.441897	5.697899965999966	435.982336
+array-examples/sorting_bubblesort_ground-2.yml	false	Parsing OK	10.46041	5.683407246000002	435.916800
+array-examples/sorting_selectionsort_2_ground.yml	false	Parsing OK	11.208061	5.766243360999965	434.352128
+array-examples/sorting_selectionsort_ground-1.yml	false	Parsing OK	10.599812	5.592118072000005	442.195968
+array-examples/sorting_selectionsort_ground-2.yml	true	Parsing OK	11.269173	5.905412657999989	439.373824
+array-examples/standard_allDiff2_ground.yml	false	Parsing OK	10.224971	5.601497891000008	429.150208
+array-examples/standard_compareModified_ground.yml	true	Parsing OK	10.374304	5.56275684000002	433.307648
+array-examples/standard_compare_ground.yml	true	Parsing OK	10.234936	5.635848398999997	442.740736
+array-examples/standard_copy1_ground-1.yml	true	Parsing OK	9.692752	5.466753343999983	417.931264
+array-examples/standard_copy1_ground-2.yml	false	Parsing OK	9.554345	5.34225554599999	432.500736
+array-examples/standard_copy2_ground-1.yml	false	Parsing OK	10.037351	5.5441127619999975	429.195264
+array-examples/standard_copy2_ground-2.yml	true	Parsing OK	9.675698	5.474824742999999	437.997568
+array-examples/standard_copy3_ground-1.yml	true	Parsing OK	10.018128	5.528528714000004	444.649472
+array-examples/standard_copy3_ground-2.yml	false	Parsing OK	9.998364	5.570766599000024	439.107584
+array-examples/standard_copy4_ground-1.yml	true	Parsing OK	9.9698	5.468206346000045	434.905088
+array-examples/standard_copy4_ground-2.yml	false	Parsing OK	10.098724	5.607095039000001	444.399616
+array-examples/standard_copy5_ground-1.yml	true	Parsing OK	10.337968	5.637950504999992	441.020416
+array-examples/standard_copy5_ground-2.yml	false	Parsing OK	10.36331	5.656528634999972	440.086528
+array-examples/standard_copy6_ground-1.yml	false	Parsing OK	10.291565	5.337107897999999	445.206528
+array-examples/standard_copy6_ground-2.yml	true	Parsing OK	10.327236	5.6834669369999915	443.666432
+array-examples/standard_copy7_ground-1.yml	false	Parsing OK	10.818591	5.873233649999975	447.778816
+array-examples/standard_copy7_ground-2.yml	true	Parsing OK	10.746857	5.65315160199998	445.952000
+array-examples/standard_copy8_ground-1.yml	true	Parsing OK	10.452616	5.713250947999995	445.431808
+array-examples/standard_copy8_ground-2.yml	false	Parsing OK	10.569387	5.7050753849999865	447.758336
+array-examples/standard_copy9_ground-1.yml	false	Parsing OK	11.564561	5.6832614489999855	450.514944
+array-examples/standard_copy9_ground-2.yml	true	Parsing OK	11.137386	5.745301703999985	449.355776
+array-examples/standard_copyInitSum2_ground-1.yml	false	Parsing OK	9.938519	5.447449000000006	429.559808
+array-examples/standard_copyInitSum2_ground-2.yml	true	Parsing OK	10.297533	5.378496089999999	444.121088
+array-examples/standard_copyInitSum3_ground.yml	true	Parsing OK	10.190786	5.520498973000031	435.093504
+array-examples/standard_copyInitSum_ground.yml	true	Parsing OK	10.190599	5.579049456999996	435.068928
+array-examples/standard_copyInit_ground.yml	true	Parsing OK	9.831528	5.435830771999974	440.045568
+array-examples/standard_find_ground-1.yml	true	Parsing OK	10.027126	5.452818472999979	430.166016
+array-examples/standard_init1_ground-1.yml	false	Parsing OK	9.806776	5.425683879000019	438.218752
+array-examples/standard_init1_ground-2.yml	true	Parsing OK	9.796593	5.4681356540000365	428.220416
+array-examples/standard_init2_ground-1.yml	false	Parsing OK	9.918207	5.484550430000013	425.799680
+array-examples/standard_init2_ground-2.yml	true	Parsing OK	10.045	5.495997821000003	429.342720
+array-examples/standard_init3_ground-1.yml	false	Parsing OK	9.698526	5.345466442999964	426.491904
+array-examples/standard_init3_ground-2.yml	true	Parsing OK	9.982162	5.504113014999973	425.041920
+array-examples/standard_init4_ground-1.yml	false	Parsing OK	9.9649	5.528578908999975	444.907520
+array-examples/standard_init4_ground-2.yml	true	Parsing OK	10.135232	5.252863252999987	445.673472
+array-examples/standard_init5_ground-1.yml	true	Parsing OK	10.28926	5.605435276000094	432.857088
+array-examples/standard_init5_ground-2.yml	false	Parsing OK	10.408944	5.590424625999958	427.716608
+array-examples/standard_init6_ground-1.yml	false	Parsing OK	10.294382	5.507141558000058	439.934976
+array-examples/standard_init6_ground-2.yml	true				
+array-examples/standard_init7_ground-1.yml	false				
+array-examples/standard_init7_ground-2.yml	true				
+array-examples/standard_init8_ground-1.yml	false				
+array-examples/standard_init8_ground-2.yml	true				
+array-examples/standard_init9_ground-1.yml	false				
+array-examples/standard_init9_ground-2.yml	true				
+array-examples/standard_maxInArray_ground.yml	true				
+array-examples/standard_minInArray_ground-1.yml	false				
+array-examples/standard_minInArray_ground-2.yml	true				
+array-examples/standard_palindrome_ground.yml	true				
+array-examples/standard_partial_init_ground.yml	true				
+array-examples/standard_partition_ground-1.yml	false				
+array-examples/standard_partition_ground-2.yml	true				
+array-examples/standard_partition_original_ground.yml	true				
+array-examples/standard_password_ground.yml	true				
+array-examples/standard_reverse_ground.yml	true				
+array-examples/standard_running-1.yml	false				
+array-examples/standard_running-2.yml	true				
+array-examples/standard_sentinel-2.yml	true				
+array-examples/standard_sentinel.i.v+cfa-reducer.yml	true				
+array-examples/standard_seq_init_ground.yml	true				
+array-examples/standard_strcmp_ground.yml	true				
+array-examples/standard_strcpy_ground-1.yml	true				
+array-examples/standard_strcpy_original-2.yml	true				
+array-examples/standard_two_index_01.yml	true				
+array-examples/standard_two_index_02.yml	true				
+array-examples/standard_two_index_03.yml	true				
+array-examples/standard_two_index_04.yml	true				
+array-examples/standard_two_index_05.yml	true				
+array-examples/standard_two_index_06.yml	true				
+array-examples/standard_two_index_07.yml	true				
+array-examples/standard_two_index_08.yml	true				
+array-examples/standard_two_index_09.yml	true				
+array-examples/standard_vararg_ground.yml	true				
+array-examples/standard_vector_difference_ground.yml	true				
+array-industry-pattern/array_assert_loop_dep.yml	false				
+array-industry-pattern/array_monotonic.yml	true				
+array-industry-pattern/array_mul_init.yml	true				
+array-industry-pattern/array_of_struct_break.yml	true				
+array-industry-pattern/array_of_struct_loop_dep.yml	false				
+array-industry-pattern/array_of_struct_ptr_cond_init.yml	true				
+array-industry-pattern/array_of_struct_ptr_flag_init.yml	true				
+array-industry-pattern/array_of_struct_ptr_monotonic.yml	true				
+array-industry-pattern/array_of_struct_ptr_mul_init.yml	true				
+array-industry-pattern/array_of_struct_single_elem_init.yml	true				
+array-industry-pattern/array_ptr_partial_init.yml	true				
+array-industry-pattern/array_ptr_single_elem_init-1.yml	true				
+array-industry-pattern/array_ptr_single_elem_init-2.yml	false				
+array-industry-pattern/array_range_init.yml	false				
+array-industry-pattern/array_shadowinit.yml	true				
+array-industry-pattern/array_single_elem_init.yml	false				
+array-industry-pattern/check_removal_from_set_after_insertion.yml	false				
+reducercommutativity/avg05-1.yml	true				
+reducercommutativity/avg10-2.yml	true				
+reducercommutativity/avg20-2.yml	true				
+reducercommutativity/avg40-2.yml	true				
+reducercommutativity/avg60-1.yml	true				
+reducercommutativity/max.yml	true				
+reducercommutativity/max05-1.yml	true				
+reducercommutativity/max10-1.yml	true				
+reducercommutativity/max20-1.yml	true				
+reducercommutativity/max40-1.yml	true				
+reducercommutativity/max60-2.yml	true				
+reducercommutativity/rangesum.yml	false				
+reducercommutativity/rangesum05.yml	false				
+reducercommutativity/rangesum10.yml	false				
+reducercommutativity/rangesum20.yml	false				
+reducercommutativity/rangesum40.yml	false				
+reducercommutativity/rangesum60.yml	false				
+reducercommutativity/sep.yml	true				
+reducercommutativity/sep05-1.yml	true				
+reducercommutativity/sep10-2.yml	true				
+reducercommutativity/sep20-1.yml	true				
+reducercommutativity/sep40-1.yml	true				
+reducercommutativity/sep60-2.yml	true				
+reducercommutativity/sum05-2.yml	true				
+reducercommutativity/sum10-1.yml	true				
+reducercommutativity/sum20-2.yml	true				
+reducercommutativity/sum40-2.yml	true				
+reducercommutativity/sum60-2.yml	true				
+array-tiling/mbpr2.yml	true				
+array-tiling/mbpr3.yml	true				
+array-tiling/mbpr4.yml	true				
+array-tiling/mbpr5.yml	true				
+array-tiling/mlceu.yml	false				
+array-tiling/mlceu2.yml	true				
+array-tiling/nr2.yml	true				
+array-tiling/nr3.yml	true				
+array-tiling/nr4.yml	true				
+array-tiling/nr5.yml	true				
+array-tiling/pnr2.yml	true				
+array-tiling/pnr3.yml	true				
+array-tiling/pnr4.yml	true				
+array-tiling/pnr5.yml	true				
+array-tiling/poly1.yml	true				
+array-tiling/poly2.yml	true				
+array-tiling/pr2.yml	true				
+array-tiling/pr3.yml	true				
+array-tiling/pr4.yml	true				
+array-tiling/pr5.yml	true				
+array-tiling/revcpyswp2.yml	true				
+array-tiling/rew.yml	true				
+array-tiling/rewnif.yml	true				
+array-tiling/rewnifrev.yml	true				
+array-tiling/rewnifrev2.yml	true				
+array-tiling/rewrev.yml	true				
+array-tiling/skipped.yml	true				
+array-tiling/skippedu.yml	false				
+array-tiling/tcpy.yml	true				
+array-programs/copysome1-1.yml	true				
+array-programs/copysome1-2.yml	false				
+array-programs/copysome2-1.yml	true				
+array-programs/copysome2-2.yml	false				
+array-programs/partial_mod_count_1.yml	true				
+array-programs/partial_mod_count_2.yml	true				
+array-programs/partial_mod_count_3.yml	true				
+array-programs/partial_mod_count_4.yml	true				
+array-programs/partial_mod_count_5.yml	true				
+array-programs/partial_mod_count_limited_1.yml	true				
+array-programs/partial_mod_count_limited_2.yml	true				
+array-programs/partial_mod_count_limited_3.yml	true				
+array-programs/partial_mod_count_limited_4.yml	true				
+array-programs/partial_mod_count_limited_5.yml	true				
+array-programs/partial_mod_count_limited_base.yml	true				
+array-programs/partial_mod_count_limited_gen.yml	true				
+array-crafted/bAnd1.yml	true				
+array-crafted/bAnd2.yml	true				
+array-crafted/bAnd3.yml	true				
+array-crafted/bAnd4.yml	true				
+array-crafted/bAnd5.yml	true				
+array-crafted/bor1.yml	true				
+array-crafted/bor2.yml	true				
+array-crafted/bor3.yml	true				
+array-crafted/bor4.yml	true				
+array-crafted/bor5.yml	true				
+array-crafted/mapavg1.yml	true				
+array-crafted/mapavg2.yml	true				
+array-crafted/mapavg3.yml	true				
+array-crafted/mapavg4.yml	true				
+array-crafted/mapavg5.yml	true				
+array-crafted/mapsum1.yml	true				
+array-crafted/mapsum2.yml	true				
+array-crafted/mapsum3.yml	true				
+array-crafted/mapsum4.yml	true				
+array-crafted/mapsum5.yml	true				
+array-crafted/xor1.yml	true				
+array-crafted/xor2.yml	true				
+array-crafted/xor3.yml	true				
+array-crafted/xor4.yml	true				
+array-crafted/xor5.yml	true				
+array-crafted/zero_sum1.yml	true				
+array-crafted/zero_sum2.yml	true				
+array-crafted/zero_sum3.yml	true				
+array-crafted/zero_sum4.yml	true				
+array-crafted/zero_sum5.yml	true				
+array-crafted/zero_sum_const1.yml	true				
+array-crafted/zero_sum_const2.yml	true				
+array-crafted/zero_sum_const3.yml	true				
+array-crafted/zero_sum_const4.yml	true				
+array-crafted/zero_sum_const5.yml	true				
+array-crafted/zero_sum_const_m2.yml	true				
+array-crafted/zero_sum_const_m3.yml	true				
+array-crafted/zero_sum_const_m4.yml	true				
+array-crafted/zero_sum_const_m5.yml	true				
+array-crafted/zero_sum_m2.yml	true				
+array-crafted/zero_sum_m3.yml	true				
+array-crafted/zero_sum_m4.yml	true				
+array-crafted/zero_sum_m5.yml	true				
+array-multidimensional/add-2-n-u.yml	true				
+array-multidimensional/add-3-n-u.yml	true				
+array-multidimensional/copy-2-u.yml	true				
+array-multidimensional/copy-3-n-u.yml	true				
+array-multidimensional/copy-partial-2-n-u.yml	true				
+array-multidimensional/copy-partial-3-u.yml	true				
+array-multidimensional/diff-2-n-u.yml	true				
+array-multidimensional/diff-3-n-u.yml	true				
+array-multidimensional/init-2-n-u.yml	true				
+array-multidimensional/init-3-u.yml	true				
+array-multidimensional/init-4-n-u.yml	true				
+array-multidimensional/init-non-constant-2-n-u.yml	true				
+array-multidimensional/init-non-constant-3-u.yml	true				
+array-multidimensional/max-2-u.yml	true				
+array-multidimensional/max-3-n-u.yml	true				
+array-multidimensional/min-2-u.yml	true				
+array-multidimensional/min-3-n-u.yml	true				
+array-multidimensional/rev-2-n-u.yml	true				
+array-multidimensional/rev-3-u.yml	true				
+array-multidimensional/transpose-u.yml	true				
+array-patterns/array10_pattern.yml	true				
+array-patterns/array11_pattern.yml	true				
+array-patterns/array12_pattern.yml	true				
+array-patterns/array13_pattern.yml	true				
+array-patterns/array14_pattern.yml	true				
+array-patterns/array15_pattern.yml	true				
+array-patterns/array16_pattern.yml	true				
+array-patterns/array17_pattern.yml	true				
+array-patterns/array18_pattern.yml	true				
+array-patterns/array19_pattern.yml	true				
+array-patterns/array1_pattern.yml	true				
+array-patterns/array20_pattern.yml	true				
+array-patterns/array21_pattern.yml	true				
+array-patterns/array22_pattern.yml	true				
+array-patterns/array23_pattern.yml	true				
+array-patterns/array24_pattern.yml	true				
+array-patterns/array25_pattern.yml	true				
+array-patterns/array26_pattern.yml	true				
+array-patterns/array27_pattern.yml	true				
+array-patterns/array28_pattern.yml	true				
+array-patterns/array29_pattern.yml	true				
+array-patterns/array2_pattern.yml	true				
+array-patterns/array30_pattern.yml	true				
+array-patterns/array3_pattern.yml	true				
+array-patterns/array4_pattern.yml	true				
+array-patterns/array5_pattern.yml	true				
+array-patterns/array6_pattern.yml	true				
+array-patterns/array7_pattern.yml	true				
+array-patterns/array8_pattern.yml	true				
+array-patterns/array9_pattern.yml	true				
+array-cav19/array_doub_access_init_const.yml	true				
+array-cav19/array_init_both_ends_multiple_sum.yml	true				
+array-cav19/array_init_nondet_vars.yml	true				
+array-cav19/array_init_pair_sum_const.yml	true				
+array-cav19/array_init_pair_symmetr.yml	true				
+array-cav19/array_init_pair_symmetr2.yml	true				
+array-cav19/array_init_var_plus_ind.yml	true				
+array-cav19/array_init_var_plus_ind2.yml	true				
+array-cav19/array_init_var_plus_ind3.yml	true				
+array-cav19/array_min_and_copy_shift_sum_add.yml	true				
+array-cav19/array_tiling_poly6.yml	true				
+array-cav19/array_tiling_tcpy.yml	true				
+array-cav19/array_tripl_access_init_const.yml	true				
+array-lopstr16/base_case.yml	true				
+array-lopstr16/break-1.yml	true				
+array-lopstr16/break-2.yml	true				
+array-lopstr16/flag_loopdep.yml	true				
+array-lopstr16/flag_loopdep_simple.yml	true				
+array-lopstr16/motivex.yml	true				
+array-lopstr16/partial_lesser_bound-1.yml	true				
+array-lopstr16/partial_lesser_bound.yml	true				
+array-lopstr16/scalar_loopdep.yml	true				
+array-lopstr16/single_elem_safe.yml	true				
+array-lopstr16/sum_multi_array.yml	true				
+array-fpi/brs1.yml	true				
+array-fpi/brs1f.yml	false				
+array-fpi/brs2.yml	true				
+array-fpi/brs2f.yml	false				
+array-fpi/brs3.yml	true				
+array-fpi/brs3f.yml	false				
+array-fpi/brs4.yml	true				
+array-fpi/brs4f.yml	false				
+array-fpi/brs5.yml	true				
+array-fpi/brs5f.yml	false				
+array-fpi/conda.yml	true				
+array-fpi/condaf.yml	false				
+array-fpi/condg.yml	true				
+array-fpi/condgf.yml	false				
+array-fpi/condm.yml	true				
+array-fpi/condmf.yml	false				
+array-fpi/condn.yml	true				
+array-fpi/condnf.yml	false				
+array-fpi/eqn1.yml	true				
+array-fpi/eqn1f.yml	false				
+array-fpi/eqn2.yml	true				
+array-fpi/eqn2f.yml	false				
+array-fpi/eqn3.yml	true				
+array-fpi/eqn3f.yml	false				
+array-fpi/eqn4.yml	true				
+array-fpi/eqn4f.yml	false				
+array-fpi/eqn5.yml	true				
+array-fpi/eqn5f.yml	false				
+array-fpi/ifcomp.yml	true				
+array-fpi/ifcompf.yml	false				
+array-fpi/ifeqn1.yml	true				
+array-fpi/ifeqn1f.yml	false				
+array-fpi/ifeqn2.yml	true				
+array-fpi/ifeqn2f.yml	false				
+array-fpi/ifeqn3.yml	true				
+array-fpi/ifeqn3f.yml	false				
+array-fpi/ifeqn4.yml	true				
+array-fpi/ifeqn4f.yml	false				
+array-fpi/ifeqn5.yml	true				
+array-fpi/ifeqn5f.yml	false				
+array-fpi/ifncomp.yml	true				
+array-fpi/ifncompf.yml	false				
+array-fpi/indp1f.yml	false				
+array-fpi/indp2.yml	true				
+array-fpi/indp2f.yml	false				
+array-fpi/indp3.yml	true				
+array-fpi/indp3f.yml	false				
+array-fpi/indp4.yml	true				
+array-fpi/indp4f.yml	false				
+array-fpi/indp5.yml	true				
+array-fpi/indp5f.yml	false				
+array-fpi/modn.yml	true				
+array-fpi/modnf.yml	false				
+array-fpi/modp.yml	true				
+array-fpi/modpf.yml	false				
+array-fpi/mods.yml	true				
+array-fpi/modsf.yml	false				
+array-fpi/ms1.yml	true				
+array-fpi/ms1f.yml	false				
+array-fpi/ms2.yml	true				
+array-fpi/ms2f.yml	false				
+array-fpi/ms3.yml	true				
+array-fpi/ms3f.yml	false				
+array-fpi/ms4.yml	true				
+array-fpi/ms4f.yml	false				
+array-fpi/ms5.yml	true				
+array-fpi/ms5f.yml	false				
+array-fpi/ncomp.yml	true				
+array-fpi/ncompf.yml	false				
+array-fpi/nsqm-if.yml	true				
+array-fpi/nsqm-iff.yml	false				
+array-fpi/nsqm.yml	true				
+array-fpi/nsqmf.yml	false				
+array-fpi/pcomp.yml	true				
+array-fpi/pcompf.yml	false				
+array-fpi/res1.yml	true				
+array-fpi/res1f.yml	false				
+array-fpi/res1o.yml	true				
+array-fpi/res1of.yml	false				
+array-fpi/res2.yml	true				
+array-fpi/res2f.yml	false				
+array-fpi/res2o.yml	true				
+array-fpi/res2of.yml	false				
+array-fpi/s12if.yml	true				
+array-fpi/s12iff.yml	false				
+array-fpi/s1if.yml	true				
+array-fpi/s1iff.yml	false				
+array-fpi/s1lif.yml	true				
+array-fpi/s1liff.yml	false				
+array-fpi/s22if.yml	true				
+array-fpi/s22iff.yml	false				
+array-fpi/s2if.yml	true				
+array-fpi/s2iff.yml	false				
+array-fpi/s2lif.yml	true				
+array-fpi/s2liff.yml	false				
+array-fpi/s32if.yml	true				
+array-fpi/s32iff.yml	false				
+array-fpi/s3if.yml	true				
+array-fpi/s3iff.yml	false				
+array-fpi/s3lif.yml	true				
+array-fpi/s3liff.yml	false				
+array-fpi/s42if.yml	true				
+array-fpi/s42iff.yml	false				
+array-fpi/s4if.yml	true				
+array-fpi/s4iff.yml	false				
+array-fpi/s4lif.yml	true				
+array-fpi/s4liff.yml	false				
+array-fpi/s52if.yml	true				
+array-fpi/s52iff.yml	false				
+array-fpi/s5if.yml	true				
+array-fpi/s5iff.yml	false				
+array-fpi/s5lif.yml	true				
+array-fpi/s5liff.yml	false				
+array-fpi/sina1.yml	true				
+array-fpi/sina1f.yml	false				
+array-fpi/sina2.yml	true				
+array-fpi/sina2f.yml	false				
+array-fpi/sina3.yml	true				
+array-fpi/sina3f.yml	false				
+array-fpi/sina4.yml	true				
+array-fpi/sina4f.yml	false				
+array-fpi/sina5.yml	true				
+array-fpi/sina5f.yml	false				
+array-fpi/sqm-if.yml	true				
+array-fpi/sqm-iff.yml	false				
+array-fpi/sqm.yml	true				
+array-fpi/sqmf.yml	false				
+array-fpi/ss1.yml	true				
+array-fpi/ss1f.yml	false				
+array-fpi/ss2.yml	true				
+array-fpi/ss2f.yml	false				
+array-fpi/ss3.yml	true				
+array-fpi/ss3f.yml	false				
+array-fpi/ss4.yml	true				
+array-fpi/ss4f.yml	false				
+array-fpi/ssina.yml	true				
+array-fpi/ssinaf.yml	false				

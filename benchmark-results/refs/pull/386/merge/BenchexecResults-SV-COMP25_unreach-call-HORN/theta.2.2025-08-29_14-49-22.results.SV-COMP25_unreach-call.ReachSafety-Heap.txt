@@ -1,0 +1,38 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Heap
+date:                    Fri, 2025-08-29 14:49:22 UTC
+tool:                    Theta 6.17.7
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmccyg1gnepe
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3202.621 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Heap
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                              status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------
+ldv-regression/1_3.yml                                 ERROR (frontend failed, before parsing finished)        1.69        0.69        None
+ldv-regression/alias_of_return.c_1.yml                 ERROR (server error, after parsing finished)       14.36        7.22        None
+ldv-regression/alias_of_return.yml                     ERROR (server error, after parsing finished)       14.96        7.35        None
+ldv-regression/alias_of_return_2.c_1.yml               ERROR (server error, after parsing finished)       14.53        7.30        None
+ldv-regression/alias_of_return_2.yml                   ERROR (server error, after parsing finished)       15.84        7.52        None
+ldv-regression/alt_test.yml                            false(unreach-call)             11.93        5.35        None
+ldv-regression/callfpointer.yml                        true                             8.54        4.41        None
+ldv-regression/ex3_forlist.yml                         ERROR (server error, after parsing finished)       19.65        8.25        None
+ldv-regression/fo_test.yml                             false(unreach-call)             12.85        5.51        None
