@@ -44,13 +44,13 @@ class XCFA(
     var phase = 0
     do {
       var ready = true
-      procedureBuilders.forEach { ready = it.optimize(phase) && ready }
-      initProcedureBuilders.forEach { ready = it.first.optimize(phase) && ready }
+      procedureBuilders.toSet().forEach { ready = it.optimize(phase) && ready }
+      initProcedureBuilders.toSet().forEach { ready = it.first.optimize(phase) && ready }
       phase++
     } while (!ready)
 
-    procedures = procedureBuilders.map { it.build(this) }.toSet()
-    initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+    procedures = procedureBuilders.toSet().map { it.build(this) }.toSet()
+    initProcedures = initProcedureBuilders.toSet().map { Pair(it.first.build(this), it.second) }
     unsafeUnrollUsed =
       (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
   }

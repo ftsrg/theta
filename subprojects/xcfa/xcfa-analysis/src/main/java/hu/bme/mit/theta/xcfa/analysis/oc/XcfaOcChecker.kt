@@ -49,10 +49,13 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import kotlin.time.measureTime
 
 private val Expr<*>.vars
@@ -60,6 +63,7 @@ private val Expr<*>.vars
 
 class XcfaOcChecker(
   xcfa: XCFA,
+  property: ErrorDetection,
   decisionProcedure: OcDecisionProcedureType,
   smtSolver: String,
   private val logger: Logger,
@@ -72,7 +76,14 @@ class XcfaOcChecker(
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+  private val xcfa =
+    xcfa.optimizeFurther(
+      when (property) {
+        ErrorDetection.ERROR_LOCATION -> ProcedurePassManager()
+        ErrorDetection.DATA_RACE -> ProcedurePassManager(listOf(DataRaceToReachabilityPass()))
+        else -> error("Unsupported property by OC checker: $property")
+      } + OcExtraPasses()
+    )
   private val autoConflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private var indexing = VarIndexingFactory.indexing(0)
@@ -95,66 +106,66 @@ class XcfaOcChecker(
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
-        if (xcfa.initProcedures.size > 1) exit("multiple entry points")
+      if (xcfa.initProcedures.size > 1) exit("multiple entry points")
 
-        logger.mainStep("Adding constraints...")
-        xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
-        addCrossThreadRelations()
-        if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
-        val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
+      logger.mainStep("Adding constraints...")
+      xcfa.initProcedures.forEach { ThreadProcessor(Thread(procedure = it.first)).process() }
+      addCrossThreadRelations()
+      if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe(EmptyProof.getInstance())
+      val (preservedPos, preservedWss) = memoryModel.filter(events, pos, wss)
 
-        // "Manually" add some conflicts
-        logger.info(
-          "Auto conflict time (ms): " +
-            measureTime {
-                val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
-                ocChecker.solver.add(conflicts.map { Not(it.expr) })
-                logger.info("Auto conflicts: ${conflicts.size}")
-              }
-              .inWholeMilliseconds
-        )
-
-        logger.mainStep("Start checking...")
-        val status: SolverStatus?
-        val checkerTime = measureTime {
-          status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
-        }
-        if (ocChecker !is XcfaOcCorrectnessValidator)
-          logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
-        logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
-
-        ocChecker.solver.statistics.let {
-          logger.info("Solver statistics:")
-          it.forEach { (k, v) -> logger.info("$k: $v") }
-        }
-        when {
-          status?.isUnsat == true -> {
-            if (outputConflictClauses)
-              System.err.println(
-                "Conflict clause output time (ms): ${
-                        measureTime {
-                            ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
-                        }.inWholeMilliseconds
-                    }"
-              )
-            SafetyResult.safe(EmptyProof.getInstance())
+      // "Manually" add some conflicts
+      logger.info(
+        "Auto conflict time (ms): " +
+          measureTime {
+            val conflicts = autoConflictFinder.findConflicts(events, preservedPos, rfs, logger)
+            ocChecker.solver.add(conflicts.map { Not(it.expr) })
+            logger.info("Auto conflicts: ${conflicts.size}")
           }
+            .inWholeMilliseconds
+      )
 
-          status?.isSat == true -> {
-            if (ocChecker is XcfaOcCorrectnessValidator)
-              return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-            if (memoryModel == SC) {
-              val trace =
-                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
-            } else {
-              SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
-            }
-          }
-
-          else -> SafetyResult.unknown()
-        }
+      logger.mainStep("Start checking...")
+      val status: SolverStatus?
+      val checkerTime = measureTime {
+        status = ocChecker.check(events, pos, preservedPos, rfs, preservedWss)
       }
+      if (ocChecker !is XcfaOcCorrectnessValidator)
+        logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+      logger.info("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
+
+      ocChecker.solver.statistics.let {
+        logger.info("Solver statistics:")
+        it.forEach { (k, v) -> logger.info("$k: $v") }
+      }
+      when {
+        status?.isUnsat == true -> {
+          if (outputConflictClauses)
+            System.err.println(
+              "Conflict clause output time (ms): ${
+                measureTime {
+                  ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
+                }.inWholeMilliseconds
+              }"
+            )
+          SafetyResult.safe(EmptyProof.getInstance())
+        }
+
+        status?.isSat == true -> {
+          if (ocChecker is XcfaOcCorrectnessValidator)
+            return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+          if (memoryModel == SC) {
+            val trace =
+              XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+            SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+          } else {
+            SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
+          }
+        }
+
+        else -> SafetyResult.unknown()
+      }
+    }
       .also {
         logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
@@ -173,19 +184,20 @@ class XcfaOcChecker(
     private val memoryWrites = mutableSetOf<E>()
     private lateinit var edge: XcfaEdge
     private var inEdge = false
-    private var atomicEntered: Boolean? = null
+    private var atomicBlock: Int? = null
     private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
     fun event(d: VarDecl<*>, type: EventType, varPid: Int? = null): List<E> {
       check(!inEdge || last.size == 1)
       val decl = d.threadVar(varPid ?: pid)
-      val useLastClk = inEdge || atomicEntered == true
-      val e =
-        if (useLastClk) E(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
-        else E(decl.getNewIndexed(), type, guard, pid, edge)
+      val clkId = when {
+        inEdge -> last.first().clkId
+        atomicBlock != null -> atomicBlock!!
+        else -> E.uniqueClkId()
+      }
+      val e = E(decl.getNewIndexed(), type, guard, pid, edge, clkId)
       last.forEach { po(it, e) }
       inEdge = true
-      if (atomicEntered == false) atomicEntered = true
       when (type) {
         EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
         EventType.WRITE -> lastWrites[decl] = setOf(e)
@@ -202,14 +214,14 @@ class XcfaOcChecker(
       check(!inEdge || last.size == 1)
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
-      val useLastClk = inEdge || atomicEntered == true
-      val e =
-        if (useLastClk)
-          E(memoryDecl.getNewIndexed(), type, guard, pid, edge, last.first().clkId, array, offset)
-        else E(memoryDecl.getNewIndexed(), type, guard, pid, edge, array = array, offset = offset)
+      val clkId = when {
+        inEdge -> last.first().clkId
+        atomicBlock != null -> atomicBlock!!
+        else -> E.uniqueClkId()
+      }
+      val e = E(memoryDecl.getNewIndexed(), type, guard, pid, edge, clkId, array, offset)
       last.forEach { po(it, e) }
       inEdge = true
-      if (atomicEntered == false) atomicEntered = true
       when (type) {
         EventType.READ -> memoryWrites.forEach { rfs.add(RelationType.RF, it, e) }
         EventType.WRITE -> memoryWrites.add(e)
@@ -291,7 +303,7 @@ class XcfaOcChecker(
               }
               .toMutableMap()
           var firstLabel = true
-          atomicEntered = current.atomics.firstOrNull()
+          atomicBlock = current.atomics.firstOrNull()
 
           edge.getFlatLabels().forEach { label ->
             if (label.references.isNotEmpty()) exit("references")
@@ -399,14 +411,14 @@ class XcfaOcChecker(
                 ) {
                   if (
                     label.labels.size != 1 ||
-                      label.labels.first() != "pthread_exit" ||
-                      !edge.target.final
+                    label.labels.first() != "pthread_exit" ||
+                    !edge.target.final
                   ) {
                     exit("untransformed fence label: $label")
                   }
                 }
-                if (label.isAtomicBegin) atomicEntered = false
-                if (label.isAtomicEnd) atomicEntered = null
+                if (label.isAtomicBegin) atomicBlock = E.uniqueClkId()
+                if (label.isAtomicEnd) atomicBlock = null
               }
 
               is NopLabel -> {}
@@ -422,7 +434,7 @@ class XcfaOcChecker(
           searchItem.lastEvents.addAll(last)
           searchItem.lastWrites.add(lastWrites)
           searchItem.threadLookups.add(threadLookup)
-          searchItem.atomics.add(atomicEntered)
+          searchItem.atomics.add(atomicBlock)
           searchItem.incoming++
           if (searchItem.incoming == searchItem.loc.incomingEdges.size) {
             waitList.remove(searchItem)

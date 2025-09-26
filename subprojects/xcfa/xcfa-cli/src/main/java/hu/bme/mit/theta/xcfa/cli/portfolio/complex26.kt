@@ -1059,11 +1059,12 @@ fun complexPortfolio26(
                   solverHome = baseConfig.backendConfig.solverHome,
                   timeoutMs = 250_000,
                   inProcess = inProcess,
-                  specConfig = OcConfig(
-                    decisionProcedure = OcDecisionProcedureType.BASIC,
-                    autoConflict = AutoConflictFinderConfig.GENERIC,
-                    autoConflictBound = 3,
-                  ),
+                  specConfig =
+                    OcConfig(
+                      decisionProcedure = OcDecisionProcedureType.BASIC,
+                      autoConflict = AutoConflictFinderConfig.GENERIC,
+                      autoConflictBound = 3,
+                    ),
                 ),
               outputConfig = baseConfig.outputConfig,
               debugConfig = baseConfig.debugConfig,

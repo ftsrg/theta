@@ -21,6 +21,12 @@ import hu.bme.mit.theta.frontend.ParseContext
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
 
   constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
+
+  operator fun plus(other: ProcedurePassManager): ProcedurePassManager =
+    ProcedurePassManager(this.passes + other.passes)
+
+  operator fun plus(passes: List<ProcedurePass>): ProcedurePassManager =
+    ProcedurePassManager(this.passes + listOf(passes))
 }
 
 class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
@@ -50,7 +56,11 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass(parseContext),
+      InlineProceduresPass(parseContext)
+    ),
+    listOf(
+      // Clean up procedures after inlining
+      InlinedProcedureRemovalPass(),
       EmptyEdgeRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),

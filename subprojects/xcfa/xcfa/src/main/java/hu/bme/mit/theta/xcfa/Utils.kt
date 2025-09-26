@@ -136,13 +136,13 @@ val WRITE: AccessType
 val READ: AccessType
   get() = Pair(true, false)
 
-private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap =
+fun List<VarAccessMap>.merge(): VarAccessMap =
   this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
   }
 
 private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
-  listOfNotNull(this, other).mergeAndCollect()
+  listOfNotNull(this, other).merge()
 
 inline val XcfaLabel.isAtomicBegin: Boolean
   get() = this is FenceLabel && "ATOMIC_BEGIN" in labels
@@ -232,8 +232,8 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       }
     }
 
-    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
+    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.merge()
+    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.merge()
     is InvokeLabel ->
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel ->

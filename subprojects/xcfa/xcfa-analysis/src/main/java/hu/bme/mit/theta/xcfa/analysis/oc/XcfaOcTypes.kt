@@ -114,7 +114,7 @@ internal class XcfaEvent(
 
     private fun uniqueId(): Int = idCnt++
 
-    private fun uniqueClkId(): Int = clkCnt++
+    internal fun uniqueClkId(): Int = clkCnt++
   }
 
   // A (memory) event is only considered enabled if the array and offset expressions are also known
@@ -228,7 +228,7 @@ internal data class SearchItem(val loc: XcfaLocation) {
   val lastWrites: MutableList<Map<VarDecl<*>, Set<XcfaEvent>>> = mutableListOf()
   val threadLookups: MutableList<Map<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>> =
     mutableListOf()
-  val atomics: MutableList<Boolean?> = mutableListOf()
+  val atomics: MutableList<Int?> = mutableListOf()
   var incoming: Int = 0
 }
 
