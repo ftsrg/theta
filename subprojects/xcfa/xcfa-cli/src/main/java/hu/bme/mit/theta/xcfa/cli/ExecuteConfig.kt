@@ -756,7 +756,10 @@ private fun postTraceGenerationLogging(
         logger.write(Logger.Level.SUBSTEP, "Continuing concretization with next trace...")
       }
     }
-    logger.write(Logger.Level.RESULT, "Successfully generated ${concreteTraces} concrete traces.\n")
+    logger.write(
+      Logger.Level.RESULT,
+      "Successfully generated ${concreteTraces-1} concrete traces.\n",
+    )
   }
 
   // TODO print coverage (full or not)?
