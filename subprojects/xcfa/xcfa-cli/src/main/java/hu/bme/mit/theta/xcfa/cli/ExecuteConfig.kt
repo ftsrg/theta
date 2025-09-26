@@ -662,7 +662,7 @@ private fun postTraceGenerationLogging(
     GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
     logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
 
-    var concreteTraces = 0
+    var concreteTraces = 1
     for (abstractTrace in abstractSummary.sourceTraces) {
       try {
         // TODO no concrete summary implemented for XCFA yet, only traces
@@ -688,9 +688,29 @@ private fun postTraceGenerationLogging(
         val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
         concreteDotFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
 
+        val yamlWitnessFile = File(resultFolder, "witness-$concreteTraces.yml")
+        val inputfile =
+          config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!
+        val property = config.inputConfig.property
+        val architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
+        val witnessWriter = YamlWitnessWriter()
+        witnessWriter.violationWitnessFromConcreteTrace(
+          concrTrace,
+          witnessWriter.getMetadata(inputfile, property, architecture),
+          inputfile,
+          property,
+          architecture,
+          getSolver(
+            config.outputConfig.witnessConfig.concretizerSolver,
+            config.outputConfig.witnessConfig.validateConcretizerSolver,
+          ),
+          parseContext!!,
+          yamlWitnessFile,
+        )
+
         logger.write(
-          Logger.Level.MAINSTEP,
-          "Concrete trace exported to ${concreteTraceFile} and ${concreteDotFile}",
+          Logger.Level.RESULT,
+          "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}",
         )
         concreteTraces++
       } catch (e: IllegalArgumentException) {

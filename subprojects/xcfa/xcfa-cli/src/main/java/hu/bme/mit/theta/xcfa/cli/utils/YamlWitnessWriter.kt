@@ -44,7 +44,6 @@ import java.util.*
 import kotlinx.serialization.encodeToString
 
 class YamlWitnessWriter {
-
   fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
@@ -54,30 +53,7 @@ class YamlWitnessWriter {
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    val metadata =
-      Metadata(
-        formatVersion = "2.0",
-        uuid = UUID.randomUUID().toString(),
-        creationTime = getIsoDate(),
-        producer =
-          Producer(
-            name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
-            version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
-          ),
-        task =
-          Task(
-            inputFiles = listOf(inputFile.name),
-            inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-            specification = property.name,
-            dataModel =
-              architecture?.let {
-                if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
-                else DataModel.LP64
-              } ?: DataModel.ILP32,
-            language = Language.C,
-          ),
-      )
-
+    val metadata = getMetadata(inputFile, property, architecture)
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
         XcfaTraceConcretizer.concretize(
@@ -86,115 +62,16 @@ class YamlWitnessWriter {
           parseContext,
         )
 
-      val witness =
-        if (property == ErrorDetection.TERMINATION) {
-          // last state is cycle_head, find its earliest occurrence
-          // stem is everything beforehand
-          // cycle's segments are everything in-between
-
-          val cycleHead = concrTrace.states.last()
-          val cycleHeadFirst =
-            concrTrace.states.indexOfFirst {
-              it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-                it.sGlobal == cycleHead.sGlobal
-            }
-          if (cycleHeadFirst == -1) {
-            error("Lasso not found")
-          }
-          val stem =
-            Trace.of(
-              concrTrace.states.subList(0, cycleHeadFirst - 1),
-              concrTrace.actions.subList(0, cycleHeadFirst - 2),
-            )
-          val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
-            // case of e.g., BMC !!
-            Trace.of(
-              concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
-              concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
-            )
-
-          val backEdge =
-            Trace.of(
-              concrTrace.states.subList(concrTrace.states.size - 2, concrTrace.states.size),
-              concrTrace.actions.subList(concrTrace.actions.size - 1, concrTrace.actions.size),
-            )
-
-          val stemTrace =
-            traceToWitness(trace = stem, parseContext = parseContext, property = property)
-          val lassoTrace =
-            traceToWitness(trace = lasso, parseContext = parseContext, property = property)
-          val backEdgeTrace =
-            traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
-
-          YamlWitness(
-            entryType = EntryType.VIOLATION,
-            metadata = metadata,
-            content =
-              (0..(stemTrace.length()))
-                .flatMap {
-                  listOfNotNull(
-                    stemTrace.states
-                      .get(it)
-                      ?.toSegment(stemTrace.actions.getOrNull(it - 1), inputFile),
-                    stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
-                  )
-                }
-                .map { ContentItem(it) } +
-                ContentItem(
-                  WaypointContent(
-                    type = WaypointType.RECURRENCE_CONDITION,
-                    location =
-                      ((lasso.actions.first().edge.metadata as? CMetaData)?.astNodes?.first()
-                          ?: error("Cycle's metadata is missing."))
-                        .let {
-                          Location(
-                            fileName = inputFile.name,
-                            line = it.lineNumberStart,
-                            column = it.colNumberStart + 1,
-                          )
-                        },
-                    constraint =
-                      Constraint(
-                        value =
-                          cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
-                        format = Format.C_EXPRESSION,
-                      ),
-                    action = Action.CYCLE,
-                  )
-                ) +
-                (0..<lassoTrace.length())
-                  .flatMap {
-                    listOfNotNull(
-                      lassoTrace.states
-                        .get(it)
-                        ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile, Action.CYCLE),
-                      lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
-                    )
-                  }
-                  .map { ContentItem(it) },
-          )
-        } else {
-          val witnessTrace =
-            traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
-
-          YamlWitness(
-            entryType = EntryType.VIOLATION,
-            metadata = metadata,
-            content =
-              (0..(witnessTrace.length()))
-                .flatMap {
-                  listOfNotNull(
-                    witnessTrace.states
-                      .get(it)
-                      ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
-                    witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
-                  )
-                }
-                .map { ContentItem(it) },
-          )
-        }
-
-      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+      violationWitnessFromConcreteTrace(
+        concrTrace,
+        metadata,
+        inputFile,
+        property,
+        architecture,
+        cexSolverFactory,
+        parseContext,
+        witnessfile,
+      )
     } else if (safetyResult.isSafe) {
 
       val witness =
@@ -206,6 +83,156 @@ class YamlWitnessWriter {
 
       witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     }
+  }
+
+  fun getMetadata(
+    inputFile: File,
+    property: ErrorDetection,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): Metadata {
+    return Metadata(
+      formatVersion = "2.0",
+      uuid = UUID.randomUUID().toString(),
+      creationTime = getIsoDate(),
+      producer =
+        Producer(
+          name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
+          version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
+        ),
+      task =
+        Task(
+          inputFiles = listOf(inputFile.name),
+          inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
+          specification = property.name,
+          dataModel =
+            architecture?.let {
+              if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
+              else DataModel.LP64
+            } ?: DataModel.ILP32,
+          language = Language.C,
+        ),
+    )
+  }
+
+  fun violationWitnessFromConcreteTrace(
+    concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+    metadata: Metadata,
+    inputFile: File,
+    property: ErrorDetection,
+    architecture: ArchitectureConfig.ArchitectureType?,
+    cexSolverFactory: SolverFactory,
+    parseContext: ParseContext,
+    witnessfile: File,
+  ) {
+    val witness =
+      if (property == ErrorDetection.TERMINATION) {
+        // last state is cycle_head, find its earliest occurrence
+        // stem is everything beforehand
+        // cycle's segments are everything in-between
+
+        val cycleHead = concrTrace.states.last()
+        val cycleHeadFirst =
+          concrTrace.states.indexOfFirst {
+            it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+              it.sGlobal == cycleHead.sGlobal
+          }
+        if (cycleHeadFirst == -1) {
+          error("Lasso not found")
+        }
+        val stem =
+          Trace.of(
+            concrTrace.states.subList(0, cycleHeadFirst - 1),
+            concrTrace.actions.subList(0, cycleHeadFirst - 2),
+          )
+        val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
+          // case of e.g., BMC !!
+          Trace.of(
+            concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
+            concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
+          )
+
+        val backEdge =
+          Trace.of(
+            concrTrace.states.subList(concrTrace.states.size - 2, concrTrace.states.size),
+            concrTrace.actions.subList(concrTrace.actions.size - 1, concrTrace.actions.size),
+          )
+
+        val stemTrace =
+          traceToWitness(trace = stem, parseContext = parseContext, property = property)
+        val lassoTrace =
+          traceToWitness(trace = lasso, parseContext = parseContext, property = property)
+        val backEdgeTrace =
+          traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
+
+        YamlWitness(
+          entryType = EntryType.VIOLATION,
+          metadata = metadata,
+          content =
+            (0..(stemTrace.length()))
+              .flatMap {
+                listOfNotNull(
+                  stemTrace.states
+                    .get(it)
+                    ?.toSegment(stemTrace.actions.getOrNull(it - 1), inputFile),
+                  stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
+                )
+              }
+              .map { ContentItem(it) } +
+              ContentItem(
+                WaypointContent(
+                  type = WaypointType.RECURRENCE_CONDITION,
+                  location =
+                    ((lasso.actions.first().edge.metadata as? CMetaData)?.astNodes?.first()
+                        ?: error("Cycle's metadata is missing."))
+                      .let {
+                        Location(
+                          fileName = inputFile.name,
+                          line = it.lineNumberStart,
+                          column = it.colNumberStart + 1,
+                        )
+                      },
+                  constraint =
+                    Constraint(
+                      value =
+                        cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
+                      format = Format.C_EXPRESSION,
+                    ),
+                  action = Action.CYCLE,
+                )
+              ) +
+              (0..<lassoTrace.length())
+                .flatMap {
+                  listOfNotNull(
+                    lassoTrace.states
+                      .get(it)
+                      ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile, Action.CYCLE),
+                    lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
+                  )
+                }
+                .map { ContentItem(it) },
+        )
+      } else {
+        val witnessTrace =
+          traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+
+        YamlWitness(
+          entryType = EntryType.VIOLATION,
+          metadata = metadata,
+          content =
+            (0..(witnessTrace.length()))
+              .flatMap {
+                listOfNotNull(
+                  witnessTrace.states
+                    .get(it)
+                    ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
+                  witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+                )
+              }
+              .map { ContentItem(it) },
+        )
+      }
+
+    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 }
 
