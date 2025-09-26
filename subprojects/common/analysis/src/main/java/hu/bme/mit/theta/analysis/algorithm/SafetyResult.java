@@ -60,16 +60,16 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
 
     public static <Pr extends Proof, C extends Cex> Safe<Pr, C> safe(
             final Pr witness, final Statistics stats) {
-        return new Safe<>(witness, Optional.of(stats));
+        return new Safe<>(witness, Optional.ofNullable(stats));
     }
 
     public static <Pr extends Proof, C extends Cex> Unsafe<Pr, C> unsafe(
             final C cex, final Pr witness, final Statistics stats) {
-        return new Unsafe<>(cex, witness, Optional.of(stats));
+        return new Unsafe<>(cex, witness, Optional.ofNullable(stats));
     }
 
     public static <Pr extends Proof, C extends Cex> Unknown<Pr, C> unknown(final Statistics stats) {
-        return new Unknown<>(Optional.of(stats));
+        return new Unknown<>(Optional.ofNullable(stats));
     }
 
     public abstract boolean isSafe();

@@ -16,10 +16,15 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public interface ExprState extends State {
+public interface ExprState extends State, InvariantProof {
 
     Expr<BoolType> toExpr();
+
+    default Expr<BoolType> getInvariant() {
+        return toExpr();
+    }
 }

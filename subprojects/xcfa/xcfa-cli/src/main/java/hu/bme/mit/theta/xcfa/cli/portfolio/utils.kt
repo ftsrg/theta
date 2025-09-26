@@ -362,6 +362,8 @@ fun baseBoundedConfig(
         versionInfo = false,
         resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
         cOutputConfig = COutputConfig(disable = true),
+        xcfaOutputConfig = XcfaOutputConfig(disable = true),
+        chcOutputConfig = ChcOutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
             disable = false,
@@ -425,6 +427,8 @@ fun baseMddConfig(
         versionInfo = false,
         resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
         cOutputConfig = COutputConfig(disable = true),
+        xcfaOutputConfig = XcfaOutputConfig(disable = true),
+        chcOutputConfig = ChcOutputConfig(disable = true),
         witnessConfig =
           WitnessConfig(
             disable = false,

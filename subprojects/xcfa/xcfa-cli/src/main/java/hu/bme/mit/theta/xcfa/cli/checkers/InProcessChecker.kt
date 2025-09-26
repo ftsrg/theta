@@ -88,6 +88,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
                 resultFolder = tempDir.toFile(),
                 cOutputConfig = COutputConfig(disable = true),
                 xcfaOutputConfig = XcfaOutputConfig(disable = true),
+                chcOutputConfig = ChcOutputConfig(disable = true),
                 argConfig =
                   config.outputConfig.argConfig.copy(
                     disable = false

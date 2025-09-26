@@ -15,10 +15,14 @@
  */
 package hu.bme.mit.theta.frontend.petrinet.xsts;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
@@ -26,7 +30,9 @@ import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
+import hu.bme.mit.theta.xsts.analysis.XstsAction;
+import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import org.junit.Test;
@@ -39,7 +45,7 @@ public class PnmlSymbolicGSATTest {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final PetriNet petriNet =
-                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-10.pnml", "");
+                XMLPnmlToPetrinet.parse("src/test/resources/pnml/Philosophers-5.pnml", "");
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(("prop { true }").getBytes())) {
@@ -48,10 +54,18 @@ public class PnmlSymbolicGSATTest {
 
         final SafetyResult<?, ?> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final SafetyChecker<?, ?, ?> checker =
-                    XstsMddChecker.create(
-                            xsts, solverPool, logger, MddChecker.IterationStrategy.GSAT);
-            status = checker.check();
+
+            SafetyChecker<
+                            InvariantProof,
+                            Trace<XstsState<? extends ExprState>, XstsAction>,
+                            UnitPrec>
+                    pipeline =
+                            new XstsPipelineChecker<>(
+                                    xsts,
+                                    monolithicExpr ->
+                                            new MddChecker(monolithicExpr, solverPool, logger));
+            status = pipeline.check();
+            logger.mainStep(status.toString());
             logger.mainStep(
                     "State space size: "
                             + ((MddAnalysisStatistics) status.getStats().get())

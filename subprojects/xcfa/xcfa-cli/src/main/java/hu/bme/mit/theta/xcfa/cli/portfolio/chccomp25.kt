@@ -153,6 +153,22 @@ fun chcCompPortfolio25(
       )
     }
 
+    val mddCegar = { timeout: Long ->
+      ConfigNode(
+        "MDD-cegar-$inProcess",
+        baseMddConfig.copy(
+          backendConfig =
+            baseMddConfig.backendConfig.copy(
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              parseInProcess = true,
+              specConfig = baseMddConfig.backendConfig.specConfig!!.copy(cegar = true),
+            )
+        ),
+        checker,
+      )
+    }
+
     val complex25 =
       ConfigNode(
         "Complex25-$inProcess",
@@ -190,7 +206,7 @@ fun chcCompPortfolio25(
           val kind = kind(20_000, "Z3")
           val expl = expl(650_000, "Z3")
           val bmcCVC5 = bmc(550_000, "cvc5:1.0.8")
-          val imc = imc(10_000, "Z3")
+          val imc = imc(10_000, "mathsat:5.6.10")
           val bool = bool(15_000, "Z3")
           val cart = cart(15_000, "Z3")
           val kindCVC5 = kind(70_000, "cvc5:1.0.8")
@@ -198,11 +214,13 @@ fun chcCompPortfolio25(
           val cartCVC5 = cart(500_000, "cvc5:1.0.8")
           val explCVC5 = expl(125_000, "cvc5:1.0.8")
           val mdd = mdd(100_000)
+          val mddCegar = mddCegar(100_000)
 
           kind then
             imc then
             bool then
             cart then
+            mddCegar then
             kindCVC5 then
             boolCVC5 then
             bmc then
@@ -219,12 +237,13 @@ fun chcCompPortfolio25(
           val kind = kind(200_000, "Z3")
           val bool = bool(300_000, "Z3")
           val cart = cart(450_000, "Z3")
-          val imc = imc(15_000, "Z3")
+          val imc = imc(15_000, "mathsat:5.6.10")
           val cartCVC5 = cart(600_000, "cvc5:1.0.8")
           val expl = expl(10_000, "Z3")
           val mdd = mdd(50_000)
+          val mddCegar = mddCegar(100_000)
 
-          bmc then kind then bool then cart then imc then cartCVC5 then expl then mdd
+          bmc then kind then bool then cart then imc then mddCegar then cartCVC5 then expl then mdd
 
           Pair(bmc, mdd)
         } else if (types.any { it is ArrayType<*, *> }) {
@@ -232,12 +251,13 @@ fun chcCompPortfolio25(
           val cart = cart(25_000, "Z3")
           val bool = bool(10_000, "Z3")
           val expl = expl(10_000, "Z3")
-          val imc = imc(20_000, "Z3")
+          val imc = imc(20_000, "mathsat:5.6.10")
           val kind = kind(10_000, "Z3")
           val bmc = bmc(400_000, "Z3")
           val mdd = mdd(50_000)
+          val mddCegar = mddCegar(100_000)
 
-          cart then bool then expl then imc then kind then bmc then mdd
+          cart then bool then expl then imc then kind then bmc then mddCegar then mdd
 
           Pair(cart, mdd)
         } else {
@@ -245,7 +265,7 @@ fun chcCompPortfolio25(
           val cart = cart(500_000, "Z3")
           val bool = bool(150_000, "Z3")
           val bmc = bmc(20_000, "Z3")
-          val imc = imc(20_000, "Z3")
+          val imc = imc(20_000, "mathsat:5.6.10")
           val kind = kind(20_000, "Z3")
           val expl = expl(50_000, "Z3")
           val boolCVC5 = bool(700_000, "cvc5:1.0.8")
@@ -254,12 +274,14 @@ fun chcCompPortfolio25(
           val imcCVC5 = imc(50_000, "cvc5:1.0.8")
           val explCVC5 = expl(50_000, "cvc5:1.0.8")
           val bmcCVC5 = bmc(100_000, "cvc5:1.0.8")
+          val mddCegar = mddCegar(100_000)
 
           bmc then
             imc then
             kind then
             expl then
             mdd then
+            mddCegar then
             imcCVC5 then
             explCVC5 then
             cart then
@@ -298,11 +320,4 @@ fun chcCompPortfolio25(
 
   return if (portfolioConfig.debugConfig.debug) getStm(false)
   else STM(inProcess, setOf(fallbackEdge))
-}
-
-enum class Arithmetic {
-  LIA,
-  ARRAYS,
-  LRA,
-  BV,
 }

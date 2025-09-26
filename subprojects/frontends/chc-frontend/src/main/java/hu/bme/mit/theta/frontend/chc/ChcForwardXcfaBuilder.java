@@ -77,7 +77,8 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             builder.addVar(var);
             transformConst(Decls.Const(varName, type), true);
         }
-        XcfaLocation location = new XcfaLocation(name, EmptyMetaData.INSTANCE);
+        XcfaLocation location =
+                new XcfaLocation(name, new ChcMetadata(name, vars.stream().toList(), false));
         locations.put(name, new UPred(location, vars));
         locations.put(ctx.symbol().getText(), new UPred(location, vars));
         builder.addLoc(location);

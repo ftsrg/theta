@@ -17,12 +17,11 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Statistics;
-import com.microsoft.z3.Status;
+import com.microsoft.z3.*;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -249,6 +248,29 @@ class Z3Solver implements UCSolver, Solver {
             keys.add(key);
         }
         return builder.buildOrThrow();
+    }
+
+    @Override
+    public Expr<BoolType> simplify(Expr<BoolType> expr) {
+        try {
+            Tactic t =
+                    z3Context.then(
+                            z3Context.mkTactic(
+                                    "simplify"), // Always start with basic simplification
+                            z3Context.mkTactic("propagate-values"), // Propagate known constants
+                            z3Context.mkTactic("ctx-simplify"), // Contextual simplification
+                            z3Context.mkTactic(
+                                    "ctx-solver-simplify") // Uses solver context for even more
+                            // simplification
+                            );
+            Goal g = z3Context.mkGoal(true, false, false);
+            g.add(transformationManager.toTerm(expr));
+            ApplyResult ar = t.apply(g);
+            BoolExpr result = ar.getSubgoals()[0].AsBoolExpr();
+            return (Expr<BoolType>) termTransformer.toExpr(result);
+        } catch (Throwable t) {
+            return expr;
+        }
     }
 
     ////

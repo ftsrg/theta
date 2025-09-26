@@ -22,7 +22,8 @@ import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
-import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityTemplate
 
 object MddExplicitRepresentationExtractor {
 
@@ -50,39 +51,71 @@ object MddExplicitRepresentationExtractor {
         result = mddGraph.terminalVariableHandle.getHandleFor(mddGraph.getNodeFor(node.data))
       }
     } else {
-      val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-      Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
-      val expressionRepresentation = node.node.representation as MddExpressionRepresentation
-      val explicitRepresentation = expressionRepresentation.explicitRepresentation
-
-      val cursor = explicitRepresentation.cacheView.cursor()
-      while (cursor.moveNext()) {
+      if (node.node.representation is IdentityRepresentation) {
         val s =
           transform(
-            variable.lower.get().getHandleFor(cursor.value()),
-            variable.lower.orElse(null),
+            variable.lower
+              .get()
+              .lower
+              .get()
+              .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
+            variable.lower.get().lower.orElse(null),
             cache,
           )
-        templateBuilder.set(cursor.key(), s.node)
+        result =
+          if (!s.isTerminalZero) {
+            variable.checkInNode(IdentityTemplate(s.node))
+          } else {
+            variable.mddGraph.terminalZeroHandle
+          }
+      } else {
+        val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
+        Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
+        val expressionRepresentation = node.node.representation as MddExpressionRepresentation
+        val explicitRepresentation = expressionRepresentation.explicitRepresentation
+
+        if (explicitRepresentation.cacheView.defaultValue() != null) {
+          val s =
+            transform(
+              variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
+              variable.lower.orElse(null),
+              cache,
+            )
+          if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
+        } else {
+          val cursor = explicitRepresentation.cacheView.cursor()
+          while (cursor.moveNext()) {
+            val s =
+              transform(
+                variable.lower.get().getHandleFor(cursor.value()),
+                variable.lower.orElse(null),
+                cache,
+              )
+            if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
+          }
+        }
+
+        result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
       }
 
-      result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
-      if (
-        structToSym.get(result) != null &&
-          (node.node.representation as MddExpressionRepresentation).explicitRepresentation.size != 0
-      ) {
-        println("Collision:")
-        val expr1 =
-          (structToSym.get(result)!!.node.representation as MddExpressionRepresentation).expr
-        val expr2 = (node.node.representation as MddExpressionRepresentation).expr
-
-        val expr1Canonized = ExprUtils.canonize(expr1)
-        val expr2Canonized = ExprUtils.canonize(expr2)
-        println(expr2Canonized.equals(expr1Canonized))
-        println("expr1:" + expr1)
-        println("expr2:" + expr2)
-      }
-      structToSym.put(result, node)
+      //      if (
+      //        structToSym.get(result) != null &&
+      //          (node.node.representation as
+      // MddExpressionRepresentation).explicitRepresentation.size != 0
+      //      ) {
+      //        println("Collision:")
+      //        val expr1 =
+      //          (structToSym.get(result)!!.node.representation as
+      // MddExpressionRepresentation).expr
+      //        val expr2 = (node.node.representation as MddExpressionRepresentation).expr
+      //
+      //        val expr1Canonized = ExprUtils.canonize(expr1)
+      //        val expr2Canonized = ExprUtils.canonize(expr2)
+      //        println(expr2Canonized.equals(expr1Canonized))
+      //        println("expr1:" + expr1)
+      //        println("expr2:" + expr2)
+      //      }
+      //      structToSym.put(result, node)
     }
     cache.addToCache(node, result)
     return result

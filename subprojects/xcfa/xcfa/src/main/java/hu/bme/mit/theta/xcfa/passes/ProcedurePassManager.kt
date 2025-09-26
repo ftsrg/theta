@@ -132,11 +132,11 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       // trying to inline procedures
       //      InlineProceduresPass(parseContext),
       RemoveDeadEnds(parseContext),
-      EliminateSelfLoops(),
+      //      EliminateSelfLoops(),
       // handling remaining function calls
-      LbePass(parseContext),
-      NormalizePass(), // needed after lbe, TODO
-      DeterministicPass(), // needed after lbe, TODO
+      //      LbePass(parseContext),
+      //      NormalizePass(), // needed after lbe, TODO
+      //      DeterministicPass(), // needed after lbe, TODO
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
     ),

@@ -112,7 +112,7 @@ fun runConfig(
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
-  postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
+  postVerificationLogging(xcfa, result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
 }
@@ -345,7 +345,7 @@ private fun backend(
           }
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
             } ms)\n",
@@ -371,7 +371,7 @@ private fun preVerificationLogging(
 
       logger.write(
         Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n",
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
       )
 
       if (!config.outputConfig.chcOutputConfig.disable) {
@@ -423,6 +423,7 @@ private fun preVerificationLogging(
 }
 
 private fun postVerificationLogging(
+  xcfa: XCFA?,
   safetyResult: SafetyResult<*, *>,
   mcm: MCM?,
   parseContext: ParseContext?,
@@ -430,6 +431,25 @@ private fun postVerificationLogging(
   logger: Logger,
   uniqueLogger: Logger,
 ) {
+  if (
+    config.frontendConfig.inputType == InputType.CHC &&
+      xcfa != null &&
+      (config.frontendConfig.specConfig as CHCFrontendConfig).model
+  ) {
+    val resultFolder = config.outputConfig.resultFolder
+    resultFolder.mkdirs()
+    val chcAnswer = writeModel(xcfa, safetyResult)
+    val chcAnswerFile = File(resultFolder, "chc-answer.smt2")
+    if (chcAnswerFile.exists()) {
+      logger.writeln(
+        INFO,
+        "CHC answer/model already written to file $chcAnswerFile, not overwriting",
+      )
+    } else {
+      chcAnswerFile.writeText(chcAnswer)
+      logger.writeln(INFO, "CHC answer/model written to file $chcAnswerFile")
+    }
+  }
   if (config.outputConfig.enableOutput && mcm != null && parseContext != null) {
     try {
       // we only want to log the files if the current configuration is not --in-process or portfolio

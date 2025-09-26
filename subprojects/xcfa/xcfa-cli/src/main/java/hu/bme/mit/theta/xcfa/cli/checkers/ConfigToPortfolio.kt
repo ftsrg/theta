@@ -28,6 +28,8 @@ import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.*
@@ -54,6 +56,10 @@ fun getPortfolioChecker(
 > = SafetyChecker { _ ->
   val sw = Stopwatch.createStarted()
   val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
+  val chcModels =
+    if (config.frontendConfig.inputType == InputType.CHC)
+      (config.frontendConfig.specConfig as CHCFrontendConfig).model
+    else false
 
   val portfolioStm =
     when (portfolioName) {
@@ -75,7 +81,9 @@ fun getPortfolioChecker(
 
       "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "CHC-COMP" -> chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "CHC-COMP" ->
+        if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else chcCompPortfolioModel25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TESTING",
       "CHC",

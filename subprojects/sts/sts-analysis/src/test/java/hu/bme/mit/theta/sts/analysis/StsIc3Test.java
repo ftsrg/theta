@@ -31,29 +31,29 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
+import hu.bme.mit.theta.sts.analysis.pipeline.StsPipelineChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(value = Parameterized.class)
-public class Ic3Test {
+public class StsIc3Test {
 
     @Parameterized.Parameter(value = 0)
     public String filePath;
@@ -99,21 +99,23 @@ public class Ic3Test {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
-        var checker =
-                new Ic3Checker<>(
-                        monolithicExpr,
-                        true,
-                        Z3LegacySolverFactory.getInstance(),
-                        valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
-                        (Valuation v1, Valuation v2) ->
-                                StsToMonolithicExprKt.valToAction(sts, v1, v2),
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
-                        true,
+
+        final var checker =
+                new StsPipelineChecker<>(
+                        sts,
+                        monolithicExpr ->
+                                new Ic3Checker(
+                                        monolithicExpr,
+                                        Z3LegacySolverFactory.getInstance(),
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        true,
+                                        logger),
+                        List.of(),
+                        List.of(),
                         logger);
         Assert.assertEquals(isSafe, checker.check().isSafe());
     }

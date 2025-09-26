@@ -19,21 +19,22 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 class XstsCliMdd :
-  XstsCliBaseCommand(
+  XstsCliMonolithicBaseCommand(
     name = "MDD",
     help = "Model checking of XSTS using MDDs (Multi-value Decision Diagrams)",
   ) {
@@ -43,7 +44,11 @@ class XstsCliMdd :
       .enum<MddChecker.IterationStrategy>()
       .default(MddChecker.IterationStrategy.GSAT)
 
-  private fun printResult(status: SafetyResult<MddProof, MddCex>, xsts: XSTS, totalTimeMs: Long) {
+  private fun printResult(
+    status: SafetyResult<InvariantProof, out Trace<XstsState<*>, XstsAction>>,
+    xsts: XSTS,
+    totalTimeMs: Long,
+  ) {
     if (!outputOptions.benchmarkMode) {
       logger.writeln(Logger.Level.RESULT, status.toString())
       return
@@ -76,11 +81,15 @@ class XstsCliMdd :
     val xsts = inputOptions.loadXsts()
     val sw = Stopwatch.createStarted()
     val result =
-      SolverPool(solverFactory).use {
-        val checker = XstsMddChecker.create(xsts, it, logger, iterationStrategy)
+      SolverPool(solverFactory).use { solverPool ->
+        val checker =
+          createChecker(xsts, solverFactory) {
+            MddChecker(it, solverPool, logger, iterationStrategy)
+          }
         checker.check(null)
       }
     sw.stop()
     printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
+    writeCex(result, xsts)
   }
 }

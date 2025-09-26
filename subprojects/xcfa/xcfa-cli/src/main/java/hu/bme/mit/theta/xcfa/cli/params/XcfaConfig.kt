@@ -169,7 +169,9 @@ data class CHCFrontendConfig(
     names = ["--chc-transformation"],
     description = "Direction of transformation from CHC to XCFA",
   )
-  var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO
+  var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
+  @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
+  var model: Boolean = false,
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config

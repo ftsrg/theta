@@ -22,6 +22,8 @@ import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
@@ -114,7 +116,12 @@ class XcfaCli(private val args: Array<String>) {
       return
     }
 
-    val logger = ConsoleLogger(config.debugConfig.logLevel)
+    val logger =
+      if (config.debugConfig.logLevel == Logger.Level.DISABLE) {
+        NullLogger.getInstance()
+      } else {
+        ConsoleLogger(config.debugConfig.logLevel)
+      }
     val uniqueLogger = UniqueWarningLogger(logger)
 
     runConfig(config, logger, uniqueLogger, false)

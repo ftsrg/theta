@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
 import static hu.bme.mit.theta.xcfa.passes.UtilsKt.changeVars;
 
 import com.google.common.collect.ImmutableList;
@@ -171,7 +172,7 @@ public class ChcUtils {
         final String[] paramSorts =
                 paramTypes.stream().map(typeTransformer::toSort).toArray(String[]::new);
 
-        final String symbolName = decl.getName();
+        final String symbolName = encodeSymbol(decl.getName());
         final String symbolDeclaration =
                 String.format(
                         "(declare-fun %s (%s) %s)",
