@@ -101,7 +101,7 @@ class DataRaceToReachabilityPass : ProcedurePass {
             if (label.isAtomicEnd) atomic = false
 
             val vars = label.collectVarsWithAccessType().filter { it.key in potentialRacingVars }
-            val dereferences = label.dereferencesWithAccessTypes
+            val dereferences = label.dereferencesWithAccessType
 
             if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
             anyChange = true
@@ -140,7 +140,7 @@ class DataRaceToReachabilityPass : ProcedurePass {
         val (newLabels, errorLabel) =
           getNewLabelsForAccesses(
             allVarsToCheck.associateWith { READ },
-            allDereferencesToCheck.map { it to READ },
+            allDereferencesToCheck.associateWith { READ },
             onlyPreLabels = true,
           )
 
@@ -164,7 +164,7 @@ class DataRaceToReachabilityPass : ProcedurePass {
 
   private fun getNewLabelsForAccesses(
     vars: VarAccessMap,
-    dereferences: List<Pair<Dereference<*, *, *>, AccessType>>,
+    dereferences: DereferenceAccessMap,
     originalLabel: XcfaLabel? = null,
     skipPreLabels: Boolean = false,
     onlyPreLabels: Boolean = false,

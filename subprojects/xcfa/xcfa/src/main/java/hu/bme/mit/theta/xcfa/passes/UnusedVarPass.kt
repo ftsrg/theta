@@ -31,11 +31,10 @@ import hu.bme.mit.theta.xcfa.model.*
 class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
   companion object {
-    var enabled = true
+    var removeUnusedGlobalVars = true
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled) return builder
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()
@@ -46,6 +45,11 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
       lastEdges = edges
 
       usedVars.clear()
+
+      if (!removeUnusedGlobalVars) {
+        usedVars.addAll(builder.parent.getVars().map { it.wrappedVar })
+      }
+
       usedVars.addAll(
         builder.parent.getProcedures().flatMap {
           it.getParams().filter { it.second != ParamDirection.IN }.map { it.first }

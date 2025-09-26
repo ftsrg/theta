@@ -116,7 +116,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   }
   if (config.inputConfig.property == ErrorDetection.DATA_RACE) {
     StaticCoiPass.enabled = false
-    UnusedVarPass.enabled = false
+    UnusedVarPass.removeUnusedGlobalVars = false
   }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()

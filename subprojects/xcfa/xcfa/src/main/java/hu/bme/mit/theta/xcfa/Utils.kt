@@ -119,6 +119,8 @@ typealias AccessType = Pair<Boolean, Boolean>
 
 typealias VarAccessMap = Map<VarDecl<*>, AccessType>
 
+typealias DereferenceAccessMap = Map<Dereference<*, *, *>, AccessType>
+
 typealias GlobalVarAccessMap = Map<XcfaGlobalVar, AccessType>
 
 val AccessType?.isRead
@@ -134,13 +136,18 @@ val WRITE: AccessType
 val READ: AccessType
   get() = Pair(true, false)
 
-fun List<VarAccessMap>.merge(): VarAccessMap =
+private fun List<VarAccessMap>.mergeVarAccesses(): VarAccessMap =
   this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
   }
 
 private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
-  listOfNotNull(this, other).merge()
+  listOfNotNull(this, other).mergeVarAccesses()
+
+private fun List<DereferenceAccessMap>.mergeDerefs(): DereferenceAccessMap =
+  this.fold(mapOf()) { acc, next ->
+    (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
+  }
 
 inline val XcfaLabel.isAtomicBegin: Boolean
   get() = this is FenceLabel && "ATOMIC_BEGIN" in labels
@@ -171,6 +178,7 @@ inline val String.releasedMutex: String?
       startsWith("mutex_unlock") -> substringAfter('(').substringBefore(')')
       startsWith("start_cond_wait") ->
         substring("start_cond_wait".length + 1, length - 1).split(",")[1]
+
       else -> null
     }
 
@@ -212,6 +220,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
         is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
         is AssignStmt<*> ->
           ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+
         is MemoryAssignStmt<*, *, *> -> {
           var expr: Expr<*> = stmt.deref
           while (expr is Dereference<*, *, *>) {
@@ -230,12 +239,13 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       }
     }
 
-    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.merge()
-    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.merge()
+    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
+    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is InvokeLabel ->
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel ->
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
+
     is JoinLabel -> mapOf(pidVar to READ)
     else -> emptyMap()
   }
@@ -475,25 +485,27 @@ val Expr<*>.dereferences: List<Dereference<*, *, *>>
       ops.flatMap { it.dereferences }
     }
 
-val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
+val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
   get() =
     when (this) {
       is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
-      is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
-      is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
-      is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
-      is StmtLabel -> stmt.dereferencesWithAccessTypes
-      else -> listOf()
+      is SequenceLabel -> labels.map(XcfaLabel::dereferencesWithAccessType).mergeDerefs()
+      is InvokeLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
+      is StartLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
+      is StmtLabel -> stmt.dereferencesWithAccessType
+      else -> mapOf()
     }
 
-val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
+val Stmt.dereferencesWithAccessType: DereferenceAccessMap
   get() =
     when (this) {
-      is MemoryAssignStmt<*, *, *> ->
-        expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
-      is AssignStmt<*> -> expr.dereferences.map { Pair(it, READ) }
-      is AssumeStmt -> cond.dereferences.map { Pair(it, READ) }
-      else -> listOf()
+      is MemoryAssignStmt<*, *, *> -> listOfNotNull(
+        expr.dereferences.associateWith { READ }, mapOf(deref to WRITE)
+      ).mergeDerefs()
+
+      is AssignStmt<*> -> expr.dereferences.associateWith { READ }
+      is AssumeStmt -> cond.dereferences.associateWith { READ }
+      else -> mapOf()
     }
 
 fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel =

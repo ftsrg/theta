@@ -69,7 +69,7 @@ class StaticCoiPass : ProcedurePass {
       this is StmtLabel &&
         ((this.stmt is AssignStmt<*> && "_ret" !in this.stmt.varDecl.name) ||
           this.stmt is HavocStmt<*>) &&
-        dereferencesWithAccessTypes.none { it.second.isWritten }
+        dereferencesWithAccessType.none { it.value.isWritten }
 
   private fun findDirectObservers(edge: XcfaEdge, label: XcfaLabel, remaining: List<XcfaLabel>) {
     val writtenVars =
@@ -123,7 +123,7 @@ class StaticCoiPass : ProcedurePass {
     while (toVisit.isNotEmpty()) {
       val visiting = toVisit.removeFirst()
       if (visiting.collectAssumesVars().isNotEmpty()) return true
-      if (visiting.dereferencesWithAccessTypes.any { it.second.isWritten }) return true
+      if (visiting.dereferencesWithAccessType.any { it.value.isWritten }) return true
 
       visited.add(visiting)
       val toAdd =

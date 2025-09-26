@@ -143,8 +143,8 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
         else -> this
       }
     val ret = ArrayList<Stmt>()
-    val accessType = dereferencesWithAccessTypes.filter { dereferences.contains(it.first) }
-    for (dereference in accessType.filter { it.second.isRead }.map { it.first }) {
+    val accessType = dereferencesWithAccessType.filter { it.key in dereferences }
+    for (dereference in accessType.filter { it.value.isRead }.map { it.key }) {
       ret.add(
         Assign(
           cast(lut[dereference]!!, dereference.type),
@@ -156,7 +156,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
       )
     }
     ret.add(stmt)
-    for (dereference in accessType.filter { it.second.isWritten }.map { it.first }) {
+    for (dereference in accessType.filter { it.value.isWritten }.map { it.key }) {
       ret.add(
         MemoryAssign(
           cast(
