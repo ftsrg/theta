@@ -13,17 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.utils
+package hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms
 
-import hu.bme.mit.theta.analysis.algorithm.PartitionedInvariantProof
-import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 
-data class LocationInvariants(
-  private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>
-) : PartitionedInvariantProof<XcfaLocation> {
+interface ProofConservingModelToMonolithicAdapter<M, S : State, A : Action> :
+  ModelToMonolithicAdapter<M, S, A, InvariantProof> {
 
-  constructor() : this(emptyMap())
-
-  override fun getPartitions(): Map<XcfaLocation, Collection<ExprState>> = locationInvariants
+  override fun proofToModelProof(proof: InvariantProof) = proof
 }

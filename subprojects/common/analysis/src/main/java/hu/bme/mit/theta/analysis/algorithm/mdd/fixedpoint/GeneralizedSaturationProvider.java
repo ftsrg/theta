@@ -132,18 +132,6 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
 
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
-        //
-        //		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode,
-        // MddNode>(n,
-        //			(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
-        //				d.getDiagonal(stateSpaceInfo).get(key),
-        //				variable.getLower().orElse(null),
-        //				cache.getLower()
-        //			))
-        //		);
-        //
-        //		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
-
         MddUnsafeTemplateBuilder templateBuilder =
                 JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 

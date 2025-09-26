@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -65,7 +66,10 @@ fun getPortfolioChecker(
       "STABLE",
       "CEGAR",
       "COMPLEX",
-      "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX25" ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
@@ -85,6 +89,8 @@ fun getPortfolioChecker(
       "CHC",
       "HORN",
       "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       else -> {
         if (File(portfolioName).exists()) {

@@ -20,6 +20,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -303,6 +306,24 @@ fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfa
       if (it.xcfa!!.isInlined) it.processes else it.processes.map { (_, p) -> p.locs.peek() }
     }
     .build() // TODO: can we do this nicely?
+
+fun getExplXcfaASGAbstractor(
+  analysis: Analysis<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>,
+  logger: Logger,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  searchStrategy: LoopCheckerSearchStrategy,
+  acceptancePredicate: AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+): ASGAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>> =
+  ASGAbstractor(analysis, lts, acceptancePredicate, searchStrategy, logger)
+
+fun getPredXcfaASGAbstractor(
+  analysis: Analysis<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>,
+  logger: Logger,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  searchStrategy: LoopCheckerSearchStrategy,
+  acceptancePredicate: AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+): ASGAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>> =
+  ASGAbstractor(analysis, lts, acceptancePredicate, searchStrategy, logger)
 
 /// EXPL
 

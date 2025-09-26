@@ -19,12 +19,12 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import java.util.function.Predicate
 
-class AcceptancePredicate<S : State, A : Action>(
+class AcceptancePredicate<S : State, A : Action>
+@JvmOverloads
+constructor(
   private val statePredicate: ((S?) -> Boolean)? = null,
   private val actionPredicate: ((A?) -> Boolean)? = null,
 ) : Predicate<Pair<S?, A?>> {
-
-  constructor(statePredicate: (S?) -> Boolean = { _ -> true }, a: Unit) : this(statePredicate)
 
   fun testState(state: S): Boolean {
     return statePredicate?.invoke(state) ?: false

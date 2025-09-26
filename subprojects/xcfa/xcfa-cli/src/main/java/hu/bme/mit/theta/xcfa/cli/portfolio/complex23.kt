@@ -27,7 +27,6 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import java.nio.file.Paths
 
 fun complexPortfolio23(
   xcfa: XCFA,
@@ -92,7 +91,7 @@ fun complexPortfolio23(
       outputConfig =
         OutputConfig(
           versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
+          resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
           cOutputConfig = COutputConfig(disable = true),
           witnessConfig =
             WitnessConfig(

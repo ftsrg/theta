@@ -15,7 +15,12 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-public class EmptyProof implements Proof {
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import org.jetbrains.annotations.NotNull;
+
+public class EmptyProof implements InvariantProof {
 
     private static final EmptyProof empty = new EmptyProof();
 
@@ -23,5 +28,10 @@ public class EmptyProof implements Proof {
 
     public static EmptyProof getInstance() {
         return empty;
+    }
+
+    @Override
+    public @NotNull Expr<BoolType> getInvariant() {
+        return BoolExprs.True();
     }
 }

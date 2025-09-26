@@ -24,16 +24,12 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.XstsAction
 import hu.bme.mit.theta.xsts.analysis.XstsState
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -52,26 +48,20 @@ class XstsCliBounded :
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        valToState: (Valuation) -> ExprState,
-        biValToAction: (Valuation, Valuation) -> ExprAction,
         logger: Logger,
-      ) = buildBMC(monolithicExpr, solverFactory.createSolver(), valToState, biValToAction, logger)
+      ) = buildBMC(monolithicExpr, solverFactory.createSolver(), logger)
     },
     KINDUCTION {
 
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        valToState: (Valuation) -> ExprState,
-        biValToAction: (Valuation, Valuation) -> ExprAction,
         logger: Logger,
       ) =
         buildKIND(
           monolithicExpr,
           solverFactory.createSolver(),
           solverFactory.createSolver(),
-          valToState,
-          biValToAction,
           logger,
         )
     },
@@ -80,16 +70,12 @@ class XstsCliBounded :
       override fun buildChecker(
         monolithicExpr: MonolithicExpr,
         solverFactory: SolverFactory,
-        valToState: (Valuation) -> ExprState,
-        biValToAction: (Valuation, Valuation) -> ExprAction,
         logger: Logger,
       ) =
         buildIMC(
           monolithicExpr,
           solverFactory.createSolver(),
           solverFactory.createItpSolver(),
-          valToState,
-          biValToAction,
           logger,
         )
     };
@@ -97,10 +83,8 @@ class XstsCliBounded :
     abstract fun buildChecker(
       monolithicExpr: MonolithicExpr,
       solverFactory: SolverFactory,
-      valToState: (Valuation) -> ExprState,
-      biValToAction: (Valuation, Valuation) -> ExprAction,
       logger: Logger,
-    ): BoundedChecker<ExprState, ExprAction>
+    ): BoundedChecker
   }
 
   private val variant by option().enum<Variant>().default(Variant.BMC)
@@ -133,12 +117,9 @@ class XstsCliBounded :
     registerSolverManagers()
     val solverFactory = SolverManager.resolveSolverFactory(solver)
     val xsts = inputOptions.loadXsts()
-    val monolithicExpr = createMonolithicExpr(xsts)
     val sw = Stopwatch.createStarted()
     val checker =
-      wrapInCegarIfNeeded(monolithicExpr, solverFactory) {
-        variant.buildChecker(it, solverFactory, it.valToState, it.biValToAction, logger)
-      }
+      createChecker(xsts, solverFactory) { variant.buildChecker(it, solverFactory, logger) }
     val result = checker.check()
     sw.stop()
     printResult(

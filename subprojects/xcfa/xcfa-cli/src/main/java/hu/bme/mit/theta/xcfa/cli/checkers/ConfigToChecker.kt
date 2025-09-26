@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -46,17 +47,20 @@ fun getSafetyChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
+        else getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
       Backend.KINDIMC,
-      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-      Backend.MDD -> getMddChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.MDD -> getMddChecker(xcfa, parseContext, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
@@ -66,9 +70,12 @@ fun getSafetyChecker(
           SafetyResult.unknown()
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
-      Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
-      Backend.LASSO_VALIDATION ->
-        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
+      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"

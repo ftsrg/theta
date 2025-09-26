@@ -25,6 +25,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeCompara
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
@@ -52,6 +55,7 @@ import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.lang.reflect.Type
+import java.util.function.Predicate
 
 enum class InputType {
   C,
@@ -65,6 +69,7 @@ enum class InputType {
 
 enum class Backend {
   CEGAR,
+  ASGCEGAR,
   BOUNDED,
   BMC,
   KIND,
@@ -77,8 +82,8 @@ enum class Backend {
   TRACEGEN,
   MDD,
   IC3,
-  LASSO_VALIDATION,
   NONE,
+  LASSO_VALIDATOR,
 }
 
 enum class POR(
@@ -107,6 +112,18 @@ enum class Strategy {
 
 // TODO partial orders nicely
 enum class Domain(
+  val asgAbstractor:
+    (
+      xcfa: XCFA,
+      solver: Solver,
+      maxEnum: Int,
+      logger: Logger,
+      lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+      search: LoopCheckerSearchStrategy,
+      partialOrder: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
+      statePredicate: Predicate<XcfaState<PtrState<ExprState>>?>,
+      transitionPredicate: Predicate<XcfaAction?>?,
+    ) -> ASGAbstractor<out ExprState, out ExprAction, out Prec>,
   val abstractor:
     (
       xcfa: XCFA,
@@ -134,6 +151,31 @@ enum class Domain(
 ) {
 
   EXPL(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplXcfaAnalysis(
+          xcfa,
+          solver,
+          maxEnum,
+          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j),
@@ -155,6 +197,31 @@ enum class Domain(
     stateType = TypeToken.get(ExplState::class.java).type,
   ),
   PRED_BOOL(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxenum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.booleanAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -182,6 +249,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_CART(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxenum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.cartesianAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -209,6 +301,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_SPLIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxenum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.booleanSplitAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -444,7 +561,6 @@ enum class ConeOfInfluenceMode(
   var porLts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>? = null
 }
 
-// TODO CexMonitor: disable for multi_seq
 // TODO add new monitor to xsts cli
 enum class CexMonitorOptions {
 

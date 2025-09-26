@@ -20,11 +20,15 @@ import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
+import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -54,10 +58,30 @@ class YamlWitnessWriter {
     witnessfile: File,
   ) {
     val metadata = getMetadata(inputFile, property, architecture)
-    if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
+
+    val trace =
+      safetyResult.asUnsafe().cex.let {
+        if (it is HackyAsgTrace<*>) {
+          val actions = (it as HackyAsgTrace<*>).trace.actions
+          val explStates = (it as HackyAsgTrace<*>).trace.states
+          val states =
+            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+              state as XcfaState<PtrState<*>>
+              state.withState(PtrState(explStates[i]))
+            }
+
+          Trace.of(states, actions)
+        } else if (it is ASGTrace<*, *>) {
+          (it as ASGTrace<*, *>).toTrace()
+        } else {
+          it
+        }
+      }
+
+    if (safetyResult.isUnsafe && trace is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
         XcfaTraceConcretizer.concretize(
-          safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
           cexSolverFactory,
           parseContext,
         )
@@ -91,7 +115,7 @@ class YamlWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType?,
   ): Metadata {
     return Metadata(
-      formatVersion = "2.0",
+      formatVersion = "2.1",
       uuid = UUID.randomUUID().toString(),
       creationTime = getIsoDate(),
       producer =
@@ -132,80 +156,117 @@ class YamlWitnessWriter {
 
         val cycleHead = concrTrace.states.last()
         val cycleHeadFirst =
-          concrTrace.states.indexOfFirst {
-            it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-              it.sGlobal == cycleHead.sGlobal
-          }
+          concrTrace.states
+            .indexOfFirst {
+              it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+                it.sGlobal == cycleHead.sGlobal
+            }
+            .let { index ->
+              if (index == concrTrace.states.size - 1) {
+                // we go backwards, and find a candidate.
+                val revIdx =
+                  1 +
+                    concrTrace.states
+                      .subList(0, concrTrace.states.size - 1)
+                      .reversed()
+                      .indexOfFirst {
+                        it.processes.values.map { it.locs } ==
+                          cycleHead.processes.values.map { it.locs } &&
+                          it.sGlobal.toMap().all { (key, value) ->
+                            cycleHead.sGlobal.toMap()[key] == value
+                          }
+                      }
+                concrTrace.states.size - 1 - revIdx
+              } else {
+                index
+              }
+            }
         if (cycleHeadFirst == -1) {
           error("Lasso not found")
         }
         val stem =
           Trace.of(
-            concrTrace.states.subList(0, cycleHeadFirst - 1),
-            concrTrace.actions.subList(0, cycleHeadFirst - 2),
+            concrTrace.states.subList(0, cycleHeadFirst + 1),
+            concrTrace.actions.subList(0, cycleHeadFirst),
           )
         val lasso = // TODO this works for CHCs, with the CHC backend, but adds wrong location in
           // case of e.g., BMC !!
           Trace.of(
-            concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size - 1),
-            concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size - 1),
-          )
-
-        val backEdge =
-          Trace.of(
-            concrTrace.states.subList(concrTrace.states.size - 2, concrTrace.states.size),
-            concrTrace.actions.subList(concrTrace.actions.size - 1, concrTrace.actions.size),
+            concrTrace.states.subList(cycleHeadFirst, concrTrace.states.size),
+            concrTrace.actions.subList(cycleHeadFirst, concrTrace.actions.size),
           )
 
         val stemTrace =
           traceToWitness(trace = stem, parseContext = parseContext, property = property)
         val lassoTrace =
           traceToWitness(trace = lasso, parseContext = parseContext, property = property)
-        val backEdgeTrace =
-          traceToWitness(trace = backEdge, parseContext = parseContext, property = property)
 
         YamlWitness(
           entryType = EntryType.VIOLATION,
           metadata = metadata,
           content =
-            (0..(stemTrace.length()))
+            (0..(stemTrace.length() - 1))
               .flatMap {
                 listOfNotNull(
                   stemTrace.states
                     .get(it)
-                    ?.toSegment(stemTrace.actions.getOrNull(it - 1), inputFile),
+                    ?.toSegment(
+                      stemTrace.actions.getOrNull(it - 1),
+                      stemTrace.actions.getOrNull(it),
+                      inputFile,
+                      parseContext = parseContext,
+                    ),
                   stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
                 )
               }
               .map { ContentItem(it) } +
-              ContentItem(
-                WaypointContent(
-                  type = WaypointType.RECURRENCE_CONDITION,
-                  location =
-                    ((lasso.actions.first().edge.metadata as? CMetaData)?.astNodes?.first()
-                        ?: error("Cycle's metadata is missing."))
-                      .let {
-                        Location(
-                          fileName = inputFile.name,
-                          line = it.lineNumberStart,
-                          column = it.colNumberStart + 1,
-                        )
-                      },
-                  constraint =
-                    Constraint(
-                      value =
-                        cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
-                      format = Format.C_EXPRESSION,
-                    ),
-                  action = Action.CYCLE,
-                )
-              ) +
-              (0..<lassoTrace.length())
+              //                ContentItem(
+              //                  WaypointContent(
+              //                    type = WaypointType.ASSUMPTION,
+              //                    location =
+              //
+              // ((lasso.actions.first().label.getFlatLabels().first().metadata as? CMetaData)
+              //                          ?.astNodes
+              //                          ?.first() ?: error("Cycle's metadata is missing."))
+              //                        .let {
+              //                          val astNode =
+              //                            if (it is CWhile) {
+              //                              it.body
+              //                            } else if (it is CFor) {
+              //                              it.body
+              //                            } else if (it is CDoWhile) {
+              //                              it.body
+              //                            } else {
+              //                              it
+              //                            }
+              //                          Location(
+              //                            fileName = inputFile.name,
+              //                            line = astNode.lineNumberStart,
+              //                            column = astNode.colNumberStart + 1,
+              //                          )
+              //                        },
+              //                    constraint =
+              //                      Constraint(
+              //                        value =
+              //
+              // cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
+              //                        format = Format.C_EXPRESSION,
+              //                      ),
+              //                    action = Action.CYCLE,
+              //                  )
+              //                ) +
+              (0..<(lassoTrace.length()))
                 .flatMap {
                   listOfNotNull(
                     lassoTrace.states
                       .get(it)
-                      ?.toSegment(lassoTrace.actions.getOrNull(it - 1), inputFile, Action.CYCLE),
+                      ?.toSegment(
+                        lassoTrace.actions.getOrNull(it - 1),
+                        lassoTrace.actions.getOrNull(it),
+                        inputFile,
+                        Action.CYCLE,
+                        parseContext = parseContext,
+                      ),
                     lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
                   )
                 }
@@ -224,7 +285,12 @@ class YamlWitnessWriter {
                 listOfNotNull(
                   witnessTrace.states
                     .get(it)
-                    ?.toSegment(witnessTrace.actions.getOrNull(it - 1), inputFile),
+                    ?.toSegment(
+                      witnessTrace.actions.getOrNull(it - 1),
+                      witnessTrace.actions.getOrNull(it),
+                      inputFile,
+                      parseContext = parseContext,
+                    ),
                   witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
                 )
               }
@@ -265,19 +331,62 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   return endLoc
 }
 
+var prevVal: Map<Decl<*>, LitExpr<*>> = emptyMap()
+
 private fun WitnessNode.toSegment(
-  witnessEdge: WitnessEdge?,
+  incomingEdge: WitnessEdge?,
+  outgoingEdge: WitnessEdge?,
   inputFile: File,
   action: Action = Action.FOLLOW,
+  parseContext: ParseContext,
 ): WaypointContent? {
   if (violation) {
     val loc = xcfaLocations.values.first().first()
     val locLoc =
       getLocation(inputFile, loc.metadata)
-        ?: getLocation(inputFile, witnessEdge)
-        ?: getLocation(inputFile, witnessEdge?.edge?.metadata)
+        ?: getLocation(inputFile, incomingEdge)
+        ?: getLocation(inputFile, incomingEdge?.edge?.metadata)
         ?: return null
     return WaypointContent(type = WaypointType.TARGET, location = locLoc, action = action)
+  } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
+    val loc =
+      Location(
+        fileName = inputFile.name,
+        line = outgoingEdge.startline!!,
+        column = outgoingEdge.startcol!! + 1,
+      )
+    val constraint =
+      globalState
+        ?.toMap()
+        ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
+        ?.mapNotNull { (varDecl, value) ->
+          val splitName = varDecl.name.split("::")
+          val rootName =
+            if (splitName[0].matches(Regex("T[0-9]*")))
+              splitName.subList(2, splitName.size).joinToString("::")
+            else varDecl.name
+          if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
+            "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
+              printLit(value)
+            })"
+          } else {
+            null
+          }
+        }
+        ?.joinToString("&&")
+        ?.let { if (it.isEmpty()) "1" else it }
+    prevVal = globalState?.toMap() ?: prevVal
+
+    return if (constraint != null && constraint.isNotEmpty())
+      WaypointContent(
+        type = WaypointType.ASSUMPTION,
+        location = loc,
+        action = action,
+        constraint = Constraint(constraint, format = Format.C_EXPRESSION),
+      )
+    else {
+      null
+    }
   } else {
     return null
   }
@@ -299,18 +408,27 @@ private fun WitnessEdge.toSegment(
       line = startline ?: endline ?: return null,
       column = (startcol ?: endcol)?.plus(1),
     )
+  //  val nextStartLoc =
+  //    Location(
+  //      fileName = inputFile.name,
+  //      line = nextStatementStartLine ?: return null,
+  //      column = nextStatementStartCol?.plus(1),
+  //    )
 
   val (loc, constraint, type) =
     if (assumption != null) {
-      Triple(
-        endLoc,
-        Constraint(value = assumption!!, format = Format.C_EXPRESSION),
-        WaypointType.ASSUMPTION,
-      )
+      //      Triple(
+      //        nextStartLoc,
+      //        Constraint(value = assumption!!, format = Format.C_EXPRESSION),
+      //        WaypointType.ASSUMPTION,
+      //      )
+      return null
     } else if (control != null) {
-      Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
+      // Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
+      return null
     } else if (enterLoopHead) {
-      Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
+      // Triple(startLoc, Constraint(value = "true"), WaypointType.BRANCHING)
+      return null
     } else if (enterFunction != null) {
       Triple(startLoc, Constraint(value = enterFunction!!), WaypointType.FUNCTION_ENTER)
     } else if (returnFromFunction != null) {
