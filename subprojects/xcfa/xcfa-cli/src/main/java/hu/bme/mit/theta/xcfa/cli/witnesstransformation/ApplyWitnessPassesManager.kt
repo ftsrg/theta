@@ -29,5 +29,6 @@ class ApplyWitnessPassesManager(parseContext: ParseContext, witness: YamlWitness
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
+      SimplifyExprsPass(parseContext),
     )
   )
