@@ -159,7 +159,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 /**
  * Represents the known value of an important element for ordering consistency checking. Such an
  * important element is either a relation (being enabled) or an event (being enabled - having a
- * guard that evaluates to true). The fix (closed by theory axioms) relations and the solver
+ * guard that evaluates to true). The fix relations (closed by theory axioms) and the solver
  * decision stack level are also stored.
  */
 open class OcAssignment<E : Event>

@@ -91,7 +91,11 @@ class XcfaOcChecker(
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
   private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
-  private val memoryGarbage = memoryDecl.getNewIndexed() // this declaration is not constrained
+  private val memoryGarbage = memoryDecl // the value of this declaration is not constrained
+    .getNewIndexed()
+    .also {
+      XcfaEvent.memoryGarbage = it
+    }
 
   private val threads = mutableSetOf<Thread>()
   private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
@@ -278,6 +282,7 @@ class XcfaOcChecker(
             guards.add(thread.guard)
             thread.startEvent?.let { lastEvents.add(it) }
             this.lastWrites.add(thread.lastWrites)
+            lastEvents.addAll(last)
           }
         )
 
@@ -570,9 +575,8 @@ class XcfaOcChecker(
     }
 
   private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
-    if (
-      this !== memoryDecl && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
-    ) { // if not global var
+    if (this !== memoryDecl && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }) {
+      // if not global var
       cast(
         localVars
           .getOrPut(this) { mutableMapOf() }
