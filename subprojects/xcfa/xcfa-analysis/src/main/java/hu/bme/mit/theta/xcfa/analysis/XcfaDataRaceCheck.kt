@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expl.ExplState
@@ -38,52 +37,51 @@ import java.util.function.Predicate
 
 private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
 
-/**
- * Returns a predicate that checks whether data race is possible after the given state.
- */
-fun getDataRacePredicate() = Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
-  val xcfa = s.xcfa!!
-  for (process1 in s.processes) {
-    for (process2 in s.processes) {
-      if (process1.key != process2.key) {
-        for (edge1 in process1.value.locs.peek().outgoingEdges) {
-          for (edge2 in process2.value.locs.peek().outgoingEdges) {
-            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
-            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+/** Returns a predicate that checks whether data race is possible after the given state. */
+fun getDataRacePredicate() =
+  Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
+    val xcfa = s.xcfa!!
+    for (process1 in s.processes) {
+      for (process2 in s.processes) {
+        if (process1.key != process2.key) {
+          for (edge1 in process1.value.locs.peek().outgoingEdges) {
+            for (edge2 in process2.value.locs.peek().outgoingEdges) {
+              val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+              val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
 
-            val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-            val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globals1) {
-              for (v2 in globals2) {
-                if (
-                  v1.globalVar == v2.globalVar &&
-                  !v1.globalVar.atomic &&
-                  (v1.access.isWritten || v2.access.isWritten) &&
-                  (v1.mutexes intersect v2.mutexes).isEmpty()
-                )
-                  return@Predicate true
+              val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+              val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+              for (v1 in globals1) {
+                for (v2 in globals2) {
+                  if (
+                    v1.globalVar == v2.globalVar &&
+                      !v1.globalVar.atomic &&
+                      (v1.access.isWritten || v2.access.isWritten) &&
+                      (v1.mutexes intersect v2.mutexes).isEmpty()
+                  )
+                    return@Predicate true
+                }
               }
-            }
 
-            val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
-            val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
-            for (m1 in mems1) {
-              for (m2 in mems2) {
-                if (
-                  (m1.access.isWritten || m2.access.isWritten) &&
-                  (m1.mutexes intersect m2.mutexes).isEmpty() &&
-                  mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
-                )
-                  return@Predicate true
+              val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
+              val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
+              for (m1 in mems1) {
+                for (m2 in mems2) {
+                  if (
+                    (m1.access.isWritten || m2.access.isWritten) &&
+                      (m1.mutexes intersect m2.mutexes).isEmpty() &&
+                      mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                  )
+                    return@Predicate true
+                }
               }
             }
           }
         }
       }
     }
+    false
   }
-  false
-}
 
 /**
  * Represents a global variable access: stores the variable declaration, the access type
@@ -141,7 +139,7 @@ private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
  * @return the list of memory accesses (c.f., [MemoryAccessWithMutexes])
  */
 private fun XcfaEdge.getMemoryAccessesWithMutexes(
-  currentMutexes: Set<String>,
+  currentMutexes: Set<String>
 ): List<MemoryAccessWithMutexes> {
   val neededMutexes = currentMutexes.toMutableSet()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
@@ -155,8 +153,16 @@ private fun XcfaEdge.getMemoryAccessesWithMutexes(
         check(changedVars.intersect(vars).isEmpty()) {
           "Cannot handle dereferences with changed variables in between: $this"
         }
-        if (accesses.none { it.array == deref.array && it.offset == deref.offset && (it.access == access && it.access == WRITE) }) {
-          accesses.add(MemoryAccessWithMutexes(deref.array, deref.offset, access, neededMutexes.toSet()))
+        if (
+          accesses.none {
+            it.array == deref.array &&
+              it.offset == deref.offset &&
+              (it.access == access && it.access == WRITE)
+          }
+        ) {
+          accesses.add(
+            MemoryAccessWithMutexes(deref.array, deref.offset, access, neededMutexes.toSet())
+          )
         }
       }
     }
@@ -183,11 +189,8 @@ private fun mayBeSameMemoryLocation(
   array2: Expr<*>,
   offset2: Expr<*>,
   state: XcfaState<out PtrState<out ExprState>>,
-) : Boolean {
-  var expr: Expr<BoolType> = And(
-    Eq(array1, array2),
-    Eq(offset1, offset2),
-  )
+): Boolean {
+  var expr: Expr<BoolType> = And(Eq(array1, array2), Eq(offset1, offset2))
   expr =
     (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
       ?: ExprUtils.simplify(expr)

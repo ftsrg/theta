@@ -36,7 +36,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
   var current = ArrayList<XcfaLabel>()
   for (label in label.labels) {
     if (function(label)) {
-      if (current.size > 0) {
+      if (current.isNotEmpty()) {
         newLabels.add(SequenceLabel(current))
         current = ArrayList()
       }
@@ -45,7 +45,7 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
       current.add(label)
     }
   }
-  if (current.size > 0) newLabels.add(SequenceLabel(current))
+  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current))
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)

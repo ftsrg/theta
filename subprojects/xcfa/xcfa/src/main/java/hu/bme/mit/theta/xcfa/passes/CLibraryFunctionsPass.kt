@@ -66,12 +66,14 @@ class CLibraryFunctionsPass : ProcedurePass {
               when (invokeLabel.name) {
                 "printf" -> {
                   val printfCounter = printfCounter++
-                  (2 until invokeLabel.params.size).mapIndexed { index, param ->
-                    val expr = invokeLabel.params[param]
-                    val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
-                    builder.addVar(arg)
-                    AssignStmtLabel(arg, expr, metadata)
-                  }
+                  (2 until invokeLabel.params.size)
+                    .mapIndexed { index, param ->
+                      val expr = invokeLabel.params[param]
+                      val arg = Decls.Var("__printf_arg_${printfCounter}_$index", expr.type)
+                      builder.addVar(arg)
+                      AssignStmtLabel(arg, expr, metadata)
+                    }
+                    .run { ifEmpty { listOf(NopLabel) } }
                 }
                 "pthread_join" -> {
                   var handle = invokeLabel.params[1]
@@ -173,7 +175,5 @@ class CLibraryFunctionsPass : ProcedurePass {
     return builder
   }
 
-  private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name in supportedFunctions
-  }
+  private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 }
