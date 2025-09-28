@@ -49,10 +49,10 @@ class DataRaceToReachabilityPass : ProcedurePass {
   private val VarDecl<*>.readFlag: VarDecl<IntType>
     get() = readFlagVars[this]!!
 
-  private val derefArrayWriteFlagVar = Decls.Var("_deref_array_write_flag", Int())
-  private val derefOffsetWriteFlagVar = Decls.Var("_deref_offset_write_flag", Int())
-  private val derefArrayReadFlagVar = Decls.Var("_deref_array_read_flag", Int())
-  private val derefOffsetReadFlagVar = Decls.Var("_deref_offset_read_flag", Int())
+  private val derefArrayWriteFlagVar = Decls.Var("_deref_array_write", Int())
+  private val derefOffsetWriteFlagVar = Decls.Var("_deref_offset_write", Int())
+  private val derefArrayReadFlagVar = Decls.Var("_deref_array_read", Int())
+  private val derefOffsetReadFlagVar = Decls.Var("_deref_offset_read", Int())
   private val Expr<*>.derefArrayWriteFlag: VarDecl<IntType>
     get() = derefArrayWriteFlagVar.also { check(type == Int()) }
 

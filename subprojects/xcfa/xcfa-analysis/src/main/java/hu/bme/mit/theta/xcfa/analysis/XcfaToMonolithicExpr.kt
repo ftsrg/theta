@@ -52,9 +52,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
-import org.kframework.mpfr.BigFloat
 import java.math.BigInteger
 import java.util.*
+import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
   get() =

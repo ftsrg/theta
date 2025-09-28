@@ -15,6 +15,13 @@
  */
 package hu.bme.mit.theta.frontend.litmus2xcfa.dsl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
+
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -25,16 +32,8 @@ import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64BaseVisitor;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Parser;
 import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.LitmusPasses;
-
 import java.math.BigInteger;
 import java.util.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
 
 public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
     private final Map<String, Tuple2<VarDecl<BvType>, Optional<LitExpr<BvType>>>> vars;

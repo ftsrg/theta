@@ -95,10 +95,12 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 
   protected fun derive(rels: GlobalRelation, rf: Relation<E>, w: E): Reason? =
     when {
-      !rf.from.sameMemory(w) -> null // different referenced memory locations
-      rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
-      w.clkId == rf.from.clkId || w.clkId == rf.to.clkId ->
-        null // w within an atomic block with one of the rf ends
+      rf.from.clkId == rf.to.clkId -> null
+      // rf within an atomic block
+      w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null
+      // w within an atomic block with one of the rf ends
+      !rf.to.sameMemory(w) -> null
+      // different memory locations (checking with rf.to due to common memory garbage event)
 
       rels[w.clkId, rf.to.clkId] != null -> { // WS derivation
         val reason = WriteSerializationReason(rf, w, rels[w.clkId, rf.to.clkId]!!)

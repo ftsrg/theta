@@ -90,7 +90,7 @@ class XcfaOcChecker(
 
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
-  private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
+  private val memoryDecl = Decls.Var("__oc_memory_declaration__", Int())
   private val memoryGarbage =
     memoryDecl // the value of this declaration is not constrained
       .getNewIndexed()
@@ -202,6 +202,7 @@ class XcfaOcChecker(
       if (addMemoryGarbage) {
         val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
         val e = E(memoryGarbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
+        e.assignment = True()
         memoryWrites.add(e)
         events
           .getOrPut(memoryDecl) { mutableMapOf() }

@@ -43,7 +43,6 @@ import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getCegarChecker(
@@ -53,12 +52,6 @@ fun getCegarChecker(
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
-  if (
-    config.inputConfig.property == ErrorDetection.DATA_RACE &&
-      xcfa.procedures.any { it.edges.any { it.label.dereferences.isNotEmpty() } }
-  ) {
-    throw RuntimeException("DATA_RACE cannot be checked when pointers exist in the file.")
-  }
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       cegarConfig.abstractorConfig.abstractionSolver,

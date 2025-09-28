@@ -224,27 +224,31 @@ fun getXcfaErrorPredicate(
     ErrorDetection.DATA_RACE -> {
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         val xcfa = s.xcfa!!
-        for (process1 in s.processes) for (process2 in s.processes) if (
-          process1.key != process2.key
-        )
-          for (edge1 in process1.value.locs.peek().outgoingEdges) for (edge2 in
-            process2.value.locs.peek().outgoingEdges) {
-            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
-            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
-            val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-            val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globalVars1) {
-              for (v2 in globalVars2) {
-                if (
-                  v1.globalVar == v2.globalVar &&
-                    !v1.globalVar.atomic &&
-                    (v1.access.isWritten || v2.access.isWritten) &&
-                    (v1.mutexes intersect v2.mutexes).isEmpty()
-                )
-                  return@Predicate true
+        for (process1 in s.processes) {
+          for (process2 in s.processes) {
+            if (process1.key != process2.key) {
+              for (edge1 in process1.value.locs.peek().outgoingEdges) {
+                for (edge2 in process2.value.locs.peek().outgoingEdges) {
+                  val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+                  val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+                  val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+                  val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+                  for (v1 in globals1) {
+                    for (v2 in globals2) {
+                      if (
+                        v1.globalVar == v2.globalVar &&
+                          !v1.globalVar.atomic &&
+                          (v1.access.isWritten || v2.access.isWritten) &&
+                          (v1.mutexes intersect v2.mutexes).isEmpty()
+                      )
+                        return@Predicate true
+                    }
+                  }
+                }
               }
             }
           }
+        }
         false
       }
     }
