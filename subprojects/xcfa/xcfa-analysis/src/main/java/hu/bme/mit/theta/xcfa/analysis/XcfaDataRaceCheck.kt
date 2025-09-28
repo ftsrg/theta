@@ -1,0 +1,199 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.xcfa.analysis
+
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.utils.WithPushPop
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.model.FenceLabel
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
+import java.util.function.Predicate
+
+private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
+
+/**
+ * Returns a predicate that checks whether data race is possible after the given state.
+ */
+fun getDataRacePredicate() = Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
+  val xcfa = s.xcfa!!
+  for (process1 in s.processes) {
+    for (process2 in s.processes) {
+      if (process1.key != process2.key) {
+        for (edge1 in process1.value.locs.peek().outgoingEdges) {
+          for (edge2 in process2.value.locs.peek().outgoingEdges) {
+            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+
+            val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+            val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+            for (v1 in globals1) {
+              for (v2 in globals2) {
+                if (
+                  v1.globalVar == v2.globalVar &&
+                  !v1.globalVar.atomic &&
+                  (v1.access.isWritten || v2.access.isWritten) &&
+                  (v1.mutexes intersect v2.mutexes).isEmpty()
+                )
+                  return@Predicate true
+              }
+            }
+
+            val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
+            val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
+            for (m1 in mems1) {
+              for (m2 in mems2) {
+                if (
+                  (m1.access.isWritten || m2.access.isWritten) &&
+                  (m1.mutexes intersect m2.mutexes).isEmpty() &&
+                  mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                )
+                  return@Predicate true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  false
+}
+
+/**
+ * Represents a global variable access: stores the variable declaration, the access type
+ * (read/write) and the set of mutexes that are needed to perform the variable access.
+ */
+private class GlobalVarAccessWithMutexes(
+  val globalVar: XcfaGlobalVar,
+  val access: AccessType,
+  val mutexes: Set<String>,
+)
+
+/**
+ * Represents a memory access: stores the array expression, the offset expression, the access type
+ * (read/write) and the set of mutexes that are needed to perform the memory access.
+ */
+private class MemoryAccessWithMutexes(
+  val array: Expr<*>,
+  val offset: Expr<*>,
+  val access: AccessType,
+  val mutexes: Set<String>,
+)
+
+/**
+ * Returns the global variable accesses of the edge.
+ *
+ * @param xcfa the XCFA that contains the edge
+ * @param currentMutexes the set of mutexes currently acquired by the process of the edge
+ * @return the list of global variable accesses (c.f., [GlobalVarAccessWithMutexes])
+ */
+private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
+  xcfa: XCFA,
+  currentMutexes: Set<String>,
+): List<GlobalVarAccessWithMutexes> {
+  val globalVars = xcfa.globalVars
+  val neededMutexes = currentMutexes.toMutableSet()
+  val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
+  getFlatLabels().forEach { label ->
+    if (label is FenceLabel) {
+      neededMutexes.addAll(label.acquiredMutexes)
+    } else {
+      label.collectGlobalVars(globalVars).forEach { (v, access) ->
+        if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
+          accesses.add(GlobalVarAccessWithMutexes(v, access, neededMutexes.toSet()))
+        }
+      }
+    }
+  }
+  return accesses
+}
+
+/**
+ * Returns the memory accesses of the edge.
+ *
+ * @param currentMutexes the set of mutexes currently acquired by the process of the edge
+ * @return the list of memory accesses (c.f., [MemoryAccessWithMutexes])
+ */
+private fun XcfaEdge.getMemoryAccessesWithMutexes(
+  currentMutexes: Set<String>,
+): List<MemoryAccessWithMutexes> {
+  val neededMutexes = currentMutexes.toMutableSet()
+  val accesses = mutableListOf<MemoryAccessWithMutexes>()
+  val changedVars = mutableSetOf<VarDecl<*>>()
+  getFlatLabels().forEach { label ->
+    if (label is FenceLabel) {
+      neededMutexes.addAll(label.acquiredMutexes)
+    } else {
+      label.dereferencesWithAccessType.forEach { (deref, access) ->
+        val vars = ExprUtils.getVars(deref.array) + ExprUtils.getVars(deref.offset)
+        check(changedVars.intersect(vars).isEmpty()) {
+          "Cannot handle dereferences with changed variables in between: $this"
+        }
+        if (accesses.none { it.array == deref.array && it.offset == deref.offset && (it.access == access && it.access == WRITE) }) {
+          accesses.add(MemoryAccessWithMutexes(deref.array, deref.offset, access, neededMutexes.toSet()))
+        }
+      }
+    }
+    label.collectVarsWithAccessType().forEach { (v, access) ->
+      if (access.isWritten) changedVars.add(v)
+    }
+  }
+  return accesses
+}
+
+/**
+ * Checks whether the two given memory locations may be the same under the given state.
+ *
+ * @param array1 the array expression of the first memory location
+ * @param offset1 the offset expression of the first memory location
+ * @param array2 the array expression of the second memory location
+ * @param offset2 the offset expression of the second memory location
+ * @param state the state to check under
+ * @return true if the two memory locations may be the same, false otherwise
+ */
+private fun mayBeSameMemoryLocation(
+  array1: Expr<*>,
+  offset1: Expr<*>,
+  array2: Expr<*>,
+  offset2: Expr<*>,
+  state: XcfaState<out PtrState<out ExprState>>,
+) : Boolean {
+  var expr: Expr<BoolType> = And(
+    Eq(array1, array2),
+    Eq(offset1, offset2),
+  )
+  expr =
+    (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
+      ?: ExprUtils.simplify(expr)
+  return WithPushPop(dependencySolver).use {
+    dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
+    dependencySolver.add(PathUtils.unfold(expr, 0))
+    dependencySolver.check().isSat
+  }
+}

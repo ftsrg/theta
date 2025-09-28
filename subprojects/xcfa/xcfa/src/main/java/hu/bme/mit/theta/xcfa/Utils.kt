@@ -253,7 +253,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 /**
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
-private fun XcfaLabel.collectGlobalVars(globalVars: Set<XcfaGlobalVar>): GlobalVarAccessMap =
+fun XcfaLabel.collectGlobalVars(globalVars: Set<XcfaGlobalVar>): GlobalVarAccessMap =
   collectVarsWithAccessType()
     .mapNotNull { labelVar ->
       globalVars.firstOrNull { it.wrappedVar == labelVar.key }?.let { Pair(it, labelVar.value) }
@@ -276,53 +276,6 @@ fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): GlobalVarAccessMap {
   } else {
     collectGlobalVarsWithTraversal(globalVars) { it.mutexOperations(mutexes) }
   }
-}
-
-/**
- * Represents a global variable access: stores the variable declaration, the access type
- * (read/write) and the set of mutexes that are needed to perform the variable access.
- */
-class GlobalVarAccessWithMutexes(
-  val globalVar: XcfaGlobalVar,
-  val access: AccessType,
-  val mutexes: Set<String>,
-)
-
-/**
- * Returns the global variable accesses of the edge.
- *
- * @param xcfa the XCFA that contains the edge
- * @param currentMutexes the set of mutexes currently acquired by the process of the edge
- * @return the list of global variable accesses (c.f., [GlobalVarAccessWithMutexes])
- */
-fun XcfaEdge.getGlobalVarsWithNeededMutexes(
-  xcfa: XCFA,
-  currentMutexes: Set<String>,
-): List<GlobalVarAccessWithMutexes> {
-  val globalVars = xcfa.globalVars
-  val neededMutexes = currentMutexes.toMutableSet()
-  val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
-  getFlatLabels().forEach { label ->
-    if (label is FenceLabel) {
-      neededMutexes.addAll(label.acquiredMutexes)
-    } else {
-      val vars = label.collectGlobalVars(globalVars)
-      accesses.addAll(
-        vars.mapNotNull { (varDecl, accessType) ->
-          if (
-            accesses.any {
-              it.globalVar == varDecl && (it.access == accessType && it.access == WRITE)
-            }
-          ) {
-            null
-          } else {
-            GlobalVarAccessWithMutexes(varDecl, accessType, neededMutexes.toSet())
-          }
-        }
-      )
-    }
-  }
-  return accesses
 }
 
 /**
