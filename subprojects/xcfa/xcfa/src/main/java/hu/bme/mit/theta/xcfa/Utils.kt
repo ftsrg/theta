@@ -20,7 +20,9 @@ import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.*
@@ -524,9 +526,11 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
 
         val bases =
           this.procedures
-            .flatMap {
-              it.edges.flatMap {
-                it.getFlatLabels().flatMap { it.dereferences.map { unboxMod(it.array) } }
+            .flatMap { proc ->
+              proc.edges.flatMap { edge ->
+                edge.getFlatLabels().flatMap { label ->
+                  label.dereferences.map { unboxMod(it.array) }
+                }
               }
             }
             .filter { it !is LitExpr<*> && it !is Dereference<*, *, *> }
@@ -536,17 +540,17 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
         // value assignments are either assignments, or thread start statements, or procedure invoke
         // statements
         val assignments =
-          this.procedures.flatMap {
-            it.edges.flatMap {
-              it
+          this.procedures.flatMap { proc ->
+            proc.edges.flatMap { edge ->
+              edge
                 .getFlatLabels()
                 .filter { it is StmtLabel && it.stmt is AssignStmt<*> }
                 .map { (it as StmtLabel).stmt as AssignStmt<*> }
             }
           }
         val threadStart =
-          this.procedures.flatMap {
-            it.edges
+          this.procedures.flatMap { proc ->
+            proc.edges
               .flatMap { it.getFlatLabels().filterIsInstance<StartLabel>() }
               .flatMap {
                 val calledProc = this.procedures.find { proc -> proc.name == it.name }
@@ -574,18 +578,18 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
               }
           }
         val procInvoke =
-          this.procedures.flatMap {
-            it.edges
+          this.procedures.flatMap { proc ->
+            proc.edges
               .flatMap { it.getFlatLabels().filterIsInstance<InvokeLabel>() }
               .flatMap {
                 val calledProc = this.procedures.find { proc -> proc.name == it.name }
-                calledProc?.let { proc ->
-                  proc.params
+                calledProc?.let { calledProc ->
+                  calledProc.params
                     .filter { it.second != ParamDirection.OUT }
                     .mapIndexed { i, (param, _) ->
                       Assign(cast(param, param.type), cast(it.params[i], param.type))
                     } +
-                    proc.params
+                    calledProc.params
                       .filter { it.second != ParamDirection.IN }
                       .mapIndexed { i, (param, _) ->
                         Assign(
@@ -635,7 +639,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
 
         var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
         while (lastLits != lits) {
-          lastLits = lits.toMap()
+          lastLits = lits.entries.associate { (k, v) -> k to v.toMutableSet() }
           alias.forEach {
             lits
               .getOrPut(it.key) { LinkedHashSet() }
@@ -656,6 +660,31 @@ fun Collection<VarDecl<*>>.pointsTo(xcfa: XCFA) =
   flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
 
 fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
+
+fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
+  val results = mutableSetOf<LitExpr<*>>()
+  var values = listOf<Map<Decl<*>, LitExpr<*>>>()
+  val vars = ExprUtils.getVars(this)
+  vars.forEach { v ->
+    val pts = xcfa.pointsToGraph[v] ?: return null
+    val newValues = mutableListOf<Map<Decl<*>, LitExpr<*>>>()
+    pts.forEach { lit ->
+      if (values.isEmpty()) {
+        newValues.add(mapOf(v to lit))
+      } else {
+        values.forEach { vs -> newValues.add(vs + mapOf(v to lit)) }
+      }
+    }
+    values = newValues
+  }
+  values.forEach { vs ->
+    val valuation = ImmutableValuation.from(vs)
+    val simplified = ExprUtils.simplify(this, valuation)
+    if (simplified !is LitExpr<*>) return null
+    results.add(simplified)
+  }
+  return results
+}
 
 private fun <T : Type> assignStmtLabelOf(
   lhs: VarDecl<T>,

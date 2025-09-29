@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
-import kotlin.math.max
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
@@ -385,8 +384,11 @@ class DataRaceToReachabilityPass : ProcedurePass {
    * Collects the number of threads for each procedure: returns true if multiple threads may run the
    * procedure, false otherwise. Note that this is a conservative analysis.
    */
-  private fun getMultipleThreadsPerProcedure(builder: XcfaProcedureBuilder): Map<XcfaProcedureBuilder, Boolean> {
-    val threadCount = builder.parent.getInitProcedures().associate { it.first to false }.toMutableMap()
+  private fun getMultipleThreadsPerProcedure(
+    builder: XcfaProcedureBuilder
+  ): Map<XcfaProcedureBuilder, Boolean> {
+    val threadCount =
+      builder.parent.getInitProcedures().associate { it.first to false }.toMutableMap()
     var previousCounts: Map<XcfaProcedureBuilder, Boolean>? = null
     while (previousCounts != threadCount) {
       previousCounts = threadCount.toMap()
@@ -399,11 +401,18 @@ class DataRaceToReachabilityPass : ProcedurePass {
           edge.getFlatLabels().forEach { label ->
             if (label is StartLabel) {
               val started = builder.parent.getProcedures().find { it.name == label.name }!!
-              threadCount[started] = threadCount[started] == true || threadCount[proc] == true || started in visitedNewRound || (edge in loopEdges)
+              threadCount[started] =
+                threadCount[started] == true ||
+                  threadCount[proc] == true ||
+                  started in visitedNewRound ||
+                  (edge in loopEdges)
               visitedNewRound.add(started)
             } else if (label is InvokeLabel) {
               val invoked = builder.parent.getProcedures().find { it.name == label.name }!!
-              threadCount[invoked] = threadCount[invoked] == true || threadCount[proc] == true || invoked in originalCounts
+              threadCount[invoked] =
+                threadCount[invoked] == true ||
+                  threadCount[proc] == true ||
+                  invoked in originalCounts
               visitedNewRound.add(invoked)
             }
           }

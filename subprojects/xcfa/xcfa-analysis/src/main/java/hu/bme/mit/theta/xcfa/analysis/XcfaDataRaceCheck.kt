@@ -41,39 +41,41 @@ private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolve
 fun getDataRacePredicate() =
   Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
     val xcfa = s.xcfa!!
-    for (process1 in s.processes) {
-      for (process2 in s.processes) {
-        if (process1.key != process2.key) {
-          for (edge1 in process1.value.locs.peek().outgoingEdges) {
-            for (edge2 in process2.value.locs.peek().outgoingEdges) {
-              val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
-              val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+    val processes = s.processes.entries.toList()
+    for (i in processes.indices) {
+      val process1 = processes[i]
+      for (j in i + 1 until processes.size) {
+        val process2 = processes[j]
+        check(process1.key != process2.key)
+        for (edge1 in process1.value.locs.peek().outgoingEdges) {
+          for (edge2 in process2.value.locs.peek().outgoingEdges) {
+            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
 
-              val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-              val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-              for (v1 in globals1) {
-                for (v2 in globals2) {
-                  if (
-                    v1.globalVar == v2.globalVar &&
-                      !v1.globalVar.atomic &&
-                      (v1.access.isWritten || v2.access.isWritten) &&
-                      (v1.mutexes intersect v2.mutexes).isEmpty()
-                  )
-                    return@Predicate true
-                }
+            val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+            val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+            for (v1 in globals1) {
+              for (v2 in globals2) {
+                if (
+                  v1.globalVar == v2.globalVar &&
+                    !v1.globalVar.atomic &&
+                    (v1.access.isWritten || v2.access.isWritten) &&
+                    (v1.mutexes intersect v2.mutexes).isEmpty()
+                )
+                  return@Predicate true
               }
+            }
 
-              val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
-              val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
-              for (m1 in mems1) {
-                for (m2 in mems2) {
-                  if (
-                    (m1.access.isWritten || m2.access.isWritten) &&
-                      (m1.mutexes intersect m2.mutexes).isEmpty() &&
-                      mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
-                  )
-                    return@Predicate true
-                }
+            val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
+            val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
+            for (m1 in mems1) {
+              for (m2 in mems2) {
+                if (
+                  (m1.access.isWritten || m2.access.isWritten) &&
+                    (m1.mutexes intersect m2.mutexes).isEmpty() &&
+                    mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                )
+                  return@Predicate true
               }
             }
           }

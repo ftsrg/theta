@@ -155,13 +155,6 @@ open class XcfaAasporLts(
         return true
       }
     }
-    return indirectlyDependent(
-      state,
-      sourceSetAction,
-      sourceSetActionVars,
-      influencedVars,
-      sourceSetMemLocs,
-      influencedMemLocs,
-    )
+    return indirectlyDependent(state, sourceSetAction, sourceSetMemLocs, influencedMemLocs)
   }
 }

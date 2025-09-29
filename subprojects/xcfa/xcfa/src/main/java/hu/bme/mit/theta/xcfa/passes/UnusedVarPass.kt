@@ -113,8 +113,10 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
         when (stmt) {
           is AssignStmt<*> ->
             if (
-              stmt.varDecl in used || (keepGlobalVariableAccesses &&
-                (ExprUtils.getVars(stmt.expr).any { it in global } || stmt.expr.dereferences.isNotEmpty()))
+              stmt.varDecl in used ||
+                (keepGlobalVariableAccesses &&
+                  (ExprUtils.getVars(stmt.expr).any { it in global } ||
+                    stmt.expr.dereferences.isNotEmpty()))
             )
               this
             else NopLabel
