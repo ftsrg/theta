@@ -1,0 +1,29 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ProductLines
+date:                    Fri, 2025-05-16 12:21:09 UTC
+tool:                    Theta 6.15.0
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmberfyhpb9w
+os:                      Linux-6.11.0-1012-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3232.162 MHz
+ram:                     16766.418944 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ProductLines
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                   status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------

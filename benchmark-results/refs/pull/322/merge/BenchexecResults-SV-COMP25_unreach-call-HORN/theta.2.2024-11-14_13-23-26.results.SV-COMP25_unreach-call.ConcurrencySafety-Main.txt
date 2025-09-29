@@ -1,0 +1,46 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ConcurrencySafety-Main
+date:                    Thu, 2024-11-14 13:23:26 UTC
+tool:                    Theta 6.8.5
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1979-407
+os:                      Linux-6.8.0-1016-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3244.142 MHz
+ram:                     16766.783488 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ConcurrencySafety-Main
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                                          status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread/bigshot_s.yml                                                                                                                                                              Parsing OK                       7.33        2.70        None
+pthread/bigshot_s2.yml                                                                                                                                                             Parsing OK                       6.80        2.51        None
+pthread/butterfly.yml                                                                                                                                                              Parsing OK                       5.46        2.20        None
+pthread/fib_safe-10.yml                                                                                                                                                            Parsing OK                       5.56        2.36        None
+pthread/fib_safe-11.yml                                                                                                                                                            Parsing OK                       5.01        1.91        None
+pthread/fib_safe-12.yml                                                                                                                                                            Parsing OK                       5.15        1.97        None
+pthread/fib_safe-5.yml                                                                                                                                                             Parsing OK                       3.66        1.67        None
+pthread/fib_safe-6.yml                                                                                                                                                             Parsing OK                       4.33        2.07        None
+pthread/fib_safe-7.yml                                                                                                                                                             Parsing OK                       3.77        1.70        None
+pthread/fib_unsafe-10.yml                                                                                                                                                          Parsing OK                       3.81        1.69        None
+pthread/fib_unsafe-11.yml                                                                                                                                                          Parsing OK                       4.05        1.96        None
+pthread/fib_unsafe-12.yml                                                                                                                                                          Parsing OK                       4.01        2.04        None
+pthread/fib_unsafe-5.yml                                                                                                                                                           Parsing OK                       3.36        1.52        None
+pthread/fib_unsafe-6.yml                                                                                                                                                           Parsing OK                       3.94        1.78        None
+pthread/fib_unsafe-7.yml                                                                                                                                                           Parsing OK                       3.48        1.57        None
+pthread/lazy01.yml                                                                                                                                                                 Parsing OK                       3.36        1.56        None
+pthread/queue.yml                                                                                                                                                                  Parsing OK                       5.89        2.67        None

@@ -1,0 +1,110 @@
+Theta/theta-start.sh sv-benchmarks/c/termination-crafted/Bangalore_v4.c --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-crafted/Bangalore_v4.c' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio CEGAR --loglevel RESULT --architecture LP64 --input sv-benchmarks/c/termination-crafted/Bangalore_v4.c --property sv-benchmarks/c/properties/termination.prp --smt-home /home/runner/work/theta/theta/Theta/solvers
+Arithmetic: []
+ParsingResult Success
+Alias graph size: 0 -> []
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore_v4.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/termination.prp, property=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=ASGCEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=ALLVARS, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore_v4.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: Arithmetic: []
+server: ParsingResult Success
+server: Alias graph size: 0 -> []
+ErrorCodeException(code=201)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:130)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:112)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:127)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:137)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore_v4.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/termination.prp, property=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=ASGCEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=EMPTY, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore_v4.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: Arithmetic: []
+server: ParsingResult Success
+server: Alias graph size: 0 -> []
+ErrorCodeException(code=201)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:130)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:112)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:127)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:137)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore_v4.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/termination.prp, property=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=ASGCEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=AsgCegarConfig(initPrec=EMPTY, cexMonitor=CHECK, abstractorConfig=AsgCegarAbstractorConfig(abstractionSolver=Z3:4.13, validateAbstractionSolver=false, domain=PRED_BOOL, maxEnum=1, search=NDFS), refinerConfig=AsgCegarRefinerConfig(refinementSolver=Z3:4.13, validateRefinementSolver=false, refinement=DIRECT_REFINEMENT, exprSplitter=WHOLE))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore_v4.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: Arithmetic: []
+server: ParsingResult Success
+server: Alias graph size: 0 -> []
+ErrorCodeException(code=201)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:130)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.TerminationKt$termination$checker$1.invoke(termination.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:112)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:281)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:280)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:113)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:127)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:137)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=201)
+Handling exception as AnythingButServerError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore_v4.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/termination.prp, property=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:4.13, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore_v4.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: Arithmetic: []
+server: ParsingResult Success
+server: Alias graph size: 0 -> []
+server: (SafetyResult Safe)
+(SafetyResult Safe)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/termination-crafted/Bangalore_v4.c, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=sv-benchmarks/c/properties/termination.prp, property=TERMINATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=BoundedConfig(maxBound=0, reversed=false, cegar=false, initPrec=EMPTY, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3:4.13, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/termination-crafted/Bangalore_v4.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false)) succeeded in 305073 ms
+success-result: BMC-true
+(SafetyResult Safe)
