@@ -354,24 +354,3 @@ private fun XCFA.staticThreadProcedureMap(
   }
   return threads
 }
-
-private val XcfaProcedure.loopEdges: Set<XcfaEdge>
-  get() {
-    val loopEdges = mutableSetOf<XcfaEdge>()
-    val visited = mutableSetOf<XcfaLocation>()
-    val stack = Stack<XcfaLocation>()
-    stack.push(this.initLoc)
-    while (stack.isNotEmpty()) {
-      val loc = stack.pop()
-      if (!visited.add(loc)) continue
-      for (edge in loc.outgoingEdges) {
-        if (edge.target in stack) {
-          val (_, es) = getLoopElements(edge)
-          loopEdges.addAll(es)
-        } else {
-          stack.push(edge.target)
-        }
-      }
-    }
-    return loopEdges
-  }

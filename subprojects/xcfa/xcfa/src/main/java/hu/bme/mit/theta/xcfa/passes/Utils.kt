@@ -221,3 +221,29 @@ fun getLoopElements(backEdge: XcfaEdge): Pair<Set<XcfaLocation>, Set<XcfaEdge>> 
   }
   return locs to edges
 }
+
+private fun getLoopEdges(initLoc: XcfaLocation): Set<XcfaEdge> {
+  val loopEdges = mutableSetOf<XcfaEdge>()
+  val visited = mutableSetOf<XcfaLocation>()
+  val stack = Stack<XcfaLocation>()
+  stack.push(initLoc)
+  while (stack.isNotEmpty()) {
+    val loc = stack.pop()
+    if (!visited.add(loc)) continue
+    for (edge in loc.outgoingEdges) {
+      if (edge.target in stack) {
+        val (_, es) = getLoopElements(edge)
+        loopEdges.addAll(es)
+      } else {
+        stack.push(edge.target)
+      }
+    }
+  }
+  return loopEdges
+}
+
+val XcfaProcedureBuilder.loopEdges: Set<XcfaEdge>
+  get() = getLoopEdges(initLoc)
+
+val XcfaProcedure.loopEdges: Set<XcfaEdge>
+  get() = getLoopEdges(initLoc)

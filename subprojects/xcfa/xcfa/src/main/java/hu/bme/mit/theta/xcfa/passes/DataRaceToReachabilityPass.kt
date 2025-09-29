@@ -309,6 +309,7 @@ class DataRaceToReachabilityPass : ProcedurePass {
         }
       }
 
+      val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
       potentialRacingVars =
         builder.parent
           .getVars()
@@ -317,16 +318,20 @@ class DataRaceToReachabilityPass : ProcedurePass {
           .filter { v ->
             var anyWrite = false
             val usingThreads =
-              builder.parent.getProcedures().count { b ->
+              builder.parent.getProcedures().map { b ->
                 val edges = if (b == initProcedure) b.getEdges() - initEdges else b.getEdges()
-                edges.any { e ->
-                  e.getFlatLabels().any { l ->
-                    val accesses = l.collectVarsWithAccessType()
-                    if (accesses[v]?.isWritten == true) anyWrite = true
-                    accesses.containsKey(v)
-                  }
+                if (edges.any { e ->
+                    e.getFlatLabels().any { l ->
+                      val accesses = l.collectVarsWithAccessType()
+                      if (accesses[v]?.isWritten == true) anyWrite = true
+                      accesses.containsKey(v)
+                    }
+                  }) {
+                  if (multipleThreadsPerProcedure[b] == true) 2 else 1
+                } else {
+                  0
                 }
-              }
+              }.sum()
             usingThreads > 1 && anyWrite
           }
           .toSet()
@@ -371,5 +376,37 @@ class DataRaceToReachabilityPass : ProcedurePass {
     }
 
     return potentialRacingVars!!
+  }
+
+  /**
+   * Collects the number of threads for each procedure: returns true if multiple threads may run the
+   * procedure, false otherwise. Note that this is a conservative analysis.
+   */
+  private fun getMultipleThreadsPerProcedure(builder: XcfaProcedureBuilder): Map<XcfaProcedureBuilder, Boolean> {
+    val threadCount = builder.parent.getInitProcedures().associate { it.first to false }.toMutableMap()
+    var previousCounts: Map<XcfaProcedureBuilder, Boolean>? = null
+    while (previousCounts != threadCount) {
+      previousCounts = threadCount.toMap()
+      val visitedNewRound = mutableSetOf<XcfaProcedureBuilder>()
+      builder.parent.getProcedures().forEach { proc ->
+        if (proc !in threadCount) return@forEach
+        val loopEdges = proc.loopEdges
+        proc.getEdges().forEach { edge ->
+          val originalCounts = visitedNewRound.toSet()
+          edge.getFlatLabels().forEach { label ->
+            if (label is StartLabel) {
+              val started = builder.parent.getProcedures().find { it.name == label.name }!!
+              threadCount[started] = threadCount[started] == true || threadCount[proc] == true || started in visitedNewRound || (edge in loopEdges)
+              visitedNewRound.add(started)
+            } else if (label is InvokeLabel) {
+              val invoked = builder.parent.getProcedures().find { it.name == label.name }!!
+              threadCount[invoked] = threadCount[invoked] == true || threadCount[proc] == true || invoked in originalCounts
+              visitedNewRound.add(invoked)
+            }
+          }
+        }
+      }
+    }
+    return threadCount
   }
 }

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.isRead
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -112,8 +113,8 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
         when (stmt) {
           is AssignStmt<*> ->
             if (
-              stmt.varDecl in used ||
-                (keepGlobalVariableAccesses && ExprUtils.getVars(stmt.expr).any { it in global })
+              stmt.varDecl in used || (keepGlobalVariableAccesses &&
+                (ExprUtils.getVars(stmt.expr).any { it in global } || stmt.expr.dereferences.isNotEmpty()))
             )
               this
             else NopLabel
