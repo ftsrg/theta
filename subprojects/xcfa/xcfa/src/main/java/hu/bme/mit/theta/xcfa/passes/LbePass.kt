@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
@@ -307,6 +308,7 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
     return !edge.getFlatLabels().all { label ->
       !(label is StartLabel || label is JoinLabel) &&
         label.collectVars().all(builder.getVars()::contains) &&
+        label.dereferences.isEmpty() &&
         !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
         !(label is FenceLabel &&
           label.labels.any { name ->
