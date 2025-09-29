@@ -20,9 +20,11 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.utils.PrecSerializer
+import hu.bme.mit.theta.c2xcfa.getBoolExprFromC
 import hu.bme.mit.theta.c2xcfa.getExpressionFromC
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -37,10 +39,13 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 import java.io.File
 import java.util.*
+import kotlin.reflect.KProperty
 
 object WitnessPrecSerializerConfig {
-    var parseContext: ParseContext? = null
-    var logger: Logger? = null
+    private const val ERROR_MESSAGE = "Misconfigured WitnessPrecSerializer"
+
+    var parseContext: ParseContext by ThrowIfNullDelegate(ERROR_MESSAGE)
+    var logger: Logger by ThrowIfNullDelegate(ERROR_MESSAGE)
     var inputFile: File? = null
     var property: ErrorDetection? = null
     var architecture: ArchitectureConfig.ArchitectureType? = null
@@ -48,13 +53,15 @@ object WitnessPrecSerializerConfig {
 
 class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
     override fun serialize(prec: Prec): String {
-        val procedureVars = prec.usedVars.map { it.name }.groupBy { it.split("::").first() }
+        val procedureVars = prec.usedVars.groupByProcedure()
         val procedurePreds = (prec as PredPrec).preds.map {
-            it.toC(parseContext ?: throw RuntimeException("Misconfigured WitnessPrecSerializer"))
+            it.toC(parseContext)
         }.groupBy { pred ->
-            procedureVars.keys.firstOrNull { pred.contains(it) } // preds without local vars are grouped to null
+            procedureVars.keys.firstOrNull { proc -> // preds without local vars are grouped to null
+                proc?.let{ pred.contains(it) } ?: false
+            }
         }
-        val contents = procedurePreds.entries.map { (procedure, preds) ->
+        val contents = procedurePreds.map { (procedure, preds) ->
             val precision = if (procedure == null) { // preds with global variables only
                 Precision(
                     type = PrecisionType.PREDICATE,
@@ -79,32 +86,9 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
             ContentItem(precision = precision)
         }
 
-        val metadata = Metadata(
-            formatVersion = "2.2",
-            uuid = UUID.randomUUID().toString(),
-            creationTime = getIsoDate(),
-            producer =
-            Producer(
-                name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
-                version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
-            ),
-            task =
-            Task(
-                inputFiles = listOf(inputFile?.name ?: "unknown"),
-                inputFileHashes = mapOf(Pair(inputFile?.path ?: "unknown", createTaskHash(inputFile?.path ?: "unknown"))),
-                specification = property?.name ?: "unknown",
-                dataModel =
-                architecture?.let {
-                    if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
-                    else DataModel.LP64
-                } ?: DataModel.ILP32,
-                language = Language.C,
-            ),
-        )
-
         val witness = YamlWitness(
             entryType = EntryType.PRECISION,
-            metadata = metadata,
+            metadata = getMetadata(),
             content = contents
         )
 
@@ -114,31 +98,112 @@ class WitnessPredPrecSerializer : PrecSerializer<PredPrec> {
     override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): PredPrec {
         if ("" == input) return PredPrec.of()
 
-        val witness = WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), input).get(0)
+        val witness = WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), input)[0]
         val predSet = witness.content
             .mapNotNull { it.precision }
             .filter { it.type == PrecisionType.PREDICATE }
-            .flatMap { it.values.map { value ->
-                getExpressionFromC(
-                    value,
-                    parseContext ?: throw RuntimeException("Misconfigured WitnessPrecSerializer"),
-                    false,
-                    false,
-                    logger ?: throw RuntimeException("Misconfigured WitnessPrecSerializer"),
-                    currentVars
-                )
+            .flatMap { it.values.mapNotNull { value ->
+                try {
+                    getBoolExprFromC(value, parseContext, false, false, logger, currentVars)
+                } catch (e: RuntimeException) {
+                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                    null
+                }
             } }
-        val predPrec = PredPrec.of(predSet)
-        return predPrec
+
+        return PredPrec.of(predSet)
     }
 }
 
 class WitnessExplPrecSerializer : PrecSerializer<ExplPrec> {
     override fun serialize(prec: Prec): String {
-        TODO("Not yet implemented")
+        val procedureVars = (prec as ExplPrec).vars
+            .groupByProcedure()
+            .mapValues { (_, vars) ->
+                vars.map { "&" + it.split("::").last() }
+            }
+
+        val contents = procedureVars.map { (procedure, vars) ->
+            ContentItem(precision =
+                Precision(
+                    type = PrecisionType.EXPLICIT,
+                    scope = if (procedure == null) PrecisionScope(PrecisionScopeType.GLOBAL)
+                            else PrecisionScope(PrecisionScopeType.FUNCTION, functionName = procedure),
+                    format = Format.C_EXPRESSION,
+                    values = vars,
+                )
+            )
+        }
+
+        val witness = YamlWitness(
+            entryType = EntryType.PRECISION,
+            metadata = getMetadata(),
+            content = contents
+        )
+
+        return WitnessYamlConfig.encodeToString(listOf(witness))
     }
 
     override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): ExplPrec {
-        TODO("Not yet implemented")
+        if ("" == input) return ExplPrec.empty()
+
+        val witness = WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), input)[0]
+        val vars = witness.content
+            .mapNotNull { it.precision }
+            .filter { it.type == PrecisionType.EXPLICIT }
+            .flatMap { it.values.flatMap { value ->
+                try {
+                    val expr = getExpressionFromC(value, parseContext, false, false, logger, currentVars)
+                    ExprUtils.getVars(expr)
+                } catch (e: RuntimeException) {
+                    logger.writeln(Logger.Level.INFO, "WARNING: Couldn't parse initial precision $value, skipping it (${e.message})")
+                    emptySet()
+                }
+            } }
+
+        return ExplPrec.of(vars)
+    }
+}
+
+private fun Collection<VarDecl<*>>.groupByProcedure() = this
+    .map { it.name }
+    .groupBy {
+        if (it.contains("::")) it.split("::").first()
+        else null
+    }
+
+private fun getMetadata() =
+    Metadata(
+        formatVersion = "2.2",
+        uuid = UUID.randomUUID().toString(),
+        creationTime = getIsoDate(),
+        producer =
+        Producer(
+            name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
+            version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
+        ),
+        task =
+        Task(
+            inputFiles = listOf(inputFile?.name ?: "unknown"),
+            inputFileHashes = mapOf(Pair(inputFile?.path ?: "unknown", createTaskHash(inputFile?.path ?: "unknown"))),
+            specification = property?.name ?: "unknown",
+            dataModel =
+            architecture?.let {
+                if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
+                else DataModel.LP64
+            } ?: DataModel.ILP32,
+            language = Language.C,
+        ),
+    )
+
+class ThrowIfNullDelegate<T, P>(private val errorMessage: String) {
+    var value: P? = null
+
+    operator fun getValue(thisRef: T?, property: KProperty<*>): P {
+        return value ?: throw NullPointerException("$errorMessage: ${property.name} is null")
+    }
+
+    operator fun setValue(thisRef: T?, property: KProperty<*>, value: P) {
+        this.value = value
     }
 }
