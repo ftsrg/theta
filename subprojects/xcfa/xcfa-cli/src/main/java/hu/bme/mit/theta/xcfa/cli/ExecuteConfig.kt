@@ -35,6 +35,7 @@ import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -54,6 +55,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.isDataRacePossible
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -183,7 +185,7 @@ fun frontend(
 
   val input = config.inputConfig.input!!
   logger.write(
-    Logger.Level.INFO,
+    INFO,
     "Parsing the input $input as ${config.frontendConfig.inputType}\n",
   )
 
@@ -219,7 +221,7 @@ fun frontend(
   }
 
   logger.write(
-    Logger.Level.INFO,
+    INFO,
     "Frontend finished: ${xcfa.name}  (in ${
         stopwatch.elapsed(TimeUnit.MILLISECONDS)
     } ms)\n",
@@ -246,13 +248,19 @@ private fun backend(
   if (config.backendConfig.backend == Backend.NONE) {
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
-    if (
-      xcfa?.procedures?.all {
-        it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
-      } ?: false
+    if (config.inputConfig.property == ErrorDetection.ERROR_LOCATION &&
+      (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-      logger.write(Logger.Level.RESULT, "Input is trivially safe\n")
+      logger.write(RESULT, "Input is trivially safe\n")
+
+      logger.write(RESULT, result.toString() + "\n")
+      result
+    } else if (config.inputConfig.property == ErrorDetection.DATA_RACE &&
+      xcfa != null && !isDataRacePossible(xcfa)
+    ) {
+      val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+      logger.write(RESULT, "Input is trivially safe: no global memory is written or all global memory accesses are atomic\n")
 
       logger.write(RESULT, result.toString() + "\n")
       result
@@ -260,7 +268,7 @@ private fun backend(
       val stopwatch = Stopwatch.createStarted()
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}\n",
       )
 
@@ -359,7 +367,7 @@ private fun preVerificationLogging(
       resultFolder.mkdirs()
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
       )
 
@@ -402,11 +410,11 @@ private fun preVerificationLogging(
             )
           )
         } catch (e: Throwable) {
-          logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+          logger.write(VERBOSE, "Could not emit C file\n")
         }
       }
     } catch (e: Throwable) {
-      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+      logger.write(INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
   }
 }
@@ -450,7 +458,7 @@ private fun postVerificationLogging(
       resultFolder.mkdirs()
 
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
       )
 
@@ -533,7 +541,7 @@ private fun postVerificationLogging(
           )
       }
     } catch (e: Throwable) {
-      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+      logger.write(INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
   }
 }

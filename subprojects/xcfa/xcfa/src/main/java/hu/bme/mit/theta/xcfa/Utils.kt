@@ -246,7 +246,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
     is InvokeLabel ->
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel ->
-      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
+      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to WRITE)
 
     is JoinLabel -> mapOf(pidVar to READ)
     else -> emptyMap()
@@ -345,6 +345,16 @@ fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
   }
   return Pair(scope, env)
 }
+
+/**
+ * Returns XCFA locations that are inner locations of any atomic block (after an edge with an
+ * AtomicBegin and before an edge with an AtomicEnd) for all procedures of the XCFA.
+ *
+ * @param builder the XCFA builder
+ * @return the set of locations in an atomic block in all procedures of the XCFA
+ */
+fun getAtomicBlockInnerLocations(builder: XcfaBuilder): Set<XcfaLocation> =
+  builder.getProcedures().flatMap { getAtomicBlockInnerLocations(it) }.toSet()
 
 /**
  * Returns XCFA locations that are inner locations of any atomic block (after an edge with an
@@ -608,11 +618,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
 
         while (ptrVars != lastPtrVars) {
           lastPtrVars = ptrVars.toSet()
-
           val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unboxMod(it.expr) }
-          allAssignments.filter {
-            ptrVars.contains(it.varDecl) && (it.expr !is LitExpr<*>) && (it.expr !is RefExpr<*>)
-          }
           ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
         }
 

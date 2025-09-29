@@ -75,7 +75,7 @@ fun getDataRacePredicate() =
                     (m1.mutexes intersect m2.mutexes).isEmpty() &&
                     mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
                 )
-                  return@Predicate true
+                  return@Predicate true // TODO: refiner needs to check that the memory locations are really the same
               }
             }
           }
