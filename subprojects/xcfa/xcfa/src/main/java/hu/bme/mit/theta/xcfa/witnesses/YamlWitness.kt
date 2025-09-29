@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.witnesses
 import com.charleskorn.kaml.MultiLineStringStyle
 import com.charleskorn.kaml.SingleLineStringStyle
 import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -54,7 +55,7 @@ val WitnessYamlConfig =
 data class YamlWitness(
   @SerialName("entry_type") val entryType: EntryType,
   val metadata: Metadata,
-  val declarations: List<String> = listOf(),
+  @Required val declarations: List<String> = emptyList(), // TODO remove field
   val content: List<ContentItem>,
 )
 
@@ -336,13 +337,13 @@ data class Precision(
 
 enum class PrecisionType {
   @SerialName("predicate") PREDICATE,
-  @SerialName("explicit") EXPLICIT,
+  @SerialName("relevant_memory_locations") EXPLICIT,
 }
 
 @Serializable
 data class PrecisionScope(
   val type: PrecisionScopeType,
-  val functionName: String? = null,
+  @SerialName("function_name") val functionName: String? = null,
   val location: Location? = null,
 )
 
