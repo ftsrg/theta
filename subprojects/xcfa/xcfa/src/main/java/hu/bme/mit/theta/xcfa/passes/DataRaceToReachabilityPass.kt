@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import kotlin.math.max
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
@@ -318,20 +319,22 @@ class DataRaceToReachabilityPass : ProcedurePass {
           .filter { v ->
             var anyWrite = false
             val usingThreads =
-              builder.parent.getProcedures().map { b ->
+              builder.parent.getProcedures().sumOf { b ->
                 val edges = if (b == initProcedure) b.getEdges() - initEdges else b.getEdges()
-                if (edges.any { e ->
-                    e.getFlatLabels().any { l ->
-                      val accesses = l.collectVarsWithAccessType()
-                      if (accesses[v]?.isWritten == true) anyWrite = true
-                      accesses.containsKey(v)
-                    }
-                  }) {
-                  if (multipleThreadsPerProcedure[b] == true) 2 else 1
-                } else {
-                  0
+                val multiThreadPerProcedure = multipleThreadsPerProcedure[b] == true
+                var access = 0
+                for (e in edges) {
+                  val accesses = e.collectVarsWithAccessType()
+                  if (accesses.containsKey(v)) {
+                    access = if (multiThreadPerProcedure) 2 else 1
+                  }
+                  if (accesses[v]?.isWritten == true) {
+                    anyWrite = true
+                    break
+                  }
                 }
-              }.sum()
+                access
+              }
             usingThreads > 1 && anyWrite
           }
           .toSet()
