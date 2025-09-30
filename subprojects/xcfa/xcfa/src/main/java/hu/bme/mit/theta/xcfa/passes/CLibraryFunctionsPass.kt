@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
@@ -23,6 +24,8 @@ import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 /**
  * Transforms the library procedure calls with names in supportedFunctions into model elements.
@@ -114,16 +117,20 @@ class CLibraryFunctionsPass : ProcedurePass {
                   var handle = invokeLabel.params[1]
                   while (handle is Reference<*, *>) handle = handle.expr
                   check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                  val decl = handle.decl
+                  checkMutexDecl(decl, builder)
 
-                  listOf(FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata))
+                  listOf(FenceLabel(setOf("mutex_lock(${decl.name})"), metadata))
                 }
 
                 "pthread_mutex_unlock" -> {
                   var handle = invokeLabel.params[1]
                   while (handle is Reference<*, *>) handle = handle.expr
                   check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                  val decl = handle.decl
+                  checkMutexDecl(decl, builder)
 
-                  listOf(FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata))
+                  listOf(FenceLabel(setOf("mutex_unlock(${decl.name})"), metadata))
                 }
 
                 "pthread_cond_wait" -> {
@@ -173,6 +180,21 @@ class CLibraryFunctionsPass : ProcedurePass {
       }
     }
     return builder
+  }
+
+  private fun checkMutexDecl(mutex: Decl<*>, builder: XcfaProcedureBuilder) {
+    check(mutex is VarDecl<*> && mutex in builder.parent.getVars().map { it.wrappedVar }) {
+      "Local mutex handles are not supported: ${mutex.name}"
+    }
+    val writes =
+      builder.parent.getProcedures().sumOf { proc ->
+        proc.getEdges().count { edge ->
+          edge.collectVarsWithAccessType().any { (v, access) -> v == mutex && access.isWritten }
+        }
+      }
+    check(writes <= 1) {
+      "Non-static mutex handles (multiple writes) are not supported: ${mutex.name}"
+    }
   }
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
