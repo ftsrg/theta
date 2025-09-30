@@ -50,18 +50,20 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // optimizing
       SimplifyExprsPass(parseContext),
       LoopUnrollPass(),
-      SimplifyExprsPass(parseContext),
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass(parseContext)
+      InlineProceduresPass(parseContext),
     ),
     listOf(
       // Clean up procedures after inlining
       InlinedProcedureRemovalPass(),
+    ),
+    listOf(
       EmptyEdgeRemovalPass(),
+      SimplifyExprsPass(parseContext),
+      UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),

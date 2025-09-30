@@ -174,8 +174,12 @@ fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuild
 /**
  * Returns the set of edges that are before any thread start in the init procedure or after all
  * thread joins in the init procedure (when it is guaranteed that no other thread is running).
+ *
+ * @param builder the XcfaBuilder to analyze
+ * @param onlyInitPhase if true, only edges before any thread start are returned
+ * @return the set of edges that are non-concurrent
  */
-private fun getNonConcurrentEdges(builder: XcfaBuilder): Set<XcfaEdge> {
+fun getNonConcurrentEdges(builder: XcfaBuilder, onlyInitPhase: Boolean = false): Set<XcfaEdge> {
   val initProcedure = builder.getInitProcedures().first().first
   val loopEdges = initProcedure.loopEdges
   val threadStartOrInvokeInLoop =
@@ -196,7 +200,7 @@ private fun getNonConcurrentEdges(builder: XcfaBuilder): Set<XcfaEdge> {
       locationsToVisit.add(edge.target)
     }
   }
-  if (threadStartOrInvokeInLoop) return nonConcurrent
+  if (threadStartOrInvokeInLoop || onlyInitPhase) return nonConcurrent
 
   // Collect edges after all thread joins
   val startedThreadVars = mutableSetOf<VarDecl<*>>()

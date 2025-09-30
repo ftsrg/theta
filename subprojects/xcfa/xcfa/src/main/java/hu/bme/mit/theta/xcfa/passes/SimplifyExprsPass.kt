@@ -24,12 +24,15 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.simplify
+import java.util.Stack
 
 /**
  * This pass simplifies the expressions inside statements and substitutes the values of constant
@@ -41,8 +44,15 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
     val unusedLocRemovalPass = UnusedLocRemovalPass()
-    val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     var edges = LinkedHashSet(builder.getEdges())
+    val initEdges = LinkedHashSet(if (builder in builder.parent.getInitProcedures().map { it.first }) {
+      getNonConcurrentEdges(builder.parent, true)
+    } else {
+      emptySet()
+    })
+    val initLoops = getInitLoops(builder.initLoc, initEdges)
+
+    val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val constValuation = MutableValuation()
     val modifiedGlobalVars =
       builder.parent
@@ -62,20 +72,32 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val edge = toVisit.removeFirst()
         visited.add(edge)
 
-        val incomingValuations =
+        val nonModifiedValuation = if (edge.source.incomingEdges.size == 2 && edge.source in initLoops) {
+          val loopEdges = initLoops[edge.source]!!
+          val previousNonLoopEdge = edge.source.incomingEdges.first { it !in loopEdges }
+          ImmutableValuation.from(valuations[previousNonLoopEdge]?.toMap()?.filter { (v, _) ->
+            loopEdges.none { e -> e.collectVarsWithAccessType()[v]?.isWritten == true }
+          })
+        } else {
+          null
+        }
+        val intersectedValuation =
           edge.source.incomingEdges
             .filter { it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) } }
             .map(valuations::get)
             .reduceOrNull(this::intersect)
-        val localValuation =
-          MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
+        val incomingValuations = nonModifiedValuation union intersectedValuation
+        val localValuation = MutableValuation.copyOf(incomingValuations)
         localValuation.putAll(constValuation)
+
         val oldLabels = edge.getFlatLabels()
         val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
 
-        // note that global variable values are still propagated within an edge (XcfaEdge is
-        // considered atomic)
-        modifiedGlobalVars.forEach { localValuation.remove(it) }
+        if (edge !in initEdges) {
+          // note that global variable values are still propagated within an edge (XcfaEdge is
+          // considered atomic)
+          modifiedGlobalVars.forEach { localValuation.remove(it) }
+        }
 
         if (newLabels != oldLabels) {
           builder.removeEdge(edge)
@@ -108,6 +130,12 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     )
   }
 
+  private infix fun Valuation?.union(other: Valuation?): Valuation {
+    val map1 = this?.toMap() ?: mapOf()
+    val map2 = other?.toMap() ?: mapOf()
+    return ImmutableValuation.from(map1 + map2)
+  }
+
   /**
    * Separates the variables in this collection. The constant variables are added to the given
    * valuation with their values. Modified variables are returned as a list.
@@ -131,5 +159,30 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
           valuation.toMap()[v]?.let { constValuation.put(v, it) }
         }
       }
+  }
+
+  private fun getInitLoops(initLoc: XcfaLocation, initEdges: Set<XcfaEdge>): Map<XcfaLocation, Set<XcfaEdge>> {
+    val loopEdges = mutableMapOf<XcfaLocation, Set<XcfaEdge>>()
+    val visited = mutableSetOf<XcfaEdge>()
+    val stack = Stack<XcfaLocation>()
+    stack.push(initLoc)
+    while (stack.isNotEmpty()) {
+      val loc = stack.peek()
+      val edge = loc.outgoingEdges.firstOrNull { it in initEdges && it !in visited }
+      if (edge == null) {
+        stack.pop()
+        continue
+      }
+      visited.add(edge)
+      if (edge.target in stack) {
+        val (_, edges) = getLoopElements(edge)
+        if (edges.all { it in initEdges }) {
+          loopEdges[edge.target] = edges
+        }
+      } else {
+        stack.push(edge.target)
+      }
+    }
+    return loopEdges
   }
 }
