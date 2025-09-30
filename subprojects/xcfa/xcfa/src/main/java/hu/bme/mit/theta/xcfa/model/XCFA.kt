@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.xcfa.lazyPointsToGraph
+import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
 import java.util.*
 
 class XCFA(
@@ -31,7 +31,7 @@ class XCFA(
 
   private var cachedHash: Int? = null
 
-  val pointsToGraph by this.lazyPointsToGraph
+  val pointsToGraph by lazy { this.getPointsToGraph() }
 
   var procedures: Set<XcfaProcedure> // procedure definitions
     private set

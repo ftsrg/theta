@@ -19,11 +19,11 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.dereferences
-import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getAtomicBlockInnerLocations
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
  * This pass simplifies the XCFA by joining certain edges to single edges.

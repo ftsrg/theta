@@ -16,9 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class RemoveAbortBranchesPass : ProcedurePass {
 

@@ -18,8 +18,13 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectAssumesVars
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isRead
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 class StaticCoiPass : ProcedurePass {
 

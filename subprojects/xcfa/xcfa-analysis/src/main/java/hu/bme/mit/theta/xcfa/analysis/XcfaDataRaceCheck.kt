@@ -28,11 +28,18 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.FenceLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
+import hu.bme.mit.theta.xcfa.utils.AccessType
+import hu.bme.mit.theta.xcfa.utils.WRITE
+import hu.bme.mit.theta.xcfa.utils.acquiredMutexes
+import hu.bme.mit.theta.xcfa.utils.collectGlobalVars
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.util.function.Predicate
 
 private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
@@ -75,7 +82,8 @@ fun getDataRacePredicate() =
                     (m1.mutexes intersect m2.mutexes).isEmpty() &&
                     mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
                 )
-                  return@Predicate true // TODO: refiner needs to check that the memory locations are really the same
+                  return@Predicate true // TODO: refiner needs to check that the memory locations
+                // are really the same
               }
             }
           }

@@ -58,6 +58,11 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
+import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
+import hu.bme.mit.theta.xcfa.utils.references
 import kotlin.time.measureTime
 
 private val Expr<*>.vars

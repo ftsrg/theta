@@ -45,10 +45,10 @@ import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.nio.file.Paths
 
 fun complexPortfolio25(

@@ -54,13 +54,13 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isDataRacePossible
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
@@ -184,10 +184,7 @@ fun frontend(
   val stopwatch = Stopwatch.createStarted()
 
   val input = config.inputConfig.input!!
-  logger.write(
-    INFO,
-    "Parsing the input $input as ${config.frontendConfig.inputType}\n",
-  )
+  logger.write(INFO, "Parsing the input $input as ${config.frontendConfig.inputType}\n")
 
   val parseContext = ParseContext()
 
@@ -248,19 +245,25 @@ private fun backend(
   if (config.backendConfig.backend == Backend.NONE) {
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
-    if (config.inputConfig.property == ErrorDetection.ERROR_LOCATION &&
-      (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
+    if (
+      config.inputConfig.property == ErrorDetection.ERROR_LOCATION &&
+        (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.write(RESULT, "Input is trivially safe\n")
 
       logger.write(RESULT, result.toString() + "\n")
       result
-    } else if (config.inputConfig.property == ErrorDetection.DATA_RACE &&
-      xcfa != null && !isDataRacePossible(xcfa)
+    } else if (
+      config.inputConfig.property == ErrorDetection.DATA_RACE &&
+        xcfa != null &&
+        !isDataRacePossible(xcfa)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-      logger.write(RESULT, "Input is trivially safe: no global memory is written or all global memory accesses are atomic\n")
+      logger.write(
+        RESULT,
+        "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses.\n",
+      )
 
       logger.write(RESULT, result.toString() + "\n")
       result

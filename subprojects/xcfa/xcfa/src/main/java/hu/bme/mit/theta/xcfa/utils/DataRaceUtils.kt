@@ -13,10 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package hu.bme.mit.theta.xcfa
+package hu.bme.mit.theta.xcfa.utils
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 
@@ -24,26 +25,22 @@ import hu.bme.mit.theta.xcfa.passes.loopEdges
  * Checks whether a data race is possible in the given XCFA
  *
  * @param xcfa the XCFA to analyze
- * @return true if there is any potential racing global variable or memory access that is not atomic where the variable/memory location is written at least once
+ * @return true if there is any potential racing global variable or memory access that is not atomic
+ *   where the variable/memory location is written at least once
  */
-fun isDataRacePossible(xcfa: XCFA): Boolean =
-  isDataRacePossible(xcfa.procedureBuilders.first().parent)
-
-/**
- * Checks whether a data race is possible in the given XcfaBuilder
- *
- * @param builder the XcfaBuilder to analyze
- * @return true if there is any potential racing global variable or memory access that is not atomic where the variable/memory location is written at least once
- */
-fun isDataRacePossible(builder: XcfaBuilder): Boolean {
-  val nonConcurrent = getNonConcurrentEdges(builder)
+fun isDataRacePossible(xcfa: XCFA): Boolean {
+  val builder = xcfa.procedureBuilders.first().parent
+  val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
+  val nonConcurrent = initEdges + (finalEdges ?: setOf())
   val atomicLocations = getAtomicBlockInnerLocations(builder)
   if (getPotentialRacingVars(builder, nonConcurrent, atomicLocations).isNotEmpty()) {
     return true
   }
 
-  var nonAtomicMemoryAccess = false
-  var writeMemoryAccess = false
+  val pointerPartitions = pointerPartitions(xcfa, initEdges)
+  val n = pointerPartitions.size
+  val nonAtomicMemoryAccess = BooleanArray(n + 1) { false }
+  val writeMemoryAccess = BooleanArray(n + 1) { false }
   builder.getProcedures().forEach { proc ->
     val edges = proc.getEdges() - nonConcurrent
     for (e in edges) {
@@ -51,14 +48,20 @@ fun isDataRacePossible(builder: XcfaBuilder): Boolean {
       for (l in e.getFlatLabels()) {
         if (l.isAtomicBegin) atomic = true
         if (l.isAtomicEnd) atomic = false
-        l.dereferencesWithAccessType.forEach { (_, access) ->
+        l.dereferencesWithAccessType.forEach { (deref, access) ->
+          val partition =
+            pointerPartitions
+              .indexOfFirst {
+                ((deref.array as? RefExpr<*>)?.decl in it.first) || deref.array in it.second
+              }
+              .let { if (it == -1) n else it } // if not found, put in "other" partition
           if (!atomic) {
-            nonAtomicMemoryAccess = true
+            nonAtomicMemoryAccess[partition] = true
           }
           if (access.isWritten) {
-            writeMemoryAccess = true
+            writeMemoryAccess[partition] = true
           }
-          if (nonAtomicMemoryAccess && writeMemoryAccess) {
+          if (nonAtomicMemoryAccess[partition] && writeMemoryAccess[partition]) {
             return true
           }
         }
@@ -75,21 +78,24 @@ fun isDataRacePossible(builder: XcfaBuilder): Boolean {
  * @param builder the XcfaBuilder to analyze
  * @return the set of variables that may be involved in a data race
  */
-fun getPotentialRacingVars(builder: XcfaBuilder): Set<VarDecl<*>> =
-  getPotentialRacingVars(builder, getNonConcurrentEdges(builder), getAtomicBlockInnerLocations(builder))
+fun getPotentialRacingVars(builder: XcfaBuilder): Set<VarDecl<*>> {
+  val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
+  val nonConcurrent = initEdges + (finalEdges ?: setOf())
+  return getPotentialRacingVars(builder, nonConcurrent, getAtomicBlockInnerLocations(builder))
+}
 
 /**
  * Collects the set of variables that may be involved in a data race.
  *
  * @param builder the XcfaBuilder to analyze
- * @param initEdges the set of edges that are before any thread start in the init procedure
+ * @param nonConcurrent the set of edges that are before any thread start in the init procedure
  * @param atomicLocations the set of locations that are inside atomic blocks
  * @return the set of variables that may be involved in a data race
  */
 private fun getPotentialRacingVars(
   builder: XcfaBuilder,
-  initEdges: Set<XcfaEdge>,
-  atomicLocations: Set<XcfaLocation>
+  nonConcurrent: Set<XcfaEdge>,
+  atomicLocations: Set<XcfaLocation>,
 ): Set<VarDecl<*>> {
   val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
   val nonAtomicGlobalVars = builder.getVars().filter { !it.atomic }.map { it.wrappedVar }.toSet()
@@ -98,7 +104,7 @@ private fun getPotentialRacingVars(
   val nonAtomicAccesses = nonAtomicGlobalVars.associateWith { false }.toMutableMap()
 
   for (proc in builder.getProcedures()) {
-    val edges = proc.getEdges() - initEdges
+    val edges = proc.getEdges() - nonConcurrent
     val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
     val currentVarAccesses = mutableSetOf<VarDecl<*>>()
     for (e in edges) {
@@ -125,9 +131,12 @@ private fun getPotentialRacingVars(
     }
   }
 
-  val potentialRacingVars = nonAtomicGlobalVars.filter {
-    threadsAccessingVar[it]!! > 1 && nonAtomicAccesses[it] == true && writeAccesses[it] == true
-  }.toSet()
+  val potentialRacingVars =
+    nonAtomicGlobalVars
+      .filter {
+        threadsAccessingVar[it]!! > 1 && nonAtomicAccesses[it] == true && writeAccesses[it] == true
+      }
+      .toSet()
   return potentialRacingVars
 }
 
@@ -136,8 +145,7 @@ private fun getPotentialRacingVars(
  * procedure, false otherwise. Note that this is a conservative analysis.
  */
 fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuilder, Boolean> {
-  val threadCount =
-    builder.getInitProcedures().associate { it.first to false }.toMutableMap()
+  val threadCount = builder.getInitProcedures().associate { it.first to false }.toMutableMap()
   var previousCounts: Map<XcfaProcedureBuilder, Boolean>? = null
   while (previousCounts != threadCount) {
     previousCounts = threadCount.toMap()
@@ -159,9 +167,7 @@ fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuild
           } else if (label is InvokeLabel) {
             val invoked = builder.getProcedures().find { it.name == label.name }!!
             threadCount[invoked] =
-              threadCount[invoked] == true ||
-                threadCount[proc] == true ||
-                invoked in originalCounts
+              threadCount[invoked] == true || threadCount[proc] == true || invoked in originalCounts
             visitedNewRound.add(invoked)
           }
         }
@@ -171,75 +177,59 @@ fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuild
   return threadCount
 }
 
-/**
- * Returns the set of edges that are before any thread start in the init procedure or after all
- * thread joins in the init procedure (when it is guaranteed that no other thread is running).
- *
- * @param builder the XcfaBuilder to analyze
- * @param onlyInitPhase if true, only edges before any thread start are returned
- * @return the set of edges that are non-concurrent
- */
-fun getNonConcurrentEdges(builder: XcfaBuilder, onlyInitPhase: Boolean = false): Set<XcfaEdge> {
-  val initProcedure = builder.getInitProcedures().first().first
-  val loopEdges = initProcedure.loopEdges
-  val threadStartOrInvokeInLoop =
-    loopEdges.any { edge ->
-      edge.getFlatLabels().any { it is StartLabel || it is JoinLabel || it is InvokeLabel }
-    }
-  val nonConcurrent = mutableSetOf<XcfaEdge>()
+private fun pointerPartitions(
+  xcfa: XCFA,
+  initEdges: Set<XcfaEdge>,
+): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
+  val pointsTo = xcfa.getPointsToGraph(initEdges).toList()
 
-  // Collect edges before any thread start
-  val visitedLocations = mutableSetOf<XcfaLocation>()
-  val locationsToVisit = mutableListOf(initProcedure.initLoc)
-  while (locationsToVisit.isNotEmpty()) {
-    val loc = locationsToVisit.removeLast()
-    if (!visitedLocations.add(loc) || (loc.incomingEdges.size > 1 && threadStartOrInvokeInLoop)) continue
-    loc.outgoingEdges.forEach { edge ->
-      if (edge.getFlatLabels().any { it is StartLabel }) return@forEach
-      nonConcurrent.add(edge)
-      locationsToVisit.add(edge.target)
-    }
+  val n = pointsTo.size
+  val uf = UnionFind(n)
+
+  val elementToSets = mutableMapOf<LitExpr<*>, MutableList<Int>>()
+  pointsTo.forEachIndexed { index, (_, lits) ->
+    lits.forEach { lit -> elementToSets.getOrPut(lit) { mutableListOf() }.add(index) }
   }
-  if (threadStartOrInvokeInLoop || onlyInitPhase) return nonConcurrent
 
-  // Collect edges after all thread joins
-  val startedThreadVars = mutableSetOf<VarDecl<*>>()
-  val joinedThreadVars = mutableSetOf<VarDecl<*>>()
-  val joins = mutableSetOf<XcfaEdge>()
-  initProcedure.getEdges().forEach { edge ->
-    edge.getFlatLabels().forEach { label ->
-      if (label is StartLabel) {
-        if (label.pidVar in startedThreadVars) {
-          // using same var for multiple threads, cannot continue
-          return nonConcurrent
-        }
-        startedThreadVars.add(label.pidVar)
-      }
-      if (label is JoinLabel) {
-        joinedThreadVars.add(label.pidVar)
-        joins.add(edge)
-      }
+  elementToSets.forEach { (_, indices) ->
+    for (i in 1 until indices.size) {
+      uf.union(indices[0], indices[i])
     }
   }
 
-  if (!startedThreadVars.all { it in joinedThreadVars }) {
-    return nonConcurrent
+  val groups = mutableMapOf<Int, Pair<MutableSet<VarDecl<*>>, MutableSet<LitExpr<*>>>>()
+  for (i in 0 until n) {
+    val root = uf.find(i)
+    val item = pointsTo[i]
+    val group = groups.getOrPut(root) { mutableSetOf<VarDecl<*>>() to mutableSetOf() }
+    group.first.add(item.first)
+    group.second.addAll(item.second)
   }
 
-  val edgesAfterAllJoins = joins.map { join ->
-    val visited = mutableSetOf<XcfaLocation>()
-    val toVisit = mutableListOf(join.target)
-    val edgesAfterJoin = mutableSetOf<XcfaEdge>()
-    while (toVisit.isNotEmpty()) {
-      val loc = toVisit.removeLast()
-      if (!visited.add(loc)) continue
-      loc.outgoingEdges.forEach { edge ->
-        if (edge.getFlatLabels().any { it is StartLabel }) return@map setOf()
-        edgesAfterJoin.add(edge)
-        toVisit.add(edge.target)
-      }
+  return groups.values.toList()
+}
+
+private class UnionFind(n: Int) {
+  private val parent = IntArray(n) { it }
+  private val rank = IntArray(n) { 0 }
+
+  fun find(x: Int): Int {
+    if (parent[x] != x) parent[x] = find(parent[x])
+    return parent[x]
+  }
+
+  fun union(x: Int, y: Int) {
+    val rootX = find(x)
+    val rootY = find(y)
+    if (rootX == rootY) return
+
+    if (rank[rootX] < rank[rootY]) {
+      parent[rootX] = rootY
+    } else if (rank[rootX] > rank[rootY]) {
+      parent[rootY] = rootX
+    } else {
+      parent[rootY] = rootX
+      rank[rootX]++
     }
-    edgesAfterJoin
-  }.reduce { acc, edgesAfterJoin -> acc intersect edgesAfterJoin }
-  return nonConcurrent + edgesAfterAllJoins
+  }
 }

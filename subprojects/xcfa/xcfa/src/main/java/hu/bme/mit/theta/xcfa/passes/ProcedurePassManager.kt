@@ -55,10 +55,11 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
+      NondetFunctionPass(),
     ),
     listOf(
       // Clean up procedures after inlining
-      InlinedProcedureRemovalPass(),
+      InlinedProcedureRemovalPass()
     ),
     listOf(
       EmptyEdgeRemovalPass(),
@@ -72,7 +73,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // handling remaining function calls
       MemsafetyPass(parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO

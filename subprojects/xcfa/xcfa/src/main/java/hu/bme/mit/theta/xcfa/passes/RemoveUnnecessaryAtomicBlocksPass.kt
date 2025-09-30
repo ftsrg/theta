@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isAtomicBegin
-import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
+import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 
 class RemoveUnnecessaryAtomicBlocksPass : ProcedurePass {
 

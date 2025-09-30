@@ -49,11 +49,10 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
-import java.util.*
 import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int

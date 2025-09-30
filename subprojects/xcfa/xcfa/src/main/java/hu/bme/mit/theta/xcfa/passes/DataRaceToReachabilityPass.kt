@@ -26,8 +26,19 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.DereferenceAccessMap
+import hu.bme.mit.theta.xcfa.utils.READ
+import hu.bme.mit.theta.xcfa.utils.VarAccessMap
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.getPotentialRacingVars
+import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
+import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
+import hu.bme.mit.theta.xcfa.utils.isRead
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 /**
  * Reduces data race checking to reachability checking by adding write access flags for each global
