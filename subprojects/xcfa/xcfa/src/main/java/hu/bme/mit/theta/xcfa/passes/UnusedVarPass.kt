@@ -49,7 +49,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
       usedVars.clear()
 
-      if (!keepGlobalVariableAccesses) {
+      if (keepGlobalVariableAccesses) {
         usedVars.addAll(globalVars)
       }
 

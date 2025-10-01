@@ -187,72 +187,70 @@ fun getNonConcurrentEdges(
 ): Pair<Set<XcfaEdge>, Set<XcfaEdge>?> {
   val initProcedure = builder.getInitProcedures().first().first
   val loopEdges = initProcedure.loopEdges
-  val threadStartOrInvokeInLoop =
+  var potentialNotJoinedThread =
     loopEdges.any { edge ->
       edge.getFlatLabels().any { it is StartLabel || it is JoinLabel || it is InvokeLabel }
     }
-  val initEdges = mutableSetOf<XcfaEdge>()
 
-  // Collect edges before any thread start
-  val visitedLocations = mutableSetOf<XcfaLocation>()
-  val locationsToVisit = mutableListOf(initProcedure.initLoc)
-  while (locationsToVisit.isNotEmpty()) {
-    val loc = locationsToVisit.removeLast()
-    if (!visitedLocations.add(loc) || (loc.incomingEdges.size > 1 && threadStartOrInvokeInLoop))
-      continue
-    loc.outgoingEdges.forEach { edge ->
-      if (edge.getFlatLabels().any { it is StartLabel }) return@forEach
-      initEdges.add(edge)
-      locationsToVisit.add(edge.target)
-    }
-  }
-  if (threadStartOrInvokeInLoop || onlyInitPhase) {
-    return initEdges to null
-  }
-
-  // Collect edges after all thread joins
+  val starts = mutableSetOf<XcfaEdge>()
   val startedThreadVars = mutableSetOf<VarDecl<*>>()
-  val joinedThreadVars = mutableSetOf<VarDecl<*>>()
   val joins = mutableSetOf<XcfaEdge>()
+  val joinedThreadVars = mutableSetOf<VarDecl<*>>()
   initProcedure.getEdges().forEach { edge ->
     edge.getFlatLabels().forEach { label ->
       if (label is StartLabel) {
         if (label.pidVar in startedThreadVars) {
-          // using same var for multiple threads, cannot continue
-          return initEdges to null
+          potentialNotJoinedThread = false
         }
+        starts.add(edge)
         startedThreadVars.add(label.pidVar)
       }
       if (label is JoinLabel) {
-        joinedThreadVars.add(label.pidVar)
         joins.add(edge)
+        joinedThreadVars.add(label.pidVar)
       }
     }
   }
 
-  if (!startedThreadVars.all { it in joinedThreadVars }) {
-    return initEdges to null
+  if (starts.isEmpty()) {
+    return setOf<XcfaEdge>() to null
   }
 
-  val edgesAfterAllJoins =
+  // Collect edges before any thread start
+  val edgesAfterAnyStart =
+    starts
+      .map { start -> collectReachableEdges(start, true) }
+      .reduce { acc, edgesAfterStart -> acc union edgesAfterStart }
+  val edgesBeforeAllStarts = initProcedure.getEdges() - edgesAfterAnyStart
+
+  if (potentialNotJoinedThread || onlyInitPhase || !startedThreadVars.all { it in joinedThreadVars }) {
+    return edgesBeforeAllStarts to null
+  }
+
+  // Collect edges after all thread joins
+  val edgesBeforeAnyJoin =
     joins
-      .map { join ->
-        val visited = mutableSetOf<XcfaLocation>()
-        val toVisit = mutableListOf(join.target)
-        val edgesAfterJoin = mutableSetOf<XcfaEdge>()
-        while (toVisit.isNotEmpty()) {
-          val loc = toVisit.removeLast()
-          if (!visited.add(loc)) continue
-          loc.outgoingEdges.forEach { edge ->
-            if (edge.getFlatLabels().any { it is StartLabel }) return@map setOf()
-            edgesAfterJoin.add(edge)
-            toVisit.add(edge.target)
-          }
-        }
-        edgesAfterJoin
-      }
-      .reduce { acc, edgesAfterJoin -> acc intersect edgesAfterJoin }
-  return initEdges to edgesAfterAllJoins
+      .map { join -> collectReachableEdges(join, false) }
+      .reduce { acc, edgesAfterJoin -> acc union edgesAfterJoin }
+  val edgesAfterAllJoins = initProcedure.getEdges() - edgesBeforeAnyJoin
+
+  return edgesBeforeAllStarts to edgesAfterAllJoins
+}
+
+private fun collectReachableEdges(start: XcfaEdge, forward: Boolean = true): Set<XcfaEdge> {
+  val visited = mutableSetOf<XcfaLocation>()
+  val toVisit = mutableListOf(if (forward) start.target else start.source)
+  val reachableEdges = mutableSetOf(start)
+  while (toVisit.isNotEmpty()) {
+    val loc = toVisit.removeLast()
+    if (!visited.add(loc)) continue
+    val edges = if (forward) loc.outgoingEdges else loc.incomingEdges
+    edges.forEach { edge ->
+      reachableEdges.add(edge)
+      toVisit.add(if (forward) edge.target else edge.source)
+    }
+  }
+  return reachableEdges
 }
 
 fun getInitLoops(
