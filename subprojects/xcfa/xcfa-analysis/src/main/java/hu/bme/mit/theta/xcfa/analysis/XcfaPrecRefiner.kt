@@ -28,8 +28,14 @@ import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.common.CartesianProduct
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PositionAwareSubstitution
 import hu.bme.mit.theta.xcfa.model.getTempLookup
+import hu.bme.mit.theta.xcfa.passes.allVarInstances
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import kotlin.collections.flatMap
 
 class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(
   refToPrec: RefutationToPrec<PtrPrec<P>, R>
@@ -97,8 +103,15 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
       is ExplPrec ->
         ExplPrec.of(vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
 
-      is PredPrec ->
-        PredPrec.of(preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+      is PredPrec -> {
+        PredPrec.of(preds.flatMap { pred ->
+          val refsInOrder = ArrayList<RefExpr<*>>()
+          ExprUtils.collectRefs(pred, refsInOrder)
+          val varInstanceSets : List<Set<VarDecl<*>>> = refsInOrder.map { it.decl.allVarInstances(lookups) }
+          val varInstancesCartesianProduct : List<List<VarDecl<*>>> = CartesianProduct.of(varInstanceSets)
+          varInstancesCartesianProduct.map { PositionAwareSubstitution.substitute(pred, it) }
+        }) as P
+      }
 
       is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 

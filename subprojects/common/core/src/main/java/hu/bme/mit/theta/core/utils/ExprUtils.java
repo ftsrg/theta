@@ -244,6 +244,20 @@ public final class ExprUtils {
     }
 
     /**
+     * Collect references in an expression into a given collection.
+     *
+     * @param expr Expression
+     * @param collectTo Collection where the references should be put
+     */
+    public static void collectRefs(final Expr<?> expr, final Collection<RefExpr<?>> collectTo) {
+        if (expr instanceof RefExpr) {
+            collectTo.add((RefExpr<?>) expr);
+            return;
+        }
+        expr.getOps().forEach(op -> collectRefs(op, collectTo));
+    }
+
+    /**
      * Collect indexed constants of an expression into a given collection.
      *
      * @param expr Expression

@@ -171,6 +171,12 @@ fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Decl<T>
 fun <T : Type> VarDecl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
   (varLut[this] ?: this) as VarDecl<T>
 
+fun <T : Type> Decl<T>.allVarInstances(lookups: Collection<Map<out Decl<*>, VarDecl<*>>>) : Set<VarDecl<T>> {
+  val newVars = mutableSetOf<VarDecl<T>>()
+  lookups.forEach { varLut -> varLut[this] ?.let { newVars.add(it as VarDecl<T>) } }
+  return if (newVars.isEmpty()) setOf(this as VarDecl<T>) else newVars
+}
+
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 
 private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
