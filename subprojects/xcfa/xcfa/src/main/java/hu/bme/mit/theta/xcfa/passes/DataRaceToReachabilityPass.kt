@@ -305,16 +305,17 @@ class DataRaceToReachabilityPass : ProcedurePass {
   }
 
   private fun collectPotentialRacingVars(builder: XcfaProcedureBuilder): Set<VarDecl<*>> {
+    val xcfaBuilder = builder.parent
     if (potentialRacingVars == null) {
-      potentialRacingVars = getPotentialRacingVars(builder.parent)
-      val initProcedure = builder.parent.getInitProcedures().first().first
+      potentialRacingVars = getPotentialRacingVars(xcfaBuilder)
+      val initProcedure = xcfaBuilder.getInitProcedures().first().first
 
       val initializeFlags =
         potentialRacingVars!!.flatMap { v ->
           writeFlagVars[v] = Decls.Var("_write_flag_${v.name}", Int())
           readFlagVars[v] = Decls.Var("_read_flag_${v.name}", Int())
-          builder.parent.addVar(XcfaGlobalVar(writeFlagVars[v]!!, Int(0)))
-          builder.parent.addVar(XcfaGlobalVar(readFlagVars[v]!!, Int(0)))
+          xcfaBuilder.addVar(XcfaGlobalVar(writeFlagVars[v]!!, Int(0), atomic = true))
+          xcfaBuilder.addVar(XcfaGlobalVar(readFlagVars[v]!!, Int(0), atomic = true))
           listOf(
             StmtLabel(AssignStmt.of(v.writeFlag, Int(0))),
             StmtLabel(AssignStmt.of(v.readFlag, Int(0))),
@@ -326,10 +327,10 @@ class DataRaceToReachabilityPass : ProcedurePass {
             StmtLabel(AssignStmt.of(derefArrayReadFlagVar, Int(-1))),
             StmtLabel(AssignStmt.of(derefOffsetReadFlagVar, Int(-1))),
           )
-      builder.parent.addVar(XcfaGlobalVar(derefArrayWriteFlagVar, Int(-1)))
-      builder.parent.addVar(XcfaGlobalVar(derefOffsetWriteFlagVar, Int(-1)))
-      builder.parent.addVar(XcfaGlobalVar(derefArrayReadFlagVar, Int(-1)))
-      builder.parent.addVar(XcfaGlobalVar(derefOffsetReadFlagVar, Int(-1)))
+      xcfaBuilder.addVar(XcfaGlobalVar(derefArrayWriteFlagVar, Int(-1), atomic = true))
+      xcfaBuilder.addVar(XcfaGlobalVar(derefOffsetWriteFlagVar, Int(-1), atomic = true))
+      xcfaBuilder.addVar(XcfaGlobalVar(derefArrayReadFlagVar, Int(-1), atomic = true))
+      xcfaBuilder.addVar(XcfaGlobalVar(derefOffsetReadFlagVar, Int(-1), atomic = true))
 
       val newLoc =
         XcfaLocation("${initProcedure.initLoc.name}_dr", metadata = initProcedure.initLoc.metadata)

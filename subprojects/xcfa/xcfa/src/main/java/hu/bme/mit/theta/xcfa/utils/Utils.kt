@@ -223,7 +223,9 @@ fun getNonConcurrentEdges(
       .reduce { acc, edgesAfterStart -> acc union edgesAfterStart }
   val edgesBeforeAllStarts = initProcedure.getEdges() - edgesAfterAnyStart
 
-  if (potentialNotJoinedThread || onlyInitPhase || !startedThreadVars.all { it in joinedThreadVars }) {
+  if (
+    potentialNotJoinedThread || onlyInitPhase || !startedThreadVars.all { it in joinedThreadVars }
+  ) {
     return edgesBeforeAllStarts to null
   }
 

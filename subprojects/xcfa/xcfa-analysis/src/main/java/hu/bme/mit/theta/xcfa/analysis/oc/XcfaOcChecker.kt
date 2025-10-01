@@ -45,7 +45,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
@@ -64,9 +63,6 @@ import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
 import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 import hu.bme.mit.theta.xcfa.utils.references
 import kotlin.time.measureTime
-
-private val Expr<*>.vars
-  get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(
   xcfa: XCFA,
@@ -239,7 +235,7 @@ class XcfaOcChecker(
 
     private fun memoryEvent(
       deref: Dereference<*, *, *>,
-      consts: Map<Any, ConstDecl<*>>,
+      consts: Map<Any, IndexedConstDecl<*>>,
       type: EventType,
     ): List<E> {
       check(!inEdge || last.size == 1)
@@ -251,7 +247,8 @@ class XcfaOcChecker(
           atomicBlock != null -> atomicBlock!!
           else -> E.uniqueClkId()
         }
-      val e = E(memoryDecl.getNewIndexed(), type, guard, pid, edge, clkId, array, offset)
+      val const = consts.getOrElse(deref) { memoryDecl.getNewIndexed() }
+      val e = E(const, type, guard, pid, edge, clkId, array, offset)
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
@@ -263,9 +260,9 @@ class XcfaOcChecker(
     }
 
     private fun <T : Type> Expr<T>.toEvents(
-      consts: Map<Any, ConstDecl<*>>? = null,
+      consts: Map<Any, IndexedConstDecl<*>>? = null,
       update: Boolean = true,
-    ): Map<Any, ConstDecl<*>> {
+    ): Map<Any, IndexedConstDecl<*>> {
       val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
       vars.forEach {
         last = event(it, READ)
@@ -352,7 +349,7 @@ class XcfaOcChecker(
                   is AssumeStmt -> {
                     val consts =
                       stmt.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
-                        stmt.cond.dereferences.associateWith { memoryDecl.getNewIndexed(false) }
+                        stmt.cond.dereferences.associateWith { memoryDecl.getNewIndexed(true) }
                     val condWithConsts = stmt.cond.with(consts)
                     val asAssign =
                       consts.size == 1 &&

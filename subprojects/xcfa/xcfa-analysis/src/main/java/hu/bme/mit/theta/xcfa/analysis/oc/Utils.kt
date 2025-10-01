@@ -22,12 +22,16 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 internal typealias E = XcfaEvent
 
 internal typealias R = Relation<XcfaEvent>
+
+internal val Expr<*>.vars: Set<VarDecl<*>>
+  get() = ExprUtils.getVars(this)
 
 /** Important! Empty collection is converted to true (not false). */
 internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> =
