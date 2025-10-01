@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CClock
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -27,7 +29,7 @@ class CollectClockVarsPass(val timed : Boolean, val parseContext : ParseContext)
         if (timed) {
             builder.getVars()
                 .filter { CComplexType.getType(it.ref, parseContext) is CClock }
-                .forEach { builder.addClock(it) }
+                .forEach { builder.addClock(cast(it, Rat())) }
         }
         return builder
     }

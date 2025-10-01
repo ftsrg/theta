@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 import kotlin.collections.LinkedHashSet
@@ -38,6 +39,8 @@ constructor(
 ) {
 
   fun getVars(): Set<XcfaGlobalVar> = vars
+
+  fun getClocks(): Set<XcfaGlobalVar> = clocks
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures
 
@@ -81,7 +84,7 @@ constructor(
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
-  private val clocks: MutableSet<VarDecl<*>> = LinkedHashSet(),
+  private val clocks: MutableSet<VarDecl<RatType>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -211,7 +214,7 @@ constructor(
     atomicVars.add(v)
   }
 
-  fun addClock(toAdd: VarDecl<*>) {
+  fun addClock(toAdd: VarDecl<RatType>) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }

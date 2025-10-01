@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.xcfa.lazyPointsToGraph
 import java.util.*
 
@@ -99,7 +100,7 @@ data class XcfaProcedure(
   val name: String,
   val params: List<Pair<VarDecl<*>, ParamDirection>>, // procedure params
   val vars: Set<VarDecl<*>>, // local variables
-  val clocks: Set<VarDecl<*>> = emptySet(),
+  val clocks: Set<VarDecl<RatType>> = emptySet(),
   val locs: Set<XcfaLocation>, // locations
   val edges: Set<XcfaEdge>, // edges
   val initLoc: XcfaLocation, // initial location
