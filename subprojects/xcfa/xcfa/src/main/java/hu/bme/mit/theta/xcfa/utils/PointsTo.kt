@@ -236,7 +236,10 @@ private fun getValuationAfterInitPhase(
   val visited = mutableSetOf<XcfaEdge>()
   val valuations = LinkedHashMap<XcfaEdge, Valuation>()
   while (toVisit.isNotEmpty()) {
-    val edge = toVisit.removeFirst()
+    val edge = toVisit.find { candidate ->
+      candidate.source.incomingEdges.all { it in visited }
+    } ?: toVisit.first()
+    toVisit.remove(edge)
     visited.add(edge)
     val valuation =
       MutableValuation.copyOf(mergeIncomingValuations(edge.source, valuations, initLoops))

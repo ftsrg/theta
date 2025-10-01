@@ -38,7 +38,9 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
   val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
   val nonConcurrent = initEdges + (finalEdges ?: setOf())
   val atomicLocations = getAtomicBlockInnerLocations(builder)
-  val potentialRacingVars = getPotentialRacingVars(builder, nonConcurrent, atomicLocations)
+  val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
+  val potentialRacingVars = getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
+
   if (potentialRacingVars.isNotEmpty()) {
     logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
     logger?.writeln(INFO, "| Potential racing variables: $potentialRacingVars")
@@ -46,11 +48,14 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
   }
 
   val pointerPartitions = pointerPartitions(xcfa, initEdges)
-  val n = pointerPartitions.size
+  val n = pointerPartitions.size // +1 for "other" partition
+  val threadsAccessingMemory = IntArray(n + 1) { 0 }
   val nonAtomicMemoryAccess = BooleanArray(n + 1) { false }
   val writeMemoryAccess = BooleanArray(n + 1) { false }
   builder.getProcedures().forEach { proc ->
     val edges = proc.getEdges() - nonConcurrent
+    val accessedPartitions = mutableSetOf<Int>()
+    val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
     for (e in edges) {
       var atomic = e.source in atomicLocations
       for (l in e.getFlatLabels()) {
@@ -63,18 +68,26 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
                 ((deref.array as? RefExpr<*>)?.decl in it.first) || deref.array in it.second
               }
               .let { if (it == -1) n else it } // if not found, put in "other" partition
+          accessedPartitions.add(partition)
           if (!atomic) {
             nonAtomicMemoryAccess[partition] = true
           }
           if (access.isWritten) {
             writeMemoryAccess[partition] = true
           }
-          if (nonAtomicMemoryAccess[partition] && writeMemoryAccess[partition]) {
+
+          val threads = threadsAccessingMemory[partition] + varAccessCount
+          val nonAtomic = nonAtomicMemoryAccess[partition]
+          val write = writeMemoryAccess[partition]
+          if (threads > 1 && nonAtomic && write) {
             logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
             return true
           }
         }
       }
+    }
+    accessedPartitions.forEach { p ->
+      threadsAccessingMemory[p] += varAccessCount
     }
   }
 
@@ -106,8 +119,8 @@ private fun getPotentialRacingVars(
   builder: XcfaBuilder,
   nonConcurrent: Set<XcfaEdge>,
   atomicLocations: Set<XcfaLocation>,
+  multipleThreadsPerProcedure: Map<XcfaProcedureBuilder, Boolean> = getMultipleThreadsPerProcedure(builder),
 ): Set<VarDecl<*>> {
-  val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
   val nonAtomicGlobalVars = builder.getVars().filter { !it.atomic }.map { it.wrappedVar }.toSet()
   val threadsAccessingVar = nonAtomicGlobalVars.associateWith { 0 }.toMutableMap()
   val writeAccesses = nonAtomicGlobalVars.associateWith { false }.toMutableMap()
@@ -115,7 +128,6 @@ private fun getPotentialRacingVars(
 
   for (proc in builder.getProcedures()) {
     val edges = proc.getEdges() - nonConcurrent
-    val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
     val currentVarAccesses = mutableSetOf<VarDecl<*>>()
     for (e in edges) {
       var atomic = e.source in atomicLocations
@@ -136,6 +148,7 @@ private fun getPotentialRacingVars(
         }
       }
     }
+    val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
     currentVarAccesses.forEach { v ->
       threadsAccessingVar[v] = threadsAccessingVar[v]!! + varAccessCount
     }
