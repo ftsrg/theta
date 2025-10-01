@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.clock.op.ClockOpSubstitutionVisitor
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
+import java.util.function.Function
 
 /** XcfaEdge must be in a `deterministic` ProcedureBuilder */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
@@ -110,6 +112,9 @@ fun XcfaLabel.changeVars(
         WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
+
+      is ClockOpLabel ->
+        ClockOpLabel(this.op.accept(ClockOpSubstitutionVisitor(), Function { v -> v.changeVars(varLut) }))
 
       else -> this
     }
