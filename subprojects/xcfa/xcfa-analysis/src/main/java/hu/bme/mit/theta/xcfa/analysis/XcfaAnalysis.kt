@@ -36,9 +36,12 @@ import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.clock.op.ClockOps.Reset
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
@@ -102,13 +105,20 @@ fun getCoreXcfaLts() =
             )
           )
         } else if (!proc.value.paramsInitialized) {
+          val lookup = proc.value.foldVarLookup()
+          val newClocksResetLabel = SequenceLabel(
+            listOf(
+              s.xcfa?.clocks?.filter { it.threadLocal }?.map { it.wrappedVar } ?: emptyList(),
+              proc.value.procedure?.clocks ?: emptyList()
+            ).flatten().map { ClockOpLabel(Reset(lookup[it] as VarDecl<RatType>, 0)) }
+          )
           listOf(
             XcfaAction(
               proc.key,
               XcfaEdge(
                 proc.value.locs.peek(),
                 proc.value.locs.peek(),
-                proc.value.paramStmts.peek().first,
+                SequenceLabel(listOf(proc.value.paramStmts.peek().first, newClocksResetLabel)),
                 proc.value.locs.peek().metadata,
               ),
               nextCnt = s.sGlobal.nextCnt,
@@ -184,6 +194,9 @@ fun getCoreXcfaLts() =
                     )
                   }
                   is ClockDelayLabel -> {
+                    if (s.processes.any { !it.value.paramsInitialized }) {
+                      StmtLabel(Assume(False()))
+                    } else {
                       val activeClocks: MutableSet<VarDecl<RatType>> = mutableSetOf()
                       val (threadLocalClocks, globalClocks) = s.xcfa?.clocks?.partition { it.threadLocal }
                         ?.let {
@@ -203,6 +216,7 @@ fun getCoreXcfaLts() =
                         )
                       }
                       ClockDelayLabel(activeClocks, label.metadata)
+                    }
                   }
                   else -> label
                 }
