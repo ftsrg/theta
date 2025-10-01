@@ -21,7 +21,9 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
@@ -71,7 +73,10 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
       val toVisit = builder.initLoc.outgoingEdges.toMutableList()
       val visited = mutableSetOf<XcfaEdge>()
       while (toVisit.isNotEmpty()) {
-        val edge = toVisit.removeFirst()
+        val edge = toVisit.find { candidate ->
+          candidate.source.incomingEdges.all { it in visited }
+        } ?: toVisit.first()
+        toVisit.remove(edge)
         visited.add(edge)
         val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
         val localValuation = MutableValuation.copyOf(incomingValuations)
@@ -80,7 +85,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val oldLabels = edge.getFlatLabels()
         val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
 
-        if (edge !in initEdges) {
+        if (edge !in initEdges || newLabels.any { it is InvokeLabel || it is StartLabel }) {
           // note that global variable values are still propagated within an edge (XcfaEdge is
           // considered atomic)
           modifiedGlobalVars.forEach { localValuation.remove(it) }
@@ -92,6 +97,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
           if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
             val newEdge = edge.withLabel(SequenceLabel(newLabels))
             builder.addEdge(newEdge)
+            visited.add(newEdge)
             valuations[newEdge] = localValuation
           }
         } else {

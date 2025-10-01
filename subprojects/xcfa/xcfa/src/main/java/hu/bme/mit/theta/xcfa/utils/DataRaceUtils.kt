@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.INFO
+import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -28,12 +31,17 @@ import hu.bme.mit.theta.xcfa.passes.loopEdges
  * @return true if there is any potential racing global variable or memory access that is not atomic
  *   where the variable/memory location is written at least once
  */
-fun isDataRacePossible(xcfa: XCFA): Boolean {
+fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
+  logger?.writeln(MAINSTEP, "Data race pre-check")
+  logger?.writeln(MAINSTEP, "| Collecting candidates for data race...")
   val builder = xcfa.procedureBuilders.first().parent
   val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
   val nonConcurrent = initEdges + (finalEdges ?: setOf())
   val atomicLocations = getAtomicBlockInnerLocations(builder)
-  if (getPotentialRacingVars(builder, nonConcurrent, atomicLocations).isNotEmpty()) {
+  val potentialRacingVars = getPotentialRacingVars(builder, nonConcurrent, atomicLocations)
+  if (potentialRacingVars.isNotEmpty()) {
+    logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
+    logger?.writeln(INFO, "| Potential racing variables: $potentialRacingVars")
     return true
   }
 
@@ -62,6 +70,7 @@ fun isDataRacePossible(xcfa: XCFA): Boolean {
             writeMemoryAccess[partition] = true
           }
           if (nonAtomicMemoryAccess[partition] && writeMemoryAccess[partition]) {
+            logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
             return true
           }
         }
@@ -69,6 +78,7 @@ fun isDataRacePossible(xcfa: XCFA): Boolean {
     }
   }
 
+  logger?.writeln(MAINSTEP, "| No candidate for data race.")
   return false
 }
 

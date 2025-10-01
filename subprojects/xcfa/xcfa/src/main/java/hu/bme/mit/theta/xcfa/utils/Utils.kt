@@ -335,12 +335,19 @@ fun mergeIncomingValuations(
   val nonModifiedValuation =
     if (loc.incomingEdges.size == 2 && loc in initLoops) {
       val loopEdges = initLoops[loc]!!
-      val previousNonLoopEdge = loc.incomingEdges.first { it !in loopEdges }
-      ImmutableValuation.from(
-        valuations[previousNonLoopEdge]?.toMap()?.filter { (v, _) ->
-          loopEdges.none { e -> e.collectVarsWithAccessType()[v]?.isWritten == true }
-        }
-      )
+      val straight = loopEdges.none { edge ->
+        edge.getFlatLabels().any { l -> l is InvokeLabel || l is StartLabel }
+      }
+      if (straight) {
+        val previousNonLoopEdge = loc.incomingEdges.first { it !in loopEdges }
+        ImmutableValuation.from(
+          valuations[previousNonLoopEdge]?.toMap()?.filter { (v, _) ->
+            loopEdges.none { e -> e.collectVarsWithAccessType()[v]?.isWritten == true }
+          }
+        )
+      } else {
+        null
+      }
     } else {
       null
     }

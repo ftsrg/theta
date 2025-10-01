@@ -257,7 +257,7 @@ private fun backend(
     } else if (
       config.inputConfig.property == ErrorDetection.DATA_RACE &&
         xcfa != null &&
-        !isDataRacePossible(xcfa)
+        !isDataRacePossible(xcfa, logger)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.write(
