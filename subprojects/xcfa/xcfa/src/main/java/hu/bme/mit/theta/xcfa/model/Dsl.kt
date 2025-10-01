@@ -298,7 +298,7 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     }
 
     fun clockDelay(): SequenceLabel {
-      val label = ClockDelayLabel(EmptyMetaData)
+      val label = ClockDelayLabel()
       labelList.add(label)
       return SequenceLabel(labelList)
     }

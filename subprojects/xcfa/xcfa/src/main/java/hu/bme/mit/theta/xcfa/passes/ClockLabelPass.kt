@@ -86,7 +86,7 @@ class ClockLabelPass(val timed : Boolean) : ProcedurePass {
                                 }
 
                                 "theta_clock_delay" -> {
-                                    listOf(ClockDelayLabel(metadata))
+                                    listOf(ClockDelayLabel(metadata = metadata))
                                 }
 
                                 "theta_elapsed_time" -> {

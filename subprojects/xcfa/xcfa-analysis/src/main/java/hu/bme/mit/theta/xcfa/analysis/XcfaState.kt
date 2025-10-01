@@ -172,8 +172,8 @@ constructor(
           is StartLabel -> changes.add { state -> state.start(it) }.let { true }
           is StmtLabel -> true
           is WriteLabel -> error("Read/Write labels not yet supported")
-          is ClockOpLabel -> TODO()
-          is ClockDelayLabel -> TODO()
+          is ClockOpLabel -> true
+          is ClockDelayLabel -> true
         }
       }
 
@@ -214,6 +214,7 @@ constructor(
     newProcesses[pid] =
       XcfaProcessState(
         LinkedList(listOf(procedure.initLoc)),
+        procedure = procedure,
         prefix = "T$pid",
         varLookup = LinkedList(listOf(lookup)),
         returnStmts = LinkedList(listOf(returnStmt)),
@@ -319,6 +320,7 @@ data class XcfaProcessState(
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
+  val procedure: XcfaProcedure? = null,
 ) {
 
   internal var popped: XcfaLocation? =
