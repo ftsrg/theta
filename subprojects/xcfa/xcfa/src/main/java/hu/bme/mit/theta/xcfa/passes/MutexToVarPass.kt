@@ -82,8 +82,9 @@ class MutexToVarPass : ProcedurePass {
             actions.add(StmtLabel(AssignStmt.of(args[0].signalFlag, False())))
           }
           if (Regex("cond_wait\\((.*)\\)").matches(l)) {
-            val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
-            actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
+            // Spurious wakeup may occur in pthread_cond_wait
+            //val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
+            //actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
           }
           if (Regex("cond_signal\\((.*)\\)").matches(l)) {
             val arg = l.substring("cond_signal".length + 1, l.length - 1)

@@ -42,6 +42,7 @@ class CLibraryFunctionsPass : ProcedurePass {
       "pthread_mutex_unlock",
       "pthread_cond_wait",
       "pthread_cond_signal",
+      "pthread_cond_broadcast",
       "pthread_mutex_init",
       "pthread_cond_init",
       "pthread_exit",
@@ -150,6 +151,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                   )
                 }
 
+                "pthread_cond_broadcast",
                 "pthread_cond_signal" -> {
                   var cond = invokeLabel.params[1]
                   while (cond is Reference<*, *>) cond = cond.expr
