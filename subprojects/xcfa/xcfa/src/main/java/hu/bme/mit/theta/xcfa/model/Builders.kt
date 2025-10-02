@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 import kotlin.collections.LinkedHashSet
@@ -79,6 +81,7 @@ constructor(
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
   unsafeUnrollUsed: Boolean = false,
+  var prop: Expr<BoolType> = True(),
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -176,6 +179,7 @@ constructor(
         initLoc = optimized.initLoc,
         finalLoc = optimized.finalLoc,
         errorLoc = optimized.errorLoc,
+        prop = prop,
       )
     built.parent = parent
     return built

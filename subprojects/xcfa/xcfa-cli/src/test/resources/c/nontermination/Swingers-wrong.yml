@@ -1,0 +1,138 @@
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "024bed4c-abd9-461d-adc1-e50715255852"
+    creation_time: "2025-05-22T08:48:17Z"
+    producer:
+      name: "Theta"
+      version: "no version found"
+    task:
+      input_files:
+      - "Swingers.c"
+      input_file_hashes:
+        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/Swingers.c": "979bf81231d85b3bd3be96ca9c795b59e6636e16367d6fd923131e434b6e2abd"
+      specification: "TERMINATION"
+      data_model: "LP64"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(bob == 0)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 7
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 0)&&(bob == 0)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 8
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 0)&&(temp == 18)&&(bob == 0)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 9
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 0)&&(temp == 18)&&(bob == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 10
+          column: 5
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 17)&&(temp == 18)&&(bob == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 12
+          column: 34
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 17)&&(temp == 18)&&(bob == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 13
+          column: 9
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 17)&&(temp == 13)&&(bob == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 14
+          column: 9
+        action: "follow"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 13)&&(temp == 13)&&(bob == 17)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 12
+          column: 34
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 13)&&(temp == 17)&&(bob == 17)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 13
+          column: 9
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 13)&&(temp == 17)&&(bob == 17)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 14
+          column: 9
+        action: "cycle"
+  - segment:
+    - waypoint:
+        type: "assumption"
+        constraint:
+          value: "(samantha == 13)&&(temp == 17)&&(bob == 13)"
+          format: "c_expression"
+        location:
+          file_name: "Swingers.c"
+          line: 15
+          column: 9
+        action: "cycle"
