@@ -39,7 +39,8 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
   val nonConcurrent = initEdges + (finalEdges ?: setOf())
   val atomicLocations = getAtomicBlockInnerLocations(builder)
   val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
-  val potentialRacingVars = getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
+  val potentialRacingVars =
+    getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
 
   if (potentialRacingVars.isNotEmpty()) {
     logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
@@ -86,9 +87,7 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
         }
       }
     }
-    accessedPartitions.forEach { p ->
-      threadsAccessingMemory[p] += varAccessCount
-    }
+    accessedPartitions.forEach { p -> threadsAccessingMemory[p] += varAccessCount }
   }
 
   logger?.writeln(MAINSTEP, "| No candidate for data race.")
@@ -119,7 +118,8 @@ private fun getPotentialRacingVars(
   builder: XcfaBuilder,
   nonConcurrent: Set<XcfaEdge>,
   atomicLocations: Set<XcfaLocation>,
-  multipleThreadsPerProcedure: Map<XcfaProcedureBuilder, Boolean> = getMultipleThreadsPerProcedure(builder),
+  multipleThreadsPerProcedure: Map<XcfaProcedureBuilder, Boolean> =
+    getMultipleThreadsPerProcedure(builder),
 ): Set<VarDecl<*>> {
   val nonAtomicGlobalVars = builder.getVars().filter { !it.atomic }.map { it.wrappedVar }.toSet()
   val threadsAccessingVar = nonAtomicGlobalVars.associateWith { 0 }.toMutableMap()

@@ -73,9 +73,9 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
       val toVisit = builder.initLoc.outgoingEdges.toMutableList()
       val visited = mutableSetOf<XcfaEdge>()
       while (toVisit.isNotEmpty()) {
-        val edge = toVisit.find { candidate ->
-          candidate.source.incomingEdges.all { it in visited }
-        } ?: toVisit.first()
+        val edge =
+          toVisit.find { candidate -> candidate.source.incomingEdges.all { it in visited } }
+            ?: toVisit.first()
         toVisit.remove(edge)
         visited.add(edge)
         val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
