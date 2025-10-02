@@ -33,7 +33,7 @@ fun MonolithicExpr.orderVars(): List<VarDecl<*>> {
 }
 
 // Filters affected variables
-class MonolithicExprEvent : Event {
+class MonolithicExprEvent : Event<VarDecl<*>> {
 
   constructor(expr: Expr<BoolType>, transOffsetIndex: VarIndexing) {
     val vars = ExprUtils.getVars(expr)
