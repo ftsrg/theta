@@ -237,6 +237,7 @@ class XcfaOcChecker(
       deref: Dereference<*, *, *>,
       consts: Map<Any, IndexedConstDecl<*>>,
       type: EventType,
+      useProvidedConst: Boolean = false,
     ): List<E> {
       check(!inEdge || last.size == 1)
       val array = deref.array.with(consts)
@@ -247,7 +248,12 @@ class XcfaOcChecker(
           atomicBlock != null -> atomicBlock!!
           else -> E.uniqueClkId()
         }
-      val const = consts.getOrElse(deref) { memoryDecl.getNewIndexed() }
+      val const =
+        if (useProvidedConst && deref in consts) {
+          consts[deref]!!
+        } else {
+          memoryDecl.getNewIndexed()
+        }
       val e = E(const, type, guard, pid, edge, clkId, array, offset)
       last.forEach { po(it, e) }
       inEdge = true
@@ -261,16 +267,16 @@ class XcfaOcChecker(
 
     private fun <T : Type> Expr<T>.toEvents(
       consts: Map<Any, IndexedConstDecl<*>>? = null,
-      update: Boolean = true,
+      useProvidedConst: Boolean = false,
     ): Map<Any, IndexedConstDecl<*>> {
       val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
       vars.forEach {
         last = event(it, READ)
-        if (update) mutConsts[it] = last.first().const
+        if (!useProvidedConst) mutConsts[it] = last.first().const
       }
       dereferences.forEach {
-        last = memoryEvent(it, mutConsts, READ)
-        if (update) mutConsts[it] = last.first().const
+        last = memoryEvent(it, mutConsts, READ, useProvidedConst)
+        if (!useProvidedConst) mutConsts[it] = last.first().const
       }
       return mutConsts
     }
@@ -364,7 +370,7 @@ class XcfaOcChecker(
                         }
                       }
                     }
-                    stmt.cond.toEvents(consts, false)
+                    stmt.cond.toEvents(consts, true)
                     if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
                       last.first().assignment = condWithConsts
                     }
