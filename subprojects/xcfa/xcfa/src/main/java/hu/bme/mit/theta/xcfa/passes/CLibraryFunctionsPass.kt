@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -36,6 +36,7 @@ class CLibraryFunctionsPass : ProcedurePass {
   private val supportedFunctions =
     setOf(
       "printf",
+      "scanf",
       "pthread_join",
       "pthread_create",
       "pthread_mutex_lock",
@@ -79,85 +80,59 @@ class CLibraryFunctionsPass : ProcedurePass {
                     }
                     .run { ifEmpty { listOf(NopLabel) } }
                 }
-                "pthread_join" -> {
-                  var handle = invokeLabel.params[1]
-                  while (handle is Reference<*, *>) handle = handle.expr
-                  check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
+                "scanf" -> {
+                  check(invokeLabel.params.size >= 3) {
+                    "At least two parameters (format string and one variable) expected in scanf"
+                  }
+                  (2 until invokeLabel.params.size).map { index ->
+                    val param = invokeLabel.getParam(index)
+                    StmtLabel(HavocStmt.of(param), metadata = metadata)
+                  }
+                }
+
+                "pthread_join" -> {
+                  val handle = invokeLabel.getParam(1)
                   listOf(
-                    JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata),
+                    JoinLabel(handle, metadata),
                     AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
                   )
                 }
 
                 "pthread_create" -> {
-                  var handle = invokeLabel.params[1]
-                  while (handle is Reference<*, *>) handle = handle.expr
-                  check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
-
-                  val funcptr = invokeLabel.params[3]
-                  check(funcptr is RefExpr && (funcptr as RefExpr<out Type>).decl is VarDecl)
-
+                  val handle = invokeLabel.getParam(1)
+                  val funcptr = invokeLabel.getParam(3)
                   val param = invokeLabel.params[4]
-
+                  // int(0) to solve StartLabel not handling return params
                   listOf(
-                    StartLabel(
-                      (funcptr as RefExpr<out Type>).decl.name,
-                      listOf(
-                        Int(0),
-                        param,
-                      ), // int(0) to solve StartLabel not handling return params
-                      (handle as RefExpr<out Type>).decl as VarDecl<*>,
-                      metadata,
-                    ),
+                    StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
                     AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
                   )
                 }
 
                 "pthread_mutex_lock" -> {
-                  var handle = invokeLabel.params[1]
-                  while (handle is Reference<*, *>) handle = handle.expr
-                  check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
-                  val decl = handle.decl
-                  checkMutexDecl(decl, builder)
-
-                  listOf(FenceLabel(setOf("mutex_lock(${decl.name})"), metadata))
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(FenceLabel(setOf("mutex_lock(${handle.name})"), metadata))
                 }
 
                 "pthread_mutex_unlock" -> {
-                  var handle = invokeLabel.params[1]
-                  while (handle is Reference<*, *>) handle = handle.expr
-                  check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
-                  val decl = handle.decl
-                  checkMutexDecl(decl, builder)
-
-                  listOf(FenceLabel(setOf("mutex_unlock(${decl.name})"), metadata))
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(FenceLabel(setOf("mutex_unlock(${handle.name})"), metadata))
                 }
 
                 "pthread_cond_wait" -> {
-                  var cond = invokeLabel.params[1]
-                  while (cond is Reference<*, *>) cond = cond.expr
-                  var handle = invokeLabel.params[2]
-                  while (handle is Reference<*, *>) handle = handle.expr
-                  check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
-                  check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
-
+                  val cond = invokeLabel.getParam(1)
+                  val handle = invokeLabel.getMutexHandle(builder, 2)
                   listOf(
-                    FenceLabel(
-                      setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
-                      metadata,
-                    ),
-                    FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"), metadata),
+                    FenceLabel(setOf("start_cond_wait(${cond.name},${handle.name})"), metadata),
+                    FenceLabel(setOf("cond_wait(${cond.name},${handle.name})"), metadata),
                   )
                 }
 
                 "pthread_cond_broadcast",
                 "pthread_cond_signal" -> {
-                  var cond = invokeLabel.params[1]
-                  while (cond is Reference<*, *>) cond = cond.expr
-                  check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
-
-                  listOf(FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata))
+                  val cond = invokeLabel.getParam(1)
+                  listOf(FenceLabel(setOf("cond_signal(${cond.name})"), metadata))
                 }
 
                 "pthread_mutex_init",
@@ -200,4 +175,20 @@ class CLibraryFunctionsPass : ProcedurePass {
   }
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
+
+  private fun InvokeLabel.getParam(index: Int): VarDecl<*> {
+    var param = params[index]
+    while (param is Reference<*, *>) param = param.expr
+    check(param is RefExpr && param.decl is VarDecl<*>)
+    return param.decl as VarDecl<*>
+  }
+
+  private fun InvokeLabel.getMutexHandle(
+    builder: XcfaProcedureBuilder,
+    index: Int = 1,
+  ): VarDecl<*> {
+    val handle = getParam(index)
+    checkMutexDecl(handle, builder)
+    return handle
+  }
 }

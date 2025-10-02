@@ -112,8 +112,8 @@ constructor(
                   in Regex("cond_wait\\((.*)\\)") -> {
                     val args = label.substring("cond_wait".length + 1, label.length - 1).split(",")
                     // Spurious wakeup may occur in pthread_cond_wait!
-                    //changes.add { state -> state.enterMutex(args[0], a.pid) }
-                    //changes.add { state -> state.exitMutex(args[0], a.pid) }
+                    // changes.add { state -> state.enterMutex(args[0], a.pid) }
+                    // changes.add { state -> state.exitMutex(args[0], a.pid) }
                     changes.add { state -> state.enterMutex(args[1], a.pid) }
                   }
 
