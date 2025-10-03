@@ -53,6 +53,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.ccha
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 private const val arraySize = 10
 

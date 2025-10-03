@@ -64,7 +64,7 @@ fun complexPortfolio23(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
+              por = POR.NOPOR,
               porRandomSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
@@ -107,7 +107,7 @@ fun complexPortfolio23(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi = ConeOfInfluenceMode.COI,
-        porLevel =
+        por =
           if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
         refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY),

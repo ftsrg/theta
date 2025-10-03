@@ -15,34 +15,29 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.xcfa.model.InvokeLabel
-import hu.bme.mit.theta.xcfa.model.StartLabel
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
-/**
- * Mark procedure builders with reachability info. Marks the called ProcedureBuilders
- * `reachable-from-<X>`.
- */
-class CallGraphPass : ProcedurePass {
+class RemoveAbortBranchesPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val calledProcedures = LinkedHashSet<String>()
     builder
-      .getEdges()
-      .map { it.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }
-      .flatten()
-      .forEach {
-        when (it) {
-          is InvokeLabel -> calledProcedures.add(it.name)
-          is StartLabel -> calledProcedures.add(it.name)
-          else -> error("Will never be here (due to filter above)")
-        }
+      .getLocs()
+      .filter { l ->
+        l.outgoingEdges.isEmpty() &&
+          !l.initial &&
+          !l.final &&
+          !l.error &&
+          l.incomingEdges.size == 1 &&
+          l.incomingEdges.first().getFlatLabels().all { it is StmtLabel && it.stmt is AssumeStmt }
       }
-    builder.parent
-      .getProcedures()
-      .filter { calledProcedures.contains(it.name) }
-      .forEach { it.metaData["reachable-from-${builder.name}"] = Unit }
+      .forEach {
+        val incomingEdge = it.incomingEdges.first()
+        builder.removeEdge(incomingEdge)
+        builder.removeLoc(it)
+      }
     return builder
   }
 }

@@ -28,8 +28,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -89,7 +89,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_SEQ },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_SEQ),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -109,7 +109,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_FULL },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_FULL),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }

@@ -19,11 +19,11 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import kotlin.collections.set
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getAtomicBlockInnerLocations
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
  * This pass simplifies the XCFA by joining certain edges to single edges.
@@ -34,35 +34,40 @@ import kotlin.collections.set
  *   at the ends)
  * * Middle location: a location whose incoming degree is 1
  */
-class LbePass(val parseContext: ParseContext) : ProcedurePass {
+class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : ProcedurePass {
 
   companion object {
 
     /** The level of LBE that specifies which type of graph transformations to apply. */
-    var level = LbeLevel.NO_LBE
+    var defaultLevel = LbeLevel.NO_LBE
   }
 
   /** LBE modes. */
-  enum class LbeLevel {
+  enum class LbeLevel(val isLocal: Boolean, val isFull: Boolean) {
 
     /** The pass returns the builder without applying any changes. */
-    NO_LBE,
-
-    /** Applies sequential collapsing on atomic blocks and consecutive local operations. */
-    LBE_LOCAL,
+    NO_LBE(false, false),
 
     /**
      * Enables collapsing of sequential edges of a location where the number of incoming edges to
      * the location is exactly 1. A new edge is created for every outgoing edge of the location
      * combined with the labels of the incoming edge. Parallel edges are not collapsed.
      */
-    LBE_SEQ,
+    LBE_SEQ(false, false),
 
     /**
      * Enables collapsing of sequential and parallel edges too. Currently, [NondetLabel] is not
-     * supported by the analysis so this mode cannot be used.
+     * supported by the CEGAR analysis so use this mode with care.
      */
-    LBE_FULL,
+    LBE_FULL(false, true),
+
+    /** Applies sequential collapsing on atomic blocks and consecutive local operations. */
+    LBE_LOCAL(true, false),
+
+    /**
+     * Applies sequential and parallel collapsing on atomic blocks and consecutive local operations.
+     */
+    LBE_LOCAL_FULL(true, true),
   }
 
   /**
@@ -71,6 +76,12 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
    * **Warning! Multiple parallel running of this pass instance does not work correctly!**
    */
   private var atomicPhase = false
+  val level: LbeLevel =
+    when {
+      parseContext.multiThreading && level == LbeLevel.LBE_SEQ -> LbeLevel.LBE_LOCAL
+      parseContext.multiThreading && level == LbeLevel.LBE_FULL -> LbeLevel.LBE_LOCAL_FULL
+      else -> level
+    }
   lateinit var builder: XcfaProcedureBuilder
 
   /**
@@ -84,11 +95,6 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (level == LbeLevel.NO_LBE) return builder
 
-    if ((level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL) && parseContext.multiThreading) {
-      level = LbeLevel.LBE_LOCAL
-    }
-
-    Preconditions.checkNotNull(builder.metaData["deterministic"])
     Preconditions.checkNotNull(builder.metaData["noSelfLoops"])
     this.builder = builder
 
@@ -98,27 +104,25 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     // Step 1
-    if (level == LbeLevel.LBE_LOCAL) {
-      collapseAtomics()
-    }
+    if (level.isLocal) collapseAtomics()
 
     // Step 2
-    collapseParallelsAndSnakes(builder.getLocs().toList(), false)
+    collapse(builder.getLocs().toList(), false)
 
-    // Step 3
-    // if (level != LbeLevel.LBE_LOCAL) {
-    removeAllMiddleLocations(builder.getLocs().toList(), false)
-    // }
     return builder
   }
 
-  /** Collapses atomic blocks sequentially. */
+  /** Collapses atomic blocks. */
   private fun collapseAtomics() {
     atomicPhase = true
     val atomicBlockInnerLocations = getAtomicBlockInnerLocations(builder)
-    collapseParallelsAndSnakes(atomicBlockInnerLocations, true)
-    removeAllMiddleLocations(atomicBlockInnerLocations, true)
+    collapse(atomicBlockInnerLocations, true)
     atomicPhase = false
+  }
+
+  private fun collapse(locationsToVisit: List<XcfaLocation>, strict: Boolean) {
+    collapseAll(locationsToVisit, strict)
+    removeAllMiddleLocations(locationsToVisit, strict)
   }
 
   /**
@@ -129,7 +133,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
    * @param strict If true, cascade collapsing is limited to locations in locationsToVisit.
    * @return Returns the list of removed locations.
    */
-  private fun collapseParallelsAndSnakes(
+  private fun collapseAll(
     locationsToVisit: List<XcfaLocation>,
     strict: Boolean,
   ): List<XcfaLocation> {
@@ -139,8 +143,8 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
       val visiting = editedLocationsToVisit.first()
       if (!strict || locationsToVisit.contains(visiting)) {
         // Join parallel edges starting from "visiting" location
-        if (level == LbeLevel.LBE_FULL) {
-          collapseParallelEdges(visiting, editedLocationsToVisit)
+        if (level.isFull) {
+          collapseParallelEdges(visiting, editedLocationsToVisit, strict)
         }
 
         // Collapse "visiting" location if it is part of a snake
@@ -170,7 +174,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
           if (removed) {
             val start = mutableListOf<XcfaLocation>()
             start.add(nextLocation)
-            val locationsToRemove = collapseParallelsAndSnakes(start, strict)
+            val locationsToRemove = collapseAll(start, strict)
             locationsToRemove.forEach { editedLocationsToVisit.remove(it) }
           }
         }
@@ -189,37 +193,27 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
   private fun collapseParallelEdges(
     location: XcfaLocation,
     locationsToVisit: MutableList<XcfaLocation>,
+    strict: Boolean,
   ) {
-    val edgesByTarget = mutableMapOf<XcfaLocation, MutableList<XcfaEdge>>()
-    for (edge in location.outgoingEdges) {
-      val edgesToTarget = edgesByTarget.getOrDefault(edge.target, ArrayList())
-      edgesToTarget.add(edge)
-      edgesByTarget[edge.target] = edgesToTarget
-    }
-    for (key in edgesByTarget.keys) {
-      val edgesToTarget: List<XcfaEdge> = checkNotNull(edgesByTarget[key])
-      if (edgesToTarget.size <= 1) continue
-      val source = edgesToTarget[0].source
-      val target = edgesToTarget[0].target
-      var nondetLabel = NondetLabel(emptySet())
-      for (edge in edgesToTarget) {
-        val oldLabels = nondetLabel.labels.toMutableSet()
-        oldLabels.addAll(getNonDetBranch(edge.getFlatLabels()))
-        nondetLabel = NondetLabel(oldLabels)
-        builder.removeEdge(edge)
+    location.outgoingEdges
+      .groupBy { it.target }
+      .forEach { (target, edgesToTarget) ->
+        if (edgesToTarget.size <= 1) return@forEach
+        val nondetLabel =
+          NondetLabel(
+            edgesToTarget
+              .flatMap { edge ->
+                builder.removeEdge(edge)
+                getNonDetBranch(edge.getFlatLabels())
+              }
+              .toSet()
+          )
+        val combinedMetadata = combineMetadata(edgesToTarget.map(XcfaEdge::metadata))
+        builder.addEdge(XcfaEdge(location, target, nondetLabel, combinedMetadata))
+        if (!strict && edgesToTarget.size >= 2 && target !in locationsToVisit) {
+          locationsToVisit.add(target)
+        }
       }
-      builder.addEdge(
-        XcfaEdge(
-          source,
-          target,
-          nondetLabel,
-          combineMetadata(edgesToTarget.map(XcfaEdge::metadata)),
-        )
-      )
-      if (edgesToTarget.size >= 2 && !locationsToVisit.contains(key)) {
-        locationsToVisit.add(key)
-      }
-    }
   }
 
   /**
@@ -278,7 +272,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     if (
       location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } } ||
         location.outgoingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } } ||
-        (level == LbeLevel.LBE_LOCAL && !atomicPhase && isNotLocal(outEdge))
+        (level.isLocal && !atomicPhase && isNotLocal(outEdge))
     ) {
       return false
     }
@@ -314,6 +308,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     return !edge.getFlatLabels().all { label ->
       !(label is StartLabel || label is JoinLabel) &&
         label.collectVars().all(builder.getVars()::contains) &&
+        label.dereferences.isEmpty() &&
         !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
         !(label is FenceLabel &&
           label.labels.any { name ->

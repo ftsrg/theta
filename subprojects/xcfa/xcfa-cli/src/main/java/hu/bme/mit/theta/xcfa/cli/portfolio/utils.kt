@@ -61,7 +61,7 @@ fun baseCegarConfig(
       frontendConfig =
         if (serialize)
           FrontendConfig(
-            lbeLevel = LbePass.level,
+            lbeLevel = LbePass.defaultLevel,
             loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = efficient),
@@ -76,7 +76,7 @@ fun baseCegarConfig(
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
-              porLevel = NOPOR,
+              por = NOPOR,
               porRandomSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
@@ -215,7 +215,7 @@ fun baseBoundedConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -278,7 +278,7 @@ fun baseMddConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),

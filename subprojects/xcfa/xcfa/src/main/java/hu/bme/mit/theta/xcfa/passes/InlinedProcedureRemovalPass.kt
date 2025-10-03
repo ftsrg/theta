@@ -20,29 +20,24 @@ import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
-/**
- * Mark procedure builders with reachability info. Marks the called ProcedureBuilders
- * `reachable-from-<X>`.
- */
-class CallGraphPass : ProcedurePass {
+/** Removes procedures that are not used anymore. */
+class InlinedProcedureRemovalPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val calledProcedures = LinkedHashSet<String>()
-    builder
-      .getEdges()
-      .map { it.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }
-      .flatten()
-      .forEach {
-        when (it) {
-          is InvokeLabel -> calledProcedures.add(it.name)
-          is StartLabel -> calledProcedures.add(it.name)
-          else -> error("Will never be here (due to filter above)")
+    if (builder in builder.parent.getInitProcedures().map { it.first }) return builder
+
+    val isCalled =
+      builder.parent.getProcedures().any { proc ->
+        proc.getEdges().any { edge ->
+          edge.getFlatLabels().any { label ->
+            (label is InvokeLabel && label.name == builder.name) ||
+              (label is StartLabel && label.name == builder.name)
+          }
         }
       }
-    builder.parent
-      .getProcedures()
-      .filter { calledProcedures.contains(it.name) }
-      .forEach { it.metaData["reachable-from-${builder.name}"] = Unit }
+    if (!isCalled) {
+      builder.parent.removeProcedure(builder)
+    }
     return builder
   }
 }
