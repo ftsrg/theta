@@ -52,24 +52,22 @@ object MddExplicitRepresentationExtractor {
       }
     } else {
       if (node.node.representation is IdentityRepresentation) {
-        val identityNode =
-          variable.checkInNode(
-            IdentityTemplate(
-              transform(
-                  variable.lower
-                    .get()
-                    .lower
-                    .get()
-                    .getHandleFor(
-                      (node.node.representation as IdentityRepresentation).continuation
-                    ),
-                  variable.lower.get().lower.orElse(null),
-                  cache,
-                )
-                .node
-            )
+        val s =
+          transform(
+            variable.lower
+              .get()
+              .lower
+              .get()
+              .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
+            variable.lower.get().lower.orElse(null),
+            cache,
           )
-        result = identityNode
+        result =
+          if (!s.isTerminalZero) {
+            variable.checkInNode(IdentityTemplate(s.node))
+          } else {
+            variable.mddGraph.terminalZeroHandle
+          }
       } else {
         val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
         Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
@@ -77,14 +75,13 @@ object MddExplicitRepresentationExtractor {
         val explicitRepresentation = expressionRepresentation.explicitRepresentation
 
         if (explicitRepresentation.cacheView.defaultValue() != null) {
-          templateBuilder.setDefault(
+          val s =
             transform(
-                variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
-                variable.lower.orElse(null),
-                cache,
-              )
-              .node
-          )
+              variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
+              variable.lower.orElse(null),
+              cache,
+            )
+          if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
         } else {
           val cursor = explicitRepresentation.cacheView.cursor()
           while (cursor.moveNext()) {
@@ -94,7 +91,7 @@ object MddExplicitRepresentationExtractor {
                 variable.lower.orElse(null),
                 cache,
               )
-            templateBuilder.set(cursor.key(), s.node)
+            if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
           }
         }
 
