@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.monolithic
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
@@ -44,8 +43,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
-import org.kframework.mpfr.BigFloat
 import java.math.BigInteger
+import org.kframework.mpfr.BigFloat
 
 abstract class XcfaToMonolithicAdapter(
   override val model: XCFA,

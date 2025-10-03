@@ -22,15 +22,16 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.sts.STS
 
-class StsToMonolithicAdapter(override val model: STS)
-  : ProofConservingModelToMonolithicAdapter<STS, ExplState, StsAction> {
+class StsToMonolithicAdapter(override val model: STS) :
+  ProofConservingModelToMonolithicAdapter<STS, ExplState, StsAction> {
 
   lateinit var sts: STS
 
-  override val monolithicExpr: MonolithicExpr get() {
-    sts = model
-    return MonolithicExpr(model.init, model.trans, model.prop)
-  }
+  override val monolithicExpr: MonolithicExpr
+    get() {
+      sts = model
+      return MonolithicExpr(model.init, model.trans, model.prop)
+    }
 
   override fun traceToModelTrace(trace: Trace<ExplState, ExprAction>): Trace<ExplState, StsAction> =
     Trace.of(trace.states, trace.actions.map { _ -> StsAction(sts) })

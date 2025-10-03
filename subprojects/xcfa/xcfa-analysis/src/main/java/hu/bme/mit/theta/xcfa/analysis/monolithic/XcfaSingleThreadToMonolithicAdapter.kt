@@ -50,11 +50,10 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
-
 class XcfaSingleThreadToMonolithicAdapter(
   model: XCFA,
   parseContext: ParseContext,
-  private val initValues: Boolean = false
+  private val initValues: Boolean = false,
 ) : XcfaToMonolithicAdapter(model, parseContext) {
 
   private lateinit var locVar: VarDecl<Type>
@@ -62,71 +61,66 @@ class XcfaSingleThreadToMonolithicAdapter(
   private lateinit var locations: List<XcfaLocation>
   private lateinit var edges: List<XcfaEdge>
 
-  override val monolithicExpr: MonolithicExpr get() {
-    Preconditions.checkArgument(model.initProcedures.size == 1)
-    val proc = model.initProcedures.stream().findFirst().orElse(null).first
-    Preconditions.checkArgument(
-      proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
-    )
+  override val monolithicExpr: MonolithicExpr
+    get() {
+      Preconditions.checkArgument(model.initProcedures.size == 1)
+      val proc = model.initProcedures.stream().findFirst().orElse(null).first
+      Preconditions.checkArgument(
+        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
+      )
 
-    locations = proc.locs.toList()
-    edges = proc.edges.toList()
-    val locationMap = locations.mapIndexed { index, location -> location to index }.toMap()
-    val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
-    locVar = Decls.Var("__loc_", intType)
+      locations = proc.locs.toList()
+      edges = proc.edges.toList()
+      val locationMap = locations.mapIndexed { index, location -> location to index }.toMap()
+      val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
+      locVar = Decls.Var("__loc_", intType)
 
-    val tranList =
-      proc.edges
-        .map { edge: XcfaEdge ->
-          val (source, target, label) = edge
+      val tranList =
+        proc.edges
+          .map { edge: XcfaEdge ->
+            val (source, target, label) = edge
+            SequenceStmt.of(
+              listOf(
+                AssumeStmt.of(Eq(locVar.ref, smtInt(locationMap[source]!!))),
+                label.toStmt(),
+                AssignStmt.of(locVar, cast(smtInt(locationMap[target]!!), locVar.type)),
+                AssignStmt.of(edgeVar, cast(smtInt(edgeMap[edge]!!), edgeVar.type)),
+              )
+            )
+          }
+          .toList() +
           SequenceStmt.of(
             listOf(
-              AssumeStmt.of(Eq(locVar.ref, smtInt(locationMap[source]!!))),
-              label.toStmt(),
-              AssignStmt.of(locVar, cast(smtInt(locationMap[target]!!), locVar.type)),
-              AssignStmt.of(edgeVar, cast(smtInt(edgeMap[edge]!!), edgeVar.type)),
+              AssumeStmt.of(Eq(locVar.ref, smtInt(locationMap[proc.errorLoc.get()]!!))),
+              AssignStmt.of(locVar, cast(smtInt(locationMap[proc.errorLoc.get()]!!), locVar.type)),
             )
           )
-        }
-        .toList() +
-        SequenceStmt.of(
-          listOf(
-            AssumeStmt.of(Eq(locVar.ref, smtInt(locationMap[proc.errorLoc.get()]!!))),
-            AssignStmt.of(locVar, cast(smtInt(locationMap[proc.errorLoc.get()]!!), locVar.type)),
-          )
-        )
-    val trans = NonDetStmt.of(tranList)
-    val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
+      val trans = NonDetStmt.of(tranList)
+      val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
-    val defaultValues =
-      if (initValues) trans.getDefaultValues(setOf(locVar, edgeVar))
-      else True()
+      val defaultValues = if (initValues) trans.getDefaultValues(setOf(locVar, edgeVar)) else True()
 
-    return MonolithicExpr(
-      initExpr =
-        And(
-          Eq(locVar.ref, smtInt(locationMap[proc.initLoc]!!)),
-          Eq(edgeVar.ref, smtInt(-1)),
-          defaultValues,
-        ),
-      transExpr = And(transUnfold.exprs),
-      propExpr =
-        if (proc.errorLoc.isPresent)
-          Neq(locVar.ref, smtInt(locationMap[proc.errorLoc.get()]!!))
-        else True(),
-      transOffsetIndex = transUnfold.indexing,
-      vars = StmtUtils.getVars(trans).toList(),
-      ctrlVars = listOf(locVar, edgeVar),
-    )
-  }
+      return MonolithicExpr(
+        initExpr =
+          And(
+            Eq(locVar.ref, smtInt(locationMap[proc.initLoc]!!)),
+            Eq(edgeVar.ref, smtInt(-1)),
+            defaultValues,
+          ),
+        transExpr = And(transUnfold.exprs),
+        propExpr =
+          if (proc.errorLoc.isPresent) Neq(locVar.ref, smtInt(locationMap[proc.errorLoc.get()]!!))
+          else True(),
+        transOffsetIndex = transUnfold.indexing,
+        vars = StmtUtils.getVars(trans).toList(),
+        ctrlVars = listOf(locVar, edgeVar),
+      )
+    }
 
   override fun traceToModelTrace(
-    trace: Trace<ExplState, ExprAction>,
+    trace: Trace<ExplState, ExprAction>
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(
-      trace.states.map(this::valToState),
-      trace.states.drop(1).map(this::valToAction)
-    )
+    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
   }
 
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants =

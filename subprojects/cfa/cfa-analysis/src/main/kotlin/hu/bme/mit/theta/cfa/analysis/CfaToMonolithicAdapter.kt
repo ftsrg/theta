@@ -54,60 +54,61 @@ class CfaToMonolithicAdapter(override val model: CFA) :
   lateinit var indexedEdges: Map<Pair<Int, Int>, CFA.Edge>
   lateinit var locVar: VarDecl<IntType>
 
-  override val monolithicExpr: MonolithicExpr get() {
-    Preconditions.checkArgument(model.errorLoc.isPresent)
-    locationIndexes = model.locs.mapIndexed { index, loc -> loc to index }.toMap()
-    locVar = Decls.Var("__loc__", Int())
-    indexedEdges =
-      model.edges.associateBy { edge ->
-        Pair(locationIndexes[edge.source]!!, locationIndexes[edge.target]!!)
-      }
-    val tranList =
-      indexedEdges
-        .map { entry ->
-          val (sourceIndex, targetIndex) = entry.key
-          SequenceStmt.of(
-            listOf(
-              AssumeStmt.of(Eq(locVar.ref, Int(sourceIndex))),
-              entry.value.stmt,
-              AssignStmt.of(locVar, Int(targetIndex)),
-            )
-          )
+  override val monolithicExpr: MonolithicExpr
+    get() {
+      Preconditions.checkArgument(model.errorLoc.isPresent)
+      locationIndexes = model.locs.mapIndexed { index, loc -> loc to index }.toMap()
+      locVar = Decls.Var("__loc__", Int())
+      indexedEdges =
+        model.edges.associateBy { edge ->
+          Pair(locationIndexes[edge.source]!!, locationIndexes[edge.target]!!)
         }
-        .toList()
-
-    val defaultValues =
-      model.vars
-        .map {
-          when (it.type) {
-            is IntType -> Eq(it.ref, Int(0))
-            is BoolType -> Eq(it.ref, Bool(false))
-            is BvType ->
-              Eq(
-                it.ref,
-                BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+      val tranList =
+        indexedEdges
+          .map { entry ->
+            val (sourceIndex, targetIndex) = entry.key
+            SequenceStmt.of(
+              listOf(
+                AssumeStmt.of(Eq(locVar.ref, Int(sourceIndex))),
+                entry.value.stmt,
+                AssignStmt.of(locVar, Int(targetIndex)),
               )
-            is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
-            else -> throw IllegalArgumentException("Unsupported type")
+            )
           }
-        }
-        .toList()
-        .let { And(it) }
+          .toList()
 
-    val trans = NonDetStmt.of(tranList)
-    val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
-    val transExpr = And(transUnfold.exprs)
-    val initExpr = And(Eq(locVar.ref, Int(locationIndexes[model.initLoc]!!)), defaultValues)
-    val propExpr = Neq(locVar.ref, Int(locationIndexes[model.errorLoc.orElseThrow()]!!))
+      val defaultValues =
+        model.vars
+          .map {
+            when (it.type) {
+              is IntType -> Eq(it.ref, Int(0))
+              is BoolType -> Eq(it.ref, Bool(false))
+              is BvType ->
+                Eq(
+                  it.ref,
+                  BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
+                )
+              is FpType -> FpAssign(it.ref as Expr<FpType>, NaN(it.type as FpType))
+              else -> throw IllegalArgumentException("Unsupported type")
+            }
+          }
+          .toList()
+          .let { And(it) }
 
-    return MonolithicExpr(
-      initExpr,
-      transExpr,
-      propExpr,
-      transUnfold.indexing,
-      vars = model.vars.toList() + listOf(locVar),
-    )
-  }
+      val trans = NonDetStmt.of(tranList)
+      val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
+      val transExpr = And(transUnfold.exprs)
+      val initExpr = And(Eq(locVar.ref, Int(locationIndexes[model.initLoc]!!)), defaultValues)
+      val propExpr = Neq(locVar.ref, Int(locationIndexes[model.errorLoc.orElseThrow()]!!))
+
+      return MonolithicExpr(
+        initExpr,
+        transExpr,
+        propExpr,
+        transUnfold.indexing,
+        vars = model.vars.toList() + listOf(locVar),
+      )
+    }
 
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
