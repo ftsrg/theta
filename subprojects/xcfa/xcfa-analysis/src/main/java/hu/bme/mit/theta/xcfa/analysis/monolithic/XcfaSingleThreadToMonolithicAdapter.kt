@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis
+package hu.bme.mit.theta.xcfa.analysis.monolithic
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
@@ -54,14 +54,16 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import java.math.BigInteger
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.kframework.mpfr.BigFloat
+import java.math.BigInteger
 
 private val LitExpr<*>.value: Int
   get() =
@@ -71,20 +73,19 @@ private val LitExpr<*>.value: Int
       else -> error("Unknown integer type: $type")
     }
 
-class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Boolean = false) :
-  ModelToMonolithicAdapter<
-    ParseContext,
-    XcfaState<PtrState<ExplState>>,
-    XcfaAction,
-    LocationInvariants,
-  > {
+class XcfaSingleThreadToMonolithicAdapter(
+  override val model: XCFA,
+  private val parseContext: ParseContext,
+  private val initValues: Boolean = false
+) :
+  ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
   private lateinit var locVar: VarDecl<Type>
   private lateinit var locations: List<XcfaLocation>
   private lateinit var edges: List<XcfaEdge>
   private lateinit var smtAwareInteger: (Int) -> LitExpr<*>
 
-  override fun modelToMonolithicExpr(parseContext: ParseContext): MonolithicExpr {
+  override val monolithicExpr: MonolithicExpr get() {
     val intType = CInt.getUnsignedInt(parseContext).smtType
 
     smtAwareInteger =
@@ -97,8 +98,8 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
           else -> error("Unknown integer type: $intType")
         }
 
-    Preconditions.checkArgument(xcfa.initProcedures.size == 1)
-    val proc = xcfa.initProcedures.stream().findFirst().orElse(null).first
+    Preconditions.checkArgument(model.initProcedures.size == 1)
+    val proc = model.initProcedures.stream().findFirst().orElse(null).first
     Preconditions.checkArgument(
       proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
     )
@@ -176,9 +177,12 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
   }
 
   override fun traceToModelTrace(
-    trace: Trace<ExplState, ExprAction>
+    trace: Trace<ExplState, ExprAction>,
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
+    return Trace.of(
+      trace.states.map(this::valToState),
+      trace.states.drop(1).map(this::valToAction)
+    )
   }
 
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants =
@@ -203,7 +207,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()
     return XcfaState(
-      xcfa,
+      model,
       locations[(valMap[valMap.keys.first { it.name == "__loc_" }])!!.value],
       PtrState(
         ExplState.of(

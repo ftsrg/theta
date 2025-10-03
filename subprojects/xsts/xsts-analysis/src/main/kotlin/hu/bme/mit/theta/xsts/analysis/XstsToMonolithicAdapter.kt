@@ -34,13 +34,10 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xsts.XSTS
 
-class XstsToMonolithicAdapter :
+class XstsToMonolithicAdapter(override val model: XSTS) :
   ProofConservingModelToMonolithicAdapter<XSTS, XstsState<out ExprState>, XstsAction> {
 
-  lateinit var xsts: XSTS
-
-  override fun modelToMonolithicExpr(model: XSTS): MonolithicExpr {
-    xsts = model
+  override val monolithicExpr: MonolithicExpr get() {
     val initStmtUnfoldResult = StmtUtils.toExpr(model.init, VarIndexingFactory.indexing(0))
     var initExpr = PathUtils.unfold(And(listOf(model.initFormula) + initStmtUnfoldResult.exprs), 0)
     val subBuilder = BasicSubstitution.builder()
@@ -91,7 +88,7 @@ class XstsToMonolithicAdapter :
     trace: Trace<ExplState, ExprAction>
   ): Trace<XstsState<out ExprState>, XstsAction> {
     val states = trace.states.map { valToState(it.`val`) }
-    return Trace.of(states, XstsAction.create(SequenceStmt.of(listOf(xsts.env, xsts.tran))))
+    return Trace.of(states, XstsAction.create(SequenceStmt.of(listOf(model.env, model.tran))))
   }
 
   private fun valToState(valuation: Valuation): XstsState<ExplState> {

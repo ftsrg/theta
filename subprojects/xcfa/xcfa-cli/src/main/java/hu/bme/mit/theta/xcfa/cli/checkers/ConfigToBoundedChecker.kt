@@ -36,7 +36,8 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -92,11 +93,8 @@ fun getBoundedChecker(
   if (boundedConfig.reversed) {
     passes.add(ReverseMEPass())
   }
-  return FormalismPipelineChecker(
-    model = parseContext,
-    modelAdapter = XcfaToMonolithicAdapter(xcfa),
-    MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
-  )
+
+  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger)
 }
 
 private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {

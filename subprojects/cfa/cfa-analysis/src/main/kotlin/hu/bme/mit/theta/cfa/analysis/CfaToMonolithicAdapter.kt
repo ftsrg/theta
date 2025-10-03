@@ -47,14 +47,14 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import java.math.BigInteger
 
-class CfaToMonolithicAdapter :
+class CfaToMonolithicAdapter(override val model: CFA) :
   ProofConservingModelToMonolithicAdapter<CFA, CfaState<ExplState>, CfaAction> {
 
   lateinit var locationIndexes: Map<CFA.Loc, Int>
   lateinit var indexedEdges: Map<Pair<Int, Int>, CFA.Edge>
   lateinit var locVar: VarDecl<IntType>
 
-  override fun modelToMonolithicExpr(model: CFA): MonolithicExpr {
+  override val monolithicExpr: MonolithicExpr get() {
     Preconditions.checkArgument(model.errorLoc.isPresent)
     locationIndexes = model.locs.mapIndexed { index, loc -> loc to index }.toMap()
     locVar = Decls.Var("__loc__", Int())

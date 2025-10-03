@@ -39,7 +39,8 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -94,9 +95,6 @@ fun getMddChecker(
   if (mddConfig.reversed) {
     passes.add(ReverseMEPass())
   }
-  return FormalismPipelineChecker(
-    model = parseContext,
-    modelAdapter = XcfaToMonolithicAdapter(xcfa, initValues = true),
-    MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
-  )
+
+  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger, true)
 }

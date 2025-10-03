@@ -36,7 +36,8 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.Ic3Config
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -77,12 +78,6 @@ fun getIc3Checker(
   if (ic3Config.reversed) {
     passes.add(ReverseMEPass())
   }
-  val checker =
-    FormalismPipelineChecker(
-      model = parseContext,
-      modelAdapter = XcfaToMonolithicAdapter(xcfa),
-      MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
-    )
 
-  return checker
+  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger)
 }

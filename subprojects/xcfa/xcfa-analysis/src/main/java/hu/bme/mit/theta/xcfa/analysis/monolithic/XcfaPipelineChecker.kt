@@ -13,7 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.sts.analysis.pipeline
+
+package hu.bme.mit.theta.xcfa.analysis.monolithic
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
@@ -21,29 +22,34 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassPipelineChecker
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassValidator
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
-import hu.bme.mit.theta.sts.STS
-import hu.bme.mit.theta.sts.analysis.StsAction
-import hu.bme.mit.theta.sts.analysis.StsToMonolithicAdapter
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.model.XCFA
 
-class StsPipelineChecker<Pr : InvariantProof>
+class XcfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
 constructor(
-  sts: STS,
+  xcfa: XCFA,
+  parseContext: ParseContext,
   checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
-  validators: List<MonolithicExprPassValidator<in Pr>> =
-    MonolithicExprPassPipelineChecker.defaultValidators(),
   logger: Logger = NullLogger.getInstance(),
-) :
-  FormalismPipelineChecker<STS, ExplState, StsAction, Pr, InvariantProof>(
-    StsToMonolithicAdapter(sts),
-    MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
+  initValues: Boolean = false,
+)
+  : FormalismPipelineChecker<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, Pr, LocationInvariants>(
+    if (parseContext.multiThreading) {
+      XcfaMultiThreadToMonolithicAdapter(xcfa, parseContext, initValues)
+    } else {
+      XcfaSingleThreadToMonolithicAdapter(xcfa, parseContext, initValues)
+    },
+    MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   )
