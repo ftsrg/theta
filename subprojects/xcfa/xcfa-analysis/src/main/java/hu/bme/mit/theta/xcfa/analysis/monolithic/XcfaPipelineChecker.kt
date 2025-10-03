@@ -29,6 +29,10 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -53,3 +57,11 @@ constructor(
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   )
+
+internal val LitExpr<*>.value: Int
+  get() =
+    when (this) {
+      is IntLitExpr -> value.toInt()
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toInt()
+      else -> error("Unknown integer type: $type")
+    }
