@@ -929,23 +929,29 @@ fun complexPortfolio26(
               outputConfig = baseConfig.outputConfig,
               debugConfig = baseConfig.debugConfig,
             ),
-            checker
+            checker,
           )
 
         val optimizedXcfa =
-          xcfa.optimizeFurther(ProcedurePassManager(listOf(
-            LbePass(parseContext, LBE_LOCAL),
-            NormalizePass(),
-            DeterministicPass(),
-            UnusedVarPass(logger),
-            EmptyEdgeRemovalPass(),
-            UnusedLocRemovalPass(),
-          )))
+          xcfa.optimizeFurther(
+            ProcedurePassManager(
+              listOf(
+                LbePass(parseContext, LBE_LOCAL),
+                NormalizePass(),
+                DeterministicPass(),
+                UnusedVarPass(logger),
+                EmptyEdgeRemovalPass(),
+                UnusedLocRemovalPass(),
+              )
+            )
+          )
 
-        val multithreadCegarBaseConfig = baseConfig.copy(
-          inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(optimizedXcfa, mcm, parseContext)),
-          frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL)
-        )
+        val multithreadCegarBaseConfig =
+          baseConfig.copy(
+            inputConfig =
+              baseConfig.inputConfig.copy(xcfaWCtx = Triple(optimizedXcfa, mcm, parseContext)),
+            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
+          )
 
         val config_MULTITHREAD_EXPL_SEQ_ITP =
           ConfigNode(
@@ -1065,13 +1071,7 @@ fun complexPortfolio26(
               checker,
             )
 
-          edges.add(
-            Edge(
-              config_OC,
-              config_MULTITHREAD_EXPL_COI_SEQ_ITP,
-              anyError
-            )
-          )
+          edges.add(Edge(config_OC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
 
           edges.add(
             Edge(
@@ -1097,20 +1097,10 @@ fun complexPortfolio26(
             )
           )
         } else {
-          edges.add(
-            Edge(
-              config_OC,
-              config_MULTITHREAD_EXPL_SEQ_ITP,
-              anyError
-            )
-          )
+          edges.add(Edge(config_OC, config_MULTITHREAD_EXPL_SEQ_ITP, anyError))
 
           edges.add(
-            Edge(
-              config_MULTITHREAD_EXPL_SEQ_ITP,
-              config_MULTITHREAD_PRED_SEQ_ITP,
-              anyError,
-            )
+            Edge(config_MULTITHREAD_EXPL_SEQ_ITP, config_MULTITHREAD_PRED_SEQ_ITP, anyError)
           )
 
           edges.add(

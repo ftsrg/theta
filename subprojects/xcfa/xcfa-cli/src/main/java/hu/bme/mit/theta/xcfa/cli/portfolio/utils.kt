@@ -77,7 +77,7 @@ fun baseCegarConfig(
             CegarConfig(
               initPrec = EMPTY,
               por = NOPOR,
-              porRandomSeed = -1,
+              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =

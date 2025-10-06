@@ -48,7 +48,7 @@ var baseConfig = XcfaCegarConfig(
     maxEnum = 1,
     search = Search.ERR,
     initPrec = InitPrec.EMPTY,
-    porLevel = POR.NOPOR,
+    por = POR.NOPOR,
     refinementSolver = "Z3",
     validateRefinementSolver = false,
     refinement = Refinement.SEQ_ITP,
@@ -59,10 +59,10 @@ var baseConfig = XcfaCegarConfig(
 )
 
 if (traitsTyped.multithreaded) {
-    baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY)
+    baseConfig = baseConfig.copy(search = Search.BFS, por = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY)
 
     if (propertyTyped == ErrorDetection.DATA_RACE) {
-        baseConfig = baseConfig.copy(porLevel = POR.SPOR)
+        baseConfig = baseConfig.copy(por = POR.SPOR)
     }
 }
 

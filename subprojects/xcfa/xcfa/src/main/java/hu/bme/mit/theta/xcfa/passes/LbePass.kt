@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
@@ -77,8 +76,7 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
    */
   private var atomicPhase = false
   val level: LbeLevel =
-    if (parseContext.multiThreading && !level.isLocal) LbeLevel.NO_LBE
-    else level
+    if (parseContext.multiThreading && !level.isLocal) LbeLevel.NO_LBE else level
   lateinit var builder: XcfaProcedureBuilder
 
   /**
