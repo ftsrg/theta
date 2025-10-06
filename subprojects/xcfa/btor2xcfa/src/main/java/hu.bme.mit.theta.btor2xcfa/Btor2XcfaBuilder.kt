@@ -137,6 +137,8 @@ object Btor2XcfaBuilder {
       lastLoc = newLoc
     }
 
+
+
     // Add operations
     Btor2Circuit.ops.forEach() {
       val loc = nextLoc(false, false, false)

@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
 import java.math.BigInteger
 
-fun getOperandExpr(operand: Btor2Node, negated: Boolean = false): Expr<BvType> {
+fun getOperandRef(operand: Btor2Node, negated: Boolean = false): Expr<BvType> {
   return if (negated) {
     Not(operand.getVar()!!.ref as Expr<BvType>) as Expr<BvType>
   } else {
@@ -60,10 +60,10 @@ data class Btor2UnaryOperation(
   override fun getExpr(): Expr<BvType> {
     val one = BvExprs.Bv(booleanArrayOf(true)) as Expr<BvType>
     return when (operator) {
-      Btor2UnaryOperator.NOT -> BvNotExpr.of(getOperandExpr(operand))
-      Btor2UnaryOperator.INC -> BvAddExpr.create(mutableListOf(getOperandExpr(operand), one))
-      Btor2UnaryOperator.DEC -> BvSubExpr.create(getOperandExpr(operand), one)
-      Btor2UnaryOperator.NEG -> BvNegExpr.of(getOperandExpr(operand))
+      Btor2UnaryOperator.NOT -> BvNotExpr.of(getOperandRef(operand))
+      Btor2UnaryOperator.INC -> BvAddExpr.create(mutableListOf(getOperandRef(operand), one))
+      Btor2UnaryOperator.DEC -> BvSubExpr.create(getOperandRef(operand), one)
+      Btor2UnaryOperator.NEG -> BvNegExpr.of(getOperandRef(operand))
       Btor2UnaryOperator.REDAND -> BvAndExpr.create(valueByBits())
       Btor2UnaryOperator.REDOR -> BvOrExpr.create(valueByBits())
       Btor2UnaryOperator.REDXOR -> BvXorExpr.create(valueByBits())
@@ -103,8 +103,8 @@ data class Btor2ExtOperation(
       ogLength?.plus(wLength)
         ?: throw IllegalArgumentException("Operand sort width is null or not defined")
     return when (operator) {
-      Btor2ExtOperator.SEXT -> BvSExtExpr.create(getOperandExpr(operand), BvType.of(newLength))
-      Btor2ExtOperator.UEXT -> BvZExtExpr.create(getOperandExpr(operand), BvType.of(newLength))
+      Btor2ExtOperator.SEXT -> BvSExtExpr.create(getOperandRef(operand), BvType.of(newLength))
+      Btor2ExtOperator.UEXT -> BvZExtExpr.create(getOperandRef(operand), BvType.of(newLength))
     }
   }
 
@@ -133,7 +133,7 @@ data class Btor2SliceOperation(
   override fun getExpr(): Expr<BvType> {
     val newU: BigInteger = u + BigInteger.valueOf(1)
     // val newU: BigInteger = if (u == l) u + BigInteger.valueOf(1) else u
-    return BvExtractExpr.create(getOperandExpr(operand), IntLitExpr.of(l), IntLitExpr.of(newU))
+    return BvExtractExpr.create(getOperandRef(operand), IntLitExpr.of(l), IntLitExpr.of(newU))
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {
@@ -161,8 +161,8 @@ data class Btor2BinaryOperation(
   }
 
   override fun getExpr(): Expr<BvType> {
-    val op1Expr = getOperandExpr(op1, opd1_negated)
-    val op2Expr = getOperandExpr(op2, opd2_negated)
+    val op1Expr = getOperandRef(op1, opd1_negated)
+    val op2Expr = getOperandRef(op2, opd2_negated)
 
     return when (operator) {
       Btor2BinaryOperator.ADD -> BvAddExpr.create(mutableListOf(op1Expr, op2Expr))
@@ -252,8 +252,8 @@ data class Btor2Comparison(
   }
 
   override fun getExpr(): Expr<BvType> {
-    val op1_expr = getOperandExpr(op1, opd1_negated)
-    val op2_expr = getOperandExpr(op2, opd2_negated)
+    val op1_expr = getOperandRef(op1, opd1_negated)
+    val op2_expr = getOperandRef(op2, opd2_negated)
     return when (operator) {
       Btor2ComparisonOperator.EQ ->
         IteExpr.of(
@@ -358,13 +358,13 @@ data class Btor2Boolean(
     return when (operator) {
       Btor2BooleanOperator.IFF ->
         IteExpr.of(
-          IffExpr.create(getOperandExpr(op1, opd1_negated), getOperandExpr(op2, opd2_negated)),
+          IffExpr.create(getOperandRef(op1, opd1_negated), getOperandRef(op2, opd2_negated)),
           BvExprs.Bv(BooleanArray(1) { true }),
           BvExprs.Bv(BooleanArray(1) { false }),
         )
       Btor2BooleanOperator.IMPLIES ->
         IteExpr.of(
-          ImplyExpr.create(getOperandExpr(op1, opd1_negated), getOperandExpr(op2, opd2_negated)),
+          ImplyExpr.create(getOperandRef(op1, opd1_negated), getOperandRef(op2, opd2_negated)),
           BvExprs.Bv(BooleanArray(1) { true }),
           BvExprs.Bv(BooleanArray(1) { false }),
         )
@@ -400,10 +400,10 @@ data class Btor2TernaryOperation(
 
   override fun getExpr(): Expr<BvType> {
     checkAllTypesEqual(op1.getExpr(), BvExprs.Bv(BooleanArray(1) { true }))
-    val op1Expr = getOperandExpr(op1, negated1)
+    val op1Expr = getOperandRef(op1, negated1)
     val op1ExprBool = Eq(op1Expr, BvExprs.Bv(BooleanArray(1) { true }))
-    val op2Expr = getOperandExpr(op2, negated2)
-    val op3Expr = getOperandExpr(op3, negated3)
+    val op2Expr = getOperandRef(op2, negated2)
+    val op3Expr = getOperandRef(op3, negated3)
 
     return when (operator) {
       Btor2TernaryOperator.ITE -> IteExpr.of(op1ExprBool as Expr<BoolType>, op2Expr, op3Expr)
