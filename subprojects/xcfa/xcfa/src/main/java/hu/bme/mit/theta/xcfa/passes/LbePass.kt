@@ -77,11 +77,8 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
    */
   private var atomicPhase = false
   val level: LbeLevel =
-    when {
-      parseContext.multiThreading && level == LbeLevel.LBE_SEQ -> LbeLevel.LBE_LOCAL
-      parseContext.multiThreading && level == LbeLevel.LBE_FULL -> LbeLevel.LBE_LOCAL_FULL
-      else -> level
-    }
+    if (parseContext.multiThreading && !level.isLocal) LbeLevel.NO_LBE
+    else level
   lateinit var builder: XcfaProcedureBuilder
 
   /**
@@ -95,7 +92,6 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (level == LbeLevel.NO_LBE) return builder
 
-    Preconditions.checkNotNull(builder.metaData["noSelfLoops"])
     this.builder = builder
 
     // Step 0
@@ -170,12 +166,14 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
       if (!strict || locationsToVisit.contains(visiting)) {
         if (visiting.outgoingEdges.size == 1 && visiting.incomingEdges.size > 1) {
           val nextLocation = visiting.outgoingEdges.first().target
-          val removed = removeMiddleLocation(visiting)
-          if (removed) {
-            val start = mutableListOf<XcfaLocation>()
-            start.add(nextLocation)
-            val locationsToRemove = collapseAll(start, strict)
-            locationsToRemove.forEach { editedLocationsToVisit.remove(it) }
+          if (nextLocation != visiting) {
+            val removed = removeMiddleLocation(visiting)
+            if (removed) {
+              val start = mutableListOf<XcfaLocation>()
+              start.add(nextLocation)
+              val locationsToRemove = collapseAll(start, strict)
+              locationsToRemove.forEach { editedLocationsToVisit.remove(it) }
+            }
           }
         }
       }

@@ -46,6 +46,16 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.EmptyEdgeRemovalPass
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
+import hu.bme.mit.theta.xcfa.passes.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnusedLocRemovalPass
+import hu.bme.mit.theta.xcfa.passes.UnusedVarPass
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.nio.file.Paths
 
@@ -129,9 +139,7 @@ fun complexPortfolio26(
       baseConfig.copy(
         backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
       )
-  }
-
-  if (!xcfa.isInlined) {
+  } else if (!xcfa.isInlined) {
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val recursiveConfig =
       baseCegarConfig.copy(
@@ -902,8 +910,9 @@ fun complexPortfolio26(
         val config_OC =
           ConfigNode(
             "MULTITHREAD_OC-$inProcess",
-            XcfaConfig<CFrontendConfig, OcConfig>(
+            XcfaConfig(
               inputConfig = baseConfig.inputConfig,
+              frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = NO_LBE),
               backendConfig =
                 BackendConfig(
                   backend = OC,
@@ -923,10 +932,25 @@ fun complexPortfolio26(
             checker
           )
 
+        val optimizedXcfa =
+          xcfa.optimizeFurther(ProcedurePassManager(listOf(
+            LbePass(parseContext, LBE_LOCAL),
+            NormalizePass(),
+            DeterministicPass(),
+            UnusedVarPass(logger),
+            EmptyEdgeRemovalPass(),
+            UnusedLocRemovalPass(),
+          )))
+
+        val multithreadCegarBaseConfig = baseConfig.copy(
+          inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = Triple(optimizedXcfa, mcm, parseContext)),
+          frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL)
+        )
+
         val config_MULTITHREAD_EXPL_SEQ_ITP =
           ConfigNode(
             "MULTITHREAD_EXPL_SEQ_ITP-$inProcess",
-            baseConfig.adaptConfig(
+            multithreadCegarBaseConfig.adaptConfig(
               inProcess = inProcess,
               domain = EXPL,
               abstractionSolver = "Z3",
@@ -940,7 +964,7 @@ fun complexPortfolio26(
         val config_MULTITHREAD_PRED_SEQ_ITP =
           ConfigNode(
             "MULTITHREAD_PRED_SEQ_ITP-$inProcess",
-            baseConfig.adaptConfig(
+            multithreadCegarBaseConfig.adaptConfig(
               inProcess = inProcess,
               domain = PRED_CART,
               abstractionSolver = "Z3",
@@ -954,7 +978,7 @@ fun complexPortfolio26(
         val config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES =
           ConfigNode(
             "MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES-$inProcess",
-            baseConfig.adaptConfig(
+            multithreadCegarBaseConfig.adaptConfig(
               inProcess = inProcess,
               domain = PRED_CART,
               abstractionSolver = "Z3",
@@ -969,7 +993,7 @@ fun complexPortfolio26(
         val config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3 =
           ConfigNode(
             "MULTITHREAD_PRED_SEQ_ITP_NEWZ3-$inProcess",
-            baseConfig.adaptConfig(
+            multithreadCegarBaseConfig.adaptConfig(
               inProcess = inProcess,
               domain = PRED_CART,
               abstractionSolver = "Z3:4.13",
@@ -983,7 +1007,7 @@ fun complexPortfolio26(
         val config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT =
           ConfigNode(
             "MULTITHREAD_EXPL_NWT_WP_MATHSAT-$inProcess",
-            baseConfig.adaptConfig(
+            multithreadCegarBaseConfig.adaptConfig(
               inProcess = inProcess,
               domain = EXPL,
               abstractionSolver = "mathsat:5.6.10",
@@ -998,7 +1022,7 @@ fun complexPortfolio26(
           val config_MULTITHREAD_EXPL_COI_SEQ_ITP =
             ConfigNode(
               "MULTITHREAD_EXPL_COI_SEQ_ITP-$inProcess",
-              baseConfig.adaptConfig(
+              multithreadCegarBaseConfig.adaptConfig(
                 inProcess = inProcess,
                 domain = EXPL,
                 abstractionSolver = "Z3",
@@ -1013,7 +1037,7 @@ fun complexPortfolio26(
           val config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES =
             ConfigNode(
               "MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES-$inProcess",
-              baseConfig.adaptConfig(
+              multithreadCegarBaseConfig.adaptConfig(
                 inProcess = inProcess,
                 domain = PRED_CART,
                 abstractionSolver = "Z3",
@@ -1029,7 +1053,7 @@ fun complexPortfolio26(
           val config_MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3 =
             ConfigNode(
               "MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3-$inProcess",
-              baseConfig.adaptConfig(
+              multithreadCegarBaseConfig.adaptConfig(
                 inProcess = inProcess,
                 domain = PRED_CART,
                 abstractionSolver = "Z3:4.13",
