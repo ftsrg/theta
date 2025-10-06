@@ -424,20 +424,23 @@ class PassTests {
 
   @Test
   fun testCPipeline() {
+    val passes = CPasses(false, parseContext, NullLogger.getInstance())
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
-          (init to final) { "proc1"() }
-        }
-        procedure("proc1") { (init to final) { assume("1 == 1") } }
+        procedure("main", passes) { (init to final) { "proc1"() } }.start()
+        procedure("proc1", passes) { (init to final) { assume("1 == 1") } }
       }
 
+    // Test inline
     assertTrue(
       xcfaSource.procedures
         .first { it.name == "main" }
         .edges
         .none { it.getFlatLabels().any { it is InvokeLabel } }
     )
+
+    // Test inlined procedure removal (not init, not invoked, not started)
+    assertTrue(xcfaSource.procedures.none { it.name == "proc1" })
   }
 
   @Test
