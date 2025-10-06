@@ -22,11 +22,13 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.inputStream
+import com.github.ajalt.clikt.parameters.types.int
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
 import hu.bme.mit.theta.frontend.petrinet.model.PropType
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS
 import hu.bme.mit.theta.xsts.XSTS
+import hu.bme.mit.theta.xsts.analysis.passes.XstsStmtFlatteningTransformer
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.*
 
@@ -44,6 +46,13 @@ class InputOptions :
     option(help = "Path of the property file. Has priority over --inlineProperty").inputStream()
   private val inlineProperty: String? by
     option(help = "Input property as a string. Ignored if --property is defined")
+  private val flattenDepth: Int by
+    option(
+        help =
+          "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening."
+      )
+      .int()
+      .default(2)
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
   val pnProperty: PropType by
@@ -63,9 +72,11 @@ class InputOptions :
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
       return PetriNetToXSTS.createXSTS(petriNet, propertyStream, pnProperty)
     }
-    return XstsDslManager.createXsts(
-      SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
-    )
+    val parsedXsts =
+      XstsDslManager.createXsts(
+        SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
+      )
+    return XstsStmtFlatteningTransformer.transform(parsedXsts, flattenDepth)
   }
 
   fun loadPetriNet(): MutableList<PetriNet> = /*PetriNetParser.loadPnml(model).parsePTNet()*/

@@ -75,7 +75,7 @@ fun getMddChecker(
           monolithicExpr.vars,
           stmts
             .map {
-              object : Event {
+              object : Event<VarDecl<*>> {
                 override fun getAffectedVars(): List<VarDecl<*>> =
                   StmtUtils.getWrittenVars(it).toList()
               }
