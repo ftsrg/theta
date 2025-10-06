@@ -301,11 +301,15 @@ private fun backend(
 
               result.isUnsafe -> {
                 // need to determine what kind
-                val property = try {
-                  ErrorDetection.ltlFromTrace(config.inputConfig.property, result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>)
-                } catch(e : UnknownResultException) {
-                  return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
-                }
+                val property =
+                  try {
+                    ErrorDetection.ltlFromTrace(
+                      config.inputConfig.property,
+                      result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
+                    )
+                  } catch (e: UnknownResultException) {
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  }
                 property?.also { logger.write(RESULT, "(Property %s)\n", it) }
                 result
               }
@@ -568,7 +572,11 @@ private fun postVerificationLogging(
             (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
           }
         }
-        val ltlViolationProperty = ErrorDetection.ltlFromTrace(config.inputConfig.property, safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>)!!
+        val ltlViolationProperty =
+          ErrorDetection.ltlFromTrace(
+            config.inputConfig.property,
+            safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
+          )!!
         val witnessFile = File(resultFolder, "witness.graphml")
         GraphmlWitnessWriter()
           .writeWitness(

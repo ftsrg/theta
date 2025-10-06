@@ -13,17 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.Trace
 
-class UnknownResultException(message: String = "Unknown analysis result") : RuntimeException(message)
+class UnknownResultException(message: String = "Unknown analysis result") :
+  RuntimeException(message)
 
 enum class MemSafetyType {
   VALID_FREE,
   VALID_DEREF,
-  VALID_MEMTRACK
+  VALID_MEMTRACK,
 }
 
 enum class ErrorDetection(val ltl: (Any) -> String?) {
@@ -44,28 +44,26 @@ enum class ErrorDetection(val ltl: (Any) -> String?) {
 
   companion object {
     /**
-     * Derives the correct LTL property string for a given ErrorDetection type.
-     * Optionally inspects a trace to disambiguate MEMSAFETY and MEMCLEANUP cases.
+     * Derives the correct LTL property string for a given ErrorDetection type. Optionally inspects
+     * a trace to disambiguate MEMSAFETY and MEMCLEANUP cases.
      */
-    fun ltlFromTrace(
-      property: ErrorDetection,
-      trace: Trace<XcfaState<*>, XcfaAction>?,
-    ): String? {
+    fun ltlFromTrace(property: ErrorDetection, trace: Trace<XcfaState<*>, XcfaAction>?): String? {
       return when (property) {
         MEMSAFETY,
         MEMCLEANUP -> {
-          val locName = trace
-            ?.states
-            ?.asReversed()
-            ?.firstOrNull {
-              it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
-            }
-            ?.processes
-            ?.values
-            ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
-            ?.locs
-            ?.firstOrNull { it.name.contains("__THETA_") }
-            ?.name
+          val locName =
+            trace
+              ?.states
+              ?.asReversed()
+              ?.firstOrNull {
+                it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
+              }
+              ?.processes
+              ?.values
+              ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
+              ?.locs
+              ?.firstOrNull { it.name.contains("__THETA_") }
+              ?.name
 
           locName?.let {
             when (it) {
@@ -75,11 +73,12 @@ enum class ErrorDetection(val ltl: (Any) -> String?) {
                 if (property == MEMCLEANUP) {
                   MEMCLEANUP.ltl(Unit)
                 } else {
-                  throw UnknownResultException("Uncertain MEMSAFETY result: __THETA_lost encountered")
+                  throw UnknownResultException(
+                    "Uncertain MEMSAFETY result: __THETA_lost encountered"
+                  )
                 }
-              else -> throw RuntimeException(
-                "Could not determine subproperty from location name: $it"
-              )
+              else ->
+                throw RuntimeException("Could not determine subproperty from location name: $it")
             }
           }
         }
