@@ -135,7 +135,6 @@ constructor(
     }
     val nextStates: AbstractNextStateDescriptor = OrNextStateDescriptor.create(descriptors)
 
-
     val negatedPropExpr = PathUtils.unfold(Not(monolithicExpr.propExpr), 0)
     val propNode =
       stateSig.topVariableHandle.checkInNode(
