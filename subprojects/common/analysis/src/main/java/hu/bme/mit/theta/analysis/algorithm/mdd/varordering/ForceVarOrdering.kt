@@ -81,8 +81,8 @@ private fun <V> eventSpans(vars: List<V>, events: List<Event<V>>) =
         when (it.isEmpty()) {
           true -> 0
           else -> {
-            val firstVar = it.minOf { vars.indexOf(it) }
-            val lastVar = it.maxOf { vars.indexOf(it) }
+            val firstVar = it.filter { decl -> decl in vars }.minOf { vars.indexOf(it) }
+            val lastVar = it.filter { decl -> decl in vars }.maxOf { vars.indexOf(it) }
             lastVar - firstVar
           }
         }
