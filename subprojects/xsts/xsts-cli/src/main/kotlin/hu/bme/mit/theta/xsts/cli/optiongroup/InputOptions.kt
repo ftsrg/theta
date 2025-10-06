@@ -72,9 +72,10 @@ class InputOptions :
       val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
       return PetriNetToXSTS.createXSTS(petriNet, propertyStream, pnProperty)
     }
-    val parsedXsts = XstsDslManager.createXsts(
-      SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
-    )
+    val parsedXsts =
+      XstsDslManager.createXsts(
+        SequenceInputStream(FileInputStream(model), propertyStream ?: InputStream.nullInputStream())
+      )
     return XstsStmtFlatteningTransformer.transform(parsedXsts, flattenDepth)
   }
 

@@ -36,11 +36,10 @@ constructor(
   val vars: List<VarDecl<*>> =
     (getVars(initExpr) union getVars(transExpr) union getVars(propExpr)).toList(),
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
-  val events : List<Event<VarDecl<*>>> = splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) }
+  val events: List<Event<VarDecl<*>>> =
+    splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) },
 ) {
-  val split: List<Expr<BoolType>> by lazy {
-    splitTransExpr(transExpr)
-  }
+  val split: List<Expr<BoolType>> by lazy { splitTransExpr(transExpr) }
 }
 
 fun MonolithicExpr.action() =

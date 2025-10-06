@@ -36,6 +36,7 @@ public final class IdentityNextStateDescriptor implements AbstractNextStateDescr
 
     private IdentityNextStateDescriptor(AbstractNextStateDescriptor child) {
         this.child = child;
+        // TODO cache hashcode
     }
 
     private IdentityNextStateDescriptor() {

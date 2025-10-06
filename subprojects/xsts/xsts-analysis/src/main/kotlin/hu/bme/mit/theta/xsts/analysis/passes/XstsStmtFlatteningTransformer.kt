@@ -23,75 +23,87 @@ import hu.bme.mit.theta.xsts.XSTS
 
 object XstsStmtFlatteningTransformer {
 
-    fun transform(xsts: XSTS, depth: Int): XSTS {
+  fun transform(xsts: XSTS, depth: Int): XSTS {
 
-        /*
+    /*
 
-        Flattens the statements up to a given depth.
+    Flattens the statements up to a given depth.
 
-        */
+    */
 
-        if (depth == 0) return xsts
+    if (depth == 0) return xsts
 
-        val envFlattened = flattenStmts(xsts.env, depth)
-        val tranFlattened = flattenStmts(xsts.tran, depth)
+    val envFlattened = flattenStmts(xsts.env, depth)
+    val tranFlattened = flattenStmts(xsts.tran, depth)
 
-        return XSTS(
-            xsts.stateVars,
-            xsts.localVars,
-            xsts.ctrlVars,
-            xsts.init,
-            NonDetStmt.of(tranFlattened.toList()),
-            NonDetStmt.of(envFlattened.toList()),
-            xsts.initFormula,
-            xsts.prop,
-        )
+    return XSTS(
+      xsts.stateVars,
+      xsts.localVars,
+      xsts.ctrlVars,
+      xsts.init,
+      NonDetStmt.of(tranFlattened.toList()),
+      NonDetStmt.of(envFlattened.toList()),
+      xsts.initFormula,
+      xsts.prop,
+    )
+  }
+
+  private fun cartesianProduct(vararg sets: Set<*>): Set<kotlin.collections.List<*>> =
+    sets
+      .fold(listOf(listOf<Any?>())) { acc, set ->
+        acc.flatMap { list -> set.map { element -> list + element } }
+      }
+      .toSet()
+
+  private fun flattenStmts(stmt: Stmt, maxDepth: Int = -1, currentDepth: Int = 0): Set<Stmt> {
+    if (maxDepth != -1 && currentDepth > maxDepth) {
+      return setOf(stmt)
     }
+    return when (stmt) {
+      is NonDetStmt -> {
+        stmt.stmts
+          .flatMap {
+            flattenStmts(it, maxDepth, if (stmt.stmts.size > 1) currentDepth + 1 else currentDepth)
+          }
+          .toSet()
+      }
 
-    private fun cartesianProduct(vararg sets: Set<*>): Set<kotlin.collections.List<*>> =
-        sets
-            .fold(listOf(listOf<Any?>())) { acc, set ->
-                acc.flatMap { list -> set.map { element -> list + element } }
-            }
-            .toSet()
-
-    private fun flattenStmts(stmt: Stmt, maxDepth: Int = -1, currentDepth: Int = 0): Set<Stmt> {
-        if (maxDepth != -1 && currentDepth > maxDepth) {
-            return setOf(stmt)
-        }
-        return when (stmt) {
-            is NonDetStmt -> {
-                stmt.stmts.flatMap { flattenStmts(it, maxDepth, if (stmt.stmts.size > 1) currentDepth + 1 else currentDepth) }.toSet()
-            }
-
-            is SequenceStmt -> {
-                cartesianProduct(
-                    *(stmt.stmts.map { flattenStmts(it, maxDepth, if (stmt.stmts.size > 1) currentDepth + 1 else currentDepth) }
-                        .toTypedArray())
+      is SequenceStmt -> {
+        cartesianProduct(
+            *(stmt.stmts
+              .map {
+                flattenStmts(
+                  it,
+                  maxDepth,
+                  if (stmt.stmts.size > 1) currentDepth + 1 else currentDepth,
                 )
-                    .map { SequenceStmt.of(it as kotlin.collections.List<Stmt>) }
-                    .toSet()
-            }
+              }
+              .toTypedArray())
+          )
+          .map { SequenceStmt.of(it as kotlin.collections.List<Stmt>) }
+          .toSet()
+      }
 
-            is IfStmt -> {
-                flattenStmts(stmt.then, maxDepth, currentDepth + 1) + flattenStmts(stmt.elze, maxDepth, currentDepth + 1)
-            }
+      is IfStmt -> {
+        flattenStmts(stmt.then, maxDepth, currentDepth + 1) +
+          flattenStmts(stmt.elze, maxDepth, currentDepth + 1)
+      }
 
-            else -> {
-                setOf(stmt)
-            }
+      else -> {
+        setOf(stmt)
+      }
+    }
+  }
+
+  fun XSTS.events(): List<Event<VarDecl<*>>> {
+
+    val flattened = flattenStmts(SequenceStmt.of(listOf(env, tran)), 5)
+    return flattened
+      .map {
+        object : Event<VarDecl<*>> {
+          override fun getAffectedVars(): List<VarDecl<*>> = StmtUtils.getWrittenVars(it).toList()
         }
-    }
-
-    fun XSTS.events(): List<Event<VarDecl<*>>> {
-
-        val flattened = flattenStmts(SequenceStmt.of(listOf(env, tran)), 5)
-        return flattened.map {
-            object : Event<VarDecl<*>> {
-                override fun getAffectedVars(): List<VarDecl<*>> =
-                    StmtUtils.getWrittenVars(it).toList()
-            }
-        }.toList()
-
-    }
+      }
+      .toList()
+  }
 }

@@ -85,7 +85,7 @@ class XstsToMonolithicAdapter :
       monolithicUnfoldResult.indexing,
       ctrlVars = model.ctrlVars,
       vars = model.stateVars.toList(),
-      events = xsts.events()
+      events = xsts.events(),
     )
   }
 
