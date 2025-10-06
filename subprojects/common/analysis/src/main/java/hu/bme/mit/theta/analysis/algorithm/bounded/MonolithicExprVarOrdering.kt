@@ -26,8 +26,7 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 
 fun MonolithicExpr.orderVars(): List<VarDecl<*>> {
-  val events = this.split().map { MonolithicExprEvent(it, this.transOffsetIndex) }.toList()
-  val orderedVars = orderVarsFromRandomStartingPoints(this.vars, events)
+  val orderedVars = orderVarsFromRandomStartingPoints(this.vars, this.events, 10)
   return orderedVars.filter { !it.name.contains("_messageQueueOf") } +
     orderedVars.filter { it.name.contains("_messageQueueOf") }
 }
