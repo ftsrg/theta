@@ -1,0 +1,18 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/termination.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/termination-recursive-malloc/mutual_simple.i' with property 'sv-benchmarks/c/properties/termination.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64'
+Mapping property 'sv-benchmarks/c/properties/termination.prp' to 'sv-benchmarks/c/properties/unreach-call.prp'
+Language C detected and set for analysis (CPAMain.detectFrontendLanguageIfNecessary, INFO)
+
+Using the following resource limits: CPU-time limit of 900s (ResourceLimitChecker.fromConfiguration, INFO)
+
+CPAchecker 3.1-svn-c087875f13 / default (OpenJDK 64-Bit Server VM 17.0.13) started (CPAchecker.run, INFO)
+
+Parsing CFA from file(s) "formatted_files/mutual_simple.i" (CPAchecker.parse, INFO)
+
+Using default specification, which checks for assertion failures and error labels. (CPAchecker.run, INFO)
+

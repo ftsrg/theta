@@ -1,0 +1,290 @@
+Theta/theta-start.sh sv-benchmarks/c/pthread-wmm/safe030_tso.i --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/no-overflow.prp --architecture ILP32 --portfolio CEGAR --input sv-benchmarks/c/pthread-wmm/safe030_tso.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/pthread-wmm/safe030_tso.i as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: CompoundDefinitions are not yet implemented!
+WARNING: Unknown simple type union pthread_attr_t
+WARNING: enums are not yet supported! Using int instead.
+Arithmetic: []
+Frontend finished:   (in 896 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using portfolio MULTITHREAD
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=150000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: line 1:0 no viable alternative at input 'mod'
+server: Could not parse (var main::t2509 Int) = start P2(0, (mod (mod 0 4294967296) 4294967296))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5939a379, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@6050462a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4c0884e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@231baf51, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@11841b15, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@73877e19, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@3e83c18, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@783efb48, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5d235104, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4e8e8621, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@c446b14, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@3af356f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4443ef6f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7e46d648, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@51751e5f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@2b0b4d53, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@33b082c5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@16073fa8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@1cc9cfb2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@cfbc8e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@3bead518, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@14bf57b2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@46d9aec8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@14379273, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7918c7f8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@17740dae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@bc4d5e1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@3c6aa04a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@2257fadf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7144655b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5c82cd4f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@35835e65, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@289fdb08, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7a231dfd, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@30814f43, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@1fde4f40, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@49cf9028, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@2b61a019, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@11a00961, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7ce9e05a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4992613f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@6fd5717c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@7e2f86e6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@4d774249, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@17b64941, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@53ac845a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5136207f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@26a4551a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@3fdecce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@344426bf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f22d0099f38@5411dd90) }
+server: env: Env( (Frame __unbuffered_cnt <- (var __unbuffered_cnt Int) main$tmp_guard0 <- (var main$tmp_guard0 Int) main$tmp_guard1 <- (var main$tmp_guard1 Int) x <- (var x Int) y <- (var y Int) z <- (var z Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret0 <- (var call_abort_ret0 Int) reach_error_ret <- (var reach_error_ret Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::expression <- (var __VERIFIER_assert::expression Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) call_abort_ret2 <- (var call_abort_ret2 Int) P0_ret <- (var P0_ret Int) P0::arg <- (var P0::arg Int) call___VERIFIER_atomic_begin_ret3 <- (var call___VERIFIER_atomic_begin_ret3 Int) call___VERIFIER_atomic_end_ret4 <- (var call___VERIFIER_atomic_end_ret4 Int) call___VERIFIER_atomic_begin_ret5 <- (var call___VERIFIER_atomic_begin_ret5 Int) call___VERIFIER_atomic_end_ret6 <- (var call___VERIFIER_atomic_end_ret6 Int) call___VERIFIER_atomic_begin_ret7 <- (var call___VERIFIER_atomic_begin_ret7 Int) call___VERIFIER_atomic_end_ret8 <- (var call___VERIFIER_atomic_end_ret8 Int) call___VERIFIER_atomic_begin_ret9 <- (var call___VERIFIER_atomic_begin_ret9 Int) call___VERIFIER_atomic_end_ret10 <- (var call___VERIFIER_atomic_end_ret10 Int) P1_ret <- (var P1_ret Int) P1::arg <- (var P1::arg Int) call___VERIFIER_atomic_begin_ret11 <- (var call___VERIFIER_atomic_begin_ret11 Int) call___VERIFIER_atomic_end_ret12 <- (var call___VERIFIER_atomic_end_ret12 Int) call___VERIFIER_atomic_begin_ret13 <- (var call___VERIFIER_atomic_begin_ret13 Int) call___VERIFIER_atomic_end_ret14 <- (var call___VERIFIER_atomic_end_ret14 Int) call___VERIFIER_atomic_begin_ret15 <- (var call___VERIFIER_atomic_begin_ret15 Int) call___VERIFIER_atomic_end_ret16 <- (var call___VERIFIER_atomic_end_ret16 Int) call___VERIFIER_atomic_begin_ret17 <- (var call___VERIFIER_atomic_begin_ret17 Int) call___VERIFIER_atomic_end_ret18 <- (var call___VERIFIER_atomic_end_ret18 Int) P2_ret <- (var P2_ret Int) P2::arg <- (var P2::arg Int) call___VERIFIER_atomic_begin_ret19 <- (var call___VERIFIER_atomic_begin_ret19 Int) call___VERIFIER_atomic_end_ret20 <- (var call___VERIFIER_atomic_end_ret20 Int) call___VERIFIER_atomic_begin_ret21 <- (var call___VERIFIER_atomic_begin_ret21 Int) call___VERIFIER_atomic_end_ret22 <- (var call___VERIFIER_atomic_end_ret22 Int) call___VERIFIER_atomic_begin_ret23 <- (var call___VERIFIER_atomic_begin_ret23 Int) call___VERIFIER_atomic_end_ret24 <- (var call___VERIFIER_atomic_end_ret24 Int) call___VERIFIER_atomic_begin_ret25 <- (var call___VERIFIER_atomic_begin_ret25 Int) call___VERIFIER_atomic_end_ret26 <- (var call___VERIFIER_atomic_end_ret26 Int) main_ret <- (var main_ret Int) main::t2507 <- (var main::t2507 Int) main::t2508 <- (var main::t2508 Int) main::t2509 <- (var main::t2509 Int) call_pthread_create_ret27 <- (var call_pthread_create_ret27 Int) call_pthread_create_ret28 <- (var call_pthread_create_ret28 Int) call_pthread_create_ret29 <- (var call_pthread_create_ret29 Int) call___VERIFIER_atomic_begin_ret30 <- (var call___VERIFIER_atomic_begin_ret30 Int) call___VERIFIER_atomic_end_ret31 <- (var call___VERIFIER_atomic_end_ret31 Int) call_assume_abort_if_not_ret32 <- (var call_assume_abort_if_not_ret32 Int) call___VERIFIER_atomic_begin_ret33 <- (var call___VERIFIER_atomic_begin_ret33 Int) call___VERIFIER_atomic_end_ret34 <- (var call___VERIFIER_atomic_end_ret34 Int) call___VERIFIER_atomic_begin_ret35 <- (var call___VERIFIER_atomic_begin_ret35 Int) call___VERIFIER_atomic_end_ret36 <- (var call___VERIFIER_atomic_end_ret36 Int) call___VERIFIER_assert_ret37 <- (var call___VERIFIER_assert_ret37 Int)) )
+server: type: StartLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:347)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.expr(ExprParser.java:191)
+server: 	at hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper.<init>(ExprParser.kt:89)
+server: 	at hu.bme.mit.theta.xcfa.model.StartLabel$Companion.fromString(XcfaLabel.kt:93)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:319)
+server: 	... 31 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=300000, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=z3:4.12.2, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=z3:4.12.2, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: line 1:0 no viable alternative at input 'mod'
+server: Could not parse (var main::t2509 Int) = start P2(0, (mod (mod 0 4294967296) 4294967296))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5939a379, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@6050462a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4c0884e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@231baf51, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@11841b15, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@73877e19, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@3e83c18, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@783efb48, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5d235104, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4e8e8621, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@c446b14, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@3af356f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4443ef6f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7e46d648, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@51751e5f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@2b0b4d53, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@33b082c5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@16073fa8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@1cc9cfb2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@cfbc8e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@3bead518, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@14bf57b2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@46d9aec8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@14379273, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7918c7f8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@17740dae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@bc4d5e1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@3c6aa04a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@2257fadf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7144655b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5c82cd4f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@35835e65, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@289fdb08, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7a231dfd, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@30814f43, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@1fde4f40, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@49cf9028, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@2b61a019, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@11a00961, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7ce9e05a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4992613f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@6fd5717c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@7e2f86e6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@4d774249, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@17b64941, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@53ac845a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5136207f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@26a4551a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@3fdecce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@344426bf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007ff438099f38@5411dd90) }
+server: env: Env( (Frame __unbuffered_cnt <- (var __unbuffered_cnt Int) main$tmp_guard0 <- (var main$tmp_guard0 Int) main$tmp_guard1 <- (var main$tmp_guard1 Int) x <- (var x Int) y <- (var y Int) z <- (var z Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret0 <- (var call_abort_ret0 Int) reach_error_ret <- (var reach_error_ret Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::expression <- (var __VERIFIER_assert::expression Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) call_abort_ret2 <- (var call_abort_ret2 Int) P0_ret <- (var P0_ret Int) P0::arg <- (var P0::arg Int) call___VERIFIER_atomic_begin_ret3 <- (var call___VERIFIER_atomic_begin_ret3 Int) call___VERIFIER_atomic_end_ret4 <- (var call___VERIFIER_atomic_end_ret4 Int) call___VERIFIER_atomic_begin_ret5 <- (var call___VERIFIER_atomic_begin_ret5 Int) call___VERIFIER_atomic_end_ret6 <- (var call___VERIFIER_atomic_end_ret6 Int) call___VERIFIER_atomic_begin_ret7 <- (var call___VERIFIER_atomic_begin_ret7 Int) call___VERIFIER_atomic_end_ret8 <- (var call___VERIFIER_atomic_end_ret8 Int) call___VERIFIER_atomic_begin_ret9 <- (var call___VERIFIER_atomic_begin_ret9 Int) call___VERIFIER_atomic_end_ret10 <- (var call___VERIFIER_atomic_end_ret10 Int) P1_ret <- (var P1_ret Int) P1::arg <- (var P1::arg Int) call___VERIFIER_atomic_begin_ret11 <- (var call___VERIFIER_atomic_begin_ret11 Int) call___VERIFIER_atomic_end_ret12 <- (var call___VERIFIER_atomic_end_ret12 Int) call___VERIFIER_atomic_begin_ret13 <- (var call___VERIFIER_atomic_begin_ret13 Int) call___VERIFIER_atomic_end_ret14 <- (var call___VERIFIER_atomic_end_ret14 Int) call___VERIFIER_atomic_begin_ret15 <- (var call___VERIFIER_atomic_begin_ret15 Int) call___VERIFIER_atomic_end_ret16 <- (var call___VERIFIER_atomic_end_ret16 Int) call___VERIFIER_atomic_begin_ret17 <- (var call___VERIFIER_atomic_begin_ret17 Int) call___VERIFIER_atomic_end_ret18 <- (var call___VERIFIER_atomic_end_ret18 Int) P2_ret <- (var P2_ret Int) P2::arg <- (var P2::arg Int) call___VERIFIER_atomic_begin_ret19 <- (var call___VERIFIER_atomic_begin_ret19 Int) call___VERIFIER_atomic_end_ret20 <- (var call___VERIFIER_atomic_end_ret20 Int) call___VERIFIER_atomic_begin_ret21 <- (var call___VERIFIER_atomic_begin_ret21 Int) call___VERIFIER_atomic_end_ret22 <- (var call___VERIFIER_atomic_end_ret22 Int) call___VERIFIER_atomic_begin_ret23 <- (var call___VERIFIER_atomic_begin_ret23 Int) call___VERIFIER_atomic_end_ret24 <- (var call___VERIFIER_atomic_end_ret24 Int) call___VERIFIER_atomic_begin_ret25 <- (var call___VERIFIER_atomic_begin_ret25 Int) call___VERIFIER_atomic_end_ret26 <- (var call___VERIFIER_atomic_end_ret26 Int) main_ret <- (var main_ret Int) main::t2507 <- (var main::t2507 Int) main::t2508 <- (var main::t2508 Int) main::t2509 <- (var main::t2509 Int) call_pthread_create_ret27 <- (var call_pthread_create_ret27 Int) call_pthread_create_ret28 <- (var call_pthread_create_ret28 Int) call_pthread_create_ret29 <- (var call_pthread_create_ret29 Int) call___VERIFIER_atomic_begin_ret30 <- (var call___VERIFIER_atomic_begin_ret30 Int) call___VERIFIER_atomic_end_ret31 <- (var call___VERIFIER_atomic_end_ret31 Int) call_assume_abort_if_not_ret32 <- (var call_assume_abort_if_not_ret32 Int) call___VERIFIER_atomic_begin_ret33 <- (var call___VERIFIER_atomic_begin_ret33 Int) call___VERIFIER_atomic_end_ret34 <- (var call___VERIFIER_atomic_end_ret34 Int) call___VERIFIER_atomic_begin_ret35 <- (var call___VERIFIER_atomic_begin_ret35 Int) call___VERIFIER_atomic_end_ret36 <- (var call___VERIFIER_atomic_end_ret36 Int) call___VERIFIER_assert_ret37 <- (var call___VERIFIER_assert_ret37 Int)) )
+server: type: StartLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:347)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.expr(ExprParser.java:191)
+server: 	at hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper.<init>(ExprParser.kt:89)
+server: 	at hu.bme.mit.theta.xcfa.model.StartLabel$Companion.fromString(XcfaLabel.kt:93)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:319)
+server: 	... 31 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as TimeoutOrNotSolvableError
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=0, inProcess=true, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=PRED_CART, maxEnum=1, search=DFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+server: line 1:0 no viable alternative at input 'mod'
+server: Could not parse (var main::t2509 Int) = start P2(0, (mod (mod 0 4294967296) 4294967296))
+server: scope: Scope{
+server: enclosingScope: null
+server: symbolTable: SymbolTable(hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@23bb8443, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@49438269, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@ba2f4ec, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@1c1bbc4e, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@55fe41ea, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@fbd1f6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4e268090, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5136d012, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5939a379, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@6050462a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4c0884e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@231baf51, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@11841b15, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@73877e19, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@3e83c18, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@783efb48, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5d235104, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4e8e8621, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@c446b14, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@3af356f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4443ef6f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7e46d648, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@51751e5f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@2b0b4d53, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@33b082c5, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@16073fa8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@1cc9cfb2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@cfbc8e8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@3bead518, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@14bf57b2, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@46d9aec8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@14379273, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7918c7f8, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@17740dae, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@bc4d5e1, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@3c6aa04a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@2257fadf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7144655b, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5c82cd4f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@35835e65, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@289fdb08, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7a231dfd, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@30814f43, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@1fde4f40, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@49cf9028, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@2b61a019, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@11a00961, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7ce9e05a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4992613f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@6fd5717c, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@7e2f86e6, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@4d774249, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@17b64941, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@53ac845a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5136207f, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@26a4551a, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@3fdecce, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@344426bf, hu.bme.mit.theta.grammar.gson.VarDeclAdapter$$Lambda$10/0x00007f5f60099f38@5411dd90) }
+server: env: Env( (Frame __unbuffered_cnt <- (var __unbuffered_cnt Int) main$tmp_guard0 <- (var main$tmp_guard0 Int) main$tmp_guard1 <- (var main$tmp_guard1 Int) x <- (var x Int) y <- (var y Int) z <- (var z Int) assume_abort_if_not_ret <- (var assume_abort_if_not_ret Int) assume_abort_if_not::cond <- (var assume_abort_if_not::cond Int) call_abort_ret0 <- (var call_abort_ret0 Int) reach_error_ret <- (var reach_error_ret Int) __VERIFIER_assert_ret <- (var __VERIFIER_assert_ret Int) __VERIFIER_assert::expression <- (var __VERIFIER_assert::expression Int) call_reach_error_ret1 <- (var call_reach_error_ret1 Int) call_abort_ret2 <- (var call_abort_ret2 Int) P0_ret <- (var P0_ret Int) P0::arg <- (var P0::arg Int) call___VERIFIER_atomic_begin_ret3 <- (var call___VERIFIER_atomic_begin_ret3 Int) call___VERIFIER_atomic_end_ret4 <- (var call___VERIFIER_atomic_end_ret4 Int) call___VERIFIER_atomic_begin_ret5 <- (var call___VERIFIER_atomic_begin_ret5 Int) call___VERIFIER_atomic_end_ret6 <- (var call___VERIFIER_atomic_end_ret6 Int) call___VERIFIER_atomic_begin_ret7 <- (var call___VERIFIER_atomic_begin_ret7 Int) call___VERIFIER_atomic_end_ret8 <- (var call___VERIFIER_atomic_end_ret8 Int) call___VERIFIER_atomic_begin_ret9 <- (var call___VERIFIER_atomic_begin_ret9 Int) call___VERIFIER_atomic_end_ret10 <- (var call___VERIFIER_atomic_end_ret10 Int) P1_ret <- (var P1_ret Int) P1::arg <- (var P1::arg Int) call___VERIFIER_atomic_begin_ret11 <- (var call___VERIFIER_atomic_begin_ret11 Int) call___VERIFIER_atomic_end_ret12 <- (var call___VERIFIER_atomic_end_ret12 Int) call___VERIFIER_atomic_begin_ret13 <- (var call___VERIFIER_atomic_begin_ret13 Int) call___VERIFIER_atomic_end_ret14 <- (var call___VERIFIER_atomic_end_ret14 Int) call___VERIFIER_atomic_begin_ret15 <- (var call___VERIFIER_atomic_begin_ret15 Int) call___VERIFIER_atomic_end_ret16 <- (var call___VERIFIER_atomic_end_ret16 Int) call___VERIFIER_atomic_begin_ret17 <- (var call___VERIFIER_atomic_begin_ret17 Int) call___VERIFIER_atomic_end_ret18 <- (var call___VERIFIER_atomic_end_ret18 Int) P2_ret <- (var P2_ret Int) P2::arg <- (var P2::arg Int) call___VERIFIER_atomic_begin_ret19 <- (var call___VERIFIER_atomic_begin_ret19 Int) call___VERIFIER_atomic_end_ret20 <- (var call___VERIFIER_atomic_end_ret20 Int) call___VERIFIER_atomic_begin_ret21 <- (var call___VERIFIER_atomic_begin_ret21 Int) call___VERIFIER_atomic_end_ret22 <- (var call___VERIFIER_atomic_end_ret22 Int) call___VERIFIER_atomic_begin_ret23 <- (var call___VERIFIER_atomic_begin_ret23 Int) call___VERIFIER_atomic_end_ret24 <- (var call___VERIFIER_atomic_end_ret24 Int) call___VERIFIER_atomic_begin_ret25 <- (var call___VERIFIER_atomic_begin_ret25 Int) call___VERIFIER_atomic_end_ret26 <- (var call___VERIFIER_atomic_end_ret26 Int) main_ret <- (var main_ret Int) main::t2507 <- (var main::t2507 Int) main::t2508 <- (var main::t2508 Int) main::t2509 <- (var main::t2509 Int) call_pthread_create_ret27 <- (var call_pthread_create_ret27 Int) call_pthread_create_ret28 <- (var call_pthread_create_ret28 Int) call_pthread_create_ret29 <- (var call_pthread_create_ret29 Int) call___VERIFIER_atomic_begin_ret30 <- (var call___VERIFIER_atomic_begin_ret30 Int) call___VERIFIER_atomic_end_ret31 <- (var call___VERIFIER_atomic_end_ret31 Int) call_assume_abort_if_not_ret32 <- (var call_assume_abort_if_not_ret32 Int) call___VERIFIER_atomic_begin_ret33 <- (var call___VERIFIER_atomic_begin_ret33 Int) call___VERIFIER_atomic_end_ret34 <- (var call___VERIFIER_atomic_end_ret34 Int) call___VERIFIER_atomic_begin_ret35 <- (var call___VERIFIER_atomic_begin_ret35 Int) call___VERIFIER_atomic_end_ret36 <- (var call___VERIFIER_atomic_end_ret36 Int) call___VERIFIER_assert_ret37 <- (var call___VERIFIER_assert_ret37 Int)) )
+server: type: StartLabel
+server: Exception in thread "main" java.lang.reflect.InvocationTargetException
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+server: 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+server: 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+server: 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method.callMethod(CallerImpl.kt:97)
+server: 	at kotlin.reflect.jvm.internal.calls.CallerImpl$Method$Instance.call(CallerImpl.kt:113)
+server: 	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:108)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:83)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:69)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter.read(XcfaLabelAdapter.kt:33)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.parseProcedures(XcfaAdapter.kt:180)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:101)
+server: 	at hu.bme.mit.theta.xcfa.gson.XcfaAdapter.read(XcfaAdapter.kt:30)
+server: 	at com.google.gson.internal.bind.TypeAdapters$34$1.read(TypeAdapters.java:979)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:161)
+server: 	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:266)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:1058)
+server: 	at com.google.gson.Gson.fromJson(Gson.java:986)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:54)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+server: Caused by: org.antlr.v4.runtime.misc.ParseCancellationException
+server: 	at org.antlr.v4.runtime.BailErrorStrategy.recover(BailErrorStrategy.java:51)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:347)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.expr(ExprParser.java:191)
+server: 	at hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper.<init>(ExprParser.kt:89)
+server: 	at hu.bme.mit.theta.xcfa.model.StartLabel$Companion.fromString(XcfaLabel.kt:93)
+server: 	... 28 more
+server: Caused by: org.antlr.v4.runtime.NoViableAltException
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.noViableAlt(ParserATNSimulator.java:2026)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.execATN(ParserATNSimulator.java:467)
+server: 	at org.antlr.v4.runtime.atn.ParserATNSimulator.adaptivePredict(ParserATNSimulator.java:393)
+server: 	at hu.bme.mit.theta.grammar.dsl.gen.ExprParser.funcLitExpr(ExprParser.java:319)
+server: 	... 31 more
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Complex24Kt$complexPortfolio24$checker$1.invoke(complex24.kt:42)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:44)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:33)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:111)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:82)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:30)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:215)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:58)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:214)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:84)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:104)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:36)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:115)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [SolverError])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=150000, inProcess=false, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using CEGAR
+Configuration: (CegarChecker (XcfaAbstractor (PriorityWaitlist (Combinator TargetFirst (Combinator (Inverter DepthOrder) CreationOrder)))) hu.bme.mit.theta.analysis.expr.refinement.AasporRefiner@622d7e4)
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Starting ARG: 1 nodes, 1 incomplete, 0 unsafe
+|  |  Building ARG...done
+|  |  Finished ARG: 57 nodes, 0 incomplete, 0 unsafe
+| Checking abstraction done, result: (AbstractorResult Safe)
+(SafetyResult Safe)
+AlgorithmTimeMs: 121
+Iterations: 1
+
+Backend finished (in 209 ms)
+(SafetyResult Safe)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=OVERFLOW, frontendConfig=FrontendConfig(lbeLevel=LBE_LOCAL, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=150000, inProcess=false, specConfig=CegarConfig(initPrec=EMPTY, porLevel=AASPOR, porRandomSeed=-1, coi=COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=DFS, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false)) succeeded in 3592 ms
+Backend finished (in 3596 ms)
+(SafetyResult Safe)

@@ -1,0 +1,103 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP24_unreach-call.ReachSafety-Hardware, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-08-29 16:45:57 UTC
+tool:                    Theta 6.5.2
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO
+resource limits:
+- time:                  20 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az773-379
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3239.359 MHz
+ram:                     16757.338112 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Hardware
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                   status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml             TIMEOUT                         20.16       14.48        None
+btor2c-lazyMod.cambridge.5.prop1-back-serstep.yml           TIMEOUT                         21.90       10.27        None
+btor2c-lazyMod.extinction.4.prop1-func-interl.yml           TIMEOUT                         20.47        8.99        None
+btor2c-lazyMod.lup.2.prop1-func-interl.yml                  TIMEOUT                         21.71        8.17        None
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml           TIMEOUT                         22.05        7.95        None
+btor2c-lazyMod.msmie.4.prop1-func-interl.yml                TIMEOUT                         20.20        9.35        None
+btor2c-lazyMod.protocols.5.prop1-func-interl.yml            TIMEOUT                         20.71       10.57        None
+btor2c-lazyMod.pgm_protocol.4.prop5-func-interl.yml         TIMEOUT                         20.93       12.94        None
+btor2c-lazyMod.brp.1.prop1-func-interl.yml                  TIMEOUT                         20.62        8.68        None
+btor2c-lazyMod.brp2.5.prop3-back-serstep.yml                TIMEOUT                         22.11        7.59        None
+btor2c-lazyMod.shift_register_top_w64_d8_e0.yml             TIMEOUT                         20.93       10.42        None
+btor2c-lazyMod.sw_ball2004_1.yml                            true                            13.61        7.79        None
+btor2c-lazyMod.needham.4.prop1-back-serstep.yml             TIMEOUT                         21.27        8.69        None
+btor2c-lazyMod.synapse.6.prop1-back-serstep.yml             TIMEOUT                         20.36       11.26        None
+btor2c-lazyMod.at.7.prop1-back-serstep.yml                  TIMEOUT                         21.95        8.21        None
+btor2c-lazyMod.peterson.7.prop1-func-interl.yml             TIMEOUT                         21.04        7.38        None
+btor2c-lazyMod.vis_arrays_bufferAlloc.yml                   TIMEOUT                         20.96       10.23        None
+btor2c-lazyMod.circular_pointer_top_w16_d8_e0.yml           TIMEOUT                         20.80       10.50        None
+btor2c-lazyMod.vis_arrays_vsaR_p10.yml                      TIMEOUT                         20.75       10.53        None
+btor2c-lazyMod.rether.1.prop1-func-interl.yml               TIMEOUT                         21.79        7.63        None
+btor2c-lazyMod.vis_arrays_vsaR_p16.yml                      TIMEOUT                         20.61       10.72        None
+btor2c-lazyMod.adding.5.prop1-func-interl.yml               TIMEOUT                         20.33       11.42        None
+btor2c-lazyMod.cambridge.7.prop1-back-serstep.yml           TIMEOUT                         20.30       11.33        None
+btor2c-lazyMod.brp2.3.prop1-back-serstep.yml                TIMEOUT                         22.61        7.55        None
+btor2c-lazyMod.mpeg.yml                                     TIMEOUT                         21.51        7.55        None
+btor2c-lazyMod.arbitrated_top_n5_w8_d128_e0.yml             TIMEOUT                         20.95       10.35        None
+btor2c-lazyMod.protocols.1.prop1-back-serstep.yml           TIMEOUT                         20.57       10.76        None
+btor2c-lazyMod.protocols.5.prop1-back-serstep.yml           TIMEOUT                         20.24        8.99        None
+btor2c-lazyMod.production_cell.4.prop1-func-interl.yml      TIMEOUT                         20.97        8.41        None
+btor2c-lazyMod.gear.2.prop4-func-interl.yml                 TIMEOUT                         22.42        7.60        None
+btor2c-lazyMod.arbitrated_top_n4_w8_d32_e0.yml              TIMEOUT                         20.32       14.11        None
+btor2c-lazyMod.h_b03.yml                                    TIMEOUT                         20.71       10.58        None
+btor2c-lazyMod.vis_arrays_palu.yml                          false(unreach-call)             14.88        7.23        None
+btor2c-lazyMod.telephony.8.prop1-back-serstep.yml           TIMEOUT                         22.59       10.02        None
+btor2c-lazyMod.resistance.2.prop2-func-interl.yml           TIMEOUT                         20.91       10.31        None
+btor2c-lazyMod.needham.2.prop4-back-serstep.yml             TIMEOUT                         21.83        7.96        None
+btor2c-lazyMod.lamport.5.prop1-back-serstep.yml             TIMEOUT                         21.80        7.51        None
+btor2c-lazyMod.train-gate.5.prop1-back-serstep.yml          TIMEOUT                         22.67        7.85        None
+btor2c-lazyMod.synapse.1.prop1-back-serstep.yml             TIMEOUT                         22.23       10.33        None
+btor2c-lazyMod.circular_pointer_top_w8_d128_e0.yml          TIMEOUT                         22.65        7.49        None
+btor2c-lazyMod.brp2.5.prop2-func-interl.yml                 TIMEOUT                         20.40        7.47        None
+btor2c-lazyMod.peg_solitaire.6.prop1-back-serstep.yml       TIMEOUT                         21.33        8.60        None
+btor2c-lazyMod.plc.1.prop2-back-serstep.yml                 TIMEOUT                         20.17        9.44        None
+btor2c-lazyMod.vis_arrays_vsaR_p12.yml                      TIMEOUT                         20.25       11.20        None
+btor2c-lazyMod.mul8.yml                                     TIMEOUT                         21.65       12.95        None
+btor2c-lazyMod.elevator_planning.1.prop1-func-interl.yml    TIMEOUT                         20.66       10.66        None
+btor2c-lazyMod.pgm_protocol.8.prop1-back-serstep.yml        TIMEOUT                         20.96       10.55        None
+btor2c-lazyMod.bakery.4.prop1-back-serstep.yml              TIMEOUT                         20.89        8.48        None
+btor2c-lazyMod.frogs.4.prop1-func-interl.yml                TIMEOUT                         21.43        8.51        None
+btor2c-lazyMod.brp2.3.prop2-func-interl.yml                 TIMEOUT                         20.25        7.49        None
+-------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                   done                            34.14      498.72           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             50 Files
+  correct:               2
+    correct true:        1
+    correct false:       1
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              48
+  Score:                 3 (max: 75)

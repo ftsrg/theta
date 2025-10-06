@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Tue, 2024-11-12 13:13:57 UTC
+tool:                    Theta 6.8.2
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1215-213
+os:                      Linux-6.5.0-1025-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2786.083 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            
+and-02.yml                            TIMEOUT                         40.11       31.87        None
+and-03-false.yml                      false(unreach-call)             18.75        9.72        None
+and-03.yml                            TIMEOUT                         40.39       24.62        None
+and-04-false.yml                      false(unreach-call)             24.84       12.63        None
+and-04.yml                            TIMEOUT                         40.65       24.06        None
+and-05-false.yml                      false(unreach-call)             23.55       11.70        None
+and-05.yml                            true                            22.31       11.39        None
+and-06.yml                            TIMEOUT                         40.61       23.83        None
+and-assume.yml                        
+consecutive-zero-bits-trailing.yml    
+counting-bits-BK.yml                  TIMEOUT                         40.17       24.97        None
+counting-bits-BK1.yml                 TIMEOUT                         40.77       27.39        None
+counting-bits-set.yml                 ERROR (frontend failed, before parsing finished)       13.30        7.66        None
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           130.62      224.06           -
+
+Statistics:             11 Files
+  correct:               4
+    correct true:        1
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               7
+  Score:                 5 (max: 19)
