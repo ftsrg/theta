@@ -123,7 +123,7 @@ constructor(
 
     val transNodes = mutableListOf<MddHandle>()
     val descriptors = mutableListOf<AbstractNextStateDescriptor>()
-    for (expr in monolithicExpr.split) {
+    for (expr in listOf(Or(monolithicExpr.split))) {
       val transExpr =
         And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
       val transitionNode =
