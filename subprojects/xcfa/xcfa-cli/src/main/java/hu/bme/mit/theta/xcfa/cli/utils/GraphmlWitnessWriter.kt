@@ -44,6 +44,7 @@ class GraphmlWitnessWriter {
     parseContext: ParseContext,
     witnessfile: File,
     property: ErrorDetection,
+    ltlViolationProperty: String,
   ) {
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
@@ -111,9 +112,7 @@ class GraphmlWitnessWriter {
         .append(System.lineSeparator())
         .append("<data key=\"producer\">theta</data>")
         .append(System.lineSeparator())
-        .append(
-          "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>"
-        )
+        .append("<data key=\"specification\">$ltlViolationProperty</data>")
         .append(System.lineSeparator())
         .append("<data key=\"sourcecodelang\">C</data>")
         .append(System.lineSeparator())

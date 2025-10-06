@@ -49,6 +49,7 @@ class YamlWitnessWriter {
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: ErrorDetection,
+    ltlViolationProperty: String,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
@@ -68,7 +69,7 @@ class YamlWitnessWriter {
           Task(
             inputFiles = listOf(inputFile.name),
             inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-            specification = property.name,
+            specification = ltlViolationProperty,
             dataModel =
               architecture?.let {
                 if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32

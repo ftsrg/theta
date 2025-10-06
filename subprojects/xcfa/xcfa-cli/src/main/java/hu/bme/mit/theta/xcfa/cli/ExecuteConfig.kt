@@ -40,6 +40,7 @@ import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.UnknownResultException
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
@@ -270,48 +271,14 @@ private fun backend(
               }
 
               result.isUnsafe -> {
-                // need to determine what kind
                 val property =
-                  when (config.inputConfig.property) {
-                    ErrorDetection.MEMSAFETY,
-                    ErrorDetection.MEMCLEANUP -> {
-                      val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
-                      trace
-                        ?.states
-                        ?.asReversed()
-                        ?.firstOrNull {
-                          it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
-                        }
-                        ?.processes
-                        ?.values
-                        ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
-                        ?.locs
-                        ?.firstOrNull { it.name.contains("__THETA_") }
-                        ?.name
-                        ?.let {
-                          when (it) {
-                            "__THETA_bad_free" -> "valid-free"
-                            "__THETA_bad_deref" -> "valid-deref"
-                            "__THETA_lost" ->
-                              if (config.inputConfig.property == ErrorDetection.MEMCLEANUP)
-                                "valid-memcleanup"
-                              else
-                                "valid-memtrack"
-                                  .also { // this is not an exact check.
-                                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
-                                  }
-                            else ->
-                              throw RuntimeException(
-                                "Something went wrong; could not determine subproperty! Named location: $it"
-                              )
-                          }
-                        }
-                    }
-                    ErrorDetection.DATA_RACE -> "no-data-race"
-                    ErrorDetection.ERROR_LOCATION -> "unreach-call"
-                    ErrorDetection.OVERFLOW -> "no-overflow"
-                    ErrorDetection.NO_ERROR -> null
-                    ErrorDetection.TERMINATION -> "termination"
+                  try {
+                    ErrorDetection.ltlFromTrace(
+                      config.inputConfig.property,
+                      result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
+                    )
+                  } catch (e: UnknownResultException) {
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                   }
                 property?.also { logger.write(RESULT, "(Property %s)\n", it) }
                 result
@@ -494,6 +461,11 @@ private fun postVerificationLogging(
             (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
           }
         }
+        val ltlViolationProperty =
+          ErrorDetection.ltlFromTrace(
+            config.inputConfig.property,
+            safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
+          )!!
         val witnessFile = File(resultFolder, "witness.graphml")
         GraphmlWitnessWriter()
           .writeWitness(
@@ -506,6 +478,7 @@ private fun postVerificationLogging(
             parseContext,
             witnessFile,
             config.inputConfig.property,
+            ltlViolationProperty,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
         YamlWitnessWriter()
@@ -513,6 +486,7 @@ private fun postVerificationLogging(
             safetyResult,
             config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             config.inputConfig.property,
+            ltlViolationProperty,
             (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
             getSolver(
               config.outputConfig.witnessConfig.concretizerSolver,
