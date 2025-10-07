@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.DereferenceAccessMap
@@ -45,38 +47,41 @@ import hu.bme.mit.theta.xcfa.utils.isWritten
  * variable write access, and checks for multiple access and each global variable access (writes and
  * reads).
  */
-class DataRaceToReachabilityPass : ProcedurePass {
+class DataRaceToReachabilityPass(private val property: XcfaProperty) : ProcedurePass {
 
   companion object {
+    var enabled = false
 
     private var potentialRacingVars: Set<VarDecl<*>>? = null
+
+    private val writeFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
+    private val readFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
+    private val VarDecl<*>.writeFlag: VarDecl<IntType>
+      get() = writeFlagVars[this]!!
+
+    private val VarDecl<*>.readFlag: VarDecl<IntType>
+      get() = readFlagVars[this]!!
+
+    private val derefArrayWriteFlagVar = Decls.Var("_deref_array_write", Int())
+    private val derefOffsetWriteFlagVar = Decls.Var("_deref_offset_write", Int())
+    private val derefArrayReadFlagVar = Decls.Var("_deref_array_read", Int())
+    private val derefOffsetReadFlagVar = Decls.Var("_deref_offset_read", Int())
+    private val Expr<*>.derefArrayWriteFlag: VarDecl<IntType>
+      get() = derefArrayWriteFlagVar.also { check(type == Int()) }
+
+    private val Expr<*>.derefOffsetWriteFlag: VarDecl<IntType>
+      get() = derefOffsetWriteFlagVar.also { check(type == Int()) }
+
+    private val Expr<*>.derefArrayReadFlag: VarDecl<IntType>
+      get() = derefArrayReadFlagVar.also { check(type == Int()) }
+
+    private val Expr<*>.derefOffsetReadFlag: VarDecl<IntType>
+      get() = derefOffsetReadFlagVar.also { check(type == Int()) }
   }
 
-  private val writeFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
-  private val readFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
-  private val VarDecl<*>.writeFlag: VarDecl<IntType>
-    get() = writeFlagVars[this]!!
-
-  private val VarDecl<*>.readFlag: VarDecl<IntType>
-    get() = readFlagVars[this]!!
-
-  private val derefArrayWriteFlagVar = Decls.Var("_deref_array_write", Int())
-  private val derefOffsetWriteFlagVar = Decls.Var("_deref_offset_write", Int())
-  private val derefArrayReadFlagVar = Decls.Var("_deref_array_read", Int())
-  private val derefOffsetReadFlagVar = Decls.Var("_deref_offset_read", Int())
-  private val Expr<*>.derefArrayWriteFlag: VarDecl<IntType>
-    get() = derefArrayWriteFlagVar.also { check(type == Int()) }
-
-  private val Expr<*>.derefOffsetWriteFlag: VarDecl<IntType>
-    get() = derefOffsetWriteFlagVar.also { check(type == Int()) }
-
-  private val Expr<*>.derefArrayReadFlag: VarDecl<IntType>
-    get() = derefArrayReadFlagVar.also { check(type == Int()) }
-
-  private val Expr<*>.derefOffsetReadFlag: VarDecl<IntType>
-    get() = derefOffsetReadFlagVar.also { check(type == Int()) }
-
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!enabled) return builder
+
     removeOriginalErrorEdges(builder)
     val potentialRacingVars = collectPotentialRacingVars(builder)
     val isInitialPhase = builder in builder.parent.getInitProcedures().map { it.first }
@@ -170,6 +175,7 @@ class DataRaceToReachabilityPass : ProcedurePass {
       }
     }
 
+    property.transformSpecification(ErrorDetection.ERROR_LOCATION)
     return builder
   }
 

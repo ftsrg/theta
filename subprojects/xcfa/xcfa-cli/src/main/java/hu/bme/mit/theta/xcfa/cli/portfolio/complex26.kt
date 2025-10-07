@@ -22,7 +22,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
@@ -129,10 +129,11 @@ fun complexPortfolio26(
 
   if (parseContext.multiThreading) {
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+    val verifiedProperty = baseConfig.inputConfig.property.verifiedProperty
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
-        coi = if (baseConfig.inputConfig.property == ERROR_LOCATION) COI else NO_COI,
-        por = if (baseConfig.inputConfig.property == ERROR_LOCATION) AASPOR else SPOR,
+        coi = if (verifiedProperty == ERROR_LOCATION) COI else NO_COI,
+        por = if (verifiedProperty == ERROR_LOCATION) AASPOR else SPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
@@ -1024,7 +1025,7 @@ fun complexPortfolio26(
             checker,
           )
 
-        if (baseConfig.inputConfig.property == ERROR_LOCATION) {
+        if (baseConfig.inputConfig.property.verifiedProperty == ERROR_LOCATION) {
           val config_MULTITHREAD_EXPL_COI_SEQ_ITP =
             ConfigNode(
               "MULTITHREAD_EXPL_COI_SEQ_ITP-$inProcess",

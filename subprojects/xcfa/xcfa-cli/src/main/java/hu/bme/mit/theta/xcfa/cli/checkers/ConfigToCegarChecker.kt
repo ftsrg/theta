@@ -91,7 +91,7 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.stopCriterion,
       logger,
       lts,
-      config.inputConfig.property,
+      config.inputConfig.property.verifiedProperty,
       if (cegarConfig.por.isDynamic) {
         XcfaDporLts.getPartialOrder(corePartialOrd)
       } else {

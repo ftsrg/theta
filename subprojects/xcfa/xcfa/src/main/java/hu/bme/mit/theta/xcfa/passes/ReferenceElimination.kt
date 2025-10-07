@@ -70,7 +70,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
 
                 listOf(assign, assign2)
@@ -117,7 +117,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
-            if (MemsafetyPass.NEED_CHECK) {
+            if (MemsafetyPass.enabled) {
               val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
 
               listOf(assign1, assign2, assign3)

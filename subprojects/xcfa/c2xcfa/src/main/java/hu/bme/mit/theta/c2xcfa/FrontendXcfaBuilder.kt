@@ -59,6 +59,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
@@ -68,9 +70,14 @@ import java.util.stream.Collectors
 
 class FrontendXcfaBuilder(
   val parseContext: ParseContext,
-  val checkOverflow: Boolean = false,
+  val property: XcfaProperty,
   val uniqueWarningLogger: Logger,
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
+
+  private val checkOverflow: Boolean =
+    (property.inputProperty == ErrorDetection.OVERFLOW).also {
+      if (it) property.transformSpecification(ErrorDetection.NO_ERROR)
+    }
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   private var ptrCnt = 1 // counts up, uses 3k+1
@@ -107,7 +114,7 @@ class FrontendXcfaBuilder(
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
-    if (MemsafetyPass.NEED_CHECK) {
+    if (MemsafetyPass.enabled) {
       val fitsall = Fitsall.getFitsall(parseContext)
       val ptrType = CPointer(null, null, parseContext)
       val ptrSize =
@@ -158,7 +165,7 @@ class FrontendXcfaBuilder(
             )
           )
         )
-        if (MemsafetyPass.NEED_CHECK) {
+        if (MemsafetyPass.enabled) {
           val bounds = globalDeclaration.get1().arrayDimensions[0].expression
           checkState(
             bounds is IntLitExpr || bounds is BvLitExpr,
@@ -257,7 +264,7 @@ class FrontendXcfaBuilder(
     val funcDecl = function.funcDecl
     val compound = function.compound
     val builder =
-      XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
+      XcfaProcedureBuilder(funcDecl.name, CPasses(property, parseContext, uniqueWarningLogger))
     xcfaBuilder.addProcedure(builder)
     val initStmtList = ArrayList<XcfaLabel>()
     if (param.size > 0 && builder.name.equals("main")) {
