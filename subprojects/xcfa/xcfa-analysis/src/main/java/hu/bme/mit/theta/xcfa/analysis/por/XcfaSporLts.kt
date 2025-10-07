@@ -31,11 +31,17 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.acquiredEmbeddedFenceVars
+import hu.bme.mit.theta.xcfa.utils.acquiredMutexes
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mutexOperations
+import hu.bme.mit.theta.xcfa.utils.pointsTo
 import java.util.*
 import java.util.function.Predicate
 import kotlin.random.Random
@@ -252,14 +258,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     )
       return true
 
-    return indirectlyDependent(
-      state,
-      sourceSetAction,
-      sourceSetActionVars,
-      influencedVars,
-      sourceSetMemLocs,
-      influencedMemLocs,
-    )
+    return indirectlyDependent(state, sourceSetAction, sourceSetMemLocs, influencedMemLocs)
   }
 
   /**
@@ -270,22 +269,25 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   protected fun indirectlyDependent(
     state: XcfaState<out PtrState<out ExprState>>,
     sourceSetAction: XcfaAction,
-    sourceSetActionVars: Set<VarDecl<*>>,
-    influencedVars: Set<VarDecl<*>>,
     sourceSetMemLocs: Set<MemLoc>,
     inflMemLocs: Set<MemLoc>,
   ): Boolean {
-    val sourceSetActionMemLocs =
-      sourceSetActionVars.pointsTo(xcfa) +
-        sourceSetMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
-    val influencedMemLocs =
-      influencedVars.pointsTo(xcfa) + inflMemLocs.map { it.first }.filterIsInstance<LitExpr<*>>()
-    val intersection = sourceSetActionMemLocs intersect influencedMemLocs
+    val sourceSetActionMemLocs = memLocsToLitExprs(sourceSetMemLocs) ?: return true
+    val influencedMemLocs = memLocsToLitExprs(inflMemLocs) ?: return true
+    val intersection = intersect(sourceSetActionMemLocs, influencedMemLocs)
     if (intersection.isEmpty())
       return false // they cannot point to the same memory location even based on static info
 
-    val derefs = sourceSetAction.label.dereferences.map { it.array }
-    var expr: Expr<BoolType> = Or(intersection.flatMap { memLoc -> derefs.map { Eq(memLoc, it) } })
+    if (sourceSetMemLocs.all { it.first is LitExpr<*> })
+      return true // there is no uncertainty in the current memory locations, and they intersect
+
+    val derefs = sourceSetAction.label.dereferences
+    var expr: Expr<BoolType> =
+      Or(
+        intersection.flatMap { memLoc ->
+          derefs.map { And(Eq(memLoc.first, it.array), Eq(memLoc.second, it.offset)) }
+        }
+      )
     expr =
       (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
         ?: ExprUtils.simplify(expr)
@@ -297,6 +299,37 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
       ) // is it always given that the state will produce 0 indexed constants?
       dependencySolver.check().isSat // two pointers may point to the same memory location
     }
+  }
+
+  private fun exprToLitExpr(expr: Expr<*>): Set<LitExpr<*>>? =
+    if (expr is LitExpr<*>) setOf(expr) else expr.pointsTo(xcfa)
+
+  private fun memLocsToLitExprs(
+    memLocs: Set<MemLoc>
+  ): List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>? =
+    memLocs.map {
+      val first = exprToLitExpr(it.first) ?: return null
+      val second = exprToLitExpr(it.second) ?: return null
+      first to second
+    }
+
+  private fun intersect(
+    memlocs1: List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>,
+    memlocs2: List<Pair<Set<LitExpr<*>>, Set<LitExpr<*>>>>,
+  ): Set<Pair<LitExpr<*>, LitExpr<*>>> {
+    val intersection = mutableSetOf<Pair<LitExpr<*>, LitExpr<*>>>()
+    for (memloc1 in memlocs1) {
+      for (memloc2 in memlocs2) {
+        val firsts = memloc1.first intersect memloc2.first
+        val seconds = memloc1.second intersect memloc2.second
+        for (f in firsts) {
+          for (s in seconds) {
+            intersection.add(f to s)
+          }
+        }
+      }
+    }
+    return intersection
   }
 
   /**

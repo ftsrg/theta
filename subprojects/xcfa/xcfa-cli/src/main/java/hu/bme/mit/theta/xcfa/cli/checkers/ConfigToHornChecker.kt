@@ -37,6 +37,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.ProofNode
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.HornConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -58,7 +59,7 @@ fun getHornChecker(
 
   val hornConfig = config.backendConfig.specConfig as HornConfig
 
-  val property = config.inputConfig.property
+  val property = config.inputConfig.property.verifiedProperty
 
   val xcfa =
     xcfa.optimizeFurther(

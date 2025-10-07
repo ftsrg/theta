@@ -169,31 +169,6 @@ constructor(
   }
 }
 
-data class ReadLabel(
-  val local: VarDecl<*>,
-  val global: VarDecl<*>,
-  val labels: Set<String>,
-  override val metadata: MetaData,
-) : XcfaLabel(metadata = metadata) {
-
-  override fun toString(): String {
-    return "R[$local <- $global] @$labels"
-  }
-}
-
-data class WriteLabel
-constructor(
-  val local: VarDecl<*>,
-  val global: VarDecl<*>,
-  val labels: Set<String>,
-  override val metadata: MetaData,
-) : XcfaLabel(metadata = metadata) {
-
-  override fun toString(): String {
-    return "W[$global <- $local] @$labels"
-  }
-}
-
 data class FenceLabel(val labels: Set<String>, override val metadata: MetaData = EmptyMetaData) :
   XcfaLabel(metadata = metadata) {
 
@@ -216,7 +191,7 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   XcfaLabel(metadata = metadata) {
 
   override fun toStmt(): Stmt {
-    return SequenceStmt(labels.map { it.toStmt() })
+    return SequenceStmt(labels.filter { it !is NopLabel }.map { it.toStmt() })
   }
 
   override fun toString(): String {

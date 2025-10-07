@@ -22,10 +22,9 @@ import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait.*
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.SIMPLE
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -44,11 +43,12 @@ import hu.bme.mit.theta.xcfa.cli.params.POR.*
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.NWT_IT_WP
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.nio.file.Paths
 
 fun complexPortfolio25(
@@ -73,7 +73,7 @@ fun complexPortfolio25(
         ),
       frontendConfig =
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -86,8 +86,8 @@ fun complexPortfolio25(
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
-              porLevel = NOPOR,
-              porRandomSeed = -1,
+              por = NOPOR,
+              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =
@@ -152,8 +152,8 @@ fun complexPortfolio25(
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
-        coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
-        porLevel = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        coi = if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE) NO_COI else COI,
+        por = if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE) SPOR else AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
@@ -271,7 +271,7 @@ fun complexPortfolio25(
     return if (portfolioConfig.debugConfig.debug) notinproc.innerSTM else STM(inproc, edges)
   }
 
-  fun getStm(trait: ArithmeticTrait, inProcess: Boolean): STM {
+  fun getStm(trait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
     val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
       ConfigNode(
@@ -1145,10 +1145,10 @@ fun complexPortfolio25(
   val mainTrait =
     when {
       parseContext.multiThreading -> MULTITHREAD
-      FLOAT in parseContext.arithmeticTraits -> FLOAT
-      ARR in parseContext.arithmeticTraits -> ARR
-      BITWISE in parseContext.arithmeticTraits -> BITWISE
-      NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
+      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
+      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ARR
+      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> BITWISE
+      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
       else -> LIN_INT
     }
 
@@ -1157,7 +1157,10 @@ fun complexPortfolio25(
   var inProcessStm = getStm(mainTrait, true)
   var notInProcessStm = getStm(mainTrait, false)
 
-  if (parseContext.multiThreading && baseConfig.inputConfig.property == ERROR_LOCATION) {
+  if (
+    parseContext.multiThreading &&
+      baseConfig.inputConfig.property.verifiedProperty == ERROR_LOCATION
+  ) {
     val inProcOc = ConfigNode("OC", ocConfig(true), checker)
     val notInProcOc = ConfigNode("OC", ocConfig(false), checker)
     val inProcessCegar = HierarchicalNode("InProcessCegar", inProcessStm)

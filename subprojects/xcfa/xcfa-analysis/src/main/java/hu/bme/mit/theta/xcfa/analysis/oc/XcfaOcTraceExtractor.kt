@@ -27,12 +27,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isAtomicBegin
-import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
+import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 import java.util.*
 
 /** Extracts an error trace from the given model. */

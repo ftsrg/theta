@@ -52,14 +52,6 @@ class UtilsTest {
           SequenceLabel(listOf(NopLabel), EmptyMetaData),
           SequenceLabel(listOf(NopLabel), EmptyMetaData),
         ),
-        Arguments.of(
-          ReadLabel(x, y, setOf(), EmptyMetaData),
-          ReadLabel(xPrime, y, setOf(), EmptyMetaData),
-        ),
-        Arguments.of(
-          WriteLabel(x, y, setOf(), EmptyMetaData),
-          WriteLabel(xPrime, y, setOf(), EmptyMetaData),
-        ),
         Arguments.of(FenceLabel(setOf(), EmptyMetaData), FenceLabel(setOf(), EmptyMetaData)),
         Arguments.of(
           StartLabel("", listOf(x.ref), y, EmptyMetaData),

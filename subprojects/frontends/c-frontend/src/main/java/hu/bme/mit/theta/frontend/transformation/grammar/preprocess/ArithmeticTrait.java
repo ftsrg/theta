@@ -20,6 +20,5 @@ public enum ArithmeticTrait {
     NONLIN_INT,
     BITWISE,
     FLOAT,
-    ARR,
-    MULTITHREAD
+    ARR
 }
