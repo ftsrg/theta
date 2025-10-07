@@ -498,6 +498,17 @@ fun getBoundedXcfaChecker(
   isHavoc: Boolean = false,
 ): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
   val lts = getXcfaLts()
+  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
+}
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
   val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
   val target = getXcfaErrorPredicate(errorDetection)
   val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
