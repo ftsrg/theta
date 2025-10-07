@@ -51,6 +51,7 @@ fun getChecker(
       Backend.IMC,
       Backend.KINDIMC,
       Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
+      Backend.PATH_ENUMERATION -> getPathEnumerationChecker(xcfa, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
