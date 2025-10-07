@@ -16,16 +16,13 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.expr.refinement.*
-import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
-import hu.bme.mit.theta.xcfa.analysis.por.*
-import java.util.*
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -53,14 +50,30 @@ class XcfaUnitAnalysisTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  fun testBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
-    println("Testing BMC on $filepath...")
+  fun testNoporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
     val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
     ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val checker = getBoundedXcfaChecker(xcfa, ErrorDetection.ERROR_LOCATION, bound, solver)
+    val safetyResult = checker.check()
+
+    Assertions.assertTrue(verdict(safetyResult))
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testSporBounded(filepath: String, bound: Int, verdict: (SafetyResult<*, *>) -> Boolean) {
+    println("Testing SPOR on $filepath...")
+    val stream = javaClass.getResourceAsStream(filepath)
+    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    ConeOfInfluence = XcfaCoiMultiThread(xcfa)
+    val lts = XcfaSporLts(xcfa)
+
+    val solver = Z3LegacySolverFactory.getInstance().createSolver()
+    val checker = getBoundedXcfaChecker(xcfa, lts, ErrorDetection.ERROR_LOCATION, bound, solver)
     val safetyResult = checker.check()
 
     Assertions.assertTrue(verdict(safetyResult))
