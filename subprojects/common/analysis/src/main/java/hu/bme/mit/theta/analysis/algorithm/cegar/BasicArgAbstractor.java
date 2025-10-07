@@ -66,6 +66,11 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
     }
 
     @Override
+    public ArgBuilder<S, A, P> getArgBuilder() {
+        return argBuilder;
+    }
+
+    @Override
     public ARG<S, A> createProof() {
         return argBuilder.createArg();
     }
