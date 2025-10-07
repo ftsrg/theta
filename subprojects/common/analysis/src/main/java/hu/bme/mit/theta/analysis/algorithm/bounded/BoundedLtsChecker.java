@@ -122,7 +122,7 @@ public class BoundedLtsChecker<S extends ExprState, A extends ExprAction, P exte
         if (target.test(state)) {
             return getCex();
         }
-        if (depth() > bound) {
+        if (bound > 0 && depth() > bound) {
             return SafetyResult.unknown();
         }
         var indexing = transition.succIndexing();

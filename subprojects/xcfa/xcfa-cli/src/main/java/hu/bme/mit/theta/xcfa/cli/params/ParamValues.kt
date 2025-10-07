@@ -37,6 +37,9 @@ import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
+import hu.bme.mit.theta.analysis.unit.UnitAnalysis
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -70,6 +73,7 @@ enum class Backend {
   KIND,
   IMC,
   KINDIMC,
+  PATH_ENUMERATION,
   CHC,
   OC,
   LAZY,
@@ -233,6 +237,26 @@ enum class Domain(
     partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
+  ),
+  UNIT(
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+      getXcfaAbstractor(UnitXcfaAnalysis(a, j), d, e, f, g, h)
+    },
+    itpPrecRefiner = {
+      XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
+        ItpRefToPtrPrec(
+          object : RefutationToPrec<UnitPrec, ItpRefutation> {
+            override fun join(prec1: UnitPrec?, prec2: UnitPrec?) = UnitPrec.getInstance()
+
+            override fun toPrec(refutation: ItpRefutation?, index: Int) = UnitPrec.getInstance()
+          }
+        )
+      )
+    },
+    initPrec = { _, _ -> XcfaPrec(PtrPrec(UnitPrec.getInstance())) },
+    partialOrd = { UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd() },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<UnitState>>, XcfaAction>(),
+    stateType = TypeToken.get(UnitState::class.java).type,
   ),
 }
 
