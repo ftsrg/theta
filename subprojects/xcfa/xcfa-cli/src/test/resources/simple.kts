@@ -105,11 +105,12 @@ fun portfolio(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE)
             ConeOfInfluenceMode.NO_COI
           else ConeOfInfluenceMode.COI,
         por =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE) POR.SPOR
+          else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
       )
     baseConfig =
