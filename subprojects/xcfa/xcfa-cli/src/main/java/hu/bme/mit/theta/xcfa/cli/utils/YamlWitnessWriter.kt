@@ -52,12 +52,13 @@ class YamlWitnessWriter {
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: ErrorDetection,
+    ltlViolationProperty: String,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    val metadata = getMetadata(inputFile, property, architecture)
+    val metadata = getMetadata(inputFile, ltlViolationProperty, architecture)
 
     val trace =
       safetyResult.asUnsafe().cex.let {
@@ -91,8 +92,6 @@ class YamlWitnessWriter {
         metadata,
         inputFile,
         property,
-        architecture,
-        cexSolverFactory,
         parseContext,
         witnessfile,
       )
@@ -111,7 +110,9 @@ class YamlWitnessWriter {
 
   fun getMetadata(
     inputFile: File,
-    property: ErrorDetection,
+    ltlViolationProperty:
+      String, // ErrorDetection enum is not enough, several violation specifications can fit for a
+    // single ErrorDetection value
     architecture: ArchitectureConfig.ArchitectureType?,
   ): Metadata {
     return Metadata(
@@ -127,7 +128,7 @@ class YamlWitnessWriter {
         Task(
           inputFiles = listOf(inputFile.name),
           inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-          specification = property.name,
+          specification = ltlViolationProperty,
           dataModel =
             architecture?.let {
               if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
@@ -143,8 +144,6 @@ class YamlWitnessWriter {
     metadata: Metadata,
     inputFile: File,
     property: ErrorDetection,
-    architecture: ArchitectureConfig.ArchitectureType?,
-    cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
@@ -215,6 +214,7 @@ class YamlWitnessWriter {
                       stemTrace.actions.getOrNull(it),
                       inputFile,
                       parseContext = parseContext,
+                      violation = false,
                     ),
                   stemTrace.actions.getOrNull(it)?.toSegment(inputFile),
                 )
@@ -283,17 +283,19 @@ class YamlWitnessWriter {
             (0..(witnessTrace.length()))
               .flatMap {
                 listOfNotNull(
-                  witnessTrace.states
-                    .get(it)
-                    ?.toSegment(
-                      witnessTrace.actions.getOrNull(it - 1),
-                      witnessTrace.actions.getOrNull(it),
-                      inputFile,
-                      parseContext = parseContext,
-                    ),
+                  witnessTrace.states[it]?.toSegment(
+                    witnessTrace.actions.getOrNull(it - 1),
+                    witnessTrace.actions.getOrNull(it),
+                    inputFile,
+                    parseContext = parseContext,
+                    violation =
+                      witnessTrace.states[it].violation ||
+                        witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
+                  ),
                   witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
                 )
               }
+              .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
               .map { ContentItem(it) },
         )
       }
@@ -325,8 +327,8 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   val endLoc =
     Location(
       fileName = inputFile.name,
-      line = witnessEdge.endline ?: witnessEdge.startline ?: return null,
-      column = (witnessEdge.endcol ?: witnessEdge.startcol)?.plus(1),
+      line = witnessEdge.startline ?: witnessEdge.endline ?: return null,
+      column = (witnessEdge.startcol ?: witnessEdge.endcol)?.plus(1),
     )
   return endLoc
 }
@@ -339,22 +341,25 @@ private fun WitnessNode.toSegment(
   inputFile: File,
   action: Action = Action.FOLLOW,
   parseContext: ParseContext,
+  violation: Boolean = false,
 ): WaypointContent? {
+  var loc =
+    Location(
+      fileName = inputFile.name,
+      line = outgoingEdge?.startline ?: -1,
+      column = outgoingEdge?.startcol?.plus(1),
+    )
   if (violation) {
-    val loc = xcfaLocations.values.first().first()
-    val locLoc =
-      getLocation(inputFile, loc.metadata)
-        ?: getLocation(inputFile, incomingEdge)
-        ?: getLocation(inputFile, incomingEdge?.edge?.metadata)
-        ?: return null
-    return WaypointContent(type = WaypointType.TARGET, location = locLoc, action = action)
+    if (loc.line == -1) {
+      val locLoc = xcfaLocations.values.first().first()
+      loc =
+        getLocation(inputFile, locLoc.metadata)
+          ?: getLocation(inputFile, incomingEdge)
+          ?: getLocation(inputFile, incomingEdge?.edge?.metadata)
+          ?: return null
+    }
+    return WaypointContent(type = WaypointType.TARGET, location = loc, action = action)
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
-    val loc =
-      Location(
-        fileName = inputFile.name,
-        line = outgoingEdge.startline!!,
-        column = outgoingEdge.startcol!! + 1,
-      )
     val constraint =
       globalState
         ?.toMap()

@@ -61,7 +61,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
     // Possible side effect if not handled: possibly a "non-existing leaf" and superfluous traces or
     // just traces that are 1 longer than they should be
     val badNodes = DoubleEndNodeRemover.collectBadLeaves(arg)
-    logger.write(Logger.Level.INFO, "Number of bad nodes filtered out: ${badNodes.size}")
+    logger.write(Logger.Level.INFO, "Number of bad nodes filtered out: ${badNodes.size}\n")
 
     // leaves
     val endNodes = arg.nodes.filter { obj: ArgNode<S, A> -> obj.isLeaf }.toList()
