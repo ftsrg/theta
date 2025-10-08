@@ -123,13 +123,14 @@ class XcfaMultiThreadToMonolithicAdapter(
                       is StartLabel -> {
                         val pidVar = pidVars[l.pidVar]!!
                         val startedLocVar = locVars[l]!!
+                        val startedLocMap = locs[l]!!
                         val startedInitLoc = threads[l]!!.initLoc
                         listOf(
-                          AssignStmt.of(pidVar, cast(smtInt(threadIds[l]!!), pidVar.type)),
                           AssumeStmt.of(Eq(startedLocVar.ref, smtInt(-1))),
+                          AssignStmt.of(pidVar, cast(smtInt(threadIds[l]!!), pidVar.type)),
                           AssignStmt.of(
                             startedLocVar,
-                            cast(smtInt(locMap[startedInitLoc]!!), startedLocVar.type),
+                            cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
                           ),
                         )
                       }
@@ -150,7 +151,8 @@ class XcfaMultiThreadToMonolithicAdapter(
                                 Imply(
                                   Eq(pidVar.ref, smtInt(pid)),
                                   if (finalLoc.isPresent) {
-                                    val finalLocValue = locMap[finalLoc.get()]!!
+                                    val joinedLocMap = locs[startLabel]!!
+                                    val finalLocValue = joinedLocMap[finalLoc.get()]!!
                                     val joinedThreadLocVar = locVars[startLabel]!!
                                     Eq(joinedThreadLocVar.ref, smtInt(finalLocValue))
                                   } else {
