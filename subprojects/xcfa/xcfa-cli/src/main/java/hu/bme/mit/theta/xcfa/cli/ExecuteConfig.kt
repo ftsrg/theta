@@ -106,7 +106,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig
     cegarConfig as CegarConfig
-    val random = Random(cegarConfig.porRandomSeed)
+    val random = Random(cegarConfig.porSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }

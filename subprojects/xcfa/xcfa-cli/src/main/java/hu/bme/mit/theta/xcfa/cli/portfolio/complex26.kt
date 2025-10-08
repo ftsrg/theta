@@ -22,7 +22,6 @@ import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
@@ -38,15 +37,25 @@ import hu.bme.mit.theta.xcfa.cli.params.Domain.PRED_CART
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec.ALLASSUMES
 import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
 import hu.bme.mit.theta.xcfa.cli.params.POR.AASPOR
 import hu.bme.mit.theta.xcfa.cli.params.POR.SPOR
-import hu.bme.mit.theta.xcfa.cli.params.Refinement.NWT_IT_WP
-import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
+import hu.bme.mit.theta.xcfa.cli.params.Refinement.*
 import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.EmptyEdgeRemovalPass
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
+import hu.bme.mit.theta.xcfa.passes.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnusedLocRemovalPass
+import hu.bme.mit.theta.xcfa.passes.UnusedVarPass
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.nio.file.Paths
 
@@ -122,17 +131,15 @@ fun complexPortfolio26(
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
-        coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
-        por = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        coi = if (baseConfig.inputConfig.property == ERROR_LOCATION) COI else NO_COI,
+        por = if (baseConfig.inputConfig.property == ERROR_LOCATION) AASPOR else SPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
       baseConfig.copy(
         backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
       )
-  }
-
-  if (!xcfa.isInlined) {
+  } else if (!xcfa.isInlined) {
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val recursiveConfig =
       baseCegarConfig.copy(
@@ -900,159 +907,12 @@ fun complexPortfolio26(
       }
 
       MULTITHREAD -> {
-        val config_MULTITHREAD_EXPL_SEQ_ITP_Z3 =
+        val config_OC =
           ConfigNode(
-            "MULTITHREAD_EXPL_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 150000,
-            ),
-            checker,
-          )
-        val config_MULTITHREAD_EXPL_SEQ_ITP_mathsat =
-          ConfigNode(
-            "MULTITHREAD_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 150000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_SEQ_ITP_Z3,
-            config_MULTITHREAD_EXPL_SEQ_ITP_mathsat,
-            solverError,
-          )
-        )
-        val config_MULTITHREAD_EXPL_NWT_IT_WP_z3 =
-          ConfigNode(
-            "MULTITHREAD_EXPL_NWT_IT_WP_z3:4.12.2-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "z3:4.12.2",
-              refinementSolver = "z3:4.12.2",
-              refinement = NWT_IT_WP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_SEQ_ITP_Z3,
-            config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_SEQ_ITP_mathsat,
-            config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat =
-          ConfigNode(
-            "MULTITHREAD_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = EXPL,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = NWT_IT_WP,
-              timeoutMs = 300000,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
-            config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat,
-            solverError,
-          )
-        )
-        val config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3 =
-          ConfigNode(
-            "MULTITHREAD_PRED_CART_SEQ_ITP_Z3-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "Z3",
-              refinementSolver = "Z3",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrNotSolvableError else anyError,
-          )
-        )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat,
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3,
-            if (inProcess) timeoutOrSolverError else anyError,
-          )
-        )
-        val config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat =
-          ConfigNode(
-            "MULTITHREAD_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "mathsat:5.6.10",
-              refinementSolver = "mathsat:5.6.10",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3,
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat,
-            solverError,
-          )
-        )
-        val config_MULTITHREAD_PRED_CART_SEQ_ITP_z3 =
-          ConfigNode(
-            "MULTITHREAD_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
-            baseConfig.adaptConfig(
-              inProcess = inProcess,
-              domain = PRED_CART,
-              abstractionSolver = "z3:4.12.2",
-              refinementSolver = "z3:4.12.2",
-              refinement = SEQ_ITP,
-              timeoutMs = 0,
-            ),
-            checker,
-          )
-        edges.add(
-          Edge(
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat,
-            config_MULTITHREAD_PRED_CART_SEQ_ITP_z3,
-            solverError,
-          )
-        )
-        val cegarStm = STM(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, edges)
-
-        if (baseConfig.inputConfig.property == ERROR_LOCATION) {
-          val config_OC =
-            XcfaConfig<CFrontendConfig, OcConfig>(
+            "MULTITHREAD_OC-$inProcess",
+            XcfaConfig(
               inputConfig = baseConfig.inputConfig,
+              frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = NO_LBE),
               backendConfig =
                 BackendConfig(
                   backend = OC,
@@ -1068,14 +928,206 @@ fun complexPortfolio26(
                 ),
               outputConfig = baseConfig.outputConfig,
               debugConfig = baseConfig.debugConfig,
+            ),
+            checker,
+          )
+
+        val optimizedXcfa =
+          xcfa.optimizeFurther(
+            ProcedurePassManager(
+              listOf(
+                LbePass(parseContext, LBE_LOCAL),
+                NormalizePass(),
+                DeterministicPass(),
+                UnusedVarPass(logger),
+                EmptyEdgeRemovalPass(),
+                UnusedLocRemovalPass(),
+              )
             )
-          val oc = ConfigNode("MULTITHREAD_OC-$inProcess", config_OC, checker)
-          val cegar = HierarchicalNode("MULTITHREAD_CEGAR-$inProcess", cegarStm)
-          val exitOcEdge = Edge(oc, cegar, anyError)
-          STM(oc, setOf(exitOcEdge))
+          )
+
+        val multithreadCegarBaseConfig =
+          baseConfig.copy(
+            inputConfig =
+              baseConfig.inputConfig.copy(xcfaWCtx = Triple(optimizedXcfa, mcm, parseContext)),
+            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
+          )
+
+        val config_MULTITHREAD_EXPL_SEQ_ITP =
+          ConfigNode(
+            "MULTITHREAD_EXPL_SEQ_ITP-$inProcess",
+            multithreadCegarBaseConfig.adaptConfig(
+              inProcess = inProcess,
+              domain = EXPL,
+              abstractionSolver = "Z3",
+              refinementSolver = "Z3",
+              refinement = SEQ_ITP,
+              timeoutMs = 300_000,
+            ),
+            checker,
+          )
+
+        val config_MULTITHREAD_PRED_SEQ_ITP =
+          ConfigNode(
+            "MULTITHREAD_PRED_SEQ_ITP-$inProcess",
+            multithreadCegarBaseConfig.adaptConfig(
+              inProcess = inProcess,
+              domain = PRED_CART,
+              abstractionSolver = "Z3",
+              refinementSolver = "Z3",
+              refinement = SEQ_ITP,
+              timeoutMs = 0,
+            ),
+            checker,
+          )
+
+        val config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES =
+          ConfigNode(
+            "MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES-$inProcess",
+            multithreadCegarBaseConfig.adaptConfig(
+              inProcess = inProcess,
+              domain = PRED_CART,
+              abstractionSolver = "Z3",
+              refinementSolver = "Z3",
+              refinement = BW_BIN_ITP,
+              initPrec = ALLASSUMES,
+              timeoutMs = 320_000,
+            ),
+            checker,
+          )
+
+        val config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3 =
+          ConfigNode(
+            "MULTITHREAD_PRED_SEQ_ITP_NEWZ3-$inProcess",
+            multithreadCegarBaseConfig.adaptConfig(
+              inProcess = inProcess,
+              domain = PRED_CART,
+              abstractionSolver = "Z3:4.13",
+              refinementSolver = "Z3:4.13",
+              refinement = SEQ_ITP,
+              timeoutMs = 0,
+            ),
+            checker,
+          )
+
+        val config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT =
+          ConfigNode(
+            "MULTITHREAD_EXPL_NWT_WP_MATHSAT-$inProcess",
+            multithreadCegarBaseConfig.adaptConfig(
+              inProcess = inProcess,
+              domain = EXPL,
+              abstractionSolver = "mathsat:5.6.10",
+              refinementSolver = "mathsat:5.6.10",
+              refinement = NWT_IT_WP,
+              timeoutMs = 0,
+            ),
+            checker,
+          )
+
+        if (baseConfig.inputConfig.property == ERROR_LOCATION) {
+          val config_MULTITHREAD_EXPL_COI_SEQ_ITP =
+            ConfigNode(
+              "MULTITHREAD_EXPL_COI_SEQ_ITP-$inProcess",
+              multithreadCegarBaseConfig.adaptConfig(
+                inProcess = inProcess,
+                domain = EXPL,
+                abstractionSolver = "Z3",
+                refinementSolver = "Z3",
+                refinement = SEQ_ITP,
+                coi = COI,
+                timeoutMs = 250_000,
+              ),
+              checker,
+            )
+
+          val config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES =
+            ConfigNode(
+              "MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES-$inProcess",
+              multithreadCegarBaseConfig.adaptConfig(
+                inProcess = inProcess,
+                domain = PRED_CART,
+                abstractionSolver = "Z3",
+                refinementSolver = "Z3",
+                refinement = SEQ_ITP,
+                coi = COI,
+                initPrec = ALLASSUMES,
+                timeoutMs = 0,
+              ),
+              checker,
+            )
+
+          val config_MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3 =
+            ConfigNode(
+              "MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3-$inProcess",
+              multithreadCegarBaseConfig.adaptConfig(
+                inProcess = inProcess,
+                domain = PRED_CART,
+                abstractionSolver = "Z3:4.13",
+                refinementSolver = "Z3:4.13",
+                refinement = SEQ_ITP,
+                coi = COI,
+                timeoutMs = 0,
+              ),
+              checker,
+            )
+
+          edges.add(Edge(config_OC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_EXPL_COI_SEQ_ITP,
+              config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
+              anyError,
+            )
+          )
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
+              config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES,
+              anyError,
+            )
+          )
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_PRED_COI_SEQ_ITP_ALLASSUMES,
+              config_MULTITHREAD_PRED_COI_SEQ_ITP_NEWZ3,
+              anyError,
+            )
+          )
         } else {
-          cegarStm
+          edges.add(Edge(config_OC, config_MULTITHREAD_EXPL_SEQ_ITP, anyError))
+
+          edges.add(
+            Edge(config_MULTITHREAD_EXPL_SEQ_ITP, config_MULTITHREAD_PRED_SEQ_ITP, anyError)
+          )
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_PRED_SEQ_ITP,
+              config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
+              anyError,
+            )
+          )
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_PRED_BW_BIN_ITP_ALLASSUMES,
+              config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3,
+              anyError,
+            )
+          )
+
+          edges.add(
+            Edge(
+              config_MULTITHREAD_PRED_SEQ_ITP_NEWZ3,
+              config_MULTITHREAD_EXPL_NWT_IT_WP_MATHSAT,
+              anyError,
+            )
+          )
         }
+        STM(config_OC, edges)
       }
 
       PTR -> {

@@ -62,8 +62,8 @@ fun portfolio(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
-              porRandomSeed = -1,
+              por = POR.NOPOR,
+              porSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
               abstractorConfig =
@@ -108,7 +108,7 @@ fun portfolio(
           if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
             ConeOfInfluenceMode.NO_COI
           else ConeOfInfluenceMode.COI,
-        porLevel =
+        por =
           if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
       )

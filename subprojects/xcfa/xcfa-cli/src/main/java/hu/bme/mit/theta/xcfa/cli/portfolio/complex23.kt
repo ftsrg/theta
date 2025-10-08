@@ -65,7 +65,7 @@ fun complexPortfolio23(
             CegarConfig(
               initPrec = InitPrec.EMPTY,
               por = POR.NOPOR,
-              porRandomSeed = -1,
+              porSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
               abstractorConfig =

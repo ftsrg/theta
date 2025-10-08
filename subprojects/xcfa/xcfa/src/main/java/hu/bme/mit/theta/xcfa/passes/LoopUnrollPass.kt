@@ -23,7 +23,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -46,7 +45,10 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
     var UNROLL_LIMIT = 1000
     var FORCE_UNROLL_LIMIT = -1
 
-    private val solver: Solver = Z3SolverFactory.getInstance().createSolver()
+    private val transFunc: ExplStmtTransFunc by lazy {
+      val solver = Z3SolverFactory.getInstance().createSolver()
+      ExplStmtTransFunc.create(solver, 1)
+    }
   }
 
   private val forceUnrollLimit = max(FORCE_UNROLL_LIMIT, alwaysForceUnroll)
@@ -75,10 +77,10 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
       override fun getStmts() = listOf(stmt)
     }
 
-    fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
-      val count = count(transFunc)
-      if (count != null) {
-        unroll(builder, count, true)
+    fun unroll(builder: XcfaProcedureBuilder) {
+      val c = count()
+      if (c != null) {
+        unroll(builder, c, true)
       } else if (forceUnrollLimit != -1) {
         builder.setUnsafeUnroll()
         unroll(builder, forceUnrollLimit, false)
@@ -123,7 +125,7 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
       }
     }
 
-    private fun count(transFunc: ExplStmtTransFunc): Int? {
+    private fun count(): Int? {
       if (!properlyUnrollable) return null
       check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
       check(loopStartEdges.size == 1)
@@ -188,10 +190,9 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val transFunc = ExplStmtTransFunc.create(solver, 1)
     while (true) {
       val loop = findLoop(builder.initLoc) ?: break
-      loop.unroll(builder, transFunc)
+      loop.unroll(builder)
       testedLoops.add(loop)
     }
     return builder

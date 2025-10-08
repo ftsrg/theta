@@ -77,7 +77,7 @@ fun baseCegarConfig(
             CegarConfig(
               initPrec = EMPTY,
               por = NOPOR,
-              porRandomSeed = -1,
+              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =
@@ -163,6 +163,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   refinementSolver: String = this.backendConfig.specConfig!!.refinerConfig.refinementSolver,
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
+  coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
@@ -190,6 +191,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
                   refinement = refinement,
                   exprSplitter = exprSplitter,
                 ),
+            coi = coi,
           ),
       )
   )
