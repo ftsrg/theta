@@ -77,6 +77,14 @@ class FrontendXcfaBuilder(
   private var ptrCnt = 1 // counts up, uses 3k+1
     get() = field.also { field += 3 }
 
+  /**
+   * If a compound statement has pre-statements, the metadata has to appear before the pre-list, but
+   * evaluation of statement has to happen afterwards. i.e., statement metadata should be added only
+   * once, before pre-statements and should not be re-added later when evaluated, so we collect it
+   * here and filter its metadata out in/after pre-statements
+   */
+  val alreadyHandledStatements: MutableSet<CStatement> = LinkedHashSet()
+
   private fun getLoc(
     builder: XcfaProcedureBuilder,
     name: String?,
@@ -93,17 +101,21 @@ class FrontendXcfaBuilder(
     return getLoc(builder, "__loc_" + XcfaLocation.uniqueCounter(), metadata)
   }
 
-  private fun getMetadata(source: CStatement): CMetaData =
-    CMetaData(
-      lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
-      lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
-      colNumberStart = source.colNumberStart.takeIf { it != -1 },
-      colNumberStop = source.colNumberStop.takeIf { it != -1 },
-      offsetStart = source.offsetStart.takeIf { it != -1 },
-      offsetEnd = source.offsetEnd.takeIf { it != -1 },
-      sourceText = source.sourceText,
-      astNodes = listOf(source),
-    )
+  private fun getMetadata(source: CStatement): MetaData =
+    if (alreadyHandledStatements.contains(source)) {
+      EmptyMetaData
+    } else {
+      CMetaData(
+        lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
+        lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
+        colNumberStart = source.colNumberStart.takeIf { it != -1 },
+        colNumberStop = source.colNumberStop.takeIf { it != -1 },
+        offsetStart = source.offsetStart.takeIf { it != -1 },
+        offsetEnd = source.offsetEnd.takeIf { it != -1 },
+        sourceText = source.sourceText,
+        astNodes = listOf(source),
+      )
+    }
 
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
@@ -522,7 +534,25 @@ class FrontendXcfaBuilder(
     val postStatements = statement.postStatements
     val initLoc = getLoc(builder, statement.id, metadata = EmptyMetaData)
     builder.addLoc(initLoc)
-    val edge = XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData)
+    val (edge, innerStmt) =
+      if (
+        statement.getcStatementList().size == 1 &&
+          (statement.preStatements as? CCompound)?.getcStatementList()?.isNotEmpty() == true
+      ) {
+        val metadata = getMetadata(statement.getcStatementList()[0])
+        Pair(
+          XcfaEdge(
+            lastLoc,
+            initLoc,
+            StmtLabel(SkipStmt.getInstance(), metadata = metadata),
+            metadata = metadata,
+          ),
+          statement.getcStatementList()[0],
+        )
+      } else {
+        Pair(XcfaEdge(lastLoc, initLoc, metadata = EmptyMetaData), null)
+      }
+    if (innerStmt != null) alreadyHandledStatements.add(innerStmt)
     builder.addEdge(edge)
     lastLoc = initLoc
     if (preStatements != null)
@@ -536,6 +566,7 @@ class FrontendXcfaBuilder(
     if (postStatements != null)
       lastLoc =
         postStatements.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
+    if (innerStmt != null) alreadyHandledStatements.remove(innerStmt)
     return lastLoc
   }
 
