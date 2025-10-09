@@ -126,7 +126,7 @@ get_interpolants_response_smtinterpol
     ;
 
 precision_response
-    : proof_funs* term*
+    : proof_funs* (ParOpen CMD_Assert term ParClose)*
     ;
 
 // Parser Rules End
@@ -800,6 +800,8 @@ PK_Version
 
 UndefinedSymbol:
     Sym (Digit | Sym)*;
+
+SetInfo : ParOpen CMD_SetInfo ~[\r\n]* -> skip;
 
 WS  :  [ \t\r\n]+ -> skip
     ;
