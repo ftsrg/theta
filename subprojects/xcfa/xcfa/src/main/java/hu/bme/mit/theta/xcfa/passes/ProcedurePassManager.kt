@@ -66,13 +66,13 @@ class CPasses(timed : Boolean, checkOverflow: Boolean, parseContext: ParseContex
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
-      DelayPass(timed),
-      PropagateClockAssumptionsPass(timed),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
+      DelayPass(timed),
+      PropagateClockAssumptionsPass(timed),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
   )
