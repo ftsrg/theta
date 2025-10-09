@@ -41,6 +41,7 @@ class CLibraryFunctionsPass : ProcedurePass {
       "pthread_create",
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
+      "pthread_mutex_trylock",
       "pthread_cond_wait",
       "pthread_cond_signal",
       "pthread_cond_broadcast",
@@ -118,6 +119,11 @@ class CLibraryFunctionsPass : ProcedurePass {
                 "pthread_mutex_unlock" -> {
                   val handle = invokeLabel.getMutexHandle(builder)
                   listOf(FenceLabel(setOf("mutex_unlock(${handle.name})"), metadata))
+                }
+
+                "pthread_mutex_trylock" -> {
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(FenceLabel(setOf("mutex_trylock(${handle.name})"), metadata))
                 }
 
                 "pthread_cond_wait" -> {

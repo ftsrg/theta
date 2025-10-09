@@ -102,6 +102,16 @@ constructor(
                       )
                     }
 
+                  in Regex("mutex_trylock\\((.*)\\)") ->
+                    changes.add { state ->
+                      val newState = state.enterMutex(
+                        label.substring("mutex_trylock".length + 1, label.length - 1),
+                        a.pid,
+                      )
+                      if (newState.isBottom) state
+                      else newState
+                    }
+
                   in Regex("start_cond_wait\\((.*)\\)") -> {
                     val args =
                       label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
