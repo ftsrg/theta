@@ -21,17 +21,16 @@ import hu.bme.mit.theta.analysis.algorithm.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractSummaryBuilder
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSet
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 
-class TraceGenerationChecker<S : State, A : Action, P : Prec>(
+class CegarTraceGenerationChecker<S : State, A : Action, P : Prec>(
   private val logger: Logger,
   private val abstractor: BasicArgAbstractor<S, A, P>,
   private val getFullTraces: Boolean,
-) : Checker<AbstractTraceSummary<S, A>, P> {
+) : Checker<AbstractTraceSet<S, A>, P> {
   private var traces: List<Trace<S, A>> = ArrayList()
 
   companion object {
@@ -39,12 +38,12 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
       logger: Logger,
       abstractor: BasicArgAbstractor<S, A, P>,
       getFullTraces: Boolean,
-    ): TraceGenerationChecker<S, A, P> {
-      return TraceGenerationChecker(logger, abstractor, getFullTraces)
+    ): CegarTraceGenerationChecker<S, A, P> {
+      return CegarTraceGenerationChecker(logger, abstractor, getFullTraces)
     }
   }
 
-  override fun check(prec: P): TraceGenerationResult<AbstractTraceSummary<S, A>, S, A> {
+  override fun check(prec: P): TraceGenerationResult<AbstractTraceSet<S, A>, S, A> {
     logger.write(
       Logger.Level.SUBSTEP,
       "Printing prec for trace generation...\n" + System.lineSeparator(),
@@ -74,13 +73,15 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec>(
       )
 
     assert(!getFullTraces)
+    /*
     val summaryBuilder = AbstractSummaryBuilder<S, A>()
     argTraces.forEach { trace -> summaryBuilder.addTrace(trace) }
-    val traceSetSummary = summaryBuilder.build()
+    val traceSetSummary = summaryBuilder.build(arg)
+     */
 
     logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
-    return TraceGenerationResult(traceSetSummary)
+    return TraceGenerationResult(AbstractTraceSet(argTraces))
   }
 
   private fun filterEndNodes(

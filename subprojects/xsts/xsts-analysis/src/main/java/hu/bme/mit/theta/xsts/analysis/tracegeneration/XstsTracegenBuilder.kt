@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker.Companion.create
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.CegarTraceGenerationChecker.Companion.create
 import hu.bme.mit.theta.analysis.expl.*
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger

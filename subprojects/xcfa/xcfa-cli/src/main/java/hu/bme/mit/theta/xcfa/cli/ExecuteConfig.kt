@@ -27,13 +27,13 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSet
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
@@ -440,7 +440,7 @@ private fun postAnalysisLogging(
         result
           as
           TraceGenerationResult<
-            AbstractTraceSummary<XcfaState<*>, XcfaAction>,
+            AbstractTraceSet<XcfaState<*>, XcfaAction>,
             XcfaState<*>,
             XcfaAction,
           >,
@@ -642,18 +642,20 @@ private fun writeSequenceTrace(
 
 private fun postTraceGenerationLogging(
   result:
-    TraceGenerationResult<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>,
+    TraceGenerationResult<AbstractTraceSet<XcfaState<*>, XcfaAction>, XcfaState<*>, XcfaAction>,
   mcm: MCM?,
   parseContext: ParseContext?,
   config: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
 ) {
+  /*
   val abstractSummary = result.summary
   logger.write(
     Logger.Level.MAINSTEP,
     "Successfully generated a summary of ${abstractSummary.sourceTraces.size} abstract traces.\n",
   )
+   */
 
   val resultFolder = config.outputConfig.resultFolder
   resultFolder.mkdirs()
@@ -663,16 +665,16 @@ private fun postTraceGenerationLogging(
       Logger.Level.MAINSTEP,
       "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
     )
-
     val modelName = config.inputConfig.input!!.name
-    val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
-    val visFile =
-      resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
-    GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-    logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
-
+    /*
+        val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+        val visFile =
+          resultFolder.absolutePath + File.separator + modelName + ".abstract-trace-summary.png"
+        GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+        logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+    */
     var concreteTraces = 1
-    for (abstractTrace in abstractSummary.sourceTraces) {
+    for (abstractTrace in result.summary.sourceTraces) {
       try {
         // TODO no concrete summary implemented for XCFA yet, only traces
         val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =

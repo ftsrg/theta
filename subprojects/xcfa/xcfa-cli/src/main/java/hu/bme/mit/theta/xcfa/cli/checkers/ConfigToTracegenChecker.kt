@@ -22,11 +22,10 @@ import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.CegarTraceGenerationChecker
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
@@ -81,7 +80,7 @@ fun getTracegenChecker(
       tracegenConfig.abstractorConfig.havocMemory,
     ) as BasicArgAbstractor<ExprState, ExprAction, Prec>
 
-  val tracegenChecker = TraceGenerationChecker.create(logger, abstractor, false)
+  val tracegenChecker = CegarTraceGenerationChecker.create(logger, abstractor, false)
 
   return Checker<AbstractTraceSummary<XcfaState<*>, XcfaAction>, XcfaPrec<*>> { prec ->
     tracegenChecker.check(prec) as Result<AbstractTraceSummary<XcfaState<*>, XcfaAction>>

@@ -17,13 +17,12 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.analysis.algorithm.Statistics
 import java.util.*
 
-class TraceGenerationResult<Pr : AbstractTraceSummary<S, A>, S : State, A : Action>(
-  val summary: Pr
-) : Result<Pr> {
+class TraceGenerationResult<Pr : Proof, S : State, A : Action>(val summary: Pr) : Result<Pr> {
 
   override fun getProof(): Pr {
     return summary

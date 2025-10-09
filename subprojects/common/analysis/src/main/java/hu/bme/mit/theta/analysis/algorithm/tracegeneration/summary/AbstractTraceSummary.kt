@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.Proof
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
@@ -36,7 +37,7 @@ class AbstractSummaryBuilder<S : State, A : Action> {
     argTraces.add(trace)
   }
 
-  fun build(): AbstractTraceSummary<S, A> {
+  fun build(arg: ARG<S, A>): AbstractTraceSummary<S, A> {
     checkState(argTraces.isNotEmpty(), "Summary must have at least one trace in it!")
 
     val argNodes: Set<ArgNode<S, A>> = argTraces.map { trace -> trace.nodes() }.flatten().toSet()
@@ -85,7 +86,7 @@ class AbstractSummaryBuilder<S : State, A : Action> {
     // create summary nodes and a map of argnodes to summary nodes
     val argNodeSummaryNodeMap =
       nodeGroups
-        .flatMap { AbstractSummaryNode.create(it) } // Create summary nodes for each group
+        .flatMap { AbstractSummaryNode.create(it, arg) } // Create summary nodes for each group
         .flatMap { summaryNode -> summaryNode.argNodes.map { node -> node to summaryNode } }
         .toMap()
 
@@ -126,6 +127,9 @@ data class AbstractTraceSummary<S : State, A : Action>(
   val initNode: AbstractSummaryNode<S, A>,
 ) : Proof {}
 
+data class AbstractTraceSet<S : State, A : Action>(val sourceTraces: Collection<ArgTrace<S, A>>) :
+  Proof {}
+
 /**
  * Groups arg nodes based on coverages, but also stores the traces they appear in, coverage
  * relations and arg nodes
@@ -145,7 +149,8 @@ private constructor(
     var counter: Long = 0
 
     fun <S : State, A : Action> create(
-      argNodes: MutableSet<ArgNode<S, A>>
+      argNodes: MutableSet<ArgNode<S, A>>,
+      arg: ARG<S, A>,
     ): Set<AbstractSummaryNode<S, A>> {
       // all of the nodes should be in some kind of coverage relationship with each other,
       // so we partition them in a way that that is true
@@ -154,7 +159,7 @@ private constructor(
       if (partitions.size > 1) {
         val abstractSummaryNodes = mutableSetOf<AbstractSummaryNode<S, A>>()
         for (partition in partitions) {
-          abstractSummaryNodes.addAll(create(partition.toMutableSet()))
+          abstractSummaryNodes.addAll(create(partition.toMutableSet(), arg))
         }
         return abstractSummaryNodes
       } else {
@@ -171,6 +176,8 @@ private constructor(
             } else if (!leastOverApproximatedNode.inPartialOrder(node)) {
               throw RuntimeException(
                 "All nodes in summary node should be in some partial ordering!"
+                // TODO: this check can easily fail, I need to re-think how a summary should work
+                // (later)
               )
             }
           }
@@ -211,6 +218,9 @@ private constructor(
     private fun <S : State, A : Action> partitionNodes(
       argNodes: Set<ArgNode<S, A>>
     ): List<Set<ArgNode<S, A>>> {
+      val visited = mutableSetOf<ArgNode<S, A>>()
+      val partitions = mutableListOf<Set<ArgNode<S, A>>>()
+
       // Build the adjacency list
       val graph =
         argNodes.associateWith { node ->
@@ -220,9 +230,6 @@ private constructor(
         }
 
       // Find connected components using DFS
-      val visited = mutableSetOf<ArgNode<S, A>>()
-      val partitions = mutableListOf<Set<ArgNode<S, A>>>()
-
       fun dfs(node: ArgNode<S, A>, component: MutableSet<ArgNode<S, A>>) {
         if (node in visited) return
         visited += node

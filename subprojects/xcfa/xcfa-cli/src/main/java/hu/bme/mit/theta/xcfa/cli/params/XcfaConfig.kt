@@ -284,7 +284,13 @@ data class TracegenConfig(
   @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
   var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
   val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
-) : SpecBackendConfig
+) : SpecBackendConfig {
+  override fun getObjects(): Set<Config> {
+    return super.getObjects() union abstractorConfig.getObjects()
+  }
+
+  override fun update(): Boolean = listOf(abstractorConfig).map { it.update() }.any { it }
+}
 
 data class CegarAbstractorConfig(
   @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
