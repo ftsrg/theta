@@ -72,7 +72,7 @@ class CPasses(timed : Boolean, checkOverflow: Boolean, parseContext: ParseContex
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       DelayPass(timed),
-      PropagateClockAssumptionsPass(timed),
+      InvariantPass(timed),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
   )

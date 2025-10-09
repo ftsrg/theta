@@ -36,6 +36,8 @@ import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.clock.constr.TrueConstr
+import hu.bme.mit.theta.core.clock.op.ClockOps.Guard
 import hu.bme.mit.theta.core.clock.op.ClockOps.Reset
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -215,7 +217,20 @@ fun getCoreXcfaLts() =
                             .map { cast(it.value, Rat()) }
                         )
                       }
-                      ClockDelayLabel(activeClocks, label.metadata)
+                      val invariants = mutableListOf<XcfaLabel>()
+                      invariants.addAll(
+                        s.processes.mapNotNull { (pid, processState) ->
+                            val loc = if (pid == proc.key) edge.target
+                              else processState.locs.peek()
+                            if (loc.invariant !is TrueConstr) {
+                              ClockOpLabel(Guard((loc.invariant))).changeVars(processState.foldVarLookup())
+                            } else null
+                          }
+                      )
+                      SequenceLabel(
+                        listOf(ClockDelayLabel(activeClocks), SequenceLabel(invariants)),
+                        label.metadata
+                      )
                     }
                   }
                   else -> label

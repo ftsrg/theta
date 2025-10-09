@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.core.clock.constr.ClockConstr
+import hu.bme.mit.theta.core.clock.constr.ClockConstrs.True
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -118,6 +120,7 @@ constructor(
   val initial: Boolean = false, // is this the initial location?
   val final: Boolean = false, // is this the final location?
   val error: Boolean = false, // is this the error location?
+  var invariant: ClockConstr = True(),
   val metadata: MetaData,
 ) {
 

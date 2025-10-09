@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.core.clock.constr.ClockConstr
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -327,6 +328,10 @@ constructor(
         }
       }
     }
+  }
+
+  fun addInvariant(loc: XcfaLocation, invariant: ClockConstr) {
+    loc.invariant = invariant
   }
 
   fun changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>) {

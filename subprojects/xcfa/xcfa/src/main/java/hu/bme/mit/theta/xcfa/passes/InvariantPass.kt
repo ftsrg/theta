@@ -20,54 +20,53 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstr
 import hu.bme.mit.theta.core.clock.constr.UnitConstr
 import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr
 import hu.bme.mit.theta.core.clock.constr.UnitLtConstr
-import hu.bme.mit.theta.core.clock.op.ClockOps
 import hu.bme.mit.theta.core.clock.op.GuardOp
+import hu.bme.mit.theta.core.clock.op.ResetOp
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.ClockOpLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import java.util.LinkedList
 import java.util.Queue
 
-class PropagateClockAssumptionsPass(val timed : Boolean) : ProcedurePass {
+class InvariantPass(val timed : Boolean) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (timed) {
             val invariants: Map<XcfaLocation, ClockConstr> = collectInvariants(builder.getLocs())
-            for ((location, invariant) in invariants) {
-                val invariantLabel = ClockOpLabel(ClockOps.Guard(invariant))
-                for (incomingEdge in location.incomingEdges) {
-                    val newIncomingEdge = addLabelToEdge(incomingEdge, invariantLabel)
-                    builder.removeEdge(incomingEdge)
-                    builder.addEdge(newIncomingEdge)
-                }
+            for ((loc, invariant) in invariants) {
+                builder.addInvariant(loc, invariant)
             }
         }
         return builder
     }
 
-    private fun collectInvariants(locations : Collection<XcfaLocation>) : Map<XcfaLocation, UnitConstr> {
-        val invariants : HashMap<XcfaLocation, UnitConstr> = HashMap()
+    private fun collectInvariants(locations : Collection<XcfaLocation>) : Map<XcfaLocation, ClockConstr> {
+        val invariants : HashMap<XcfaLocation, ClockConstr> = HashMap()
         for (location in locations) {
             val edges : Queue<XcfaEdge> = LinkedList(location.outgoingEdges)
             val visitedLocations : MutableCollection<XcfaLocation> = arrayListOf(location)
-            val upperBounds : MutableCollection<UnitConstr> = arrayListOf()
+            val upperBounds : MutableCollection<ClockConstr> = arrayListOf()
             while (edges.isNotEmpty()) {
                 val edge = edges.remove()
                 var closed = false
                 for (label in edge.getFlatLabels()) {
-                    if (containsUpperBound(label)) {
-                        upperBounds.add(extractUpperBound(label))
-                        closed = true
+                    if (label is ClockOpLabel) {
+                        if (label.op is ResetOp) {
+                            break
+                        }
+                        if (label.op is GuardOp && isUpperBound(label.op.constr)) {
+                            upperBounds.add(label.op.constr)
+                            closed = true
+                        }
                     }
                 }
                 if (!closed) {
-                    val target = edge.target
-                    if (!visitedLocations.contains(target)) {
-                        edges.addAll(target.outgoingEdges)
-                        visitedLocations.add(target)
+                    val newSource = edge.target
+                    if (!visitedLocations.contains(newSource)) {
+                        edges.addAll(newSource.outgoingEdges)
+                        visitedLocations.add(newSource)
                     }
                 }
             }
@@ -81,24 +80,14 @@ class PropagateClockAssumptionsPass(val timed : Boolean) : ProcedurePass {
 
     private fun isUpperBound(clockConstr : ClockConstr) : Boolean = clockConstr is UnitLeqConstr || clockConstr is UnitLtConstr
 
-    private fun containsUpperBound(label : XcfaLabel) : Boolean {
-        return label is ClockOpLabel && label.op is GuardOp && isUpperBound(label.op.constr)
-    }
-
-    private fun extractUpperBound(label : XcfaLabel) : UnitConstr {
-        return ((label as ClockOpLabel).op as GuardOp).constr as UnitConstr
-    }
-
-    private fun maxUpperBound(upperBounds : Collection<UnitConstr>) : UnitConstr {
-        return upperBounds.maxWith { constr1, constr2 -> compareUpperBounds(constr1, constr2) }
-    }
-
-    private fun compareUpperBounds(constr1: UnitConstr, constr2: UnitConstr): Int {
-        check(isUpperBound(constr1) && isUpperBound(constr2))
-        return when {
-            constr1.bound != constr2.bound -> constr1.bound.compareTo(constr2.bound)
-            constr1 is UnitLeqConstr && constr2 is UnitLtConstr -> 1
-            else -> -1
+    private fun maxUpperBound(upperBounds : Collection<ClockConstr>) : ClockConstr {
+        check(upperBounds.all { isUpperBound(it) })
+        return upperBounds.map { it as UnitConstr }.maxWith { constr1, constr2 ->
+            when {
+                constr1.bound != constr2.bound -> constr1.bound.compareTo(constr2.bound)
+                constr1 is UnitLeqConstr && constr2 is UnitLtConstr -> 1  // constr1 is higher
+                else -> -1  // constr1 is lower
+            }
         }
     }
 }

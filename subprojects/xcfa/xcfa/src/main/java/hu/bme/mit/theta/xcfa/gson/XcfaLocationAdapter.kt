@@ -62,7 +62,7 @@ class XcfaLocationAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaLocati
     }
     reader.endObject()
 
-    return XcfaLocation(name, initial, final, error, metaData ?: EmptyMetaData)
+    return XcfaLocation(name, initial, final, error, metadata = metaData ?: EmptyMetaData)
   }
 
   private fun initGson() {
