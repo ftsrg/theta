@@ -17,12 +17,14 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import java.util.*
@@ -183,6 +185,91 @@ data class FenceLabel(val labels: Set<String>, override val metadata: MetaData =
       return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
     }
   }
+}
+
+sealed class NewFenceLabel(open val handle: VarDecl<*>, override val metadata: MetaData = EmptyMetaData) : XcfaLabel(metadata) {
+  open val acquiredMutexes: Set<VarDecl<*>> = setOf()
+  open val releasedMutexes: Set<VarDecl<*>> = setOf()
+  open val blockingMutexes: Set<VarDecl<*>> = setOf()
+
+  protected abstract val label: String
+  override fun toString(): String = "F[$label(${handle.name})]"
+}
+
+sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
+  NewFenceLabel(handle = ATOMIC_MUTEX, metadata) {
+
+  companion object {
+    val ATOMIC_MUTEX = Decls.Var("__theta_atomic_mutex__", Int())
+  }
+}
+
+data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
+  AtomicFenceLabel(metadata) {
+
+  override val acquiredMutexes = setOf(ATOMIC_MUTEX)
+  override val blockingMutexes = setOf(ATOMIC_MUTEX)
+  override val label = "ATOMIC_BEGIN"
+}
+
+data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
+  AtomicFenceLabel(metadata) {
+
+  override val releasedMutexes = setOf(ATOMIC_MUTEX)
+  override val label = "ATOMIC_END"
+}
+
+data class MutexLockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : NewFenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle)
+  override val blockingMutexes = setOf(handle)
+  override val label = "mutex_lock"
+}
+
+data class MutexUnlockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : NewFenceLabel(handle, metadata) {
+
+  override val releasedMutexes = setOf(handle)
+  override val label = "mutex_unlock"
+}
+
+data class MutexTryLockLabel(
+  override val handle: VarDecl<*>,
+  val successVar: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : NewFenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle)
+  override val label = "mutex_trylock"
+  override fun toString(): String = "F[$label(${handle.name}, ${successVar.name})]"
+}
+
+data class StartCondWaitLabel(
+  override val handle: VarDecl<*>,
+  val condition: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : NewFenceLabel(handle, metadata) {
+
+  override val releasedMutexes = setOf(handle)
+  override val label = "start_cond_wait"
+  override fun toString(): String = "F[$label(${condition.name}, ${handle.name})]"
+}
+
+data class CondWaitLabel(
+  override val handle: VarDecl<*>,
+  val condition: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : NewFenceLabel(handle, metadata) {
+
+  override val blockingMutexes = setOf(handle)
+  override val acquiredMutexes = setOf(handle)
+  override val label = "cond_wait"
+  override fun toString(): String = "F[$label(${condition.name}, ${handle.name})]"
 }
 
 data class SequenceLabel

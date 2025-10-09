@@ -115,7 +115,8 @@ constructor(
                   in Regex("start_cond_wait\\((.*)\\)") -> {
                     val args =
                       label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
-                    changes.add { state -> state.enterMutex(args[0], -1) }
+                    // No need to do this due to spurious wakeup
+                    // changes.add { state -> state.enterMutex(args[0], -1) }
                     changes.add { state -> state.exitMutex(args[1], a.pid) }
                   }
 
@@ -127,13 +128,14 @@ constructor(
                     changes.add { state -> state.enterMutex(args[1], a.pid) }
                   }
 
-                  in Regex("cond_signal\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.exitMutex(
-                        label.substring("cond_signal".length + 1, label.length - 1),
-                        -1,
-                      )
-                    }
+                  // No need to do this due to spurious wakeup
+                  // in Regex("cond_signal\\((.*)\\)") ->
+                  //   changes.add { state ->
+                  //     state.exitMutex(
+                  //       label.substring("cond_signal".length + 1, label.length - 1),
+                  //       -1,
+                  //     )
+                  //  }
 
                   "pthread_exit" -> {
                     if (processState.locs.size > 1)
