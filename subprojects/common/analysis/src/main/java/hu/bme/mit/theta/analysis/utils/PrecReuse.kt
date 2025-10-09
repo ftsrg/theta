@@ -76,7 +76,9 @@ object PrecReuse {
         assert(inputFile != null)
         assert(serializer != null)
 
-        val savedPrec = (if (isEnabled) inputFile?.readText() else null) ?: ""
+        val savedPrec = (if (isEnabled) inputFile?.readLines() else null)
+            ?.filter { line -> line.trim().let { it.isNotEmpty() && ':' != it.last() } }
+            ?.joinToString(separator = "\n") ?: ""
         return serializer?.parse(savedPrec, currentVars) as? P ?: throw RuntimeException("Misconfigured PrecSerializer")
     }
 
@@ -104,10 +106,10 @@ interface PrecSerializer<out P : Prec> {
 }
 
 class ExplPrecSerializer : PrecSerializer<ExplPrec> {
-    override fun serialize(prec: Prec) = prec.usedVars.joinToString(separator = " ") { it.toSymbol() }
+    override fun serialize(prec: Prec) = "*:\n" + prec.usedVars.joinToString(separator = "\n") { it.name }
     override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): ExplPrec {
         val varNames = input.trim().split(Regex("\\s+"))
-        val vars = currentVars.filter { varNames.contains(it.toSymbol()) }
+        val vars = currentVars.filter { varNames.contains(it.name) }
         return ExplPrec.of(vars)
     }
 }
@@ -125,10 +127,11 @@ class PredPrecSerializer : PrecSerializer<PredPrec> {
 
         val predicates = (prec as PredPrec).preds
             .map { pred -> ExprUtils.changeDecls(pred, quotedVarLookup) }
-            .joinToString(separator = "\n", prefix = "(", postfix = ")", transform = transformationManager::toTerm)
-            .let { it.slice(1..(it.length - 2)) }
+            .joinToString(separator = "\n") {
+                "(assert ${transformationManager.toTerm(it)})"
+            }
 
-        return "$varDecls\n$predicates"
+        return "$varDecls\n\n*:\n$predicates"
     }
 
     override fun parse(input: String, currentVars: Iterable<VarDecl<*>>): PredPrec {
