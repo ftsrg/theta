@@ -341,9 +341,7 @@ data class RWLockReadLockLabel(
 
     internal val readHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
     internal val VarDecl<*>.readHandle: VarDecl<*>
-      get() = readHandles.getOrPut(this) {
-        Decls.Var("${this.name}__read_handle__", Int())
-      }
+      get() = readHandles.getOrPut(this) { Decls.Var("${this.name}__read_handle__", Int()) }
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
@@ -360,7 +358,8 @@ data class RWLockWriteLockLabel(
 ) : FenceLabel(handle, metadata) {
 
   override val acquiredMutexes = setOf(handle.writeHandle)
-  override val blockingMutexes = setOf(handle.writeHandle, handle.readHandle, AtomicFenceLabel.ATOMIC_MUTEX)
+  override val blockingMutexes =
+    setOf(handle.writeHandle, handle.readHandle, AtomicFenceLabel.ATOMIC_MUTEX)
   override val label = LABEL
 
   override fun toString(): String = super.toString()
@@ -371,9 +370,7 @@ data class RWLockWriteLockLabel(
 
     internal val writeHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
     internal val VarDecl<*>.writeHandle: VarDecl<*>
-      get() = writeHandles.getOrPut(this) {
-        Decls.Var("${this.name}__write_handle__", this.type)
-      }
+      get() = writeHandles.getOrPut(this) { Decls.Var("${this.name}__write_handle__", this.type) }
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {

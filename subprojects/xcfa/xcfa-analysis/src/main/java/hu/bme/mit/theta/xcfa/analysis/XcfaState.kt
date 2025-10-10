@@ -148,8 +148,7 @@ constructor(
           is JoinLabel -> {
             changes.add { state ->
               val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
-              if (joinedPid in state.processes) copy(bottom = true)
-              else state
+              if (joinedPid in state.processes) copy(bottom = true) else state
             }
             null
           }
@@ -270,9 +269,7 @@ constructor(
     }
 
     val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes.forEach {
-      newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid
-    }
+    label.acquiredMutexes.forEach { newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid }
     return copy(mutexes = newMutexes)
   }
 

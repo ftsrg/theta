@@ -149,10 +149,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                 "pthread_cond_wait" -> {
                   val handle = invokeLabel.getMutexHandle(builder, 2)
                   // Due to spurious wakeup, it is basically equivalent to unlock+lock
-                  listOf(
-                    MutexUnlockLabel(handle, metadata),
-                    MutexLockLabel(handle, metadata),
-                  )
+                  listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata))
                 }
 
                 "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
