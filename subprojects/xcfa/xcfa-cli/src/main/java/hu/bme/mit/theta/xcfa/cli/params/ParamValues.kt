@@ -422,8 +422,10 @@ enum class InitPrec(
 
 enum class ConeOfInfluenceMode(
   val getLts:
-    (XCFA, ParseContext, POR, MutableMap<VarDecl<*>, MutableSet<ExprState>>) ->
-      Pair<XcfaCoi?, LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>>
+    (XCFA, ParseContext, POR, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> Pair<
+        XcfaCoi?,
+        LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+      >
 ) {
 
   NO_COI({ xcfa, _, por, ivr ->

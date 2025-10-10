@@ -60,7 +60,8 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
   init {
     if (coneOfInfluence != null) {
       coneOfInfluence.coreTransFunc =
-        transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
+        transFunc
+          as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
       coreTransFunc =
         coneOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
     }

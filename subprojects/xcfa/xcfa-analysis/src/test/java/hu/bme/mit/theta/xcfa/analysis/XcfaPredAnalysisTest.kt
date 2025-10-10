@@ -39,10 +39,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.random.Random
 
 class XcfaPredAnalysisTest {
 
