@@ -43,7 +43,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -54,13 +54,16 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
   private val coreInitFunc: InitFunc<XcfaState<PtrState<S>>, XcfaPrec<P>>,
   private var coreTransFunc: TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>,
+  coneOfInfluence: XcfaCoi? = null,
 ) : Analysis<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>> {
 
   init {
-    ConeOfInfluence.coreTransFunc =
-      transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
-    coreTransFunc =
-      ConeOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    if (coneOfInfluence != null) {
+      coneOfInfluence.coreTransFunc =
+        transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
+      coreTransFunc =
+        coneOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    }
   }
 
   override fun getPartialOrd(): PartialOrd<XcfaState<PtrState<S>>> = corePartialOrd
@@ -335,11 +338,13 @@ class ExplXcfaAnalysis(
   maxEnum: Int,
   partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
     coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, isHavoc),
+    coneOfInfluence = coi,
   )
 
 /// PRED
@@ -397,9 +402,11 @@ class PredXcfaAnalysis(
   predAbstractor: PredAbstractor,
   partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
     coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc),
+    coneOfInfluence = coi,
   )
