@@ -34,7 +34,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
 import hu.bme.mit.theta.xcfa.utils.AccessType
 import hu.bme.mit.theta.xcfa.utils.WRITE
-import hu.bme.mit.theta.xcfa.utils.acquiredMutexes
 import hu.bme.mit.theta.xcfa.utils.collectGlobalVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
@@ -42,7 +41,7 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.util.function.Predicate
 
-private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
+private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
 /** Returns a predicate that checks whether data race is possible after the given state. */
 fun getDataRacePredicate() =
@@ -130,7 +129,7 @@ private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      neededMutexes.addAll(label.acquiredMutexes)
+      neededMutexes.addAll(label.acquiredMutexes.map { it.name })
     } else {
       label.collectGlobalVars(globalVars).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
@@ -156,7 +155,7 @@ private fun XcfaEdge.getMemoryAccessesWithMutexes(
   val changedVars = mutableSetOf<VarDecl<*>>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      neededMutexes.addAll(label.acquiredMutexes)
+      neededMutexes.addAll(label.acquiredMutexes.map { it.name })
     } else {
       label.dereferencesWithAccessType.forEach { (deref, access) ->
         val vars = ExprUtils.getVars(deref.array) + ExprUtils.getVars(deref.offset)

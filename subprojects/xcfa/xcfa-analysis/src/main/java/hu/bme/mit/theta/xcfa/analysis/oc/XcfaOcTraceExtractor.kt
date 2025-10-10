@@ -27,12 +27,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
-import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 import java.util.*
 
 /** Extracts an error trace from the given model. */
@@ -174,10 +170,11 @@ internal class XcfaOcTraceExtractor(
 
     // extend the trace until the target location is reached
     while (
-      currentState.mutexes[""]?.equals(pid) == false ||
+      currentState.mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name]?.equals(pid) == false ||
         currentState.processes[pid]!!.locs.peek() != to
     ) {
-      val stepPid = currentState.mutexes[""] ?: pid // finish atomic block first
+      // finish atomic block first
+      val stepPid = currentState.mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name] ?: pid
       val edge =
         currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
       actions.add(XcfaAction(stepPid, edge))
@@ -204,8 +201,8 @@ internal class XcfaOcTraceExtractor(
   private fun Map<String, Int>.update(edge: XcfaEdge, pid: Int): Map<String, Int> {
     val map = this.toMutableMap()
     edge.getFlatLabels().forEach {
-      if (it.isAtomicBegin) map[""] = pid
-      if (it.isAtomicEnd) map.remove("")
+      if (it is AtomicBeginLabel) map[AtomicFenceLabel.ATOMIC_MUTEX.name] = pid
+      if (it is AtomicEndLabel) map.remove(AtomicFenceLabel.ATOMIC_MUTEX.name)
     }
     return map
   }

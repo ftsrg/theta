@@ -64,8 +64,8 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
     for (e in edges) {
       var atomic = e.source in atomicLocations
       for (l in e.getFlatLabels()) {
-        if (l.isAtomicBegin) atomic = true
-        if (l.isAtomicEnd) atomic = false
+        if (l is AtomicBeginLabel) atomic = true
+        if (l is AtomicEndLabel) atomic = false
         l.dereferencesWithAccessType.forEach { (deref, access) ->
           val partition =
             pointerPartitions
@@ -136,8 +136,8 @@ private fun getPotentialRacingVars(
     for (e in edges) {
       var atomic = e.source in atomicLocations
       for (l in e.getFlatLabels()) {
-        if (l.isAtomicBegin) atomic = true
-        if (l.isAtomicEnd) atomic = false
+        if (l is AtomicBeginLabel) atomic = true
+        if (l is AtomicEndLabel) atomic = false
         val accesses = l.collectVarsWithAccessType()
         accesses.forEach { (v, access) ->
           if (v in nonAtomicGlobalVars) {

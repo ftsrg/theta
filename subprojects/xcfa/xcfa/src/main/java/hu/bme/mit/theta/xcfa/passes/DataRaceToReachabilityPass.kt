@@ -35,8 +35,6 @@ import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.getPotentialRacingVars
-import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
-import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 
@@ -108,8 +106,8 @@ class DataRaceToReachabilityPass : ProcedurePass {
               if (label is StartLabel) initial = false
               return@mapIndexed listOf(label) to null
             }
-            if (label.isAtomicBegin) atomic = true
-            if (label.isAtomicEnd) atomic = false
+            if (label is AtomicBeginLabel) atomic = true
+            if (label is AtomicEndLabel) atomic = false
 
             val vars = label.collectVarsWithAccessType().filter { it.key in potentialRacingVars }
             val dereferences = label.dereferencesWithAccessType

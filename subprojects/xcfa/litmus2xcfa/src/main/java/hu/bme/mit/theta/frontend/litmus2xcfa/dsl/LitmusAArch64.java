@@ -345,13 +345,15 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
 
         @Override
         public XcfaLabel visitFence(LitmusAArch64Parser.FenceContext ctx) {
-            return new FenceLabel(
-                    Set.of(
-                            ctx.Fence().getText()
-                                    + (ctx.FenceOpt() == null
-                                            ? ""
-                                            : "." + ctx.FenceOpt().getText())),
-                    EmptyMetaData.INSTANCE);
+            throw new UnsupportedOperationException(
+                    "Fences are not supported in this version of the frontend.");
+            //            return new FenceLabel(
+            //                    Set.of(
+            //                            ctx.Fence().getText()
+            //                                    + (ctx.FenceOpt() == null
+            //                                            ? ""
+            //                                            : "." + ctx.FenceOpt().getText())),
+            //                    EmptyMetaData.INSTANCE);
         }
     }
 

@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -35,13 +34,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.acquiredEmbeddedFenceVars
-import hu.bme.mit.theta.xcfa.utils.acquiredMutexes
-import hu.bme.mit.theta.xcfa.utils.collectVars
-import hu.bme.mit.theta.xcfa.utils.dereferences
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.mutexOperations
-import hu.bme.mit.theta.xcfa.utils.pointsTo
+import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
 import java.util.function.Predicate
 import kotlin.random.Random
@@ -86,16 +79,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
   /** Backward edges in the CFA (an edge of a loop). */
   private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
 
-  /**
-   * Variables associated to mutex identifiers. TODO: this should really be solved by storing
-   * VarDecls in FenceLabel.
-   */
-  protected val fenceVars: MutableMap<String, VarDecl<*>> = mutableMapOf()
-  private val String.fenceVar
-    get() =
-      fenceVars.getOrPut("") {
-        Decls.Var(if (this == "") "__THETA_atomic_mutex_" else this, Bool())
-      }
+  /** Variables of mutex handles (VarDecls in FenceLabels), needed for AASPOR. */
+  protected val fenceVars: MutableSet<VarDecl<*>> = mutableSetOf()
 
   init {
     collectBackwardEdges()
@@ -165,7 +150,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     firstProcesses: MutableSet<Int>,
     enabledActionsByProcess: Map<Int, List<XcfaAction>>,
   ) {
-    val processState = checkNotNull(state.processes[pid])
+    val processState = state.processes[pid]!!
     if (!processState.paramsInitialized) return
     val disabledOutEdges =
       processState.locs.peek().outgoingEdges.filter { edge ->
@@ -173,17 +158,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
       }
     disabledOutEdges.forEach { edge ->
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
-        fence.labels
-          .filter { it.startsWith("mutex_lock") }
-          .forEach { lock ->
-            val mutex = lock.substringAfter('(').substringBefore(')')
-            state.mutexes[mutex]?.let { pid2 ->
-              if (pid2 !in firstProcesses) {
-                firstProcesses.add(pid2)
-                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
-              }
+        fence.blockingMutexesWithoutAtomic.forEach { mutex ->
+          state.mutexes[mutex.name]?.let { pid2 ->
+            if (pid2 !in firstProcesses) {
+              firstProcesses.add(pid2)
+              checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
             }
           }
+        }
       }
     }
   }
@@ -341,19 +323,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
    */
   private fun getDirectlyUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
     val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar)
+    fenceVars.addAll(edge.fenceVars)
     return edge
       .getFlatLabels()
-      .flatMap { label ->
-        label.collectVars().filter { it in globalVars } union
-          ((label as? FenceLabel)
-            ?.labels
-            ?.filter { it.startsWith("start_cond_wait") || it.startsWith("cond_signal") }
-            ?.map { it.substringAfter("(").substringBefore(")").split(",")[0] }
-            ?.map { it.fenceVar } ?: listOf())
-      }
+      .flatMap { label -> label.collectVars().filter { it in globalVars } }
       .toSet() union
       edge.acquiredEmbeddedFenceVars.let { mutexes ->
-        if (mutexes.size <= 1) setOf() else mutexes.map { it.fenceVar }
+        fenceVars.addAll(mutexes)
+        if (mutexes.size <= 1) setOf() else mutexes
       }
   }
 

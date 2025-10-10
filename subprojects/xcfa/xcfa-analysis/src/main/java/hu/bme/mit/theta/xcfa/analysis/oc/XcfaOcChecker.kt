@@ -59,8 +59,6 @@ import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
-import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 import hu.bme.mit.theta.xcfa.utils.references
 import kotlin.time.measureTime
 
@@ -442,19 +440,11 @@ class XcfaOcChecker(
               }
 
               is FenceLabel -> {
-                if (
-                  label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true
-                ) {
-                  if (
-                    label.labels.size != 1 ||
-                      label.labels.first() != "pthread_exit" ||
-                      !edge.target.final
-                  ) {
-                    exit("untransformed fence label: $label")
-                  }
+                if (label !is AtomicFenceLabel) {
+                  exit("untransformed fence label: $label")
                 }
-                if (label.isAtomicBegin) atomicBlock = E.uniqueClkId()
-                if (label.isAtomicEnd) atomicBlock = null
+                if (label is AtomicBeginLabel) atomicBlock = E.uniqueClkId()
+                if (label is AtomicEndLabel) atomicBlock = null
               }
 
               is NopLabel -> {}

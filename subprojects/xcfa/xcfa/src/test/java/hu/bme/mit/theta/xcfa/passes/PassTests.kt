@@ -328,8 +328,8 @@ class PassTests {
               "pid".join()
               "pid".assign("0")
             }
-            (init to "L3") { fence("mutex_lock(x)") }
-            (init to "L4") { fence("mutex_unlock(x)") }
+            (init to "L3") { mutex_lock("x") }
+            (init to "L4") { mutex_unlock("x") }
           },
         ),
         PassTestData(
@@ -340,8 +340,8 @@ class PassTests {
             (init to "L2") { "__VERIFIER_atomic_end"("0") }
           },
           output = {
-            (init to "L1") { fence("ATOMIC_BEGIN") }
-            (init to "L2") { fence("ATOMIC_END") }
+            (init to "L1") { atomic_begin() }
+            (init to "L2") { atomic_end() }
           },
         ),
         PassTestData(

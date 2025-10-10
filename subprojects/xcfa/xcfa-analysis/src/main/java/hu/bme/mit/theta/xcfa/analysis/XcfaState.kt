@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -65,8 +66,9 @@ constructor(
 
   fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[""] != null && mutexes[""] != a.pid)
+    if (mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name] !in listOf(null, a.pid)) {
       return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
+    }
 
     val processState = processes[a.pid]
     checkNotNull(processState)
@@ -77,80 +79,50 @@ constructor(
       changes.add { state -> state.withProcesses(newProcesses) }
     }
 
-    val newLabels =
-      a.edge.getFlatLabels().filter {
-        when (it) {
-          is FenceLabel ->
-            it.labels
-              .forEach { label ->
-                when (label) {
-                  "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
-                  "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
-                  in Regex("mutex_lock\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.enterMutex(
-                        label.substring("mutex_lock".length + 1, label.length - 1),
-                        a.pid,
-                      )
-                    }
+    val newLabels: List<XcfaLabel> =
+      a.edge.getFlatLabels().mapNotNull { label ->
+        when (label) {
+          is FenceLabel -> {
+            when (label) {
+              is AtomicBeginLabel,
+              is MutexLockLabel -> changes.add { it.enterMutex(label.handle.name, a.pid) }
 
-                  in Regex("mutex_unlock\\((.*)\\)") ->
-                    changes.add { state ->
-                      state.exitMutex(
-                        label.substring("mutex_unlock".length + 1, label.length - 1),
-                        a.pid,
-                      )
-                    }
+              is AtomicEndLabel,
+              is MutexUnlockLabel -> changes.add { it.exitMutex(label.handle.name, a.pid) }
 
-                  in Regex("mutex_trylock\\((.*)\\)") ->
-                    changes.add { state ->
-                      val newState = state.enterMutex(
-                        label.substring("mutex_trylock".length + 1, label.length - 1),
-                        a.pid,
-                      )
-                      if (newState.isBottom) state
-                      else newState
-                    }
-
-                  in Regex("start_cond_wait\\((.*)\\)") -> {
-                    val args =
-                      label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
-                    // No need to do this due to spurious wakeup
-                    // changes.add { state -> state.enterMutex(args[0], -1) }
-                    changes.add { state -> state.exitMutex(args[1], a.pid) }
-                  }
-
-                  in Regex("cond_wait\\((.*)\\)") -> {
-                    val args = label.substring("cond_wait".length + 1, label.length - 1).split(",")
-                    // Spurious wakeup may occur in pthread_cond_wait!
-                    // changes.add { state -> state.enterMutex(args[0], a.pid) }
-                    // changes.add { state -> state.exitMutex(args[0], a.pid) }
-                    changes.add { state -> state.enterMutex(args[1], a.pid) }
-                  }
-
-                  // No need to do this due to spurious wakeup
-                  // in Regex("cond_signal\\((.*)\\)") ->
-                  //   changes.add { state ->
-                  //     state.exitMutex(
-                  //       label.substring("cond_signal".length + 1, label.length - 1),
-                  //       -1,
-                  //     )
-                  //  }
-
-                  "pthread_exit" -> {
-                    if (processState.locs.size > 1)
-                      error("pthread_exit not allowed in invoked function")
-                  }
-
-                  else -> error("Unknown fence label $label")
+              is MutexTryLockLabel -> {
+                var success = false
+                changes.add { state ->
+                  val newState = state.enterMutex(label.handle.name, a.pid)
+                  success = !newState.isBottom
+                  if (newState.isBottom) state else newState
                 }
+                AssignStmtLabel(
+                  label.successVar.ref,
+                  Int(if (success) 1 else 0),
+                  metadata = label.metadata,
+                )
               }
-              .let { false }
+
+              is StartCondWaitLabel -> {
+                // No need to do this due to spurious wakeup
+                // changes.add { state -> state.enterMutex(label.cond.name, -1) }
+                changes.add { state -> state.exitMutex(label.handle.name, a.pid) }
+              }
+
+              is CondWaitLabel -> {
+                // Spurious wakeup may occur in pthread_cond_wait!
+                // changes.add { state -> state.enterMutex(label.cond.name, a.pid) }
+                // changes.add { state -> state.exitMutex(label.cond.name, a.pid) }
+                changes.add { state -> state.enterMutex(label.handle.name, a.pid) }
+              }
+            }.let { it as? XcfaLabel }
+          }
 
           is InvokeLabel -> {
             val proc =
-              xcfa?.procedures?.find { proc -> proc.name == it.name }
-                ?: error("No such method ${it.name}.")
+              xcfa?.procedures?.find { proc -> proc.name == label.name }
+                ?: error("No such method ${label.name}.")
             val returnStmt =
               SequenceLabel(
                 proc.params
@@ -158,31 +130,31 @@ constructor(
                   .filter { it.value.second != ParamDirection.IN }
                   .map { iVal ->
                     AssignStmtLabel(
-                      it.params[iVal.index] as RefExpr<*>,
+                      label.params[iVal.index] as RefExpr<*>,
                       cast(iVal.value.first.ref, iVal.value.first.type),
-                      metadata = it.metadata,
+                      metadata = label.metadata,
                     )
                   }
               )
             changes.add { state ->
-              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), it.tempLookup)
+              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
             }
-            false
+            null
           }
 
-          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
+          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
 
+          is StartLabel -> changes.add { state -> state.start(label) }.let { null }
           is JoinLabel -> {
-            changes.add { state -> state.enterMutex("${threadLookup[it.pidVar]}", a.pid) }
-            changes.add { state -> state.exitMutex("${threadLookup[it.pidVar]}", a.pid) }
-            false
+            changes.add { state -> state.enterMutex("${threadLookup[label.pidVar]}", a.pid) }
+            changes.add { state -> state.exitMutex("${threadLookup[label.pidVar]}", a.pid) }
+            null
           }
 
-          is NondetLabel -> true
-          NopLabel -> false
-          is SequenceLabel -> true
-          is StartLabel -> changes.add { state -> state.start(it) }.let { true }
-          is StmtLabel -> true
+          is SequenceLabel -> label
+          is NondetLabel -> label
+          is StmtLabel -> label
+          NopLabel -> null
         }
       }
 

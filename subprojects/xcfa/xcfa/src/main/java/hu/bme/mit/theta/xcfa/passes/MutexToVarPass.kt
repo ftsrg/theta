@@ -22,9 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.acquiredMutex
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.releasedMutex
 
 /**
  * Replaces mutexes (except the atomic block mutexes) with boolean variables. mutex_lock(mutex_var)
@@ -71,36 +69,22 @@ class MutexToVarPass : ProcedurePass {
       is FenceLabel -> {
         val actions = mutableListOf<XcfaLabel>()
 
-        labels.forEach { l ->
-          if (l in listOf("pthread_exit", "ATOMIC_BEGIN", "ATOMIC_END")) {
-            actions.add(FenceLabel(setOf(l)))
-            return@forEach
+        if (this is AtomicFenceLabel) {
+          actions.add(this)
+        } else {
+          blockingMutexesWithoutAtomic.forEach {
+            actions.add(StmtLabel(AssumeStmt.of(Not(it.name.mutexFlag.ref))))
           }
-
-          if (Regex("start_cond_wait\\((.*)\\)").matches(l)) {
-            val args = l.substring("start_cond_wait".length + 1, l.length - 1).split(",")
-            actions.add(StmtLabel(AssignStmt.of(args[0].signalFlag, False())))
+          acquiredMutexes.forEach {
+            actions.add(StmtLabel(AssignStmt.of(it.name.mutexFlag, True())))
           }
-          if (Regex("cond_wait\\((.*)\\)").matches(l)) {
-            // Spurious wakeup may occur in pthread_cond_wait
-            // val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
-            // actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
+          releasedMutexes.forEach {
+            actions.add(StmtLabel(AssignStmt.of(it.name.mutexFlag, False())))
           }
-          if (Regex("cond_signal\\((.*)\\)").matches(l)) {
-            val arg = l.substring("cond_signal".length + 1, l.length - 1)
-            actions.add(StmtLabel(AssignStmt.of(arg.signalFlag, True())))
-          }
-
-          l.acquiredMutex?.let {
-            actions.add(StmtLabel(AssumeStmt.of(Not(it.mutexFlag.ref))))
-            actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, True())))
-          }
-          l.releasedMutex?.let { actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, False()))) }
         }
 
-        SequenceLabel(
-          actions
-        ) // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
+        // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
+        SequenceLabel(actions, metadata)
       }
 
       else -> this
@@ -109,9 +93,6 @@ class MutexToVarPass : ProcedurePass {
 
   private val String.mutexFlag
     get() = flag("_mutex_flag")
-
-  private val String.signalFlag
-    get() = flag("_signal_flag")
 
   private fun String.flag(prefix: String) =
     mutexVars.getOrPut(this) { Decls.Var("${prefix}_${ifEmpty { "atomic" }}", Bool()) }

@@ -105,6 +105,17 @@ fun XcfaLabel.changeVars(
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
 
+      is FenceLabel -> {
+        when (this) {
+          is CondWaitLabel -> CondWaitLabel(handle.changeVars(varLut), condition.changeVars(varLut), metadata)
+          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is MutexTryLockLabel -> MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
+          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
+          is StartCondWaitLabel -> StartCondWaitLabel(handle.changeVars(varLut), condition.changeVars(varLut), metadata)
+          else -> this
+        }
+      }
+
       else -> this
     }
   else this

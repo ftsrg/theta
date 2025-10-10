@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 
 /**
@@ -113,48 +114,54 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                 "pthread_mutex_lock" -> {
                   val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(FenceLabel(setOf("mutex_lock(${handle.name})"), metadata))
+                  listOf(MutexLockLabel(handle, metadata))
                 }
 
                 "pthread_mutex_unlock" -> {
                   val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(FenceLabel(setOf("mutex_unlock(${handle.name})"), metadata))
+                  listOf(MutexUnlockLabel(handle, metadata))
                 }
 
                 "pthread_mutex_trylock" -> {
                   val handle = invokeLabel.getMutexHandle(builder)
-                  listOf(FenceLabel(setOf("mutex_trylock(${handle.name})"), metadata))
+                  val ret = invokeLabel.getParam(0)
+                  listOf(MutexTryLockLabel(handle, ret, metadata))
                 }
 
                 "pthread_cond_wait" -> {
-                  val cond = invokeLabel.getParam(1)
+                  val condition = invokeLabel.getParam(1)
                   val handle = invokeLabel.getMutexHandle(builder, 2)
                   listOf(
-                    FenceLabel(setOf("start_cond_wait(${cond.name},${handle.name})"), metadata),
-                    FenceLabel(setOf("cond_wait(${cond.name},${handle.name})"), metadata),
+                    StartCondWaitLabel(handle, condition, metadata),
+                    CondWaitLabel(handle, condition, metadata),
                   )
                 }
 
-                "pthread_cond_broadcast",
-                "pthread_cond_signal" -> {
-                  val cond = invokeLabel.getParam(1)
-                  listOf(FenceLabel(setOf("cond_signal(${cond.name})"), metadata))
-                }
-
+                "pthread_cond_broadcast", // No need to handle due to spurious wakeup
+                "pthread_cond_signal", // No need to handle due to spurious wakeup
                 "pthread_mutex_init",
                 "pthread_cond_init" -> listOf(NopLabel)
 
                 "pthread_exit" -> {
                   target = builder.finalLoc.get()
-                  listOf(FenceLabel(setOf("pthread_exit"), metadata))
+
+                  builder.parent.getProcedures().forEach { proc ->
+                    proc.getEdges().forEach { e ->
+                      if (
+                        e.getFlatLabels().any { l -> l is InvokeLabel && l.name == builder.name }
+                      ) {
+                        error("pthread_exit is not supported in invoked procedures")
+                      }
+                    }
+                  }
+
+                  listOf(NopLabel)
                 }
 
                 else -> error("Unsupported library function ${invokeLabel.name}")
               }
             XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
-              .splitIf { label ->
-                label is FenceLabel && label.labels.any { l -> l.startsWith("start_cond_wait") }
-              }
+              .splitIf { label -> label is StartCondWaitLabel }
               .forEach(builder::addEdge)
           } else {
             builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
