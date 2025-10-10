@@ -83,9 +83,8 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
     is FenceLabel ->
       when (this) {
+        is AtomicFenceLabel -> setOf()
         is MutexTryLockLabel -> setOf(handle, successVar)
-        is StartCondWaitLabel -> setOf(handle, condition)
-        is CondWaitLabel -> setOf(handle, condition)
         else -> setOf(handle)
       }
     else -> emptySet()
@@ -169,8 +168,6 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       when (this) {
         is AtomicFenceLabel -> mapOf()
         is MutexTryLockLabel -> mapOf(handle to READ) + mapOf(successVar to WRITE)
-        is StartCondWaitLabel -> mapOf(handle to READ) + mapOf(condition to READ)
-        is CondWaitLabel -> mapOf(handle to READ) + mapOf(condition to READ)
         else -> mapOf(handle to READ)
       }
     }

@@ -249,7 +249,7 @@ private fun <S : ExprState> stackIsLeq(s1: XcfaState<PtrState<S>>, s2: XcfaState
 
 fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
-    s1.processes.size == s2.processes.size &&
+    s1.processes.keys == s2.processes.keys &&
       stackIsLeq(s1, s2) &&
       s1.bottom == s2.bottom &&
       s1.mutexes == s2.mutexes &&

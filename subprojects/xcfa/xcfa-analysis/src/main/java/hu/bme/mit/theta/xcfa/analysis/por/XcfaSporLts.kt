@@ -159,7 +159,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
     disabledOutEdges.forEach { edge ->
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
         fence.blockingMutexesWithoutAtomic.forEach { mutex ->
-          state.mutexes[mutex.name]?.let { pid2 ->
+          state.mutexes[mutex.name]?.forEach { pid2 ->
             if (pid2 !in firstProcesses) {
               firstProcesses.add(pid2)
               checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)

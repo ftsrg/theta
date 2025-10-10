@@ -55,8 +55,8 @@ fun getDataRacePredicate() =
         check(process1.key != process2.key)
         for (edge1 in process1.value.locs.peek().outgoingEdges) {
           for (edge2 in process2.value.locs.peek().outgoingEdges) {
-            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
-            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+            val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
+            val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
 
             val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
             val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)

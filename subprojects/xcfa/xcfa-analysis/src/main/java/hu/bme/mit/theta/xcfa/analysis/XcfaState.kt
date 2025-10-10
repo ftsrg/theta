@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -39,7 +40,7 @@ constructor(
   val xcfa: XCFA?,
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
-  val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
+  val mutexes: Map<String, Set<Int>> = mapOf(),
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
 ) : ExprState {
@@ -51,10 +52,19 @@ constructor(
   ) : this(
     xcfa = xcfa,
     processes =
-      mapOf(Pair(0, XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList()))),
-    state,
+      mapOf(0 to XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList())),
+    sGlobal = state,
     mutexes = emptyMap(),
   )
+
+  init {
+    check((mutexes[ATOMIC_MUTEX.name]?.size ?: 0) <= 1) {
+      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX.name]} hold it."
+    }
+    check(mutexes.values.all { it.isNotEmpty() }) {
+      "No mutex can be held by an empty set of processes, but $mutexes contains empty mutexes."
+    }
+  }
 
   override fun isBottom(): Boolean {
     return bottom || sGlobal.isBottom
@@ -66,7 +76,7 @@ constructor(
 
   fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name] !in listOf(null, a.pid)) {
+    if (mutexes[ATOMIC_MUTEX.name]?.any { it != a.pid } == true) {
       return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
     }
 
@@ -74,7 +84,7 @@ constructor(
     checkNotNull(processState)
     check(processState.locs.peek() == a.source)
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[a.pid] = checkNotNull(processes[a.pid]?.withNewLoc(a.target))
+    newProcesses[a.pid] = processes[a.pid]!!.withNewLoc(a.target)
     if (processes != newProcesses) {
       changes.add { state -> state.withProcesses(newProcesses) }
     }
@@ -85,15 +95,18 @@ constructor(
           is FenceLabel -> {
             when (label) {
               is AtomicBeginLabel,
-              is MutexLockLabel -> changes.add { it.enterMutex(label.handle.name, a.pid) }
+              is MutexLockLabel,
+              is RWLockReadLockLabel,
+              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
               is AtomicEndLabel,
-              is MutexUnlockLabel -> changes.add { it.exitMutex(label.handle.name, a.pid) }
+              is MutexUnlockLabel,
+              is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
 
               is MutexTryLockLabel -> {
                 var success = false
                 changes.add { state ->
-                  val newState = state.enterMutex(label.handle.name, a.pid)
+                  val newState = state.enterMutex(label, a.pid)
                   success = !newState.isBottom
                   if (newState.isBottom) state else newState
                 }
@@ -102,19 +115,6 @@ constructor(
                   Int(if (success) 1 else 0),
                   metadata = label.metadata,
                 )
-              }
-
-              is StartCondWaitLabel -> {
-                // No need to do this due to spurious wakeup
-                // changes.add { state -> state.enterMutex(label.cond.name, -1) }
-                changes.add { state -> state.exitMutex(label.handle.name, a.pid) }
-              }
-
-              is CondWaitLabel -> {
-                // Spurious wakeup may occur in pthread_cond_wait!
-                // changes.add { state -> state.enterMutex(label.cond.name, a.pid) }
-                // changes.add { state -> state.exitMutex(label.cond.name, a.pid) }
-                changes.add { state -> state.enterMutex(label.handle.name, a.pid) }
               }
             }.let { it as? XcfaLabel }
           }
@@ -146,8 +146,11 @@ constructor(
 
           is StartLabel -> changes.add { state -> state.start(label) }.let { null }
           is JoinLabel -> {
-            changes.add { state -> state.enterMutex("${threadLookup[label.pidVar]}", a.pid) }
-            changes.add { state -> state.exitMutex("${threadLookup[label.pidVar]}", a.pid) }
+            changes.add { state ->
+              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
+              if (joinedPid in state.processes) copy(bottom = true)
+              else state
+            }
             null
           }
 
@@ -159,7 +162,7 @@ constructor(
       }
 
     changes.add { state ->
-      if (checkNotNull(state.processes[a.pid]).locs.isEmpty()) state.endProcess(a.pid) else state
+      if (state.processes[a.pid]!!.locs.isEmpty()) state.endProcess(a.pid) else state
     }
 
     return Pair(
@@ -232,18 +235,14 @@ constructor(
             )
           ),
       )
-    val newMutexes = LinkedHashMap(mutexes)
-    newMutexes["$pid"] = pid
 
-    return copy(processes = newProcesses, threadLookup = newThreadLookup, mutexes = newMutexes)
+    return copy(processes = newProcesses, threadLookup = newThreadLookup)
   }
 
   private fun endProcess(pid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     newProcesses.remove(pid)
-    val newMutexes = LinkedHashMap(mutexes)
-    newMutexes.remove("$pid")
-    return copy(processes = newProcesses, mutexes = newMutexes)
+    return copy(processes = newProcesses)
   }
 
   private fun invokeFunction(
@@ -265,17 +264,28 @@ constructor(
     return copy(processes = newProcesses)
   }
 
-  fun enterMutex(key: String, pid: Int): XcfaState<S> {
-    if (mutexes.keys.any { it == key && mutexes[it] != pid }) return copy(bottom = true)
+  private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
+    if (label.blockingMutexes.any { it.name in mutexes && pid !in mutexes[it.name]!! }) {
+      return copy(bottom = true)
+    }
 
     val newMutexes = LinkedHashMap(mutexes)
-    newMutexes[key] = pid
+    label.acquiredMutexes.forEach {
+      newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid
+    }
     return copy(mutexes = newMutexes)
   }
 
-  fun exitMutex(key: String, pid: Int): XcfaState<S> {
+  private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> {
     val newMutexes = LinkedHashMap(mutexes)
-    newMutexes.remove(key, pid)
+    label.releasedMutexes.forEach {
+      val holders = newMutexes[it.name]
+      when {
+        holders == null || pid !in holders -> {}
+        holders.size == 1 -> newMutexes.remove(it.name)
+        else -> newMutexes[it.name] = holders - pid
+      }
+    }
     return copy(mutexes = newMutexes)
   }
 

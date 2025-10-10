@@ -43,6 +43,9 @@ class CLibraryFunctionsPass : ProcedurePass {
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
       "pthread_mutex_trylock",
+      "pthread_rwlock_rdlock",
+      "pthread_rwlock_wrlock",
+      "pthread_rwlock_unlock",
       "pthread_cond_wait",
       "pthread_cond_signal",
       "pthread_cond_broadcast",
@@ -128,17 +131,32 @@ class CLibraryFunctionsPass : ProcedurePass {
                   listOf(MutexTryLockLabel(handle, ret, metadata))
                 }
 
+                "pthread_rwlock_rdlock" -> {
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(RWLockReadLockLabel(handle, metadata))
+                }
+
+                "pthread_rwlock_wrlock" -> {
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(RWLockWriteLockLabel(handle, metadata))
+                }
+
+                "pthread_rwlock_unlock" -> {
+                  val handle = invokeLabel.getMutexHandle(builder)
+                  listOf(RWLockUnlockLabel(handle, metadata))
+                }
+
                 "pthread_cond_wait" -> {
-                  val condition = invokeLabel.getParam(1)
                   val handle = invokeLabel.getMutexHandle(builder, 2)
+                  // Due to spurious wakeup, it is basically equivalent to unlock+lock
                   listOf(
-                    StartCondWaitLabel(handle, condition, metadata),
-                    CondWaitLabel(handle, condition, metadata),
+                    MutexUnlockLabel(handle, metadata),
+                    MutexLockLabel(handle, metadata),
                   )
                 }
 
-                "pthread_cond_broadcast", // No need to handle due to spurious wakeup
-                "pthread_cond_signal", // No need to handle due to spurious wakeup
+                "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
+                "pthread_cond_signal", // No need for special handling due to spurious wakeup
                 "pthread_mutex_init",
                 "pthread_cond_init" -> listOf(NopLabel)
 
@@ -161,7 +179,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                 else -> error("Unsupported library function ${invokeLabel.name}")
               }
             XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
-              .splitIf { label -> label is StartCondWaitLabel }
+              .splitIf { label -> label is MutexUnlockLabel || label is MutexLockLabel }
               .forEach(builder::addEdge)
           } else {
             builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
