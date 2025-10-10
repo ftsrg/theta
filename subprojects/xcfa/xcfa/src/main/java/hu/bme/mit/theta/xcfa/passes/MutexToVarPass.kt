@@ -19,27 +19,31 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
- * Replaces mutexes (except the atomic block mutexes) with boolean variables. mutex_lock(mutex_var)
- * -> assume(!mutex_var); mutex_var := true; (atomically) mutex_unlock(mutex_var) -> mutex_var :=
- * false;
+ * Replaces mutexes (except the atomic block mutexes) with counting variables.
+ *
+ * mutex_lock(mutex_var) -> assume(mutex_var = 0); mutex_var := mutex_var + 1; (atomically)
+ *
+ * mutex_unlock(mutex_var) -> mutex_var := mutex_var - 1;
  */
 class MutexToVarPass : ProcedurePass {
 
-  private val mutexVars = mutableMapOf<String, VarDecl<BoolType>>()
+  companion object {
+    private val mutexVars = mutableMapOf<String, VarDecl<IntType>>()
+
+    private val String.mutexFlag
+      get() = mutexVars.getOrPut(this) { Decls.Var("_mutex_flag_${ifEmpty { "atomic" }}", Int()) }
+  }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    builder.parent.getVars().forEach { (v) ->
-      if (v.type == BoolType.getInstance()) {
-        mutexVars[v.name] = v as VarDecl<BoolType>
-      }
-    }
-
     builder.getEdges().toSet().forEach { edge ->
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(edge.label.replaceMutex()))
@@ -53,7 +57,7 @@ class MutexToVarPass : ProcedurePass {
         if (
           initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }
         ) {
-          val assign = StmtLabel(AssignStmt.of(v, False()))
+          val assign = StmtLabel(AssignStmt.of(v, Int(0)))
           val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
           proc.removeEdge(initEdge)
           proc.addEdge(initEdge.withLabel(label))
@@ -73,13 +77,15 @@ class MutexToVarPass : ProcedurePass {
           actions.add(this)
         } else {
           blockingMutexesWithoutAtomic.forEach {
-            actions.add(StmtLabel(AssumeStmt.of(Not(it.name.mutexFlag.ref))))
+            actions.add(StmtLabel(AssumeStmt.of(Eq(it.name.mutexFlag.ref, Int(0)))))
           }
           acquiredMutexes.forEach {
-            actions.add(StmtLabel(AssignStmt.of(it.name.mutexFlag, True())))
+            val m = it.name.mutexFlag
+            actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Add(m.ref, Int(1)))))
           }
           releasedMutexes.forEach {
-            actions.add(StmtLabel(AssignStmt.of(it.name.mutexFlag, False())))
+            val m = it.name.mutexFlag
+            actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Sub(m.ref, Int(1)))))
           }
         }
 
@@ -90,10 +96,4 @@ class MutexToVarPass : ProcedurePass {
       else -> this
     }
   }
-
-  private val String.mutexFlag
-    get() = flag("_mutex_flag")
-
-  private fun String.flag(prefix: String) =
-    mutexVars.getOrPut(this) { Decls.Var("${prefix}_${ifEmpty { "atomic" }}", Bool()) }
 }
