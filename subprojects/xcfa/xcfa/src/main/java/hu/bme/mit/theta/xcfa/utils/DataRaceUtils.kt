@@ -32,6 +32,10 @@ import hu.bme.mit.theta.xcfa.passes.loopEdges
  *   where the variable/memory location is written at least once
  */
 fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
+  if (xcfa.procedureBuilders.isEmpty()) {
+    // This may occur in portfolio, then this was already checked
+    return true
+  }
   logger?.writeln(MAINSTEP, "Data race pre-check")
   logger?.writeln(MAINSTEP, "| Collecting candidates for data race...")
   val builder = xcfa.procedureBuilders.first().parent

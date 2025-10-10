@@ -33,9 +33,7 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.INFO
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
-import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
+import hu.bme.mit.theta.common.logging.Logger.Level.*
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -44,9 +42,6 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
-import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
@@ -171,13 +166,6 @@ fun frontend(
   uniqueLogger: Logger,
 ): Triple<XCFA, MCM, ParseContext> {
   if (config.inputConfig.xcfaWCtx != null) {
-    val xcfa = config.inputConfig.xcfaWCtx!!.first
-    ConeOfInfluence =
-      if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
-        XcfaCoiMultiThread(xcfa)
-      } else {
-        XcfaCoiSingleThread(xcfa)
-      }
     return config.inputConfig.xcfaWCtx!!
   }
 
@@ -202,9 +190,6 @@ fun frontend(
     } else {
       emptySet()
     }
-
-  ConeOfInfluence =
-    if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
 
   if (
     parseContext.multiThreading &&
