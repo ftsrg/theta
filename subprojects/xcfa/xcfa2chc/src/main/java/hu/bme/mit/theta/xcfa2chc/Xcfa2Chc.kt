@@ -37,12 +37,12 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 enum class RankingFunction(val constraint: (Expr<IntType>, Expr<IntType>) -> Expr<BoolType>) {
   ADD({ old, new -> Eq(new, Add(old, Int(1))) }) // +1

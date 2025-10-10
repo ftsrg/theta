@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
-import hu.bme.mit.theta.xcfa.collectHavocs
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder
+import hu.bme.mit.theta.xcfa.utils.collectHavocs
 
 data class XcfaStatistics(val globalVars: Int, val procedures: Collection<XcfaProcedureStatistics>)
 

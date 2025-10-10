@@ -45,7 +45,7 @@ fun getChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,

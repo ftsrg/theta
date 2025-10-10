@@ -51,7 +51,7 @@ fun boundedPortfolio25(
         ),
       frontendConfig =
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),

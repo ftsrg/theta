@@ -43,12 +43,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.getGlobalVarsWithNeededMutexes
-import hu.bme.mit.theta.xcfa.isWritten
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 import java.util.function.Predicate
 
@@ -56,13 +54,17 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
   private val coreInitFunc: InitFunc<XcfaState<PtrState<S>>, XcfaPrec<P>>,
   private var coreTransFunc: TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>,
+  coneOfInfluence: XcfaCoi? = null,
 ) : Analysis<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>> {
 
   init {
-    ConeOfInfluence.coreTransFunc =
-      transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
-    coreTransFunc =
-      ConeOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    if (coneOfInfluence != null) {
+      coneOfInfluence.coreTransFunc =
+        transFunc
+          as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
+      coreTransFunc =
+        coneOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    }
   }
 
   override fun getPartialOrd(): PartialOrd<XcfaState<PtrState<S>>> = corePartialOrd
@@ -221,33 +223,7 @@ fun getXcfaErrorPredicate(
         s.processes.any { it.value.locs.peek().error }
       }
 
-    ErrorDetection.DATA_RACE -> {
-      Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
-        val xcfa = s.xcfa!!
-        for (process1 in s.processes) for (process2 in s.processes) if (
-          process1.key != process2.key
-        )
-          for (edge1 in process1.value.locs.peek().outgoingEdges) for (edge2 in
-            process2.value.locs.peek().outgoingEdges) {
-            val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
-            val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
-            val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-            val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globalVars1) {
-              for (v2 in globalVars2) {
-                if (
-                  v1.globalVar == v2.globalVar &&
-                    !v1.globalVar.atomic &&
-                    (v1.access.isWritten || v2.access.isWritten) &&
-                    (v1.mutexes intersect v2.mutexes).isEmpty()
-                )
-                  return@Predicate true
-              }
-            }
-          }
-        false
-      }
-    }
+    ErrorDetection.DATA_RACE -> getDataRacePredicate()
 
     ErrorDetection.NO_ERROR,
     ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
@@ -363,11 +339,13 @@ class ExplXcfaAnalysis(
   maxEnum: Int,
   partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
     coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, isHavoc),
+    coneOfInfluence = coi,
   )
 
 /// PRED
@@ -425,9 +403,11 @@ class PredXcfaAnalysis(
   predAbstractor: PredAbstractor,
   partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
     coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc),
+    coneOfInfluence = coi,
   )

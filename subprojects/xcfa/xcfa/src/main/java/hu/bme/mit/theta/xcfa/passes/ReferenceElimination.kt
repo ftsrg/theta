@@ -31,10 +31,10 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.references
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.references
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
@@ -95,7 +95,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
+            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach { proc ->
