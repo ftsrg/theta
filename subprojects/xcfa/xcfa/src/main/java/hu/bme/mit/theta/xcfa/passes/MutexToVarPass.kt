@@ -76,7 +76,7 @@ class MutexToVarPass : ProcedurePass {
         if (this is AtomicFenceLabel) {
           actions.add(this)
         } else {
-          blockingMutexesWithoutAtomic.forEach {
+          blockingMutexes.forEach {
             actions.add(StmtLabel(AssumeStmt.of(Eq(it.name.mutexFlag.ref, Int(0)))))
           }
           acquiredMutexes.forEach {

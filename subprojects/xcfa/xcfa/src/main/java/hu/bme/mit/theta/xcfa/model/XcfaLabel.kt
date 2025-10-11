@@ -169,31 +169,13 @@ constructor(
   }
 }
 
-// data class FenceLabel(val labels: Set<String>, override val metadata: MetaData = EmptyMetaData) :
-//  XcfaLabel(metadata = metadata) {
-//
-//  override fun toString(): String {
-//    return "F[${labels.joinToString(";")}]"
-//  }
-//
-//  companion object {
-//
-//    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-//      val (labelList) = Regex("^F\\[(.*)]$").matchEntire(s)!!.destructured
-//      return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
-//    }
-//  }
-// }
-
 sealed class FenceLabel(
   open val handle: VarDecl<*>,
   override val metadata: MetaData = EmptyMetaData,
 ) : XcfaLabel(metadata) {
   open val acquiredMutexes: Set<VarDecl<*>> = setOf()
   open val releasedMutexes: Set<VarDecl<*>> = setOf()
-  open val blockingMutexes: Set<VarDecl<*>> = setOf()
-  val blockingMutexesWithoutAtomic: Set<VarDecl<*>>
-    get() = blockingMutexes.filter { it != AtomicFenceLabel.ATOMIC_MUTEX }.toSet()
+  open val blockingMutexes: Set<VarDecl<*>> = setOf() // atomic implicitly blocks everything
 
   protected abstract val label: String
 
@@ -257,7 +239,7 @@ data class MutexLockLabel(
 ) : FenceLabel(handle, metadata) {
 
   override val acquiredMutexes = setOf(handle)
-  override val blockingMutexes = setOf(handle, AtomicFenceLabel.ATOMIC_MUTEX)
+  override val blockingMutexes = setOf(handle)
   override val label = LABEL
 
   override fun toString(): String = super.toString()
@@ -330,7 +312,7 @@ data class RWLockReadLockLabel(
 ) : FenceLabel(handle, metadata) {
 
   override val acquiredMutexes = setOf(handle.readHandle)
-  override val blockingMutexes = setOf(handle.writeHandle, AtomicFenceLabel.ATOMIC_MUTEX)
+  override val blockingMutexes = setOf(handle.writeHandle)
   override val label = LABEL
 
   override fun toString(): String = super.toString()
@@ -358,8 +340,7 @@ data class RWLockWriteLockLabel(
 ) : FenceLabel(handle, metadata) {
 
   override val acquiredMutexes = setOf(handle.writeHandle)
-  override val blockingMutexes =
-    setOf(handle.writeHandle, handle.readHandle, AtomicFenceLabel.ATOMIC_MUTEX)
+  override val blockingMutexes = setOf(handle.writeHandle, handle.readHandle)
   override val label = LABEL
 
   override fun toString(): String = super.toString()

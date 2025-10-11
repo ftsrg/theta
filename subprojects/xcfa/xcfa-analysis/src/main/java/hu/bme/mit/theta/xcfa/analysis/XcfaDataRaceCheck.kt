@@ -66,7 +66,7 @@ fun getDataRacePredicate() =
                   v1.globalVar == v2.globalVar &&
                     !v1.globalVar.atomic &&
                     (v1.access.isWritten || v2.access.isWritten) &&
-                    (v1.mutexes intersect v2.mutexes).isEmpty()
+                    canExecuteConcurrently(v1, v2)
                 )
                   return@Predicate true
               }
@@ -78,11 +78,11 @@ fun getDataRacePredicate() =
               for (m2 in mems2) {
                 if (
                   (m1.access.isWritten || m2.access.isWritten) &&
-                    (m1.mutexes intersect m2.mutexes).isEmpty() &&
+                    canExecuteConcurrently(m1, m2) &&
                     mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
                 )
-                  return@Predicate true // TODO: refiner needs to check that the memory locations
-                // are really the same
+                  return@Predicate true
+                // TODO: refiner needs to check that the memory locations are really the same
               }
             }
           }
@@ -92,26 +92,34 @@ fun getDataRacePredicate() =
     false
   }
 
-/**
- * Represents a global variable access: stores the variable declaration, the access type
- * (read/write) and the set of mutexes that are needed to perform the variable access.
- */
-private class GlobalVarAccessWithMutexes(
-  val globalVar: XcfaGlobalVar,
+private sealed class GlobalAccessWithMutexes(
   val access: AccessType,
-  val mutexes: Set<String>,
+  val acquiredMutexes: Set<String>,
+  val blockingMutexes: Set<String>,
 )
 
 /**
+ * Represents a global variable access: stores the variable declaration, the access type
+ * (read/write) and the set of acquired/blocking mutexes for performing the variable access.
+ */
+private class GlobalVarAccessWithMutexes(
+  val globalVar: XcfaGlobalVar,
+  access: AccessType,
+  acquiredMutexes: Set<String>,
+  blockingMutexes: Set<String>,
+) : GlobalAccessWithMutexes(access, acquiredMutexes, blockingMutexes)
+
+/**
  * Represents a memory access: stores the array expression, the offset expression, the access type
- * (read/write) and the set of mutexes that are needed to perform the memory access.
+ * (read/write) and the set of acquired/blocking mutexes for performing the variable access.
  */
 private class MemoryAccessWithMutexes(
   val array: Expr<*>,
   val offset: Expr<*>,
-  val access: AccessType,
-  val mutexes: Set<String>,
-)
+  access: AccessType,
+  acquiredMutexes: Set<String>,
+  blockingMutexes: Set<String>,
+) : GlobalAccessWithMutexes(access, acquiredMutexes, blockingMutexes)
 
 /**
  * Returns the global variable accesses of the edge.
@@ -125,15 +133,19 @@ private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
   currentMutexes: Set<String>,
 ): List<GlobalVarAccessWithMutexes> {
   val globalVars = xcfa.globalVars
-  val neededMutexes = currentMutexes.toMutableSet()
+  val acquiredMutexes = currentMutexes.toMutableSet()
+  val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      neededMutexes.addAll(label.acquiredMutexes.map { it.name })
+      acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
+      blockingMutexes.addAll(label.blockingMutexes.map { it.name })
     } else {
       label.collectGlobalVars(globalVars).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
-          accesses.add(GlobalVarAccessWithMutexes(v, access, neededMutexes.toSet()))
+          accesses.add(
+            GlobalVarAccessWithMutexes(v, access, acquiredMutexes.toSet(), blockingMutexes.toSet())
+          )
         }
       }
     }
@@ -150,12 +162,14 @@ private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
 private fun XcfaEdge.getMemoryAccessesWithMutexes(
   currentMutexes: Set<String>
 ): List<MemoryAccessWithMutexes> {
-  val neededMutexes = currentMutexes.toMutableSet()
+  val acquiredMutexes = currentMutexes.toMutableSet()
+  val blockingMutexes = mutableSetOf<String>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
   val changedVars = mutableSetOf<VarDecl<*>>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
-      neededMutexes.addAll(label.acquiredMutexes.map { it.name })
+      acquiredMutexes.addAll(label.acquiredMutexes.map { it.name })
+      blockingMutexes.addAll(label.blockingMutexes.map { it.name })
     } else {
       label.dereferencesWithAccessType.forEach { (deref, access) ->
         val vars = ExprUtils.getVars(deref.array) + ExprUtils.getVars(deref.offset)
@@ -170,7 +184,13 @@ private fun XcfaEdge.getMemoryAccessesWithMutexes(
           }
         ) {
           accesses.add(
-            MemoryAccessWithMutexes(deref.array, deref.offset, access, neededMutexes.toSet())
+            MemoryAccessWithMutexes(
+              deref.array,
+              deref.offset,
+              access,
+              acquiredMutexes.toSet(),
+              blockingMutexes.toSet(),
+            )
           )
         }
       }
@@ -209,3 +229,10 @@ private fun mayBeSameMemoryLocation(
     dependencySolver.check().isSat
   }
 }
+
+private fun canExecuteConcurrently(
+  access1: GlobalAccessWithMutexes,
+  access2: GlobalAccessWithMutexes,
+): Boolean =
+  (access1.acquiredMutexes intersect access2.blockingMutexes).isEmpty() &&
+    (access2.acquiredMutexes intersect access1.blockingMutexes).isEmpty()
