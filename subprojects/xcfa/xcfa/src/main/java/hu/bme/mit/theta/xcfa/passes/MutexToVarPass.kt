@@ -23,8 +23,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
+import hu.bme.mit.theta.xcfa.model.RWLockWriteLockLabel.Companion.writeHandle
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
@@ -46,7 +49,7 @@ class MutexToVarPass : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     builder.getEdges().toSet().forEach { edge ->
       builder.removeEdge(edge)
-      builder.addEdge(edge.withLabel(edge.label.replaceMutex()))
+      edge.label.replaceMutex().forEach { newLabel -> builder.addEdge(edge.withLabel(newLabel)) }
     }
 
     mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False())) }
@@ -67,33 +70,67 @@ class MutexToVarPass : ProcedurePass {
     return builder
   }
 
-  private fun XcfaLabel.replaceMutex(): XcfaLabel {
+  private fun XcfaLabel.replaceMutex(): Set<XcfaLabel> {
     return when (this) {
-      is SequenceLabel -> SequenceLabel(labels.map { it.replaceMutex() }, metadata)
+      is SequenceLabel ->
+        descartes(labels.map { it.replaceMutex() }).map { SequenceLabel(it, metadata) }.toSet()
+
       is FenceLabel -> {
         val actions = mutableListOf<XcfaLabel>()
 
-        if (this is AtomicFenceLabel) {
-          actions.add(this)
-        } else {
-          blockingMutexes.forEach {
-            actions.add(StmtLabel(AssumeStmt.of(Eq(it.name.mutexFlag.ref, Int(0)))))
+        when (this) {
+          is AtomicFenceLabel -> actions.add(this)
+
+          is RWLockUnlockLabel -> {
+            // this is a hack because RWLockUnlock unlocks both read and write locks
+            // if write lock is held, it unlocks that, otherwise a read lock
+            val writeFlag = handle.writeHandle.name.mutexFlag
+            val readFlag = handle.readHandle.name.mutexFlag
+            return setOf(
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Eq(writeFlag.ref, Int(0)))),
+                  StmtLabel(AssignStmt.of(readFlag, IntExprs.Sub(readFlag.ref, Int(1)))),
+                )
+              ),
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Neq(writeFlag.ref, Int(0)))),
+                  StmtLabel(AssignStmt.of(writeFlag, IntExprs.Sub(writeFlag.ref, Int(1)))),
+                )
+              ),
+            )
           }
-          acquiredMutexes.forEach {
-            val m = it.name.mutexFlag
-            actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Add(m.ref, Int(1)))))
-          }
-          releasedMutexes.forEach {
-            val m = it.name.mutexFlag
-            actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Sub(m.ref, Int(1)))))
+
+          else -> {
+            blockingMutexes.forEach {
+              actions.add(StmtLabel(AssumeStmt.of(Eq(it.name.mutexFlag.ref, Int(0)))))
+            }
+            acquiredMutexes.forEach {
+              val m = it.name.mutexFlag
+              actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Add(m.ref, Int(1)))))
+            }
+            releasedMutexes.forEach {
+              val m = it.name.mutexFlag
+              actions.add(StmtLabel(AssignStmt.of(m, IntExprs.Sub(m.ref, Int(1)))))
+            }
           }
         }
 
         // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
-        SequenceLabel(actions, metadata)
+        setOf(SequenceLabel(actions, metadata))
       }
 
-      else -> this
+      else -> setOf(this)
     }
   }
+
+  private inline fun <reified T> descartes(sets: List<Set<T>>): Set<List<T>> =
+    if (sets.isEmpty()) setOf()
+    else
+      sets
+        .fold(setOf(listOf<T>())) { acc, set ->
+          acc.flatMap { prefix -> set.map { element -> prefix + element } }.toSet()
+        }
+        .toSet()
 }
