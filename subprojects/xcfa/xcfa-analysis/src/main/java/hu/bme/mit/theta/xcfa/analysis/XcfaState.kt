@@ -174,7 +174,7 @@ constructor(
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
-    val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
+    val procedure = xcfa?.procedures?.find { it.name == startLabel.name }!!
     val paramList = procedure.params.toMap()
     val tempLookup = startLabel.tempLookup
     val returnStmt =
@@ -252,14 +252,13 @@ constructor(
     tempLookup: Map<VarDecl<*>, VarDecl<*>>,
   ): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[pid] =
-      checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
+    newProcesses[pid] = processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup)!!
     return copy(processes = newProcesses)
   }
 
   private fun returnFromFunction(pid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    newProcesses[pid] = checkNotNull(processes[pid]?.exitFunction())
+    newProcesses[pid] = processes[pid]?.exitFunction()!!
     return copy(processes = newProcesses)
   }
 

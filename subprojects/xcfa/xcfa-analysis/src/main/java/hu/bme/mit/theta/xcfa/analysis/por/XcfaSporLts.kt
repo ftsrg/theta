@@ -56,7 +56,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) :
 
   companion object {
 
-    private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
+    private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
     var random: Random = Random.Default
   }
 
