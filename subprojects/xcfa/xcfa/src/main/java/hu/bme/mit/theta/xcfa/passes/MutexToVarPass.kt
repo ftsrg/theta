@@ -49,7 +49,13 @@ class MutexToVarPass : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     builder.getEdges().toSet().forEach { edge ->
       builder.removeEdge(edge)
-      edge.label.replaceMutex().forEach { newLabel -> builder.addEdge(edge.withLabel(newLabel)) }
+      edge.label.replaceMutex().let { newLabels ->
+        if (newLabels.isNotEmpty()) {
+          newLabels.forEach { newLabel -> builder.addEdge(edge.withLabel(newLabel)) }
+        } else {
+          builder.addEdge(edge.withLabel(SequenceLabel(listOf())))
+        }
+      }
     }
 
     mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False())) }
