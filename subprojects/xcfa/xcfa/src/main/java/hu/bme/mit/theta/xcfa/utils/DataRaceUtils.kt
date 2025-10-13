@@ -19,7 +19,6 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.loopEdges
@@ -52,7 +51,7 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
     return true
   }
 
-  val pointerPartitions = pointerPartitions(xcfa, initEdges)
+  val pointerPartitions = xcfa.getPointerPartitions(initEdges)
   val n = pointerPartitions.size // +1 for "other" partition
   val threadsAccessingMemory = IntArray(n + 1) { 0 }
   val nonAtomicMemoryAccess = BooleanArray(n + 1) { false }
@@ -202,61 +201,4 @@ fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuild
     }
   }
   return threadCount
-}
-
-private fun pointerPartitions(
-  xcfa: XCFA,
-  initEdges: Set<XcfaEdge>,
-): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
-  val pointsTo = xcfa.getPointsToGraph(initEdges).toList()
-
-  val n = pointsTo.size
-  val uf = UnionFind(n)
-
-  val elementToSets = mutableMapOf<LitExpr<*>, MutableList<Int>>()
-  pointsTo.forEachIndexed { index, (_, lits) ->
-    lits.forEach { lit -> elementToSets.getOrPut(lit) { mutableListOf() }.add(index) }
-  }
-
-  elementToSets.forEach { (_, indices) ->
-    for (i in 1 until indices.size) {
-      uf.union(indices[0], indices[i])
-    }
-  }
-
-  val groups = mutableMapOf<Int, Pair<MutableSet<VarDecl<*>>, MutableSet<LitExpr<*>>>>()
-  for (i in 0 until n) {
-    val root = uf.find(i)
-    val item = pointsTo[i]
-    val group = groups.getOrPut(root) { mutableSetOf<VarDecl<*>>() to mutableSetOf() }
-    group.first.add(item.first)
-    group.second.addAll(item.second)
-  }
-
-  return groups.values.toList()
-}
-
-private class UnionFind(n: Int) {
-  private val parent = IntArray(n) { it }
-  private val rank = IntArray(n) { 0 }
-
-  fun find(x: Int): Int {
-    if (parent[x] != x) parent[x] = find(parent[x])
-    return parent[x]
-  }
-
-  fun union(x: Int, y: Int) {
-    val rootX = find(x)
-    val rootY = find(y)
-    if (rootX == rootY) return
-
-    if (rank[rootX] < rank[rootY]) {
-      parent[rootX] = rootY
-    } else if (rank[rootX] > rank[rootY]) {
-      parent[rootY] = rootX
-    } else {
-      parent[rootY] = rootX
-      rank[rootX]++
-    }
-  }
 }

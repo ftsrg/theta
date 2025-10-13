@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -223,11 +224,18 @@ private fun mayBeSameMemoryLocation(
   expr =
     (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
       ?: ExprUtils.simplify(expr)
-  return WithPushPop(dependencySolver).use {
-    dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
-    dependencySolver.add(PathUtils.unfold(expr, 0))
-    dependencySolver.check().isSat
-  }
+  val possibleSameLocation =
+    WithPushPop(dependencySolver).use {
+      dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
+      dependencySolver.add(PathUtils.unfold(expr, 0))
+      dependencySolver.check().isSat
+    }
+  if (!possibleSameLocation) return false
+
+  val pointerPartitions = state.xcfa!!.getPointerPartitions()
+  val a1 = (array1 as? RefExpr<*>)?.decl ?: return true // cannot decide
+  val a2 = (array2 as? RefExpr<*>)?.decl ?: return true // cannot decide
+  return pointerPartitions.any { a1 in it.first && a2 in it.first }
 }
 
 private fun canExecuteConcurrently(
