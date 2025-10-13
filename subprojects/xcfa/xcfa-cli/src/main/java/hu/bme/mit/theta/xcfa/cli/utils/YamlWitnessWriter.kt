@@ -176,7 +176,8 @@ class YamlWitnessWriter {
 
     if (!waypoints.any { wp -> wp.type == WaypointType.TARGET }) {
       val last = waypoints.last()
-      val newLast = last.copy(type = WaypointType.TARGET) // change last follow to be target
+      val newLast =
+        last.copy(type = WaypointType.TARGET, constraint = null) // change last follow to be target
       waypoints[waypoints.size - 1] = newLast
     }
     val witnessContent = waypoints.map { ContentItem(it) }
