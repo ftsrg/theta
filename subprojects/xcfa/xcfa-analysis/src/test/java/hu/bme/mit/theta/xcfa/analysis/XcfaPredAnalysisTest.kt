@@ -38,6 +38,8 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
@@ -49,6 +51,8 @@ class XcfaPredAnalysisTest {
   companion object {
 
     private val seed = 1001
+
+    private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
     @JvmStatic
     fun data(): Collection<Array<Any>> {
@@ -65,7 +69,8 @@ class XcfaPredAnalysisTest {
   fun testNoporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing NOPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -121,7 +126,8 @@ class XcfaPredAnalysisTest {
   fun testSporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing SPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -178,7 +184,8 @@ class XcfaPredAnalysisTest {
     XcfaDporLts.random = Random(seed)
     println("Testing DPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -232,7 +239,8 @@ class XcfaPredAnalysisTest {
   fun testAasporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
     println("Testing AASPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =
@@ -293,7 +301,8 @@ class XcfaPredAnalysisTest {
     XcfaDporLts.random = Random(seed)
     println("Testing AADPOR on $filepath...")
     val stream = javaClass.getResourceAsStream(filepath)
-    val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val analysis =

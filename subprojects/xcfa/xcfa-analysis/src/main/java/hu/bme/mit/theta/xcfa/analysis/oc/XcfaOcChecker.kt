@@ -50,16 +50,11 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.utils.dereferences
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.references
+import hu.bme.mit.theta.xcfa.utils.*
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -77,14 +72,13 @@ class XcfaOcChecker(
   private val acceptUnreliableSafe: Boolean = false,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
-  private val xcfa =
-    xcfa.optimizeFurther(
-      when (property) {
-        ErrorDetection.ERROR_LOCATION -> ProcedurePassManager()
-        ErrorDetection.DATA_RACE -> ProcedurePassManager(listOf(DataRaceToReachabilityPass()))
-        else -> error("Unsupported property by OC checker: $property")
-      } + OcExtraPasses()
-    )
+  init {
+    check(property == ErrorDetection.ERROR_LOCATION) {
+      "Unsupported property by OC checker: $property. Consider using a specification transformation."
+    }
+  }
+
+  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
   private val autoConflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private var indexing = VarIndexingFactory.indexing(0)

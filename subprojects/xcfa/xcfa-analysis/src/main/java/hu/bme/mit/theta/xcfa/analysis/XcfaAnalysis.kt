@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
@@ -202,33 +203,20 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   }
 }
 
-enum class ErrorDetection {
-  ERROR_LOCATION,
-  DATA_RACE,
-  OVERFLOW,
-  MEMSAFETY,
-  MEMCLEANUP,
-  NO_ERROR,
-  TERMINATION,
-}
-
 fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
   when (errorDetection) {
-    ErrorDetection.MEMSAFETY,
-    ErrorDetection.MEMCLEANUP,
     ErrorDetection.ERROR_LOCATION ->
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         s.processes.any { it.value.locs.peek().error }
       }
-
     ErrorDetection.DATA_RACE -> getDataRacePredicate()
-
-    ErrorDetection.NO_ERROR,
-    ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-
-    ErrorDetection.TERMINATION -> error("Termination only supports BOUNDED backend right now.")
+    ErrorDetection.NO_ERROR -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+    else ->
+      error(
+        "The error detection mode $errorDetection cannot be converted to a state predicate. Consider using a specification transformation."
+      )
   }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =

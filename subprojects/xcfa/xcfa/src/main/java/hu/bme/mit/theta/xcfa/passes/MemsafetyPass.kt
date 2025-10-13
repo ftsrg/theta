@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
@@ -44,14 +46,15 @@ import hu.bme.mit.theta.xcfa.utils.dereferences
  *   This property is violated if Valgrind reports 'definitely lost'.)
  *     - inserted check: we keep track of variables.
  */
-class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
+class MemsafetyPass(private val property: XcfaProperty, private val parseContext: ParseContext) :
+  ProcedurePass {
 
   companion object {
-    var NEED_CHECK = false
+    var enabled = false
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!NEED_CHECK) return builder
+    if (!enabled) return builder
 
     breakUpErrors(builder)
 
@@ -61,6 +64,7 @@ class MemsafetyPass(val parseContext: ParseContext) : ProcedurePass {
 
     annotateLost(builder)
 
+    property.transformSpecification(ErrorDetection.ERROR_LOCATION)
     return builder
   }
 
