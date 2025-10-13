@@ -706,7 +706,7 @@ private fun postTraceGenerationLogging(
         val ltlProperty = ErrorDetection.ERROR_LOCATION.ltl(Unit)!!
         val architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
         val witnessWriter = YamlWitnessWriter()
-        witnessWriter.violationWitnessFromConcreteTrace(
+        witnessWriter.tracegenWitnessFromConcreteTrace(
           concrTrace,
           witnessWriter.getMetadata(inputfile, ltlProperty, architecture),
           inputfile,

@@ -139,6 +139,54 @@ class YamlWitnessWriter {
     )
   }
 
+  fun tracegenWitnessFromConcreteTrace(
+    concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
+    metadata: Metadata,
+    inputFile: File,
+    property: ErrorDetection,
+    parseContext: ParseContext,
+    witnessfile: File,
+  ) {
+    check(property == ErrorDetection.ERROR_LOCATION)
+    val witnessTrace =
+      traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+
+    val waypoints =
+      (0..(witnessTrace.length()))
+        .flatMap {
+          listOfNotNull(
+            witnessTrace.states[it]?.toSegment(
+              witnessTrace.actions.getOrNull(it - 1),
+              witnessTrace.actions.getOrNull(it),
+              inputFile,
+              parseContext = parseContext,
+              violation =
+                witnessTrace.states[it].violation ||
+                  witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
+            ),
+            witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+          )
+        }
+        .let {
+          if (it.any { wp -> wp.type == WaypointType.TARGET })
+            it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1)
+          else it
+        }
+        .toMutableList()
+
+    if (!waypoints.any { wp -> wp.type == WaypointType.TARGET }) {
+      val last = waypoints.last()
+      val newLast = last.copy(type = WaypointType.TARGET) // change last follow to be target
+      waypoints[waypoints.size - 1] = newLast
+    }
+    val witnessContent = waypoints.map { ContentItem(it) }
+
+    val witness =
+      YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = witnessContent)
+
+    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+  }
+
   fun violationWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
