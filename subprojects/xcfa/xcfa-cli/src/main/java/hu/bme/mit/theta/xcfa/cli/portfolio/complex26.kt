@@ -903,10 +903,48 @@ fun complexPortfolio26(
       }
 
       MULTITHREAD -> {
+        val cegarXcfa =
+          xcfa.optimizeFurther(
+            ProcedurePassManager(
+              listOf(
+                LbePass(parseContext, LBE_LOCAL),
+                NormalizePass(),
+                DeterministicPass(),
+                UnusedVarPass(logger),
+                EmptyEdgeRemovalPass(),
+                UnusedLocRemovalPass(),
+              )
+            )
+          )
+
+        val property = baseConfig.inputConfig.property.copy()
+        val ocXcfa =
+          if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE)
+            xcfa.optimizeFurther(
+              ProcedurePassManager(listOf(DataRaceToReachabilityPass(property, true)))
+            )
+          else xcfa
+
+        val multithreadCegarBaseConfig =
+          baseConfig.copy(
+            inputConfig =
+              baseConfig.inputConfig.copy(xcfaWCtx = Triple(cegarXcfa, mcm, parseContext)),
+            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
+          )
+
         val ocBaseConfig =
           XcfaConfig(
-            inputConfig = baseConfig.inputConfig,
-            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = NO_LBE),
+            inputConfig =
+              baseConfig.inputConfig.copy(
+                xcfaWCtx = Triple(ocXcfa, mcm, parseContext),
+                property = property,
+              ),
+            frontendConfig =
+              baseConfig.frontendConfig.copy(
+                lbeLevel = NO_LBE,
+                enableDataRaceToReachability =
+                  baseConfig.inputConfig.property.verifiedProperty == DATA_RACE,
+              ),
             backendConfig =
               BackendConfig(
                 backend = OC,
@@ -917,6 +955,7 @@ fun complexPortfolio26(
             outputConfig = baseConfig.outputConfig,
             debugConfig = baseConfig.debugConfig,
           )
+
         val config_OC =
           ConfigNode(
             "MULTITHREAD_OC_BASIC_GENERIC3-$inProcess",
@@ -933,27 +972,6 @@ fun complexPortfolio26(
                 )
             ),
             checker,
-          )
-
-        val optimizedXcfa =
-          xcfa.optimizeFurther(
-            ProcedurePassManager(
-              listOf(
-                LbePass(parseContext, LBE_LOCAL),
-                NormalizePass(),
-                DeterministicPass(),
-                UnusedVarPass(logger),
-                EmptyEdgeRemovalPass(),
-                UnusedLocRemovalPass(),
-              )
-            )
-          )
-
-        val multithreadCegarBaseConfig =
-          baseConfig.copy(
-            inputConfig =
-              baseConfig.inputConfig.copy(xcfaWCtx = Triple(optimizedXcfa, mcm, parseContext)),
-            frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
           )
 
         val config_MULTITHREAD_EXPL_SEQ_ITP =

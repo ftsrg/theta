@@ -31,6 +31,9 @@ class XcfaProperty(val inputProperty: ErrorDetection) {
   fun transformSpecification(newProperty: ErrorDetection) {
     verifiedProperty = newProperty
   }
+
+  fun copy(): XcfaProperty =
+    XcfaProperty(inputProperty).also { it.verifiedProperty = this.verifiedProperty }
 }
 
 enum class ErrorDetection {

@@ -45,7 +45,10 @@ import hu.bme.mit.theta.xcfa.utils.isWritten
  * variable write access, and checks for multiple access and each global variable access (writes and
  * reads).
  */
-class DataRaceToReachabilityPass(private val property: XcfaProperty) : ProcedurePass {
+class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Boolean? = null) :
+  ProcedurePass {
+
+  private val enabled: Boolean = enabled ?: Companion.enabled
 
   companion object {
     var enabled = false
