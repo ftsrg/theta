@@ -108,7 +108,8 @@ fun getCegarChecker(
       as ExprTraceChecker<Refutation>
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
     cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter
+      cegarConfig.refinerConfig.exprSplitter.exprSplitter,
+      xcfa,
     ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
