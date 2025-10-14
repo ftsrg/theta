@@ -131,7 +131,7 @@ class MetaSolver implements  Solver {
         try {
             solver.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new MetaSolverException("Closing solver failed", e);
         }
         solver = solvers.get(++currentSolverIndex);
 
