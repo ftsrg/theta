@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.expr.refinement.autoexpl;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -99,15 +101,20 @@ public class NewOperandsAutoExpl implements AutoExpl {
                                                                     }));
                         });
 
+        explVars.addAll(
+                ExprUtils.getVars(itp).stream()
+                        .filter(
+                                decl ->
+                                        newOperands
+                                                                .computeIfAbsent(
+                                                                        decl,
+                                                                        d -> Containers.createSet())
+                                                                .size()
+                                                        > newOperandsLimit
+                                                || decl.getType() == Bool())
+                        .collect(Collectors.toSet()));
         //        explVars.addAll(
-        //                ExprUtils.getVars(itp).stream()
-        //                        .filter(
-        //                                decl ->
-        //                                        newOperands.computeIfAbsent(decl, d ->
-        // Containers.createSet()).size()
-        //                                                                > newOperandsLimit
-        //                                                || decl.getType() == Bool())
-        //                        .collect(Collectors.toSet()));
+        //                                ExprUtils.getVars(itp));
 
         cache.add(itp);
     }
