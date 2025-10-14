@@ -15,14 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.expr.refinement.autoexpl;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ public class NewOperandsAutoExpl implements AutoExpl {
     private final Map<Decl<?>, Set<Expr<?>>> modelOperands;
     private final Map<Decl<?>, Set<Expr<?>>> newOperands;
     private final int newOperandsLimit;
+    private final Set<Expr<BoolType>> cache;
 
     public NewOperandsAutoExpl(
             final Set<VarDecl<?>> explPreferredVars,
@@ -45,6 +47,7 @@ public class NewOperandsAutoExpl implements AutoExpl {
         this.modelOperands = modelOperands;
 
         this.newOperands = Containers.createMap();
+        this.cache = Containers.createSet();
     }
 
     @Override
@@ -55,12 +58,15 @@ public class NewOperandsAutoExpl implements AutoExpl {
     @Override
     public void update(Expr<BoolType> itp) {
 
+        if (itp instanceof FalseExpr || itp instanceof TrueExpr || cache.contains(itp)) return;
+
         final Set<Expr<BoolType>> canonicalAtoms =
                 ExprUtils.getAtoms(itp).stream()
                         .map(ExprUtils::canonize)
                         .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
                         .collect(Collectors.toSet());
         canonicalAtoms.stream()
+                .map(atom -> atom instanceof NotExpr notExpr ? notExpr.getOp() : atom)
                 .filter(atom -> atom.getOps().size() > 1)
                 .forEach(
                         atom -> {
@@ -75,13 +81,13 @@ public class NewOperandsAutoExpl implements AutoExpl {
                                                                     op -> {
                                                                         final Decl<?> decl =
                                                                                 ref.getDecl();
-                                                                        if (modelOperands
-                                                                                        .containsKey(
-                                                                                                decl)
-                                                                                && !modelOperands
-                                                                                        .get(decl)
-                                                                                        .contains(
-                                                                                                op)) {
+                                                                        if (!modelOperands
+                                                                                .computeIfAbsent(
+                                                                                        decl,
+                                                                                        k ->
+                                                                                                Containers
+                                                                                                        .createSet())
+                                                                                .contains(op)) {
                                                                             newOperands
                                                                                     .computeIfAbsent(
                                                                                             decl,
@@ -93,14 +99,16 @@ public class NewOperandsAutoExpl implements AutoExpl {
                                                                     }));
                         });
 
-        explVars.addAll(
-                ExprUtils.getVars(itp).stream()
-                        .filter(
-                                decl ->
-                                        newOperands.containsKey(decl)
-                                                        && newOperands.get(decl).size()
-                                                                > newOperandsLimit
-                                                || decl.getType() == Bool())
-                        .collect(Collectors.toSet()));
+        //        explVars.addAll(
+        //                ExprUtils.getVars(itp).stream()
+        //                        .filter(
+        //                                decl ->
+        //                                        newOperands.computeIfAbsent(decl, d ->
+        // Containers.createSet()).size()
+        //                                                                > newOperandsLimit
+        //                                                || decl.getType() == Bool())
+        //                        .collect(Collectors.toSet()));
+
+        cache.add(itp);
     }
 }
