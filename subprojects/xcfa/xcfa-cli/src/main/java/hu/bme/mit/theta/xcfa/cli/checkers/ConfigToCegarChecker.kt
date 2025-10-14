@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
@@ -198,6 +199,18 @@ fun getCegarChecker(
                       }
                       is PredState -> {
                         PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
+                      }
+                      is Prod2State<*, *> -> {
+                        if (s.state1.isBottom) ExplState.bottom()
+                        else
+                          Prod2State.of(
+                            ExplState.of((s.state1 as ExplState).`val`.changeVars(declMap)),
+                            PredState.of(
+                              (s.state2 as PredState).preds.map {
+                                ExprUtils.changeDecls(it, declMap)
+                              }
+                            ),
+                          )
                       }
                       else -> {
                         error("Unknown state: ${s}")
