@@ -16,11 +16,22 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
+import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
@@ -50,6 +61,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   ProcedurePass {
 
   companion object {
+
     var enabled = false
   }
 
@@ -153,29 +165,25 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (
-            deref((it.label as SequenceLabel).labels[0])
-          ) { // if dereference is in a short-circuiting path, add prior assumptions as well.
+          if (deref((it.label as SequenceLabel).labels[0])) {
+            // if dereference is in a short-circuiting path, add prior assumptions as well.
             val derefAssume =
               Assume(
                 Or(
-                  Or(
-                    it.label.labels[0].dereferences.map { Leq(it.array, pointerType.nullValue) }
-                  ), // uninit ptr
-                  Or(
-                    it.label.labels[0].dereferences.map {
-                      val sizeVar = builder.parent.getPtrSizeVar()
-                      Leq(
-                        ArrayReadExpr.create<Type, Type>(sizeVar.ref, it.array),
-                        it.offset,
-                      ) // freed/not big enough ptr
-                    }
-                  ),
-                  Or(
-                    it.label.labels[0].dereferences.map {
-                      Lt(it.offset, fitsall.nullValue) // negative index
-                    }
-                  ),
+                  it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
+                    val sizeVar = builder.parent.getPtrSizeVar()
+                    And(
+                      And(shortCircuitConds),
+                      Or(
+                        Leq(deref.array, pointerType.nullValue), // uninit ptr
+                        Leq(
+                          ArrayReadExpr.create<Type, Type>(sizeVar.ref, deref.array),
+                          deref.offset,
+                        ), // freed/not big enough ptr
+                        Lt(deref.offset, fitsall.nullValue), // negative index
+                      ),
+                    )
+                  }
                 )
               )
             builder.addEdge(it)
@@ -222,7 +230,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
 
     for (incomingEdge in LinkedHashSet(finalLoc.incomingEdges)) {
       builder.removeEdge(incomingEdge)
-      val newLoc = XcfaLocation("pre-final", metadata = EmptyMetaData)
+      val newLoc = XcfaLocation("pre_final", metadata = EmptyMetaData)
       builder.addLoc(newLoc)
       builder.addEdge(incomingEdge.withTarget(newLoc))
       builder.addEdge(
@@ -251,4 +259,58 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private fun deref(it: XcfaLabel): Boolean {
     return it.dereferences.isNotEmpty()
   }
+
+  private val XcfaLabel.derefsWithShortCircuitCond:
+    List<Pair<Dereference<*, *, *>, List<Expr<BoolType>>>>
+    get() =
+      when (this) {
+        is StmtLabel -> stmt.derefsWithShortCircuitCond
+        is InvokeLabel -> params.flatMap { it.derefsWithShortCircuitCond }
+        is NondetLabel -> labels.flatMap { it.derefsWithShortCircuitCond }
+        is SequenceLabel -> labels.flatMap { it.derefsWithShortCircuitCond }
+        is StartLabel -> params.flatMap { it.derefsWithShortCircuitCond }
+        else -> emptyList()
+      }
+
+  val Stmt.derefsWithShortCircuitCond: List<Pair<Dereference<*, *, *>, List<Expr<BoolType>>>>
+    get() =
+      when (this) {
+        is AssumeStmt -> cond.derefsWithShortCircuitCond
+        is AssignStmt<*> -> expr.derefsWithShortCircuitCond
+        is MemoryAssignStmt<*, *, *> -> expr.derefsWithShortCircuitCond + listOf(deref to listOf())
+        else -> emptyList()
+      }
+
+  private val Expr<*>.derefsWithShortCircuitCond:
+    List<Pair<Dereference<*, *, *>, List<Expr<BoolType>>>>
+    get() =
+      when (this) {
+        is AndExpr -> {
+          val conditions = mutableListOf<Expr<BoolType>>()
+          ops.flatMap { op ->
+            val derefs =
+              op.derefsWithShortCircuitCond.map { (deref, conds) -> deref to (conditions + conds) }
+            conditions.add(op)
+            derefs
+          }
+        }
+
+        is OrExpr -> {
+          val conditions = mutableListOf<Expr<BoolType>>()
+          ops.flatMap { op ->
+            val derefs =
+              op.derefsWithShortCircuitCond.map { (deref, conds) -> deref to (conditions + conds) }
+            conditions.add(Not(op))
+            derefs
+          }
+        }
+
+        is Dereference<*, *, *> -> {
+          ops.flatMap { it.derefsWithShortCircuitCond } + listOf(this to listOf())
+        }
+
+        else -> {
+          ops.flatMap { it.derefsWithShortCircuitCond }
+        }
+      }
 }

@@ -47,12 +47,7 @@ fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
 fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   when (this) {
-    is SequenceLabel -> {
-      val ret = mutableListOf<XcfaLabel>()
-      labels.forEach { ret.addAll(it.getFlatLabels()) }
-      ret
-    }
-
+    is SequenceLabel -> labels.flatMap { it.getFlatLabels() }
     else -> listOf(this)
   }
 
