@@ -35,11 +35,13 @@ import java.util.*
 internal class XcfaOcTraceExtractor(
   private val xcfa: XCFA,
   private val ocChecker: OcChecker<E>,
-  private val threads: Set<Thread>,
-  private val events: Map<VarDecl<*>, Map<Int, List<E>>>,
-  private val violations: List<Violation>,
-  private val pos: List<R>,
+  eventGraph: XcfaToEventGraph.EventGraph,
 ) {
+
+  private val threads: Set<Thread> = eventGraph.threads
+  private val events: Map<VarDecl<*>, Map<Int, List<E>>> = eventGraph.events
+  private val violations: List<Violation> = eventGraph.violations
+  private val pos: List<R> = eventGraph.pos
 
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
