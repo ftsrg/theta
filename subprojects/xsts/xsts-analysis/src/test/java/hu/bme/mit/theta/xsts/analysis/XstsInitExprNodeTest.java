@@ -68,7 +68,9 @@ public class XstsInitExprNodeTest {
         var recursiveCursor = rootNode.cursor();
         recursiveCursor.moveNext();
 
-        final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
+        final var rootHandle =
+                varOrder.getDefaultSetSignature().getTopVariableHandle().getHandleFor(rootNode);
+        final Set<Valuation> valuations = MddValuationCollector.collect(rootHandle);
 
         assertEquals(valuations.size(), 1);
     }

@@ -21,20 +21,28 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaToMonolithicExprKt;
-import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
+import hu.bme.mit.theta.cfa.analysis.*;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.*;
@@ -52,12 +60,16 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /** A command line interface for running a CEGAR configuration on a CFA. */
@@ -66,6 +78,116 @@ public class CfaCli {
     private static final String JAR_NAME = "theta-cfa-cli.jar";
     private final String[] args;
     private final TableWriter writer;
+
+    enum Algorithm {
+        CEGAR {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                throw new UnsupportedOperationException(
+                        "CEGAR can't provide a checker factory as it is not to be used in ME"
+                                + " pipeline");
+            }
+        },
+        BMC {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildBMC(
+                                monolithicExpr, solverFactory.createSolver(), logger));
+            }
+        },
+        KINDUCTION {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildKIND(
+                                monolithicExpr,
+                                solverFactory.createSolver(),
+                                solverFactory.createSolver(),
+                                logger));
+            }
+        },
+        IMC {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        BoundedCheckerBuilderKt.buildIMC(
+                                monolithicExpr,
+                                solverFactory.createSolver(),
+                                solverFactory.createItpSolver(),
+                                logger));
+            }
+        },
+        MDD {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new MddChecker(
+                                monolithicExpr,
+                                new SolverPool(solverFactory),
+                                logger,
+                                cfaCli.iterationStrategy));
+            }
+        },
+        IC3 {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new Ic3Checker(
+                                monolithicExpr,
+                                solverFactory,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                logger));
+            }
+        };
+
+        abstract Function<
+                        MonolithicExpr,
+                        SafetyChecker<
+                                ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
+                getCheckerFactory(CfaCli cfaCli, SolverFactory solverFactory, Logger logger);
+    }
 
     @Parameter(
             names = {"--algorithm"},
@@ -138,6 +260,26 @@ public class CfaCli {
             names = "--prunestrategy",
             description = "Strategy for pruning the ARG after refinement")
     PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+
+    @Parameter(
+            names = {"--reversed"},
+            description = "Reversed state space exploration")
+    Boolean reversed = false;
+
+    @Parameter(
+            names = {"--cegar"},
+            description = "Wrap the analysis in a CEGAR loop")
+    Boolean cegar = false;
+
+    @Parameter(
+            names = {"--liveness-to-safety"},
+            description = "Use liveness to safety transformation")
+    Boolean livenessToSafety = false;
+
+    @Parameter(
+            names = {"--iteration-strategy"},
+            description = "MDD iteration strategy")
+    MddChecker.IterationStrategy iterationStrategy = MddChecker.IterationStrategy.GSAT;
 
     @Parameter(names = "--loglevel", description = "Detailedness of logging")
     Logger.Level logLevel = Level.SUBSTEP;
@@ -260,15 +402,33 @@ public class CfaCli {
                         buildConfiguration(
                                 cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
-            } else if (algorithm == Algorithm.BMC
-                    || algorithm == Algorithm.KINDUCTION
-                    || algorithm == Algorithm.IMC) {
-                final BoundedChecker<?, ?> checker =
-                        buildBoundedChecker(cfa, abstractionSolverFactory);
-                status = checker.check(null);
             } else {
-                throw new UnsupportedOperationException(
-                        "Algorithm " + algorithm + " not supported");
+                List<MonolithicExprPass<InvariantProof>> passes = new ArrayList<>();
+                if (livenessToSafety) {
+                    passes.add(new L2SMEPass<>());
+                }
+                if (cegar) {
+                    passes.add(
+                            new PredicateAbstractionMEPass<>(
+                                    ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
+                                            abstractionSolverFactory)));
+                }
+                if (reversed) {
+                    passes.add(new ReverseMEPass<>());
+                }
+                final SafetyChecker<InvariantProof, Trace<CfaState<ExplState>, CfaAction>, UnitPrec>
+                        formalismChecker =
+                                new CfaPipelineChecker<>(
+                                        cfa,
+                                        monolithicExpr ->
+                                                algorithm
+                                                        .getCheckerFactory(
+                                                                this,
+                                                                abstractionSolverFactory,
+                                                                logger)
+                                                        .apply(monolithicExpr),
+                                        passes);
+                status = formalismChecker.check(null);
             }
             sw.stop();
 
@@ -329,47 +489,6 @@ public class CfaCli {
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
-    }
-
-    private BoundedChecker<?, ?> buildBoundedChecker(
-            final CFA cfa, final SolverFactory abstractionSolverFactory) {
-        final MonolithicExpr monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
-        final BoundedChecker<?, ?> checker;
-        switch (algorithm) {
-            case BMC ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildBMC(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                                    logger);
-            case KINDUCTION ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildKIND(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    abstractionSolverFactory.createSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                                    logger);
-            case IMC ->
-                    checker =
-                            BoundedCheckerBuilderKt.buildIMC(
-                                    monolithicExpr,
-                                    abstractionSolverFactory.createSolver(),
-                                    abstractionSolverFactory.createItpSolver(),
-                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                                    (val1, val2) ->
-                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                                    logger);
-            default ->
-                    throw new UnsupportedOperationException(
-                            "Algorithm " + algorithm + " not supported");
-        }
-        return checker;
     }
 
     private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(

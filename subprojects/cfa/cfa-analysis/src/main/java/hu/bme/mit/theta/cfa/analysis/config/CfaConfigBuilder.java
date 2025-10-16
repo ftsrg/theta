@@ -146,13 +146,6 @@ public class CfaConfigBuilder {
         throw new UnsupportedOperationException(domain + " domain is not supported.");
     }
 
-    public enum Algorithm {
-        CEGAR,
-        BMC,
-        KINDUCTION,
-        IMC
-    }
-
     public enum Domain {
         EXPL(null),
         PRED_BOOL(PredAbstractors::booleanAbstractor),

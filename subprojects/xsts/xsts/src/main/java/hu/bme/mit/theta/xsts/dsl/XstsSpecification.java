@@ -35,7 +35,6 @@ import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class XstsSpecification implements DynamicScope {
 
@@ -90,86 +89,94 @@ public class XstsSpecification implements DynamicScope {
         }
 
         final Set<VarDecl<?>> stateVars =
-                context.variableDeclarations.stream()
-                        .map(
-                                varDeclContext -> {
-                                    final String varName = varDeclContext.name.getText();
-                                    if (tempVarPattern.matcher(varName).matches()) {
-                                        throw new ParseException(
-                                                varDeclContext,
-                                                "Variable name '" + varName + "' is reserved!");
-                                    }
-                                    if (customTypeShortNames.contains(varName))
-                                        throw new ParseException(
-                                                varDeclContext,
-                                                String.format(
-                                                        "Variable name '%s' matches at least one"
-                                                                + " declared enum literal",
-                                                        varName));
+                Containers.createSet(
+                        context.variableDeclarations.stream()
+                                .map(
+                                        varDeclContext -> {
+                                            final String varName = varDeclContext.name.getText();
+                                            if (tempVarPattern.matcher(varName).matches()) {
+                                                throw new ParseException(
+                                                        varDeclContext,
+                                                        "Variable name '"
+                                                                + varName
+                                                                + "' is reserved!");
+                                            }
+                                            if (customTypeShortNames.contains(varName))
+                                                throw new ParseException(
+                                                        varDeclContext,
+                                                        String.format(
+                                                                "Variable name '%s' matches at"
+                                                                        + " least one declared enum"
+                                                                        + " literal",
+                                                                varName));
 
-                                    final XstsVariableSymbol symbol =
-                                            new XstsVariableSymbol(typeTable, varDeclContext);
-                                    declare(symbol);
+                                            final XstsVariableSymbol symbol =
+                                                    new XstsVariableSymbol(
+                                                            typeTable, varDeclContext);
+                                            declare(symbol);
 
-                                    final VarDecl<?> var = symbol.instantiate(env);
-                                    if (varDeclContext.CTRL() != null) {
-                                        ctrlVars.add(var);
-                                    }
-                                    if (varDeclContext.initValue != null) {
-                                        var scope = new BasicDynamicScope(this);
-                                        if (var.getType() instanceof EnumType enumType) {
-                                            env.push();
-                                            enumType.getValues()
-                                                    .forEach(
-                                                            literal -> {
-                                                                Symbol fullNameSymbol =
-                                                                        resolve(
-                                                                                        EnumType
-                                                                                                .makeLongName(
-                                                                                                        enumType,
-                                                                                                        literal))
-                                                                                .orElseThrow();
-                                                                if (fullNameSymbol
-                                                                        instanceof
-                                                                        XstsCustomLiteralSymbol
-                                                                                        fNameCustLitSymbol) {
-                                                                    var customSymbol =
-                                                                            XstsCustomLiteralSymbol
-                                                                                    .copyWithName(
-                                                                                            fNameCustLitSymbol,
-                                                                                            literal);
-                                                                    scope.declare(customSymbol);
-                                                                    env.define(
-                                                                            customSymbol,
-                                                                            customSymbol
-                                                                                    .instantiate());
-                                                                } else {
-                                                                    throw new IllegalArgumentException(
-                                                                            String.format(
-                                                                                    "%s is not a"
-                                                                                        + " literal"
-                                                                                        + " of type"
-                                                                                        + " %s",
-                                                                                    literal,
-                                                                                    enumType
-                                                                                            .getName()));
-                                                                }
-                                                            });
-                                        }
-                                        initExprs.add(
-                                                Eq(
-                                                        var.getRef(),
-                                                        new XstsExpression(
-                                                                        scope,
-                                                                        typeTable,
-                                                                        varDeclContext.initValue)
-                                                                .instantiate(env)));
-                                        if (var.getType() instanceof EnumType) env.pop();
-                                    }
-                                    env.define(symbol, var);
-                                    return var;
-                                })
-                        .collect(Collectors.toUnmodifiableSet());
+                                            final VarDecl<?> var = symbol.instantiate(env);
+                                            if (varDeclContext.CTRL() != null) {
+                                                ctrlVars.add(var);
+                                            }
+                                            if (varDeclContext.initValue != null) {
+                                                var scope = new BasicDynamicScope(this);
+                                                if (var.getType() instanceof EnumType enumType) {
+                                                    env.push();
+                                                    enumType.getValues()
+                                                            .forEach(
+                                                                    literal -> {
+                                                                        Symbol fullNameSymbol =
+                                                                                resolve(
+                                                                                                EnumType
+                                                                                                        .makeLongName(
+                                                                                                                enumType,
+                                                                                                                literal))
+                                                                                        .orElseThrow();
+                                                                        if (fullNameSymbol
+                                                                                instanceof
+                                                                                XstsCustomLiteralSymbol
+                                                                                                fNameCustLitSymbol) {
+                                                                            var customSymbol =
+                                                                                    XstsCustomLiteralSymbol
+                                                                                            .copyWithName(
+                                                                                                    fNameCustLitSymbol,
+                                                                                                    literal);
+                                                                            scope.declare(
+                                                                                    customSymbol);
+                                                                            env.define(
+                                                                                    customSymbol,
+                                                                                    customSymbol
+                                                                                            .instantiate());
+                                                                        } else {
+                                                                            throw new IllegalArgumentException(
+                                                                                    String.format(
+                                                                                            "%s is"
+                                                                                                + " not a"
+                                                                                                + " literal"
+                                                                                                + " of type"
+                                                                                                + " %s",
+                                                                                            literal,
+                                                                                            enumType
+                                                                                                    .getName()));
+                                                                        }
+                                                                    });
+                                                }
+                                                initExprs.add(
+                                                        Eq(
+                                                                var.getRef(),
+                                                                new XstsExpression(
+                                                                                scope,
+                                                                                typeTable,
+                                                                                varDeclContext
+                                                                                        .initValue)
+                                                                        .instantiate(env)));
+                                                if (var.getType() instanceof EnumType) env.pop();
+                                            }
+                                            env.define(symbol, var);
+                                            return var;
+                                        })
+                                .toList());
 
         final NonDetStmt tranSet =
                 new XstsTransitionSet(this, typeTable, context.tran.transitionSet())

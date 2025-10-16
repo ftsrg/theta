@@ -18,26 +18,23 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class XstsMddCheckerTest {
 
@@ -218,22 +215,14 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final SafetyResult<MddProof, Trace<ExprState, ExprAction>> status;
+        final SafetyResult<InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>>
+                status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            var monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
             var checker =
-                    MddChecker.create(
-                            monolithicExpr,
-                            List.copyOf(monolithicExpr.getVars()),
-                            solverPool,
-                            logger,
-                            MddChecker.IterationStrategy.GSAT,
-                            valuation -> monolithicExpr.getValToState().invoke(valuation),
-                            (Valuation v1, Valuation v2) ->
-                                    monolithicExpr.getBiValToAction().invoke(v1, v2),
-                            true,
-                            100);
-            status = checker.check(null);
+                    new XstsPipelineChecker<>(
+                            xsts,
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
+            status = checker.check();
             logger.mainStep(status.toString());
         }
 
