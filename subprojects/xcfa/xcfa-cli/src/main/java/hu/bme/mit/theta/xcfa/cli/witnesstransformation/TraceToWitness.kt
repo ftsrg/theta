@@ -90,6 +90,7 @@ fun traceToWitness(
             }
             .toMap(),
         globalState = state.sGlobal,
+        // localState = //state
       )
     if (node != WitnessNode(id = "N${newStates.size}")) {
       newStates.add(node)

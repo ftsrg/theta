@@ -114,6 +114,7 @@ class FrontendXcfaBuilder(
         offsetEnd = source.offsetEnd.takeIf { it != -1 },
         sourceText = source.sourceText,
         astNodes = listOf(source),
+        functionName = source.functionName.takeIf { it != "" },
       )
     }
 

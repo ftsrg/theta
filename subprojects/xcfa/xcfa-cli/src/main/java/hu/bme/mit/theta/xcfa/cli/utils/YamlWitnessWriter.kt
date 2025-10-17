@@ -34,12 +34,16 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
+import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
+import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.witnesses.*
@@ -409,37 +413,72 @@ private fun WitnessNode.toSegment(
     }
     return WaypointContent(type = WaypointType.TARGET, location = loc, action = action)
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
-    val constraint =
-      globalState
-        ?.toMap()
-        ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
-        ?.mapNotNull { (varDecl, value) ->
-          val splitName = varDecl.name.split("::")
-          val rootName =
-            if (splitName[0].matches(Regex("T[0-9]*")))
-              splitName.subList(2, splitName.size).joinToString("::")
-            else varDecl.name
-          if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
-            "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-              printLit(value)
-            })"
-          } else {
-            null
-          }
-        }
-        ?.joinToString("&&")
-        ?.let { if (it.isEmpty()) "1" else it }
-    prevVal = globalState?.toMap() ?: prevVal
-
-    return if (constraint != null && constraint.isNotEmpty())
-      WaypointContent(
-        type = WaypointType.ASSUMPTION,
+    if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CCall }) {
+      // function return
+      // I don't know if we ever have a constant to assume what \result is, so we skip these
+      // waypoints
+      // for now
+      return null
+      /*
+      val constraint = "\\result == ??"
+      return WaypointContent(
+          type = WaypointType.FUNCTION_RETURN,
+          location = loc,
+          action = action,
+          constraint = TODO()
+        )
+      */
+    } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
+      val constraintValue =
+        if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
+          "false"
+        else "true"
+      return WaypointContent(
+        type = WaypointType.BRANCHING,
         location = loc,
         action = action,
-        constraint = Constraint(constraint, format = Format.C_EXPRESSION),
+        constraint = Constraint(constraintValue, format = Format.C_EXPRESSION),
       )
-    else {
-      null
+    } else {
+      val constraint =
+        globalState
+          ?.toMap()
+          ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
+          ?.mapNotNull { (varDecl, value) ->
+            val splitName = varDecl.name.split("::")
+            val rootName =
+              if (splitName[0].matches(Regex("T[0-9]*")))
+                splitName.subList(2, splitName.size).joinToString("::")
+              else varDecl.name
+            if (
+              splitName[splitName.size - 2] !=
+                (outgoingEdge.edge!!.metadata as CMetaData).functionName
+            ) {
+              null
+            } else {
+              if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
+                "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
+                  printLit(value)
+                })"
+              } else {
+                null
+              }
+            }
+          }
+          ?.joinToString("&&")
+          ?.let { if (it.isEmpty()) "1" else it }
+      prevVal = globalState?.toMap() ?: prevVal
+
+      return if (constraint != null && constraint.isNotEmpty()) {
+        WaypointContent(
+          type = WaypointType.ASSUMPTION,
+          location = loc,
+          action = action,
+          constraint = Constraint(constraint, format = Format.C_EXPRESSION),
+        )
+      } else {
+        null
+      }
     }
   } else {
     return null
