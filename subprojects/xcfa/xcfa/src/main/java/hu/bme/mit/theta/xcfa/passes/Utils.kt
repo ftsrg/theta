@@ -79,7 +79,12 @@ fun XcfaLabel.changeVars(
   if (varLut.isNotEmpty())
     when (this) {
       is InvokeLabel ->
-        InvokeLabel(name, params.map { it.changeVars(varLut, parseContext) }, metadata = metadata)
+        InvokeLabel(
+          name,
+          params.map { it.changeVars(varLut, parseContext) },
+          metadata = metadata,
+          isLibraryFunction = isLibraryFunction,
+        )
 
       is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
       is NondetLabel ->

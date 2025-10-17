@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
+import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
@@ -31,70 +32,75 @@ import hu.bme.mit.theta.xcfa.passes.loopEdges
  *   where the variable/memory location is written at least once
  */
 fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
-  if (xcfa.procedureBuilders.isEmpty()) {
-    // This may occur in portfolio, then this was already checked
-    return true
-  }
-  logger?.writeln(MAINSTEP, "Data race pre-check")
-  logger?.writeln(MAINSTEP, "| Collecting candidates for data race...")
-  val builder = xcfa.procedureBuilders.first().parent
-  val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
-  val nonConcurrent = initEdges + (finalEdges ?: setOf())
-  val atomicLocations = getAtomicBlockInnerLocations(builder)
-  val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
-  val potentialRacingVars =
-    getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
+  try {
+    if (xcfa.procedureBuilders.isEmpty()) {
+      // This may occur in portfolio, then this was already checked
+      return true
+    }
+    logger?.writeln(MAINSTEP, "Data race pre-check")
+    logger?.writeln(MAINSTEP, "| Collecting candidates for data race...")
+    val builder = xcfa.procedureBuilders.first().parent
+    val (initEdges, finalEdges) = getNonConcurrentEdges(builder)
+    val nonConcurrent = initEdges + (finalEdges ?: setOf())
+    val atomicLocations = getAtomicBlockInnerLocations(builder)
+    val multipleThreadsPerProcedure = getMultipleThreadsPerProcedure(builder)
+    val potentialRacingVars =
+      getPotentialRacingVars(builder, nonConcurrent, atomicLocations, multipleThreadsPerProcedure)
 
-  if (potentialRacingVars.isNotEmpty()) {
-    logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
-    logger?.writeln(INFO, "| Potential racing variables: $potentialRacingVars")
-    return true
-  }
+    if (potentialRacingVars.isNotEmpty()) {
+      logger?.writeln(MAINSTEP, "| Potential racing global variable found.")
+      logger?.writeln(INFO, "| Potential racing variables: $potentialRacingVars")
+      return true
+    }
 
-  val pointerPartitions = xcfa.getPointerPartitions(initEdges)
-  val n = pointerPartitions.size // +1 for "other" partition
-  val threadsAccessingMemory = IntArray(n + 1) { 0 }
-  val nonAtomicMemoryAccess = BooleanArray(n + 1) { false }
-  val writeMemoryAccess = BooleanArray(n + 1) { false }
-  builder.getProcedures().forEach { proc ->
-    val edges = proc.getEdges() - nonConcurrent
-    val accessedPartitions = mutableSetOf<Int>()
-    val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
-    for (e in edges) {
-      var atomic = e.source in atomicLocations
-      for (l in e.getFlatLabels()) {
-        if (l is AtomicBeginLabel) atomic = true
-        if (l is AtomicEndLabel) atomic = false
-        l.dereferencesWithAccessType.forEach { (deref, access) ->
-          val partition =
-            pointerPartitions
-              .indexOfFirst {
-                ((deref.array as? RefExpr<*>)?.decl in it.first) || deref.array in it.second
-              }
-              .let { if (it == -1) n else it } // if not found, put in "other" partition
-          accessedPartitions.add(partition)
-          if (!atomic) {
-            nonAtomicMemoryAccess[partition] = true
-          }
-          if (access.isWritten) {
-            writeMemoryAccess[partition] = true
-          }
+    val pointerPartitions = xcfa.getPointerPartitions(initEdges)
+    val n = pointerPartitions.size // +1 for "other" partition
+    val threadsAccessingMemory = IntArray(n + 1) { 0 }
+    val nonAtomicMemoryAccess = BooleanArray(n + 1) { false }
+    val writeMemoryAccess = BooleanArray(n + 1) { false }
+    builder.getProcedures().forEach { proc ->
+      val edges = proc.getEdges() - nonConcurrent
+      val accessedPartitions = mutableSetOf<Int>()
+      val varAccessCount = if (multipleThreadsPerProcedure[proc] == true) 2 else 1
+      for (e in edges) {
+        var atomic = e.source in atomicLocations
+        for (l in e.getFlatLabels()) {
+          if (l is AtomicBeginLabel) atomic = true
+          if (l is AtomicEndLabel) atomic = false
+          l.dereferencesWithAccessType.forEach { (deref, access) ->
+            val partition =
+              pointerPartitions
+                .indexOfFirst {
+                  ((deref.array as? RefExpr<*>)?.decl in it.first) || deref.array in it.second
+                }
+                .let { if (it == -1) n else it } // if not found, put in "other" partition
+            accessedPartitions.add(partition)
+            if (!atomic) {
+              nonAtomicMemoryAccess[partition] = true
+            }
+            if (access.isWritten) {
+              writeMemoryAccess[partition] = true
+            }
 
-          val threads = threadsAccessingMemory[partition] + varAccessCount
-          val nonAtomic = nonAtomicMemoryAccess[partition]
-          val write = writeMemoryAccess[partition]
-          if (threads > 1 && nonAtomic && write) {
-            logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
-            return true
+            val threads = threadsAccessingMemory[partition] + varAccessCount
+            val nonAtomic = nonAtomicMemoryAccess[partition]
+            val write = writeMemoryAccess[partition]
+            if (threads > 1 && nonAtomic && write) {
+              logger?.writeln(MAINSTEP, "| Potential racing memory location found.")
+              return true
+            }
           }
         }
       }
+      accessedPartitions.forEach { p -> threadsAccessingMemory[p] += varAccessCount }
     }
-    accessedPartitions.forEach { p -> threadsAccessingMemory[p] += varAccessCount }
-  }
 
-  logger?.writeln(MAINSTEP, "| No candidate for data race.")
-  return false
+    logger?.writeln(MAINSTEP, "| No candidate for data race.")
+    return false
+  } catch (e: Exception) {
+    logger?.writeln(VERBOSE, "| Data race pre-check failed with exception: ${e.message}")
+    return true
+  }
 }
 
 /**
@@ -191,7 +197,10 @@ fun getMultipleThreadsPerProcedure(builder: XcfaBuilder): Map<XcfaProcedureBuild
                 (edge in loopEdges)
             visitedNewRound.add(started)
           } else if (label is InvokeLabel) {
-            val invoked = builder.getProcedures().find { it.name == label.name }!!
+            val invoked =
+              builder.getProcedures().find { it.name == label.name }
+                ?: if (label.isLibraryFunction) return@forEach
+                else error("Unknown procedure: $label")
             threadCount[invoked] =
               threadCount[invoked] == true || threadCount[proc] == true || invoked in originalCounts
             visitedNewRound.add(invoked)

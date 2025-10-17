@@ -43,6 +43,7 @@ constructor(
   val params: List<Expr<*>>,
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+  var isLibraryFunction: Boolean = false, // true means that passes/analyses should handle it
 ) : XcfaLabel(metadata) {
 
   override fun toString(): String {

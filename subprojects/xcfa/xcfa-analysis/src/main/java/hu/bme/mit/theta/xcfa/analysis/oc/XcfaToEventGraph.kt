@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
@@ -25,10 +24,12 @@ import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -39,6 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.model.*
@@ -46,9 +48,11 @@ import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
 
-internal class XcfaToEventGraph(
-  private val xcfa: XCFA,
-) {
+internal class XcfaToEventGraph(private val xcfa: XCFA) {
+
+  init {
+    if (xcfa.initProcedures.size > 1) exit("multiple entry points.")
+  }
 
   data class EventGraph(
     val threads: Set<Thread>,
@@ -78,9 +82,7 @@ internal class XcfaToEventGraph(
     memoryDecl.getNewIndexed().also { XcfaEvent.memoryGarbage = it }
 
   fun create(): EventGraph {
-    xcfa.initProcedures.forEach {
-      ThreadProcessor(Thread(procedure = it.first), true).process()
-    }
+    ThreadProcessor(Thread(procedure = xcfa.initProcedures.first().first), true).process()
     addCrossThreadRelations()
     return EventGraph(
       threads,
@@ -329,7 +331,7 @@ internal class XcfaToEventGraph(
 
     private fun AssumeStmt.process(
       assumeConsts: MutableMap<Any, MutableList<ConstDecl<*>>>,
-      firstLabel: Boolean
+      firstLabel: Boolean,
     ) {
       val consts =
         this.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
@@ -337,15 +339,11 @@ internal class XcfaToEventGraph(
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&
-          consts.keys.first().let {
-            it is VarDecl<*> && it.threadVar(pid) !in lastWrites
-          }
+          consts.keys.first().let { it is VarDecl<*> && it.threadVar(pid) !in lastWrites }
       if (edge.source.outgoingEdges.size > 1 || !asAssign) {
         guard = guard + condWithConsts
         if (firstLabel) {
-          consts.forEach { (v, c) ->
-            assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
-          }
+          consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
       this.cond.toEvents(consts, true)
@@ -367,7 +365,9 @@ internal class XcfaToEventGraph(
       last.first().assignment = Eq(last.first().const.ref, this.expr.with(exprConsts))
     }
 
-    private fun StartLabel.process(threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>) {
+    private fun StartLabel.process(
+      threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
+    ) {
       if (this.name in thread.startHistory) {
         exit("recursive thread start")
       }
@@ -388,14 +388,15 @@ internal class XcfaToEventGraph(
         multipleUsePidVars.add(pidVar)
       }
       val newHistory = thread.startHistory + thread.procedure.name
-      val newThread =
-        Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
+      val newThread = Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
       last.first().assignment = Eq(last.first().const.ref, Int(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
       ThreadProcessor(newThread).process()
     }
 
-    private fun JoinLabel.process(threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>) {
+    private fun JoinLabel.process(
+      threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
+    ) {
       val incomingGuard = guard
       val lastEvents = mutableListOf<E>()
       val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
@@ -424,7 +425,48 @@ internal class XcfaToEventGraph(
     }
 
     private fun InvokeLabel.process() {
-      exit("function call: $$this")
+      when (name) {
+        "pthread_getspecific" -> {
+          val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
+          val key = (params[1] as Dereference<*, *, *>).array
+          val deref = Dereference.of(key, Int(pid), Int())
+          val assign = Assign(cast(ret, Int()), deref)
+          assign.process()
+        }
+
+        "pthread_setspecific" -> {
+          val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
+          val key = (params[1] as Dereference<*, *, *>).array
+          val deref = Dereference.of(key, Int(pid), Int())
+          val memAssign = MemoryAssignStmt.of(deref, cast(params[2], Int()))
+          memAssign.process()
+          val assign = Assign(cast(ret, Int()), Int(0))
+          assign.process()
+        }
+
+        "pthread_key_create" -> {
+          val isNull = Eq(params[2], Int(0))
+          if (ExprSimplifier.create().simplify(isNull, ImmutableValuation.empty()) != True()) {
+            exit("pthread_key_create with non-null destructor")
+          }
+          val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
+          val key = (params[1] as RefExpr<*>).decl as VarDecl<*>
+          repeat(maxPid) { i ->
+            val deref = Dereference.of(key.ref, Int(i), Int())
+            val default = MemoryAssignStmt.of(deref, Int(0))
+            default.process()
+          }
+          val assign = Assign(cast(ret, Int()), Int(0))
+          assign.process()
+        }
+
+        else -> {
+          if (xcfa.procedures.any { it.name == this.name }) {
+            exit("OC checker requires function inlining: $this")
+          }
+          exit("Unknown function: $this")
+        }
+      }
     }
   }
 
@@ -473,6 +515,27 @@ internal class XcfaToEventGraph(
         type,
       )
     } else this
+
+  private val maxPid by lazy {
+    var counter = 1
+    fun explore(proc: XcfaProcedure, startHistory: Set<String>) {
+      proc.edges.forEach { e ->
+        e.getFlatLabels().filterIsInstance<StartLabel>().forEach { s ->
+          if (s.name in startHistory) {
+            exit("recursive thread start")
+          }
+          counter++
+          val procedure =
+            xcfa.procedures.find { it.name == s.name } ?: exit("unknown procedure name: ${s.name}")
+          explore(procedure, startHistory + proc.name)
+        }
+      }
+    }
+
+    val initProc = xcfa.initProcedures.first().first
+    explore(initProc, setOf(initProc.name))
+    counter
+  }
 
   private fun exit(msg: String): Nothing {
     error("Feature not supported by OC checker: $msg.")

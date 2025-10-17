@@ -52,6 +52,9 @@ class CLibraryFunctionsPass : ProcedurePass {
       "pthread_mutex_init",
       "pthread_cond_init",
       "pthread_exit",
+      "pthread_key_create",
+      "pthread_getspecific",
+      "pthread_setspecific",
     )
 
   companion object {
@@ -171,6 +174,13 @@ class CLibraryFunctionsPass : ProcedurePass {
                   }
 
                   listOf(NopLabel)
+                }
+
+                "pthread_key_create",
+                "pthread_getspecific",
+                "pthread_setspecific" -> {
+                  invokeLabel.isLibraryFunction = true
+                  listOf(invokeLabel)
                 }
 
                 else -> error("Unsupported library function ${invokeLabel.name}")

@@ -68,17 +68,14 @@ class XcfaOcChecker(
 
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> =
     let {
-        if (xcfa.initProcedures.size > 1) {
-          error("Feature not supported by OC checker: multiple entry points.")
-        }
-
-        logger.mainStep("Adding constraints...")
+        logger.mainStep("Creating event graph...")
         val eg = XcfaToEventGraph(xcfa).create()
 
-        if (eg.violations.isEmpty()){
+        if (eg.violations.isEmpty()) {
           return@let SafetyResult.safe(EmptyProof.getInstance())
         }
 
+        logger.mainStep("Adding constraints...")
         addToSolver(eg, ocChecker.solver)
         val (preservedPos, preservedWss) = memoryModel.filter(eg.events, eg.pos, eg.wss)
 

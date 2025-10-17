@@ -213,6 +213,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             name,
             params.map { it.changeReferredVars(varLut, parseContext) },
             metadata = metadata,
+            isLibraryFunction = isLibraryFunction,
           )
 
         is NondetLabel ->
