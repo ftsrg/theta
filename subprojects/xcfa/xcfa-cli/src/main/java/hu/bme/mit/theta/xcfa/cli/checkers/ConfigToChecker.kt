@@ -76,6 +76,12 @@ fun getSafetyChecker(
         if (config.inputConfig.property == ErrorDetection.TERMINATION)
           getAsgCegarChecker(xcfa, mcm, config, logger)
         else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
+      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
+      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"

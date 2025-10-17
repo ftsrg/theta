@@ -96,6 +96,20 @@ fun runConfig(
     } else {
 
       var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+      var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+
+      config.inputConfig.witness?.also {
+        logger.writeln(INFO, "Applying witness $it")
+        if (!it.exists()) {
+          exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        val witness =
+          WitnessYamlConfig.decodeFromString(
+              ListSerializer(YamlWitness.serializer()),
+              it.readText(),
+            )[0]
+        xcfa = xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
+      }
 
       config.inputConfig.witness?.also {
         logger.writeln(INFO, "Applying witness $it")
@@ -540,6 +554,24 @@ private fun postVerificationLogging(
               safetyResult.asUnsafe().cex
             }
 
+          val trace =
+            if (safetyResult.asUnsafe().cex is HackyAsgTrace<*>) {
+              val actions = (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).trace.actions
+              val explStates = (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).trace.states
+              val states =
+                (safetyResult.asUnsafe().cex as HackyAsgTrace<*>).originalStates.mapIndexed {
+                  i,
+                  state ->
+                  state as XcfaState<PtrState<*>>
+                  state.withState(PtrState(explStates[i]))
+                }
+
+              Trace.of(states, actions)
+            } else if (safetyResult.asUnsafe().cex is ASGTrace<*, *>) {
+              (safetyResult.asUnsafe().cex as ASGTrace<*, *>).toTrace()
+            } else {
+              safetyResult.asUnsafe().cex
+            }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             XcfaTraceConcretizer.concretize(
               trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
