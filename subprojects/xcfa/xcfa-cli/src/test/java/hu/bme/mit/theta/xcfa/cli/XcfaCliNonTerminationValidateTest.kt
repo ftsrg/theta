@@ -25,8 +25,8 @@ import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import kotlin.io.path.readText
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -188,8 +188,19 @@ class XcfaCliNonTerminationValidateTest {
         temp.absolutePathString(),
         "--enable-output",
       )
+
     main(params)
-    assertFalse(temp.resolve("witness.yml").exists())
+
+    val witnessFile = temp.resolve("witness.yml")
+    if (witnessFile.exists()) {
+      val content = witnessFile.readText()
+      assertFalse(
+        content.contains("violation_sequence"),
+        "witness.yml should not contain 'violation_sequence'",
+      )
+    } else {
+      fail("witness.yml was not generated — expected it to exist for validation")
+    }
   }
 
   @ParameterizedTest

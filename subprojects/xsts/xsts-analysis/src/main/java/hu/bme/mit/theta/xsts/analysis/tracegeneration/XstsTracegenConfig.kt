@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.CegarTraceGenerationChecker
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSet
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 
 class XstsTracegenConfig<S : State, A : Action, P : Prec>
@@ -27,7 +27,7 @@ private constructor(
   private val checker: CegarTraceGenerationChecker<S, A, P>,
   private val prec: P,
 ) {
-  fun check(): TraceGenerationResult<AbstractTraceSummary<S, A>, S, A> {
+  fun check(): TraceGenerationResult<AbstractTraceSet<S, A>, S, A> {
     return checker.check(prec)
   }
 

@@ -254,7 +254,12 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     private void propagateFunctionName(CStatement stmt, String name) {
-        stmt.setFunctionName(name);
+        if (stmt.getFunctionName() == null) {
+            // only overwrite if null, because
+            // sometimes we set it to "NonC" on purpose
+            // and we do not want to overwrite that
+            stmt.setFunctionName(name);
+        }
         if (stmt instanceof CCompound) {
             ((CCompound) stmt)
                     .getcStatementList()
@@ -690,7 +695,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                     CComplexType.getType(varDecl.getRef(), parseContext)
                                             .limit(varDecl.getRef());
                             CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                            // recordMetadata(ctx, cAssume); no metadata, as assumption is not in C
+                            recordMetadata(ctx, cAssume);
+                            cAssume.setFunctionName("NotC");
+                            // as assumption is not in C
                             // file
                             compound.addCStatement(cAssume);
                         }
@@ -705,7 +712,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                                 CComplexType.getType(varDecl.getRef(), parseContext)
                                         .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
-                        // recordMetadata(ctx, cAssume); no metadata, as assumption is not in C file
+                        recordMetadata(ctx, cAssume);
+                        cAssume.setFunctionName("NotC");
+                        // assumption is not in C file
                         compound.addCStatement(cAssume);
                     }
                 }

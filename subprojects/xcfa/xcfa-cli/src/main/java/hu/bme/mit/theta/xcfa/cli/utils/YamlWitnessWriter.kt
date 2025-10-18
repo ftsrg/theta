@@ -56,49 +56,58 @@ class YamlWitnessWriter {
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: ErrorDetection,
-    ltlViolationProperty: String,
+    ltlViolationProperty: String?,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    val metadata = getMetadata(inputFile, ltlViolationProperty, architecture)
-
-    val trace =
-      safetyResult.asUnsafe().cex.let {
-        if (it is HackyAsgTrace<*>) {
-          val actions = (it as HackyAsgTrace<*>).trace.actions
-          val explStates = (it as HackyAsgTrace<*>).trace.states
-          val states =
-            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
-              state as XcfaState<PtrState<*>>
-              state.withState(PtrState(explStates[i]))
-            }
-
-          Trace.of(states, actions)
-        } else if (it is ASGTrace<*, *>) {
-          (it as ASGTrace<*, *>).toTrace()
-        } else {
-          it
-        }
+    var ltlSpecification =
+      if (safetyResult.isSafe) {
+        check(ltlViolationProperty == null)
+        property.name
+      } else {
+        check(ltlViolationProperty != null)
+        ltlViolationProperty
       }
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
-    if (safetyResult.isUnsafe && trace is Trace<*, *>) {
-      val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-        XcfaTraceConcretizer.concretize(
-          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-          cexSolverFactory,
+    if (safetyResult.isUnsafe) {
+      val trace =
+        safetyResult.asUnsafe().cex.let {
+          if (it is HackyAsgTrace<*>) {
+            val actions = (it as HackyAsgTrace<*>).trace.actions
+            val explStates = (it as HackyAsgTrace<*>).trace.states
+            val states =
+              (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+                state as XcfaState<PtrState<*>>
+                state.withState(PtrState(explStates[i]))
+              }
+
+            Trace.of(states, actions)
+          } else if (it is ASGTrace<*, *>) {
+            (it as ASGTrace<*, *>).toTrace()
+          } else {
+            it
+          }
+        }
+      if (trace is Trace<*, *>) {
+        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+          XcfaTraceConcretizer.concretize(
+            trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+            cexSolverFactory,
+            parseContext,
+          )
+
+        violationWitnessFromConcreteTrace(
+          concrTrace,
+          metadata,
+          inputFile,
+          property,
           parseContext,
+          witnessfile,
         )
-
-      violationWitnessFromConcreteTrace(
-        concrTrace,
-        metadata,
-        inputFile,
-        property,
-        parseContext,
-        witnessfile,
-      )
+      }
     } else if (safetyResult.isSafe) {
 
       val witness =
@@ -114,7 +123,7 @@ class YamlWitnessWriter {
 
   fun getMetadata(
     inputFile: File,
-    ltlViolationProperty:
+    ltlSpecification:
       String, // ErrorDetection enum is not enough, several violation specifications can fit for a
     // single ErrorDetection value
     architecture: ArchitectureConfig.ArchitectureType?,
@@ -132,7 +141,7 @@ class YamlWitnessWriter {
         Task(
           inputFiles = listOf(inputFile.name),
           inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-          specification = ltlViolationProperty,
+          specification = ltlSpecification,
           dataModel =
             architecture?.let {
               if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32

@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
@@ -289,6 +290,7 @@ private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
     is MemoryAssignStmt<*, *, *> ->
       "${stmt.deref.toC(parseContext)} = ${stmt.expr.toC(parseContext)};"
     is AssumeStmt -> "if(!${stmt.cond.toC(parseContext)}) abort();"
+    is SkipStmt -> ""
     else -> TODO("Not yet supported: $stmt")
   }
 

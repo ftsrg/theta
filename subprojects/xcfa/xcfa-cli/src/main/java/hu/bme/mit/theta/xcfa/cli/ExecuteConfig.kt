@@ -586,10 +586,12 @@ private fun postVerificationLogging(
           }
         }
         val ltlViolationProperty =
-          ErrorDetection.ltlFromTrace(
-            config.inputConfig.property,
-            safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
-          )!!
+          if (safetyResult.isUnsafe) {
+            ErrorDetection.ltlFromTrace(
+              config.inputConfig.property,
+              safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
+            )!!
+          } else null
         val witnessFile = File(resultFolder, "witness.graphml")
         GraphmlWitnessWriter()
           .writeWitness(
