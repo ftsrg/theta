@@ -19,7 +19,13 @@ package hu.bme.mit.theta.solver.meta;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MetaItpPattern implements ItpPattern {
 
@@ -31,11 +37,28 @@ public class MetaItpPattern implements ItpPattern {
 
     @Override
     public <E> E visit(ItpPatternVisitor<E> visitor) {
-        // TODO parallel visit all patterns, return fastest
-        return patternMap.values().iterator().next().visit(visitor);
+        ExecutorService executorService = Executors.newFixedThreadPool(patternMap.size());
+        List<Callable<E>> tasks = new ArrayList<>();
+
+        for (ItpPattern pattern : patternMap.values()) {
+            tasks.add( () -> pattern.visit( visitor ) );
+        }
+
+        E item;
+        try {
+            item = executorService.invokeAny(tasks);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MetaSolverException(e);
+        }
+        executorService.shutdown();
+        return item;
     }
 
-    public ItpPattern get(ItpSolver solver) {
+    public ItpPattern getPattern(ItpSolver solver) {
         return patternMap.get(solver);
+    }
+
+    public void remove(ItpSolver solver) {
+        patternMap.remove(solver);
     }
 }

@@ -64,8 +64,8 @@ public class MetaSolverTest {
     @Before
     public void setup() {
         solver = new MetaSolverFactory(List.of(
-                    Z3SolverFactory.getInstance(),
-                    Z3LegacySolverFactory.getInstance()))
+                    Z3LegacySolverFactory.getInstance(),
+                    Z3SolverFactory.getInstance()))
                 .createSolver();
     }
 

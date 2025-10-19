@@ -20,37 +20,46 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
-final class MetaItpSolver implements ItpSolver, Solver {
-    private ItpSolver solver;
+public class MetaItpSolver implements ItpSolver, Solver {
     private final List<ItpSolver> solvers;
-    private int currentSolverIndex = 0;
     private final Stack<Expr<BoolType>> assertions = new StackImpl<>();
-    private final Stack<ItpMarker> markers = new StackImpl<>();
+    private final Stack<MetaItpMarker> markers = new StackImpl<>();
+    private final List<MetaItpPattern> patterns = new ArrayList<>();
 
-    MetaItpSolver(List<ItpSolver> solvers) {
+    public MetaItpSolver(List<ItpSolver> solvers) {
         this.solvers = solvers;
-        solver = solvers.get(0);
     }
 
     @Override
     public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
-
-        try {
-            return solver.createTreePattern(root);
-        } catch (Exception e) {
-            switchSolvers();
-            return solver.createTreePattern(root);
+        Map<ItpSolver, ItpPattern> patternMap = new HashMap<>();
+        // copy tree for each solver
+        List<SolverResult<ItpMarkerTree<? extends ItpMarker>>> solverResultList = allResults(solver -> new SolverResult<>(copyTree(root, solver), solver));
+        for (final SolverResult<ItpMarkerTree<? extends ItpMarker>> result : solverResultList) {
+            patternMap.put(result.solver, result.solver.createTreePattern(result.result));
         }
+        MetaItpPattern pattern = new MetaItpPattern(patternMap);
+        patterns.add(pattern);
+        return pattern;
+    }
+
+    private ItpMarkerTree<? extends ItpMarker> copyTree(ItpMarkerTree<? extends ItpMarker> root, ItpSolver solver) {
+        checkArgument(root.getMarker() instanceof MetaItpMarker);
+        final MetaItpMarker metaMarker = (MetaItpMarker) root.getMarker();
+        final ItpMarker marker = metaMarker.getMarker(solver);
+        if (root.getChildrenNumber() == 0) {
+            return ItpMarkerTree.Leaf(marker);
+        }
+        List<? extends ItpMarkerTree<? extends ItpMarker>> subtrees = root.getChildren().stream().map(child -> copyTree(child,solver)).toList();
+        return ItpMarkerTree.Tree(marker,subtrees.toArray(new ItpMarkerTree[subtrees.size()]));
     }
 
     @Override
@@ -59,7 +68,7 @@ final class MetaItpSolver implements ItpSolver, Solver {
         for (ItpSolver solver : solvers) {
             markersMap.put(solver, solver.createMarker());
         }
-        ItpMarker marker = new  MetaItpMarker(markersMap);
+        MetaItpMarker marker = new MetaItpMarker(markersMap);
         markers.add(marker);
         return marker;
     }
@@ -69,84 +78,86 @@ final class MetaItpSolver implements ItpSolver, Solver {
         checkArgument(marker instanceof MetaItpMarker);
 
         assertions.add(assertion);
-        try {
-            solver.add(((MetaItpMarker) marker).getMarker(solver), assertion);
-        } catch (Exception e) {
-            switchSolvers();
+        for (ItpSolver solver : solvers) {
+            try {
+                solver.add(((MetaItpMarker) marker).getMarker(solver), assertion);
+            } catch (Exception e) {
+                remove(solver);
+            }
         }
+
     }
 
     @Override
     public Interpolant getInterpolant(ItpPattern pattern) {
-        try {
-            return solver.getInterpolant(pattern);
-        } catch (Exception e) {
-            switchSolvers();
-            check();
-            return solver.getInterpolant(pattern);
-        }
+        checkArgument(pattern instanceof MetaItpPattern);
+
+        List<SolverResult<Interpolant>> interpolants = allResults(solver ->
+                new SolverResult<>(solver.getInterpolant(((MetaItpPattern) pattern).getPattern(solver)), solver));
+
+        SolverResult<Interpolant> strongest = interpolants.stream().min(MetaItpSolver::selectStronger).orElseThrow();
+        return new MetaInterpolant(strongest.solver, strongest.result);
     }
 
     @Override
     public Collection<? extends ItpMarker> getMarkers() {
-        return solver.getMarkers();
+        return markers.toCollection();
+    }
+
+    @Override
+    public void add(Expr<BoolType> assertion) {
+        assertions.add(assertion);
+        for (ItpSolver solver : solvers) {
+            try {
+                ((Solver) solver).add(assertion);
+            } catch (Exception e) {
+                remove(solver);
+            }
+        }
     }
 
     @Override
     public SolverStatus check() {
-        try {
-            return solver.check();
-        }
-        catch (Exception e) {
-            switchSolvers();
-            return check();
-        }
+        // wait for all the solvers to finish this step, so getting the model or interpolant is possible
+        return allResults(SolverBase::check).get(0);
     }
 
     @Override
     public void push() {
-        solver.push();
+        markers.push();
+        for (ItpSolver solver : solvers) {
+            solver.push();
+        }
     }
 
     @Override
     public void pop(int n) {
-        solver.pop(n);
+        markers.pop(n);
+        for (ItpSolver solver : solvers) {
+            solver.pop(n);
+        }
     }
 
     @Override
     public void reset() {
-        for (ItpSolver itpSolver : solvers) {
-            itpSolver.reset();
+        for (ItpSolver solver : solvers) {
+            solver.reset();
         }
-        solver = solvers.get(0);
     }
 
     @Override
     public SolverStatus getStatus() {
-        try {
-            return solver.getStatus();
-        }
-        catch (Exception e) {
-            switchSolvers();
-            check();
-            return getStatus();
-        }
+        return firstResult(SolverBase::getStatus);
     }
 
     @Override
     public Valuation getModel() {
-        try {
-            return solver.getModel();
-        }
-        catch (Exception e) {
-            switchSolvers();
-            return getModel();
-        }
+        return firstResult(SolverBase::getModel);
     }
 
     @Override
     public Collection<Expr<BoolType>> getAssertions() {
-        return solver.getAssertions();
+        return assertions.toCollection();
     }
 
     @Override
@@ -156,27 +167,101 @@ final class MetaItpSolver implements ItpSolver, Solver {
         }
     }
 
-    @Override
-    public void add(Expr<BoolType> assertion) {
-        assertions.add(assertion);
+    private void remove(ItpSolver solver) {
+        solvers.remove(solver);
+        for (MetaItpPattern pattern : patterns) {
+            pattern.remove(solver);
+        }
+
         try {
-            ((Solver) solver).add(assertion);
+            solver.reset();
+            solver.close();
         } catch (Exception e) {
-            switchSolvers();
+            throw new MetaSolverException("Closing solver failed", e);
+        }
+        checkArgument(!solvers.isEmpty(), "MetaItpSolver has run out of solvers.");
+    }
+
+    private interface SolverAction <T> {
+        T run(ItpSolver solver);
+    }
+
+    private <T> T firstResult(SolverAction<T> action){
+        ExecutorService executorService = Executors.newFixedThreadPool(solvers.size());
+        List<Callable<T>> tasks = new ArrayList<>();
+
+        for (ItpSolver solver : solvers) {
+            tasks.add(() -> {
+                T result;
+                try {
+                   result = action.run(solver);
+                } catch (Exception e) {
+                    remove(solver);
+                    // ignore this task's result
+                    throw new IllegalStateException();
+                }
+                return result;
+            });
+        }
+
+        T item;
+        try {
+            item = executorService.invokeAny(tasks);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new MetaSolverException(e);
+        }
+        return item;
+    }
+
+    private <T> List<T> allResults(SolverAction<T> action){
+        ExecutorService executorService = Executors.newFixedThreadPool(solvers.size());
+        List<Callable<T>> tasks = new ArrayList<>();
+
+        for (ItpSolver solver : solvers) {
+            tasks.add(() -> {
+                T result = null;
+                try {
+                    result = action.run(solver);
+                } catch (Exception e) {
+                    remove(solver);
+                }
+                return result;
+            });
+        }
+
+        List<Future<T>> futureItems;
+        try {
+            futureItems = executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            throw new MetaSolverException(e);
+        }
+
+        List<T> items = futureItems.stream()
+                .map(future -> {
+                    try {
+                        return future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new MetaSolverException(e);
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        executorService.shutdown();
+        return items;
+    }
+
+    private static class SolverResult <T> {
+        T result;
+        ItpSolver solver;
+        public SolverResult(T result, ItpSolver solver) {
+            this.result = result;
+            this.solver = solver;
         }
     }
 
-    private void switchSolvers() {
-        checkState(currentSolverIndex != solvers.size(), "Meta ITP solver has cycled through all of its solvers.");
-        try {
-            solver.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        solver = solvers.get(++currentSolverIndex);
-
-        for (Expr<BoolType> assertion : assertions) {
-            solver.add(createMarker(), assertion);
-        }
+    private static int selectStronger(SolverResult<Interpolant> a, SolverResult<Interpolant> b) {
+        // todo choose strongest
+        return 0;
     }
 }
