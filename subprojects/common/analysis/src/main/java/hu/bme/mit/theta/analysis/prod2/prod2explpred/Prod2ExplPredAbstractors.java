@@ -40,12 +40,7 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,6 +63,9 @@ public class Prod2ExplPredAbstractors {
         return new BooleanAbstractor(solver, false);
     }
 
+    /*
+     * PRED_SPLIT-like combined abstractor, which returns a separate state for each satisfying assignment
+     */
     private static final class BooleanAbstractor implements Prod2ExplPredAbstractor {
 
         private final Solver solver;
@@ -159,5 +157,89 @@ public class Prod2ExplPredAbstractors {
                 actLits.add(Decls.Const(litPrefix + actLits.size(), BoolExprs.Bool()));
             }
         }
+    }
+
+    /*
+     * PRED_CART-like combined abstractor, which returns a single abstract state and behaves similarly to maxenum=1 for explicitly tracked values
+     */
+    private static final class CartesianAbstractor implements Prod2ExplPredAbstractor {
+
+        private final Solver solver;
+
+        public CartesianAbstractor(final Solver solver) {
+            this.solver = solver;
+        }
+
+        @Override
+        public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
+                final Expr<BoolType> expr,
+                final VarIndexing exprIndexing,
+                final Prod2Prec<ExplPrec, PredPrec> prec,
+                final VarIndexing precIndexing,
+                final Function<? super Valuation, ? extends ExplState> valuationToState,
+                final int limit) {
+            final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
+
+            try (WithPushPop wp = new WithPushPop(solver)) {
+                solver.add(PathUtils.unfold(expr, exprIndexing));
+                solver.check();
+                if (solver.getStatus().isUnsat()) {
+                    return Collections.emptySet();
+                }
+
+                final var predPrec = prec.getPrec2();
+
+                for (final Expr<BoolType> pred : predPrec.getPreds()) {
+                    final boolean ponEntailed;
+                    final boolean negEntailed;
+                    try (WithPushPop wp1 = new WithPushPop(solver)) {
+                        solver.add(PathUtils.unfold(predPrec.negate(pred), precIndexing));
+                        ponEntailed = solver.check().isUnsat();
+                    }
+                    try (WithPushPop wp2 = new WithPushPop(solver)) {
+                        solver.add(PathUtils.unfold(pred, precIndexing));
+                        negEntailed = solver.check().isUnsat();
+                    }
+
+                    assert !(ponEntailed && negEntailed)
+                            : "Ponated and negated predicates are both entailed.";
+
+                    if (ponEntailed) {
+                        newStatePreds.add(pred);
+                    }
+                    if (negEntailed) {
+                        newStatePreds.add(predPrec.negate(pred));
+                    }
+                }
+            }
+
+            return Collections.singleton(
+                    Prod2State.of(ExplState.top(), PredState.of(newStatePreds)));
+        }
+
+        //        @Override
+        //        public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
+        //                final Expr<BoolType> expr,
+        //                final VarIndexing exprIndexing,
+        //                final PredPrec prec,
+        //                final VarIndexing precIndexing,
+        //                final Prod2State<ExplState, PredState> state,
+        //                final ExprAction action) {
+        //            var actionExpr = action.toExpr();
+        //            if (actionExpr.equals(True())) {
+        //                var filteredPreds =
+        //                        state.getPreds().stream()
+        //                                .filter(
+        //                                        p -> {
+        //                                            var vars = ExprUtils.getVars(p);
+        //                                            var indexing = action.nextIndexing();
+        //                                            return vars.stream()
+        //                                                    .allMatch(v -> indexing.get(v) == 0);
+        //                                        })
+        //                                .collect(Collectors.toList());
+        //                return Collections.singleton(PredState.of(filteredPreds));
+        //            }
+        //            return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
+        //        }
     }
 }
