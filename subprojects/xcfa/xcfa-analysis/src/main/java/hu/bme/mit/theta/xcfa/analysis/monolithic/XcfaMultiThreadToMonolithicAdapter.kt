@@ -222,35 +222,6 @@ class XcfaMultiThreadToMonolithicAdapter(
           }
           .let { And(it) }
 
-      val events: List<Event<VarDecl<*>>> =
-        threads
-          .flatMap { (start, proc) ->
-            proc.edges.flatMap { edge ->
-              val varLookUp = varLookUps[start]!!
-              edge.getFlatLabels().map { label ->
-                label.toStmt().changeVars(varLookUp, parseContext).let {
-                  if (label is StartLabel) {
-                    val pidVar = pidVars[label.pidVar]!!
-                    SequenceStmt.of(
-                      listOf(
-                        it,
-                        AssignStmt.of(pidVar, cast(smtInt(threadIds[label]!!), pidVar.type)),
-                      )
-                    )
-                  } else it
-                }
-              }
-            }
-          }
-          .toSet()
-          .map {
-            object : Event<VarDecl<*>> {
-              override fun getAffectedVars(): List<VarDecl<*>> =
-                StmtUtils.getWrittenVars(it).toList()
-            }
-          }
-          .toList()
-
       return MonolithicExpr(
         initExpr = And(locDefaultValues, edgeDefaultValue, defaultValues),
         transExpr = And(transUnfold.exprs),
