@@ -81,7 +81,6 @@ fun getMddChecker(
       //        ),
     )
   }
-
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
 
   if (mddConfig.cegar) {
@@ -92,7 +91,7 @@ fun getMddChecker(
   }
   return FormalismPipelineChecker(
     model = parseContext,
-    modelAdapter = XcfaToMonolithicAdapter(xcfa, initValues = true),
+    modelAdapter = XcfaToMonolithicAdapter(xcfa, config.inputConfig.property, initValues = true),
     MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
   )
 }

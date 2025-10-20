@@ -72,7 +72,11 @@ private val LitExpr<*>.value: Int
       else -> error("Unknown integer type: $type")
     }
 
-class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Boolean = false) :
+class XcfaToMonolithicAdapter(
+  private val xcfa: XCFA,
+  private val property: ErrorDetection,
+  private val initValues: Boolean = false,
+) :
   ModelToMonolithicAdapter<
     ParseContext,
     XcfaState<PtrState<ExplState>>,
@@ -140,6 +144,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
                   it.ref,
                   BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
                 )
+
               is FpType ->
                 FpAssign(
                   it.ref as Expr<FpType>,
@@ -148,6 +153,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
                     it.type as FpType,
                   ),
                 )
+
               else -> throw IllegalArgumentException("Unsupported type")
             }
           }
@@ -164,7 +170,8 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
         ),
       transExpr = And(transUnfold.exprs),
       propExpr =
-        if (proc.errorLoc.isPresent)
+        if (property == ErrorDetection.TERMINATION) xcfa.initProcedures[0].first.prop
+        else if (proc.errorLoc.isPresent)
           Neq(locVar.ref, smtAwareInteger(locationMap[proc.errorLoc.get()]!!))
         else True(),
       transOffsetIndex = transUnfold.indexing,

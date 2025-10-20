@@ -35,7 +35,12 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     public static String encodeSymbol(String name) {
         if (problematicCharactersRegex.matcher(name).find()) {
-            return "|%s|".formatted(name);
+            char[] chars = name.toCharArray();
+            if (chars[0] == '|' && chars[chars.length - 1] == '|') {
+                return name;
+            } else {
+                return "|%s|".formatted(name);
+            }
         } else {
             return name;
         }
