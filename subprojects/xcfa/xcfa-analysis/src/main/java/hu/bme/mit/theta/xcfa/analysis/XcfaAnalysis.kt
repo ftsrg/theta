@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
@@ -439,7 +440,31 @@ private fun getExplPredCombinedXcfaInitFunc(
   }
 }
 
-private fun getExplPredCombinedXcfaTransFunc(
+public fun getExplPredStmtXcfaTransFunc(
+  solver: Solver,
+  isHavoc: Boolean,
+): (
+  XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
+  XcfaAction,
+  XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
+) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>> {
+  val combinedTransFunc =
+    (Prod2ExplPredStmtTransFunc.create<StmtAction>(solver)
+        as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
+      .getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val (newSt, newAct) = s.apply(a)
+    combinedTransFunc
+      .getSuccStates(
+        newSt.sGlobal,
+        newAct,
+        p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
+      )
+      .map { newSt.withState(it) }
+  }
+}
+
+public fun getExplPredSplitXcfaTransFunc(
   prod2ExplPredAbstractor: Prod2ExplPredAbstractors.Prod2ExplPredAbstractor,
   isHavoc: Boolean,
 ): (
@@ -466,12 +491,17 @@ private fun getExplPredCombinedXcfaTransFunc(
 class ExplPredCombinedXcfaAnalysis(
   xcfa: XCFA,
   solver: Solver,
-  prod2ExplPredAbstractor: Prod2ExplPredAbstractors.Prod2ExplPredAbstractor,
+  prod2ExplPredTransFunc:
+    (
+      XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
+      XcfaAction,
+      XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
+    ) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
   partialOrd: PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
   isHavoc: Boolean,
 ) :
   XcfaAnalysis<Prod2State<ExplState, PredState>, PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplPredCombinedXcfaInitFunc(xcfa, solver),
-    coreTransFunc = getExplPredCombinedXcfaTransFunc(prod2ExplPredAbstractor, isHavoc),
+    coreTransFunc = prod2ExplPredTransFunc,
   )

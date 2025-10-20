@@ -251,13 +251,47 @@ enum class Domain(
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
   ),
-  EXPL_PRED_COMBINED(
+  EXPL_PRED_SPLIT(
     abstractor = { a, b, c, d, e, f, g, h, i, j ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
           a,
           b,
-          Prod2ExplPredAbstractors.booleanAbstractor(b),
+          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), j),
+          i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          j,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    itpPrecRefiner = { a, b ->
+      XcfaPrecRefiner<
+        PtrState<Prod2State<ExplState, PredState>>,
+        Prod2Prec<ExplPrec, PredPrec>,
+        ItpRefutation,
+      >(
+        ItpRefToPtrPrec(AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(b), a))
+      )
+    },
+    initPrec = { x, ip -> ip.prod2Prec(x) },
+    partialOrd = { solver ->
+      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+    },
+    nodePruner =
+      AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
+  ),
+  EXPL_PRED_STMT(
+    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+      getXcfaAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          a,
+          b,
+          getExplPredStmtXcfaTransFunc(b, j),
           i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           j,
         ),
