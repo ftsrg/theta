@@ -24,8 +24,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.dereferences
 
 /**
  * Adds assumptions to the XCFA if memory safety needs to be checked. Rules based on:

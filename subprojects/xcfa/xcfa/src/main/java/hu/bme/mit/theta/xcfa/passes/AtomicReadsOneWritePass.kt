@@ -27,8 +27,12 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
+import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 /**
  * One atomic unit (atomic block or edge) can have at most one write operation on a global variable

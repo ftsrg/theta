@@ -19,9 +19,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
@@ -36,7 +34,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.Ic3Config
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -77,12 +75,6 @@ fun getIc3Checker(
   if (ic3Config.reversed) {
     passes.add(ReverseMEPass())
   }
-  val checker =
-    FormalismPipelineChecker(
-      model = parseContext,
-      modelAdapter = XcfaToMonolithicAdapter(xcfa),
-      MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
-    )
 
-  return checker
+  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger)
 }

@@ -21,6 +21,12 @@ import hu.bme.mit.theta.frontend.ParseContext
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
 
   constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
+
+  operator fun plus(other: ProcedurePassManager): ProcedurePassManager =
+    ProcedurePassManager(this.passes + other.passes)
+
+  operator fun plus(passes: List<ProcedurePass>): ProcedurePassManager =
+    ProcedurePassManager(this.passes + listOf(passes))
 }
 
 class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
@@ -44,14 +50,21 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // optimizing
       SimplifyExprsPass(parseContext),
       LoopUnrollPass(),
-      SimplifyExprsPass(parseContext),
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
+      NondetFunctionPass(),
+    ),
+    listOf(
+      // Clean up procedures after inlining
+      InlinedProcedureRemovalPass()
+    ),
+    listOf(
       EmptyEdgeRemovalPass(),
+      SimplifyExprsPass(parseContext),
+      UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
@@ -60,7 +73,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // handling remaining function calls
       MemsafetyPass(parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO

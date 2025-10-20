@@ -23,10 +23,10 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import kotlin.reflect.KProperty
 
 fun <K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }

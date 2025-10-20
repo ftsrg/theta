@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -32,6 +31,12 @@ import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.analysis.por.extension
 import hu.bme.mit.theta.xcfa.analysis.por.nullableExtension
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.VarAccessMap
+import hu.bme.mit.theta.xcfa.utils.collectAssumesVars
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.isRead
+import hu.bme.mit.theta.xcfa.utils.isWritten
+import hu.bme.mit.theta.xcfa.utils.pointsTo
 import java.util.*
 import kotlin.math.min
 

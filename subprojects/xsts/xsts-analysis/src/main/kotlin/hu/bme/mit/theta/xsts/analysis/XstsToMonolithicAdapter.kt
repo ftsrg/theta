@@ -33,67 +33,68 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.passes.XstsStmtFlatteningTransformer.events
 
-class XstsToMonolithicAdapter :
+class XstsToMonolithicAdapter(override val model: XSTS) :
   ProofConservingModelToMonolithicAdapter<XSTS, XstsState<out ExprState>, XstsAction> {
 
-  lateinit var xsts: XSTS
-
-  override fun modelToMonolithicExpr(model: XSTS): MonolithicExpr {
-    xsts = model
-    val initStmtUnfoldResult = StmtUtils.toExpr(model.init, VarIndexingFactory.indexing(0))
-    var initExpr = PathUtils.unfold(And(listOf(model.initFormula) + initStmtUnfoldResult.exprs), 0)
-    val subBuilder = BasicSubstitution.builder()
-    for (v in model.stateVars) {
-      if (initStmtUnfoldResult.indexing.get(v) > 0) {
-        for (i in 0..<initStmtUnfoldResult.indexing.get(v)) {
-          subBuilder.put(v.getConstDecl(i), Decls.Var(v.name + "__MONOLITHIC_TEMP" + i, v.type).ref)
-        }
-      }
-      subBuilder.put(v.getConstDecl(initStmtUnfoldResult.indexing.get(v)), v.ref)
-    }
-    initExpr = ExprUtils.simplify(subBuilder.build().apply(initExpr))
-    val propExpr = model.prop
-
-    val envOrig =
-      if (model.env.stmts.size == 1 && model.env.stmts.get(0) is NonDetStmt)
-        model.env.stmts[0] as NonDetStmt
-      else model.env
-    val tranOrig =
-      if (model.tran.stmts.size == 1 && model.tran.stmts.get(0) is NonDetStmt)
-        model.tran.stmts[0] as NonDetStmt
-      else model.tran
-
-    val monolithicTransition =
-      NonDetStmt.of(
-        envOrig.stmts
-          .stream()
-          .flatMap { e: Stmt ->
-            tranOrig.stmts.stream().map { t: Stmt -> SequenceStmt.of(listOf(e, t)) as Stmt }
+  override val monolithicExpr: MonolithicExpr
+    get() {
+      val initStmtUnfoldResult = StmtUtils.toExpr(model.init, VarIndexingFactory.indexing(0))
+      var initExpr =
+        PathUtils.unfold(And(listOf(model.initFormula) + initStmtUnfoldResult.exprs), 0)
+      val subBuilder = BasicSubstitution.builder()
+      for (v in model.stateVars) {
+        if (initStmtUnfoldResult.indexing.get(v) > 0) {
+          for (i in 0..<initStmtUnfoldResult.indexing.get(v)) {
+            subBuilder.put(
+              v.getConstDecl(i),
+              Decls.Var(v.name + "__MONOLITHIC_TEMP" + i, v.type).ref,
+            )
           }
-          .toList()
-      )
-    val monolithicUnfoldResult =
-      StmtUtils.toExpr(monolithicTransition, VarIndexingFactory.indexing(0))
-    val transExpr = ExprUtils.simplify(And(monolithicUnfoldResult.exprs))
+        }
+        subBuilder.put(v.getConstDecl(initStmtUnfoldResult.indexing.get(v)), v.ref)
+      }
+      initExpr = ExprUtils.simplify(subBuilder.build().apply(initExpr))
+      val propExpr = model.prop
 
-    return MonolithicExpr(
-      initExpr,
-      transExpr,
-      propExpr,
-      monolithicUnfoldResult.indexing,
-      ctrlVars = model.ctrlVars,
-      vars = model.stateVars.toList(),
-      events = xsts.events(),
-    )
-  }
+      val envOrig =
+        if (model.env.stmts.size == 1 && model.env.stmts.get(0) is NonDetStmt)
+          model.env.stmts[0] as NonDetStmt
+        else model.env
+      val tranOrig =
+        if (model.tran.stmts.size == 1 && model.tran.stmts.get(0) is NonDetStmt)
+          model.tran.stmts[0] as NonDetStmt
+        else model.tran
+
+      val monolithicTransition =
+        NonDetStmt.of(
+          envOrig.stmts
+            .stream()
+            .flatMap { e: Stmt ->
+              tranOrig.stmts.stream().map { t: Stmt -> SequenceStmt.of(listOf(e, t)) as Stmt }
+            }
+            .toList()
+        )
+      val monolithicUnfoldResult =
+        StmtUtils.toExpr(monolithicTransition, VarIndexingFactory.indexing(0))
+      val transExpr = ExprUtils.simplify(And(monolithicUnfoldResult.exprs))
+
+      return MonolithicExpr(
+        initExpr,
+        transExpr,
+        propExpr,
+        monolithicUnfoldResult.indexing,
+        ctrlVars = model.ctrlVars,
+        vars = model.stateVars.toList(),
+        events = xsts.events(),
+      )
+    }
 
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
   ): Trace<XstsState<out ExprState>, XstsAction> {
     val states = trace.states.map { valToState(it.`val`) }
-    return Trace.of(states, XstsAction.create(SequenceStmt.of(listOf(xsts.env, xsts.tran))))
+    return Trace.of(states, XstsAction.create(SequenceStmt.of(listOf(model.env, model.tran))))
   }
 
   private fun valToState(valuation: Valuation): XstsState<ExplState> {

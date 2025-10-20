@@ -23,10 +23,10 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
 private var pidCnt = 1
@@ -111,8 +111,9 @@ constructor(
 
                   in Regex("cond_wait\\((.*)\\)") -> {
                     val args = label.substring("cond_wait".length + 1, label.length - 1).split(",")
-                    changes.add { state -> state.enterMutex(args[0], a.pid) }
-                    changes.add { state -> state.exitMutex(args[0], a.pid) }
+                    // Spurious wakeup may occur in pthread_cond_wait!
+                    // changes.add { state -> state.enterMutex(args[0], a.pid) }
+                    // changes.add { state -> state.exitMutex(args[0], a.pid) }
                     changes.add { state -> state.enterMutex(args[1], a.pid) }
                   }
 
@@ -167,11 +168,9 @@ constructor(
 
           is NondetLabel -> true
           NopLabel -> false
-          is ReadLabel -> error("Read/Write labels not yet supported")
           is SequenceLabel -> true
           is StartLabel -> changes.add { state -> state.start(it) }.let { true }
           is StmtLabel -> true
-          is WriteLabel -> error("Read/Write labels not yet supported")
         }
       }
 

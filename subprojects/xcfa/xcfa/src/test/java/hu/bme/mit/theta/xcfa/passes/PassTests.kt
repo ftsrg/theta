@@ -28,8 +28,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -89,7 +89,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_SEQ },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_SEQ),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -109,7 +109,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_FULL },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_FULL),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -309,23 +309,24 @@ class PassTests {
         PassTestData(
           global = {
             "x" type Int() init "0"
+            "pid" type Int() init "0"
             "thr1" type Int() init "0"
           },
           passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
           input = {
-            (init to "L1") { "pthread_create"("x", "x", "0", "thr1", "0") }
-            (init to "L2") { "pthread_join"("x", "x") }
+            (init to "L1") { "pthread_create"("pid", "pid", "0", "thr1", "0") }
+            (init to "L2") { "pthread_join"("pid", "pid") }
             (init to "L3") { "pthread_mutex_lock"("0", "x") }
             (init to "L4") { "pthread_mutex_unlock"("0", "x") }
           },
           output = {
             (init to "L1") {
-              "x".start("thr1", "0", "0")
-              "x".assign("0")
+              "pid".start("thr1", "0", "0")
+              "pid".assign("0")
             }
             (init to "L2") {
-              "x".join()
-              "x".assign("0")
+              "pid".join()
+              "pid".assign("0")
             }
             (init to "L3") { fence("mutex_lock(x)") }
             (init to "L4") { fence("mutex_unlock(x)") }
@@ -424,20 +425,23 @@ class PassTests {
 
   @Test
   fun testCPipeline() {
+    val passes = CPasses(false, parseContext, NullLogger.getInstance())
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
-          (init to final) { "proc1"() }
-        }
-        procedure("proc1") { (init to final) { assume("1 == 1") } }
+        procedure("main", passes) { (init to final) { "proc1"() } }.start()
+        procedure("proc1", passes) { (init to final) { assume("1 == 1") } }
       }
 
+    // Test inline
     assertTrue(
       xcfaSource.procedures
         .first { it.name == "main" }
         .edges
         .none { it.getFlatLabels().any { it is InvokeLabel } }
     )
+
+    // Test inlined procedure removal (not init, not invoked, not started)
+    assertTrue(xcfaSource.procedures.none { it.name == "proc1" })
   }
 
   @Test

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.xcfa.lazyPointsToGraph
+import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
 import java.util.*
 
 class XCFA(
@@ -31,7 +31,7 @@ class XCFA(
 
   private var cachedHash: Int? = null
 
-  val pointsToGraph by this.lazyPointsToGraph
+  val pointsToGraph by lazy { this.getPointsToGraph() }
 
   var procedures: Set<XcfaProcedure> // procedure definitions
     private set
@@ -44,13 +44,13 @@ class XCFA(
     var phase = 0
     do {
       var ready = true
-      procedureBuilders.forEach { ready = it.optimize(phase) && ready }
-      initProcedureBuilders.forEach { ready = it.first.optimize(phase) && ready }
+      procedureBuilders.toSet().forEach { ready = it.optimize(phase) && ready }
+      initProcedureBuilders.toSet().forEach { ready = it.first.optimize(phase) && ready }
       phase++
     } while (!ready)
 
-    procedures = procedureBuilders.map { it.build(this) }.toSet()
-    initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+    procedures = procedureBuilders.toSet().map { it.build(this) }.toSet()
+    initProcedures = initProcedureBuilders.toSet().map { Pair(it.first.build(this), it.second) }
     unsafeUnrollUsed =
       (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
   }

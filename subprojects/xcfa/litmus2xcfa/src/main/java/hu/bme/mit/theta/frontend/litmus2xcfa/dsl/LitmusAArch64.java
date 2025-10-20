@@ -21,7 +21,6 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.*;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -286,50 +285,62 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
 
         @Override
         public XcfaLabel visitLoad32(LitmusAArch64Parser.Load32Context ctx) {
-            final VarDecl<BvType> var = getOrCreateVar(ctx.rD32.getText(), 32);
-            final VarDecl<BvType> tmp =
-                    getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(), 64);
-            StmtLabel cast = new StmtLabel(Assign(var, Extract(tmp.getRef(), Int(0), Int(32))));
-            ReadLabel load =
-                    new ReadLabel(
-                            getGlobalFromReg(ctx.address().r.getText()),
-                            tmp,
-                            Set.of(ctx.loadInstruction().mo),
-                            EmptyMetaData.INSTANCE);
-            return new SequenceLabel(List.of(load, cast));
+            throw new UnsupportedOperationException(
+                    "32-bit loads are not supported in this version of the frontend.");
+            //            final VarDecl<BvType> var = getOrCreateVar(ctx.rD32.getText(), 32);
+            //            final VarDecl<BvType> tmp =
+            //                    getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(),
+            // 64);
+            //            StmtLabel cast = new StmtLabel(Assign(var, Extract(tmp.getRef(), Int(0),
+            // Int(32))));
+            //            ReadLabel load =
+            //                    new ReadLabel(
+            //                            getGlobalFromReg(ctx.address().r.getText()),
+            //                            tmp,
+            //                            Set.of(ctx.loadInstruction().mo),
+            //                            EmptyMetaData.INSTANCE);
+            //            return new SequenceLabel(List.of(load, cast));
         }
 
         @Override
         public XcfaLabel visitLoad64(LitmusAArch64Parser.Load64Context ctx) {
-            return new ReadLabel(
-                    getGlobalFromReg(ctx.address().r.getText()),
-                    getOrCreateVar(ctx.rD64.getText(), 32),
-                    Set.of(ctx.loadInstruction().mo),
-                    EmptyMetaData.INSTANCE);
+            throw new UnsupportedOperationException(
+                    "64-bit loads are not supported in this version of the frontend.");
+            //            return new ReadLabel(
+            //                    getGlobalFromReg(ctx.address().r.getText()),
+            //                    getOrCreateVar(ctx.rD64.getText(), 32),
+            //                    Set.of(ctx.loadInstruction().mo),
+            //                    EmptyMetaData.INSTANCE);
         }
 
         @Override
         public XcfaLabel visitStore32(LitmusAArch64Parser.Store32Context ctx) {
-            final VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
-            final VarDecl<BvType> tmp =
-                    getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(), 64);
-            StmtLabel cast = new StmtLabel(Assign(tmp, ZExt(var.getRef(), BvType(64))));
-            WriteLabel store =
-                    new WriteLabel(
-                            getGlobalFromReg(ctx.address().r.getText()),
-                            tmp,
-                            Set.of(ctx.storeInstruction().mo),
-                            EmptyMetaData.INSTANCE);
-            return new SequenceLabel(List.of(cast, store));
+            throw new UnsupportedOperationException(
+                    "32-bit stores are not supported in this version of the frontend.");
+            //            final VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
+            //            final VarDecl<BvType> tmp =
+            //                    getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(),
+            // 64);
+            //            StmtLabel cast = new StmtLabel(Assign(tmp, ZExt(var.getRef(),
+            // BvType(64))));
+            //            WriteLabel store =
+            //                    new WriteLabel(
+            //                            getGlobalFromReg(ctx.address().r.getText()),
+            //                            tmp,
+            //                            Set.of(ctx.storeInstruction().mo),
+            //                            EmptyMetaData.INSTANCE);
+            //            return new SequenceLabel(List.of(cast, store));
         }
 
         @Override
         public XcfaLabel visitStore64(LitmusAArch64Parser.Store64Context ctx) {
-            return new WriteLabel(
-                    getGlobalFromReg(ctx.address().r.getText()),
-                    getOrCreateVar(ctx.rV64.getText(), 64),
-                    Set.of(ctx.storeInstruction().mo),
-                    EmptyMetaData.INSTANCE);
+            throw new UnsupportedOperationException(
+                    "64-bit stores are not supported in this version of the frontend.");
+            //            return new WriteLabel(
+            //                    getGlobalFromReg(ctx.address().r.getText()),
+            //                    getOrCreateVar(ctx.rV64.getText(), 64),
+            //                    Set.of(ctx.storeInstruction().mo),
+            //                    EmptyMetaData.INSTANCE);
         }
 
         @Override

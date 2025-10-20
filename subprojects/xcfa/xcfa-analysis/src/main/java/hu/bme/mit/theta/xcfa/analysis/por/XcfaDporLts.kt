@@ -26,9 +26,9 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
-import hu.bme.mit.theta.xcfa.collectIndirectGlobalVarAccesses
-import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectIndirectGlobalVarAccesses
+import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream

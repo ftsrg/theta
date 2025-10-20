@@ -39,22 +39,19 @@ open class FormalismPipelineChecker<
   InnerPr : InvariantProof,
   OuterPr : Proof,
 >(
-  model: M,
   val modelAdapter: ModelToMonolithicAdapter<M, S, A, OuterPr>,
   mePipelineFactory: (MonolithicExpr) -> MonolithicExprPassPipelineChecker<InnerPr>,
 ) : SafetyChecker<OuterPr, Trace<S, A>, UnitPrec> {
 
   constructor(
-    model: M,
     modelAdapter: ModelToMonolithicAdapter<M, S, A, OuterPr>,
     pipelineArguments: MEPipelineCheckerConstructorArguments<InnerPr>,
   ) : this(
-    model,
     modelAdapter,
     { monolithicExpr -> MonolithicExprPassPipelineChecker(monolithicExpr, pipelineArguments) },
   )
 
-  private val monolithicExpr = modelAdapter.modelToMonolithicExpr(model)
+  private val monolithicExpr = modelAdapter.monolithicExpr
   private val pipeline = mePipelineFactory(monolithicExpr)
 
   override fun check(input: UnitPrec?): SafetyResult<OuterPr, Trace<S, A>> {

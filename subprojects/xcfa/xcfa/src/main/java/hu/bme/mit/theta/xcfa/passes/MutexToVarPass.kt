@@ -21,8 +21,10 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.acquiredMutex
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.releasedMutex
 
 /**
  * Replaces mutexes (except the atomic block mutexes) with boolean variables. mutex_lock(mutex_var)
@@ -70,17 +72,8 @@ class MutexToVarPass : ProcedurePass {
         val actions = mutableListOf<XcfaLabel>()
 
         labels.forEach { l ->
-          if (l == "pthread_exit") {
+          if (l in listOf("pthread_exit", "ATOMIC_BEGIN", "ATOMIC_END")) {
             actions.add(FenceLabel(setOf(l)))
-            return@forEach
-          }
-
-          if (l == "ATOMIC_BEGIN") {
-            actions.add(FenceLabel(setOf("ATOMIC_BEGIN")))
-            return@forEach
-          }
-          if (l == "ATOMIC_END") {
-            actions.add(FenceLabel(setOf("ATOMIC_END")))
             return@forEach
           }
 
@@ -89,8 +82,9 @@ class MutexToVarPass : ProcedurePass {
             actions.add(StmtLabel(AssignStmt.of(args[0].signalFlag, False())))
           }
           if (Regex("cond_wait\\((.*)\\)").matches(l)) {
-            val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
-            actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
+            // Spurious wakeup may occur in pthread_cond_wait
+            // val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
+            // actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
           }
           if (Regex("cond_signal\\((.*)\\)").matches(l)) {
             val arg = l.substring("cond_signal".length + 1, l.length - 1)
