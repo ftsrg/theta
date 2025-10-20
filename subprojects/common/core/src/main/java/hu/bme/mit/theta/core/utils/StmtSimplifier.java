@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.delta.Pair;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -53,9 +54,14 @@ import java.util.stream.Collectors;
 public class StmtSimplifier {
 
     public static Stmt simplifyStmt(final Valuation valuation, final Stmt stmt) {
+        return simplifyStmtAndReturnValuation(valuation, stmt).second;
+    }
+
+    public static Pair<Valuation, Stmt> simplifyStmtAndReturnValuation(
+            final Valuation valuation, final Stmt stmt) {
         MutableValuation mutableValuation = MutableValuation.copyOf(valuation);
         final var result = stmt.accept(new StmtSimplifierVisitor(), mutableValuation);
-        return result.stmt;
+        return new Pair<>(mutableValuation, result.getStmt());
     }
 
     private enum SimplifyStatus {

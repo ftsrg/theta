@@ -105,12 +105,9 @@ public class NewOperandsAutoExpl implements AutoExpl {
                 ExprUtils.getVars(itp).stream()
                         .filter(
                                 decl ->
-                                        newOperands
-                                                                .computeIfAbsent(
-                                                                        decl,
-                                                                        d -> Containers.createSet())
-                                                                .size()
-                                                        > newOperandsLimit
+                                        newOperands.containsKey(decl)
+                                                        && newOperands.get(decl).size()
+                                                                > newOperandsLimit
                                                 || decl.getType() == Bool())
                         .collect(Collectors.toSet()));
         //        explVars.addAll(
