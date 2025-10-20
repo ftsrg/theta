@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -40,7 +41,7 @@ class ErrorLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
               XcfaEdge(
                 it.source,
                 builder.errorLoc.get(),
-                SequenceLabel(listOf()),
+                SequenceLabel(listOf(StmtLabel(SkipStmt.getInstance(), metadata = label.metadata))),
                 metadata = label.metadata,
               )
             )

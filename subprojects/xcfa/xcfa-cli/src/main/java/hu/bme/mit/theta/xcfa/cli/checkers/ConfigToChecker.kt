@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.Checker
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
@@ -23,6 +24,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -30,7 +32,7 @@ import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getChecker(
+fun getSafetyChecker(
   xcfa: XCFA?,
   mcm: MCM?,
   config: XcfaConfig<*, *>,
@@ -45,7 +47,10 @@ fun getChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
+        else getCegarChecker(xcfa, mcm, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
@@ -66,7 +71,48 @@ fun getChecker(
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
-      Backend.LASSO_VALIDATION ->
-        getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
+      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
+      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.ASGCEGAR ->
+        if (config.inputConfig.property == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, mcm, config, logger)
+        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
+      Backend.TRACEGEN ->
+        throw RuntimeException(
+          "Trace generation is NOT safety analysis, can not return safety checker for trace generation"
+        )
+    }
+  }
+
+fun getChecker(
+  xcfa: XCFA?,
+  mcm: MCM?,
+  config: XcfaConfig<*, *>,
+  parseContext: ParseContext?,
+  logger: Logger,
+  uniqueLogger: Logger,
+): Checker<*, XcfaPrec<*>> =
+  if (config.backendConfig.inProcess) {
+    InProcessChecker(xcfa, config, parseContext, logger)
+  } else {
+    when (config.backendConfig.backend) {
+      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, mcm, config, logger)
+      Backend.NONE ->
+        SafetyChecker<
+          ARG<XcfaState<PtrState<*>>, XcfaAction>,
+          Trace<XcfaState<PtrState<*>>, XcfaAction>,
+          XcfaPrec<*>,
+        > { _ ->
+          SafetyResult.unknown()
+        }
+      else ->
+        throw RuntimeException(
+          "Use getSafetyChecker method for safety analysis instead of getChecker"
+        )
     }
   }

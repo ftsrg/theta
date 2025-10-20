@@ -50,5 +50,6 @@ fun main(args: Array<String>) =
       XstsCliIC3(),
       XstsCliHeader(),
       XstsCliMetrics(),
+      XstsCliTracegen(),
     )
     .main(args)

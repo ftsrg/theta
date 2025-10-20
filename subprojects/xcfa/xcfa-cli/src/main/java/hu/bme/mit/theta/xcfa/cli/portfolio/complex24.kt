@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -28,7 +29,6 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import java.nio.file.Paths
 
 fun complexPortfolio24(
   xcfa: XCFA,
@@ -39,7 +39,9 @@ fun complexPortfolio24(
   uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+  val checker = { config: XcfaConfig<*, *> ->
+    runConfig(config, logger, uniqueLogger, true) as SafetyResult<*, *>
+  }
 
   var baseConfig =
     XcfaConfig(
@@ -90,7 +92,7 @@ fun complexPortfolio24(
       outputConfig =
         OutputConfig(
           versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
+          resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
           cOutputConfig = COutputConfig(disable = true),
           witnessConfig =
             WitnessConfig(

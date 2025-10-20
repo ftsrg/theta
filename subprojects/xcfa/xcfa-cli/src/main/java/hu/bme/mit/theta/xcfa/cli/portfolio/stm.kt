@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -62,7 +62,7 @@ fun XcfaConfig<*, *>.visualize(): String =
 class ConfigNode(
   name: String,
   private val config: XcfaConfig<*, *>,
-  private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>,
+  private val check: (config: XcfaConfig<*, *>) -> Result<*>,
 ) : Node(name) {
 
   override fun execute(): Pair<Any, Any> {
