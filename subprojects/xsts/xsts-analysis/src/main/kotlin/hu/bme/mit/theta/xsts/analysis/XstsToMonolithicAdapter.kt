@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xsts.XSTS
+import hu.bme.mit.theta.xsts.analysis.passes.XstsStmtFlatteningTransformer.events
 
 class XstsToMonolithicAdapter(override val model: XSTS) :
   ProofConservingModelToMonolithicAdapter<XSTS, XstsState<out ExprState>, XstsAction> {
@@ -86,7 +87,7 @@ class XstsToMonolithicAdapter(override val model: XSTS) :
         monolithicUnfoldResult.indexing,
         ctrlVars = model.ctrlVars,
         vars = model.stateVars.toList(),
-        events = xsts.events(),
+        events = model.events(),
       )
     }
 
