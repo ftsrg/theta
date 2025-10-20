@@ -59,7 +59,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               builder.parent.addVar(
                 XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
               )
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 builder.parent.addVar(
                   XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
                 )
@@ -96,7 +96,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
             val labels =
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 val assign3 = builder.parent.allocate(parseContext, ret, arg)
                 listOf(assign1, assign2, assign3)
               } else {

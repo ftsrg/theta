@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
+import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectIndirectGlobalVarAccesses
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -70,8 +71,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
   companion object {
 
-    var random: Random =
-      Random.Default // use Random(seed) with a seed or Random.Default without seed
+    var random: Random = Random.Default
 
     /** Simple LTS that returns the enabled actions in a state. */
     private val simpleXcfaLts = getXcfaLts()
@@ -197,8 +197,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
           if (stack.size >= 2) {
             val lastButOne = stack[stack.size - 2]
             val mutexNeverReleased =
-              last.mutexLocks.containsKey("") &&
-                (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
+              last.mutexLocks.containsKey(AtomicFenceLabel.ATOMIC_MUTEX.name) &&
+                (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                  AtomicFenceLabel.ATOMIC_MUTEX.name
+                )
             if (last.node.explored.isEmpty() || mutexNeverReleased) {
               // if a mutex is never released another action (practically all the others) have to be
               // explored

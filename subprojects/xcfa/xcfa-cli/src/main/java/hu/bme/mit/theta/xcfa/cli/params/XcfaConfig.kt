@@ -24,10 +24,12 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
+import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
@@ -94,13 +96,17 @@ data class InputConfig(
     description = "Path of the property file (will overwrite --property when given)",
   )
   var propertyFile: File? = null,
-  @Parameter(names = ["--property-value"], description = "Property")
-  var property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+  @Parameter(
+    names = ["--property-value"],
+    description = "Property",
+    converter = StringToXcfaPropertyConverter::class,
+  )
+  var property: XcfaProperty = XcfaProperty(ErrorDetection.ERROR_LOCATION),
 ) : Config {
 
   override fun toString(): String {
     return "InputConfig(inputFile=${input}, catFile=${catFile}, parseCtx=${parseCtx}, " +
-      "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, property=${property}"
+      "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, inputProperty=${property.inputProperty}"
   }
 }
 
@@ -110,7 +116,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_SEQ, LBE_FULL, LBE_LOCAL)")
   var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
   @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
-  var staticCoi: Boolean = false,
+  var enableStaticCoi: Boolean = false,
   @Parameter(
     names = ["--unroll"],
     description =
@@ -123,6 +129,12 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)",
   )
   var forceUnroll: Int = -1,
+  @Parameter(
+    names = ["--datarace-to-reachability"],
+    description =
+      "Enable specification transformation from data race to reachability. Use this when the desired backend does not natively support data race checking.",
+  )
+  var enableDataRaceToReachability: Boolean = false,
   @Parameter(
     names = ["--enable-few"],
     description =

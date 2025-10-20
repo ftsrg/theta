@@ -41,22 +41,13 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.getLoopElements
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.get
-import kotlin.collections.none
 
 /** Get flattened label list (without sequence labels). */
 fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
 fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   when (this) {
-    is SequenceLabel -> {
-      val ret = mutableListOf<XcfaLabel>()
-      labels.forEach { ret.addAll(it.getFlatLabels()) }
-      ret
-    }
-
+    is SequenceLabel -> labels.flatMap { it.getFlatLabels() }
     else -> listOf(this)
   }
 
@@ -104,10 +95,10 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
     visitedLocations.add(visiting)
     for (outEdge in visiting.outgoingEdges) {
       var isNextAtomic = checkNotNull(isAtomic[visiting])
-      if (outEdge.getFlatLabels().any { it.isAtomicBegin }) {
+      if (outEdge.getFlatLabels().any { it is AtomicBeginLabel }) {
         isNextAtomic = true
       }
-      if (outEdge.getFlatLabels().any { it.isAtomicEnd }) {
+      if (outEdge.getFlatLabels().any { it is AtomicEndLabel }) {
         isNextAtomic = false
       }
       val target = outEdge.target

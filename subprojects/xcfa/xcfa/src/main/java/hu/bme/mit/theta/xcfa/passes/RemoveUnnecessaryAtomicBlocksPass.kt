@@ -17,8 +17,6 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isAtomicBegin
-import hu.bme.mit.theta.xcfa.utils.isAtomicEnd
 
 class RemoveUnnecessaryAtomicBlocksPass : ProcedurePass {
 
@@ -27,9 +25,9 @@ class RemoveUnnecessaryAtomicBlocksPass : ProcedurePass {
       val labelsToRemove = mutableListOf<XcfaLabel>()
       val atomicBegins = mutableListOf<XcfaLabel>()
       edge.getFlatLabels().forEach { label ->
-        if (label.isAtomicBegin) {
+        if (label is AtomicBeginLabel) {
           atomicBegins.add(label)
-        } else if (label.isAtomicEnd && atomicBegins.isNotEmpty()) {
+        } else if (label is AtomicEndLabel && atomicBegins.isNotEmpty()) {
           labelsToRemove.add(atomicBegins.removeLast())
           labelsToRemove.add(label)
         }

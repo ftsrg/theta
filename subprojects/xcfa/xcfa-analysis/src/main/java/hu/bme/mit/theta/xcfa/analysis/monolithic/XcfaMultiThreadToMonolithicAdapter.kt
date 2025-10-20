@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -43,6 +44,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.*
@@ -82,8 +84,14 @@ class XcfaMultiThreadToMonolithicAdapter(
       val threads = model.staticThreadProcedureMap
       var pid = 0
       threadIds = threads.keys.associateWith { pid++ }
+      val varLookUps =
+        threadIds.entries.associate { (start, id) ->
+          start to threads[start]!!.createLookup("T$id")
+        }
       val pidVars =
-        threads.keys.filterNotNull().associate { it.pidVar to Decls.Var(it.pidVar.name, intType) }
+        threads.keys.filterNotNull().associate {
+          it.pidVar to Decls.Var(it.pidVar.changeVars(varLookUps[it]!!).name, intType)
+        }
       locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
 
       val locs = mutableMapOf<StartLabel?, MutableMap<XcfaLocation, Int>>()
@@ -108,13 +116,14 @@ class XcfaMultiThreadToMonolithicAdapter(
         threads.flatMap { (thread, proc) ->
           val locVar = locVars[thread]!!
           val locMap = locs[thread]!!
+          val varLookUp = varLookUps[thread]!!
           proc.edges
             .map { edge: XcfaEdge ->
               val (source, target, label) = edge
               SequenceStmt.of(
                 listOf(
                   AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[source]!!))),
-                  label.toStmt(),
+                  label.changeVars(varLookUp, parseContext).toStmt(),
                   AssignStmt.of(locVar, cast(smtInt(locMap[target]!!), locVar.type)),
                   AssignStmt.of(edgeVar, cast(smtInt(edges[thread]!![edge]!!), edgeVar.type)),
                 ) +
@@ -139,7 +148,7 @@ class XcfaMultiThreadToMonolithicAdapter(
                         val pidVar = pidVars[l.pidVar]!!
                         val potentialJoinedThreads =
                           threadIds.entries.filter { (start, _) ->
-                            start != null && start.pidVar == l.pidVar
+                            start != null && pidVars[start.pidVar]!! == pidVar
                           }
                         val joinCondition =
                           if (potentialJoinedThreads.isEmpty())
@@ -212,6 +221,35 @@ class XcfaMultiThreadToMonolithicAdapter(
             }
           }
           .let { And(it) }
+
+      val events: List<Event<VarDecl<*>>> =
+        threads
+          .flatMap { (start, proc) ->
+            proc.edges.flatMap { edge ->
+              val varLookUp = varLookUps[start]!!
+              edge.getFlatLabels().map { label ->
+                label.toStmt().changeVars(varLookUp, parseContext).let {
+                  if (label is StartLabel) {
+                    val pidVar = pidVars[label.pidVar]!!
+                    SequenceStmt.of(
+                      listOf(
+                        it,
+                        AssignStmt.of(pidVar, cast(smtInt(threadIds[label]!!), pidVar.type)),
+                      )
+                    )
+                  } else it
+                }
+              }
+            }
+          }
+          .toSet()
+          .map {
+            object : Event<VarDecl<*>> {
+              override fun getAffectedVars(): List<VarDecl<*>> =
+                StmtUtils.getWrittenVars(it).toList()
+            }
+          }
+          .toList()
 
       return MonolithicExpr(
         initExpr = And(locDefaultValues, edgeDefaultValue, defaultValues),

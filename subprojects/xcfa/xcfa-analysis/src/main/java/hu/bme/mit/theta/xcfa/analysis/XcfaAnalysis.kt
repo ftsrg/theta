@@ -42,8 +42,9 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -54,13 +55,17 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
   private val coreInitFunc: InitFunc<XcfaState<PtrState<S>>, XcfaPrec<P>>,
   private var coreTransFunc: TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>,
+  coneOfInfluence: XcfaCoi? = null,
 ) : Analysis<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>> {
 
   init {
-    ConeOfInfluence.coreTransFunc =
-      transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
-    coreTransFunc =
-      ConeOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    if (coneOfInfluence != null) {
+      coneOfInfluence.coreTransFunc =
+        transFunc
+          as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
+      coreTransFunc =
+        coneOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
+    }
   }
 
   override fun getPartialOrd(): PartialOrd<XcfaState<PtrState<S>>> = corePartialOrd
@@ -198,33 +203,20 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   }
 }
 
-enum class ErrorDetection {
-  ERROR_LOCATION,
-  DATA_RACE,
-  OVERFLOW,
-  MEMSAFETY,
-  MEMCLEANUP,
-  NO_ERROR,
-  TERMINATION,
-}
-
 fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
   when (errorDetection) {
-    ErrorDetection.MEMSAFETY,
-    ErrorDetection.MEMCLEANUP,
     ErrorDetection.ERROR_LOCATION ->
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         s.processes.any { it.value.locs.peek().error }
       }
-
     ErrorDetection.DATA_RACE -> getDataRacePredicate()
-
-    ErrorDetection.NO_ERROR,
-    ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-
-    ErrorDetection.TERMINATION -> error("Termination only supports BOUNDED backend right now.")
+    ErrorDetection.NO_ERROR -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+    else ->
+      error(
+        "The error detection mode $errorDetection cannot be converted to a state predicate. Consider using a specification transformation."
+      )
   }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
@@ -245,7 +237,7 @@ private fun <S : ExprState> stackIsLeq(s1: XcfaState<PtrState<S>>, s2: XcfaState
 
 fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
-    s1.processes.size == s2.processes.size &&
+    s1.processes.keys == s2.processes.keys &&
       stackIsLeq(s1, s2) &&
       s1.bottom == s2.bottom &&
       s1.mutexes == s2.mutexes &&
@@ -292,7 +284,7 @@ private fun getExplXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i"))),
           ),
         )
       }
@@ -335,11 +327,13 @@ class ExplXcfaAnalysis(
   maxEnum: Int,
   partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
     coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, isHavoc),
+    coneOfInfluence = coi,
   )
 
 /// PRED
@@ -358,7 +352,7 @@ private fun getPredXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i"))),
           ),
         )
       }
@@ -397,9 +391,11 @@ class PredXcfaAnalysis(
   predAbstractor: PredAbstractor,
   partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
     coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc),
+    coneOfInfluence = coi,
   )

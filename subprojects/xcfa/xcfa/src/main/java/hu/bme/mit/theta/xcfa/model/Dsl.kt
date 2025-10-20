@@ -274,8 +274,28 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
       return SequenceLabel(labelList)
     }
 
-    fun fence(vararg content: String): SequenceLabel {
-      val label = FenceLabel(content.toSet(), EmptyMetaData)
+    fun atomic_begin(): SequenceLabel {
+      val label = AtomicBeginLabel()
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun atomic_end(): SequenceLabel {
+      val label = AtomicEndLabel()
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun mutex_lock(handle: String): SequenceLabel {
+      val mutex = this@XcfaProcedureBuilderContext.builder.lookup(handle)
+      val label = MutexLockLabel(mutex)
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    fun mutex_unlock(handle: String): SequenceLabel {
+      val mutex = this@XcfaProcedureBuilderContext.builder.lookup(handle)
+      val label = MutexUnlockLabel(mutex)
       labelList.add(label)
       return SequenceLabel(labelList)
     }

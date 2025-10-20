@@ -23,8 +23,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.DATA_RACE
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig.SIMPLE
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -152,8 +152,8 @@ fun complexPortfolio25(
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
-        coi = if (baseConfig.inputConfig.property == DATA_RACE) NO_COI else COI,
-        por = if (baseConfig.inputConfig.property == DATA_RACE) SPOR else AASPOR,
+        coi = if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE) NO_COI else COI,
+        por = if (baseConfig.inputConfig.property.verifiedProperty == DATA_RACE) SPOR else AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
       )
     baseConfig =
@@ -1157,7 +1157,10 @@ fun complexPortfolio25(
   var inProcessStm = getStm(mainTrait, true)
   var notInProcessStm = getStm(mainTrait, false)
 
-  if (parseContext.multiThreading && baseConfig.inputConfig.property == ERROR_LOCATION) {
+  if (
+    parseContext.multiThreading &&
+      baseConfig.inputConfig.property.verifiedProperty == ERROR_LOCATION
+  ) {
     val inProcOc = ConfigNode("OC", ocConfig(true), checker)
     val notInProcOc = ConfigNode("OC", ocConfig(false), checker)
     val inProcessCegar = HierarchicalNode("InProcessCegar", inProcessStm)

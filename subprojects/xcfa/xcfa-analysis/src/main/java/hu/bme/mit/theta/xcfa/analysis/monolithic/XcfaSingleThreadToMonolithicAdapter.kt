@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.pred.PredState
@@ -51,7 +52,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class XcfaSingleThreadToMonolithicAdapter(
-  model: XCFA,
+  override val model: XCFA,
   parseContext: ParseContext,
   private val initValues: Boolean = false,
 ) : XcfaToMonolithicAdapter(model, parseContext) {
@@ -114,7 +115,19 @@ class XcfaSingleThreadToMonolithicAdapter(
         transOffsetIndex = transUnfold.indexing,
         vars = StmtUtils.getVars(trans).toList(),
         ctrlVars = listOf(locVar, edgeVar),
-        events = events,
+        events =
+          model.procedures
+            .flatMap {
+              it.edges.flatMap { edge -> edge.getFlatLabels().map { label -> label.toStmt() } }
+            }
+            .toSet()
+            .map {
+              object : Event<VarDecl<*>> {
+                override fun getAffectedVars(): List<VarDecl<*>> =
+                  StmtUtils.getWrittenVars(it).toList()
+              }
+            }
+            .toList(),
       )
     }
 
