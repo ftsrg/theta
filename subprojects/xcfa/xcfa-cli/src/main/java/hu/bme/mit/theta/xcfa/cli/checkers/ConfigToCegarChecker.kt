@@ -36,6 +36,7 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -48,6 +49,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 fun getCegarChecker(
   xcfa: XCFA,
   mcm: MCM,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
@@ -65,7 +67,7 @@ fun getCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val lts = cegarConfig.coi.getLts(xcfa, ignoredVarRegistry, cegarConfig.por)
+  val (coi, lts) = cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry)
   val waitlist =
     if (cegarConfig.por.isDynamic) {
       (cegarConfig.coi.porLts as XcfaDporLts).waitlist
@@ -91,13 +93,14 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.stopCriterion,
       logger,
       lts,
-      config.inputConfig.property,
+      config.inputConfig.property.verifiedProperty,
       if (cegarConfig.por.isDynamic) {
         XcfaDporLts.getPartialOrder(corePartialOrd)
       } else {
         corePartialOrd
       },
       cegarConfig.abstractorConfig.havocMemory,
+      coi,
     ) as ArgAbstractor<ExprState, ExprAction, Prec>
 
   val ref: ExprTraceChecker<Refutation> =

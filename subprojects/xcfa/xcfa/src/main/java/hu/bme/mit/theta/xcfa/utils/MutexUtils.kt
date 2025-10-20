@@ -15,58 +15,24 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.FenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
 
-inline val XcfaLabel.isAtomicBegin: Boolean
-  get() = this is FenceLabel && "ATOMIC_BEGIN" in labels
-inline val XcfaLabel.isAtomicEnd: Boolean
-  get() = this is FenceLabel && "ATOMIC_END" in labels
-
-/** The set of mutexes acquired by the label. */
-inline val FenceLabel.acquiredMutexes: Set<String>
-  get() = labels.mapNotNull { it.acquiredMutex }.toSet()
-
-inline val String.acquiredMutex: String?
-  get() =
-    when {
-      this == "ATOMIC_BEGIN" -> ""
-      startsWith("mutex_lock") -> substringAfter('(').substringBefore(')')
-      startsWith("cond_wait") -> substring("cond_wait".length + 1, length - 1).split(",")[1]
-      else -> null
-    }
-
-/** The set of mutexes released by the label. */
-inline val FenceLabel.releasedMutexes: Set<String>
-  get() = labels.mapNotNull { it.releasedMutex }.toSet()
-
-inline val String.releasedMutex: String?
-  get() =
-    when {
-      this == "ATOMIC_END" -> ""
-      startsWith("mutex_unlock") -> substringAfter('(').substringBefore(')')
-      startsWith("start_cond_wait") ->
-        substring("start_cond_wait".length + 1, length - 1).split(",")[1]
-
-      else -> null
-    }
+val XcfaEdge.fenceVars: Set<VarDecl<*>>
+  get() = getFlatLabels().filterIsInstance<FenceLabel>().map { fence -> fence.handle }.toSet()
 
 /** The set of mutexes acquired embedded into each other. */
-inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<String>
+inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<VarDecl<*>>
   get() {
-    val acquired = mutableSetOf<String>()
-    val toVisit = mutableListOf<Pair<XcfaEdge, Set<String>>>(this to setOf())
+    val acquired = mutableSetOf<VarDecl<*>>()
+    val toVisit = mutableListOf<Pair<XcfaEdge, Set<VarDecl<*>>>>(this to setOf())
     while (toVisit.isNotEmpty()) {
       val (visiting, mutexes) = toVisit.removeFirst()
       val newMutexes = mutexes.toMutableSet()
       acquired.addAll(
-        visiting.getFlatLabels().flatMap { fence ->
-          if (fence !is FenceLabel) return@flatMap emptyList()
-          fence.acquiredMutexes +
-            fence.labels
-              .filter { it.startsWith("start_cond_wait") }
-              .map { it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[0] }
+        visiting.getFlatLabels().filterIsInstance<FenceLabel>().flatMap { fence ->
+          fence.acquiredMutexes
         }
       )
       if (visiting.mutexOperations(newMutexes)) {
@@ -82,10 +48,10 @@ inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<String>
  * @param mutexes the set of mutexes currently acquired
  * @return true if the set of mutexes is non-empty after the mutex operations
  */
-fun XcfaEdge.mutexOperations(mutexes: MutableSet<String>): Boolean {
+fun XcfaEdge.mutexOperations(mutexes: MutableSet<VarDecl<*>>): Boolean {
   val edgeFlatLabels = getFlatLabels()
-  val acquiredLocks = mutableSetOf<String>()
-  val releasedLocks = mutableSetOf<String>()
+  val acquiredLocks = mutableSetOf<VarDecl<*>>()
+  val releasedLocks = mutableSetOf<VarDecl<*>>()
   edgeFlatLabels.filterIsInstance<FenceLabel>().forEach { fence ->
     releasedLocks.addAll(fence.releasedMutexes)
     acquiredLocks.removeAll(fence.releasedMutexes)

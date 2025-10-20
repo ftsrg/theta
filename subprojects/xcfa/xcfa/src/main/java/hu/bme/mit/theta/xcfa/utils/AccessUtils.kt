@@ -16,11 +16,7 @@
 package hu.bme.mit.theta.xcfa.utils
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -29,20 +25,9 @@ import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
-import hu.bme.mit.theta.xcfa.model.FenceLabel
-import hu.bme.mit.theta.xcfa.model.InvokeLabel
-import hu.bme.mit.theta.xcfa.model.JoinLabel
-import hu.bme.mit.theta.xcfa.model.NondetLabel
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.StartLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.Predicate
 import kotlin.collections.plus
-import kotlin.plus
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
   globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
@@ -96,6 +81,12 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
     is JoinLabel -> setOf(pidVar)
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
+    is FenceLabel ->
+      when (this) {
+        is AtomicFenceLabel -> setOf()
+        is MutexTryLockLabel -> setOf(handle, successVar)
+        else -> setOf(handle)
+      }
     else -> emptySet()
   }
 
@@ -126,9 +117,6 @@ private fun List<VarAccessMap>.mergeVarAccesses(): VarAccessMap =
   this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
   }
-
-private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
-  listOfNotNull(this, other).mergeVarAccesses()
 
 private fun List<DereferenceAccessMap>.mergeDerefs(): DereferenceAccessMap =
   this.fold(mapOf()) { acc, next ->
@@ -176,6 +164,13 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to WRITE)
 
     is JoinLabel -> mapOf(pidVar to READ)
+    is FenceLabel -> {
+      when (this) {
+        is AtomicFenceLabel -> mapOf()
+        is MutexTryLockLabel -> mapOf(handle to READ) + mapOf(successVar to WRITE)
+        else -> mapOf(handle to READ)
+      }
+    }
     else -> emptyMap()
   }
 

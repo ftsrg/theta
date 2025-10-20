@@ -31,7 +31,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
@@ -66,7 +66,7 @@ fun getIc3Checker(
   }
 
   val passes = mutableListOf<MonolithicExprPass<EmptyProof>>()
-  if (config.inputConfig.property == ErrorDetection.TERMINATION) {
+  if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
     passes.add(L2SMEPass())
   }
   if (ic3Config.cegar) {

@@ -89,6 +89,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                 this.params.map { it.replaceDerefs(lut) },
                 metadata,
                 tempLookup,
+                isLibraryFunction,
               ),
             metadata,
           )
