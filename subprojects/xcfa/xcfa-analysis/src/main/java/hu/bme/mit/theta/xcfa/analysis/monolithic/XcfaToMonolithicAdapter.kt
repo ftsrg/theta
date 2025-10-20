@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis.monolithic
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -90,4 +91,13 @@ abstract class XcfaToMonolithicAdapter(
       }
       .toList()
       .let { And(it) }
+  
+  protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> = stmts
+      .map {
+        object : Event<VarDecl<*>> {
+          override fun getAffectedVars(): List<VarDecl<*>> =
+            StmtUtils.getWrittenVars(it).toList()
+        }
+      }
+      .toList()
 }
