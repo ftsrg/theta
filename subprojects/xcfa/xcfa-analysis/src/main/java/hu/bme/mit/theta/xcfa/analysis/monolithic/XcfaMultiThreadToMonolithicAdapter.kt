@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -88,10 +89,6 @@ class XcfaMultiThreadToMonolithicAdapter(
         threadIds.entries.associate { (start, id) ->
           start to threads[start]!!.createLookup("T$id")
         }
-      val pidVars =
-        threads.keys.filterNotNull().associate {
-          it.pidVar to Decls.Var(it.pidVar.changeVars(varLookUps[it]!!).name, intType)
-        }
       locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
 
       val locs = mutableMapOf<StartLabel?, MutableMap<XcfaLocation, Int>>()
@@ -130,13 +127,16 @@ class XcfaMultiThreadToMonolithicAdapter(
                   label.getFlatLabels().flatMap { l ->
                     when (l) {
                       is StartLabel -> {
-                        val pidVar = pidVars[l.pidVar]!!
+                        val pidVar = l.pidVar.changeVars(varLookUp)
                         val startedLocVar = locVars[l]!!
                         val startedLocMap = locs[l]!!
                         val startedInitLoc = threads[l]!!.initLoc
                         listOf(
                           AssumeStmt.of(Eq(startedLocVar.ref, smtInt(-1))),
-                          AssignStmt.of(pidVar, cast(smtInt(threadIds[l]!!), pidVar.type)),
+                          AssignStmt.of(
+                            cast(pidVar, pidVar.type),
+                            cast(smtInt(threadIds[l]!!), pidVar.type),
+                          ),
                           AssignStmt.of(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
@@ -145,10 +145,10 @@ class XcfaMultiThreadToMonolithicAdapter(
                       }
 
                       is JoinLabel -> {
-                        val pidVar = pidVars[l.pidVar]!!
+                        val pidVar = l.pidVar.changeVars(varLookUp)
                         val potentialJoinedThreads =
                           threadIds.entries.filter { (start, _) ->
-                            start != null && pidVars[start.pidVar]!! == pidVar
+                            start != null && start.pidVar == l.pidVar
                           }
                         val joinCondition =
                           if (potentialJoinedThreads.isEmpty())
@@ -230,11 +230,14 @@ class XcfaMultiThreadToMonolithicAdapter(
               edge.getFlatLabels().map { label ->
                 label.toStmt().changeVars(varLookUp, parseContext).let {
                   if (label is StartLabel) {
-                    val pidVar = pidVars[label.pidVar]!!
+                    val pidVar = label.pidVar.changeVars(varLookUp)
                     SequenceStmt.of(
                       listOf(
                         it,
-                        AssignStmt.of(pidVar, cast(smtInt(threadIds[label]!!), pidVar.type)),
+                        AssignStmt.of(
+                          cast(pidVar, pidVar.type),
+                          cast(smtInt(threadIds[label]!!), pidVar.type),
+                        ),
                       )
                     )
                   } else it
