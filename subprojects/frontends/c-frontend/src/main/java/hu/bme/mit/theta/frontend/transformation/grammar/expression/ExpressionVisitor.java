@@ -15,15 +15,6 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
-import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
@@ -60,12 +51,22 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import org.kframework.mpfr.BigFloat;
+import org.kframework.mpfr.BinaryMathContext;
+
 import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.kframework.mpfr.BigFloat;
-import org.kframework.mpfr.BinaryMathContext;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 // FunctionVisitor may be null, e.g., when parsing a simple C expression.
 
@@ -73,7 +74,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     protected final List<CStatement> preStatements = new ArrayList<>();
     protected final List<CStatement> postStatements = new ArrayList<>();
     protected final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
-    protected final Set<VarDecl<?>> atomicVars;
     protected final Map<VarDecl<?>, CDeclaration> functions;
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
@@ -83,7 +83,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private final Logger uniqueWarningLogger;
 
     public ExpressionVisitor(
-            Set<VarDecl<?>> atomicVars,
             ParseContext parseContext,
             FunctionVisitor functionVisitor,
             Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables,
@@ -91,7 +90,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             TypedefVisitor typedefVisitor,
             TypeVisitor typeVisitor,
             Logger uniqueWarningLogger) {
-        this.atomicVars = atomicVars;
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
         this.variables = variables;
@@ -745,10 +743,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
         final var variable = getVar(ctx.Identifier().getText());
-        if (atomicVars.contains(variable)) {
-            preStatements.add(new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
-            postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
-        }
         return variable.getRef();
     }
 
