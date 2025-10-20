@@ -257,3 +257,70 @@ private fun getValuationAfterInitPhase(
     }
   return finalInitEdges.map { valuations[it]!! }.reduce { acc, other -> intersect(acc, other) }
 }
+
+/**
+ * Partitions the pointer variables of the XCFA based on their points-to sets. Two pointer variables
+ * are in the same partition if their points-to sets intersect (i.e., they may point to the same
+ * location).
+ *
+ * @param xcfa the XCFA
+ * @param initEdges the set of edges after which the points-to sets are calculated
+ * @return the list of partitions, each partition is a pair of the set of pointer variables and the
+ *   set of literals they may point to
+ */
+fun pointerPartitions(
+  xcfa: XCFA,
+  initEdges: Set<XcfaEdge>,
+): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
+  val pointsTo = xcfa.getPointsToGraph(initEdges).toList()
+
+  val n = pointsTo.size
+  val uf = UnionFind(n)
+
+  val elementToSets = mutableMapOf<LitExpr<*>, MutableList<Int>>()
+  pointsTo.forEachIndexed { index, (_, lits) ->
+    lits.forEach { lit -> elementToSets.getOrPut(lit) { mutableListOf() }.add(index) }
+  }
+
+  elementToSets.forEach { (_, indices) ->
+    for (i in 1 until indices.size) {
+      uf.union(indices[0], indices[i])
+    }
+  }
+
+  val groups = mutableMapOf<Int, Pair<MutableSet<VarDecl<*>>, MutableSet<LitExpr<*>>>>()
+  for (i in 0 until n) {
+    val root = uf.find(i)
+    val item = pointsTo[i]
+    val group = groups.getOrPut(root) { mutableSetOf<VarDecl<*>>() to mutableSetOf() }
+    group.first.add(item.first)
+    group.second.addAll(item.second)
+  }
+
+  return groups.values.toList()
+}
+
+private class UnionFind(n: Int) {
+  private val parent = IntArray(n) { it }
+  private val rank = IntArray(n) { 0 }
+
+  fun find(x: Int): Int {
+    if (parent[x] != x) parent[x] = find(parent[x])
+    return parent[x]
+  }
+
+  fun union(x: Int, y: Int) {
+    val rootX = find(x)
+    val rootY = find(y)
+    if (rootX == rootY) return
+
+    if (rank[rootX] < rank[rootY]) {
+      parent[rootX] = rootY
+    } else if (rank[rootX] > rank[rootY]) {
+      parent[rootY] = rootX
+    } else {
+      parent[rootY] = rootX
+      rank[rootX]++
+    }
+  }
+}

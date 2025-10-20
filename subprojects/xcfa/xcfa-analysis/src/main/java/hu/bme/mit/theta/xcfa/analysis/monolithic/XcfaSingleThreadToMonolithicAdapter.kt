@@ -51,7 +51,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class XcfaSingleThreadToMonolithicAdapter(
-  model: XCFA,
+  override val model: XCFA,
   parseContext: ParseContext,
   private val initValues: Boolean = false,
 ) : XcfaToMonolithicAdapter(model, parseContext) {

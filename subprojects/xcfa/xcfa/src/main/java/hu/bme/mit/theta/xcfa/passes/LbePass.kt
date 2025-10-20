@@ -306,10 +306,7 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
         label.collectVars().all(builder.getVars()::contains) &&
         label.dereferences.isEmpty() &&
         !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
-        !(label is FenceLabel &&
-          label.labels.any { name ->
-            listOf("ATOMIC_BEGIN", "mutex_lock", "cond_wait").any { name.startsWith(it) }
-          })
+        !(label is FenceLabel && label.acquiredMutexes.isNotEmpty())
     }
   }
 }

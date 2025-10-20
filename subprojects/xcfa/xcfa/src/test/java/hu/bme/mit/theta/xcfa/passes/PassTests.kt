@@ -28,6 +28,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -59,6 +61,7 @@ class PassTests {
     private val parseContext = ParseContext()
     private val fpParseContext =
       ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
+    private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
     @JvmStatic
     val data: List<Arguments> =
@@ -143,7 +146,7 @@ class PassTests {
         ),
         PassTestData(
           global = {},
-          passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(false)),
+          passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(property)),
           input = { (init to final) { "reach_error".invoke() } },
           output = { (init to err) { skip() } },
         ),
@@ -153,7 +156,7 @@ class PassTests {
             listOf(
               NormalizePass(),
               DeterministicPass(),
-              FinalLocationPass(false),
+              FinalLocationPass(property),
               UnusedLocRemovalPass(),
             ),
           input = {
@@ -328,8 +331,8 @@ class PassTests {
               "pid".join()
               "pid".assign("0")
             }
-            (init to "L3") { fence("mutex_lock(x)") }
-            (init to "L4") { fence("mutex_unlock(x)") }
+            (init to "L3") { mutex_lock("x") }
+            (init to "L4") { mutex_unlock("x") }
           },
         ),
         PassTestData(
@@ -340,8 +343,8 @@ class PassTests {
             (init to "L2") { "__VERIFIER_atomic_end"("0") }
           },
           output = {
-            (init to "L1") { fence("ATOMIC_BEGIN") }
-            (init to "L2") { fence("ATOMIC_END") }
+            (init to "L1") { atomic_begin() }
+            (init to "L2") { atomic_end() }
           },
         ),
         PassTestData(
@@ -425,7 +428,7 @@ class PassTests {
 
   @Test
   fun testCPipeline() {
-    val passes = CPasses(false, parseContext, NullLogger.getInstance())
+    val passes = CPasses(property, parseContext, NullLogger.getInstance())
     val xcfaSource =
       xcfa("example") {
         procedure("main", passes) { (init to final) { "proc1"() } }.start()
@@ -449,7 +452,7 @@ class PassTests {
     lateinit var edge: XcfaEdge
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+        procedure("main", CPasses(property, parseContext, NullLogger.getInstance())) {
           edge = (init to final) {
             assume("1 == 1")
             "proc1"()
