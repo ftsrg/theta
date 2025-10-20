@@ -284,7 +284,7 @@ private fun getExplXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i"))),
           ),
         )
       }
@@ -352,7 +352,7 @@ private fun getPredXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i"))),
           ),
         )
       }

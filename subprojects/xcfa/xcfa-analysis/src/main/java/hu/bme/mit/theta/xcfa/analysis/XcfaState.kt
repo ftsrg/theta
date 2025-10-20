@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -192,7 +193,7 @@ constructor(
       )
 
     val pid = pidCnt++
-    val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
+    val lookup = procedure.createLookup("T$pid")
     newThreadLookup[startLabel.pidVar] = pid
     newProcesses[pid] =
       XcfaProcessState(
@@ -336,7 +337,7 @@ data class XcfaProcessState(
     val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
     val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
     deque.push(xcfaProcedure.initLoc)
-    val lookup = createLookup(xcfaProcedure, prefix, "P${procCnt++}")
+    val lookup = xcfaProcedure.createLookup(prefix, "P${procCnt++}")
     varLookup.push(lookup)
     returnStmts.push(returnStmt)
     paramStmts.push(
@@ -415,12 +416,11 @@ data class XcfaProcessState(
 
   companion object {
 
-    fun createLookup(
-      proc: XcfaProcedure,
-      threadPrefix: String,
-      procPrefix: String,
+    fun XcfaProcedure.createLookup(
+      threadPrefix: String = "",
+      procPrefix: String = "",
     ): Map<VarDecl<*>, VarDecl<*>> =
-      listOf(proc.params.map { it.first }, proc.vars)
+      listOf(params.map { it.first }, vars)
         .flatten()
         .associateWith {
           val sj = StringJoiner("::")
