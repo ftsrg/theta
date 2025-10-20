@@ -93,14 +93,7 @@ abstract class XcfaToMonolithicAdapter(
       .toList()
       .let { And(it) }
   
-  protected val events: List<Event<VarDecl<*>>>
-    get() = model.procedures
-      .flatMap {
-        it.edges.flatMap { xcfaEdge ->
-          xcfaEdge.getFlatLabels().map { label -> label.toStmt() }
-        }
-      }
-      .toSet()
+  protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> = stmts
       .map {
         object : Event<VarDecl<*>> {
           override fun getAffectedVars(): List<VarDecl<*>> =

@@ -114,7 +114,7 @@ class XcfaSingleThreadToMonolithicAdapter(
         transOffsetIndex = transUnfold.indexing,
         vars = StmtUtils.getVars(trans).toList(),
         ctrlVars = listOf(locVar, edgeVar),
-        events = events,
+        events = events(tranList),
       )
     }
 
