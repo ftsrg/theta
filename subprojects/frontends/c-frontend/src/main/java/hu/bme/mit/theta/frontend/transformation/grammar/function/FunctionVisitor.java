@@ -15,13 +15,6 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.function;
 
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
-
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
@@ -53,10 +46,18 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
-import java.util.*;
-import java.util.stream.Stream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+
+import java.util.*;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as
@@ -334,7 +335,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         ctx.constantExpression()
                                 .accept(
                                         new ExpressionVisitor(
-                                                atomicVariables,
                                                 parseContext,
                                                 this,
                                                 variables,
@@ -661,7 +661,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
         ExpressionVisitor expressionVisitor =
                 new ExpressionVisitor(
-                        atomicVariables,
                         parseContext,
                         this,
                         variables,
@@ -787,7 +786,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
         ExpressionVisitor expressionVisitor =
                 new ExpressionVisitor(
-                        atomicVariables,
                         parseContext,
                         this,
                         variables,
