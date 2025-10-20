@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis.monolithic
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -43,6 +44,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.kframework.mpfr.BigFloat
 
@@ -90,4 +92,20 @@ abstract class XcfaToMonolithicAdapter(
       }
       .toList()
       .let { And(it) }
+  
+  protected val events: List<Event<VarDecl<*>>>
+    get() = model.procedures
+      .flatMap {
+        it.edges.flatMap { xcfaEdge ->
+          xcfaEdge.getFlatLabels().map { label -> label.toStmt() }
+        }
+      }
+      .toSet()
+      .map {
+        object : Event<VarDecl<*>> {
+          override fun getAffectedVars(): List<VarDecl<*>> =
+            StmtUtils.getWrittenVars(it).toList()
+        }
+      }
+      .toList()
 }

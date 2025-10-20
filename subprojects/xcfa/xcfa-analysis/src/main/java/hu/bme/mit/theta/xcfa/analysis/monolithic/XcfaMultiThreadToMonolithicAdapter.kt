@@ -220,6 +220,7 @@ class XcfaMultiThreadToMonolithicAdapter(
         transOffsetIndex = transUnfold.indexing,
         vars = StmtUtils.getVars(trans).toList(),
         ctrlVars = locVars.values + edgeVar,
+        events = events,
       )
     }
 
