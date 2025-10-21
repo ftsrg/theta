@@ -32,6 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.petrinet.analysis.PetriNetForceVarOrdering
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory
@@ -64,10 +65,7 @@ class XstsCliPetrinetMdd :
   private val dependencyOutput by PetrinetDependencyOutputOptions()
 
   private fun loadOrdering(petriNet: PetriNet): List<Place> =
-    if (ordering == null)
-      petriNet.places.sortedWith { p1: Place, p2: Place ->
-        String.CASE_INSENSITIVE_ORDER.compare(p1.id.reversed(), p2.id.reversed())
-      }
+    if (ordering == null) PetriNetForceVarOrdering.orderVars(petriNet)
     else VariableOrderingFactory.fromFile(ordering, petriNet)
 
   private fun petrinetAnalysis() {
