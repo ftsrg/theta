@@ -39,6 +39,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -47,7 +48,6 @@ import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
-import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -150,24 +150,26 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
+    SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
       getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
     DataRaceToReachabilityPass.enabled = false
 
-    val ocChecker = XcfaOcChecker(
-      xcfa = xcfa,
-      property = property.verifiedProperty,
-      decisionProcedure = OcDecisionProcedureType.BASIC,
-      smtSolver = "Z3:4.13",
-      logger = NullLogger.getInstance(),
-      conflictInput = null,
-      outputConflictClauses = false,
-      nonPermissiveValidation = false,
-      autoConflictConfig = AutoConflictFinderConfig.NONE,
-      autoConflictBound = -1,
-    )
+    val ocChecker =
+      XcfaOcChecker(
+        xcfa = xcfa,
+        property = property.verifiedProperty,
+        decisionProcedure = OcDecisionProcedureType.BASIC,
+        smtSolver = "Z3:4.13",
+        logger = NullLogger.getInstance(),
+        conflictInput = null,
+        outputConflictClauses = false,
+        nonPermissiveValidation = false,
+        autoConflictConfig = AutoConflictFinderConfig.NONE,
+        autoConflictBound = -1,
+      )
 
     val safetyResult = ocChecker.check(null)
     Assertions.assertTrue(verdict(safetyResult))

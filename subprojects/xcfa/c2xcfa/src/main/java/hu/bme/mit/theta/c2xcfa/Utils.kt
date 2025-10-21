@@ -112,6 +112,7 @@ fun getExpressionFromC(
   val expr =
     context.accept(
       ExpressionVisitor(
+        setOf(),
         parseContext,
         null,
         ArrayDeque(listOf(variables)),
