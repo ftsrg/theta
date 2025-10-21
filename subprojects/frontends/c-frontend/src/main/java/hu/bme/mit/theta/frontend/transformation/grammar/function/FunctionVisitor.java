@@ -256,7 +256,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private void propagateFunctionName(CStatement stmt, String name) {
         if (stmt.getFunctionName() == null) {
             // only overwrite if null, because
-            // sometimes we set it to "NonC" on purpose
+            // sometimes we set it to "NotC" on purpose
             // and we do not want to overwrite that
             stmt.setFunctionName(name);
         }

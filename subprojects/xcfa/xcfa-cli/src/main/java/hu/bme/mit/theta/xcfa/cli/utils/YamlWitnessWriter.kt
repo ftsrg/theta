@@ -449,44 +449,49 @@ private fun WitnessNode.toSegment(
         constraint = Constraint(constraintValue, format = Format.C_EXPRESSION),
       )
     } else {
-      val constraint =
-        globalState
-          ?.toMap()
-          ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
-          ?.mapNotNull { (varDecl, value) ->
-            val splitName = varDecl.name.split("::")
-            val rootName =
-              if (splitName[0].matches(Regex("T[0-9]*")))
-                splitName.subList(2, splitName.size).joinToString("::")
-              else varDecl.name
-            if (
-              splitName[splitName.size - 2] !=
-                (outgoingEdge.edge!!.metadata as CMetaData).functionName
-            ) {
-              null
-            } else {
-              if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
-                "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-                  printLit(value)
-                })"
-              } else {
+      // we only want assumptions that are actually about something in a function
+      if ((outgoingEdge.edge!!.metadata as CMetaData).functionName != "notC") {
+        return null
+      } else {
+        val constraint =
+          globalState
+            ?.toMap()
+            ?.filter { (varDecl, value) -> !(prevVal[varDecl]?.equals(value) ?: false) }
+            ?.mapNotNull { (varDecl, value) ->
+              val splitName = varDecl.name.split("::")
+              val rootName =
+                if (splitName[0].matches(Regex("T[0-9]*")))
+                  splitName.subList(2, splitName.size).joinToString("::")
+                else varDecl.name
+              if (
+                splitName[splitName.size - 2] !=
+                  (outgoingEdge.edge!!.metadata as CMetaData).functionName
+              ) {
                 null
+              } else {
+                if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
+                  "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
+                    printLit(value)
+                  })"
+                } else {
+                  null
+                }
               }
             }
-          }
-          ?.joinToString("&&")
-          ?.let { if (it.isEmpty()) "1" else it }
-      prevVal = globalState?.toMap() ?: prevVal
+            ?.joinToString("&&")
+            ?.let { if (it.isEmpty()) "1" else it }
+        prevVal = globalState?.toMap() ?: prevVal
 
-      return if (constraint != null && constraint.isNotEmpty()) {
-        WaypointContent(
-          type = WaypointType.ASSUMPTION,
-          location = loc,
-          action = action,
-          constraint = Constraint(constraint, format = Format.C_EXPRESSION),
-        )
-      } else {
-        null
+        return if (constraint != null && constraint.isNotEmpty()) {
+          WaypointContent(
+            type = WaypointType.ASSUMPTION,
+            location = loc,
+            action = action,
+            constraint = Constraint(constraint, format = Format.C_EXPRESSION),
+          )
+        } else {
+          null
+        }
       }
     }
   } else {
