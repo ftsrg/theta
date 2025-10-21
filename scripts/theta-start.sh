@@ -24,47 +24,26 @@ print_error() {
     exit 1
 }
 
-check_java_version() {
-    if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
-        export PATH="$(IFS=:; echo "${JAVA_FALLBACK_PATHS[*]}"):$PATH"
-    fi
-    if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
-        print_error "Could not set up openjdk-$JAVA_VERSION. Is the JRE/JDK installed?"
-    fi
-}
-
-run_theta() {
-    local args=$1
-    local infile=$2
-    local property=$3
-
-    echo LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
-        $args --input "$infile" --property "$property" --smt-home "$scriptdir/solvers"
-    LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
-        $args --input "$infile" --property "$property" --smt-home "$scriptdir/solvers"
-}
-
 # ----------------------------------------
 # Main script logic
 # ----------------------------------------
 
-# Handle --version
 if [[ "${1:-}" == "--version" ]]; then
     LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" --version \
         || echo "$VERIFIER_VERSION"
     exit 0
 fi
 
-check_java_version
-
-# Extract property argument and remaining args
-read -r property modified_args <<<"$(remove_property_arg "${@:2}")"
-
-if [[ -z "$property" ]]; then
-    print_error "Missing --property argument"
+if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
+    export PATH="$(IFS=:; echo "${JAVA_FALLBACK_PATHS[*]}"):$PATH"
+fi
+if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
+    print_error "Could not set up openjdk-$JAVA_VERSION. Is the JRE/JDK installed?"
 fi
 
-echo "Verifying input '$input_file' with property '$property' using arguments '$modified_args'"
+echo "Verifying input '$input_file' using arguments '${@:2}'"
 
-# Run Theta
-run_theta "$modified_args" "$input_file" "$property"
+echo LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+    "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"
+LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+    "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"
