@@ -57,8 +57,6 @@ class XcfaDataRaceTest {
 
   companion object {
 
-    private val property = XcfaProperty(ErrorDetection.DATA_RACE)
-
     @JvmStatic
     fun data(): Collection<Array<Any>> {
       return listOf(
@@ -77,6 +75,7 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for trivial no data race...")
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
       getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
@@ -92,6 +91,7 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val stream = javaClass.getResourceAsStream(program)
     val xcfa =
       getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
@@ -150,6 +150,7 @@ class XcfaDataRaceTest {
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
     SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
