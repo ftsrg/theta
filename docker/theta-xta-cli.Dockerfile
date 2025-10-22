@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ADD lib/ lib/
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
 ADD subprojects/xta/xta-cli/build/libs/theta-xta-cli-*-all.jar /theta-xta-cli.jar
 

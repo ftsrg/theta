@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ADD lib/ lib/
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
 ADD subprojects/sts/sts-cli/build/libs/theta-sts-cli-*-all.jar /theta-sts-cli.jar
 
