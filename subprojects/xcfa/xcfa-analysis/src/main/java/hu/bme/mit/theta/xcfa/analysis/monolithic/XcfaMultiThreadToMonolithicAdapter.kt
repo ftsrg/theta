@@ -330,15 +330,17 @@ class XcfaMultiThreadToMonolithicAdapter(
         loopEdges
           .flatMap { edge -> edge.getFlatLabels().filter { !it.transformable(true) } }
           .map { it.javaClass.simpleName }
+          .toSet()
       }"
     }
     val nonLoopEdges = procedure.edges - loopEdges
     val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
     check(nonLoopEdges.all { it.label.transformable(false) }) {
       "XcfaMultiThreadToMonolithicAdapter does not support these labels: ${
-        loopEdges
+        nonLoopEdges
           .flatMap { edge -> edge.getFlatLabels().filter { !it.transformable(false) } }
           .map { it.javaClass.simpleName }
+          .toSet()
       }"
     }
     val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
