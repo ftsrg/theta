@@ -76,19 +76,30 @@ class XcfaMultiThreadToMonolithicAdapter(
   private lateinit var locs: Map<StartLabel?, Map<XcfaLocation, Int>>
   private lateinit var edges: Map<StartLabel?, Map<XcfaEdge, Int>>
   private lateinit var threadIds: Map<StartLabel?, Int>
+  private val atomicMutex = Decls.Var("__atomic_mutex", intType)
 
   override val monolithicExpr: MonolithicExpr
     get() {
+      // Collect static thread-procedure mapping
       Preconditions.checkArgument(model.initProcedures.size == 1)
       val threads = model.staticThreadProcedureMap
+      val anyAtomicBlock =
+        threads.values.any { proc ->
+          proc.edges.any { edge -> edge.getFlatLabels().any { it is AtomicFenceLabel } }
+        }
+
+      // Associate thread ids
       var pid = 0
       threadIds = threads.keys.associateWith { pid++ }
+
+      // Create variable lookups for local variables
       val varLookUps =
         threadIds.entries.associate { (start, id) ->
           start to threads[start]!!.createLookup("T$id")
         }
-      locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
 
+      // Initialize location vars, location and edge mappings
+      locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
       val locs = mutableMapOf<StartLabel?, MutableMap<XcfaLocation, Int>>()
       var locCounter = 0
       val edges = mutableMapOf<StartLabel?, MutableMap<XcfaEdge, Int>>()
@@ -107,6 +118,7 @@ class XcfaMultiThreadToMonolithicAdapter(
       this.locs = locs
       this.edges = edges
 
+      // Build transition list
       val tranList =
         threads.flatMap { (thread, proc) ->
           val locVar = locVars[thread]!!
@@ -116,8 +128,16 @@ class XcfaMultiThreadToMonolithicAdapter(
             .map { edge: XcfaEdge ->
               val (source, target, label) = edge
               SequenceStmt.of(
-                listOf(
+                listOfNotNull(
                   AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[source]!!))),
+                  if (anyAtomicBlock)
+                    AssumeStmt.of(
+                      Or(
+                        Eq(atomicMutex.ref, smtInt(-1)),
+                        Eq(atomicMutex.ref, smtInt(threadIds[thread]!!)),
+                      )
+                    )
+                  else null,
                   label.changeVars(varLookUp, parseContext).toStmt(),
                   AssignStmt.of(locVar, cast(smtInt(locMap[target]!!), locVar.type)),
                   AssignStmt.of(edgeVar, cast(smtInt(edges[thread]!![edge]!!), edgeVar.type)),
@@ -172,6 +192,19 @@ class XcfaMultiThreadToMonolithicAdapter(
                         listOf(AssumeStmt.of(joinCondition))
                       }
 
+                      is AtomicBeginLabel -> {
+                        listOf(
+                          AssignStmt.of(
+                            atomicMutex,
+                            cast(smtInt(threadIds[thread]!!), atomicMutex.type),
+                          )
+                        )
+                      }
+
+                      is AtomicEndLabel -> {
+                        listOf(AssignStmt.of(atomicMutex, cast(smtInt(-1), atomicMutex.type)))
+                      }
+
                       else -> listOf()
                     }
                   }
@@ -193,6 +226,7 @@ class XcfaMultiThreadToMonolithicAdapter(
       val trans = NonDetStmt.of(tranList)
       val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
+      // Build initializer expressions
       val locDefaultValues =
         threads
           .map { (thread, proc) ->
@@ -206,9 +240,12 @@ class XcfaMultiThreadToMonolithicAdapter(
 
       val edgeDefaultValue = Eq(edgeVar.ref, smtInt(-1))
 
-      val defaultValues =
-        if (initValues) trans.getDefaultValues(locVars.values + edgeVar) else True()
+      val atomicMutexDefaultValue = if (anyAtomicBlock) Eq(atomicMutex.ref, smtInt(-1)) else True()
 
+      val defaultValues =
+        if (initValues) trans.getDefaultValues(locVars.values + edgeVar + atomicMutex) else True()
+
+      // Build property expression
       val propExpr =
         threads
           .map { (thread, proc) ->
@@ -220,8 +257,9 @@ class XcfaMultiThreadToMonolithicAdapter(
           }
           .let { And(it) }
 
+      // Build monolithic expression
       return MonolithicExpr(
-        initExpr = And(locDefaultValues, edgeDefaultValue, defaultValues),
+        initExpr = And(locDefaultValues, edgeDefaultValue, atomicMutexDefaultValue, defaultValues),
         transExpr = And(transUnfold.exprs),
         propExpr = propExpr,
         transOffsetIndex = transUnfold.indexing,
@@ -357,12 +395,13 @@ class XcfaMultiThreadToMonolithicAdapter(
     return threads
   }
 
-  private fun XcfaLabel.transformable(inLoop: Boolean): Boolean =
+  private fun XcfaLabel.transformable(inLoop: Boolean, fenceAllowed: Boolean = true): Boolean =
     when (this) {
-      is SequenceLabel -> this.labels.all { it.transformable(inLoop) }
-      is NondetLabel -> this.labels.all { it.transformable(inLoop) }
+      is SequenceLabel -> this.labels.all { it.transformable(inLoop, fenceAllowed) }
+      is NondetLabel -> this.labels.all { it.transformable(inLoop, false) }
       is StmtLabel,
       is NopLabel -> true
+      is AtomicFenceLabel -> fenceAllowed
       is StartLabel,
       is JoinLabel -> !inLoop
       else -> false

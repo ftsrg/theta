@@ -69,12 +69,14 @@ class XcfaSingleThreadToMonolithicAdapter(
         proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
       )
 
+      // Initialize location var, location and edge mappings
       locations = proc.locs.toList()
       edges = proc.edges.toList()
       val locationMap = locations.mapIndexed { index, location -> location to index }.toMap()
       val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
       locVar = Decls.Var("__loc_", intType)
 
+      // Build transition list
       val tranList =
         proc.edges
           .map { edge: XcfaEdge ->
@@ -98,8 +100,10 @@ class XcfaSingleThreadToMonolithicAdapter(
       val trans = NonDetStmt.of(tranList)
       val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
+      // Build initializer expressions
       val defaultValues = if (initValues) trans.getDefaultValues(setOf(locVar, edgeVar)) else True()
 
+      // Build monolithic expression
       return MonolithicExpr(
         initExpr =
           And(
