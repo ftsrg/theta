@@ -325,23 +325,19 @@ class XcfaMultiThreadToMonolithicAdapter(
   ): Map<StartLabel, XcfaProcedure> {
     val procedure = startedProcedures.last()
     val loopEdges = procedure.loopEdges
-    check(
-      loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel || it is NopLabel } }
-    ) {
+    check(loopEdges.all { edge -> edge.label.transformable(true) }) {
       "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop: ${
         loopEdges
-          .flatMap { edge -> edge.getFlatLabels().filter { !(it is StmtLabel || it is NopLabel) } }
+          .flatMap { edge -> edge.getFlatLabels().filter { !it.transformable(true) } }
           .map { it.javaClass.simpleName }
       }"
     }
     val nonLoopEdges = procedure.edges - loopEdges
     val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
-    check(
-      nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel }
-    ) {
+    check(nonLoopEdges.all { it.label.transformable(false) }) {
       "XcfaMultiThreadToMonolithicAdapter does not support these labels: ${
-        nonLoopLabels
-          .filter { !(it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel) }
+        loopEdges
+          .flatMap { edge -> edge.getFlatLabels().filter { !it.transformable(false) } }
           .map { it.javaClass.simpleName }
       }"
     }
@@ -358,4 +354,15 @@ class XcfaMultiThreadToMonolithicAdapter(
     }
     return threads
   }
+
+  private fun XcfaLabel.transformable(inLoop: Boolean): Boolean =
+    when (this) {
+      is SequenceLabel -> this.labels.all { it.transformable(inLoop) }
+      is NondetLabel -> this.labels.all { it.transformable(inLoop) }
+      is StmtLabel,
+      is NopLabel -> true
+      is StartLabel,
+      is JoinLabel -> !inLoop
+      else -> false
+    }
 }
