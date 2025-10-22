@@ -29,6 +29,7 @@ runs:
     #     images: ghcr.io/${{ inputs.user-ghcr }}/${{ inputs.project }}
     #     tags: type:raw, value=${{ inputs.version }}
     - name: Assemble Shadow JAR
+      shell: bash
       run: ./gradlew clean ${{ inputs.project }}:shadowJar
     - name: Build and push to DockerHub
       uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
