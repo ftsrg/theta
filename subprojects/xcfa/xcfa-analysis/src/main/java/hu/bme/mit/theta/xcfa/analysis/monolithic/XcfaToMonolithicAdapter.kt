@@ -91,12 +91,12 @@ abstract class XcfaToMonolithicAdapter(
       }
       .toList()
       .let { And(it) }
-  
-  protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> = stmts
+
+  protected fun events(stmts: List<Stmt>): List<Event<VarDecl<*>>> =
+    stmts
       .map {
         object : Event<VarDecl<*>> {
-          override fun getAffectedVars(): List<VarDecl<*>> =
-            StmtUtils.getWrittenVars(it).toList()
+          override fun getAffectedVars(): List<VarDecl<*>> = StmtUtils.getWrittenVars(it).toList()
         }
       }
       .toList()

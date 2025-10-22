@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -326,12 +325,26 @@ class XcfaMultiThreadToMonolithicAdapter(
   ): Map<StartLabel, XcfaProcedure> {
     val procedure = startedProcedures.last()
     val loopEdges = procedure.loopEdges
-    check(loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel || it is NopLabel } })
+    check(
+      loopEdges.all { edge -> edge.getFlatLabels().all { it is StmtLabel || it is NopLabel } }
+    ) {
+      "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop: ${
+        loopEdges
+          .flatMap { edge -> edge.getFlatLabels().filter { !(it is StmtLabel || it is NopLabel) } }
+          .map { it.javaClass.simpleName }
+      }"
+    }
     val nonLoopEdges = procedure.edges - loopEdges
     val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
     check(
       nonLoopLabels.all { it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel }
-    )
+    ) {
+      "XcfaMultiThreadToMonolithicAdapter does not support these labels: ${
+        nonLoopLabels
+          .filter { !(it is StmtLabel || it is StartLabel || it is JoinLabel || it is NopLabel) }
+          .map { it.javaClass.simpleName }
+      }"
+    }
     val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
 
     val threads = mutableMapOf<StartLabel, XcfaProcedure>()
