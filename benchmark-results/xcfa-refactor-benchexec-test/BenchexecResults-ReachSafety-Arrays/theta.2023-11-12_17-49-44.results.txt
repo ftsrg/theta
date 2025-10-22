@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Arrays, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:49:44 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az180-373
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     Intel Xeon Platinum 8272CL CPU @ 2.60GHz
+- cores:                 2
+- max frequency:         2593.907 MHz
+ram:                     7258.222592 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Arrays
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                           status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------------------------------
+array-examples/standard_partition_ground-2.yml                      TIMEOUT                        120.41      113.90        None
+array-programs/copysome2-1.yml                                      TIMEOUT                        120.46      113.51        None
+array-examples/sanfoundry_24-1.yml                                  TIMEOUT                        120.60      109.25        None
+array-multidimensional/max-2-u.yml                                  ERROR (server error)             1.96        1.17        None
+array-examples/sorting_bubblesort_ground-1.yml                      TIMEOUT                        120.37      113.70        None
+array-multidimensional/rev-2-n-u.yml                                ERROR (server error)             2.01        1.18        None
+array-examples/data_structures_set_multi_proc_trivial_ground.yml    TIMEOUT                        120.35      114.03        None
+array-patterns/array21_pattern.yml                                  ERROR (server error)             1.98        1.19        None
+array-examples/standard_copy3_ground-2.yml                          TIMEOUT                        120.36      113.81        None
+array-examples/standard_copy6_ground-2.yml                          TIMEOUT                        120.38      113.13        None
+---------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                           done                             6.91      798.66           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              10
+  Score:                 0 (max: 19)

@@ -1,0 +1,122 @@
+tool		Theta 6.6.5	Theta 6.6.5	Theta 6.6.5	Theta 6.6.5
+run set		SV-COMP24_unreach-call.XCSP	SV-COMP24_unreach-call.XCSP	SV-COMP24_unreach-call.XCSP	SV-COMP24_unreach-call.XCSP
+../sv-benchmarks/c/xcsp/		status	cputime (s)	walltime (s)	memory (MB)
+AllInterval-005.yml	false	false(unreach-call)	6.432711	3.2006442329999913	457.977856
+AllInterval-006.yml	false	false(unreach-call)	7.682936	3.317692529999988	508.051456
+AllInterval-007.yml	false	false(unreach-call)	8.446173	3.62715034499999	536.104960
+AllInterval-008.yml	false	false(unreach-call)	10.742643	4.038157503000008	597.557248
+AllInterval-009.yml	false	false(unreach-call)	9.889979	4.218111088000029	584.257536
+AllInterval-010.yml	false	false(unreach-call)	10.905804	5.23539647399997	600.354816
+AllInterval-011.yml	false	TIMEOUT	20.963199	12.64071706599998	635.461632
+AllInterval-012.yml	false	TIMEOUT	20.341883	11.083692525000004	685.834240
+AllInterval-013.yml	false	TIMEOUT	20.580305	10.748974152000017	725.422080
+AllInterval-014.yml	false	TIMEOUT	20.636846	10.66953816399996	697.585664
+AllInterval-015.yml	false	TIMEOUT	20.781228	10.46694549600005	688.308224
+AllInterval-016.yml	false	TIMEOUT	20.080858	9.098765826999966	741.502976
+AllInterval-017.yml	false	TIMEOUT	20.20886	8.993818907000048	759.652352
+AllInterval-018.yml	false	TIMEOUT	20.899113	7.393263778000005	807.305216
+AllInterval-019.yml	false	TIMEOUT	20.686945	7.312288376999959	806.387712
+AllInterval-020.yml	false	TIMEOUT	20.481378	7.397724860000039	795.475968
+AllInterval-025.yml	false	TIMEOUT	22.122816	7.829714500000023	847.790080
+AllInterval-030.yml	false	TIMEOUT	21.985643	8.570485394999992	887.406592
+AllInterval-035.yml	false	TIMEOUT	21.933617	10.455588643999988	967.925760
+CostasArray-10.yml	false	TIMEOUT	21.578307	7.382319843000005	812.969984
+CostasArray-11.yml	false	TIMEOUT	22.667625	7.592393098999992	802.734080
+CostasArray-12.yml	false	TIMEOUT	22.654257	7.807755971000006	825.290752
+CostasArray-13.yml	false	TIMEOUT	22.554502	7.941660214000024	842.022912
+CostasArray-14.yml	false	TIMEOUT	21.978562	8.127471817000014	852.893696
+CostasArray-15.yml	false	TIMEOUT	21.697279	8.59186229200003	873.996288
+CostasArray-16.yml	false	TIMEOUT	21.26469	9.142660020999983	824.381440
+CostasArray-17.yml	false	TIMEOUT	22.757238	10.61884845000003	833.253376
+Dubois-015.yml	true	TIMEOUT	20.403764	7.576436570999988	810.295296
+Dubois-016.yml	true	TIMEOUT	21.081654	7.600102459000027	835.379200
+Dubois-017.yml	true	TIMEOUT	20.72665	7.661580671000024	895.066112
+Dubois-018.yml	true	TIMEOUT	20.686392	7.706947044000003	853.012480
+Dubois-019.yml	true	TIMEOUT	20.87192	7.673474285999987	940.982272
+Dubois-020.yml	true	TIMEOUT	20.624372	7.711787560000005	950.714368
+Dubois-021.yml	true	TIMEOUT	21.652086	7.795778519999999	883.404800
+Dubois-022.yml	true	TIMEOUT	22.288552	7.786423447000061	1000.194048
+Dubois-023.yml	true	TIMEOUT	21.696318	7.739899918999981	963.244032
+Dubois-024.yml	true				
+Dubois-025.yml	true				
+Dubois-026.yml	true				
+Dubois-027.yml	true				
+Dubois-028.yml	true				
+Dubois-029.yml	true				
+Dubois-030.yml	true				
+Dubois-035.yml	true				
+Dubois-040.yml	true				
+Dubois-045.yml	true				
+Dubois-050.yml	true				
+Dubois-055.yml	true				
+Dubois-060.yml	true				
+Dubois-065.yml	true				
+Dubois-070.yml	true				
+Dubois-075.yml	true				
+Dubois-080.yml	true				
+Dubois-085.yml	true				
+Dubois-090.yml	true				
+Dubois-095.yml	true				
+Dubois-100.yml	true				
+Haystacks-06.yml	true				
+Haystacks-07.yml	true				
+Haystacks-08.yml	true				
+Haystacks-09.yml	true				
+Haystacks-10.yml	true				
+Haystacks-11.yml	true				
+Haystacks-12.yml	true				
+Haystacks-13.yml	true				
+Haystacks-14.yml	true				
+Haystacks-15.yml	true				
+Haystacks-16.yml	true				
+Haystacks-17.yml	true				
+Haystacks-18.yml	true				
+Haystacks-19.yml	true				
+aim-100-1-6-sat-1.yml	false				
+aim-100-1-6-sat-2.yml	false				
+aim-100-1-6-sat-3.yml	false				
+aim-100-1-6-sat-4.yml	false				
+aim-100-1-6-unsat-1.yml	true				
+aim-100-1-6-unsat-2.yml	true				
+aim-100-1-6-unsat-3.yml	true				
+aim-100-1-6-unsat-4.yml	true				
+aim-100-2-0-sat-1.yml	false				
+aim-100-2-0-sat-2.yml	false				
+aim-100-2-0-sat-3.yml	false				
+aim-100-2-0-sat-4.yml	false				
+aim-100-2-0-unsat-1.yml	true				
+aim-100-2-0-unsat-2.yml	true				
+aim-100-2-0-unsat-3.yml	true				
+aim-100-2-0-unsat-4.yml	true				
+aim-100-3-4-sat-1.yml	false				
+aim-100-3-4-sat-2.yml	false				
+aim-100-3-4-sat-3.yml	false				
+aim-100-3-4-sat-4.yml	false				
+aim-100-6-0-sat-1.yml	false				
+aim-100-6-0-sat-2.yml	false				
+aim-100-6-0-sat-3.yml	false				
+aim-100-6-0-sat-4.yml	false				
+aim-200-1-6-sat-1.yml	false				
+aim-200-1-6-sat-2.yml	false				
+aim-200-1-6-sat-3.yml	false				
+aim-200-1-6-sat-4.yml	false				
+aim-200-1-6-unsat-1.yml	true				
+aim-200-1-6-unsat-2.yml	true				
+aim-200-1-6-unsat-3.yml	true				
+aim-200-1-6-unsat-4.yml	true				
+aim-200-2-0-sat-1.yml	false				
+aim-200-2-0-sat-2.yml	false				
+aim-200-2-0-sat-3.yml	false				
+aim-200-2-0-sat-4.yml	false				
+aim-200-2-0-unsat-1.yml	true				
+aim-200-2-0-unsat-2.yml	true				
+aim-200-2-0-unsat-3.yml	true				
+aim-200-2-0-unsat-4.yml	true				
+aim-200-3-4-sat-1.yml	false				
+aim-200-3-4-sat-2.yml	false				
+aim-200-3-4-sat-3.yml	false				
+aim-200-3-4-sat-4.yml	false				
+aim-200-6-0-sat-1.yml	false				
+aim-200-6-0-sat-2.yml	false				
+aim-200-6-0-sat-3.yml	false				
+aim-200-6-0-sat-4.yml	false				

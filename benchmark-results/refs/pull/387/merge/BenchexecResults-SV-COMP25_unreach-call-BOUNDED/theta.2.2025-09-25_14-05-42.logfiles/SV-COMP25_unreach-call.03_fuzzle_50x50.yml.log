@@ -1,0 +1,8 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/fuzzle-programs/03_fuzzle_50x50.c --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/fuzzle-programs/03_fuzzle_50x50.c' with property 'sv-benchmarks/c/properties/unreach-call.prp' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --architecture LP64 --input sv-benchmarks/c/fuzzle-programs/03_fuzzle_50x50.c --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers

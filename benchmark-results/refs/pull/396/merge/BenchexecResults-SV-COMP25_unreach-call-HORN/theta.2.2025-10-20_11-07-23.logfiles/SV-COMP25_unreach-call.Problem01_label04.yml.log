@@ -1,0 +1,46 @@
+Thorn/theta-start.sh sv-benchmarks/c/eca-rers2012/Problem01_label04.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/eca-rers2012/Problem01_label04.c' with property 'sv-benchmarks/c/properties/unreach-call.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --architecture ILP32 --input sv-benchmarks/c/eca-rers2012/Problem01_label04.c --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Arithmetic: []
+ParsingResult Success
+Alias graph size: 0 -> []
+Using CHC portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/eca-rers2012/Problem01_label04.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: Process failed! (hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver.issueGeneralCommand(SmtLibSolver.java:352), hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException: "line 6 column 32: invalid sorted variables: unknown sort 'main'")
+ErrorCodeException(code=221)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:144)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:260)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:259)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:259)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:92)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Horn25Kt$hornPortfolio25$checker$1.invoke(horn25.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.Horn25Kt$hornPortfolio25$checker$1.invoke(horn25.kt:39)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:106)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:260)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:259)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:259)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:92)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:127)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:137)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=221)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=Z3:4.13, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/eca-rers2012/Problem01_label04.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: (SafetyResult Safe)
+(SafetyResult Safe)
+Config XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=HornConfig(solver=Z3:4.13, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/eca-rers2012/Problem01_label04.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false)) succeeded in 9750 ms
+success-result: Z3native-true
+(SafetyResult Safe)

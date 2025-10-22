@@ -1,0 +1,8 @@
+tool	Theta 6.3.2	Theta 6.3.2	Theta 6.3.2	Theta 6.3.2
+run set	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows	SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	Parsing OK	11.426762	5.319359603000009	469.372928
+pthread-atomic/read_write_lock-1.yml	true	9.635208	3.800642311000047	573.071360
+pthread-wmm/rfi003_tso.yml	true	16.563727	6.58626373300001	539.947008
+pthread/lazy01.yml	true	7.47787	3.170640773999992	529.420288
+pthread-wmm/mix000.oepc.yml	true	15.698361	6.406500851999965	545.607680

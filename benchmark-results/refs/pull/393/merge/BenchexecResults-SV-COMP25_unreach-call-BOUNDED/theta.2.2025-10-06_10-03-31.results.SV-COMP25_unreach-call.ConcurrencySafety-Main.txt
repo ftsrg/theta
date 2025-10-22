@@ -1,0 +1,66 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ConcurrencySafety-Main
+date:                    Mon, 2025-10-06 10:03:31 UTC
+tool:                    Theta 6.19.1
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.54304 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ConcurrencySafety-Main
+Run set 1 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                                          status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread/bigshot_s.yml                                                                                                                                                              ERROR (server error, after parsing finished)        4.17        1.46        None
+pthread/bigshot_s2.yml                                                                                                                                                             ERROR (server error, after parsing finished)        4.25        1.52        None
+pthread/butterfly.yml                                                                                                                                                              ERROR (server error, after parsing finished)        3.83        1.33        None
+pthread/fib_safe-10.yml                                                                                                                                                            ERROR (server error, after parsing finished)        3.26        1.13        None
+pthread/fib_safe-11.yml                                                                                                                                                            ERROR (server error, after parsing finished)        3.54        1.25        None
+pthread/fib_safe-12.yml                                                                                                                                                            ERROR (server error, after parsing finished)        3.53        1.24        None
+pthread/fib_safe-5.yml                                                                                                                                                             ERROR (server error, after parsing finished)        3.76        1.33        None
+pthread/fib_safe-6.yml                                                                                                                                                             ERROR (server error, after parsing finished)        3.60        1.26        None
+pthread/fib_safe-7.yml                                                                                                                                                             ERROR (server error, after parsing finished)        3.67        1.30        None
+pthread/fib_unsafe-10.yml                                                                                                                                                          ERROR (server error, after parsing finished)        3.54        1.24        None
+pthread/fib_unsafe-11.yml                                                                                                                                                          ERROR (server error, after parsing finished)        3.57        1.24        None
+pthread/fib_unsafe-12.yml                                                                                                                                                          ERROR (server error, after parsing finished)        3.57        1.25        None
+pthread/fib_unsafe-5.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.56        1.26        None
+pthread/fib_unsafe-6.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.68        1.29        None
+pthread/fib_unsafe-7.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.71        1.30        None
+pthread/lazy01.yml                                                                                                                                                                 ERROR (server error, after parsing finished)        3.49        1.22        None
+pthread/queue.yml                                                                                                                                                                  ERROR (server error, after parsing finished)        4.44        1.48        None
+pthread/queue_longer.yml                                                                                                                                                           ERROR (server error, after parsing finished)        5.14        1.72        None
+pthread/queue_longest.yml                                                                                                                                                          ERROR (server error, after parsing finished)        5.39        1.81        None
+pthread/queue_ok.yml                                                                                                                                                               ERROR (server error, after parsing finished)        4.43        1.53        None
+pthread/queue_ok_longer.yml                                                                                                                                                        ERROR (server error, after parsing finished)        4.76        1.59        None
+pthread/queue_ok_longest.yml                                                                                                                                                       ERROR (server error, after parsing finished)        5.57        1.86        None
+pthread/reorder_2.yml                                                                                                                                                              ERROR (frontend failed, before parsing finished)        3.92        1.40        None
+pthread/reorder_5.yml                                                                                                                                                              ERROR (frontend failed, before parsing finished)        3.70        1.31        None
+pthread/singleton.yml                                                                                                                                                              ERROR (server error, after parsing finished)        3.74        1.29        None
+pthread/singleton_with-uninit-problems.yml                                                                                                                                         ERROR (server error, after parsing finished)        4.20        1.46        None
+pthread/stack-1.yml                                                                                                                                                                ERROR (server error, after parsing finished)        4.07        1.40        None
+pthread/stack-2.yml                                                                                                                                                                ERROR (server error, after parsing finished)        4.00        1.36        None
+pthread/stack_longer-1.yml                                                                                                                                                         ERROR (server error, after parsing finished)        4.59        1.53        None
+pthread/stack_longer-2.yml                                                                                                                                                         ERROR (server error, after parsing finished)        4.77        1.65        None
+pthread/stack_longest-1.yml                                                                                                                                                        ERROR (server error, after parsing finished)        5.19        1.75        None
+pthread/stack_longest-2.yml                                                                                                                                                        ERROR (server error, after parsing finished)        5.06        1.69        None
+pthread/stateful01-1.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.46        1.23        None
+pthread/stateful01-2.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.51        1.24        None
+pthread/sync01.yml                                                                                                                                                                 ERROR (server error, after parsing finished)        3.81        1.33        None
+pthread/triangular-1.yml                                                                                                                                                           ERROR (server error, after parsing finished)        3.08        1.11        None

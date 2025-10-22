@@ -1,0 +1,137 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_no-overflow.ConcurrencySafety-NoOverflows
+date:                    Mon, 2025-10-20 11:14:50 UTC
+tool:                    Theta 6.19.3
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmzdgdc
+os:                      Linux-6.14.0-1012-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3261.78 MHz
+ram:                     16772.284416 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow.ConcurrencySafety-NoOverflows
+Run set 5 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                                                                                                          status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pthread/butterfly.yml                                                                                                                                                              true                             6.95        2.50        None
+pthread/fib_safe-10.yml                                                                                                                                                            ERROR (generic error, before parsing finished)        5.86        2.11        None
+pthread/fib_safe-11.yml                                                                                                                                                            ERROR (generic error, before parsing finished)        5.82        2.13        None
+pthread/fib_safe-12.yml                                                                                                                                                            ERROR (generic error, before parsing finished)        5.89        2.15        None
+pthread/fib_safe-5.yml                                                                                                                                                             ERROR (generic error, before parsing finished)        5.81        2.10        None
+pthread/fib_safe-6.yml                                                                                                                                                             ERROR (generic error, before parsing finished)        5.99        2.15        None
+pthread/fib_safe-7.yml                                                                                                                                                             ERROR (generic error, before parsing finished)        6.13        2.18        None
+pthread/fib_unsafe-10.yml                                                                                                                                                          ERROR (generic error, before parsing finished)        5.93        2.14        None
+pthread/fib_unsafe-11.yml                                                                                                                                                          ERROR (generic error, before parsing finished)        5.81        2.07        None
+pthread/fib_unsafe-12.yml                                                                                                                                                          ERROR (generic error, before parsing finished)        5.87        2.09        None
+pthread/fib_unsafe-5.yml                                                                                                                                                           ERROR (generic error, before parsing finished)        5.81        2.10        None
+pthread/fib_unsafe-6.yml                                                                                                                                                           ERROR (generic error, before parsing finished)        5.95        2.14        None
+pthread/fib_unsafe-7.yml                                                                                                                                                           ERROR (generic error, before parsing finished)        4.61        1.91        None
+pthread/lazy01.yml                                                                                                                                                                 true                             9.24        3.22        None
+pthread/queue.yml                                                                                                                                                                  ERROR (generic error, before parsing finished)        6.47        2.29        None
+pthread/queue_longer.yml                                                                                                                                                           ERROR (generic error, before parsing finished)        6.41        2.27        None
+pthread/queue_longest.yml                                                                                                                                                          ERROR (generic error, before parsing finished)        6.78        2.36        None
+pthread/queue_ok.yml                                                                                                                                                               ERROR (generic error, before parsing finished)        6.46        2.25        None
+pthread/queue_ok_longer.yml                                                                                                                                                        ERROR (generic error, before parsing finished)        6.57        2.29        None
+pthread/queue_ok_longest.yml                                                                                                                                                       ERROR (generic error, before parsing finished)        6.51        2.26        None
+pthread/reorder_2.yml                                                                                                                                                              ERROR (generic error, before parsing finished)        6.79        2.36        None
+pthread/reorder_5.yml                                                                                                                                                              ERROR (generic error, before parsing finished)        6.56        2.26        None
+pthread/stack-1.yml                                                                                                                                                                true                            10.83        3.68        None
+pthread/stack-2.yml                                                                                                                                                                true                            10.92        3.67        None
+pthread/stack_longer-1.yml                                                                                                                                                         true                            11.54        3.85        None
+pthread/stack_longer-2.yml                                                                                                                                                         true                            11.42        3.89        None
+pthread/stack_longest-1.yml                                                                                                                                                        true                            12.21        4.13        None
+pthread/stack_longest-2.yml                                                                                                                                                        true                            11.36        3.82        None
+pthread/stateful01-1.yml                                                                                                                                                           true                             8.13        3.02        None
+pthread/stateful01-2.yml                                                                                                                                                           true                             8.92        3.40        None
+pthread/sync01.yml                                                                                                                                                                 true                            10.29        3.51        None
+pthread/triangular-1.yml                                                                                                                                                           ERROR (frontend failed, before parsing finished)        8.80        3.07        None
+pthread/triangular-2.yml                                                                                                                                                           ERROR (frontend failed, before parsing finished)        9.11        3.21        None
+pthread/triangular-longer-1.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)        8.60        3.03        None
+pthread/triangular-longer-2.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)        7.40        2.90        None
+pthread/triangular-longest-1.yml                                                                                                                                                   ERROR (frontend failed, before parsing finished)        9.18        3.23        None
+pthread/triangular-longest-2.yml                                                                                                                                                   ERROR (frontend failed, before parsing finished)        6.93        2.91        None
+pthread/twostage_3.yml                                                                                                                                                             ERROR (generic error, before parsing finished)        6.51        2.24        None
+pthread-atomic/dekker-unfair.yml                                                                                                                                                   ERROR (generic error, before parsing finished)        3.01        1.28        None
+pthread-atomic/read_write_lock-1.yml                                                                                                                                               true                             9.43        3.30        None
+pthread-atomic/read_write_lock-2.yml                                                                                                                                               true                             8.98        3.39        None
+pthread-ext/09_fmaxsym-zero.yml                                                                                                                                                    true                             9.48        3.29        None
+pthread-ext/09_fmaxsym.yml                                                                                                                                                         ERROR (generic error, before parsing finished)        5.93        2.12        None
+pthread-ext/11_fmaxsymopt-zero.yml                                                                                                                                                 true                             7.63        3.20        None
+pthread-ext/11_fmaxsymopt.yml                                                                                                                                                      ERROR (generic error, before parsing finished)        4.55        1.92        None
+pthread-ext/18_read_write_lock.yml                                                                                                                                                 true                             7.15        3.01        None
+pthread-ext/25_stack.yml                                                                                                                                                           true                             7.87        3.24        None
+pthread-ext/25_stack_longer-1.yml                                                                                                                                                  true                             9.80        3.54        None
+pthread-ext/25_stack_longer-2.yml                                                                                                                                                  true                             7.93        3.20        None
+pthread-ext/25_stack_longest-1.yml                                                                                                                                                 true                            12.52        4.25        None
+pthread-ext/25_stack_longest-2.yml                                                                                                                                                 true                            11.79        3.97        None
+pthread-ext/26_stack_cas.yml                                                                                                                                                       true                            10.93        3.67        None
+pthread-ext/26_stack_cas_longer-1.yml                                                                                                                                              true                            11.85        3.97        None
+pthread-ext/26_stack_cas_longer-2.yml                                                                                                                                              true                            11.97        4.05        None
+pthread-ext/26_stack_cas_longest-1.yml                                                                                                                                             true                            13.35        4.49        None
+pthread-ext/26_stack_cas_longest-2.yml                                                                                                                                             true                            13.51        4.52        None
+pthread-ext/28_buggy_simple_loop1_vf.yml                                                                                                                                           true                             9.58        3.33        None
+pthread-ext/35_double_lock_p3_vs.yml                                                                                                                                               true                             9.50        3.31        None
+pthread-ext/36_stack_cas_p0_vs_concur.yml                                                                                                                                          true                             7.45        3.01        None
+pthread-ext/37_stack_lock_p0_vs_concur.yml                                                                                                                                         true                             9.53        3.28        None
+pthread-ext/48_ticket_lock_low_contention_vs.yml                                                                                                                                   ERROR (frontend failed, before parsing finished)        8.64        3.00        None
+pthread-wmm/mix000.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.48        3.56        None
+pthread-wmm/mix000.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.27        3.52        None
+pthread-wmm/mix001.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.65        3.62        None
+pthread-wmm/mix001.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)        8.30        3.13        None
+pthread-wmm/mix002.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.03        3.43        None
+pthread-wmm/mix002.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)        8.54        3.27        None
+pthread-wmm/mix003.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.24        3.50        None
+pthread-wmm/mix003_power.opt_pso.opt_rmo.opt_tso.opt.yml                                                                                                                           ERROR (frontend failed, before parsing finished)       10.09        3.45        None
+pthread-wmm/mix004.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)        9.82        3.37        None
+pthread-wmm/mix004.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.17        3.44        None
+pthread-wmm/mix005.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)        9.72        3.45        None
+pthread-wmm/mix005_power.oepc_pso.oepc_rmo.oepc.yml                                                                                                                                ERROR (frontend failed, before parsing finished)        8.69        3.26        None
+pthread-wmm/mix005_tso.oepc.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)        9.83        3.34        None
+pthread-wmm/mix006.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.14        3.43        None
+pthread-wmm/mix006_power.oepc_pso.oepc_rmo.oepc.yml                                                                                                                                ERROR (frontend failed, before parsing finished)        9.97        3.40        None
+pthread-wmm/mix006_tso.oepc.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)       10.96        3.63        None
+pthread-wmm/mix007.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.43        3.56        None
+pthread-wmm/mix007.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.26        3.50        None
+pthread-wmm/mix008.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.66        3.62        None
+pthread-wmm/mix008_power.oepc_pso.oepc_rmo.oepc.yml                                                                                                                                ERROR (frontend failed, before parsing finished)       10.13        3.41        None
+pthread-wmm/mix008_tso.oepc.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)       11.32        3.79        None
+pthread-wmm/mix009.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)        7.82        3.30        None
+pthread-wmm/mix009.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)        8.35        3.12        None
+pthread-wmm/mix010.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.40        3.54        None
+pthread-wmm/mix010.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.16        3.46        None
+pthread-wmm/mix011.opt.yml                                                                                                                                                         ERROR (frontend failed, before parsing finished)       10.34        3.51        None
+pthread-wmm/mix011_power.oepc_pso.oepc_rmo.oepc.yml                                                                                                                                ERROR (frontend failed, before parsing finished)        9.93        3.38        None
+pthread-wmm/mix011_tso.oepc.yml                                                                                                                                                    ERROR (frontend failed, before parsing finished)        9.81        3.32        None
+pthread-wmm/mix012_power.oepc_power.opt_pso.oepc_rmo.oepc_rmo.opt_tso.oepc.yml                                                                                                     ERROR (frontend failed, before parsing finished)        9.80        3.42        None
+pthread-wmm/mix012_pso.opt_tso.opt.yml                                                                                                                                             ERROR (frontend failed, before parsing finished)        8.56        3.23        None
+pthread-wmm/mix013.oepc.yml                                                                                                                                                        ERROR (frontend failed, before parsing finished)       10.32        3.49        None

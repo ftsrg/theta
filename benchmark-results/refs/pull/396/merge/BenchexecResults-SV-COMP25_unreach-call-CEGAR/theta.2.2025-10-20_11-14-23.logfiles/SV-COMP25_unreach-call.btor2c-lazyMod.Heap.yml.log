@@ -1,0 +1,13 @@
+Theta/theta-start.sh sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c' with property 'sv-benchmarks/c/properties/unreach-call.prp' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio CEGAR --loglevel RESULT --architecture LP64 --input sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/Theta/solvers
+Arithmetic: [BITWISE]
+ParsingResult Success
+Alias graph size: 0 -> []
+Using portfolio BITWISE
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CEGAR, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=100000, inProcess=true, parseInProcess=false, memlimit=0, specConfig=CegarConfig(initPrec=EMPTY, porLevel=NOPOR, porRandomSeed=-1, coi=NO_COI, cexMonitor=CHECK, abstractorConfig=CegarAbstractorConfig(abstractionSolver=cvc5:1.0.8, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=ERR, havocMemory=false), refinerConfig=CegarRefinerConfig(refinementSolver=cvc5:1.0.8, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=FULL))), outputConfig=OutputConfig(versionInfo=false, enableOutput=true, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=true), chcOutputConfig=ChcOutputConfig(disable=true), witnessConfig=WitnessConfig(disable=false, svcomp=false, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/hardware-verification-bv/btor2c-lazyMod.Heap.c), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))

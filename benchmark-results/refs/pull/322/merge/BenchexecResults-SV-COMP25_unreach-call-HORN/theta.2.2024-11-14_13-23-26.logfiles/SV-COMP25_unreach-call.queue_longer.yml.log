@@ -1,0 +1,8 @@
+Thorn/theta-start.sh sv-benchmarks/c/pthread/queue_longer.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/pthread/queue_longer.i' with property 'sv-benchmarks/c/properties/unreach-call.prp' using arguments '--svcomp --portfolio HORN --loglevel RESULT --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --architecture ILP32 --input sv-benchmarks/c/pthread/queue_longer.i --property sv-benchmarks/c/properties/unreach-call.prp --smt-home /home/runner/work/theta/theta/Thorn/solvers
