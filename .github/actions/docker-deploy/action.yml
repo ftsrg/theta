@@ -28,6 +28,11 @@ runs:
     #   with:
     #     images: ghcr.io/${{ inputs.user-ghcr }}/${{ inputs.project }}
     #     tags: type:raw, value=${{ inputs.version }}
+    - name: Creating path
+      id: 'path'
+      shell: bash
+      run: |
+        echo "path=./docker/${{ inputs.project }}.Dockerfile" >> $GITHUB_OUTPUT
     - name: Assemble Shadow JAR
       shell: bash
       run: ./gradlew clean ${{ inputs.project }}:shadowJar
@@ -35,7 +40,7 @@ runs:
       uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
       with:
         context: .
-        file: ${{ inputs.project }}.Dockerfile
+        file: ${{ steps.path.outputs.path }}
         push: ${{ inputs.push }}
         tags: ${{ inputs.user-dockerhub }}/${{ inputs.project }}:${{ inputs.version }}
     - name: Build and push to ghcr.io
