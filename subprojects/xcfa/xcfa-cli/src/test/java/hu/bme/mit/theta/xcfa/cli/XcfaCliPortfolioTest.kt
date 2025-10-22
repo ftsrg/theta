@@ -70,6 +70,15 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
+          complexPortfolio26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }),
+        Arguments.of({
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
           boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }),
         Arguments.of({
