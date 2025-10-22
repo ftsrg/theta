@@ -71,7 +71,7 @@ class XcfaDataRaceTest {
   @MethodSource("data")
   fun testDataRacePreCheck(
     program: String,
-    triviallySafe: Boolean,
+    expectedDataRacePossible: Boolean,
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for trivial no data race...")
@@ -80,14 +80,14 @@ class XcfaDataRaceTest {
     val xcfa =
       getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
     val dataRacePossible = isDataRacePossible(xcfa)
-    Assertions.assertEquals(triviallySafe, dataRacePossible)
+    Assertions.assertEquals(expectedDataRacePossible, dataRacePossible)
   }
 
   @ParameterizedTest
   @MethodSource("data")
   fun testDataRaceCegarChecker(
     program: String,
-    triviallySafe: Boolean,
+    expectedDataRacePossible: Boolean,
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")
@@ -146,7 +146,7 @@ class XcfaDataRaceTest {
   @MethodSource("data")
   fun testDataRaceOcChecker(
     program: String,
-    triviallySafe: Boolean,
+    expectedDataRacePossible: Boolean,
     verdict: (SafetyResult<*, *>) -> Boolean,
   ) {
     println("Testing $program for data race...")

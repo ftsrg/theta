@@ -53,7 +53,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
   companion object {
     var enabled = false
 
-    private var potentialRacingVars: Set<VarDecl<*>>? = null
+    private val potentialRacingVars = mutableMapOf<XcfaBuilder, Set<VarDecl<*>>>()
 
     private val writeFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
     private val readFlagVars = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
@@ -313,12 +313,13 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
 
   private fun collectPotentialRacingVars(builder: XcfaProcedureBuilder): Set<VarDecl<*>> {
     val xcfaBuilder = builder.parent
-    if (potentialRacingVars == null) {
-      potentialRacingVars = getPotentialRacingVars(xcfaBuilder)
+    if (xcfaBuilder !in potentialRacingVars) {
+      val racingVars = getPotentialRacingVars(xcfaBuilder)
+      potentialRacingVars[xcfaBuilder] = racingVars
       val initProcedure = xcfaBuilder.getInitProcedures().first().first
 
       val initializeFlags =
-        potentialRacingVars!!.flatMap { v ->
+        racingVars.flatMap { v ->
           writeFlagVars[v] = Decls.Var("_write_flag_${v.name}", Int())
           readFlagVars[v] = Decls.Var("_read_flag_${v.name}", Int())
           xcfaBuilder.addVar(XcfaGlobalVar(writeFlagVars[v]!!, Int(0), atomic = true))
@@ -356,6 +357,6 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
       initProcedure.addEdge(initEdge)
     }
 
-    return potentialRacingVars!!
+    return potentialRacingVars[xcfaBuilder]!!
   }
 }
