@@ -7,6 +7,6 @@ RUN apt-get update && \
 ADD lib/ lib/
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
 
-ADD subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-*-all.jar /theta-xcfa-cli.jar \
+ADD subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-*-all.jar /theta-xcfa-cli.jar
 
 ENTRYPOINT ["java", "-jar", "theta-xcfa-cli.jar"]
