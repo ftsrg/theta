@@ -1,17 +1,12 @@
-FROM openjdk:17.0.2-slim
+FROM eclipse-temurin:17.0.2_8-jre-focal
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libgomp1 libmpfr-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir theta
-COPY . theta
-WORKDIR /theta
-RUN ./gradlew clean && \
-    ./gradlew theta-xta-cli:build && \
-    mv subprojects/xta/xta-cli/build/libs/theta-xta-cli-*-all.jar /theta-xta-cli.jar
-WORKDIR /
+ADD lib/ lib/
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/"
 
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
+ADD subprojects/xta/xta-cli/build/libs/theta-xta-cli-*-all.jar /theta-xta-cli.jar
+
 ENTRYPOINT ["java", "-jar", "theta-xta-cli.jar"]
-
