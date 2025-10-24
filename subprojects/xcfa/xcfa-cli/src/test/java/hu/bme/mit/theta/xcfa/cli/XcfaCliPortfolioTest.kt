@@ -128,6 +128,18 @@ class XcfaCliPortfolioTest {
           main.start()
         } to ParseContext().apply { multiThreading = true }
 
+      val pointer =
+        xcfa("") {
+          val main =
+            procedure("main") {
+              val x = "x" type Int()
+              (init to final) {
+                x.assign("(deref 1 0 Int)")
+              }
+            }
+          main.start()
+        } to ParseContext()
+
       val float =
         XCFA("", setOf()) to ParseContext().apply { addArithmeticTrait(ArithmeticTrait.FLOAT) }
 
@@ -160,42 +172,49 @@ class XcfaCliPortfolioTest {
       return listOf(
         arrayOf(Portfolios.complex23Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complex23Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complex24Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.complex24Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complex25Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.complex25Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complex26Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.complex26Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.multithread, unsupportedCheck),
+        arrayOf(Portfolios.bounded24Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.bounded24Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.multithread, unsupportedCheck),
+        arrayOf(Portfolios.bounded25Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.multithread, unsupportedCheck),
+        arrayOf(Portfolios.horn25Portfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.bitwise, defaultCheck),
