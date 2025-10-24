@@ -133,9 +133,7 @@ class XcfaCliPortfolioTest {
           val main =
             procedure("main") {
               val x = "x" type Int()
-              (init to final) {
-                x.assign("(deref 1 0 Int)")
-              }
+              (init to final) { x.assign("(deref 1 0 Int)") }
             }
           main.start()
         } to ParseContext()
@@ -168,8 +166,8 @@ class XcfaCliPortfolioTest {
     }
 
     @JvmStatic
-    fun data(): Collection<Array<Any>> {
-      return listOf(
+    fun data(): Collection<Array<Any>> =
+      listOf(
         arrayOf(Portfolios.complex23Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.multithread, defaultCheck),
         arrayOf(Portfolios.complex23Portfolio, Programs.pointer, defaultCheck),
@@ -220,7 +218,6 @@ class XcfaCliPortfolioTest {
         arrayOf(Portfolios.horn25Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.nonlin, defaultCheck),
       )
-    }
   }
 
   @ParameterizedTest

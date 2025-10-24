@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
 import hu.bme.mit.theta.xcfa.utils.pointerPartitions
@@ -79,7 +80,14 @@ class XCFA(
     initEdges: Set<XcfaEdge>? = null
   ): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
     if (!this::pointerPartitions.isInitialized) {
-      val init = initEdges ?: getNonConcurrentEdges(procedureBuilders.first().parent).first
+      val init =
+        when {
+          initEdges != null -> initEdges
+          initProcedures.any { p ->
+            p.first.edges.any { e -> e.getAllLabels().any { it is StartLabel } }
+          } -> getNonConcurrentEdges(procedureBuilders.first().parent, true).first
+          else -> setOf()
+        }
       pointerPartitions = pointerPartitions(this, init)
     }
     return pointerPartitions

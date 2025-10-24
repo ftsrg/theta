@@ -57,9 +57,7 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
         this.procedures
           .flatMap { proc ->
             (proc.edges - initEdges).flatMap { edge ->
-              edge.getFlatLabels().flatMap { label ->
-                label.dereferences.map { unboxMod(it.array) }
-              }
+              edge.label.dereferences.map { unboxMod(it.array) }
             }
           }
           .filter { it !is LitExpr<*> && it !is Dereference<*, *, *> }
@@ -72,7 +70,7 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
         this.procedures.flatMap { proc ->
           (proc.edges - initEdges).flatMap { edge ->
             edge
-              .getFlatLabels()
+              .getAllLabels()
               .filter { it is StmtLabel && it.stmt is AssignStmt<*> }
               .map { (it as StmtLabel).stmt as AssignStmt<*> }
           }
@@ -80,7 +78,7 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
       val threadStart =
         this.procedures.flatMap { proc ->
           proc.edges // initEdges cannot contain thread starts
-            .flatMap { it.getFlatLabels().filterIsInstance<StartLabel>() }
+            .flatMap { it.getAllLabels().filterIsInstance<StartLabel>() }
             .flatMap {
               val calledProc = this.procedures.find { proc -> proc.name == it.name }
               calledProc?.let { proc ->
@@ -109,7 +107,7 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
       val procInvoke =
         this.procedures.flatMap { proc ->
           proc.edges
-            .flatMap { it.getFlatLabels().filterIsInstance<InvokeLabel>() }
+            .flatMap { it.getAllLabels().filterIsInstance<InvokeLabel>() }
             .flatMap {
               val calledProc = this.procedures.find { proc -> proc.name == it.name }
               calledProc?.let { calledProc ->
