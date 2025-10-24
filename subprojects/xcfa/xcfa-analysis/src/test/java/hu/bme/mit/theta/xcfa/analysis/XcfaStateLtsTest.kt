@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaAasporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 import java.util.function.Predicate
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -114,7 +115,7 @@ class XcfaStateLtsTest {
         it.processes[0]!!.locs.peek() == edges[2].target &&
         it.processes[it.foreignKey()!!]!!.locs.size == 1 &&
         it.processes[it.foreignKey()!!]!!.locs.peek() == edges[0].source &&
-        lts.getEnabledActionsFor(it).size == 2 &&
+        lts.getEnabledActionsFor(it).size == 1 &&
         sporLts.getEnabledActionsFor(it).size == 1 &&
         aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
     }
@@ -126,7 +127,7 @@ class XcfaStateLtsTest {
         it.processes[0]!!.locs.peek() == edges[2].target &&
         it.processes[it.foreignKey()!!]!!.locs.size == 1 &&
         it.processes[it.foreignKey()!!]!!.locs.peek() == edges[0].target &&
-        lts.getEnabledActionsFor(it).size == 2 &&
+        lts.getEnabledActionsFor(it).size == 1 &&
         sporLts.getEnabledActionsFor(it).size == 1 &&
         aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
     }
@@ -158,7 +159,10 @@ class XcfaStateLtsTest {
     var state = initState
     for ((index, xcfaAction) in actionOrder.withIndex()) {
       println("Test $index: $xcfaAction")
-      val newState = state.apply(xcfaAction(state))
+      val action = xcfaAction(state)
+      val varLookUp = state.processes[action.pid]!!.varLookup.peek()
+      val newAction = action.withLabel(SequenceLabel(listOf(action.label.changeVars(varLookUp))))
+      val newState = state.apply(newAction)
       assertTrue(expectations[index].test(newState.first))
       state = newState.first
       println("Test $index OK")

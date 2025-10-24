@@ -15,44 +15,46 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
+import com.beust.jcommander.IStringConverter
+import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.*
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
-fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection =
-  config.inputConfig.propertyFile?.run {
-    val propertyFile = config.inputConfig.propertyFile!!
-    when {
-      propertyFile.name.endsWith("unreach-call.prp") -> {
-        ErrorDetection.ERROR_LOCATION
-      }
+fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
+  config.inputConfig.propertyFile
+    ?.run {
+      val propertyFile = config.inputConfig.propertyFile!!
+      when {
+        propertyFile.name.endsWith("unreach-call.prp") -> ERROR_LOCATION
+        propertyFile.name.endsWith("no-data-race.prp") -> DATA_RACE
+        propertyFile.name.endsWith("no-overflow.prp") -> OVERFLOW
+        propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
+        propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
+        propertyFile.name.endsWith("termination.prp") -> TERMINATION
 
-      propertyFile.name.endsWith("no-data-race.prp") -> {
-        ErrorDetection.DATA_RACE
-      }
-
-      propertyFile.name.endsWith("no-overflow.prp") -> {
-        ErrorDetection.OVERFLOW
-      }
-
-      propertyFile.name.endsWith("valid-memsafety.prp") -> {
-        ErrorDetection.MEMSAFETY
-      }
-
-      propertyFile.name.endsWith("valid-memcleanup.prp") -> {
-        ErrorDetection.MEMCLEANUP
-      }
-
-      propertyFile.name.endsWith("termination.prp") -> {
-        ErrorDetection.TERMINATION
-      }
-
-      else -> {
-        logger.write(
-          Logger.Level.INFO,
-          "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
-        )
-        ErrorDetection.NO_ERROR
+        else -> {
+          logger.write(
+            Logger.Level.INFO,
+            "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+          )
+          NO_ERROR
+        }
       }
     }
-  } ?: config.inputConfig.property
+    ?.let { XcfaProperty(it) } ?: config.inputConfig.property
+
+class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
+  override fun convert(input: String): XcfaProperty {
+    val errorDetection =
+      try {
+        valueOf(input.uppercase())
+      } catch (_: IllegalArgumentException) {
+        val allowed = ErrorDetection.entries.joinToString(", ") { it.name }
+        throw ParameterException("Invalid value '$input'. Allowed values: [$allowed]")
+      }
+    return XcfaProperty(errorDetection)
+  }
+}

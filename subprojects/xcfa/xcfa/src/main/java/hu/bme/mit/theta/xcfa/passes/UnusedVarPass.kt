@@ -20,9 +20,11 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.isRead
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.isRead
 
 /**
  * Remove unused variables from the program. Requires the ProcedureBuilder to be `deterministic`
@@ -30,10 +32,15 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
+  companion object {
+    var keepGlobalVariableAccesses = false
+  }
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()
+    val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
 
     var edges = LinkedHashSet(builder.parent.getProcedures().flatMap { it.getEdges() })
     lateinit var lastEdges: Set<XcfaEdge>
@@ -41,6 +48,11 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
       lastEdges = edges
 
       usedVars.clear()
+
+      if (keepGlobalVariableAccesses) {
+        usedVars.addAll(globalVars)
+      }
+
       usedVars.addAll(
         builder.parent.getProcedures().flatMap {
           it.getParams().filter { it.second != ParamDirection.IN }.map { it.first }
@@ -54,7 +66,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
       builder.parent.getProcedures().forEach { b ->
         b.getEdges().toList().forEach { edge ->
-          val newLabel = edge.label.removeUnusedWrites(usedVars)
+          val newLabel = edge.label.removeUnusedWrites(usedVars, globalVars)
           if (newLabel != edge.label) {
             b.removeEdge(edge)
             b.addEdge(edge.withLabel(newLabel))
@@ -84,20 +96,31 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
     return builder
   }
 
-  private fun XcfaLabel.removeUnusedWrites(usedVars: Set<VarDecl<*>>): XcfaLabel {
+  private fun XcfaLabel.removeUnusedWrites(
+    used: Set<VarDecl<*>>,
+    global: Set<VarDecl<*>>,
+  ): XcfaLabel {
     return when (this) {
       is SequenceLabel ->
-        SequenceLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel })
+        SequenceLabel(labels.map { it.removeUnusedWrites(used, global) }.filter { it !is NopLabel })
 
       is NondetLabel ->
         NondetLabel(
-          labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel }.toSet()
+          labels.map { it.removeUnusedWrites(used, global) }.filter { it !is NopLabel }.toSet()
         )
 
       is StmtLabel ->
         when (stmt) {
-          is AssignStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
-          is HavocStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
+          is AssignStmt<*> ->
+            if (
+              stmt.varDecl in used ||
+                (keepGlobalVariableAccesses &&
+                  (ExprUtils.getVars(stmt.expr).any { it in global } ||
+                    stmt.expr.dereferences.isNotEmpty()))
+            )
+              this
+            else NopLabel
+          is HavocStmt<*> -> if (stmt.varDecl in used) this else NopLabel
           else -> this
         }
 

@@ -27,8 +27,10 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isWritten
 
 /**
  * One atomic unit (atomic block or edge) can have at most one write operation on a global variable
@@ -46,7 +48,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
     this.builder = builder
 
     builder.getEdges().toSet().forEach { edge ->
-      if (edge.getFlatLabels().any { it.isAtomicBegin }) {
+      if (edge.getFlatLabels().any { it is AtomicBeginLabel }) {
         val toReplace =
           edge.countAtomicBlockAccesses().mapNotNull { (v, ao) -> if (ao.wrongWrite) v else null }
         if (toReplace.isNotEmpty()) {
@@ -63,7 +65,8 @@ class AtomicReadsOneWritePass : ProcedurePass {
                 StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
               }
             )
-          val atomicBeginIndex = newStartEdge.getFlatLabels().indexOfFirst { it.isAtomicBegin }
+          val atomicBeginIndex =
+            newStartEdge.getFlatLabels().indexOfFirst { it is AtomicBeginLabel }
           val newLabels =
             newStartEdge.getFlatLabels().toMutableList().apply {
               add(atomicBeginIndex + 1, initialAssigns)
@@ -113,7 +116,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
       var atomicEnd = false
       current.getFlatLabels().forEach {
         it.countAccesses(accesses)
-        atomicEnd = atomicEnd || it.isAtomicEnd
+        atomicEnd = atomicEnd || it is AtomicEndLabel
       }
       if (!atomicEnd) toVisit.addAll(current.target.outgoingEdges)
     }
@@ -148,7 +151,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
         current
           .getFlatLabels()
           .map {
-            atomicEnd = atomicEnd || it.isAtomicEnd
+            atomicEnd = atomicEnd || it is AtomicEndLabel
             if (atomicEnd) it else it.replaceAccesses(localVersions)
           }
           .toMutableList()
@@ -157,7 +160,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
       if (!atomicEnd) {
         toVisit.addAll(current.target.outgoingEdges)
       } else {
-        val atomicEndIndex = newLabels.indexOfFirst { it.isAtomicEnd }
+        val atomicEndIndex = newLabels.indexOfFirst { it is AtomicEndLabel }
         val finalAssigns =
           SequenceLabel(
             localVersions.map { (v, local) ->

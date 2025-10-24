@@ -879,7 +879,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -907,7 +907,7 @@
                 "content": "(assign flag1 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -993,7 +993,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1027,7 +1027,7 @@
                 "content": "(assign thr1::while1::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1113,7 +1113,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1141,7 +1141,7 @@
                 "content": "(assign flag1 0)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1436,7 +1436,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1464,7 +1464,7 @@
                 "content": "(assign turn 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1507,7 +1507,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1535,7 +1535,7 @@
                 "content": "(assign flag1 0)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1595,7 +1595,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1629,7 +1629,7 @@
                 "content": "(assign thr1::f2 flag2)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1672,7 +1672,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1700,7 +1700,7 @@
                 "content": "(assign thr1::f2 flag2)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1786,7 +1786,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1814,7 +1814,7 @@
                 "content": "(assign flag1 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1857,7 +1857,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1885,7 +1885,7 @@
                 "content": "(assign thr1::while1::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1928,7 +1928,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -1956,7 +1956,7 @@
                 "content": "(assign thr1::while1::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2470,7 +2470,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2498,7 +2498,7 @@
                 "content": "(assign flag2 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2584,7 +2584,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2618,7 +2618,7 @@
                 "content": "(assign thr2::while5::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2704,7 +2704,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -2732,7 +2732,7 @@
                 "content": "(assign flag2 0)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3027,7 +3027,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3055,7 +3055,7 @@
                 "content": "(assign turn 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3098,7 +3098,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3126,7 +3126,7 @@
                 "content": "(assign flag2 0)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3186,7 +3186,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3220,7 +3220,7 @@
                 "content": "(assign thr2::f1 flag1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3263,7 +3263,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3291,7 +3291,7 @@
                 "content": "(assign thr2::f1 flag1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3377,7 +3377,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3405,7 +3405,7 @@
                 "content": "(assign flag2 1)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3448,7 +3448,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3476,7 +3476,7 @@
                 "content": "(assign thr2::while5::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3519,7 +3519,7 @@
             },
             "labels": [
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicBeginLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {
@@ -3547,7 +3547,7 @@
                 "content": "(assign thr2::while5::t turn)"
               },
               {
-                "type": "hu.bme.mit.theta.xcfa.model.FenceLabel",
+                "type": "hu.bme.mit.theta.xcfa.model.AtomicEndLabel",
                 "metadata": {
                   "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
                   "content": {

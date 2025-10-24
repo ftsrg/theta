@@ -17,8 +17,8 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /** Removes assume(false) statements and any consequently unreachable edges and locations. */
 class AssumeFalseRemovalPass : ProcedurePass {

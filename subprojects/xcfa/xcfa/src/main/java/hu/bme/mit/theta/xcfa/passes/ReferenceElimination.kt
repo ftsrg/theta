@@ -31,10 +31,10 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.references
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.references
 
 /** Removes all references in favor of creating arrays instead. */
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
@@ -70,7 +70,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
-              if (MemsafetyPass.NEED_CHECK) {
+              if (MemsafetyPass.enabled) {
                 val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
 
                 listOf(assign, assign2)
@@ -95,7 +95,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
             val initVal = ptrType.getValue("$cnt")
-            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal))
+            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach { proc ->
@@ -117,7 +117,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
-            if (MemsafetyPass.NEED_CHECK) {
+            if (MemsafetyPass.enabled) {
               val assign3 = builder.parent.allocateUnit(parseContext, varDecl.ref)
 
               listOf(assign1, assign2, assign3)
@@ -213,6 +213,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             name,
             params.map { it.changeReferredVars(varLut, parseContext) },
             metadata = metadata,
+            isLibraryFunction = isLibraryFunction,
           )
 
         is NondetLabel ->

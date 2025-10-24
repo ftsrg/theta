@@ -17,14 +17,18 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
+import hu.bme.mit.theta.xcfa.model.RWLockReadLockLabel.Companion.readHandle
+import hu.bme.mit.theta.xcfa.model.RWLockWriteLockLabel.Companion.writeHandle
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
@@ -39,6 +43,7 @@ constructor(
   val params: List<Expr<*>>,
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+  var isLibraryFunction: Boolean = false, // true means that passes/analyses should handle it
 ) : XcfaLabel(metadata) {
 
   override fun toString(): String {
@@ -49,6 +54,7 @@ constructor(
 
   companion object {
 
+    @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val (name, params) = Regex("^([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
       return InvokeLabel(
@@ -63,13 +69,9 @@ constructor(
 data class ReturnLabel(val enclosedLabel: XcfaLabel) :
   XcfaLabel(metadata = enclosedLabel.metadata) {
 
-  override fun toStmt(): Stmt {
-    return enclosedLabel.toStmt()
-  }
+  override fun toStmt(): Stmt = enclosedLabel.toStmt()
 
-  override fun toString(): String {
-    return "Return ($enclosedLabel)"
-  }
+  override fun toString(): String = "Return ($enclosedLabel)"
 }
 
 data class StartLabel(
@@ -88,6 +90,7 @@ data class StartLabel(
 
   companion object {
 
+    @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val (pidVarName, pidVarType, name, params) =
         Regex("^\\(var (.*) (.*)\\) = start ([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
@@ -105,12 +108,11 @@ data class StartLabel(
 data class JoinLabel(val pidVar: VarDecl<*>, override val metadata: MetaData) :
   XcfaLabel(metadata = metadata) {
 
-  override fun toString(): String {
-    return "join $pidVar"
-  }
+  override fun toString(): String = "join $pidVar"
 
   companion object {
 
+    @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val (pidVarName, pidVarType) =
         Regex("^join \\(var (.*) (.*)\\)$").matchEntire(s)!!.destructured
@@ -142,13 +144,12 @@ constructor(
 
   override fun toStmt(): Stmt = stmt
 
-  override fun toString(): String {
-    if (choiceType != ChoiceType.NONE) return "($stmt)[choiceType=$choiceType]"
-    else return stmt.toString()
-  }
+  override fun toString(): String =
+    if (choiceType != ChoiceType.NONE) "($stmt)[choiceType=$choiceType]" else stmt.toString()
 
   companion object {
 
+    @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val matchResult = Regex("^\\((.*)\\)\\[choiceType=(.*)]$").matchEntire(s)
       if (matchResult != null) {
@@ -169,43 +170,218 @@ constructor(
   }
 }
 
-data class ReadLabel(
-  val local: VarDecl<*>,
-  val global: VarDecl<*>,
-  val labels: Set<String>,
-  override val metadata: MetaData,
-) : XcfaLabel(metadata = metadata) {
+sealed class FenceLabel(
+  open val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : XcfaLabel(metadata) {
+  open val acquiredMutexes: Set<VarDecl<*>> = setOf()
+  open val releasedMutexes: Set<VarDecl<*>> = setOf()
+  open val blockingMutexes: Set<VarDecl<*>> = setOf() // atomic implicitly blocks everything
 
-  override fun toString(): String {
-    return "R[$local <- $global] @$labels"
+  protected abstract val label: String
+
+  override fun toString(): String = "F[$label(${handle.name})]"
+}
+
+sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
+  FenceLabel(handle = ATOMIC_MUTEX, metadata) {
+
+  override fun toString(): String = "F[$label]"
+
+  companion object {
+    val ATOMIC_MUTEX: VarDecl<*> = Decls.Var("__theta_atomic_mutex__", Int())
   }
 }
 
-data class WriteLabel
-constructor(
-  val local: VarDecl<*>,
-  val global: VarDecl<*>,
-  val labels: Set<String>,
-  override val metadata: MetaData,
-) : XcfaLabel(metadata = metadata) {
+data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
+  AtomicFenceLabel(metadata) {
 
-  override fun toString(): String {
-    return "W[$global <- $local] @$labels"
-  }
-}
+  override val acquiredMutexes = setOf(ATOMIC_MUTEX)
+  override val blockingMutexes = setOf(ATOMIC_MUTEX)
+  override val label = "ATOMIC_BEGIN"
 
-data class FenceLabel(val labels: Set<String>, override val metadata: MetaData = EmptyMetaData) :
-  XcfaLabel(metadata = metadata) {
-
-  override fun toString(): String {
-    return "F[${labels.joinToString(";")}]"
-  }
+  override fun toString(): String = super.toString()
 
   companion object {
 
+    @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-      val (labelList) = Regex("^F\\[(.*)]$").matchEntire(s)!!.destructured
-      return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
+      if (s != AtomicBeginLabel().toString()) {
+        throw IllegalArgumentException("Invalid AtomicBeginLabel string: $s")
+      }
+      return AtomicBeginLabel(metadata = metadata)
+    }
+  }
+}
+
+data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
+  AtomicFenceLabel(metadata) {
+
+  override val releasedMutexes = setOf(ATOMIC_MUTEX)
+  override val label = "ATOMIC_END"
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      if (s != AtomicEndLabel().toString()) {
+        throw IllegalArgumentException("Invalid AtomicEndLabel string: $s")
+      }
+      return AtomicEndLabel(metadata = metadata)
+    }
+  }
+}
+
+data class MutexLockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle)
+  override val blockingMutexes = setOf(handle)
+  override val label = LABEL
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    private const val LABEL = "mutex_lock"
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      return MutexLockLabel(mutexVar, metadata = metadata)
+    }
+  }
+}
+
+data class MutexUnlockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val releasedMutexes = setOf(handle)
+  override val label = LABEL
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    private const val LABEL = "mutex_unlock"
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      return MutexUnlockLabel(mutexVar, metadata = metadata)
+    }
+  }
+}
+
+data class MutexTryLockLabel(
+  override val handle: VarDecl<*>,
+  val successVar: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle)
+  override val label = LABEL
+
+  override fun toString(): String = "F[$label(${handle.name}, ${successVar.name})]"
+
+  companion object {
+
+    private const val LABEL = "mutex_trylock"
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName, successVarName) =
+        Regex("^F\\[$LABEL\\((.*), (.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      val successVar = env.eval(scope.resolve(successVarName).orElseThrow()) as VarDecl<*>
+      return MutexTryLockLabel(mutexVar, successVar, metadata = metadata)
+    }
+  }
+}
+
+data class RWLockReadLockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle.readHandle)
+  override val blockingMutexes = setOf(handle.writeHandle)
+  override val label = LABEL
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    private const val LABEL = "rwlock_read_lock"
+
+    internal val readHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
+    internal val VarDecl<*>.readHandle: VarDecl<*>
+      get() = readHandles.getOrPut(this) { Decls.Var("${this.name}__read_handle__", Int()) }
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      return RWLockReadLockLabel(mutexVar, metadata = metadata)
+    }
+  }
+}
+
+data class RWLockWriteLockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val acquiredMutexes = setOf(handle.writeHandle)
+  override val blockingMutexes = setOf(handle.writeHandle, handle.readHandle)
+  override val label = LABEL
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    private const val LABEL = "rwlock_write_lock"
+
+    internal val writeHandles: MutableMap<VarDecl<*>, VarDecl<*>> = mutableMapOf()
+    internal val VarDecl<*>.writeHandle: VarDecl<*>
+      get() = writeHandles.getOrPut(this) { Decls.Var("${this.name}__write_handle__", this.type) }
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      return RWLockWriteLockLabel(mutexVar, metadata = metadata)
+    }
+  }
+}
+
+data class RWLockUnlockLabel(
+  override val handle: VarDecl<*>,
+  override val metadata: MetaData = EmptyMetaData,
+) : FenceLabel(handle, metadata) {
+
+  override val releasedMutexes = setOf(handle.readHandle, handle.writeHandle)
+  override val label = LABEL
+
+  override fun toString(): String = super.toString()
+
+  companion object {
+
+    private const val LABEL = "rwlock_unlock"
+
+    @Suppress("unused")
+    fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+      val (mutexName) = Regex("^F\\[$LABEL\\((.*)\\)]$").matchEntire(s)!!.destructured
+      val mutexVar = env.eval(scope.resolve(mutexName).orElseThrow()) as VarDecl<*>
+      return RWLockUnlockLabel(mutexVar, metadata = metadata)
     }
   }
 }
@@ -216,7 +392,7 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   XcfaLabel(metadata = metadata) {
 
   override fun toStmt(): Stmt {
-    return SequenceStmt(labels.map { it.toStmt() })
+    return SequenceStmt(labels.filter { it !is NopLabel }.map { it.toStmt() })
   }
 
   override fun toString(): String {
