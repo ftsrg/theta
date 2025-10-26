@@ -91,9 +91,14 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-                "2.5-1388", "2.5-1384", "2.5-1256", "2.5-1230", "2.5-916", "2.5-663", "2.5-479",
-                "2.5-7"
-        );
+                "2.5-1388",
+                "2.5-1384",
+                "2.5-1256",
+                "2.5-1230",
+                "2.5-916",
+                "2.5-663",
+                "2.5-479",
+                "2.5-7");
     }
 
     private URL getDownloadUrl(final String version)
