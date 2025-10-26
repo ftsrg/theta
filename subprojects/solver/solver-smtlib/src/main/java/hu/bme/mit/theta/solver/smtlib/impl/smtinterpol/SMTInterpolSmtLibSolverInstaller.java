@@ -90,17 +90,18 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     public List<String> getSupportedVersions() {
-        // TODO download won't work on 2.5-1301 yet, so in order for 'latest' to work, order has to
-        // stay like this for now
         return Arrays.asList(
-                "2.5-1256", "2.5-1301", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
+                "2.5-1388", "2.5-1384", "2.5-1256", "2.5-1230", "2.5-916", "2.5-663", "2.5-479",
+                "2.5-7"
+        );
     }
 
     private URL getDownloadUrl(final String version)
             throws SmtLibSolverInstallerException, MalformedURLException {
         final String fileName =
                 switch (version) {
-                    case "2.5-1301" -> "2.5-1301-g2c871e40";
+                    case "2.5-1388" -> "2.5-1388-ga5a4ab0c";
+                    case "2.5-1384" -> "2.5-1384-g98f115aa";
                     case "2.5-1256" -> "2.5-1256-g55d6ba76";
                     case "2.5-1230" -> "2.5-1230-g3eafb46a";
                     case "2.5-916" -> "2.5-916-ga5843d8b";
