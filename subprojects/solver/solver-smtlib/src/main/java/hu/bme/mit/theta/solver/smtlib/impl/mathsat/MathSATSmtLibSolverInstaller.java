@@ -44,6 +44,12 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
         versions = new ArrayList<>();
         versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("5.6.12"))
+                        .addString(LINUX, X64, "linux-x86_64")
+                        .addString(MAC, X64, "macos")
+                        .addString(WINDOWS, X64, "win64-msvc")
+                        .build());
+        versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.7"))
                         .addString(LINUX, X64, "linux-x86_64")
                         .addString(MAC, X64, "osx")
@@ -182,6 +188,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
+                "5.6.12", "5.6.11",
                 "5.6.10", "5.6.9", "5.6.8", "5.6.7", "5.6.6", "5.6.5", "5.6.4", "5.6.3", "5.6.2",
                 "5.6.1", "5.6.0", "5.5.4", "5.5.3", "5.5.2", "5.5.1", "5.5.0", "5.4.1", "5.4.0",
                 "5.3.14", "5.3.13", "5.3.12", "5.3.11", "5.3.10", "5.3.9", "5.3.8", "5.3.7",
