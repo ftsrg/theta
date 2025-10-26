@@ -50,6 +50,12 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
         versions = new ArrayList<>();
         versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("1.2.0"))
+                        .addString(LINUX, X64, "Linux-x86_64-static.zip")
+                        .addString(MAC, X64, "macOS-x86_64-static.zip")
+                        .addString(WINDOWS, X64, "Win64-x86_64-static.zip")
+                        .build());
+        versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("1.1.1"))
                         .addString(LINUX, X64, "Linux-static.zip")
                         .addString(MAC, X64, "macOS-arm64-static.zip")
@@ -157,6 +163,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
+                "1.3.1", "1.3.0", "1.2.1", "1.2.0",
                 "1.1.2", "1.1.1", "1.1.0", "1.0.9", "1.0.8", "1.0.7", "1.0.6", "1.0.5", "1.0.4",
                 "1.0.3", "1.0.2", "1.0.1", "1.0.0");
     }
