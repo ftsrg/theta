@@ -44,6 +44,62 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
         versions = new ArrayList<>();
         versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.15.1"))
+                        .addString(LINUX, X64, "x64-glibc-2.39")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7.6")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.15.0"))
+                        .addString(LINUX, X64, "x64-glibc-2.39")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7.5")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.14.1"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7.4")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.14.0"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7.2")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.13.4"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7.1")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.13.3"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-13.7")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.13.2"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-12.7.6")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("4.12.3"))
+                        .addString(LINUX, X64, "x64-glibc-2.35")
+                        .addString(WINDOWS, X64, "x64-win")
+                        .addString(WINDOWS, X86, "x86-win")
+                        .addString(MAC, X64, "x64-osx-11.7.10")
+                        .build());
+        versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("4.12.0"))
                         .addString(LINUX, X64, "x64-glibc-2.35")
                         .addString(WINDOWS, X64, "x64-win")
@@ -202,6 +258,8 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
+                "4.15.3",
+                "4.15.2", "4.15.1", "4.15.0", "4.14.1", "4.14.0", "4.13.4", "4.13.3", "4.13.2",
                 "4.13.0", "4.12.6", "4.12.5", "4.12.4", "4.12.3", "4.12.2", "4.12.1", "4.12.0",
                 "4.11.2", "4.11.0", "4.10.2", "4.10.1", "4.10.0", "4.9.1", "4.9.0", "4.8.17",
                 "4.8.16", "4.8.15", "4.8.14", "4.8.13", "4.8.12", "4.8.11", "4.8.10", "4.8.9",
