@@ -47,6 +47,19 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
     )
     return varDecl
   }
+
+  fun global(name: String, type: Type, initValue: String, atomic: Boolean): VarDecl<Type> {
+    val varDecl = Var(name, type)
+    builder.addVar(
+      XcfaGlobalVar(
+        varDecl,
+        ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(Env()) as LitExpr<*>,
+        local,
+        atomic,
+      )
+    )
+    return varDecl
+  }
 }
 
 fun XcfaProcedureBuilder.lookup(name: String): VarDecl<out Type> =
@@ -312,11 +325,9 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
   }
 
   infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> XcfaEdge {
-    val loc1 = locationLut.getOrElse(this) { XcfaLocation(this, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(this, loc1)
+    val loc1 = locationLut.getOrPut(this) { XcfaLocation(this, metadata = EmptyMetaData) }
     builder.addLoc(loc1)
-    val loc2 = locationLut.getOrElse(to) { XcfaLocation(to, metadata = EmptyMetaData) }
-    locationLut.putIfAbsent(to, loc2)
+    val loc2 = locationLut.getOrPut(to) { XcfaLocation(to, metadata = EmptyMetaData) }
     builder.addLoc(loc2)
     return { lambda ->
       val edge = XcfaEdge(loc1, loc2, lambda(SequenceLabelContext()), EmptyMetaData)
