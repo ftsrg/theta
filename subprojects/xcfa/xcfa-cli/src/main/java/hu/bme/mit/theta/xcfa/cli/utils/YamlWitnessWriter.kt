@@ -83,7 +83,7 @@ class YamlWitnessWriter {
           ),
       )
 
-    val trace =
+    val trace = if(safetyResult.isUnsafe)
       safetyResult.asUnsafe().cex.let {
         if (it is HackyAsgTrace<*>) {
           val actions = (it as HackyAsgTrace<*>).trace.actions
@@ -100,7 +100,7 @@ class YamlWitnessWriter {
         } else {
           it
         }
-      }
+      } else null
 
     if (safetyResult.isUnsafe && trace is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =

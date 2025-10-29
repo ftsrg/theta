@@ -170,9 +170,7 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
+    assertTrue(isWitnessViolation(temp),
       "No violation witness was produced!",
     )
   }
@@ -202,9 +200,7 @@ class XcfaCliNonTerminationValidateTest {
     try {
       main(params)
       assertTrue(temp.resolve("witness.yml").exists())
-      val witnessContents = temp.resolve("witness.yml").toFile().readText()
-      assertTrue(
-        "entry_type: \"violation_sequence\"" in witnessContents,
+      assertTrue(isWitnessViolation(temp),
         "No violation witness was produced!",
       )
     } catch (e: IllegalStateException) {
@@ -242,8 +238,7 @@ class XcfaCliNonTerminationValidateTest {
       main(params)
       assertTrue(temp.resolve("witness.yml").exists())
       val witnessContents = temp.resolve("witness.yml").toFile().readText()
-      assertTrue(
-        "entry_type: \"violation_sequence\"" in witnessContents,
+      assertTrue(isWitnessViolation(temp),
         "No violation witness was produced!",
       )
     } catch (e: Throwable) {
@@ -277,9 +272,7 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
+    assertTrue(isWitnessViolation(temp),
       "No violation witness was produced!",
     )
   }
@@ -333,9 +326,7 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
+    assertTrue(isWitnessViolation(temp),
       "No violation witness was produced!",
     )
   }
@@ -369,9 +360,7 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
+    assertTrue(isWitnessViolation(temp),
       "No violation witness was produced!",
     )
   }
@@ -405,12 +394,15 @@ class XcfaCliNonTerminationValidateTest {
         "--enable-output",
       )
     main(params)
-    assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(
-      "entry_type: \"violation_sequence\"" in witnessContents,
+    assertTrue(isWitnessViolation(temp),
       "No violation witness was produced!",
     )
+  }
+
+  private fun isWitnessViolation(temp: Path): Boolean {
+    assertTrue(temp.resolve("witness.yml").exists())
+    val witnessContents = temp.resolve("witness.yml").toFile().readText()
+    return "entry_type: \"violation_sequence\"" in witnessContents
   }
 
   /////////// wrong witnesses ///////////
@@ -439,7 +431,9 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
-    assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+    assertFalse(isWitnessViolation(temp),
+      "A violation witness was produced!",
+    )
   }
 
   @ParameterizedTest
@@ -473,7 +467,9 @@ class XcfaCliNonTerminationValidateTest {
     try {
       main(params)
       // TODO: add correctness check once correctness termination witnesses are added
-      assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+      assertFalse(isWitnessViolation(temp),
+        "A violation witness was produced!",
+      )
     } catch (e: Throwable) {
       if (!e.toString().contains("Done debugging")) {
         throw e
@@ -505,7 +501,9 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
-    assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+    assertFalse(isWitnessViolation(temp),
+      "A violation witness was produced!",
+    )
   }
 
   @ParameterizedTest
@@ -541,7 +539,9 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
-    assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+    assertFalse(isWitnessViolation(temp),
+      "A violation witness was produced!",
+    )
   }
 
   @ParameterizedTest
@@ -574,7 +574,9 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
-    assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+    assertFalse(isWitnessViolation(temp),
+      "A violation witness was produced!",
+    )
   }
 
   @ParameterizedTest
@@ -601,6 +603,8 @@ class XcfaCliNonTerminationValidateTest {
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
-    assertFalse(temp.resolve("witness.yml").exists(), "A violation witness was produced!")
+    assertFalse(isWitnessViolation(temp),
+      "A violation witness was produced!",
+    )
   }
 }
