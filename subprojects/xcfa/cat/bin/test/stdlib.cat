@@ -1,9 +1,0 @@
-STDLIB
-
-let po-loc = po & loc
-let rfe = rf & ext
-let rfi = rf & int
-
-let fencerel(B) = (po & (_ * B)) ;  po
-
-let ctrlcfence(ctrl,CFENCE) = (ctrl & (_ * CFENCE)) ; po

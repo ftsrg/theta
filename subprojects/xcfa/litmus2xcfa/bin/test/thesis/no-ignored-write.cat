@@ -1,6 +1,0 @@
-NOIGNOREDWRITE
-
-procedure noIgnoredWrite(W, R, loc) =
-    let pot-rf = (W * R) & loc \ illegal_rf()
-    empty range(pot-rf) \ range(rf)
-end
