@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -124,17 +125,17 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
             )
           )
         }
-        .toList() + 
+        .toList() +
         (proc.errorLoc.getOrNull()?.let { errorLoc ->
-        listOf(
-          SequenceStmt.of(
-            listOf(
-              AssumeStmt.of(Eq(locVar.ref, int(locMap[errorLoc]!!))),
-              AssignStmt.of(locVar, cast(int(locMap[errorLoc]!!), locVar.type)),
+          listOf(
+            SequenceStmt.of(
+              listOf(
+                AssumeStmt.of(Eq(locVar.ref, smtAwareInteger(locationMap[errorLoc]!!))),
+                AssignStmt.of(locVar, cast(smtAwareInteger(locationMap[errorLoc]!!), locVar.type)),
+              )
             )
           )
-        )
-      } ?: emptyList<Stmt>())
+        } ?: emptyList<Stmt>())
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
