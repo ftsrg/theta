@@ -982,7 +982,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                                         ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
                 primary =
                         Exprs.Dereference(
-                                cast(primary, primary.getType()),
+                                Exprs.Dereference(
+                                        cast(primary, primary.getType()),
+                                        type.getNullValue(),
+                                        type.getSmtType()),
                                 cast(idxExpr, primary.getType()),
                                 embeddedType.getSmtType());
                 parseContext.getMetadata().create(primary, "cType", embeddedType);
