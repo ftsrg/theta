@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -43,7 +43,7 @@ class GraphmlWitnessWriter {
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
-    property: ErrorDetection,
+    property: XcfaProperty,
     ltlViolationProperty: String,
   ) {
     // TODO eliminate the need for the instanceof check

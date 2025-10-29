@@ -25,15 +25,11 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbst
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
-import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.orderVarsFromRandomStartingPoints
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
@@ -44,8 +40,8 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 fun getMddChecker(
   xcfa: XCFA,
@@ -70,19 +66,19 @@ fun getMddChecker(
       solverPool,
       logger,
       iterationStrategy,
-      variableOrdering =
-        orderVarsFromRandomStartingPoints(
-          monolithicExpr.vars,
-          stmts
-            .map {
-              object : Event {
-                override fun getAffectedVars(): List<VarDecl<*>> =
-                  StmtUtils.getWrittenVars(it).toList()
-              }
-            }
-            .toList(),
-          20,
-        ),
+      //      variableOrdering =
+      //        orderVarsFromRandomStartingPoints(
+      //          monolithicExpr.vars,
+      //          stmts
+      //            .map {
+      //              object : Event<VarDecl<*>> {
+      //                override fun getAffectedVars(): List<VarDecl<*>> =
+      //                  StmtUtils.getWrittenVars(it).toList()
+      //              }
+      //            }
+      //            .toList(),
+      //          20,
+      //        ),
     )
   }
 

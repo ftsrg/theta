@@ -25,18 +25,18 @@ import hu.bme.mit.theta.core.decl.VarDecl
 internal fun interface MemoryConsistencyModelFilter {
   operator fun invoke(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
-    pos: MutableList<R>,
-    wss: MutableMap<VarDecl<*>, MutableSet<R>>,
+    pos: List<R>,
+    wss: Map<VarDecl<*>, Set<R>>,
   ): Pair<
     BooleanGlobalRelation, // ppo
-    MutableMap<VarDecl<*>, MutableSet<R>>, // wss
+    Map<VarDecl<*>, Set<R>>, // wss
   >
 }
 
 @Suppress("unused")
 enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyModelFilter) {
   SC({ _, pos, wss -> getClosedPo(pos) to wss }),
-  WSC({ _, pos, _ -> getClosedPo(pos) to mutableMapOf() }),
+  WSC({ _, pos, _ -> getClosedPo(pos) to mapOf() }),
   TSO({ events, pos, wss ->
     getPpo(events, pos) { v1, access1, v2, access2 ->
       v1 != v2 && access1 == setOf(WRITE) && access2 == setOf(READ)
@@ -47,7 +47,7 @@ enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyMo
   }),
 }
 
-private fun getClosedPo(pos: MutableList<R>): BooleanGlobalRelation {
+private fun getClosedPo(pos: List<R>): BooleanGlobalRelation {
   val globalPos = pos.filter { it.from.clkId != it.to.clkId }
   val rels = BooleanGlobalRelation(Event.clkSize) { false }
   rels.closeNoCycle(globalPos.map { Triple(it.from.clkId, it.to.clkId, true) })
@@ -76,7 +76,7 @@ private fun getBlockMetadata(events: Map<VarDecl<*>, Map<Int, List<E>>>): Array<
 
 private fun getPpo(
   events: Map<VarDecl<*>, Map<Int, List<E>>>,
-  pos: MutableList<R>,
+  pos: List<R>,
   filterOut: (VarDecl<*>, Set<EventType>, VarDecl<*>, Set<EventType>) -> Boolean,
 ): BooleanGlobalRelation {
   val closedPos = getClosedPo(pos)

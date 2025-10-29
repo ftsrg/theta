@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.pred.PredState
@@ -55,11 +56,11 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.kframework.mpfr.BigFloat
 
@@ -172,6 +173,21 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
           edgeVar +
           locVar,
       ctrlVars = listOf(locVar, edgeVar),
+      events =
+        xcfa.procedures
+          .flatMap {
+            it.edges.flatMap { xcfaEdge ->
+              xcfaEdge.getFlatLabels().map { label -> label.toStmt() }
+            }
+          }
+          .toSet()
+          .map {
+            object : Event<VarDecl<*>> {
+              override fun getAffectedVars(): List<VarDecl<*>> =
+                StmtUtils.getWrittenVars(it).toList()
+            }
+          }
+          .toList(),
     )
   }
 
