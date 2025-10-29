@@ -107,6 +107,13 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
+  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
+    val pathEnumerationConfig = config.backendConfig.specConfig
+    pathEnumerationConfig as PathEnumerationConfig
+    val random = Random(pathEnumerationConfig.porRandomSeed)
+    XcfaSporLts.random = random
+    XcfaDporLts.random = random
+  }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
       config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -139,9 +146,20 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
+  rule("NoCoiWhenDataRacePathEnumeration") {
+    config.backendConfig.backend == Backend.PATH_ENUMERATION &&
+      (config.backendConfig.specConfig as? PathEnumerationConfig)?.coi !=
+        ConeOfInfluenceMode.NO_COI &&
+      config.inputConfig.property == ErrorDetection.DATA_RACE
+  }
   rule("NoAaporWhenDataRace") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
+  }
+  rule("NoAaporOrDporPathEnumeration") {
+    (config.backendConfig.specConfig as? PathEnumerationConfig)?.porLevel.let {
+      it != null && (it.isAbstractionAware || it.isDynamic)
+    }
   }
   rule("DPORWithoutDFS") {
     (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&

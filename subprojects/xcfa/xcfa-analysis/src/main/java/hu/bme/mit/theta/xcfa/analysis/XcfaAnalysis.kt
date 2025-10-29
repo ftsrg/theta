@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedLtsChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
@@ -32,7 +33,9 @@ import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
+import hu.bme.mit.theta.analysis.unit.*
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -399,3 +402,83 @@ class PredXcfaAnalysis(
     coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc),
     coneOfInfluence = coi,
   )
+
+private fun getUnitXcfaPartialOrd(xcfa: XCFA): PartialOrd<XcfaState<PtrState<UnitState>>> {
+  val ptrPartialOrd = UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd()
+  return if (xcfa.isInlined) {
+    getPartialOrder(ptrPartialOrd)
+  } else {
+    getStackPartialOrder(ptrPartialOrd)
+  }
+}
+
+private fun getUnitXcfaInitFunc(
+  xcfa: XCFA
+): (XcfaPrec<PtrPrec<UnitPrec>>) -> List<XcfaState<PtrState<UnitState>>> {
+  val processInitState =
+    xcfa.initProcedures
+      .mapIndexed { i, it ->
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
+        initLocStack.add(it.first.initLoc)
+        Pair(
+          i,
+          XcfaProcessState(
+            initLocStack,
+            prefix = "T$i",
+            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+          ),
+        )
+      }
+      .toMap()
+  return { p ->
+    InitFunc<UnitState, UnitPrec> { _ -> listOf(UnitState.getInstance()) }
+      .getPtrInitFunc()
+      .getInitStates(p.p)
+      .map { XcfaState(xcfa, processInitState, it) }
+  }
+}
+
+private fun getUnitXcfaTransFunc(
+  isHavoc: Boolean
+): (XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>) -> List<
+    XcfaState<PtrState<UnitState>>
+  > {
+  val unitTransFunc =
+    TransFunc<UnitState, ExprAction, UnitPrec> { s, _, _ -> listOf(s) }.getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val (newSt, newAct) = s.apply(a)
+    unitTransFunc.getSuccStates(s.sGlobal, newAct, p.p).map { newSt.withState(it) }
+  }
+}
+
+class UnitXcfaAnalysis(xcfa: XCFA, isHavoc: Boolean) :
+  XcfaAnalysis<UnitState, PtrPrec<UnitPrec>>(
+    corePartialOrd = getUnitXcfaPartialOrd(xcfa),
+    coreInitFunc = getUnitXcfaInitFunc(xcfa),
+    coreTransFunc = getUnitXcfaTransFunc(isHavoc),
+  )
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val lts = getXcfaLts()
+  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
+}
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
+  val target = getXcfaErrorPredicate(errorDetection)
+  val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
+  return BoundedLtsChecker(lts, analysis, target, bound, prec, solver)
+}

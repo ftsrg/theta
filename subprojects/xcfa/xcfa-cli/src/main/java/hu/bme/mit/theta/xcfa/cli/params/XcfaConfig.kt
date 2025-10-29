@@ -229,6 +229,7 @@ data class BackendConfig<T : SpecBackendConfig>(
             as T
         Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
+        Backend.PATH_ENUMERATION -> PathEnumerationConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
@@ -588,3 +589,44 @@ data class DebugConfig(
   )
   var argToFile: Boolean = false,
 ) : Config
+
+data class PathEnumerationConfig(
+  @Parameter(names = ["--path-enumeration-solver"], description = "Path enumeration solver name")
+  var pathEnumerationSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-path-enumeration-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validatePathEnumerationSolver: Boolean = false,
+  @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
+  var maxBound: Int = 0,
+  @Parameter(names = ["--prec"], description = "Precision") var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--por-level"], description = "POR dependency level")
+  var porLevel: POR = POR.NOPOR,
+  @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
+  var porRandomSeed: Int = -1,
+  @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
+  var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.UNIT,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(
+    names = ["--havoc-memory"],
+    description = "HAVOC memory model (do not track pointers in transition function)",
+  )
+  var havocMemory: Boolean = false,
+) : SpecBackendConfig
