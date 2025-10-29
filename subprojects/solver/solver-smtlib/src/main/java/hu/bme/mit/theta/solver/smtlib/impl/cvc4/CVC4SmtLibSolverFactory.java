@@ -21,6 +21,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
+@Deprecated
 public class CVC4SmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
     private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {

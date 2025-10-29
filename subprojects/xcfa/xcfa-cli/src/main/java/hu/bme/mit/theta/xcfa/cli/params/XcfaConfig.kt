@@ -26,12 +26,15 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
+import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -95,37 +98,47 @@ data class InputConfig(
     description = "Path of the property file (will overwrite --property when given)",
   )
   var propertyFile: File? = null,
-  @Parameter(names = ["--property-value"], description = "Property")
-  var property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
   @Parameter(names = ["--witness"], description = "Witness file (optional)")
   var witness: File? = null,
+  @Parameter(
+    names = ["--property-value"],
+    description = "Property",
+    converter = StringToXcfaPropertyConverter::class,
+  )
+  var property: XcfaProperty = XcfaProperty(ErrorDetection.ERROR_LOCATION),
 ) : Config {
 
   override fun toString(): String {
     return "InputConfig(inputFile=${input}, catFile=${catFile}, parseCtx=${parseCtx}, " +
-      "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, property=${property}"
+      "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, inputProperty=${property.inputProperty}"
   }
 }
 
 interface SpecFrontendConfig : Config
 
 data class FrontendConfig<T : SpecFrontendConfig>(
-  @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
+  @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_SEQ, LBE_FULL, LBE_LOCAL)")
   var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
   @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
-  var staticCoi: Boolean = false,
+  var enableStaticCoi: Boolean = false,
   @Parameter(
     names = ["--unroll"],
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = 1000,
+  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
   @Parameter(
     names = ["--force-unroll"],
     description =
       "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)",
   )
   var forceUnroll: Int = -1,
+  @Parameter(
+    names = ["--datarace-to-reachability"],
+    description =
+      "Enable specification transformation from data race to reachability. Use this when the desired backend does not natively support data race checking.",
+  )
+  var enableDataRaceToReachability: Boolean = false,
   @Parameter(
     names = ["--enable-few"],
     description =
@@ -236,10 +249,12 @@ data class BackendConfig<T : SpecBackendConfig>(
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
-  @Parameter(names = ["--por-level"], description = "POR dependency level")
-  var porLevel: POR = POR.NOPOR,
-  @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
-  var porRandomSeed: Int = -1,
+  @Parameter(names = ["--por"], description = "POR algorithm type") var por: POR = POR.NOPOR,
+  @Parameter(
+    names = ["--por-seed"],
+    description = "Random seed used by POR algorithms for testing purposes",
+  )
+  var porSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
   var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
   @Parameter(
@@ -367,7 +382,7 @@ data class AsgCegarRefinerConfig(
 ) : Config
 
 data class HornConfig(
-  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:4.13",
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
   @Parameter(
     names = ["--validate-solver"],
     description =
@@ -379,6 +394,18 @@ data class HornConfig(
     description = "What relation to use for the ranking function.",
   )
   var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
+) : SpecBackendConfig
+
+data class LassoValidationConfig(
+  @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(names = ["--witness"], description = "Path of the witness file (witness.yml)")
+  var witness: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(
@@ -486,7 +513,7 @@ data class OcConfig(
   @Parameter(names = ["--oc-memory-model"], description = "Memory consistency model for OC checker")
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
-  var smtSolver: String = "Z3:4.13",
+  var smtSolver: String = "Z3:new",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

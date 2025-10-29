@@ -28,7 +28,8 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
@@ -49,15 +50,15 @@ fun traceToWitness(
   verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
   trace: Trace<XcfaState<ExplState>, XcfaAction>,
   parseContext: ParseContext,
-  property: ErrorDetection,
+  property: XcfaProperty,
 ): Trace<WitnessNode, WitnessEdge> {
   val newStates = ArrayList<WitnessNode>()
   val newActions = ArrayList<WitnessEdge>()
 
   val isError =
-    if (property == ErrorDetection.TERMINATION) {
+    if (property.verifiedProperty == ErrorDetection.TERMINATION) {
       Predicate<XcfaState<out PtrState<out ExprState>>> { false }
-    } else getXcfaErrorPredicate(property)
+    } else getXcfaErrorPredicate(property.verifiedProperty)
 
   var lastNode: WitnessNode? = null
   //    WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)

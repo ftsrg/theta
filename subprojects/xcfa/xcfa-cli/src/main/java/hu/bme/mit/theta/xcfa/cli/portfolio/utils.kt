@@ -62,7 +62,7 @@ fun baseCegarConfig(
       frontendConfig =
         if (serialize)
           FrontendConfig(
-            lbeLevel = LbePass.level,
+            lbeLevel = LbePass.defaultLevel,
             loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = efficient),
@@ -77,8 +77,8 @@ fun baseCegarConfig(
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
-              porLevel = NOPOR,
-              porRandomSeed = -1,
+              por = NOPOR,
+              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =
@@ -284,6 +284,7 @@ fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
   refinementSolver: String = this.backendConfig.specConfig!!.refinerConfig.refinementSolver,
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
+  coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, AsgCegarConfig> {
   return copy(
@@ -311,6 +312,7 @@ fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
                   refinement = refinement,
                   exprSplitter = exprSplitter,
                 ),
+            coi = coi,
           ),
       )
   )
@@ -336,7 +338,7 @@ fun baseBoundedConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -399,7 +401,7 @@ fun baseMddConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),

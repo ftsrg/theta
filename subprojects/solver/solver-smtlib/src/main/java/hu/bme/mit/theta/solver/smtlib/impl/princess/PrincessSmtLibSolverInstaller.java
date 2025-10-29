@@ -94,6 +94,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
+                "2024-11-08",
                 "2024-01-12",
                 "2023-06-19",
                 "2023-04-07",

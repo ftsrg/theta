@@ -15,29 +15,28 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.varordering
 
-import hu.bme.mit.theta.core.decl.VarDecl
 import kotlin.random.Random
 
-interface Event {
-  fun getAffectedVars(): List<VarDecl<*>>
+interface Event<V> {
+  fun getAffectedVars(): List<V>
 }
 
 /**
  * Variable ordering based on the 'FORCE' variable ordering heuristic.
  * https://doi.org/10.1145/764808.764839
  */
-fun orderVarsFromRandomStartingPoints(
-  vars: List<VarDecl<*>>,
-  events: List<Event>,
+fun <V> orderVarsFromRandomStartingPoints(
+  vars: List<V>,
+  events: List<Event<V>>,
   numStartingPoints: Int = 5,
-): List<VarDecl<*>> {
+): List<V> {
   val random = Random(0)
   val startingPoints = (0 until numStartingPoints).map { vars.shuffled(random) }
   val orderings = startingPoints.map { orderVars(it, events) }
   return orderings.minBy { eventSpans(it, events) }
 }
 
-fun orderVars(vars: List<VarDecl<*>>, events: List<Event>): List<VarDecl<*>> {
+fun <V> orderVars(vars: List<V>, events: List<Event<V>>): List<V> {
 
   val affectedVars = events.associateWith { it.getAffectedVars() }
 
@@ -75,15 +74,15 @@ fun orderVars(vars: List<VarDecl<*>>, events: List<Event>): List<VarDecl<*>> {
   return currentVarOrdering
 }
 
-private fun eventSpans(vars: List<VarDecl<*>>, events: List<Event>) =
+private fun <V> eventSpans(vars: List<V>, events: List<Event<V>>) =
   events
     .map { event ->
       event.getAffectedVars().let {
         when (it.isEmpty()) {
           true -> 0
           else -> {
-            val firstVar = it.minOf { vars.indexOf(it) }
-            val lastVar = it.maxOf { vars.indexOf(it) }
+            val firstVar = it.filter { decl -> decl in vars }.minOf { vars.indexOf(it) }
+            val lastVar = it.filter { decl -> decl in vars }.maxOf { vars.indexOf(it) }
             lastVar - firstVar
           }
         }

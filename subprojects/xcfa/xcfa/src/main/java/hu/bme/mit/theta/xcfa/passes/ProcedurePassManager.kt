@@ -17,13 +17,20 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
 
   constructor(vararg passes: List<ProcedurePass>) : this(passes.toList())
+
+  operator fun plus(other: ProcedurePassManager): ProcedurePassManager =
+    ProcedurePassManager(this.passes + other.passes)
+
+  operator fun plus(passes: List<ProcedurePass>): ProcedurePassManager =
+    ProcedurePassManager(this.passes + listOf(passes))
 }
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) :
+class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningLogger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -33,8 +40,8 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
       // handling intrinsics
-      ErrorLocationPass(checkOverflow),
-      FinalLocationPass(checkOverflow),
+      ErrorLocationPass(property),
+      FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(),
@@ -44,28 +51,35 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
       // optimizing
       SimplifyExprsPass(parseContext),
       LoopUnrollPass(),
-      SimplifyExprsPass(parseContext),
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
       InlineProceduresPass(parseContext),
+      NondetFunctionPass(),
+    ),
+    listOf(
+      // Clean up procedures after inlining
+      InlinedProcedureRemovalPass()
+    ),
+    listOf(
       EmptyEdgeRemovalPass(),
+      SimplifyExprsPass(parseContext),
+      UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
     listOf(
       // handling remaining function calls
-      MemsafetyPass(parseContext),
+      MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      NondetFunctionPass(),
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),
       HavocPromotionAndRange(parseContext),
+      DataRaceToReachabilityPass(property),
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
       EmptyEdgeRemovalPass(),
@@ -75,7 +89,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
   )
 
 class NontermValidationPasses(
-  checkOverflow: Boolean,
+  property: XcfaProperty,
   parseContext: ParseContext,
   uniqueWarningLogger: Logger,
 ) :
@@ -87,8 +101,8 @@ class NontermValidationPasses(
       // removing redundant elements
       UnusedLocRemovalPass(),
       // handling intrinsics
-      ErrorLocationPass(checkOverflow),
-      FinalLocationPass(checkOverflow),
+      ErrorLocationPass(property),
+      FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       CLibraryFunctionsPass(),
@@ -105,7 +119,7 @@ class NontermValidationPasses(
     ),
     listOf(
       // handling remaining function calls
-      MemsafetyPass(parseContext),
+      MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
       NondetFunctionPass(),
       HavocPromotionAndRange(parseContext),

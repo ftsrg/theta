@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.DirectionalMonolithicExprPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPassResult
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
@@ -104,15 +105,17 @@ constructor(
     val activationLiterals = ArrayList<VarDecl<*>>()
     val literalToPred = HashMap<Decl<*>, Expr<BoolType>>()
 
-    prec.preds.forEachIndexed { index, expr ->
-      val v = Decls.Var("v$index", BoolType.getInstance())
-      activationLiterals.add(v)
-      literalToPred[v] = expr
-      lambdaList.add(IffExpr.of(v.ref, expr))
-      lambdaPrimeList.add(
-        BoolExprs.Iff(Exprs.Prime(v.ref), ExprUtils.applyPrimes(expr, model.transOffsetIndex))
-      )
-    }
+    prec.preds
+      .filter { !model.ctrlVars.containsAll(ExprUtils.getVars(it)) }
+      .forEachIndexed { index, expr ->
+        val v = Decls.Var("v$index", BoolType.getInstance())
+        activationLiterals.add(v)
+        literalToPred[v] = expr
+        lambdaList.add(IffExpr.of(v.ref, expr))
+        lambdaPrimeList.add(
+          BoolExprs.Iff(Exprs.Prime(v.ref), ExprUtils.applyPrimes(expr, model.transOffsetIndex))
+        )
+      }
 
     this.literalToPred = literalToPred
 
@@ -123,6 +126,24 @@ constructor(
         repeat(model.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
       }
 
+    //    val transExpr = if(model.split.size > 1) {
+    //      Or(model.split.map {
+    //        val vars = ExprUtils.getVars(it)
+    //        var sub = BasicExprSubstitution.Builder()
+    //        for (v in vars) {
+    //          sub = sub.put(Eq(v.getConstDecl(model.transOffsetIndex.get(v)).ref,
+    // v.getConstDecl(0).ref), False())
+    //          sub = sub.put(Eq(v.getConstDecl(0).ref,
+    // v.getConstDecl(model.transOffsetIndex.get(v)).ref), False())
+    //        }
+    //        val identityRemovedExpr = sub.build().apply(PathUtils.unfold(it, 0))
+    //        val remainingConstants = ExprUtils.getConstants(identityRemovedExpr)
+    //        val affectedVars = vars.filter { v -> v.getConstDecl(0) in remainingConstants
+    // }.toList()
+    //        And(And(lambdaList.filter { lit ->  }), And(lambdaPrimeList), it)
+    //      })
+    //    }
+
     val transOffsetIndex = indexingBuilder.build()
     return MonolithicExpr(
       initExpr = And(And(lambdaList), model.initExpr),
@@ -131,6 +152,21 @@ constructor(
       transOffsetIndex = transOffsetIndex,
       vars = activationLiterals + model.ctrlVars,
       ctrlVars = model.ctrlVars,
+      events =
+        model.events.map {
+          val originalAffectedVars = it.getAffectedVars()
+          val affectedCtrlVars = originalAffectedVars.filter { v -> v in model.ctrlVars }
+          val affectedActivationLiterals =
+            activationLiterals.filter { v ->
+              literalToPred[v]!!.let { pred ->
+                ExprUtils.getVars(pred).any { v2 -> v2 in originalAffectedVars }
+              }
+            }
+          object : Event<VarDecl<*>> {
+            override fun getAffectedVars(): List<VarDecl<*>> =
+              affectedCtrlVars + affectedActivationLiterals
+          }
+        },
     )
   }
 

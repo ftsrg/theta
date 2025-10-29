@@ -20,7 +20,10 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.lazyPointsToGraph
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
+import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
+import hu.bme.mit.theta.xcfa.utils.pointerPartitions
 import java.util.*
 
 class XCFA(
@@ -33,7 +36,9 @@ class XCFA(
 
   private var cachedHash: Int? = null
 
-  val pointsToGraph by this.lazyPointsToGraph
+  val pointsToGraph by lazy { this.getPointsToGraph() }
+
+  private lateinit var pointerPartitions: List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>>
 
   var procedures: Set<XcfaProcedure> // procedure definitions
     private set
@@ -46,13 +51,13 @@ class XCFA(
     var phase = 0
     do {
       var ready = true
-      procedureBuilders.forEach { ready = it.optimize(phase) && ready }
-      initProcedureBuilders.forEach { ready = it.first.optimize(phase) && ready }
+      procedureBuilders.toSet().forEach { ready = it.optimize(phase) && ready }
+      initProcedureBuilders.toSet().forEach { ready = it.first.optimize(phase) && ready }
       phase++
     } while (!ready)
 
-    procedures = procedureBuilders.map { it.build(this) }.toSet()
-    initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+    procedures = procedureBuilders.toSet().map { it.build(this) }.toSet()
+    initProcedures = initProcedureBuilders.toSet().map { Pair(it.first.build(this), it.second) }
     unsafeUnrollUsed =
       (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
   }
@@ -65,6 +70,29 @@ class XCFA(
     this.procedures = procedures
     this.initProcedures = initProcedures
     return this
+  }
+
+  /**
+   * Returns the pointer partitions of the XCFA. If initEdges is provided, it will be used to
+   * compute the partitions, otherwise the non-concurrent edges are calculated and used.
+   *
+   * See [pointerPartitions][hu.bme.mit.theta.xcfa.utils.pointerPartitions].
+   */
+  fun getPointerPartitions(
+    initEdges: Set<XcfaEdge>? = null
+  ): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
+    if (!this::pointerPartitions.isInitialized) {
+      val init =
+        when {
+          initEdges != null -> initEdges
+          initProcedures.any { p ->
+            p.first.edges.any { e -> e.getAllLabels().any { it is StartLabel } }
+          } -> getNonConcurrentEdges(procedureBuilders.first().parent, true).first
+          else -> setOf()
+        }
+      pointerPartitions = pointerPartitions(this, init)
+    }
+    return pointerPartitions
   }
 
   override fun equals(other: Any?): Boolean {

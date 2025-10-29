@@ -745,10 +745,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
         final var variable = getVar(ctx.Identifier().getText());
-        if (atomicVars.contains(variable)) {
-            preStatements.add(new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
-            postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
-        }
         return variable.getRef();
     }
 
@@ -986,7 +982,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                                         ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
                 primary =
                         Exprs.Dereference(
-                                cast(primary, primary.getType()),
+                                Exprs.Dereference(
+                                        cast(primary, primary.getType()),
+                                        type.getNullValue(),
+                                        type.getSmtType()),
                                 cast(idxExpr, primary.getType()),
                                 embeddedType.getSmtType());
                 parseContext.getMetadata().create(primary, "cType", embeddedType);
@@ -1009,6 +1008,12 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
+                if (primary instanceof RefExpr
+                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                    preStatements.add(
+                            new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
+                    postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
+                }
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return primary;
@@ -1030,6 +1035,12 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
+                if (primary instanceof RefExpr
+                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                    preStatements.add(
+                            new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
+                    postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
+                }
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cAssignment);
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cexpr);
                 return expr;

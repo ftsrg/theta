@@ -23,6 +23,6 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-smtlib")) // necessary for interpolation right now
-    implementation(files(rootDir.resolve(Deps.z3)))
+    implementation(Deps.z3)
     testImplementation(testFixtures(project(":theta-core")))
 }
