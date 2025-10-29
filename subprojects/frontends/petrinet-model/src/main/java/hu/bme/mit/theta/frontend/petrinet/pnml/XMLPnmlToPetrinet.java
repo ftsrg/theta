@@ -161,9 +161,19 @@ public class XMLPnmlToPetrinet {
             final XPathExpression toolspecificWeightExpr =
                     xPath.compile("./toolspecific/weight/text()");
             final int toolspecificWeight =
-                    ((Double) toolspecificWeightExpr.evaluate(arcElement, XPathConstants.NUMBER))
-                            .intValue();
-            final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
+                    Math.max(
+                            ((Double)
+                                            toolspecificWeightExpr.evaluate(
+                                                    arcElement, XPathConstants.NUMBER))
+                                    .intValue(),
+                            1);
+            final XPathExpression inscriptionExpr = xPath.compile("./inscription/text/text()");
+            final int inscription =
+                    Math.max(
+                            ((Double) inscriptionExpr.evaluate(arcElement, XPathConstants.NUMBER))
+                                    .intValue(),
+                            1);
+            final int weight = Math.max(toolspecificWeight, inscription);
 
             if (source instanceof Place) {
                 checkArgument(target instanceof Transition);

@@ -18,16 +18,17 @@ package hu.bme.mit.theta.xsts.analysis;
 import static org.junit.Assert.assertTrue;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
-import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
+import hu.bme.mit.theta.xsts.analysis.pipeline.XstsPipelineChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -40,12 +41,14 @@ public class XstsMddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
-                    //                    {
-                    //                        "src/test/resources/model/spacecraft.xsts",
+                    //                                        {
+                    //
+                    // "src/test/resources/model/spacecraft.xsts",
+                    //
                     //
                     // "src/test/resources/property/transmitting_battery_40.prop",
-                    //                        false
-                    //                    },
+                    //                                            false
+                    //                                        },
 
                     //                { "src/test/resources/model/trafficlight.xsts",
                     // "src/test/resources/property/green_and_red.prop", true},
@@ -212,11 +215,15 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final SafetyResult<MddProof, Trace<ExplState, XstsAction>> status;
+        final SafetyResult<InvariantProof, Trace<XstsState<? extends ExprState>, XstsAction>>
+                status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final XstsMddChecker checker =
-                    XstsMddChecker.create(xsts, solverPool, logger, iterationStrategy);
-            status = checker.check(null);
+            var checker =
+                    new XstsPipelineChecker<>(
+                            xsts,
+                            monolithicExpr -> new MddChecker(monolithicExpr, solverPool, logger));
+            status = checker.check();
+            logger.mainStep(status.toString());
         }
 
         if (safe) {

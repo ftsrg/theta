@@ -22,6 +22,8 @@ import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddVariableHandle
 import hu.bme.mit.delta.java.mdd.UnaryOperationCache
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityTemplate
 
 object MddExplicitRepresentationExtractor {
 
@@ -49,34 +51,53 @@ object MddExplicitRepresentationExtractor {
         result = mddGraph.terminalVariableHandle.getHandleFor(mddGraph.getNodeFor(node.data))
       }
     } else {
-      val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-      Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
-      val expressionRepresentation = node.node.representation as MddExpressionRepresentation
-      val explicitRepresentation = expressionRepresentation.explicitRepresentation
-
-      if (explicitRepresentation.cacheView.defaultValue() != null) {
-        templateBuilder.setDefault(
+      if (node.node.representation is IdentityRepresentation) {
+        val s =
           transform(
+            variable.lower
+              .get()
+              .lower
+              .get()
+              .getHandleFor((node.node.representation as IdentityRepresentation).continuation),
+            variable.lower.get().lower.orElse(null),
+            cache,
+          )
+        result =
+          if (!s.isTerminalZero) {
+            variable.checkInNode(IdentityTemplate(s.node))
+          } else {
+            variable.mddGraph.terminalZeroHandle
+          }
+      } else {
+        val templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
+        Preconditions.checkArgument(node.node.representation is MddExpressionRepresentation)
+        val expressionRepresentation = node.node.representation as MddExpressionRepresentation
+        val explicitRepresentation = expressionRepresentation.explicitRepresentation
+
+        if (explicitRepresentation.cacheView.defaultValue() != null) {
+          val s =
+            transform(
               variable.lower.get().getHandleFor(explicitRepresentation.cacheView.defaultValue()),
               variable.lower.orElse(null),
               cache,
             )
-            .node
-        )
-      } else {
-        val cursor = explicitRepresentation.cacheView.cursor()
-        while (cursor.moveNext()) {
-          val s =
-            transform(
-              variable.lower.get().getHandleFor(cursor.value()),
-              variable.lower.orElse(null),
-              cache,
-            )
-          templateBuilder.set(cursor.key(), s.node)
+          if (!s.isTerminalZero) templateBuilder.setDefault(s.node)
+        } else {
+          val cursor = explicitRepresentation.cacheView.cursor()
+          while (cursor.moveNext()) {
+            val s =
+              transform(
+                variable.lower.get().getHandleFor(cursor.value()),
+                variable.lower.orElse(null),
+                cache,
+              )
+            if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
+          }
         }
+
+        result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
       }
 
-      result = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
       //      if (
       //        structToSym.get(result) != null &&
       //          (node.node.representation as

@@ -36,30 +36,24 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.changeVars
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.cli.utils.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getCegarChecker(
   xcfa: XCFA,
   mcm: MCM,
+  parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
-  if (
-    config.inputConfig.property == ErrorDetection.DATA_RACE &&
-      xcfa.procedures.any { it.edges.any { it.label.dereferences.isNotEmpty() } }
-  ) {
-    throw RuntimeException("DATA_RACE cannot be checked when pointers exist in the file.")
-  }
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       cegarConfig.abstractorConfig.abstractionSolver,
@@ -73,9 +67,9 @@ fun getCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val lts = cegarConfig.coi.getLts(xcfa, ignoredVarRegistry, cegarConfig.porLevel)
+  val (coi, lts) = cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry)
   val waitlist =
-    if (cegarConfig.porLevel.isDynamic) {
+    if (cegarConfig.por.isDynamic) {
       (cegarConfig.coi.porLts as XcfaDporLts).waitlist
     } else {
       PriorityWaitlist.create<ArgNode<out XcfaState<PtrState<ExprState>>, XcfaAction>>(
@@ -99,13 +93,14 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.stopCriterion,
       logger,
       lts,
-      config.inputConfig.property,
-      if (cegarConfig.porLevel.isDynamic) {
+      config.inputConfig.property.verifiedProperty,
+      if (cegarConfig.por.isDynamic) {
         XcfaDporLts.getPartialOrder(corePartialOrd)
       } else {
         corePartialOrd
       },
       cegarConfig.abstractorConfig.havocMemory,
+      coi,
     ) as ArgAbstractor<ExprState, ExprAction, Prec>
 
   val ref: ExprTraceChecker<Refutation> =
@@ -119,7 +114,7 @@ fun getCegarChecker(
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
   val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
     if (cegarConfig.refinerConfig.refinement == Refinement.MULTI_SEQ)
-      if (cegarConfig.porLevel == POR.AASPOR)
+      if (cegarConfig.por == POR.AASPOR)
         MultiExprTraceRefiner.create(
           ref,
           precRefiner,
@@ -134,7 +129,7 @@ fun getCegarChecker(
           cegarConfig.refinerConfig.pruneStrategy,
           logger,
         )
-    else if (cegarConfig.porLevel == POR.AASPOR)
+    else if (cegarConfig.por == POR.AASPOR)
       XcfaSingleExprTraceRefiner.create(
         ref,
         precRefiner,
@@ -151,7 +146,7 @@ fun getCegarChecker(
       )
 
   val cegarChecker =
-    if (cegarConfig.porLevel == POR.AASPOR)
+    if (cegarConfig.por == POR.AASPOR)
       ArgCegarChecker.create(
         abstractor,
         AasporRefiner.create(refiner, cegarConfig.refinerConfig.pruneStrategy, ignoredVarRegistry),

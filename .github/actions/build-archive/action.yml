@@ -56,20 +56,24 @@ runs:
         do
           java -jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar --home ${{ inputs.name }}/${{ inputs.name }}/solvers install $i
         done
-    - name: Download specification-transformation binary
-      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
-        name: specification-transformation
-        path: ./
-    - name: Copy specification transformation binary and license
+    # - name: Download specification-transformation binary
+    #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
+    #   with:
+    #     name: specification-transformation
+    #     path: ./
+    # - name: Copy specification transformation binary and license
+    #   shell: bash
+    #   run: |
+    #     zipfile=$(realpath ./specification-transformation.zip)
+    #     pushd ${{ inputs.name }}/${{ inputs.name }}/
+    #     unzip $zipfile
+    #     popd
+    #     cp $GITHUB_ACTION_PATH/specification-transformation.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
+    - name: Copy test input and smoketest.sh
       shell: bash
       run: |
-        zipfile=$(realpath ./specification-transformation.zip)
-        pushd ${{ inputs.name }}/${{ inputs.name }}/
-        unzip $zipfile
-        popd
-        cp $GITHUB_ACTION_PATH/specification-transformation.LICENSE ${{ inputs.name }}/${{ inputs.name }}/
-        cp $GITHUB_ACTION_PATH/offset.sh ${{ inputs.name }}/${{ inputs.name }}/
+        cp $GITHUB_ACTION_PATH/smoketest.sh ${{ inputs.name }}/${{ inputs.name }}/
+        cp $GITHUB_ACTION_PATH/input.c ${{ inputs.name }}/${{ inputs.name }}/
     - name: ZIP archive
       shell: bash
       run: |

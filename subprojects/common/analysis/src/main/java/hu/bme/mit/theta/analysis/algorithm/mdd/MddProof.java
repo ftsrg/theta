@@ -17,9 +17,13 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.mdd.MddInterpreter;
-import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
-public class MddProof implements Proof {
+public class MddProof implements InvariantProof {
 
     private final MddHandle stateSpace;
 
@@ -37,5 +41,11 @@ public class MddProof implements Proof {
 
     public MddHandle getMdd() {
         return stateSpace;
+    }
+
+    @Override
+    public Expr<BoolType> getInvariant() {
+        return SmartBoolExprs.Or(
+                MddValuationCollector.collect(stateSpace).stream().map(Valuation::toExpr).toList());
     }
 }

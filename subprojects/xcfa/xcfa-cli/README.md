@@ -79,11 +79,11 @@ entity  CegarAbstractorConfig << data >> {
 entity  CegarConfig << data >> {
    coi: ConeOfInfluenceMode
    refinerConfig: CegarRefinerConfig
-   porLevel: POR
+   por: POR
    objects: Set<Config>
    initPrec: InitPrec
    abstractorConfig: CegarAbstractorConfig
-   porRandomSeed: Int
+   porSeed: Int
    cexMonitor: CexMonitorOptions
 }
 entity  CegarRefinerConfig << data >> {

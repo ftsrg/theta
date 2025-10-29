@@ -20,7 +20,6 @@ import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
@@ -50,6 +49,7 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
         this.terminalZeroNode = variableOrder.getMddGraph().getTerminalZeroNode();
     }
 
+    @Override
     public MddHandle compute(
             AbstractNextStateDescriptor.Postcondition initializer,
             AbstractNextStateDescriptor nextStateRelation,
@@ -132,20 +132,26 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
 
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
-        IntObjMapView<MddNode> satTemplate =
-                new IntObjMapViews.Transforming<MddNode, MddNode>(
-                        n,
-                        (node, key) ->
-                                node == null
-                                        ? null
-                                        : terminalZeroToNull(
-                                                saturate(
-                                                        node,
-                                                        d.getDiagonal(stateSpaceInfo).get(key),
-                                                        variable.getLower().orElse(null),
-                                                        cache.getLower())));
+        MddUnsafeTemplateBuilder templateBuilder =
+                JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
-        MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
+        for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
+
+            MddNode s =
+                    saturate(
+                            cFrom.value(),
+                            d.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+                            variable.getLower().orElse(null),
+                            cache.getLower());
+
+            templateBuilder.set(
+                    cFrom.key(),
+                    terminalZeroToNull(
+                            unionChildren(templateBuilder.get(cFrom.key()), s, variable)));
+        }
+
+        MddNode nsat =
+                variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
 
         boolean changed;
 
@@ -160,7 +166,6 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
                         continue;
                     }
                     MddNode nfire = satFire(nsat, d, dfire, variable, cache);
-
                     nfire = variable.union(nsat, nfire);
 
                     if (nfire != nsat) {
@@ -171,7 +176,6 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
             } else if (!d.isLocallyIdentity(stateSpaceInfo)) {
                 // System.out.println("Applying transition: " + d);
                 MddNode nfire = satFire(nsat, d, d, variable, cache);
-
                 nfire = variable.union(nsat, nfire);
 
                 if (nfire != nsat) {
