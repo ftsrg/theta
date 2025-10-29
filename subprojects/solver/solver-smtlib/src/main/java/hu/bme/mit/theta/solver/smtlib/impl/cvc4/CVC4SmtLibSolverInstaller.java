@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@Deprecated
 public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     public CVC4SmtLibSolverInstaller(final Logger logger) {
