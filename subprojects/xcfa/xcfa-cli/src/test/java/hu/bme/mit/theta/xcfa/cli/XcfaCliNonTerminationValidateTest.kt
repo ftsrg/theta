@@ -37,7 +37,7 @@ class XcfaCliNonTerminationValidateTest {
   companion object {
 
     private val SMTLIB_HOME: Path = SmtLibSolverManager.HOME
-    private val solvers = listOf("z3:4.13.0", "mathsat:5.6.10")
+    private val solvers = listOf("z3:4.13.0", "mathsat:5.6.10", "eldarica:2.1")
 
     private fun installSolver(name: String) {
       try {
