@@ -22,7 +22,6 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import org.kframework.mpfr.BigFloat;
