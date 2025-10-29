@@ -1,0 +1,3 @@
+prop {
+	!( (operationRegion_Spacecraft == TransmittingRegion && mainRegion_Spacecraft == Main && (battery_Spacecraft < 40)))
+}

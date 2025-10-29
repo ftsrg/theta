@@ -1,0 +1,111 @@
+/*
+ *  Copyright 2025 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xsts.analysis
+
+import com.google.common.base.Preconditions.checkArgument
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.IfStmt
+import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.xsts.XSTS
+
+class XstsToMonolithicAdapter :
+  ModelToMonolithicAdapter<XSTS, XstsState<out ExprState>, XstsAction> {
+
+  lateinit var xsts: XSTS
+
+  override fun modelToMonolithicExpr(model: XSTS): MonolithicExpr {
+    xsts = model
+    val lastActionWasEnv = Decls.Var("__lastActionWasEnv__", BoolType.getInstance())
+    val initialized = Decls.Var("__initialized__", BoolType.getInstance())
+    val initControlVars = And(lastActionWasEnv.ref, Not(initialized.ref))
+
+    val initExpr = And(model.initFormula, initControlVars)
+    val propExpr = model.prop
+
+    val monolithicTransition =
+      IfStmt.of(
+        Not(initialized.ref),
+        SequenceStmt.of(listOf(model.init, AssignStmt.of(initialized, True()))),
+        IfStmt.of(
+          lastActionWasEnv.ref,
+          SequenceStmt.of(listOf(model.tran, AssignStmt.of(lastActionWasEnv, False()))),
+          SequenceStmt.of(listOf(model.env, AssignStmt.of(lastActionWasEnv, True()))),
+        ),
+      )
+    val monolithicUnfoldResult =
+      StmtUtils.toExpr(monolithicTransition, VarIndexingFactory.indexing(0))
+    val transExpr = And(monolithicUnfoldResult.exprs)
+
+    return MonolithicExpr(
+      initExpr,
+      transExpr,
+      propExpr,
+      monolithicUnfoldResult.indexing,
+      ctrlVars = model.ctrlVars + listOf(lastActionWasEnv, initialized),
+    )
+  }
+
+  override fun traceToModelTrace(
+    trace: Trace<ExplState, ExprAction>
+  ): Trace<XstsState<out ExprState>, XstsAction> {
+    val states = trace.states.map { valToState(it.`val`) }
+    val actions = trace.states.windowed(2, 1).map { (from, to) -> valToAction(from, to) }
+    return Trace.of(states, actions)
+  }
+
+  fun valToAction(val1: Valuation, val2: Valuation): XstsAction {
+    val (lastActionWasEnv1, initialized1) = lastActionAndInitFromValuation(val1)
+    val (lastActionWasEnv2, initialized2) = lastActionAndInitFromValuation(val2)
+
+    checkArgument(initialized2)
+    checkArgument(!initialized1 || lastActionWasEnv1 != lastActionWasEnv2)
+
+    return if (!initialized1) XstsAction.create(xsts.init)
+    else if (lastActionWasEnv1) XstsAction.create(xsts.tran) else XstsAction.create(xsts.env)
+  }
+
+  fun valToState(valuation: Valuation): XstsState<ExplState> {
+    val (lastActionWasEnv, initialized) = lastActionAndInitFromValuation(valuation)
+    return XstsState.of(ExplState.of(valuation), lastActionWasEnv, initialized)
+  }
+
+  companion object {
+    fun lastActionAndInitFromValuation(valuation: Valuation): Pair<Boolean, Boolean> {
+      val valMap = valuation.toMap()
+      val lastActionWasEnv =
+        (valMap[valMap.keys.first { it.name == "__lastActionWasEnv__" }] as BoolLitExpr).value
+      val initialized =
+        (valMap[valMap.keys.first { it.name == "__initialized__" }] as BoolLitExpr).value
+      return Pair(lastActionWasEnv, initialized)
+    }
+  }
+}

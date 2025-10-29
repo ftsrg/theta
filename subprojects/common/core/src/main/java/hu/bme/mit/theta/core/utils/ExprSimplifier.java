@@ -1120,7 +1120,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
         } else {
-            return expr;
+            return BvExtractExpr.of(bitvec, expr.getFrom(), expr.getUntil());
         }
     }
 
@@ -1130,7 +1130,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).zext(expr.getExtendType());
         } else {
-            return expr;
+            return BvZExtExpr.of(bitvec, expr.getExtendType());
         }
     }
 
@@ -1140,7 +1140,7 @@ public final class ExprSimplifier {
         if (bitvec instanceof BvLitExpr) {
             return ((BvLitExpr) bitvec).sext(expr.getExtendType());
         } else {
-            return expr;
+            return BvSExtExpr.of(bitvec, expr.getExtendType());
         }
     }
 

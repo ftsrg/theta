@@ -16,3 +16,5 @@ Contributors:
 * [Csanád Telbisz](https://github.com/csanadtelbisz)
 * [Botond Sisák](https://github.com/sisakb)
 * [Zalán Mondok](https://github.com/mondokz)
+* [Balázs Rippl](https://github.com/RipplB)
+* [Dániel Kovács](https://github.com/dantpu)

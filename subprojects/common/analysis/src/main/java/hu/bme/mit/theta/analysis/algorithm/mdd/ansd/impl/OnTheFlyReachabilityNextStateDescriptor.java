@@ -93,7 +93,7 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
                 : new IntObjMapViews.Transforming<>(
                         wrapped.getDiagonal(localStateSpace),
                         (descriptor, key) -> {
-                            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
+                            if (key == null) return descriptor;
                             return OnTheFlyReachabilityNextStateDescriptor.of(
                                     descriptor, target.get(key), killSwitch);
                         });
@@ -110,8 +110,7 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
                                 new IntObjMapViews.Transforming<>(
                                         it,
                                         (descriptor, key) -> {
-                                            if (key == null)
-                                                return AbstractNextStateDescriptor.terminalEmpty();
+                                            if (key == null) return descriptor;
                                             return OnTheFlyReachabilityNextStateDescriptor.of(
                                                     descriptor, target.get(key), killSwitch);
                                         }));

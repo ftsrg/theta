@@ -15,12 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.MddHandle;
-import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -79,60 +76,6 @@ public class MddValuationCollector {
                     collect(cursor.value(), assignments, valuations);
 
                     assignments.pop();
-                }
-            }
-        }
-    }
-
-    /**
-     * Collect all vectors from the subtree represented by a symbolic node.
-     *
-     * @param node the node
-     * @return the set of vectors represented by the node
-     */
-    public static Set<Valuation> collect(MddNode node) {
-        final Stack<Assignment> assignments = new Stack<>();
-        final Set<Valuation> valuations = Containers.createSet();
-
-        try (var cursor = node.cursor()) {
-            collect(node, cursor, assignments, valuations);
-        }
-
-        return valuations;
-    }
-
-    private static void collect(
-            MddNode node,
-            RecursiveIntObjCursor<? extends MddNode> cursor,
-            Stack<Assignment> assignments,
-            Set<Valuation> valuations) {
-        if (node.isTerminal()) {
-            valuations.add(toValuation(assignments));
-        } else {
-            if (node.defaultValue() != null) {
-                cursor.moveNext();
-
-                try (var valueCursor = cursor.valueCursor()) {
-                    collect(node.defaultValue(), valueCursor, assignments, valuations);
-                }
-
-            } else {
-                while (cursor.moveNext()) {
-                    assert cursor.value() != null;
-
-                    if (node.getRepresentation() instanceof MddExpressionRepresentation) {
-                        final MddExpressionRepresentation representation =
-                                (MddExpressionRepresentation) node.getRepresentation();
-                        assignments.push(
-                                new Assignment(representation.getMddVariable(), cursor.key()));
-                    }
-
-                    try (var valueCursor = cursor.valueCursor()) {
-                        collect(cursor.value(), valueCursor, assignments, valuations);
-                    }
-
-                    if (node.getRepresentation() instanceof MddExpressionRepresentation)
-                        assignments.pop();
                 }
             }
         }

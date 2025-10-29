@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.analysis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkElementIndex;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,6 +49,18 @@ public final class Trace<S, A> implements Cex {
     public static <S, A> Trace<S, A> of(
             final List<? extends S> states, final List<? extends A> actions) {
         return new Trace<>(states, actions);
+    }
+
+    /**
+     * Creates a trace with the given states and a single action that is repeated between each
+     * states.
+     *
+     * @param states List of states
+     * @param action Action to be repeated
+     * @return Trace with the given states and repeated action
+     */
+    public static <S, A> Trace<S, A> of(final List<? extends S> states, final A action) {
+        return new Trace<>(states, Collections.nCopies(states.size() - 1, action));
     }
 
     /** Gets the length of the trace, which is the number of actions. */

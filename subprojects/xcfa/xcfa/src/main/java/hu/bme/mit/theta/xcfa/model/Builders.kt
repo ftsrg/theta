@@ -17,24 +17,19 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 @DslMarker annotation class XcfaDsl
 
 @XcfaDsl
 class XcfaBuilder
 @JvmOverloads
-constructor(
-  var name: String,
-  private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
-  val heapMap: MutableMap<Triple<Int, Int, Type>, VarDecl<*>> = LinkedHashMap(),
-  private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
-  private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
-  val metaData: MutableMap<String, Any> = LinkedHashMap(),
-) {
+constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet()) {
+
+  private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet()
+  private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()
+  val metaData: MutableMap<String, Any> = LinkedHashMap()
 
   fun getVars(): Set<XcfaGlobalVar> = vars
 
@@ -63,6 +58,13 @@ constructor(
   fun addEntryPoint(toAdd: XcfaProcedureBuilder, params: List<Expr<*>>) {
     addProcedure(toAdd)
     initProcedures.add(Pair(toAdd, params))
+  }
+
+  fun removeProcedure(toRemove: XcfaProcedureBuilder) {
+    check(!initProcedures.any { it.first == toRemove }) {
+      "Cannot remove an entry point procedure!"
+    }
+    procedures.remove(toRemove)
   }
 }
 
@@ -118,6 +120,7 @@ constructor(
       this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
       this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
         partlyOptimized.vars.contains(this)
+
       else -> atomicVars.contains(this)
     }
 

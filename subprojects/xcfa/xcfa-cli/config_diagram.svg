@@ -299,7 +299,7 @@
                   textLength="231" x="679" y="786.8519">refinerConfig: CegarRefinerConfig
             </text>
             <text fill="#000000" font-family="Verdana" font-size="14" lengthAdjust="spacing"
-                  textLength="93" x="679" y="805.9198">porLevel: POR
+                  textLength="93" x="679" y="805.9198">por: POR
             </text>
             <text fill="#000000" font-family="Verdana" font-size="14" lengthAdjust="spacing"
                   textLength="137" x="679" y="824.9877">objects: Set&lt;Config&gt;
@@ -311,7 +311,7 @@
                   textLength="275" x="679" y="863.1236">abstractorConfig: CegarAbstractorConfig
             </text>
             <text fill="#000000" font-family="Verdana" font-size="14" lengthAdjust="spacing"
-                  textLength="139" x="679" y="882.1915">porRandomSeed: Int
+                  textLength="139" x="679" y="882.1915">porSeed: Int
             </text>
             <text fill="#000000" font-family="Verdana" font-size="14" lengthAdjust="spacing"
                   textLength="213" x="679" y="901.2594">cexMonitor: CexMonitorOptions

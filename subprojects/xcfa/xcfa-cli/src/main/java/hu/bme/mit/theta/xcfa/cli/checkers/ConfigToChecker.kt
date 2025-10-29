@@ -45,17 +45,17 @@ fun getChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+      Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
       Backend.KINDIMC,
-      Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.BOUNDED -> getBoundedChecker(xcfa, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-      Backend.MDD -> getMddChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.MDD -> getMddChecker(xcfa, parseContext, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
@@ -65,7 +65,7 @@ fun getChecker(
           SafetyResult.unknown()
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
-      Backend.IC3 -> getIc3Checker(xcfa, mcm, parseContext, config, logger)
+      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
       Backend.LASSO_VALIDATION ->
         getLassoValidationChecker(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     }

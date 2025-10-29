@@ -21,9 +21,10 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -52,7 +53,7 @@ fun complexPortfolio24(
         ),
       frontendConfig =
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
@@ -65,8 +66,8 @@ fun complexPortfolio24(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
-              porRandomSeed = -1,
+              por = POR.NOPOR,
+              porSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
               abstractorConfig =
@@ -109,11 +110,12 @@ fun complexPortfolio24(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE)
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE)
             ConeOfInfluenceMode.NO_COI
           else ConeOfInfluenceMode.COI,
-        porLevel =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+        por =
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE) POR.SPOR
+          else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
       )
     baseConfig =
@@ -196,7 +198,7 @@ fun complexPortfolio24(
     )
   }
 
-  fun getStm(trait: ArithmeticTrait, inProcess: Boolean): STM {
+  fun getStm(trait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
     val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
       ConfigNode(
@@ -1040,27 +1042,27 @@ fun complexPortfolio24(
         solverError,
       )
     )
-    if (trait == ArithmeticTrait.BITWISE) {
+    if (trait == BITWISE) {
       return STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.FLOAT) {
+    if (trait == FLOAT) {
       return STM(config_FLOAT_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.LIN_INT) {
+    if (trait == LIN_INT) {
       return STM(config_LIN_INT_EXPL_NWT_IT_WP_mathsat, edges)
     }
 
-    if (trait == ArithmeticTrait.NONLIN_INT) {
+    if (trait == NONLIN_INT) {
       return STM(config_NONLIN_INT_EXPL_NWT_IT_WP_Z3, edges)
     }
 
-    if (trait == ArithmeticTrait.ARR) {
+    if (trait == ARR) {
       return STM(config_ARR_EXPL_NWT_IT_WP_cvc5, edges)
     }
 
-    if (trait == ArithmeticTrait.MULTITHREAD) {
+    if (trait == MULTITHREAD) {
       return STM(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, edges)
     }
 
@@ -1069,12 +1071,12 @@ fun complexPortfolio24(
 
   val mainTrait =
     when {
-      parseContext.multiThreading -> ArithmeticTrait.MULTITHREAD
-      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> ArithmeticTrait.FLOAT
-      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ArithmeticTrait.ARR
-      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> ArithmeticTrait.BITWISE
-      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> ArithmeticTrait.NONLIN_INT
-      else -> ArithmeticTrait.LIN_INT
+      parseContext.multiThreading -> MULTITHREAD
+      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
+      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ARR
+      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> BITWISE
+      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
+      else -> LIN_INT
     }
 
   logger.write(Logger.Level.RESULT, "Using portfolio $mainTrait\n")

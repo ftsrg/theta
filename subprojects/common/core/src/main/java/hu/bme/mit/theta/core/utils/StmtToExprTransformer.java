@@ -160,7 +160,7 @@ final class StmtToExprTransformer {
                 indexings.add(result.indexing);
                 jointIndexing = jointIndexing.join(result.indexing);
             }
-            final Set<VarDecl<?>> vars = ExprUtils.getVars(choices);
+            final Set<VarDecl<?>> vars = StmtUtils.getVars(nonDetStmt);
             final List<Expr<BoolType>> branchExprs = new ArrayList<>();
             for (int i = 0; i < choices.size(); i++) {
                 final List<Expr<BoolType>> exprs = new ArrayList<>();
@@ -207,7 +207,7 @@ final class StmtToExprTransformer {
 
             final Expr<BoolType> thenExpr = And(thenResult.getExprs());
             final Expr<BoolType> elzeExpr = And(elzeResult.getExprs());
-            final Set<VarDecl<?>> vars = ExprUtils.getVars(ImmutableList.of(thenExpr, elzeExpr));
+            final Set<VarDecl<?>> vars = StmtUtils.getVars(ifStmt);
 
             VarIndexing jointIndexing = thenIndexing.join(elzeIndexing);
             final List<Expr<BoolType>> thenAdditions = new ArrayList<>();

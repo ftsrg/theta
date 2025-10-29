@@ -45,14 +45,8 @@ public class PetriNetToXSTS {
 
     private PetriNetToXSTS() {}
 
-    public enum PropType {
-        TARGET_MARKING,
-        DEADLOCK,
-        PN_SAFE
-    }
-
     public static XSTS createXSTS(final PetriNet net, final InputStream propStream) {
-        return createXSTS(net, propStream, PropType.TARGET_MARKING);
+        return createXSTS(net, propStream, PropType.FULL_EXPLORATION);
     }
 
     public static XSTS createXSTS(
@@ -140,7 +134,7 @@ public class PetriNetToXSTS {
                             placeIdToVar.values().stream()
                                     .map((p) -> Leq(p.getRef(), Int(1)))
                                     .toList());
-        } else if (propStream != null) {
+        } else if (propType == PropType.TARGET_MARKING && propStream != null) {
             final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
             final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
             final String property = stripPropFromPropFile(propertyFile).trim();
@@ -169,6 +163,8 @@ public class PetriNetToXSTS {
                 }
                 propExpr = cast(dslManager.parseExpr(property), Bool());
             }
+        } else if (propType == PropType.FULL_EXPLORATION) {
+            propExpr = True();
         } else {
             propExpr = True();
         }

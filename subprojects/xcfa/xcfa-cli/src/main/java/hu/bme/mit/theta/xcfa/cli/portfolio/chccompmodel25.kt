@@ -26,8 +26,8 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.BW_BIN_ITP
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 fun chcCompPortfolioModel25(
   xcfa: XCFA,
@@ -189,8 +189,8 @@ fun chcCompPortfolioModel25(
           val bmc = bmc(450_000, "Z3")
           val kind = kind(20_000, "Z3")
           val expl = expl(650_000, "mathsat:5.6.10")
-          val bmcCVC5 = bmc(550_000, "cvc5:1.0.8")
-          val imcCVC5 = imc(10_000, "cvc5:1.0.8")
+          val bmcmathsat = bmc(550_000, "mathsat:5.6.10")
+          val imcmathsat = imc(10_000, "mathsat:5.6.10")
           val bool = bool(15_000, "mathsat:5.6.10")
           val cart = cart(15_000, "mathsat:5.6.10")
           val kindCVC5 = kind(70_000, "cvc5:1.0.8")
@@ -202,14 +202,14 @@ fun chcCompPortfolioModel25(
           explCVC5 then
             boolCVC5 then
             cartCVC5 then
-            imcCVC5 then
+            imcmathsat then
             mdd then
             expl then
             bool then
             cart then
             bmc then
             kind then
-            bmcCVC5 then
+            bmcmathsat then
             kindCVC5
 
           Pair(expl, kindCVC5)
@@ -219,12 +219,13 @@ fun chcCompPortfolioModel25(
           val kind = kind(200_000, "Z3")
           val bool = bool(300_000, "Z3")
           val cart = cart(450_000, "Z3")
-          val imc = imc(15_000, "Z3")
+          val imc = imc(15_000, "mathsat:5.6.10")
+          val imcZ3 = imc(15_000, "Z3")
           val cartCVC5 = cart(600_000, "cvc5:1.0.8")
           val expl = expl(10_000, "Z3")
           val mdd = mdd(50_000)
 
-          mdd then expl then bool then cart then imc then bmc then kind then cartCVC5
+          mdd then expl then bool then cart then imc then imcZ3 then bmc then kind then cartCVC5
 
           Pair(mdd, cartCVC5)
         } else if (types.any { it is ArrayType<*, *> }) {
@@ -232,12 +233,13 @@ fun chcCompPortfolioModel25(
           val cart = cart(25_000, "Z3")
           val bool = bool(10_000, "Z3")
           val expl = expl(10_000, "Z3")
-          val imc = imc(20_000, "Z3")
+          val imc = imc(20_000, "mathsat:5.6.10")
+          val imcZ3 = imc(20_000, "Z3")
           val kind = kind(10_000, "Z3")
           val bmc = bmc(400_000, "Z3")
           val mdd = mdd(50_000)
 
-          mdd then expl then bool then cart then imc then bmc then kind
+          mdd then expl then bool then cart then imc then imcZ3 then bmc then kind
 
           Pair(mdd, kind)
         } else {
@@ -245,7 +247,8 @@ fun chcCompPortfolioModel25(
           val cart = cart(500_000, "Z3")
           val bool = bool(150_000, "Z3")
           val bmc = bmc(20_000, "Z3")
-          val imc = imc(20_000, "Z3")
+          val imc = imc(20_000, "mathsat:5.6.10")
+          val imcZ3 = imc(20_000, "Z3")
           val kind = kind(20_000, "Z3")
           val expl = expl(50_000, "Z3")
           val boolCVC5 = bool(700_000, "cvc5:1.0.8")
@@ -260,6 +263,7 @@ fun chcCompPortfolioModel25(
             bool then
             cart then
             imc then
+            imcZ3 then
             bmc then
             kind then
             explCVC5 then
@@ -298,11 +302,4 @@ fun chcCompPortfolioModel25(
 
   return if (portfolioConfig.debugConfig.debug) getStm(false)
   else STM(inProcess, setOf(fallbackEdge))
-}
-
-enum class Arithmetic {
-  LIA,
-  ARRAYS,
-  LRA,
-  BV,
 }

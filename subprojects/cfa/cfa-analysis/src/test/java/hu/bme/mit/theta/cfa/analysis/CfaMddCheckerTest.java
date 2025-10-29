@@ -15,14 +15,11 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
-import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain.*;
-import static hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement.*;
-
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.InvariantProof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddProof;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.OsHelper;
@@ -88,17 +85,14 @@ public class CfaMddCheckerTest {
 
         try {
             CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
-            var monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
 
-            final SafetyResult<MddProof, MddCex> status;
+            final SafetyResult<InvariantProof, Trace<CfaState<ExplState>, CfaAction>> status;
             try (var solverPool = new SolverPool(solverFactory)) {
-                final MddChecker<ExprAction> checker =
-                        MddChecker.create(
-                                monolithicExpr,
-                                monolithicExpr.getVars(),
-                                solverPool,
-                                logger,
-                                MddChecker.IterationStrategy.GSAT);
+                final var checker =
+                        new CfaPipelineChecker<>(
+                                cfa,
+                                monolithicExpr ->
+                                        new MddChecker(monolithicExpr, solverPool, logger));
                 status = checker.check(null);
             }
 

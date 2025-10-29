@@ -31,6 +31,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVis
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.InputStream
 import java.util.ArrayDeque
@@ -43,7 +44,7 @@ fun getXcfaFromC(
   stream: InputStream,
   parseContext: ParseContext,
   collectStatistics: Boolean,
-  checkOverflow: Boolean,
+  property: XcfaProperty,
   warningLogger: Logger,
 ): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
   val input = CharStreams.fromStream(stream)
@@ -56,7 +57,7 @@ fun getXcfaFromC(
   val program = context.accept(FunctionVisitor(parseContext, warningLogger))
   check(program is CProgram)
 
-  val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, checkOverflow, warningLogger)
+  val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
   val builder = frontendXcfaBuilder.buildXcfa(program)
   val xcfa = builder.build()
 
