@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@Deprecated
 public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     public BoolectorSmtLibSolverInstaller(final Logger logger) {
