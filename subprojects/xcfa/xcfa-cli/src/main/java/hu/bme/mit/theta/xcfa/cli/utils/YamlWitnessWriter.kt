@@ -83,24 +83,26 @@ class YamlWitnessWriter {
           ),
       )
 
-    val trace = if(safetyResult.isUnsafe)
-      safetyResult.asUnsafe().cex.let {
-        if (it is HackyAsgTrace<*>) {
-          val actions = (it as HackyAsgTrace<*>).trace.actions
-          val explStates = (it as HackyAsgTrace<*>).trace.states
-          val states =
-            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
-              state as XcfaState<PtrState<*>>
-              state.withState(PtrState(explStates[i]))
-            }
+    val trace =
+      if (safetyResult.isUnsafe)
+        safetyResult.asUnsafe().cex.let {
+          if (it is HackyAsgTrace<*>) {
+            val actions = (it as HackyAsgTrace<*>).trace.actions
+            val explStates = (it as HackyAsgTrace<*>).trace.states
+            val states =
+              (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+                state as XcfaState<PtrState<*>>
+                state.withState(PtrState(explStates[i]))
+              }
 
-          Trace.of(states, actions)
-        } else if (it is ASGTrace<*, *>) {
-          (it as ASGTrace<*, *>).toTrace()
-        } else {
-          it
+            Trace.of(states, actions)
+          } else if (it is ASGTrace<*, *>) {
+            (it as ASGTrace<*, *>).toTrace()
+          } else {
+            it
+          }
         }
-      } else null
+      else null
 
     if (safetyResult.isUnsafe && trace is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
