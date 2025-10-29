@@ -39,7 +39,7 @@ object Deps {
     }
 
     val mpfr_java = when(getOs()) {
-        "windows" -> listOf("lib/mpfr_java-1.0.jar", "lib/mpfr_java-1.0-windows64.jar")
+        "windows" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.0-windows64.jar") // version mismatch, best-effort
         "linux" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-linux64.jar")
         "macos" -> listOf("lib/mpfr_java-1.4.jar", "lib/mpfr_java-1.4-osx64.jar")
         else -> error("Operating system not supported")
