@@ -65,6 +65,8 @@ fun getPortfolioChecker(
       "STABLE",
       "CEGAR",
       "COMPLEX",
+      "COMPLEX26" -> complexPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)

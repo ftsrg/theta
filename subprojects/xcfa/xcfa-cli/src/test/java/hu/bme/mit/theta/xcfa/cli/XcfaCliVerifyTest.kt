@@ -27,11 +27,7 @@ import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -74,7 +70,7 @@ class XcfaCliVerifyTest {
     @JvmStatic
     fun cFiles(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
@@ -88,8 +84,8 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/16loop.c", null),
         Arguments.of("/c/litmustest/singlethread/17recursive.c", null),
-        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por-level SPOR"),
-        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por SPOR"),
+        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
@@ -128,7 +124,7 @@ class XcfaCliVerifyTest {
     @JvmStatic
     fun cFilesShort(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),

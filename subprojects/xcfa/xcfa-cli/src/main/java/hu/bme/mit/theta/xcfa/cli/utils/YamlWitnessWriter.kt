@@ -31,7 +31,8 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
@@ -48,7 +49,7 @@ class YamlWitnessWriter {
   fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
-    property: ErrorDetection,
+    property: XcfaProperty,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
@@ -68,7 +69,7 @@ class YamlWitnessWriter {
           Task(
             inputFiles = listOf(inputFile.name),
             inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-            specification = property.name,
+            specification = property.inputProperty.name,
             dataModel =
               architecture?.let {
                 if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
@@ -87,7 +88,7 @@ class YamlWitnessWriter {
         )
 
       val witness =
-        if (property == ErrorDetection.TERMINATION) {
+        if (property.verifiedProperty == ErrorDetection.TERMINATION) {
           // last state is cycle_head, find its earliest occurrence
           // stem is everything beforehand
           // cycle's segments are everything in-between
