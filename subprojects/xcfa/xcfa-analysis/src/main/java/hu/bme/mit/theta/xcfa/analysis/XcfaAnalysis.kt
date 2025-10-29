@@ -499,9 +499,11 @@ class ExplPredCombinedXcfaAnalysis(
     ) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
   partialOrd: PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
   isHavoc: Boolean,
+  coi: XcfaCoi? = null,
 ) :
   XcfaAnalysis<Prod2State<ExplState, PredState>, PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplPredCombinedXcfaInitFunc(xcfa, solver),
     coreTransFunc = prod2ExplPredTransFunc,
+    coneOfInfluence = coi,
   )

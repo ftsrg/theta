@@ -252,7 +252,7 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   EXPL_PRED_SPLIT(
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
           a,
@@ -260,6 +260,7 @@ enum class Domain(
           getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), j),
           i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           j,
+          null,
         ),
         d,
         e,
@@ -286,7 +287,7 @@ enum class Domain(
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   EXPL_PRED_STMT(
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
           a,
@@ -294,6 +295,7 @@ enum class Domain(
           getExplPredStmtXcfaTransFunc(b, j),
           i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           j,
+          k,
         ),
         d,
         e,
