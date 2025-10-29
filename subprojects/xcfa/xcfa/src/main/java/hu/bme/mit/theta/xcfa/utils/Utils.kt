@@ -42,12 +42,21 @@ import hu.bme.mit.theta.xcfa.passes.getLoopElements
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 import java.util.*
 
-/** Get flattened label list (without sequence labels). */
+/** Get flattened (sequential) label list (without sequence labels). */
 fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
 fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
   when (this) {
     is SequenceLabel -> labels.flatMap { it.getFlatLabels() }
+    else -> listOf(this)
+  }
+
+fun XcfaEdge.getAllLabels(): List<XcfaLabel> = label.getAllLabels()
+
+fun XcfaLabel.getAllLabels(): List<XcfaLabel> =
+  when (this) {
+    is SequenceLabel -> labels.flatMap { it.getAllLabels() }
+    is NondetLabel -> labels.flatMap { it.getAllLabels() }
     else -> listOf(this)
   }
 

@@ -55,7 +55,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
           val localVersions =
             toReplace.associateWith { v ->
               indexing = indexing.inc(v)
-              v.localVersion(indexing)
+              v.localVersion(indexing, builder)
             }
 
           val newStartEdge = edge.replaceAccesses(localVersions)
@@ -84,7 +84,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
         val localVersions =
           toReplace.associateWith { v ->
             indexing = indexing.inc(v)
-            v.localVersion(indexing)
+            v.localVersion(indexing, builder)
           }
         val initialAssigns =
           localVersions.map { (v, local) ->
@@ -102,8 +102,10 @@ class AtomicReadsOneWritePass : ProcedurePass {
     return builder
   }
 
-  private fun <T : Type> VarDecl<T>.localVersion(indexing: VarIndexing): VarDecl<T> =
-    Decls.Var("${name}_l${indexing.get(this)}", type)
+  private fun <T : Type> VarDecl<T>.localVersion(
+    indexing: VarIndexing,
+    builder: XcfaProcedureBuilder,
+  ): VarDecl<T> = Decls.Var("${name}_l${indexing.get(this)}", type).also { builder.addVar(it) }
 
   private data class AccessOrder(var write: Boolean = false, var wrongWrite: Boolean = false)
 

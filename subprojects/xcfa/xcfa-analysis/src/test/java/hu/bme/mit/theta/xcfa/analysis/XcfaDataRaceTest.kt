@@ -62,7 +62,8 @@ class XcfaDataRaceTest {
       return listOf(
         arrayOf("/04multithread.c", false, SafetyResult<*, *>::isSafe),
         arrayOf("/05datarace.c", true, SafetyResult<*, *>::isUnsafe),
-        arrayOf("/06mutex.c", true, SafetyResult<*, *>::isSafe),
+        arrayOf("/06ptrdatarace.c", true, SafetyResult<*, *>::isSafe),
+        arrayOf("/07mutex.c", true, SafetyResult<*, *>::isSafe),
       )
     }
   }
