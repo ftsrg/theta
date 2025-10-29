@@ -25,8 +25,8 @@ import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 fun termination(
   xcfa: XCFA,

@@ -91,7 +91,12 @@ fun getMddChecker(
   }
   return FormalismPipelineChecker(
     model = parseContext,
-    modelAdapter = XcfaToMonolithicAdapter(xcfa, config.inputConfig.property, initValues = true),
+    modelAdapter =
+      XcfaToMonolithicAdapter(
+        xcfa,
+        config.inputConfig.property.verifiedProperty,
+        initValues = true,
+      ),
     MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
   )
 }

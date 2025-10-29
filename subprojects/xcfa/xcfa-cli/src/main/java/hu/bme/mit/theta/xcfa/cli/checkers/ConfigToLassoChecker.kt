@@ -43,12 +43,12 @@ import hu.bme.mit.theta.xcfa.cli.params.LassoCheckerConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.getStatementToEdge
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.Action
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness

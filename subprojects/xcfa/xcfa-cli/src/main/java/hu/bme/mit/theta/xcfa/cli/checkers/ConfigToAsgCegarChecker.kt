@@ -36,8 +36,10 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
@@ -46,6 +48,7 @@ import java.util.function.Predicate
 
 fun getAsgCegarChecker(
   xcfa: XCFA,
+  parseContext: ParseContext,
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
@@ -55,7 +58,7 @@ fun getAsgCegarChecker(
   XcfaPrec<*>,
 > {
   checkState(
-    config.inputConfig.property == ErrorDetection.TERMINATION,
+    config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION,
     "Lasso checker should be used for checking termination!",
   )
 
@@ -73,7 +76,7 @@ fun getAsgCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val lts = ConeOfInfluenceMode.NO_COI.getLts(xcfa, ignoredVarRegistry, POR.NOPOR)
+  val lts = ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry)
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
 
@@ -128,7 +131,7 @@ fun getAsgCegarChecker(
       abstractionSolverInstance,
       asgCegarConfig.abstractorConfig.maxEnum,
       logger,
-      lts,
+      lts.second,
       asgCegarConfig.abstractorConfig.search,
       getPartialOrder(
         asgCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)

@@ -148,6 +148,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   inProcess: Boolean = this.backendConfig.inProcess,
+  coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
     backendConfig =
@@ -157,6 +158,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
         specConfig =
           backendConfig.specConfig!!.copy(
             initPrec = initPrec,
+            coi = coi,
             abstractorConfig =
               backendConfig.specConfig!!
                 .abstractorConfig
@@ -199,7 +201,7 @@ fun baseAsgCegarConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -284,7 +286,6 @@ fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
   refinementSolver: String = this.backendConfig.specConfig!!.refinerConfig.refinementSolver,
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
-  coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, AsgCegarConfig> {
   return copy(
@@ -312,7 +313,6 @@ fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
                   refinement = refinement,
                   exprSplitter = exprSplitter,
                 ),
-            coi = coi,
           ),
       )
   )
