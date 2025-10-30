@@ -16,6 +16,10 @@ runs:
       shell: bash
       run: |
         echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+    - name: Download libraries
+      shell: bash
+      run: |
+        ./gradlew downloadJavaSmtLibs --no-daemon --console=plain
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       name: Get JAR
       with:

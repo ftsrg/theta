@@ -123,4 +123,9 @@ public final class FpUtils {
                         value, new BinaryMathContext(type.getSignificand(), type.getExponent())),
                 type);
     }
+
+    public static BigInteger round(final BigFloat value, final FpRoundingMode roundingMode) {
+        RoundingMode r = FpUtils.getMathContextRoundingMode(roundingMode);
+        return value.toBigInteger(r);
+    }
 }

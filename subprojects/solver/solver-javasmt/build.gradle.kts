@@ -21,8 +21,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
-    implementation(files(rootDir.resolve(Deps.javasmtLocal)))
     implementation(Deps.javasmt)
-    implementation(files(rootDir.resolve(Deps.cvc5)))
+    Deps.javasmtDeps.forEach(this@dependencies::implementation)
     testImplementation(testFixtures(project(":theta-core")))
 }

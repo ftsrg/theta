@@ -21,6 +21,7 @@ dependencies {
     implementation(Deps.axiomApi)
     implementation(Deps.axiomImpl)
     implementation(Deps.jing)
+    implementation(files(rootDir.resolve(Deps.delta)))
 
     implementation(project(":theta-core"))
     implementation(project(":theta-common"))

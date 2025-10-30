@@ -179,6 +179,8 @@ final class Z3TermTransformer {
         this.addFunc("bvadd", this.exprMultiaryOperator(BvAddExpr::create));
         this.addFunc("bvsub", this.exprBinaryOperator(BvSubExpr::create));
         this.addFunc("bvpos", this.exprUnaryOperator(BvPosExpr::create));
+        this.addFunc("ubv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
+        this.addFunc("sbv_to_int", this.exprUnaryOperator(BvToIntExpr::create));
         this.addFunc("bvneg", this.exprUnaryOperator(BvNegExpr::create));
         this.addFunc("bvmul", this.exprMultiaryOperator(BvMulExpr::create));
         this.addFunc("bvudiv", this.exprBinaryOperator(BvUDivExpr::create));
