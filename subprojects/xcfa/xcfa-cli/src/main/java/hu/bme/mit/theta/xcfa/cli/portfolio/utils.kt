@@ -209,7 +209,7 @@ fun baseAsgCegarConfig(
       else (portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>),
     backendConfig =
       BackendConfig(
-        backend = Backend.ASGCEGAR,
+        backend = Backend.LIVENESS_CEGAR,
         solverHome = portfolioConfig.backendConfig.solverHome,
         timeoutMs = 0,
         parseInProcess = !serialize,

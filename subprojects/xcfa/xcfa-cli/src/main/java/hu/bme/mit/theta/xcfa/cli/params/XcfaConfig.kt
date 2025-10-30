@@ -218,7 +218,7 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
-        Backend.ASGCEGAR -> AsgCegarConfig() as T
+        Backend.LIVENESS_CEGAR -> AsgCegarConfig() as T
         Backend.BMC ->
           BoundedConfig(
             indConfig = InductionConfig(disable = true),

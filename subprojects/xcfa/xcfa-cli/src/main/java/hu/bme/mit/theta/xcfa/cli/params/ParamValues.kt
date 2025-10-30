@@ -75,7 +75,7 @@ enum class InputType {
 
 enum class Backend {
   CEGAR,
-  ASGCEGAR,
+  LIVENESS_CEGAR,
   BOUNDED,
   BMC,
   KIND,
@@ -89,7 +89,6 @@ enum class Backend {
   MDD,
   IC3,
   NONE,
-  LASSO_VALIDATOR,
 }
 
 enum class POR(

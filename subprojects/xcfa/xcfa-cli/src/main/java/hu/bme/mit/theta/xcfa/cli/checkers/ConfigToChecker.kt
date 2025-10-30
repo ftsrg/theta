@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -47,10 +46,7 @@ fun getSafetyChecker(
     mcm!!
     parseContext!!
     when (config.backendConfig.backend) {
-      Backend.CEGAR ->
-        if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
-          error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
-        else getCegarChecker(xcfa, mcm, parseContext, config, logger)
+      Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.BMC,
       Backend.KIND,
       Backend.IMC,
@@ -71,17 +67,7 @@ fun getSafetyChecker(
         }
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger)
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
-      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
-      Backend.ASGCEGAR ->
-        if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
-          getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
-        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
-      Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
-      Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
-      Backend.ASGCEGAR ->
-        if (config.inputConfig.property.inputProperty == ErrorDetection.TERMINATION)
-          getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
-        else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
+      Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"
