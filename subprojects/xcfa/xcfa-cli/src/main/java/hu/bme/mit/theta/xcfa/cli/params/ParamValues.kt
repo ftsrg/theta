@@ -38,6 +38,11 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.prod2.Prod2Ord
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2State
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -52,6 +57,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.autoexpl.xcfaNewOperandsAutoExpl
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
@@ -144,7 +150,7 @@ enum class Domain(
       coi: XcfaCoi?,
     ) -> ArgAbstractor<out ExprState, out ExprAction, out Prec>,
   val itpPrecRefiner:
-    (exprSplitter: ExprSplitter) -> PrecRefiner<
+    (exprSplitter: ExprSplitter, xcfa: XCFA) -> PrecRefiner<
         out ExprState,
         out ExprAction,
         out Prec,
@@ -192,7 +198,7 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = {
+    itpPrecRefiner = { _, _ ->
       XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToExplPrec())
       )
@@ -245,7 +251,7 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a ->
+    itpPrecRefiner = { a, _ ->
       XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToPredPrec(a))
       )
@@ -298,7 +304,7 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a ->
+    itpPrecRefiner = { a, _ ->
       XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToPredPrec(a))
       )
@@ -351,7 +357,7 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a ->
+    itpPrecRefiner = { a, _ ->
       XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
         ItpRefToPtrPrec(ItpRefToPredPrec(a))
       )
@@ -360,6 +366,76 @@ enum class Domain(
     partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
+  ),
+  EXPL_PRED_SPLIT(
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          a,
+          b,
+          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(b), j),
+          i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          j,
+          null,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    itpPrecRefiner = { a, b ->
+      XcfaPrecRefiner<
+        PtrState<Prod2State<ExplState, PredState>>,
+        Prod2Prec<ExplPrec, PredPrec>,
+        ItpRefutation,
+      >(
+        ItpRefToPtrPrec(AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(b), a))
+      )
+    },
+    initPrec = { x, ip -> ip.prod2Prec(x) },
+    partialOrd = { solver ->
+      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+    },
+    nodePruner =
+      AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
+  ),
+  EXPL_PRED_STMT(
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          a,
+          b,
+          getExplPredStmtXcfaTransFunc(b, j),
+          i as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          j,
+          k,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    itpPrecRefiner = { a, b ->
+      XcfaPrecRefiner<
+        PtrState<Prod2State<ExplState, PredState>>,
+        Prod2Prec<ExplPrec, PredPrec>,
+        ItpRefutation,
+      >(
+        ItpRefToPtrPrec(AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(b), a))
+      )
+    },
+    initPrec = { x, ip -> ip.prod2Prec(x) },
+    partialOrd = { solver ->
+      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+    },
+    nodePruner =
+      AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
 }
 
@@ -519,27 +595,38 @@ enum class TracegenAbstraction {
 enum class InitPrec(
   val explPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<ExplPrec>>,
   val predPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<PredPrec>>,
+  val prod2Prec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
 ) {
 
   EMPTY(
     explPrec = { XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())) },
     predPrec = { XcfaPrec(PtrPrec(PredPrec.of(), emptySet())) },
+    prod2Prec = { XcfaPrec(PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of()), emptySet())) },
   ),
   ALLVARS(
     explPrec = { xcfa -> XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())) },
     predPrec = { error("ALLVARS is not interpreted for the predicate domain.") },
+    prod2Prec = { xcfa ->
+      XcfaPrec(PtrPrec(Prod2Prec.of(ExplPrec.of(xcfa.collectVars()), PredPrec.of()), emptySet()))
+    },
   ),
   ALLGLOBALS(
     explPrec = { xcfa ->
       XcfaPrec(PtrPrec(ExplPrec.of(xcfa.globalVars.map { it.wrappedVar }), emptySet()))
     },
     predPrec = { error("ALLGLOBALS is not interpreted for the predicate domain.") },
+    prod2Prec = { error("ALLGLOBALS is not interpreted for the product domain.") },
   ),
   ALLASSUMES(
     explPrec = { xcfa ->
       XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectAssumes().flatMap(ExprUtils::getVars)), emptySet()))
     },
     predPrec = { xcfa -> XcfaPrec(PtrPrec(PredPrec.of(xcfa.collectAssumes()), emptySet())) },
+    prod2Prec = { xcfa ->
+      XcfaPrec(
+        PtrPrec(Prod2Prec.of(ExplPrec.empty(), PredPrec.of(xcfa.collectAssumes())), emptySet())
+      )
+    },
   ),
 }
 

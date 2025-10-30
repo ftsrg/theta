@@ -49,13 +49,19 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import kotlin.Pair;
 
 public class StmtSimplifier {
 
     public static Stmt simplifyStmt(final Valuation valuation, final Stmt stmt) {
+        return simplifyStmtAndReturnValuation(valuation, stmt).getSecond();
+    }
+
+    public static Pair<Valuation, Stmt> simplifyStmtAndReturnValuation(
+            final Valuation valuation, final Stmt stmt) {
         MutableValuation mutableValuation = MutableValuation.copyOf(valuation);
         final var result = stmt.accept(new StmtSimplifierVisitor(), mutableValuation);
-        return result.stmt;
+        return new Pair<>(mutableValuation, result.getStmt());
     }
 
     private enum SimplifyStatus {
