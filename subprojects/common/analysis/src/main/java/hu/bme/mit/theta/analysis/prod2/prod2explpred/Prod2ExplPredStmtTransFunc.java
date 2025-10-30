@@ -68,7 +68,7 @@ public class Prod2ExplPredStmtTransFunc<A extends StmtAction>
         final var simplifyResult =
                 StmtSimplifier.simplifyStmtAndReturnValuation(state.getState1(), sequence);
         final var stmtUnfoldResult =
-                StmtUtils.toExpr(simplifyResult.second, VarIndexingFactory.indexing(0));
+                StmtUtils.toExpr(simplifyResult.getSecond(), VarIndexingFactory.indexing(0));
         final var nextIndex = stmtUnfoldResult.getIndexing();
 
         final Expr<BoolType> expr = And(state.toExpr(), And(stmtUnfoldResult.getExprs()));
@@ -111,7 +111,7 @@ public class Prod2ExplPredStmtTransFunc<A extends StmtAction>
             final MutableValuation noSolverValuation = new MutableValuation();
             final List<VarDecl<?>> uncertainVars = new ArrayList<>();
             for (var v : explPrec.getVars()) {
-                final var simplifyRes = simplifyResult.first.eval(v);
+                final var simplifyRes = simplifyResult.getFirst().eval(v);
                 if (simplifyRes.isPresent()) {
                     noSolverValuation.put(v, simplifyRes.get());
                 } else {

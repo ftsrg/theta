@@ -20,7 +20,6 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.delta.Pair;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -50,11 +49,12 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import kotlin.Pair;
 
 public class StmtSimplifier {
 
     public static Stmt simplifyStmt(final Valuation valuation, final Stmt stmt) {
-        return simplifyStmtAndReturnValuation(valuation, stmt).second;
+        return simplifyStmtAndReturnValuation(valuation, stmt).getSecond();
     }
 
     public static Pair<Valuation, Stmt> simplifyStmtAndReturnValuation(

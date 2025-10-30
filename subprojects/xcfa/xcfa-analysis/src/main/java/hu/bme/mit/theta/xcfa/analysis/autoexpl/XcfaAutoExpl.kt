@@ -23,8 +23,8 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.xcfa.collectAssumes
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectAssumes
 
 fun xcfaNewOperandsAutoExpl(xcfa: XCFA): AutoExpl {
   val atoms =
