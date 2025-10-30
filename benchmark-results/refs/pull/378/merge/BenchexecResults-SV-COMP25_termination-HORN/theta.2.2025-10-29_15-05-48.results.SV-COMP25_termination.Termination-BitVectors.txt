@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Wed, 2025-10-29 15:05:48 UTC
+tool:                    Theta 6.21.2
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3246.141 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (after parsing finished)       57.38       68.44        None
+and-02.yml                            ERROR (after parsing finished)       74.22       82.73        None
+and-03-false.yml                      false(termination)               7.75        4.17        None
+and-03.yml                            ERROR (after parsing finished)       38.66       38.97        None
+and-04-false.yml                      false(termination)               7.74        4.16        None
+and-04.yml                            ERROR (after parsing finished)       93.47       93.86        None
+and-05-false.yml                      false(termination)               9.17        5.38        None
+and-05.yml                            true                            16.81       13.01        None
+and-06.yml                            
+and-assume.yml                        
+consecutive-zero-bits-trailing.yml    
+counting-bits-BK.yml                  
+counting-bits-BK1.yml                 
+counting-bits-set.yml                 
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           305.74      899.64           -
+
+Statistics:              8 Files
+  correct:               4
+    correct true:        1
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 5 (max: 13)

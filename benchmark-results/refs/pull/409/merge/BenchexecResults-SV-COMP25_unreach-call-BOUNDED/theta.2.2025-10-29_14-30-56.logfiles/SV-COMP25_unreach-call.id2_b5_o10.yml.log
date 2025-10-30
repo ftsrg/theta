@@ -1,0 +1,12 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/recursive-simple/id2_b5_o10.c --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/recursive-simple/id2_b5_o10.c' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/recursive-simple/id2_b5_o10.c --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+Arithmetic: []
+ParsingResult Success
+Alias graph size: 0 -> []
+Process failed! (hu.bme.mit.theta.xcfa.cli.portfolio.Bounded25Kt.boundedPortfolio25(bounded25.kt:122), java.lang.UnsupportedOperationException: Recursive XCFA for bounded checkers not supported)

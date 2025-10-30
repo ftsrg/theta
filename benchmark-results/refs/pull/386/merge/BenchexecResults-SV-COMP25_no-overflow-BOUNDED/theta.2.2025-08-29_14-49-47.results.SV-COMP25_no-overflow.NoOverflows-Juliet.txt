@@ -1,0 +1,128 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_no-overflow.NoOverflows-Juliet
+date:                    Fri, 2025-08-29 14:49:47 UTC
+tool:                    Theta 6.17.7
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmccyg1gnepe
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3243.897 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow.NoOverflows-Juliet
+Run set 5 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                            status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------
+CWE190_Integer_Overflow__int64_t_fscanf_add_01_bad.yml               ERROR (frontend failed, before parsing finished)        7.76        3.27        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_01_good.yml              ERROR (frontend failed, before parsing finished)        7.69        3.14        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_02_bad.yml               ERROR (frontend failed, before parsing finished)        8.17        3.11        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_02_good.yml              ERROR (frontend failed, before parsing finished)        7.60        3.11        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_03_bad.yml               ERROR (frontend failed, before parsing finished)        7.89        3.29        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_03_good.yml              ERROR (frontend failed, before parsing finished)       10.77        3.68        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_04_bad.yml               ERROR (frontend failed, before parsing finished)        9.58        3.57        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_04_good.yml              ERROR (frontend failed, before parsing finished)        7.89        3.26        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_05_bad.yml               ERROR (frontend failed, before parsing finished)       10.05        3.81        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_05_good.yml              ERROR (frontend failed, before parsing finished)        7.50        3.06        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_06_bad.yml               ERROR (frontend failed, before parsing finished)        8.39        3.57        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_06_good.yml              ERROR (frontend failed, before parsing finished)       10.71        3.64        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_07_bad.yml               ERROR (frontend failed, before parsing finished)        9.51        3.50        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_07_good.yml              ERROR (frontend failed, before parsing finished)        8.34        3.14        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_08_bad.yml               ERROR (frontend failed, before parsing finished)        9.58        3.56        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_08_good.yml              ERROR (frontend failed, before parsing finished)        9.30        3.42        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_09_bad.yml               ERROR (frontend failed, before parsing finished)        8.11        3.37        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_09_good.yml              ERROR (frontend failed, before parsing finished)        8.95        3.35        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_10_bad.yml               ERROR (frontend failed, before parsing finished)       10.49        3.57        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_10_good.yml              ERROR (frontend failed, before parsing finished)        9.34        3.44        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_11_bad.yml               ERROR (frontend failed, before parsing finished)        7.59        3.11        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_11_good.yml              ERROR (frontend failed, before parsing finished)       10.47        3.56        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_12_bad.yml               ERROR (frontend failed, before parsing finished)        9.72        3.63        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_12_good.yml              ERROR (frontend failed, before parsing finished)       10.56        3.61        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_13_bad.yml               ERROR (frontend failed, before parsing finished)        7.69        3.19        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_13_good.yml              ERROR (frontend failed, before parsing finished)        8.19        3.40        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_14_bad.yml               ERROR (frontend failed, before parsing finished)        7.76        3.23        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_14_good.yml              ERROR (frontend failed, before parsing finished)        7.85        3.25        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_15_bad.yml               ERROR (frontend failed, before parsing finished)        8.64        3.22        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_15_good.yml              ERROR (frontend failed, before parsing finished)        8.03        3.36        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_16_bad.yml               ERROR (frontend failed, before parsing finished)        7.61        3.15        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_16_good.yml              ERROR (frontend failed, before parsing finished)        7.61        3.12        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_17_bad.yml               ERROR (generic error, before parsing finished)        5.23        2.14        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_17_good.yml              ERROR (generic error, before parsing finished)        5.21        2.13        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_18_bad.yml               ERROR (frontend failed, before parsing finished)        8.00        3.34        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_18_good.yml              ERROR (frontend failed, before parsing finished)        8.51        3.27        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_21_bad.yml               ERROR (frontend failed, before parsing finished)        7.79        3.22        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_21_good.yml              ERROR (frontend failed, before parsing finished)        9.39        3.49        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_22_bad.yml               ERROR (frontend failed, before parsing finished)        7.67        3.12        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_22_good.yml              ERROR (frontend failed, before parsing finished)        8.26        3.47        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_31_bad.yml               ERROR (frontend failed, before parsing finished)        7.62        3.19        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_31_good.yml              ERROR (frontend failed, before parsing finished)        7.70        3.23        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_32_bad.yml               ERROR (frontend failed, before parsing finished)        8.00        3.35        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_32_good.yml              ERROR (frontend failed, before parsing finished)       10.31        3.54        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_34_bad.yml               ERROR (frontend failed, before parsing finished)        8.82        3.34        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_34_good.yml              ERROR (frontend failed, before parsing finished)       10.96        3.72        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_41_bad.yml               ERROR (frontend failed, before parsing finished)        9.58        3.58        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_41_good.yml              ERROR (frontend failed, before parsing finished)        9.54        3.51        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_42_bad.yml               ERROR (frontend failed, before parsing finished)        9.52        3.52        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_42_good.yml              ERROR (frontend failed, before parsing finished)        8.74        3.25        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_44_bad.yml               ERROR (frontend failed, before parsing finished)        9.65        3.63        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_44_good.yml              ERROR (frontend failed, before parsing finished)       10.48        3.56        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_45_bad.yml               ERROR (frontend failed, before parsing finished)        8.72        3.29        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_45_good.yml              ERROR (frontend failed, before parsing finished)       10.35        3.54        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_51_bad.yml               ERROR (frontend failed, before parsing finished)       10.50        3.57        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_51_good.yml              ERROR (frontend failed, before parsing finished)        9.83        3.36        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_52_bad.yml               ERROR (frontend failed, before parsing finished)        8.33        3.52        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_52_good.yml              ERROR (frontend failed, before parsing finished)        8.91        3.32        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_53_bad.yml               ERROR (frontend failed, before parsing finished)       10.37        3.56        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_53_good.yml              ERROR (frontend failed, before parsing finished)       10.58        3.59        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_54_bad.yml               ERROR (frontend failed, before parsing finished)        9.89        3.37        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_54_good.yml              ERROR (frontend failed, before parsing finished)        9.96        3.40        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_61_bad.yml               ERROR (frontend failed, before parsing finished)       10.43        3.54        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_61_good.yml              ERROR (frontend failed, before parsing finished)       10.27        3.50        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_63_bad.yml               ERROR (frontend failed, before parsing finished)        9.30        3.41        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_63_good.yml              ERROR (frontend failed, before parsing finished)        8.87        3.29        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_64_bad.yml               ERROR (frontend failed, before parsing finished)       10.49        3.55        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_64_good.yml              ERROR (frontend failed, before parsing finished)       10.38        3.55        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_65_bad.yml               ERROR (frontend failed, before parsing finished)       10.24        3.50        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_65_good.yml              ERROR (frontend failed, before parsing finished)        8.46        3.18        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_66_bad.yml               ERROR (frontend failed, before parsing finished)       10.23        3.49        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_66_good.yml              ERROR (frontend failed, before parsing finished)       10.54        3.60        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_67_bad.yml               ERROR (frontend failed, before parsing finished)       10.31        3.55        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_67_good.yml              ERROR (frontend failed, before parsing finished)       10.30        3.50        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_68_bad.yml               ERROR (frontend failed, before parsing finished)       10.24        3.48        None
+CWE190_Integer_Overflow__int64_t_fscanf_add_68_good.yml              ERROR (frontend failed, before parsing finished)       10.34        3.52        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_01_bad.yml          ERROR (frontend failed, before parsing finished)        9.63        3.30        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_01_good.yml         ERROR (frontend failed, before parsing finished)       10.50        3.57        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_02_bad.yml          ERROR (frontend failed, before parsing finished)       10.30        3.51        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_02_good.yml         ERROR (frontend failed, before parsing finished)       10.55        3.60        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_03_bad.yml          ERROR (frontend failed, before parsing finished)        8.91        3.40        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_03_good.yml         ERROR (frontend failed, before parsing finished)       10.21        3.48        None
+CWE190_Integer_Overflow__int64_t_fscanf_multiply_04_bad.yml          ERROR (frontend failed, before parsing finished)       10.44        3.57        None

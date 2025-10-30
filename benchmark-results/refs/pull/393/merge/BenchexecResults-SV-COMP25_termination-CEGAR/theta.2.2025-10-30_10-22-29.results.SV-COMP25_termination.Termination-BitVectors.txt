@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Thu, 2025-10-30 10:22:29 UTC
+tool:                    Theta 6.21.5
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3217.909 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (server error, after parsing finished)        9.63        7.00        None
+and-02.yml                            ERROR (server error, after parsing finished)        8.65        5.78        None
+and-03-false.yml                      ERROR (server error, after parsing finished)        7.80        5.60        None
+and-03.yml                            ERROR (server error, after parsing finished)        8.15        5.59        None
+and-04-false.yml                      ERROR (server error, after parsing finished)        8.32        5.71        None
+and-04.yml                            ERROR (server error, after parsing finished)        8.36        5.71        None
+and-05-false.yml                      ERROR (server error, after parsing finished)        8.23        5.94        None
+and-05.yml                            ERROR (server error, after parsing finished)        7.83        5.61        None
+and-06.yml                            ERROR (server error, after parsing finished)        8.31        5.74        None
+and-assume.yml                        ERROR (server error, after parsing finished)       10.23        6.16        None
+consecutive-zero-bits-trailing.yml    ERROR (frontend failed, before parsing finished)        1.55        0.60        None
+counting-bits-BK.yml                  ERROR (server error, after parsing finished)        8.85        5.82        None
+counting-bits-BK1.yml                 ERROR (server error, after parsing finished)        8.76        5.77        None
+counting-bits-set.yml                 ERROR (frontend failed, before parsing finished)        1.54        0.61        None
+not-01.yml                            ERROR (frontend failed, before parsing finished)        1.07        0.52        None
+not-02-false.yml                      ERROR (frontend failed, before parsing finished)        1.34        0.56        None
+not-02.yml                            ERROR (frontend failed, before parsing finished)        1.36        0.56        None
+not-03-false.yml                      ERROR (frontend failed, before parsing finished)        1.39        0.58        None
+not-03.yml                            ERROR (frontend failed, before parsing finished)        1.38        0.58        None
+not-04-false.yml                      ERROR (frontend failed, before parsing finished)        1.41        0.56        None
+not-04.yml                            ERROR (frontend failed, before parsing finished)        1.40        0.59        None
+not-05-false.yml                      ERROR (frontend failed, before parsing finished)        1.39        0.56        None
+not-05.yml                            ERROR (frontend failed, before parsing finished)        1.38        0.57        None
+or-01.yml                             ERROR (server error, after parsing finished)        8.19        5.68        None
+or-02.yml                             ERROR (server error, after parsing finished)        8.14        5.66        None
+or-03.yml                             ERROR (server error, after parsing finished)        7.97        5.38        None
+or-04.yml                             ERROR (server error, after parsing finished)        8.32        5.65        None
+or-05-false.yml                       ERROR (server error, after parsing finished)        8.81        5.80        None
+or-05.yml                             ERROR (server error, after parsing finished)        7.84        5.60        None
+or-06.yml                             ERROR (server error, after parsing finished)        8.38        5.76        None
+parity0.yml                           ERROR (server error, after parsing finished)        8.81        5.49        None
+parity1.yml                           ERROR (server error, after parsing finished)        8.32        5.75        None
+reverse-bits1.yml                     ERROR (frontend failed, before parsing finished)        1.56        0.62        None
+xor-01.yml                            ERROR (server error, after parsing finished)        8.31        5.72        None
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           202.89      137.64           -
+
+Statistics:             34 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              34
+  Score:                 0 (max: 57)

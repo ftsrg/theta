@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Fri, 2025-08-29 14:43:49 UTC
+tool:                    Theta 6.17.7
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    pkrvmccyg1gnepe
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3244.135 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (generic error, before parsing finished)        0.19        0.20        None
+and-02.yml                            TIMEOUT                         40.30       49.84        None
+and-03-false.yml                      true                            11.19        4.86        None
+and-03.yml                            true                            10.64        4.75        None
+and-04-false.yml                      true                            11.07        4.82        None
+and-04.yml                            true                            11.16        4.85        None
+and-05-false.yml                      TIMEOUT                         42.35       29.54        None
+and-05.yml                            TIMEOUT                         41.80       29.68        None
+and-06.yml                            TIMEOUT                         40.28       30.18        None
+and-assume.yml                        ERROR (generic error, before parsing finished)        0.19        0.20        None
+consecutive-zero-bits-trailing.yml    ERROR (generic error, before parsing finished)        4.40        1.63        None
+counting-bits-BK.yml                  TIMEOUT                         40.13       30.02        None
+counting-bits-BK1.yml                 TIMEOUT                         40.17       29.80        None
+counting-bits-set.yml                 
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                            76.63      224.87           -
+
+Statistics:             13 Files
+  correct:               2
+    correct true:        2
+    correct false:       0
+  incorrect:             2
+    incorrect true:      2
+    incorrect false:     0
+  unknown:               9
+  Score:               -60 (max: 23)

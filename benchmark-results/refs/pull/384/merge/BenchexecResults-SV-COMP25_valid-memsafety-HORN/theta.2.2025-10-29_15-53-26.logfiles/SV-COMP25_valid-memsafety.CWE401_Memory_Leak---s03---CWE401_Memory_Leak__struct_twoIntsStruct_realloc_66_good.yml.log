@@ -1,0 +1,9 @@
+Thorn/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_66_good.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_66_good.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s03---CWE401_Memory_Leak__struct_twoIntsStruct_realloc_66_good.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.castExpression(CParser.java:1449), org.antlr.v4.runtime.misc.ParseCancellationException)

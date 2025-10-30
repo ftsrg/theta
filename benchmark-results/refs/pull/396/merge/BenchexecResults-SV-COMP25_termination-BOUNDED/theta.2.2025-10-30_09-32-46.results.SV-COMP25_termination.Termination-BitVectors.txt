@@ -1,0 +1,96 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Thu, 2025-10-30 09:32:46 UTC
+tool:                    Theta 6.22.0
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.538944 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            TIMEOUT                        600.78      586.49        None
+and-02.yml                            true                             5.61        2.82        None
+and-03-false.yml                      true                             5.42        2.76        None
+and-03.yml                            true                             5.39        2.76        None
+and-04-false.yml                      true                             5.63        2.74        None
+and-04.yml                            true                             5.35        2.74        None
+and-05-false.yml                      false(termination)              27.92       19.98        None
+and-05.yml                            true                             5.73        2.82        None
+and-06.yml                            true                             5.62        2.87        None
+and-assume.yml                        
+consecutive-zero-bits-trailing.yml    
+counting-bits-BK.yml                  
+counting-bits-BK1.yml                 
+counting-bits-set.yml                 
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                            67.38      900.00           -
+
+Statistics:              9 Files
+  correct:               6
+    correct true:        5
+    correct false:       1
+  incorrect:             2
+    incorrect true:      2
+    incorrect false:     0
+  unknown:               1
+  Score:               -53 (max: 15)

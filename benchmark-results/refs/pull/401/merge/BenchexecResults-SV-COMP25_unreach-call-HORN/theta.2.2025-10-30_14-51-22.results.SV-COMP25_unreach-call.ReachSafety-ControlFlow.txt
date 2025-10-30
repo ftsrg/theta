@@ -1,0 +1,115 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ControlFlow
+date:                    Thu, 2025-10-30 14:51:22 UTC
+tool:                    Theta 6.22.0
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.534848 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ControlFlow
+Run set 1 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------
+openssl-simplified/s3_srvr_1b.cil.yml                                      true                             8.99        6.91        None
+locks/test_locks_10.yml                                                    true                            19.80       14.38        None
+locks/test_locks_11.yml                                                    true                            19.76       12.28        None
+locks/test_locks_12.yml                                                    true                            22.82       13.18        None
+locks/test_locks_13.yml                                                    true                            23.94       13.22        None
+locks/test_locks_14-1.yml                                                  true                            25.90       15.14        None
+locks/test_locks_14-2.yml                                                  false(unreach-call)             17.38        6.90        None
+locks/test_locks_15-1.yml                                                  false(unreach-call)             17.90        7.53        None
+locks/test_locks_15-2.yml                                                  true                            33.54       22.08        None
+locks/test_locks_5.yml                                                     true                             9.31        4.19        None
+locks/test_locks_6.yml                                                     true                            10.47        4.64        None
+locks/test_locks_7.yml                                                     true                            12.34        5.59        None
+locks/test_locks_8.yml                                                     true                            13.63        6.02        None
+locks/test_locks_9.yml                                                     true                            14.54        6.65        None
+ntdrivers/cdaudio.i.cil-1.yml                                              ERROR (frontend failed, before parsing finished)        4.65        1.54        None
+ntdrivers/diskperf.i.cil-1.yml                                             ERROR (frontend failed, before parsing finished)        3.66        1.23        None
+ntdrivers/diskperf.i.cil-2.yml                                             ERROR (frontend failed, before parsing finished)        3.56        1.19        None
+ntdrivers/floppy.i.cil-1.yml                                               ERROR (frontend failed, before parsing finished)        4.26        1.44        None
+ntdrivers/floppy.i.cil-3.yml                                               ERROR (frontend failed, before parsing finished)        4.06        1.35        None
+ntdrivers/kbfiltr.i.cil-2.yml                                              ERROR (frontend failed, before parsing finished)        3.88        1.32        None
+ntdrivers/parport.i.cil-1.yml                                              ERROR (frontend failed, before parsing finished)        4.86        1.65        None
+ntdrivers/parport.i.cil-2.yml                                              ERROR (frontend failed, before parsing finished)        5.20        1.73        None
+memory-model/2SB.yml                                                       ERROR (frontend failed, before parsing finished)        2.03        0.76        None
+memory-model/4SB.yml                                                       ERROR (frontend failed, before parsing finished)        2.01        0.74        None
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml                   true                            58.66       24.79        None
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml              true                             6.47        3.03        None
+unsignedintegeroverflow-sas23/distance_through_overflow.yml                true                             6.06        2.92        None
+unsignedintegeroverflow-sas23/linear_interpolation.yml                     true                            21.89        8.96        None
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml                   true                            40.13       27.68        None
+longjmp/68-longjmp_04-counting-local_true.yml                              
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                     
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                     
+longjmp/68-longjmp_05-heap-counting-return-one-method_true.yml             
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_neg.yml    
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_pos.yml    
+longjmp/68-longjmp_07-returns_true.yml                                     
+longjmp/68-longjmp_11-counting-return_true.yml                             
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml                    
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml                    
+longjmp/68-longjmp_12-counting-global_true.yml                             
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml                    
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml                    
+longjmp/68-longjmp_14-counting-return-one-method_true.yml                  
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml         
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml         
+longjmp/68-longjmp_15-counting-global-one-method_true.yml                  
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml         
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml         
+longjmp/68-longjmp_16-counting-local-one-method_true.yml                   
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml          
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml          
+longjmp/68-longjmp_18-simple-else_true.yml                                 
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                        
+longjmp/68-longjmp_19-simpler_true.yml                                     
+longjmp/68-longjmp_20-simpler-multifun_true.yml                            
+longjmp/68-longjmp_21-multifun_true.yml                                    
+longjmp/68-longjmp_22-multifun-arg_true.yml                                
+longjmp/68-longjmp_42-poison-reduced_true.yml                              
+longjmp/68-longjmp_44-simple-else-path_true.yml                            
+longjmp/68-longjmp_51-worries_true.yml                                     
+infeasible-control-flow/conflict_branch1.yml                               
+infeasible-control-flow/conflict_branch2.yml                               
+infeasible-control-flow/conflict_branch3.yml                               
+infeasible-control-flow/conflict_branch4.yml                               
+infeasible-control-flow/conflict_branch5.yml                               
+infeasible-control-flow/unreach_branch1.yml                                
+infeasible-control-flow/unreach_branch2.yml                                
+infeasible-control-flow/unreach_branch3.yml                                
+infeasible-control-flow/unreach_branch4.yml                                
+infeasible-control-flow/unreach_branch5.yml                                
+----------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                  done                           358.87      223.83           -
+
+Statistics:             29 Files
+  correct:              19
+    correct true:       17
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              10
+  Score:                36 (max: 49)

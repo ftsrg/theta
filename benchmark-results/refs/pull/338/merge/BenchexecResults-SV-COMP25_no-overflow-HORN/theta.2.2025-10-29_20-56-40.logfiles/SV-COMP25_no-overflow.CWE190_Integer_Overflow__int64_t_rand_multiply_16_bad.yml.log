@@ -1,0 +1,11 @@
+Thorn/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_rand_multiply_16_bad.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_rand_multiply_16_bad.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_rand_multiply_16_bad.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+line 746:66 no viable alternative at input 'typedefstruct{longlong__max_align_ll__attribute__((__aligned__(__alignof__(long'
+line 746:66 no viable alternative at input 'typedefstruct{longlong__max_align_ll__attribute__((__aligned__(__alignof__(long'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.externalDeclaration(CParser.java:8930), org.antlr.v4.runtime.misc.ParseCancellationException)

@@ -1,0 +1,11 @@
+Theta/theta-start.sh sv-benchmarks/c/product-lines/minepump_spec1_product02.cil.c --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/product-lines/minepump_spec1_product02.cil.c' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/product-lines/minepump_spec1_product02.cil.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+line 527:18 no viable alternative at input 'int(**'
+line 527:18 no viable alternative at input 'int(**'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.castDeclarationSpecifierList(CParser.java:2882), org.antlr.v4.runtime.misc.ParseCancellationException)

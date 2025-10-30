@@ -1,0 +1,96 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Wed, 2025-10-29 20:35:04 UTC
+tool:                    Theta 6.22.0
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmwhb2z
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.547136 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            ERROR (server error, after parsing finished)        7.25        4.91        None
+and-02.yml                            ERROR (server error, after parsing finished)        6.30        3.96        None
+and-03-false.yml                      ERROR (server error, after parsing finished)        6.23        3.96        None
+and-03.yml                            ERROR (server error, after parsing finished)        5.95        3.75        None
+and-04-false.yml                      ERROR (server error, after parsing finished)        6.29        3.87        None
+and-04.yml                            ERROR (server error, after parsing finished)        6.05        3.80        None
+and-05-false.yml                      ERROR (server error, after parsing finished)        6.27        4.01        None
+and-05.yml                            ERROR (server error, after parsing finished)        5.74        3.91        None
+and-06.yml                            ERROR (server error, after parsing finished)        6.16        3.86        None
+and-assume.yml                        ERROR (server error, after parsing finished)        7.92        4.41        None
+consecutive-zero-bits-trailing.yml    ERROR (frontend failed, before parsing finished)        1.43        0.57        None
+counting-bits-BK.yml                  ERROR (server error, after parsing finished)        6.12        3.86        None
+counting-bits-BK1.yml                 ERROR (server error, after parsing finished)        6.02        3.81        None
+counting-bits-set.yml                 ERROR (frontend failed, before parsing finished)        1.04        0.49        None
+not-01.yml                            ERROR (frontend failed, before parsing finished)        0.94        0.47        None
+not-02-false.yml                      ERROR (frontend failed, before parsing finished)        0.92        0.45        None
+not-02.yml                            ERROR (frontend failed, before parsing finished)        0.93        0.46        None
+not-03-false.yml                      ERROR (frontend failed, before parsing finished)        0.93        0.45        None
+not-03.yml                            ERROR (frontend failed, before parsing finished)        1.05        0.51        None
+not-04-false.yml                      ERROR (frontend failed, before parsing finished)        1.30        0.54        None
+not-04.yml                            ERROR (frontend failed, before parsing finished)        1.28        0.53        None
+not-05-false.yml                      ERROR (frontend failed, before parsing finished)        1.31        0.55        None
+not-05.yml                            ERROR (frontend failed, before parsing finished)        1.05        0.51        None
+or-01.yml                             ERROR (server error, after parsing finished)        5.59        3.72        None
+or-02.yml                             ERROR (server error, after parsing finished)        5.79        3.84        None
+or-03.yml                             ERROR (server error, after parsing finished)        6.34        3.98        None
+or-04.yml                             ERROR (server error, after parsing finished)        6.12        3.96        None
+or-05-false.yml                       ERROR (server error, after parsing finished)        6.23        3.91        None
+or-05.yml                             ERROR (server error, after parsing finished)        6.09        3.87        None
+or-06.yml                             ERROR (server error, after parsing finished)        5.80        3.80        None
+parity0.yml                           ERROR (server error, after parsing finished)        6.24        3.87        None
+parity1.yml                           ERROR (server error, after parsing finished)        6.19        3.87        None
+reverse-bits1.yml                     ERROR (frontend failed, before parsing finished)        1.48        0.58        None
+xor-01.yml                            ERROR (server error, after parsing finished)        5.82        3.79        None
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           150.75       96.62           -
+
+Statistics:             34 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              34
+  Score:                 0 (max: 57)

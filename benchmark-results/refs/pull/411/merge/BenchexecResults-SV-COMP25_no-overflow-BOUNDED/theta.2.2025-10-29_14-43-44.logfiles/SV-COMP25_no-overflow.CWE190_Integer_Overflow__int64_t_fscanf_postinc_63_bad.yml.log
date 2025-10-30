@@ -1,0 +1,8 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_postinc_63_bad.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_postinc_63_bad.i' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_fscanf_postinc_63_bad.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
