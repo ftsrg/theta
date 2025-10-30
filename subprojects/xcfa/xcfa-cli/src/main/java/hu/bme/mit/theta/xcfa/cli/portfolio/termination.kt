@@ -46,7 +46,7 @@ fun termination(
 
     val expl = { timeout: Long, solver: String ->
       ConfigNode(
-        "ASGCEGAR-EXPL-$inProcess",
+        "LIVENESS_CEGAR-EXPL-$inProcess",
         baseAsgCegarConfig.adaptConfig(
           refinementSolver = solver,
           abstractionSolver = solver,
@@ -61,7 +61,7 @@ fun termination(
 
     val predcart = { timeout: Long, solver: String ->
       ConfigNode(
-        "ASGCEGAR-PREDCART-$inProcess",
+        "LIVENESS_CEGAR-PREDCART-$inProcess",
         baseAsgCegarConfig.adaptConfig(
           refinementSolver = solver,
           abstractionSolver = solver,
@@ -75,7 +75,7 @@ fun termination(
 
     val predbool = { timeout: Long, solver: String ->
       ConfigNode(
-        "ASGCEGAR-PREDBOOL-$inProcess",
+        "LIVENESS_CEGAR-PREDBOOL-$inProcess",
         baseAsgCegarConfig.adaptConfig(
           refinementSolver = solver,
           abstractionSolver = solver,

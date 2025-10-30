@@ -82,6 +82,10 @@ class XcfaCliNonTerminationVerifyTest {
           "/c/nontermination/Pendulum-2.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
+        Arguments.of(
+          "/c/nontermination/for_infinite_loop_1.c",
+          "--property /c/nontermination/prop/termination.prp",
+        ),
       )
     }
 
@@ -124,7 +128,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--input",
         javaClass.getResource(filePath)!!.path,
         "--backend",
-        "ASGCEGAR",
+        "LIVENESS_CEGAR",
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         "--debug",
@@ -153,7 +157,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--input",
         javaClass.getResource(filePath)!!.path,
         "--backend",
-        "ASGCEGAR",
+        "LIVENESS_CEGAR",
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         "--debug",

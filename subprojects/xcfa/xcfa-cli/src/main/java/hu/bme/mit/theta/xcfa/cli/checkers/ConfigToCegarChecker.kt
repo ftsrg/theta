@@ -56,7 +56,7 @@ fun getCegarChecker(
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
-    error("Termination cannot be checked with CEGAR, use ASGCEGAR as a backend.")
+    error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
 
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
   val abstractionSolverFactory: SolverFactory =
