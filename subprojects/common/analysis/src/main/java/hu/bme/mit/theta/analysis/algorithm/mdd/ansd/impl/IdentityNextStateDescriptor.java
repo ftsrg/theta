@@ -19,6 +19,7 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class IdentityNextStateDescriptor implements AbstractNextStateDescriptor {
@@ -66,5 +67,19 @@ public final class IdentityNextStateDescriptor implements AbstractNextStateDescr
     @Override
     public boolean evaluate() {
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass(), child);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof IdentityNextStateDescriptor that) {
+            return Objects.equals(this.child, that.child);
+        }
+        return false;
     }
 }
