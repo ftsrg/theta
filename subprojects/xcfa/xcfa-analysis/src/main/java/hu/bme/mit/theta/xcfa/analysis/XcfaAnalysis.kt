@@ -76,8 +76,12 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
     coreTransFunc
 }
 
-/// Common
-private var tempCnt: Int = 0
+private val tmpVarCache = mutableMapOf<Pair<VarDecl<*>, Int>, VarDecl<*>>()
+
+private fun getTmpVar(originalVar: VarDecl<*>, tmpCnt: Int) =
+  tmpVarCache.getOrPut(originalVar to tmpCnt) {
+    Var("tmp${tmpCnt}_" + originalVar.name, originalVar.type)
+  }
 
 fun getCoreXcfaLts() =
   LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
@@ -115,6 +119,7 @@ fun getCoreXcfaLts() =
             )
           )
         } else {
+          var invokeParameterCount = proc.value.invokeParameterCounter
           proc.value.locs.peek().outgoingEdges.map { edge ->
             val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
             val flatLabels = newLabel.getFlatLabels()
@@ -134,8 +139,7 @@ fun getCoreXcfaLts() =
                               .filter { it.value.second != ParamDirection.OUT }
                               .map { iVal ->
                                 val originalVar = iVal.value.first
-                                val tempVar =
-                                  Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
+                                val tempVar = getTmpVar(originalVar, invokeParameterCount++)
                                 lookup[originalVar] = tempVar
                                 StmtLabel(
                                   Stmts.Assign(
@@ -161,8 +165,7 @@ fun getCoreXcfaLts() =
                               .filter { it.value.second != ParamDirection.OUT }
                               .mapNotNull { iVal ->
                                 val originalVar = iVal.value.first
-                                val tempVar =
-                                  Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
+                                val tempVar = getTmpVar(originalVar, invokeParameterCount++)
                                 lookup[originalVar] = tempVar
                                 val trial =
                                   Try.attempt {

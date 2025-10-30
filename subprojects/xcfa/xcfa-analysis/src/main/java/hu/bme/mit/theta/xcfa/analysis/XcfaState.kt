@@ -145,7 +145,7 @@ constructor(
 
           is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
 
-          is StartLabel -> changes.add { state -> state.start(label) }.let { null }
+          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
           is JoinLabel -> {
             changes.add { state ->
               val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
@@ -171,7 +171,7 @@ constructor(
     )
   }
 
-  private fun start(startLabel: StartLabel): XcfaState<S> {
+  private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
@@ -235,6 +235,11 @@ constructor(
             )
           ),
       )
+
+    newProcesses[startingPid] =
+      newProcesses[startingPid]!!.let {
+        it.copy(invokeParameterCounter = it.invokeParameterCounter + 1)
+      }
 
     return copy(processes = newProcesses, threadLookup = newThreadLookup)
   }
@@ -307,6 +312,7 @@ data class XcfaProcessState(
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
+  val invokeParameterCounter: Int = 0,
 ) {
 
   internal var popped: XcfaLocation? =
@@ -376,6 +382,7 @@ data class XcfaProcessState(
       returnStmts = returnStmts,
       paramStmts = paramStmts,
       paramsInitialized = false,
+      invokeParameterCounter = invokeParameterCounter + 1,
     )
   }
 
