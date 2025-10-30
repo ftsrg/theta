@@ -36,12 +36,27 @@ class XcfaProperty(val inputProperty: ErrorDetection) {
     XcfaProperty(inputProperty).also { it.verifiedProperty = this.verifiedProperty }
 }
 
-enum class ErrorDetection {
-  ERROR_LOCATION,
-  DATA_RACE,
-  OVERFLOW,
-  MEMSAFETY,
-  MEMCLEANUP,
-  NO_ERROR,
-  TERMINATION,
+enum class ErrorDetection(val ltl: (Any) -> String?) {
+  ERROR_LOCATION({ _: Any -> "CHECK( init(main()), LTL(G ! call(reach_error())) )" }),
+  DATA_RACE({ _: Any -> "CHECK( init(main()), LTL(G ! data-race) )" }),
+  OVERFLOW({ _: Any -> "CHECK( init(main()), LTL(G ! overflow) )" }),
+  MEMSAFETY({ param: Any ->
+    when (param) {
+      MemSafetyType.VALID_FREE -> "CHECK( init(main()), LTL(G valid-free) )"
+      MemSafetyType.VALID_DEREF -> "CHECK( init(main()), LTL(G valid-deref) )"
+      MemSafetyType.VALID_MEMTRACK -> "CHECK( init(main()), LTL(G valid-memtrack) )"
+      else -> throw IllegalArgumentException("Invalid MEMSAFETY type")
+    }
+  }),
+  MEMCLEANUP({ _: Any -> "CHECK( init(main()), LTL(G valid-memcleanup) )" }),
+  NO_ERROR({ _: Any -> "NONE" }),
+  TERMINATION({ _: Any -> "CHECK( init(main()), LTL(F end) )" });
+
+  companion object {
+    enum class MemSafetyType {
+      VALID_FREE,
+      VALID_DEREF,
+      VALID_MEMTRACK,
+    }
+  }
 }

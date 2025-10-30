@@ -56,6 +56,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -74,7 +75,11 @@ private val LitExpr<*>.value: Int
       else -> error("Unknown integer type: $type")
     }
 
-class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Boolean = false) :
+class XcfaToMonolithicAdapter(
+  private val xcfa: XCFA,
+  private val property: ErrorDetection,
+  private val initValues: Boolean = false,
+) :
   ModelToMonolithicAdapter<
     ParseContext,
     XcfaState<PtrState<ExplState>>,
@@ -112,7 +117,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
     val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
     locVar = Decls.Var("__loc_", intType)
     val edgeVar = Decls.Var("__edge_", intType)
-    val tranList =
+    val tranList: MutableList<Stmt> =
       proc.edges
         .map { edge: XcfaEdge ->
           val (source, target, label) = edge
@@ -125,7 +130,9 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
             )
           )
         }
-        .toList() +
+        .toMutableList()
+    if (property != ErrorDetection.TERMINATION) {
+      tranList.addAll(
         (proc.errorLoc.getOrNull()?.let { errorLoc ->
           listOf(
             SequenceStmt.of(
@@ -136,6 +143,9 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
             )
           )
         } ?: emptyList<Stmt>())
+      )
+    }
+
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
@@ -152,6 +162,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
                   it.ref,
                   BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, (it.type as BvType).size),
                 )
+
               is FpType ->
                 FpAssign(
                   it.ref as Expr<FpType>,
@@ -160,6 +171,7 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
                     it.type as FpType,
                   ),
                 )
+
               else -> throw IllegalArgumentException("Unsupported type")
             }
           }
@@ -176,7 +188,8 @@ class XcfaToMonolithicAdapter(private val xcfa: XCFA, private val initValues: Bo
         ),
       transExpr = And(transUnfold.exprs),
       propExpr =
-        if (proc.errorLoc.isPresent)
+        if (property == ErrorDetection.TERMINATION) xcfa.initProcedures[0].first.prop
+        else if (proc.errorLoc.isPresent)
           Neq(locVar.ref, smtAwareInteger(locationMap[proc.errorLoc.get()]!!))
         else True(),
       transOffsetIndex = transUnfold.indexing,

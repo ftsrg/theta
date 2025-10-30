@@ -27,7 +27,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeCompara
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
-import hu.bme.mit.theta.analysis.expl.ExplOrd
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
@@ -65,6 +67,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.lang.reflect.Type
+import java.util.function.Predicate
 
 enum class InputType {
   C,
@@ -78,6 +81,7 @@ enum class InputType {
 
 enum class Backend {
   CEGAR,
+  LIVENESS_CEGAR,
   BOUNDED,
   BMC,
   KIND,
@@ -87,9 +91,9 @@ enum class Backend {
   OC,
   LAZY,
   PORTFOLIO,
+  TRACEGEN,
   MDD,
   IC3,
-  LASSO_VALIDATION,
   NONE,
 }
 
@@ -119,6 +123,18 @@ enum class Strategy {
 
 // TODO partial orders nicely
 enum class Domain(
+  val asgAbstractor:
+    (
+      xcfa: XCFA,
+      solver: Solver,
+      maxEnum: Int,
+      logger: Logger,
+      lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+      search: LoopCheckerSearchStrategy,
+      partialOrder: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
+      statePredicate: Predicate<XcfaState<PtrState<ExprState>>?>,
+      transitionPredicate: Predicate<XcfaAction?>?,
+    ) -> ASGAbstractor<out ExprState, out ExprAction, out Prec>,
   val abstractor:
     (
       xcfa: XCFA,
@@ -147,6 +163,31 @@ enum class Domain(
 ) {
 
   EXPL(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplXcfaAnalysis(
+          xcfa,
+          solver,
+          maxEnum,
+          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j, k),
@@ -168,6 +209,31 @@ enum class Domain(
     stateType = TypeToken.get(ExplState::class.java).type,
   ),
   PRED_BOOL(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.booleanAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -196,6 +262,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_CART(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxenum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.cartesianAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -224,6 +315,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_SPLIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxenum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        PredXcfaAnalysis(
+          xcfa,
+          solver,
+          PredAbstractors.booleanSplitAbstractor(solver),
+          partialOrd as PartialOrd<XcfaState<PtrState<PredState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<PredState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
@@ -252,6 +368,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   EXPL_PRED_SPLIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          xcfa,
+          solver,
+          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(solver), false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
@@ -280,13 +421,39 @@ enum class Domain(
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
+        .getPtrPartialOrd()
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   EXPL_PRED_STMT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplPredCombinedXcfaAnalysis(
+          xcfa,
+          solver,
+          getExplPredStmtXcfaTransFunc(solver, false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
@@ -315,7 +482,8 @@ enum class Domain(
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
+        .getPtrPartialOrd()
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
@@ -469,6 +637,11 @@ enum class Search {
   };
 
   abstract fun getComp(cfa: XCFA): ArgNodeComparator
+}
+
+enum class TracegenAbstraction {
+  NONE
+  // TODO add EXPL
 }
 
 enum class InitPrec(

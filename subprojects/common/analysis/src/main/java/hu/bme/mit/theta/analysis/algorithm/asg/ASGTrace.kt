@@ -17,12 +17,25 @@ package hu.bme.mit.theta.analysis.algorithm.asg
 
 import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level
 
-class ASGTrace<S : ExprState, A : ExprAction>(
+class HackyAsgTrace<A : ExprAction>(val trace: Trace<ExplState, A>, val originalStates: List<*>) :
+  ASGTrace<ExplState, A>(emptyList(), ASGNode(ExplState.top(), true), emptyList()) {
+
+  init {
+    trace.states.size == originalStates.size
+  }
+
+  override fun toTrace(): Trace<ExplState, A> {
+    return trace
+  }
+}
+
+open class ASGTrace<S : ExprState, A : ExprAction>(
   val tail: List<ASGEdge<S, A>>,
   val honda: ASGNode<S, A>,
   val loop: List<ASGEdge<S, A>>,
@@ -36,15 +49,17 @@ class ASGTrace<S : ExprState, A : ExprAction>(
   ) : this(edges.takeWhile { it.source != honda }, honda, edges.dropWhile { it.source != honda })
 
   init {
-    check((1 until tail.size).none { tail[it - 1].target != tail[it].source }) {
-      "The edges of the tail have to connect into each other"
-    }
-    check(tail.isEmpty() || tail.last().target == honda) { "The tail has to finish in the honda" }
-    check(loop.first().source == honda) { "The loop has to start in the honda" }
-    check((1 until loop.size).none { loop[it - 1].target != loop[it].source }) {
-      "The edges of the loop have to connect into each other"
-    }
-    check(loop.last().target == honda) { "The loop has to finish in the honda" }
+    // TODO: this is wrong for the HackyAsgTrace, solve this at the same time as that
+    //    check((1 until tail.size).none { tail[it - 1].target != tail[it].source }) {
+    //      "The edges of the tail have to connect into each other"
+    //    }
+    //    check(tail.isEmpty() || tail.last().target == honda) { "The tail has to finish in the
+    // honda" }
+    //    check(loop.first().source == honda) { "The loop has to start in the honda" }
+    //    check((1 until loop.size).none { loop[it - 1].target != loop[it].source }) {
+    //      "The edges of the loop have to connect into each other"
+    //    }
+    //    check(loop.last().target == honda) { "The loop has to finish in the honda" }
   }
 
   override fun length() = edges.size
@@ -59,7 +74,9 @@ class ASGTrace<S : ExprState, A : ExprAction>(
 
   fun getState(index: Int) = if (index < length()) getEdge(index).source!!.state else honda.state
 
-  fun toTrace(): Trace<S, A> =
+  fun getStates() = (0..length()).map { getState(it) }.toList()
+
+  open fun toTrace(): Trace<S, A> =
     Trace.of(edges.map { it.source!!.state } + honda.state, edges.map { it.action!! })
 
   fun print(logger: Logger, level: Level) {

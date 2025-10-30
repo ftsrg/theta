@@ -40,6 +40,7 @@ public abstract class CStatement {
     private int colNumberStop = -1;
     private int offsetStart = -1;
     private int offsetEnd = -1;
+    private String functionName = "";
     private String sourceText = "";
     private ParserRuleContext ctx;
 
@@ -141,6 +142,14 @@ public abstract class CStatement {
 
     public void setOffsetEnd(int offsetEnd) {
         this.offsetEnd = offsetEnd;
+    }
+
+    public String getFunctionName() {
+        return functionName;
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
     }
 
     public String getSourceText() {

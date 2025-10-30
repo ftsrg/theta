@@ -44,6 +44,7 @@ class GraphmlWitnessWriter {
     parseContext: ParseContext,
     witnessfile: File,
     property: XcfaProperty,
+    ltlViolationProperty: String?,
   ) {
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
@@ -60,6 +61,8 @@ class GraphmlWitnessWriter {
       val xml = graphmlWitness.toPrettyXml()
       witnessfile.writeText(xml)
     } else if (safetyResult.isSafe) {
+      check(ltlViolationProperty == null)
+      val ltlViolationProperty = property.verifiedProperty.name
       val taskHash = WitnessWriter.createTaskHash(inputFile.absolutePath)
       val dummyWitness = StringBuilder()
       dummyWitness
@@ -111,9 +114,7 @@ class GraphmlWitnessWriter {
         .append(System.lineSeparator())
         .append("<data key=\"producer\">theta</data>")
         .append(System.lineSeparator())
-        .append(
-          "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>"
-        )
+        .append("<data key=\"specification\">$ltlViolationProperty</data>")
         .append(System.lineSeparator())
         .append("<data key=\"sourcecodelang\">C</data>")
         .append(System.lineSeparator())

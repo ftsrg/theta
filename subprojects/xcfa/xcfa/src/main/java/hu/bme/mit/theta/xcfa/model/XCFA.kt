@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
@@ -131,6 +133,7 @@ data class XcfaProcedure(
   val initLoc: XcfaLocation, // initial location
   val finalLoc: Optional<XcfaLocation>, // final location (optional)
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
+  val prop: Expr<BoolType> = True(),
 ) {
 
   internal lateinit var parent: XCFA

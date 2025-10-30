@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+
 typealias LabelCustomizer = (XcfaEdge) -> String
 
 fun XCFA.toDot(edgeLabelCustomizer: LabelCustomizer? = null): String =
@@ -72,7 +74,7 @@ private fun xcfaProcedureToDot(
   locs.forEach { builder.appendLine("${it.name}[];") }
   edges.forEach {
     builder.appendLine(
-      "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];"
+      "${it.source.name} -> ${it.target.name} [label=\"${it.getFlatLabels().joinToString("\\n")} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];"
     )
   }
   return builder.toString()

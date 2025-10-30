@@ -77,6 +77,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       LbePass(parseContext),
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
+      EliminateSelfLoops(),
       HavocPromotionAndRange(parseContext),
       DataRaceToReachabilityPass(property),
       // Final cleanup

@@ -16,15 +16,18 @@
 package hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement
 
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.asg.ASG
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTrace
 import hu.bme.mit.theta.analysis.algorithm.asg.ASGTraceRefiner
+import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
-import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner
+import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -34,7 +37,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 class SingleASGTraceRefiner<S : ExprState, A : ExprAction, P : Prec>(
   private val strategy: ASGTraceCheckerStrategy,
   private val solverFactory: SolverFactory,
-  private val refiner: JoiningPrecRefiner<S, A, P, ItpRefutation>,
+  private val refiner: PrecRefiner<S, A, P, ItpRefutation>,
   private val logger: Logger,
   private val init: Expr<BoolType> = True(),
 ) : ASGTraceRefiner<S, A, P> {
@@ -51,6 +54,14 @@ class SingleASGTraceRefiner<S : ExprState, A : ExprAction, P : Prec>(
       witness.pruneAll()
       return RefinerResult.spurious(refinedPrecision)
     }
-    return RefinerResult.unsafe(ldgTrace)
+    val hackyTrace =
+      HackyAsgTrace<A>(
+        Trace.of(
+          refutation.asFeasible().valuations.states.map { ExplState.of(it) },
+          ldgTrace.edges.map { it.action!! as A },
+        ),
+        ldgTrace.getStates(),
+      )
+    return RefinerResult.unsafe(hackyTrace as ASGTrace<S, A>)
   }
 }

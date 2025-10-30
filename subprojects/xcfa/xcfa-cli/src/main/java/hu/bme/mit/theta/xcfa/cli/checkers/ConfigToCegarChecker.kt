@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -54,6 +55,9 @@ fun getCegarChecker(
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+  if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
+    error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
+
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
   val abstractionSolverFactory: SolverFactory =
     getSolver(
