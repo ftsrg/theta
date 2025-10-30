@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
@@ -50,6 +51,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 class XcfaMultiThreadToMonolithicAdapter(
   model: XCFA,
@@ -211,16 +213,16 @@ class XcfaMultiThreadToMonolithicAdapter(
               )
             }
             .toList() +
-            if (proc.errorLoc.isPresent) {
+            (proc.errorLoc.getOrNull()?.let { errorLoc ->
               listOf(
                 SequenceStmt.of(
                   listOf(
-                    AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[proc.errorLoc.get()]!!))),
-                    AssignStmt.of(locVar, cast(smtInt(locMap[proc.errorLoc.get()]!!), locVar.type)),
+                    AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[errorLoc]!!))),
+                    AssignStmt.of(locVar, cast(smtInt(locMap[errorLoc]!!), locVar.type)),
                   )
                 )
               )
-            } else listOf()
+            } ?: emptyList<Stmt>())
         }
 
       val trans = NonDetStmt.of(tranList)
