@@ -40,12 +40,7 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,6 +63,9 @@ public class Prod2ExplPredAbstractors {
         return new BooleanAbstractor(solver, false);
     }
 
+    /*
+     * PRED_SPLIT-like combined abstractor, which returns a separate state for each satisfying assignment
+     */
     private static final class BooleanAbstractor implements Prod2ExplPredAbstractor {
 
         private final Solver solver;

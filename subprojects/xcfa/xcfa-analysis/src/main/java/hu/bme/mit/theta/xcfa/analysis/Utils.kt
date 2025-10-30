@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -53,6 +54,8 @@ private fun <S : ExprState> S.getState(varLookup: Map<VarDecl<*>, VarDecl<*>>): 
   when (this) {
     is ExplState -> ExplState.of(getVal().changeVars(varLookup))
     is PredState -> PredState.of(preds.map { p -> p.changeVars(varLookup) })
+    is Prod2State<*, *> ->
+      Prod2State.of((this.state1 as S).getState(varLookup), (this.state2 as S).getState(varLookup))
     is PtrState<*> -> PtrState(innerState.getState(varLookup))
     else ->
       throw NotImplementedError(

@@ -29,6 +29,12 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
+import hu.bme.mit.theta.analysis.prod2.Prod2InitFunc
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec
+import hu.bme.mit.theta.analysis.prod2.Prod2State
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
@@ -397,5 +403,107 @@ class PredXcfaAnalysis(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
     coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc),
+    coneOfInfluence = coi,
+  )
+
+/// EXPL_PRED_COMBINED
+
+private fun getExplPredCombinedXcfaInitFunc(
+  xcfa: XCFA,
+  solver: Solver,
+): (XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>) -> List<
+    XcfaState<PtrState<Prod2State<ExplState, PredState>>>
+  > {
+  val processInitState =
+    xcfa.initProcedures
+      .mapIndexed { i, it ->
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
+        initLocStack.add(it.first.initLoc)
+        Pair(
+          i,
+          XcfaProcessState(
+            initLocStack,
+            prefix = "T$i",
+            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+          ),
+        )
+      }
+      .toMap()
+  return { p ->
+    Prod2InitFunc.create(
+        ExplInitFunc.create(solver, True()),
+        PredInitFunc.create(PredAbstractors.cartesianAbstractor(solver), True()),
+      )
+      .getPtrInitFunc()
+      .getInitStates(p.p)
+      .map { XcfaState(xcfa, processInitState, it) }
+  }
+}
+
+public fun getExplPredStmtXcfaTransFunc(
+  solver: Solver,
+  isHavoc: Boolean,
+): (
+  XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
+  XcfaAction,
+  XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
+) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>> {
+  val combinedTransFunc =
+    (Prod2ExplPredStmtTransFunc.create<StmtAction>(solver)
+        as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
+      .getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val (newSt, newAct) = s.apply(a)
+    combinedTransFunc
+      .getSuccStates(
+        newSt.sGlobal,
+        newAct,
+        p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
+      )
+      .map { newSt.withState(it) }
+  }
+}
+
+public fun getExplPredSplitXcfaTransFunc(
+  prod2ExplPredAbstractor: Prod2ExplPredAbstractors.Prod2ExplPredAbstractor,
+  isHavoc: Boolean,
+): (
+  XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
+  XcfaAction,
+  XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
+) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>> {
+  val combinedTransFunc =
+    (Prod2ExplPredDedicatedTransFunc.create<StmtAction>(prod2ExplPredAbstractor)
+        as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
+      .getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val (newSt, newAct) = s.apply(a)
+    combinedTransFunc
+      .getSuccStates(
+        newSt.sGlobal,
+        newAct,
+        p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
+      )
+      .map { newSt.withState(it) }
+  }
+}
+
+class ExplPredCombinedXcfaAnalysis(
+  xcfa: XCFA,
+  solver: Solver,
+  prod2ExplPredTransFunc:
+    (
+      XcfaState<PtrState<Prod2State<ExplState, PredState>>>,
+      XcfaAction,
+      XcfaPrec<PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>,
+    ) -> List<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+  partialOrd: PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
+  isHavoc: Boolean,
+  coi: XcfaCoi? = null,
+) :
+  XcfaAnalysis<Prod2State<ExplState, PredState>, PtrPrec<Prod2Prec<ExplPrec, PredPrec>>>(
+    corePartialOrd = partialOrd,
+    coreInitFunc = getExplPredCombinedXcfaInitFunc(xcfa, solver),
+    coreTransFunc = prod2ExplPredTransFunc,
     coneOfInfluence = coi,
   )
