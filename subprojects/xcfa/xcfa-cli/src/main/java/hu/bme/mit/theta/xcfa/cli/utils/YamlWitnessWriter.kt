@@ -57,38 +57,24 @@ class YamlWitnessWriter {
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
-    ltlViolationProperty: String,
+    ltlViolationProperty: String?,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    val metadata =
-      Metadata(
-        formatVersion = "2.1",
-        uuid = UUID.randomUUID().toString(),
-        creationTime = getIsoDate(),
-        producer =
-          Producer(
-            name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
-            version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
-          ),
-        task =
-          Task(
-            inputFiles = listOf(inputFile.name),
-            inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
-            specification = ltlViolationProperty,
-            dataModel =
-              architecture?.let {
-                if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
-                else DataModel.LP64
-              } ?: DataModel.ILP32,
-            language = Language.C,
-          ),
-      )
+    var ltlSpecification =
+      if (safetyResult.isSafe) {
+        check(ltlViolationProperty == null)
+        property.verifiedProperty.name
+      } else {
+        check(ltlViolationProperty != null)
+        ltlViolationProperty
+      }
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
-    val trace =
-      if (safetyResult.isUnsafe)
+    if (safetyResult.isUnsafe) {
+      val trace =
         safetyResult.asUnsafe().cex.let {
           if (it is HackyAsgTrace<*>) {
             val actions = (it as HackyAsgTrace<*>).trace.actions
@@ -106,24 +92,23 @@ class YamlWitnessWriter {
             it
           }
         }
-      else null
+      if (trace is Trace<*, *>) {
+        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+          XcfaTraceConcretizer.concretize(
+            trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+            cexSolverFactory,
+            parseContext,
+          )
 
-    if (safetyResult.isUnsafe && trace is Trace<*, *>) {
-      val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-        XcfaTraceConcretizer.concretize(
-          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-          cexSolverFactory,
+        violationWitnessFromConcreteTrace(
+          concrTrace,
+          metadata,
+          inputFile,
+          property,
           parseContext,
+          witnessfile,
         )
-
-      violationWitnessFromConcreteTrace(
-        concrTrace,
-        metadata,
-        inputFile,
-        property,
-        parseContext,
-        witnessfile,
-      )
+      }
     } else if (safetyResult.isSafe) {
 
       val witness =
@@ -303,41 +288,6 @@ class YamlWitnessWriter {
                 )
               }
               .map { ContentItem(it) } +
-              //                ContentItem(
-              //                  WaypointContent(
-              //                    type = WaypointType.ASSUMPTION,
-              //                    location =
-              //
-              // ((lasso.actions.first().label.getFlatLabels().first().metadata as? CMetaData)
-              //                          ?.astNodes
-              //                          ?.first() ?: error("Cycle's metadata is missing."))
-              //                        .let {
-              //                          val astNode =
-              //                            if (it is CWhile) {
-              //                              it.body
-              //                            } else if (it is CFor) {
-              //                              it.body
-              //                            } else if (it is CDoWhile) {
-              //                              it.body
-              //                            } else {
-              //                              it
-              //                            }
-              //                          Location(
-              //                            fileName = inputFile.name,
-              //                            line = astNode.lineNumberStart,
-              //                            column = astNode.colNumberStart + 1,
-              //                          )
-              //                        },
-              //                    constraint =
-              //                      Constraint(
-              //                        value =
-              //
-              // cycleHead.sGlobal.toExpr().replaceVars(parseContext).toC(parseContext),
-              //                        format = Format.C_EXPRESSION,
-              //                      ),
-              //                    action = Action.CYCLE,
-              //                  )
-              //                ) +
               (0..<(lassoTrace.length()))
                 .flatMap {
                   listOfNotNull(
@@ -536,20 +486,9 @@ private fun WitnessEdge.toSegment(
       line = startline ?: endline ?: return null,
       column = (startcol ?: endcol)?.plus(1),
     )
-  //  val nextStartLoc =
-  //    Location(
-  //      fileName = inputFile.name,
-  //      line = nextStatementStartLine ?: return null,
-  //      column = nextStatementStartCol?.plus(1),
-  //    )
 
   val (loc, constraint, type) =
     if (assumption != null) {
-      //      Triple(
-      //        nextStartLoc,
-      //        Constraint(value = assumption!!, format = Format.C_EXPRESSION),
-      //        WaypointType.ASSUMPTION,
-      //      )
       return null
     } else if (control != null) {
       // Triple(startLoc, Constraint(value = control.toString()), WaypointType.BRANCHING)
