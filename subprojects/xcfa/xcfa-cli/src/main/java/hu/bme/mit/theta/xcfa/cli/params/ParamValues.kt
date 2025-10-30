@@ -212,7 +212,7 @@ enum class Domain(
     asgAbstractor = {
       xcfa,
       solver,
-      maxenum,
+      maxEnum,
       logger,
       lts,
       search,
@@ -368,6 +368,31 @@ enum class Domain(
     stateType = TypeToken.get(PredState::class.java).type,
   ),
   EXPL_PRED_SPLIT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplXcfaAnalysis(
+          xcfa,
+          solver,
+          maxEnum,
+          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
@@ -396,13 +421,39 @@ enum class Domain(
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
+        .getPtrPartialOrd()
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   EXPL_PRED_STMT(
+    asgAbstractor = {
+      xcfa,
+      solver,
+      maxEnum,
+      logger,
+      lts,
+      search,
+      partialOrd,
+      statePredicate,
+      transitionPredicate ->
+      ASGAbstractor(
+        ExplXcfaAnalysis(
+          xcfa,
+          solver,
+          maxEnum,
+          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         ExplPredCombinedXcfaAnalysis(
@@ -431,7 +482,8 @@ enum class Domain(
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver)).getPtrPartialOrd()
+      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
+        .getPtrPartialOrd()
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),

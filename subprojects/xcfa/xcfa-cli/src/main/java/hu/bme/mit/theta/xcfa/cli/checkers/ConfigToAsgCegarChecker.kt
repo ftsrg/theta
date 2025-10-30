@@ -148,7 +148,8 @@ fun getAsgCegarChecker(
 
   val precRefiner =
     asgCegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      asgCegarConfig.refinerConfig.exprSplitter.exprSplitter
+      asgCegarConfig.refinerConfig.exprSplitter.exprSplitter,
+      xcfa,
     ) as PrecRefiner<ExprState, ExprAction, Prec, ItpRefutation>
 
   val refiner =
