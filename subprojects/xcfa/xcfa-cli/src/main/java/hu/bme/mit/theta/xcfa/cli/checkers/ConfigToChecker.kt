@@ -79,8 +79,8 @@ fun getSafetyChecker(
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
       Backend.LASSO_VALIDATOR -> getLassoChecker(xcfa, mcm, parseContext, config, logger)
       Backend.ASGCEGAR ->
-        if (config.inputConfig.property == ErrorDetection.TERMINATION)
-          getAsgCegarChecker(xcfa, mcm, config, logger)
+        if (config.inputConfig.property.inputProperty == ErrorDetection.TERMINATION)
+          getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
         else error("Only termination can be checked with ASGCEGAR, use CEGAR for reachability.")
       Backend.TRACEGEN ->
         throw RuntimeException(
@@ -101,7 +101,7 @@ fun getChecker(
     InProcessChecker(xcfa, config, parseContext, logger)
   } else {
     when (config.backendConfig.backend) {
-      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, mcm, config, logger)
+      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,

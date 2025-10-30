@@ -172,13 +172,18 @@ class YamlWitnessWriter {
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
-    property: XcfaProperty,
+    property: ErrorDetection,
+    ltlViolationProperty: String,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    check(property.inputProperty == ErrorDetection.ERROR_LOCATION)
+    check(property == ErrorDetection.ERROR_LOCATION)
     val witnessTrace =
-      traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
+      traceToWitness(
+        trace = concrTrace,
+        parseContext = parseContext,
+        property = XcfaProperty(property),
+      )
 
     val waypoints =
       (0..(witnessTrace.length()))

@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -39,6 +40,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getTracegenChecker(
   xcfa: XCFA,
+  parseContext: ParseContext,
   mcm: MCM?,
   config: XcfaConfig<*, *>,
   logger: Logger,
@@ -46,8 +48,8 @@ fun getTracegenChecker(
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val lts = ConeOfInfluenceMode.NO_COI.getLts(xcfa, ignoredVarRegistry, POR.NOPOR)
-
+  val (coi, lts) =
+    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry)
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       tracegenConfig.abstractorConfig.abstractionSolver,
@@ -75,9 +77,10 @@ fun getTracegenChecker(
       StopCriterions.fullExploration(),
       logger,
       lts,
-      config.inputConfig.property,
+      config.inputConfig.property.verifiedProperty,
       corePartialOrd,
       tracegenConfig.abstractorConfig.havocMemory,
+      coi,
     ) as BasicArgAbstractor<ExprState, ExprAction, Prec>
 
   val tracegenChecker = CegarTraceGenerationChecker.create(logger, abstractor, false)

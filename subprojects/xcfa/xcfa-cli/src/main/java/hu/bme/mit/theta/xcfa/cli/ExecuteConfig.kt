@@ -60,14 +60,13 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPassesManager
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
@@ -720,14 +719,15 @@ private fun postTraceGenerationLogging(
         val inputfile =
           config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!
         val property = ErrorDetection.ERROR_LOCATION
-        val ltlProperty = ErrorDetection.ERROR_LOCATION.ltl(Unit)!!
+        val ltlViolationProperty = ErrorDetection.ERROR_LOCATION.ltl.toString()
         val architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
         val witnessWriter = YamlWitnessWriter()
         witnessWriter.tracegenWitnessFromConcreteTrace(
           concrTrace,
-          witnessWriter.getMetadata(inputfile, ltlProperty, architecture),
+          witnessWriter.getMetadata(inputfile, ltlViolationProperty, architecture),
           inputfile,
           property,
+          ltlViolationProperty,
           parseContext!!,
           yamlWitnessFile,
         )
