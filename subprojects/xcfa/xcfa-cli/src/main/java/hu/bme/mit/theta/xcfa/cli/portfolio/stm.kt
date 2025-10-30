@@ -173,6 +173,6 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
 
 // fun XcfaConfig<*, CegarConfig>.visualize(inProcess: Boolean): String =
 //    """solvers: $abstractionSolver, $refinementSolver
-//    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
+//    |domain: $domain, search: $search, initprec: $initPrec, por: $por
 //    |refinement: $refinement, pruneStrategy: $pruneStrategy
 //    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()

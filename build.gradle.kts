@@ -20,6 +20,13 @@ plugins {
     id("io.freefair.aggregate-javadoc") version "5.2"
     id("io.codearte.nexus-staging") version "0.30.0" apply true
     id("org.sonarqube") version "4.2.1.3168"
+    id("javasmt-common")
+}
+
+subprojects {
+    tasks.matching { it.name == "test" }.configureEach {
+        dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
+    }
 }
 
 buildscript {
@@ -29,7 +36,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "6.19.1"
+    version = "6.22.0"
 
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))

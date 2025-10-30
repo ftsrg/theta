@@ -17,8 +17,8 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.xcfa.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
 /** Transforms havocs into uninit vars whenever possible. */
 class HavocToUninitVar : ProcedurePass {

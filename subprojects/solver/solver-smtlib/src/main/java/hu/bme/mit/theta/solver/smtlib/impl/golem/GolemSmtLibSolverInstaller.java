@@ -41,8 +41,12 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
         versions = new ArrayList<>();
         versions.add(
-                SemVer.VersionDecoder.create(SemVer.of("0.5.0"))
+                SemVer.VersionDecoder.create(SemVer.of("0.8.1"))
                         .addString(LINUX, X64, "x64-linux.tar.bz2")
+                        .build());
+        versions.add(
+                SemVer.VersionDecoder.create(SemVer.of("0.5.0"))
+                        .addString(LINUX, X64, "0.5.0-x64-linux.tar.bz2")
                         .build());
     }
 
@@ -73,8 +77,8 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         final var downloadUrl =
                 URI.create(
                         String.format(
-                                "https://github.com/usi-verification-and-security/golem/releases/download/v%s/golem-%s-%s",
-                                version, version, archStr));
+                                "https://github.com/usi-verification-and-security/golem/releases/download/v%s/golem-%s",
+                                version, archStr));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
@@ -94,6 +98,9 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
+        if (SemVer.of(version).compareTo(SemVer.of("0.8.1")) >= 0) {
+            return new String[] {"--print-witness", "-portfolio"};
+        }
         return new String[] {"--print-witness"};
     }
 
@@ -106,12 +113,12 @@ public class GolemSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
-        return GolemSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return GolemSmtLibSolverFactory.create(solverFilePath, solverArgs, version.equals("0.5.0"));
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("0.5.0");
+        return Arrays.asList("0.5.0", "0.8.1");
     }
 
     private String getSolverBinaryName() {

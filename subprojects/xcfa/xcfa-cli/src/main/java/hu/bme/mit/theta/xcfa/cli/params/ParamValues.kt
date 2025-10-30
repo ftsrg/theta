@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+@file:Suppress("unused")
+
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.google.gson.reflect.TypeToken
@@ -45,15 +47,19 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
-import hu.bme.mit.theta.xcfa.collectAssumes
-import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.collectAssumes
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.lang.reflect.Type
 import java.util.function.Predicate
 
@@ -136,6 +142,7 @@ enum class Domain(
       errorDetectionType: ErrorDetection,
       partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
       isHavoc: Boolean,
+      coi: XcfaCoi?,
     ) -> ArgAbstractor<out ExprState, out ExprAction, out Prec>,
   val itpPrecRefiner:
     (exprSplitter: ExprSplitter) -> PrecRefiner<
@@ -176,9 +183,9 @@ enum class Domain(
         logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
-        ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j),
+        ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j, k),
         d,
         e,
         f,
@@ -222,7 +229,7 @@ enum class Domain(
         logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
@@ -230,6 +237,7 @@ enum class Domain(
           PredAbstractors.booleanAbstractor(b),
           i as PartialOrd<XcfaState<PtrState<PredState>>>,
           j,
+          k,
         ),
         d,
         e,
@@ -274,7 +282,7 @@ enum class Domain(
         logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
@@ -282,6 +290,7 @@ enum class Domain(
           PredAbstractors.cartesianAbstractor(b),
           i as PartialOrd<XcfaState<PtrState<PredState>>>,
           j,
+          k,
         ),
         d,
         e,
@@ -326,7 +335,7 @@ enum class Domain(
         logger,
       )
     },
-    abstractor = { a, b, c, d, e, f, g, h, i, j ->
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(
         PredXcfaAnalysis(
           a,
@@ -334,6 +343,7 @@ enum class Domain(
           PredAbstractors.booleanSplitAbstractor(b),
           i as PartialOrd<XcfaState<PtrState<PredState>>>,
           j,
+          k,
         ),
         d,
         e,
@@ -536,31 +546,45 @@ enum class InitPrec(
 
 enum class ConeOfInfluenceMode(
   val getLts:
-    (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>, POR) -> LTS<
-        XcfaState<out PtrState<out ExprState>>,
-        XcfaAction,
+    (XCFA, ParseContext, POR, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> Pair<
+        XcfaCoi?,
+        LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
       >
 ) {
 
-  NO_COI({ xcfa, ivr, por -> por.getLts(xcfa, ivr).also { NO_COI.porLts = it } }),
-  COI({ xcfa, ivr, por ->
-    ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
-    ConeOfInfluence.lts
+  NO_COI({ xcfa, _, por, ivr ->
+    val lts = por.getLts(xcfa, ivr).also { NO_COI.porLts = it }
+    null to lts
   }),
-  POR_COI({ xcfa, ivr, por ->
-    ConeOfInfluence.coreLts = getXcfaLts()
-    if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
-    else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
+  COI({ xcfa, pc, por, ivr ->
+    val coi = getCoi(xcfa, pc)
+    coi.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
+    coi to coi.lts
   }),
-  POR_COI_POR({ xcfa, ivr, por ->
-    ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
-    if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
-    else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
+  POR_COI({ xcfa, pc, por, ivr ->
+    val coi = getCoi(xcfa, pc)
+    coi.coreLts = getXcfaLts()
+    val lts =
+      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts)
+      else XcfaSporCoiLts(xcfa, coi.lts)
+    coi to lts
+  }),
+  POR_COI_POR({ xcfa, pc, por, ivr ->
+    val coi = getCoi(xcfa, pc)
+    coi.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
+    val lts =
+      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts)
+      else XcfaSporCoiLts(xcfa, coi.lts)
+    coi to lts
   });
 
   var porLts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>? = null
 }
 
+private fun getCoi(xcfa: XCFA, parseContext: ParseContext): XcfaCoi =
+  if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
+
+// TODO CexMonitor: disable for multi_seq
 // TODO add new monitor to xsts cli
 enum class CexMonitorOptions {
 

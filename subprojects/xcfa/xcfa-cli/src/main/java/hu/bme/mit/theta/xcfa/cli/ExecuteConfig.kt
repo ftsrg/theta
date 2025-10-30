@@ -45,10 +45,10 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
-import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
@@ -66,6 +66,8 @@ import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
@@ -86,8 +88,6 @@ fun runConfig(
   propagateInputOptions(config, logger, uniqueLogger)
 
   registerAllSolverManagers(config.backendConfig.solverHome, logger)
-
-  validateInputOptions(config, logger, uniqueLogger)
 
   val (xcfa, mcm, parseContext) =
     if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
@@ -110,23 +110,12 @@ fun runConfig(
         xcfa = xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
       }
 
-      config.inputConfig.witness?.also {
-        logger.writeln(INFO, "Applying witness $it")
-        if (!it.exists()) {
-          exitProcess(ExitCodes.INVALID_PARAM.code)
-        }
-        val witness =
-          WitnessYamlConfig.decodeFromString(
-              ListSerializer(YamlWitness.serializer()),
-              it.readText(),
-            )[0]
-        xcfa = xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
-      }
-
       preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       Triple(xcfa, mcm, parseContext)
     }
+
+  validateInputOptions(config, logger, uniqueLogger)
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
@@ -137,20 +126,26 @@ fun runConfig(
 
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
-  LbePass.level = config.frontendConfig.lbeLevel
-  StaticCoiPass.enabled = config.frontendConfig.staticCoi
+  LbePass.defaultLevel = config.frontendConfig.lbeLevel
+  StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
+  DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
+
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig
     cegarConfig as CegarConfig
-    val random = Random(cegarConfig.porRandomSeed)
+    val random = Random(cegarConfig.porSeed)
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
   if (
-    config.inputConfig.property == ErrorDetection.MEMSAFETY ||
-      config.inputConfig.property == ErrorDetection.MEMCLEANUP
+    config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
+      config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
   ) {
-    MemsafetyPass.NEED_CHECK = true
+    MemsafetyPass.enabled = true
+  }
+  if (config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE) {
+    StaticCoiPass.enabled = false
+    UnusedVarPass.keepGlobalVariableAccesses = true
   }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
@@ -164,17 +159,22 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 }
 
 private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+  rule("NoLbeFullWhenCegar") {
+    config.backendConfig.backend == Backend.CEGAR &&
+      (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL ||
+        config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_LOCAL_FULL)
+  }
   rule("NoCoiWhenDataRace") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
-      config.inputConfig.property == ErrorDetection.DATA_RACE
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
   rule("NoAaporWhenDataRace") {
-    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isAbstractionAware == true &&
-      config.inputConfig.property == ErrorDetection.DATA_RACE
+    (config.backendConfig.specConfig as? CegarConfig)?.por?.isAbstractionAware == true &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE
   }
   rule("DPORWithoutDFS") {
-    (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
+    (config.backendConfig.specConfig as? CegarConfig)?.por?.isDynamic == true &&
       (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
   }
   rule("SensibleLoopUnrollLimits") {
@@ -188,7 +188,7 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     config.backendConfig.backend == Backend.OC &&
       (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
         OcDecisionProcedureType.PROPAGATOR &&
-      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:4.13"
+      (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:new"
   }
 }
 
@@ -198,23 +198,13 @@ fun frontend(
   uniqueLogger: Logger,
 ): Triple<XCFA, MCM, ParseContext> {
   if (config.inputConfig.xcfaWCtx != null) {
-    val xcfa = config.inputConfig.xcfaWCtx!!.first
-    ConeOfInfluence =
-      if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
-        XcfaCoiMultiThread(xcfa)
-      } else {
-        XcfaCoiSingleThread(xcfa)
-      }
     return config.inputConfig.xcfaWCtx!!
   }
 
   val stopwatch = Stopwatch.createStarted()
 
   val input = config.inputConfig.input!!
-  logger.write(
-    Logger.Level.INFO,
-    "Parsing the input $input as ${config.frontendConfig.inputType}\n",
-  )
+  logger.writeln(INFO, "Parsing the input $input as ${config.frontendConfig.inputType}")
 
   val parseContext = ParseContext()
 
@@ -234,9 +224,6 @@ fun frontend(
       emptySet()
     }
 
-  ConeOfInfluence =
-    if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
-
   if (
     parseContext.multiThreading &&
       (config.backendConfig.specConfig as? CegarConfig)?.let {
@@ -248,17 +235,17 @@ fun frontend(
     uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
   }
 
-  logger.write(
-    Logger.Level.INFO,
+  logger.writeln(
+    INFO,
     "Frontend finished: ${xcfa.name}  (in ${
         stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n",
+    } ms)",
   )
 
-  logger.write(RESULT, "ParsingResult Success\n")
-  logger.write(
+  logger.writeln(RESULT, "ParsingResult Success")
+  logger.writeln(
     RESULT,
-    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n",
+    "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}",
   )
 
   return Triple(xcfa, mcm, parseContext)
@@ -279,20 +266,37 @@ private fun backend(
     SafetyResult.unknown<EmptyProof, EmptyCex>()
   } else {
     if (
-      xcfa?.procedures?.all {
-        it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION
-      } ?: false
+      config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
+        (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-      logger.write(Logger.Level.RESULT, "Input is trivially safe\n")
+      logger.writeln(RESULT, "Input is trivially safe")
 
-      logger.write(RESULT, result.toString() + "\n")
+      logger.writeln(RESULT, result.toString())
+      result
+    } else if (
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
+        xcfa != null &&
+        !isDataRacePossible(xcfa, logger)
+    ) {
+      val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+      logger.writeln(
+        RESULT,
+        "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses.",
+      )
+
+      logger.writeln(RESULT, result.toString())
       result
     } else {
       val stopwatch = Stopwatch.createStarted()
 
+      logger.writeln(
+        INFO,
+        "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
+      )
+
       logger.write(
-        Logger.Level.INFO,
+        INFO,
         "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}\n",
       )
 
@@ -306,7 +310,7 @@ private fun backend(
             when {
               result.isSafe && xcfa?.unsafeUnrollUsed ?: false -> {
                 // cannot report safe if force unroll was used
-                logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+                logger.writeln(RESULT, "Incomplete loop unroll used: safe result is unreliable.")
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
                 else SafetyResult.unknown<EmptyProof, EmptyCex>()
@@ -315,15 +319,51 @@ private fun backend(
               result.isUnsafe -> {
                 // need to determine what kind
                 val property =
-                  try {
-                    ErrorDetection.ltlFromTrace(
-                      config.inputConfig.property,
-                      result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
-                    )
-                  } catch (e: UnknownResultException) {
-                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  when (config.inputConfig.property.inputProperty) {
+                    ErrorDetection.MEMSAFETY,
+                    ErrorDetection.MEMCLEANUP -> {
+                      val trace = result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
+                      trace
+                        ?.states
+                        ?.asReversed()
+                        ?.firstOrNull {
+                          it.processes.values.any { it.locs.any { it.name.contains("__THETA_") } }
+                        }
+                        ?.processes
+                        ?.values
+                        ?.firstOrNull { it.locs.any { it.name.contains("__THETA_") } }
+                        ?.locs
+                        ?.firstOrNull { it.name.contains("__THETA_") }
+                        ?.name
+                        ?.let {
+                          when (it) {
+                            "__THETA_bad_free" -> "valid-free"
+                            "__THETA_bad_deref" -> "valid-deref"
+                            "__THETA_lost" ->
+                              if (
+                                config.inputConfig.property.inputProperty ==
+                                  ErrorDetection.MEMCLEANUP
+                              )
+                                "valid-memcleanup"
+                              else
+                                "valid-memtrack"
+                                  .also { // this is not an exact check.
+                                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                                  }
+                            else ->
+                              throw RuntimeException(
+                                "Something went wrong; could not determine subproperty! Named location: $it"
+                              )
+                          }
+                        }
+                    }
+                    ErrorDetection.DATA_RACE -> "no-data-race"
+                    ErrorDetection.ERROR_LOCATION -> "unreach-call"
+                    ErrorDetection.OVERFLOW -> "no-overflow"
+                    ErrorDetection.NO_ERROR -> null
+                    ErrorDetection.TERMINATION -> "termination"
                   }
-                property?.also { logger.write(RESULT, "(Property %s)\n", it) }
+                property?.also { logger.writeln(RESULT, "(Property %s)", it) }
                 result
               }
 
@@ -333,14 +373,14 @@ private fun backend(
             }
           }
 
-      logger.write(
+      logger.writeln(
         INFO,
         "Backend finished (in ${
                 stopwatch.elapsed(TimeUnit.MILLISECONDS)
-            } ms)\n",
+            } ms)",
       )
 
-      logger.write(RESULT, result.toString() + "\n")
+      logger.writeln(RESULT, result.toString())
       result
     }
   }
@@ -385,9 +425,9 @@ private fun preAnalysisLogging(
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
 
-      logger.write(
-        Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}\n",
+      logger.writeln(
+        INFO,
+        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath} with config ${config.outputConfig}",
       )
 
       if (!config.outputConfig.chcOutputConfig.disable) {
@@ -396,13 +436,13 @@ private fun preAnalysisLogging(
             val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
             chcFile.writeText(
               it.toSMT2CHC(
-                config.inputConfig.property == ErrorDetection.TERMINATION,
+                config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION,
                 (config.backendConfig.specConfig as? HornConfig)?.rankingFuncConstr
                   ?: RankingFunction.ADD,
               )
             )
           } catch (e: Exception) {
-            logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
+            logger.writeln(INFO, "Could not write CHC file: ${e.stackTraceToString()}")
           }
         }
       }
@@ -429,11 +469,11 @@ private fun preAnalysisLogging(
             )
           )
         } catch (e: Throwable) {
-          logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+          logger.writeln(VERBOSE, "Could not emit C file")
         }
       }
     } catch (e: Throwable) {
-      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+      logger.writeln(INFO, "Could not output files: ${e.stackTraceToString()}")
     }
   }
 }
@@ -513,9 +553,9 @@ private fun postVerificationLogging(
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
 
-      logger.write(
-        Logger.Level.INFO,
-        "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n",
+      logger.writeln(
+        INFO,
+        "Writing post-verification artifacts to directory ${resultFolder.absolutePath}",
       )
 
       // TODO eliminate the need for the instanceof check
@@ -585,13 +625,6 @@ private fun postVerificationLogging(
             (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
           }
         }
-        val ltlViolationProperty =
-          if (safetyResult.isUnsafe) {
-            ErrorDetection.ltlFromTrace(
-              config.inputConfig.property,
-              safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>,
-            )!!
-          } else null
         val witnessFile = File(resultFolder, "witness.graphml")
         GraphmlWitnessWriter()
           .writeWitness(
@@ -604,7 +637,6 @@ private fun postVerificationLogging(
             parseContext,
             witnessFile,
             config.inputConfig.property,
-            ltlViolationProperty,
           )
         val yamlWitnessFile = File(resultFolder, "witness.yml")
         YamlWitnessWriter()
@@ -612,7 +644,6 @@ private fun postVerificationLogging(
             safetyResult,
             config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
             config.inputConfig.property,
-            ltlViolationProperty,
             (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
             getSolver(
               config.outputConfig.witnessConfig.concretizerSolver,
@@ -623,7 +654,7 @@ private fun postVerificationLogging(
           )
       }
     } catch (e: Throwable) {
-      logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
+      logger.writeln(INFO, "Could not output files: ${e.stackTraceToString()}")
     }
   }
 }

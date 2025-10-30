@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
@@ -149,7 +150,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
 
         val.put(decl, litExpr);
-        final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, val);
+        Expr<BoolType> simplifiedExpr;
+        try {
+            simplifiedExpr = ExprUtils.simplify(expr, val);
+        } catch (ArithmeticException e) {
+            // This is needed for division by zero cases
+            simplifiedExpr = False();
+        }
 
         final MddNode childNode;
         if (mddVariable.getLower().isPresent()) {

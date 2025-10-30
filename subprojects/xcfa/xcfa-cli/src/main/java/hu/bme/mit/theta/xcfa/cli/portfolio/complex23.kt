@@ -22,7 +22,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -66,8 +66,8 @@ fun complexPortfolio23(
           specConfig =
             CegarConfig(
               initPrec = InitPrec.EMPTY,
-              porLevel = POR.NOPOR,
-              porRandomSeed = -1,
+              por = POR.NOPOR,
+              porSeed = -1,
               coi = ConeOfInfluenceMode.NO_COI,
               cexMonitor = CexMonitorOptions.CHECK,
               abstractorConfig =
@@ -109,8 +109,9 @@ fun complexPortfolio23(
     val multiThreadedCegarConfig =
       baseCegarConfig.copy(
         coi = ConeOfInfluenceMode.COI,
-        porLevel =
-          if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+        por =
+          if (baseConfig.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE) POR.SPOR
+          else POR.AASPOR,
         abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
         refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY),
       )

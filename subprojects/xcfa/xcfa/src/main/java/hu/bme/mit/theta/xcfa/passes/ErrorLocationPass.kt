@@ -16,13 +16,17 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Transforms all procedure calls to designated error procedures into edges to error locations.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class ErrorLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
+class ErrorLocationPass(property: XcfaProperty) : ProcedurePass {
+
+  private val checkOverflow: Boolean = property.inputProperty == ErrorDetection.OVERFLOW
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])

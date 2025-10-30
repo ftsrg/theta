@@ -62,7 +62,7 @@ fun baseCegarConfig(
       frontendConfig =
         if (serialize)
           FrontendConfig(
-            lbeLevel = LbePass.level,
+            lbeLevel = LbePass.defaultLevel,
             loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = efficient),
@@ -77,8 +77,8 @@ fun baseCegarConfig(
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
-              porLevel = NOPOR,
-              porRandomSeed = -1,
+              por = NOPOR,
+              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =
@@ -148,6 +148,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   inProcess: Boolean = this.backendConfig.inProcess,
+  coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
     backendConfig =
@@ -157,6 +158,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
         specConfig =
           backendConfig.specConfig!!.copy(
             initPrec = initPrec,
+            coi = coi,
             abstractorConfig =
               backendConfig.specConfig!!
                 .abstractorConfig
@@ -199,7 +201,7 @@ fun baseAsgCegarConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -336,7 +338,7 @@ fun baseBoundedConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
@@ -399,7 +401,7 @@ fun baseMddConfig(
     frontendConfig =
       if (serialize)
         FrontendConfig(
-          lbeLevel = LbePass.level,
+          lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),

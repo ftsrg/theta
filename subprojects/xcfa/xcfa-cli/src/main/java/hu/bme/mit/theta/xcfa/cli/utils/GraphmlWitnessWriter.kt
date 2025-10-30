@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -43,18 +43,8 @@ class GraphmlWitnessWriter {
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
-    property: ErrorDetection,
-    ltlViolationProperty: String?,
+    property: XcfaProperty,
   ) {
-    var ltlSpecification =
-      if (safetyResult.isSafe) {
-        check(ltlViolationProperty == null)
-        property.name
-      } else {
-        check(ltlViolationProperty != null)
-        ltlViolationProperty
-      }
-
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
       val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
@@ -121,7 +111,9 @@ class GraphmlWitnessWriter {
         .append(System.lineSeparator())
         .append("<data key=\"producer\">theta</data>")
         .append(System.lineSeparator())
-        .append("<data key=\"specification\">$ltlSpecification</data>")
+        .append(
+          "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>"
+        )
         .append(System.lineSeparator())
         .append("<data key=\"sourcecodelang\">C</data>")
         .append(System.lineSeparator())

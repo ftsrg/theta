@@ -17,7 +17,9 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.c2xcfa.CMetaDataKt.getCMetaData;
-import static hu.bme.mit.theta.xcfa.UtilsKt.*;
+import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.collectVarsWithAccessType;
+import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.isWritten;
+import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabels;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;

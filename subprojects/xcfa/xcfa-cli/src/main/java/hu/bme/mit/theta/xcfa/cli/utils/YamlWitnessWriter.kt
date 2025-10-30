@@ -37,7 +37,8 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.*
@@ -55,25 +56,38 @@ class YamlWitnessWriter {
   fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
-    property: ErrorDetection,
-    ltlViolationProperty: String?,
+    property: XcfaProperty,
     architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    var ltlSpecification =
-      if (safetyResult.isSafe) {
-        check(ltlViolationProperty == null)
-        property.name
-      } else {
-        check(ltlViolationProperty != null)
-        ltlViolationProperty
-      }
-    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val metadata =
+      Metadata(
+        formatVersion = "2.1",
+        uuid = UUID.randomUUID().toString(),
+        creationTime = getIsoDate(),
+        producer =
+          Producer(
+            name = (System.getenv("VERIFIER_NAME") ?: "").ifEmpty { "Theta" },
+            version = (System.getenv("VERIFIER_VERSION") ?: "").ifEmpty { "no version found" },
+          ),
+        task =
+          Task(
+            inputFiles = listOf(inputFile.name),
+            inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
+            specification = property.inputProperty.name,
+            dataModel =
+              architecture?.let {
+                if (it == ArchitectureConfig.ArchitectureType.ILP32) DataModel.ILP32
+                else DataModel.LP64
+              } ?: DataModel.ILP32,
+            language = Language.C,
+          ),
+      )
 
-    if (safetyResult.isUnsafe) {
-      val trace =
+    val trace =
+      if (safetyResult.isUnsafe)
         safetyResult.asUnsafe().cex.let {
           if (it is HackyAsgTrace<*>) {
             val actions = (it as HackyAsgTrace<*>).trace.actions
@@ -91,23 +105,24 @@ class YamlWitnessWriter {
             it
           }
         }
-      if (trace is Trace<*, *>) {
-        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-          XcfaTraceConcretizer.concretize(
-            trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-            cexSolverFactory,
-            parseContext,
-          )
+      else null
 
-        violationWitnessFromConcreteTrace(
-          concrTrace,
-          metadata,
-          inputFile,
-          property,
+    if (safetyResult.isUnsafe && trace is Trace<*, *>) {
+      val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+        XcfaTraceConcretizer.concretize(
+          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+          cexSolverFactory,
           parseContext,
-          witnessfile,
         )
-      }
+
+      violationWitnessFromConcreteTrace(
+        concrTrace,
+        metadata,
+        inputFile,
+        property,
+        parseContext,
+        witnessfile,
+      )
     } else if (safetyResult.isSafe) {
 
       val witness =
@@ -156,11 +171,11 @@ class YamlWitnessWriter {
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
-    property: ErrorDetection,
+    property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
-    check(property == ErrorDetection.ERROR_LOCATION)
+    check(property.inputProperty == ErrorDetection.ERROR_LOCATION)
     val witnessTrace =
       traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
 
@@ -205,12 +220,12 @@ class YamlWitnessWriter {
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
-    property: ErrorDetection,
+    property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
   ) {
     val witness =
-      if (property == ErrorDetection.TERMINATION) {
+      if (property.inputProperty == ErrorDetection.TERMINATION) {
         // last state is cycle_head, find its earliest occurrence
         // stem is everything beforehand
         // cycle's segments are everything in-between

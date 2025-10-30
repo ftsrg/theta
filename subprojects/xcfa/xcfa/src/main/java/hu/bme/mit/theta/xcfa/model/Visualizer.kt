@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
-import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 typealias LabelCustomizer = (XcfaEdge) -> String
 

@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;
 import hu.bme.mit.delta.java.mdd.MddGraph;
@@ -23,7 +28,9 @@ import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.identitynode.IdentityRepresentation;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.model.BasicExprSubstitution;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.ExprSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -127,15 +134,46 @@ public class MddExpressionTemplate implements MddNode.Template {
         if (transExpr
                 && decl instanceof IndexedConstDecl<?> constDecl
                 && constDecl.getIndex() == 0) {
-            final Substitution sub =
+
+            // Distinction between under- and overapproximation is needed because of formulas like
+            // x' = x or x' = 4, where simplify can overapproximate
+
+            // First underapproximate by replacing x' = x with false (and also x = x')
+            final var nextDecl = extractDecl.apply(mddVariable.getLower().get().getTraceInfo());
+            final ExprSubstitution underApproxSub =
+                    new BasicExprSubstitution.Builder()
+                            .put(Eq(nextDecl.getRef(), decl.getRef()), False())
+                            .put(Eq(decl.getRef(), nextDecl.getRef()), False())
+                            .build();
+            final Expr<BoolType> underapproxExpr = underApproxSub.apply(expr);
+
+            // Then overapproximate by replacing x' with x everywhere
+            final Substitution overApproxSub =
                     BasicSubstitution.builder()
                             .put(
                                     extractDecl.apply(mddVariable.getLower().get().getTraceInfo()),
                                     decl.getRef())
                             .build();
-            final Expr<BoolType> identityContinuationExpr =
-                    ExprUtils.simplify(sub.apply(canonizedExpr));
-            if (!ExprUtils.getConstants(identityContinuationExpr).contains(decl)) {
+            final Expr<BoolType> overApproxExpr =
+                    ExprUtils.simplify(overApproxSub.apply(canonizedExpr));
+
+            boolean identityNeeded = false;
+
+            if (!ExprUtils.getConstants(overApproxExpr).contains(decl)) {
+                // If over and under mismatch then use solver to decide
+                final var underConstants = ExprUtils.getConstants(underapproxExpr);
+                if (underConstants.contains(decl) || underConstants.contains(nextDecl)) {
+                    // Check if expr and not(x' = x) is sat
+                    final var andExpr = And(expr, Neq(decl.getRef(), nextDecl.getRef()));
+                    if (!isSat(andExpr, solverPool)) {
+                        identityNeeded = true;
+                    }
+                } else {
+                    identityNeeded = true;
+                }
+            }
+
+            if (identityNeeded) {
                 final MddNode cont;
                 if (mddVariable.getLower().isPresent()
                         && mddVariable.getLower().get().getLower().isPresent()) {
@@ -147,13 +185,13 @@ public class MddExpressionTemplate implements MddNode.Template {
                                     .get()
                                     .checkInNode(
                                             new MddExpressionTemplate(
-                                                    identityContinuationExpr,
+                                                    overApproxExpr,
                                                     extractDecl,
                                                     solverPool,
                                                     transExpr));
                 } else {
                     final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                    cont = mddGraph.getNodeFor(identityContinuationExpr);
+                    cont = mddGraph.getNodeFor(overApproxExpr);
                 }
                 return new IdentityRepresentation(cont);
             }

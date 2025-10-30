@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMonolithicAdapter
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.pred.PredState
@@ -32,6 +33,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -54,13 +56,15 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
-import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
+import kotlin.jvm.optionals.getOrNull
 import org.kframework.mpfr.BigFloat
 
 private val LitExpr<*>.value: Int
@@ -126,7 +130,17 @@ class XcfaToMonolithicAdapter(
             )
           )
         }
-        .toList()
+        .toList() +
+        (proc.errorLoc.getOrNull()?.let { errorLoc ->
+          listOf(
+            SequenceStmt.of(
+              listOf(
+                AssumeStmt.of(Eq(locVar.ref, smtAwareInteger(locationMap[errorLoc]!!))),
+                AssignStmt.of(locVar, cast(smtAwareInteger(locationMap[errorLoc]!!), locVar.type)),
+              )
+            )
+          )
+        } ?: emptyList<Stmt>())
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
@@ -179,6 +193,21 @@ class XcfaToMonolithicAdapter(
           edgeVar +
           locVar,
       ctrlVars = listOf(locVar, edgeVar),
+      events =
+        xcfa.procedures
+          .flatMap {
+            it.edges.flatMap { xcfaEdge ->
+              xcfaEdge.getFlatLabels().map { label -> label.toStmt() }
+            }
+          }
+          .toSet()
+          .map {
+            object : Event<VarDecl<*>> {
+              override fun getAffectedVars(): List<VarDecl<*>> =
+                StmtUtils.getWrittenVars(it).toList()
+            }
+          }
+          .toList(),
     )
   }
 

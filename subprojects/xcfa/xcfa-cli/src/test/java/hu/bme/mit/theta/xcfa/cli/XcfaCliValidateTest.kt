@@ -73,7 +73,7 @@ class XcfaCliValidateTest {
     @JvmStatic
     fun cFiles(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
@@ -87,8 +87,8 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/16loop.c", null),
         Arguments.of("/c/litmustest/singlethread/17recursive.c", null),
-        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por-level SPOR"),
-        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por SPOR"),
+        Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
@@ -127,7 +127,7 @@ class XcfaCliValidateTest {
     @JvmStatic
     fun cFilesShort(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
+        Arguments.of("/c/dekker.i", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/01cast.c", null),
         Arguments.of("/c/litmustest/singlethread/02types.c", null),

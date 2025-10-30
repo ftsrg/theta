@@ -28,8 +28,10 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
-import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -59,6 +61,7 @@ class PassTests {
     private val parseContext = ParseContext()
     private val fpParseContext =
       ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
+    private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
     @JvmStatic
     val data: List<Arguments> =
@@ -89,7 +92,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_SEQ },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_SEQ),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -109,7 +112,7 @@ class PassTests {
               NormalizePass(),
               DeterministicPass(),
               EliminateSelfLoops(),
-              LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_FULL },
+              LbePass(parseContext, LbePass.LbeLevel.LBE_FULL),
             ),
           input = {
             (init to "L1") { assume("1 == 1") }
@@ -143,8 +146,8 @@ class PassTests {
         ),
         PassTestData(
           global = {},
-          passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(false)),
-          input = { (init to final) { "reach_error".invoke() } },
+          passes = listOf(NormalizePass(), DeterministicPass(), ErrorLocationPass(property)),
+          input = { (init to final) { "reach_error"() } },
           output = { (init to err) { skip() } },
         ),
         PassTestData(
@@ -153,13 +156,13 @@ class PassTests {
             listOf(
               NormalizePass(),
               DeterministicPass(),
-              FinalLocationPass(false),
+              FinalLocationPass(property),
               UnusedLocRemovalPass(),
             ),
           input = {
-            (init to "L1") { "abort".invoke() }
+            (init to "L1") { "abort"() }
             (init to "L1") { skip() }
-            ("L1" to "L2") { "exit".invoke() }
+            ("L1" to "L2") { "exit"() }
           },
           output = {
             (init to final) { assume("false") }
@@ -209,16 +212,16 @@ class PassTests {
           passes =
             listOf(NormalizePass(), DeterministicPass(), FpFunctionsToExprsPass(fpParseContext)),
           input = {
-            (init to final) { "fabs".invoke("x", "x") }
-            (init to final) { "floor".invoke("x", "x") }
-            (init to final) { "fmax".invoke("x", "x", "x") }
-            (init to final) { "fmin".invoke("x", "x", "x") }
-            (init to final) { "sqrt".invoke("x", "x") }
-            (init to final) { "round".invoke("x", "x") }
-            (init to final) { "trunc".invoke("x", "x") }
-            (init to final) { "ceil".invoke("x", "x") }
-            (init to final) { "isinf".invoke("y", "x") }
-            (init to final) { "isfinite".invoke("y", "x") }
+            (init to final) { "fabs"("x", "x") }
+            (init to final) { "floor"("x", "x") }
+            (init to final) { "fmax"("x", "x", "x") }
+            (init to final) { "fmin"("x", "x", "x") }
+            (init to final) { "sqrt"("x", "x") }
+            (init to final) { "round"("x", "x") }
+            (init to final) { "trunc"("x", "x") }
+            (init to final) { "ceil"("x", "x") }
+            (init to final) { "isinf"("y", "x") }
+            (init to final) { "isfinite"("y", "x") }
           },
           output = {
             (init to final) { "x".assign("(fpabs x)") }
@@ -309,26 +312,41 @@ class PassTests {
         PassTestData(
           global = {
             "x" type Int() init "0"
+            "y" type Int() init "0"
+            "ret" type Int() init "0"
+            "pid" type Int() init "0"
             "thr1" type Int() init "0"
           },
           passes = listOf(NormalizePass(), DeterministicPass(), CLibraryFunctionsPass()),
           input = {
-            (init to "L1") { "pthread_create"("x", "x", "0", "thr1", "0") }
-            (init to "L2") { "pthread_join"("x", "x") }
+            (init to "L1") { "pthread_create"("ret", "pid", "0", "thr1", "0") }
+            (init to "L2") { "pthread_join"("ret", "pid") }
             (init to "L3") { "pthread_mutex_lock"("0", "x") }
             (init to "L4") { "pthread_mutex_unlock"("0", "x") }
+            (init to "L5") { "printf"("ret", "x = %d, y = %d\n", "x", "y") }
+            (init to "L6") { "scanf"("ret", "x = %d, y = %d\n", "(ref x Int)", "(ref y Int)") }
           },
           output = {
             (init to "L1") {
-              "x".start("thr1", "0", "0")
-              "x".assign("0")
+              "pid".start("thr1", "0", "0")
+              "ret".assign("0")
             }
             (init to "L2") {
-              "x".join()
-              "x".assign("0")
+              "pid".join()
+              "ret".assign("0")
             }
-            (init to "L3") { fence("mutex_lock(x)") }
-            (init to "L4") { fence("mutex_unlock(x)") }
+            (init to "L3") { mutex_lock("x") }
+            (init to "L4") { mutex_unlock("x") }
+            val printfArg1 = "__printf_arg_0_0" type Int()
+            val printfArg2 = "__printf_arg_0_1" type Int()
+            (init to "L5") {
+              printfArg1.assign("x")
+              printfArg2.assign("y")
+            }
+            (init to "L6") {
+              havoc("x")
+              havoc("y")
+            }
           },
         ),
         PassTestData(
@@ -339,8 +357,159 @@ class PassTests {
             (init to "L2") { "__VERIFIER_atomic_end"("0") }
           },
           output = {
-            (init to "L1") { fence("ATOMIC_BEGIN") }
-            (init to "L2") { fence("ATOMIC_END") }
+            (init to "L1") { atomic_begin() }
+            (init to "L2") { atomic_end() }
+          },
+        ),
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(RemoveUnnecessaryAtomicBlocksPass()),
+          input = {
+            (init to "L1") { atomic_begin() }
+            (init to "L2") { atomic_end() }
+            (init to "L3") {
+              atomic_begin()
+              atomic_end()
+            }
+            (init to "L4") {
+              atomic_begin()
+              "x".assign("y")
+              atomic_end()
+              atomic_begin()
+              "y".assign("x")
+              atomic_end()
+            }
+            (init to "L5") {
+              "x".assign("y")
+              atomic_begin()
+              nondet {
+                havoc("x")
+                havoc("y")
+              }
+              atomic_end()
+            }
+          },
+          output = {
+            (init to "L1") { atomic_begin() }
+            (init to "L2") { atomic_end() }
+            (init to "L3") { skip() }
+            (init to "L4") {
+              "x".assign("y")
+              "y".assign("x")
+            }
+            (init to "L5") {
+              "x".assign("y")
+              nondet {
+                havoc("x")
+                havoc("y")
+              }
+            }
+          },
+        ),
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(AtomicReadsOneWritePass(), NormalizePass(), DeterministicPass()),
+          input = {
+            val a = "a" type Int()
+            val b = "b" type Int()
+            (init to "L1") {
+              a.assign("x")
+              b.assign("x")
+              "x".assign("y")
+              "y".assign("a")
+            }
+            (init to "L2") {
+              "x".assign("y")
+              a.assign("x")
+            }
+          },
+          output = {
+            val a = "a" type Int()
+            val b = "b" type Int()
+            val xLocal = "x_l1" type Int()
+
+            (init to "L1") {
+              a.assign("x")
+              b.assign("x")
+              "x".assign("y")
+              "y".assign("a")
+            }
+            (init to "L2") {
+              xLocal.assign("x")
+              xLocal.assign("y")
+              a.assign(xLocal.ref)
+              "x".assign(xLocal.ref)
+            }
+          },
+        ),
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(AtomicReadsOneWritePass(), NormalizePass(), DeterministicPass()),
+          input = {
+            val a = "a" type Int()
+            val b = "b" type Int()
+            (init to "L3") {
+              a.assign("x")
+              "y".assign(a.ref)
+              "x".assign("y")
+              b.assign("x")
+            }
+          },
+          output = {
+            val a = "a" type Int()
+            val b = "b" type Int()
+            val xLocal = "x_l1" type Int()
+            val yLocal = "y_l1" type Int()
+
+            (init to "L3") {
+              xLocal.assign("x")
+              yLocal.assign("y")
+              a.assign(xLocal.ref)
+              yLocal.assign(a.ref)
+              xLocal.assign(yLocal.ref)
+              b.assign(xLocal.ref)
+              "x".assign(xLocal.ref)
+              "y".assign(yLocal.ref)
+            }
+          },
+        ),
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(AtomicReadsOneWritePass(), NormalizePass(), DeterministicPass()),
+          input = {
+            (init to "L4") {
+              atomic_begin()
+              "x".assign("y")
+            }
+            ("L4" to "L5") {
+              "y".assign("x")
+              atomic_end()
+            }
+          },
+          output = {
+            val xLocal = "x_l1" type Int()
+            (init to "L4") {
+              atomic_begin()
+              xLocal.assign("x")
+              xLocal.assign("y")
+            }
+            ("L4" to "L5") {
+              "y".assign(xLocal.ref)
+              "x".assign(xLocal.ref)
+              atomic_end()
+            }
           },
         ),
         PassTestData(
@@ -380,10 +549,23 @@ class PassTests {
       passes.fold(input) { acc, procedurePass -> procedurePass.run(acc) }.build(dummyXcfa)
     if (output != null) {
       val expectedOutput = output.build(dummyXcfa)
-      println("Expecting output:\t$expectedOutput\n   Actual output:\t$actualOutput")
-      assertEquals(expectedOutput, actualOutput)
+      val varLookUp =
+        actualOutput.vars
+          .mapNotNull { v ->
+            expectedOutput.vars.find { it.name == v.name && it.type == v.type }?.let { Pair(v, it) }
+          }
+          .toMap()
+      val actualOutputReplacedVars =
+        actualOutput.copy(
+          params = actualOutput.params.map { it.first.changeVars(varLookUp) to it.second },
+          vars = actualOutput.vars.map { it.changeVars(varLookUp) }.toSet(),
+          edges = actualOutput.edges.map { it.withLabel(it.label.changeVars(varLookUp)) }.toSet(),
+        )
+      println("Expecting output:\t$expectedOutput\n   Actual output:\t$actualOutputReplacedVars")
+      assertEquals(expectedOutput, actualOutputReplacedVars)
+    } else {
+      println("   Actual output:\t$actualOutput")
     }
-    println("   Actual output:\t$actualOutput")
     println("=============PASS=============\n")
   }
 
@@ -424,35 +606,37 @@ class PassTests {
 
   @Test
   fun testCPipeline() {
+    val passes = CPasses(property, parseContext, NullLogger.getInstance())
     val xcfaSource =
       xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
-          (init to final) { "proc1"() }
-        }
-        procedure("proc1") { (init to final) { assume("1 == 1") } }
+        procedure("main", passes) { (init to final) { "proc1"() } }.start()
+        procedure("proc1", passes) { (init to final) { assume("1 == 1") } }
       }
 
+    // Test inline
     assertTrue(
       xcfaSource.procedures
         .first { it.name == "main" }
         .edges
         .none { it.getFlatLabels().any { it is InvokeLabel } }
     )
+
+    // Test inlined procedure removal (not init, not invoked, not started)
+    assertTrue(xcfaSource.procedures.none { it.name == "proc1" })
   }
 
   @Test
   fun testSplit() {
     lateinit var edge: XcfaEdge
-    val xcfaSource =
-      xcfa("example") {
-        procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
-          edge = (init to final) {
-            assume("1 == 1")
-            "proc1"()
-            assume("1 == 1")
-          }
+    xcfa("example") {
+      procedure("main", CPasses(property, parseContext, NullLogger.getInstance())) {
+        edge = (init to final) {
+          assume("1 == 1")
+          "proc1"()
+          assume("1 == 1")
         }
       }
+    }
 
     val newEdges = edge.splitIf { it is InvokeLabel }
     assertTrue(newEdges.size == 3)
