@@ -117,7 +117,7 @@ class XcfaToMonolithicAdapter(
     val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
     locVar = Decls.Var("__loc_", intType)
     val edgeVar = Decls.Var("__edge_", intType)
-    val tranList =
+    val tranList: MutableList<Stmt> =
       proc.edges
         .map { edge: XcfaEdge ->
           val (source, target, label) = edge
@@ -130,7 +130,9 @@ class XcfaToMonolithicAdapter(
             )
           )
         }
-        .toList() +
+        .toMutableList()
+    if (property != ErrorDetection.TERMINATION) {
+      tranList.addAll(
         (proc.errorLoc.getOrNull()?.let { errorLoc ->
           listOf(
             SequenceStmt.of(
@@ -141,6 +143,9 @@ class XcfaToMonolithicAdapter(
             )
           )
         } ?: emptyList<Stmt>())
+      )
+    }
+
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
 
