@@ -150,9 +150,8 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
   }
 
   /**
-   * Removes locations whose incoming degree is 1. A new edge is created for every outgoing edge of
-   * the location combined with the labels of the incoming edge as a sequence (the labels of the
-   * incoming edge will be the first in the sequence).
+   * Removes locations whose outgoing degree is 1. A new edge is created for every incoming edge of
+   * the location combined with the labels of the outgoing edge as a sequence.
    *
    * @param locationsToVisit The starting list of locations to check.
    * @param strict If true, cascade collapsing is limited to locations in locationsToVisit.

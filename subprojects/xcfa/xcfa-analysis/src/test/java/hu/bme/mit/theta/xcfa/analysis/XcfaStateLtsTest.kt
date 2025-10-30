@@ -67,7 +67,7 @@ class XcfaStateLtsTest {
             0,
             XcfaProcessState(
               locs = LinkedList(listOf(edges[1].source)),
-              varLookup = LinkedList(listOf(createLookup(xcfa.initProcedures[0].first, "T0", "P0"))),
+              varLookup = LinkedList(listOf(xcfa.initProcedures[0].first.createLookup("T0", "P0"))),
             ),
           )
         ),

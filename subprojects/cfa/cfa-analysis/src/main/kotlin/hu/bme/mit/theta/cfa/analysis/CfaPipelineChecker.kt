@@ -42,7 +42,6 @@ constructor(
   logger: Logger = NullLogger.getInstance(),
 ) :
   FormalismPipelineChecker<CFA, CfaState<ExplState>, CfaAction, Pr, InvariantProof>(
-    cfa,
-    CfaToMonolithicAdapter(),
+    CfaToMonolithicAdapter(cfa),
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
   )
