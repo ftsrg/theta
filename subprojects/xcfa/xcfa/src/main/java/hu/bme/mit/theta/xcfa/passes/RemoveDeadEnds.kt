@@ -20,11 +20,12 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.stream.Collectors
 
-class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
+class RemoveDeadEnds(val parseContext: ParseContext, val isTermination: Boolean) : ProcedurePass {
 
   // TODO: thread start and procedure call should not be dead-end! Use-case: while(1)
   // pthread_create(..);
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (isTermination) return builder
     if (parseContext.multiThreading) return builder
     val nonDeadEndEdges: MutableSet<XcfaEdge> = LinkedHashSet()
     val reachableEdges: MutableSet<XcfaEdge> = LinkedHashSet()

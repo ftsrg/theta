@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
@@ -66,7 +67,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext),
       UnusedLocRemovalPass(),
-      RemoveDeadEnds(parseContext),
+      RemoveDeadEnds(parseContext, property.verifiedProperty == ErrorDetection.TERMINATION),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
@@ -145,7 +146,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     listOf(
       // trying to inline procedures
       //      InlineProceduresPass(parseContext),
-      RemoveDeadEnds(parseContext),
+      RemoveDeadEnds(parseContext, false),
       //      EliminateSelfLoops(),
       // handling remaining function calls
       //      LbePass(parseContext),
