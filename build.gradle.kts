@@ -20,6 +20,13 @@ plugins {
     id("io.freefair.aggregate-javadoc") version "5.2"
     id("io.codearte.nexus-staging") version "0.30.0" apply true
     id("org.sonarqube") version "4.2.1.3168"
+    id("javasmt-common")
+}
+
+subprojects {
+    tasks.matching { it.name == "test" }.configureEach {
+        dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
+    }
 }
 
 buildscript {

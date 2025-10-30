@@ -28,7 +28,6 @@ import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTab
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer.getSymbol;
 
 import com.google.common.collect.Lists;
-import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -140,7 +139,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
         while (!proofStack.isEmpty()) {
             final var proofNodeExpr = proofStack.pop();
             if (!visited.containsKey(lookup.getOrDefault(proofNodeExpr, -1))) {
-                throw new Z3Exception("Node should exist in the graph nodes");
+                throw new SmtLibSolverException("Node should exist in the graph nodes");
             }
             final var proofNode = visited.get(lookup.get(proofNodeExpr));
 
