@@ -379,16 +379,16 @@ enum class Domain(
       statePredicate,
       transitionPredicate ->
       ASGAbstractor(
-        ExplXcfaAnalysis(
+        ExplPredCombinedXcfaAnalysis(
           xcfa,
           solver,
-          maxEnum,
-          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          getExplPredSplitXcfaTransFunc(Prod2ExplPredAbstractors.booleanAbstractor(solver), false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           false,
         ),
         lts,
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
-          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
         search,
         logger,
       )
@@ -440,16 +440,16 @@ enum class Domain(
       statePredicate,
       transitionPredicate ->
       ASGAbstractor(
-        ExplXcfaAnalysis(
+        ExplPredCombinedXcfaAnalysis(
           xcfa,
           solver,
-          maxEnum,
-          partialOrd as PartialOrd<XcfaState<PtrState<ExplState>>>,
+          getExplPredStmtXcfaTransFunc(solver, false),
+          partialOrd as PartialOrd<XcfaState<PtrState<Prod2State<ExplState, PredState>>>>,
           false,
         ),
         lts,
         AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
-          as AcceptancePredicate<XcfaState<PtrState<ExplState>>, XcfaAction>,
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>,
         search,
         logger,
       )
