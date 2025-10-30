@@ -250,7 +250,7 @@ class XcfaCliNonTerminationValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "BOUNDED",
+        "KIND",
         "--input-type",
         "C",
         "--input",
@@ -302,7 +302,7 @@ class XcfaCliNonTerminationValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "BOUNDED",
+        "IMC",
         "--input-type",
         "C",
         "--input",
@@ -470,7 +470,7 @@ class XcfaCliNonTerminationValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "BOUNDED",
+        "KIND",
         "--input-type",
         "C",
         "--input",
