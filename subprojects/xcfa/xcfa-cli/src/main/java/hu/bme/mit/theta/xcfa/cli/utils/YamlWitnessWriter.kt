@@ -44,16 +44,18 @@ import java.io.File
 import java.util.*
 import kotlinx.serialization.encodeToString
 
-class YamlWitnessWriter {
+class YamlWitnessWriter : XcfaWitnessWriter {
 
-  fun writeWitness(
+  override val extension: String = "yml"
+
+  override fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
-    architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
+    architecture: ArchitectureConfig.ArchitectureType?,
   ) {
     val metadata =
       Metadata(

@@ -60,17 +60,8 @@ class XcfaCli(private val args: Array<String>) {
         config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
       }
       if (svcomp) {
-        remainingFlags.addAll(
-          listOf(
-            "--enable-output",
-            "--disable-xcfa-serialization",
-            "--disable-arg-generation",
-            "--disable-chc-serialization",
-            "--disable-c-serialization",
-            "--only-svcomp-witness",
-          )
-        )
-        if (!remainingFlags.contains("--backend")) {
+        remainingFlags.addAll(listOf("--witness-generation", "SVCOMP"))
+        if ("--backend" !in remainingFlags) {
           remainingFlags.addAll(listOf("--backend", "PORTFOLIO"))
         }
       }

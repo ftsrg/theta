@@ -86,14 +86,16 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
             outputConfig =
               config.outputConfig.copy(
                 resultFolder = tempDir.toFile(),
-                cOutputConfig = COutputConfig(disable = true),
-                xcfaOutputConfig = XcfaOutputConfig(disable = true),
-                chcOutputConfig = ChcOutputConfig(disable = true),
+                cOutputConfig = COutputConfig(enabled = false),
+                xcfaOutputConfig = XcfaOutputConfig(enabled = false),
+                chcOutputConfig = ChcOutputConfig(enabled = false),
                 argConfig =
                   config.outputConfig.argConfig.copy(
-                    disable = false
+                    enabled = true
                   ), // we need the arg to be produced
               ),
+            // TODO is it good this way? I just updated mechanically but it does not sound good when
+            // we need to produce a witness in a portfolio
           )
         CachingFileSerializer.serialize("config.json", config) { getGson(xcfa).toJson(config) }
       }

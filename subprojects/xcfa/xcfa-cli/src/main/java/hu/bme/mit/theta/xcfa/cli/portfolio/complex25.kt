@@ -49,7 +49,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.utils.dereferences
-import java.nio.file.Paths
 
 fun complexPortfolio25(
   xcfa: XCFA,
@@ -108,26 +107,7 @@ fun complexPortfolio25(
                 ),
             ),
         ),
-      outputConfig =
-        OutputConfig(
-          versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
-          xcfaOutputConfig = XcfaOutputConfig(disable = true),
-          chcOutputConfig = ChcOutputConfig(disable = true),
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 
