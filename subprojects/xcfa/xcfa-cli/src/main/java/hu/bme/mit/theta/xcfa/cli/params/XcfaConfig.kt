@@ -502,7 +502,7 @@ data class OutputConfig(
   @Parameter(names = ["--enable-output"], description = "Enable output files")
   var enableOutput: Boolean = false,
   @Parameter(
-    names = ["--output-directory"],
+    names = ["--output-directory", "--output-dir"],
     description = "Specify the directory where the result files are stored",
   )
   var resultFolder: File = Paths.get("./").toFile(),
