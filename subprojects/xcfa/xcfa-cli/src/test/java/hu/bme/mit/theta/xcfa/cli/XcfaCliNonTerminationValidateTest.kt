@@ -166,7 +166,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -193,7 +193,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     try {
       main(params)
@@ -228,7 +228,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     try {
       main(params)
@@ -262,7 +262,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -289,7 +289,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
   }
@@ -314,7 +314,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -346,7 +346,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -379,7 +379,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
@@ -414,7 +414,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
@@ -448,7 +448,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     try {
       main(params)
@@ -482,7 +482,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
@@ -519,7 +519,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
@@ -553,7 +553,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added
@@ -580,7 +580,7 @@ class XcfaCliNonTerminationValidateTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     // TODO: add correctness check once correctness termination witnesses are added

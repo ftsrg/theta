@@ -134,7 +134,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -163,7 +163,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     try {
       main(params)
@@ -200,7 +200,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     try {
       main(params)
@@ -235,7 +235,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -264,7 +264,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
   }
@@ -287,7 +287,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -321,7 +321,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
@@ -356,7 +356,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
-        "--enable-output",
+        "--svcomp",
       )
     main(params)
     assertTrue(temp.resolve("witness.yml").exists())
