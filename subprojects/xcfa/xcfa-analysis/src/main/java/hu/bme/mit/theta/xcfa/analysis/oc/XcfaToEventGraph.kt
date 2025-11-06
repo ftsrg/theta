@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -275,6 +276,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
                   is AssumeStmt -> stmt.process(assumeConsts, firstLabel)
                   is HavocStmt<*> -> stmt.process()
                   is MemoryAssignStmt<*, *, *> -> stmt.process()
+                  is SkipStmt -> {}
                   else -> exit("unknown statement type: $stmt")
                 }
               }
