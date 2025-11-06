@@ -48,7 +48,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
-    ltlViolationProperty: String?,
+    ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
   ) {
     // TODO eliminate the need for the instanceof check
@@ -67,8 +67,8 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
       witnessfile.writeText(xml)
     } else if (safetyResult.isSafe) {
       val taskHash = createTaskHash(inputFile.absolutePath)
-      check(ltlViolationProperty == null)
-      val ltlViolationProperty = property.verifiedProperty.name
+      check(ltlSpecification == null)
+      val ltlSpecification = property.verifiedProperty.name
       val dummyWitness = StringBuilder()
       dummyWitness
         .append(
@@ -119,7 +119,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
         .append(System.lineSeparator())
         .append("<data key=\"producer\">theta</data>")
         .append(System.lineSeparator())
-        .append("<data key=\"specification\">$ltlViolationProperty</data>")
+        .append("<data key=\"specification\">$ltlSpecification</data>")
         .append(System.lineSeparator())
         .append("<data key=\"sourcecodelang\">C</data>")
         .append(System.lineSeparator())

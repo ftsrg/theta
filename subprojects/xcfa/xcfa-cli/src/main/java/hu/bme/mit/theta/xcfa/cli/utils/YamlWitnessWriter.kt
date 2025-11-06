@@ -60,20 +60,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
-    ltlViolationProperty: String?,
-    architecture: ArchitectureConfig.ArchitectureType?,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
   ) {
-    var ltlSpecification =
-      if (safetyResult.isSafe) {
-        check(ltlViolationProperty == null)
-        property.verifiedProperty.name
-      } else {
-        check(ltlViolationProperty != null)
-        ltlViolationProperty
-      }
     val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
     if (safetyResult.isUnsafe) {

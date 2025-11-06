@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+
 /**
  * Represents the property to be verified on an XCFA model.
  *
@@ -36,7 +38,8 @@ class XcfaProperty(val inputProperty: ErrorDetection) {
     XcfaProperty(inputProperty).also { it.verifiedProperty = this.verifiedProperty }
 }
 
-enum class ErrorDetection(val ltl: (Any) -> String?) {
+// Unit: Safe
+enum class ErrorDetection(val ltl: (Any) -> String) {
   ERROR_LOCATION({ _: Any -> "CHECK( init(main()), LTL(G ! call(reach_error())) )" }),
   DATA_RACE({ _: Any -> "CHECK( init(main()), LTL(G ! data-race) )" }),
   OVERFLOW({ _: Any -> "CHECK( init(main()), LTL(G ! overflow) )" }),
@@ -45,7 +48,8 @@ enum class ErrorDetection(val ltl: (Any) -> String?) {
       MemSafetyType.VALID_FREE -> "CHECK( init(main()), LTL(G valid-free) )"
       MemSafetyType.VALID_DEREF -> "CHECK( init(main()), LTL(G valid-deref) )"
       MemSafetyType.VALID_MEMTRACK -> "CHECK( init(main()), LTL(G valid-memtrack) )"
-      else -> throw IllegalArgumentException("Invalid MEMSAFETY type")
+      Unit -> "CHECK( init(main()), LTL(G valid-free) )\nCHECK( init(main()), LTL(G valid-deref) )\nCHECK( init(main()), LTL(G valid-memtrack) )"
+      else -> throw IllegalArgumentException("Invalid parameter type")
     }
   }),
   MEMCLEANUP({ _: Any -> "CHECK( init(main()), LTL(G valid-memcleanup) )" }),
