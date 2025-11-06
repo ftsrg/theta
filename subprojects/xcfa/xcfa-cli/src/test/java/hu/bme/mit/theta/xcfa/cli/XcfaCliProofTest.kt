@@ -73,7 +73,8 @@ class XcfaCliProofTest {
     val temp = createTempDirectory()
     val params =
       arrayOf(
-        "--enable-output",
+        "--output",
+        "ALL",
         "--input-type",
         "C",
         "--input",

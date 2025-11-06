@@ -27,7 +27,6 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import java.nio.file.Paths
 
 fun boundedPortfolio25(
   xcfa: XCFA,
@@ -70,23 +69,7 @@ fun boundedPortfolio25(
               itpConfig = InterpolationConfig(true),
             ),
         ),
-      outputConfig =
-        OutputConfig(
-          versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 

@@ -556,3 +556,15 @@ enum class CexMonitorOptions {
   CHECK,
   DISABLE,
 }
+
+enum class OutputLevel {
+  NONE,
+  CUSTOM,
+  ALL,
+}
+
+enum class WitnessLevel {
+  NONE,
+  SVCOMP,
+  ALL,
+}

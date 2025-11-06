@@ -17,8 +17,9 @@ package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.ParameterException
 
-fun rule(name: String, test: () -> Boolean) {
+fun rule(name: String, fatal: Boolean = true, test: () -> Boolean) {
   if (test()) {
-    throw ParameterException("Validation failed for rule $name")
+    if (fatal) throw ParameterException("Validation failed for rule $name")
+    System.err.println("WARNING: Validation failed for non-fatal rule $name")
   }
 }

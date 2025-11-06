@@ -98,26 +98,7 @@ fun baseCegarConfig(
                 ),
             ),
         ),
-      outputConfig =
-        OutputConfig(
-          versionInfo = false,
-          resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
-          xcfaOutputConfig = XcfaOutputConfig(disable = true),
-          chcOutputConfig = ChcOutputConfig(disable = true),
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 
@@ -238,25 +219,7 @@ fun baseBoundedConfig(
             itpConfig = InterpolationConfig(true),
           ),
       ),
-    outputConfig =
-      OutputConfig(
-        versionInfo = false,
-        resultFolder = Paths.get("./").toFile(), // cwd
-        cOutputConfig = COutputConfig(disable = true),
-        xcfaOutputConfig = XcfaOutputConfig(disable = true),
-        chcOutputConfig = ChcOutputConfig(disable = true),
-        witnessConfig =
-          WitnessConfig(
-            disable = false,
-            concretizerSolver = "Z3",
-            validateConcretizerSolver = false,
-            inputFileForWitness =
-              portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                ?: portfolioConfig.inputConfig.input,
-          ),
-        argConfig = ArgConfig(disable = true),
-        enableOutput = portfolioConfig.outputConfig.enableOutput,
-      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
     debugConfig = portfolioConfig.debugConfig,
   )
 
@@ -300,28 +263,10 @@ fun baseMddConfig(
             iterationStrategy = MddChecker.IterationStrategy.GSAT,
             reversed = false,
             cegar = false,
-            initPrec = InitPrec.EMPTY,
+            initPrec = EMPTY,
           ),
       ),
-    outputConfig =
-      OutputConfig(
-        versionInfo = false,
-        resultFolder = Paths.get("./").toFile(), // cwd
-        cOutputConfig = COutputConfig(disable = true),
-        xcfaOutputConfig = XcfaOutputConfig(disable = true),
-        chcOutputConfig = ChcOutputConfig(disable = true),
-        witnessConfig =
-          WitnessConfig(
-            disable = false,
-            concretizerSolver = "Z3",
-            validateConcretizerSolver = false,
-            inputFileForWitness =
-              portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                ?: portfolioConfig.inputConfig.input,
-          ),
-        argConfig = ArgConfig(disable = true),
-        enableOutput = portfolioConfig.outputConfig.enableOutput,
-      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
     debugConfig = portfolioConfig.debugConfig,
   )
 
@@ -336,7 +281,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
   inProcess: Boolean = this.backendConfig.inProcess,
   reversed: Boolean = false,
   cegar: Boolean = false,
-  initprec: InitPrec = InitPrec.EMPTY,
+  initprec: InitPrec = EMPTY,
 ): XcfaConfig<*, BoundedConfig> =
   copy(
     backendConfig =
@@ -362,4 +307,24 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
                 .copy(disable = !itpEnabled, itpSolver = itpSolver),
           ),
       )
+  )
+
+fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
+  OutputConfig(
+    enabled = portfolioConfig.outputConfig.enabled,
+    resultFolder = Paths.get("./").toFile(), // cwd
+    acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
+    cOutputConfig = portfolioConfig.outputConfig.cOutputConfig,
+    xcfaOutputConfig = portfolioConfig.outputConfig.xcfaOutputConfig,
+    chcOutputConfig = portfolioConfig.outputConfig.chcOutputConfig,
+    witnessConfig =
+      WitnessConfig(
+        enabled = WitnessLevel.SVCOMP,
+        concretizerSolver = "Z3",
+        validateConcretizerSolver = false,
+        inputFileForWitness =
+          portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
+            ?: portfolioConfig.inputConfig.input,
+      ),
+    argConfig = portfolioConfig.outputConfig.argConfig,
   )
