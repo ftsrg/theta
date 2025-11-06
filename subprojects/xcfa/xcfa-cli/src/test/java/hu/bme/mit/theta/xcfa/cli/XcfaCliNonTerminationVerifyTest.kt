@@ -309,7 +309,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BMC",
+        "BOUNDED",
         "--input-type",
         "C",
         "--loglevel",
