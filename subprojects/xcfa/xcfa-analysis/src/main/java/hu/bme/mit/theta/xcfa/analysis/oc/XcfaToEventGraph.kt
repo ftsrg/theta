@@ -378,9 +378,13 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
 
       // assign parameter
       val consts = this.params[1].toEvents()
-      val arg = procedure.params.first { it.second != ParamDirection.OUT }.first
-      last = event(arg, WRITE, newPid)
-      last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
+      procedure.params
+        .firstOrNull { it.second != ParamDirection.OUT }
+        ?.first
+        ?.let { arg ->
+          last = event(arg, WRITE, newPid)
+          last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
+        }
 
       last = event(this.pidVar, WRITE)
       val pidVar = this.pidVar.threadVar(pid)
