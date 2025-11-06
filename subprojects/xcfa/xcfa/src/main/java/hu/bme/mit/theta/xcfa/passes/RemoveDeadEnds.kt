@@ -24,7 +24,7 @@ class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
 
-    var enabled = false
+    var enabled = true
   }
 
   // TODO: thread start and procedure call should not be dead-end! Use-case: while(1)

@@ -45,7 +45,11 @@ class ErrorLocationPass(property: XcfaProperty) : ProcedurePass {
               XcfaEdge(
                 it.source,
                 builder.errorLoc.get(),
-                SequenceLabel(listOf(StmtLabel(SkipStmt.getInstance(), metadata = label.metadata))),
+                if (label.metadata.isSubstantial())
+                  SequenceLabel(
+                    listOf(StmtLabel(SkipStmt.getInstance(), metadata = label.metadata))
+                  )
+                else SequenceLabel(listOf()),
                 metadata = label.metadata,
               )
             )
