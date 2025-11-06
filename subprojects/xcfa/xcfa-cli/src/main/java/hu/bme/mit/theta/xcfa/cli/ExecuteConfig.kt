@@ -97,7 +97,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
-  if (config.inputConfig.property.inputProperty in setOf(ErrorDetection.TERMINATION, ErrorDetection.OVERFLOW)) {
+  if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
   }
   if (

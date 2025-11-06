@@ -26,8 +26,7 @@ data class LtlProperty(val name: String, val value: String)
 
 /**
  * Derives the correct LTL property string for a given ErrorDetection type. Optionally inspects a
- * trace to disambiguate MEMSAFETY and MEMCLEANUP cases.
- * Returns
+ * trace to disambiguate MEMSAFETY and MEMCLEANUP cases. Returns
  */
 fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): LtlProperty? {
   return when (this.inputProperty) {
@@ -47,11 +46,13 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
 
       locName?.let {
         when (it) {
-          "__THETA_bad_free" -> LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE))
-          "__THETA_bad_deref" -> LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF))
+          "__THETA_bad_free" ->
+            LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE))
+          "__THETA_bad_deref" ->
+            LtlProperty("valid-deref", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF))
           "__THETA_lost" ->
             if (this.inputProperty == MEMCLEANUP) {
-              LtlProperty("valid-free", MEMCLEANUP.ltl(Unit))
+              LtlProperty("valid-memcleanup", MEMCLEANUP.ltl(Unit))
             } else {
               throw UnknownResultException("Uncertain MEMSAFETY result: __THETA_lost encountered")
             }
