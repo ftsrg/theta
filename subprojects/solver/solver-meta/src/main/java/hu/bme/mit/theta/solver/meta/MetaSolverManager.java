@@ -19,11 +19,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class MetaSolverManager extends SolverManager {
@@ -44,12 +42,23 @@ public final class MetaSolverManager extends SolverManager {
         return NAME.equals(name);
     }
 
+
+    /**
+     * returns a MetaSolverFactory whose portfolio is listed in the parameter
+     * @param name - semicolon separated list of solvers (e.g. Z3;Z3-Legacy)
+     * @return
+     */
     @Override
     public SolverFactory getSolverFactory(final String name) {
-        checkArgument(NAME.equals(name));
-        return new ManagedFactory(new MetaSolverFactory(List.of(
-                Z3LegacySolverFactory.getInstance(),
-                Z3SolverFactory.getInstance())));
+        final var names = name.split(";");
+        final var factories = Arrays.stream(names).map(factoryName -> {
+            try {
+                return SolverManager.resolveSolverFactory(factoryName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
+        return new ManagedFactory(new MetaSolverFactory(factories));
     }
 
     @Override

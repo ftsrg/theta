@@ -29,6 +29,8 @@ import java.nio.file.Path
 fun getSolver(name: String, validate: Boolean): SolverFactory =
   if (validate) {
     SolverValidatorWrapperFactory.create(name)
+  } else if (name.contains(';')) {
+    MetaSolverManager.create().getSolverFactory(name)
   } else {
     SolverManager.resolveSolverFactory(name)
   }
@@ -38,8 +40,6 @@ fun registerAllSolverManagers(home: String, logger: Logger) {
   // register solver managers
   SolverManager.registerSolverManager(Z3SolverManager.create())
   logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
-  SolverManager.registerSolverManager(MetaSolverManager.create())
-  logger.write(Logger.Level.INFO, "Registered Meta SolverManager\n")
   SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
   logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
   SolverManager.registerSolverManager(JavaSMTSolverManager.create())
