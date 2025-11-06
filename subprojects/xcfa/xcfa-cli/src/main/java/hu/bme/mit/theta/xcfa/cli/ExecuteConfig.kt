@@ -97,7 +97,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     XcfaSporLts.random = random
     XcfaDporLts.random = random
   }
-  if (config.inputConfig.property.inputProperty == ErrorDetection.TERMINATION) {
+  if (config.inputConfig.property.inputProperty in setOf(ErrorDetection.TERMINATION, ErrorDetection.OVERFLOW)) {
     RemoveDeadEnds.enabled = false
   }
   if (
@@ -321,7 +321,7 @@ private fun backend(
                   } catch (e: UnknownResultException) {
                     return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                   }
-                property?.also { logger.result("(Property %s)", it) }
+                property?.also { logger.result("(Property %s)", it.name) }
                 result
               }
 

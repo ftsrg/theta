@@ -134,6 +134,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
           )
         )
         edgeBuilder.clear()
+        source = target
       }
 
       while (i < oldLabels.size) {
@@ -149,7 +150,6 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
               metadata = edge.source.metadata,
             )
           flushToEdges(target)
-          source = target
           builder.addEdge(
             XcfaEdge(
               source,

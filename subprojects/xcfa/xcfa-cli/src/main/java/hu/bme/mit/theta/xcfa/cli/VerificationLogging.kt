@@ -67,7 +67,7 @@ internal fun postVerificationLogging(
   val ltlSpecification =
     if (safetyResult.isUnsafe) {
       (safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>).let {
-        config.inputConfig.property.ltlPropertyFromTrace(it)
+        config.inputConfig.property.ltlPropertyFromTrace(it)?.value
       } ?: ""
     } else {
       config.inputConfig.property.inputProperty.ltl(Unit)

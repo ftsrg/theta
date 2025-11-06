@@ -22,11 +22,14 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 class UnknownResultException(message: String = "Unknown analysis result") :
   RuntimeException(message)
 
+data class LtlProperty(val name: String, val value: String)
+
 /**
  * Derives the correct LTL property string for a given ErrorDetection type. Optionally inspects a
  * trace to disambiguate MEMSAFETY and MEMCLEANUP cases.
+ * Returns
  */
-fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): String? {
+fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): LtlProperty? {
   return when (this.inputProperty) {
     MEMSAFETY,
     MEMCLEANUP -> {
@@ -44,11 +47,11 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
 
       locName?.let {
         when (it) {
-          "__THETA_bad_free" -> MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE)
-          "__THETA_bad_deref" -> MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF)
+          "__THETA_bad_free" -> LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE))
+          "__THETA_bad_deref" -> LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF))
           "__THETA_lost" ->
             if (this.inputProperty == MEMCLEANUP) {
-              MEMCLEANUP.ltl(Unit)
+              LtlProperty("valid-free", MEMCLEANUP.ltl(Unit))
             } else {
               throw UnknownResultException("Uncertain MEMSAFETY result: __THETA_lost encountered")
             }
@@ -57,10 +60,10 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
       }
     }
 
-    DATA_RACE -> DATA_RACE.ltl(Unit)
-    ERROR_LOCATION -> ERROR_LOCATION.ltl(Unit)
-    OVERFLOW -> OVERFLOW.ltl(Unit)
-    NO_ERROR -> NO_ERROR.ltl(Unit)
-    TERMINATION -> TERMINATION.ltl(Unit)
+    DATA_RACE -> LtlProperty("no-data-race", DATA_RACE.ltl(Unit))
+    ERROR_LOCATION -> LtlProperty("unreach-call", ERROR_LOCATION.ltl(Unit))
+    OVERFLOW -> LtlProperty("no-overflow", OVERFLOW.ltl(Unit))
+    NO_ERROR -> LtlProperty("no-error", NO_ERROR.ltl(Unit))
+    TERMINATION -> LtlProperty("termination", TERMINATION.ltl(Unit))
   }
 }
