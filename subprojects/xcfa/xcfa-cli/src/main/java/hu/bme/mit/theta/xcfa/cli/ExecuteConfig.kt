@@ -174,7 +174,7 @@ private fun parseInputFiles(
   } else {
     var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-    applyOptionalWitness(config, logger, xcfa, parseContext)
+    xcfa = applyOptionalWitness(config, logger, xcfa, parseContext)
 
     preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     Triple(xcfa, mcm, parseContext)
