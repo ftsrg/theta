@@ -61,7 +61,6 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
     val configJson =
       if (config.backendConfig.parseInProcess) {
-
         val config =
           config.copy(
             outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
@@ -86,16 +85,11 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
             outputConfig =
               config.outputConfig.copy(
                 resultFolder = tempDir.toFile(),
-                cOutputConfig = COutputConfig(enabled = false),
-                xcfaOutputConfig = XcfaOutputConfig(enabled = false),
-                chcOutputConfig = ChcOutputConfig(enabled = false),
-                argConfig =
-                  config.outputConfig.argConfig.copy(
-                    enabled = true
-                  ), // we need the arg to be produced
+                cOutputConfig = config.outputConfig.cOutputConfig.copy(enabled = false),
+                xcfaOutputConfig = config.outputConfig.xcfaOutputConfig.copy(enabled = false),
+                chcOutputConfig = config.outputConfig.chcOutputConfig.copy(enabled = false),
+                argConfig = config.outputConfig.argConfig.copy(enabled = false),
               ),
-            // TODO is it good this way? I just updated mechanically but it does not sound good when
-            // we need to produce a witness in a portfolio
           )
         CachingFileSerializer.serialize("config.json", config) { getGson(xcfa).toJson(config) }
       }

@@ -215,7 +215,7 @@ fun frontend(
   )
 
   logger.result("ParsingResult Success")
-  logger.result(
+  logger.info(
     "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}"
   )
 
@@ -425,11 +425,11 @@ private fun postVerificationLogging(
   logger: Logger,
   uniqueLogger: Logger,
 ) {
+  val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
   if (
     config.frontendConfig.inputType == InputType.CHC &&
       xcfa != null &&
-      ((config.frontendConfig.specConfig as CHCFrontendConfig).model ||
-        config.outputConfig.enabled == OutputLevel.ALL)
+      ((config.frontendConfig.specConfig as CHCFrontendConfig).model || forceEnabledOutput)
   ) {
     val resultFolder = config.outputConfig.resultFolder
     resultFolder.mkdirs()
@@ -450,14 +450,13 @@ private fun postVerificationLogging(
 
   if (config.outputConfig.enabled != NONE && mcm != null && parseContext != null) {
     try {
-      val enabled = config.outputConfig.enabled == OutputLevel.ALL
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
       logger.info("Writing post-verification artifacts to directory ${resultFolder.absolutePath}")
 
       // TODO eliminate the need for the instanceof check
       if (
-        (enabled || config.outputConfig.argConfig.enabled) &&
+        (forceEnabledOutput || config.outputConfig.argConfig.enabled) &&
           safetyResult.proof is ARG<out State, out Action>
       ) {
         try {
@@ -506,7 +505,7 @@ private fun postVerificationLogging(
           }
         }
 
-        enabled || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
+        forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
           if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
               XcfaTraceConcretizer.concretize(
