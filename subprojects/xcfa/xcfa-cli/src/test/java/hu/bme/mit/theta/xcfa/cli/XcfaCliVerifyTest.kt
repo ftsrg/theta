@@ -91,6 +91,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/31structaccess.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -109,6 +110,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -119,6 +121,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -131,6 +134,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/02types.c", null),
         Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
         Arguments.of("/c/litmustest/singlethread/04real.c", null),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -142,6 +146,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 

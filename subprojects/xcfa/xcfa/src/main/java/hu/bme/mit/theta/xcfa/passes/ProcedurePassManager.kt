@@ -86,6 +86,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
+    listOf(OverflowDetectionPass(property, parseContext)),
   )
 
 class NontermValidationPasses(
