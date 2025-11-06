@@ -392,7 +392,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitIdentifierStatement(CParser.IdentifierStatementContext ctx) {
-        CStatement statement = ctx.statement().accept(this);
+        CStatement statement = ctx.blockItem().accept(this);
         CCompound compound = new CCompound(parseContext);
         compound.addCStatement(statement);
         compound.setId(ctx.Identifier().getText());

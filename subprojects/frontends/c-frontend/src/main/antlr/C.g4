@@ -486,7 +486,7 @@ statement
     ;
 
 labeledStatement
-    :   Identifier ':' statement                # identifierStatement
+    :   Identifier ':' blockItem                # identifierStatement
     |   'case' constantExpression ':' statement # caseStatement
     |   'default' ':' statement                 # defaultStatement
     ;
