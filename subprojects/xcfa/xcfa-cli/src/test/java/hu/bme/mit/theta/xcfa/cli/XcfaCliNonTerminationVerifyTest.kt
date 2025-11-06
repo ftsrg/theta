@@ -82,10 +82,6 @@ class XcfaCliNonTerminationVerifyTest {
           "/c/nontermination/Pendulum-2.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
-        Arguments.of(
-          "/c/nontermination/for_infinite_loop_1.c",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
       )
     }
 
@@ -110,6 +106,10 @@ class XcfaCliNonTerminationVerifyTest {
         ),
         Arguments.of(
           "/c/nontermination/Swingers.c",
+          "--property /c/nontermination/prop/termination.prp",
+        ),
+        Arguments.of(
+          "/c/nontermination/for_infinite_loop_1.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
       )
