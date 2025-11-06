@@ -309,6 +309,8 @@ class XcfaMultiThreadToMonolithicAdapter(
 
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()
+    if (valuation.toExpr().equals(True()))
+      return XcfaState(model, model.procedures.first().initLoc, PtrState(ExplState.top()))
     val processStates =
       locVars
         .mapNotNull { (thread, locVar) ->
