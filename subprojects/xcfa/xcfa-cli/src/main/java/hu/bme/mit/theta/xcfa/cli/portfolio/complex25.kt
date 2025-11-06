@@ -107,26 +107,7 @@ fun complexPortfolio25(
                 ),
             ),
         ),
-      outputConfig =
-        OutputConfig(
-          versionInfo = false,
-          resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
-          xcfaOutputConfig = XcfaOutputConfig(disable = true),
-          chcOutputConfig = ChcOutputConfig(disable = true),
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 

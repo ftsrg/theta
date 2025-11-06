@@ -52,8 +52,11 @@ import java.io.File
 import java.util.*
 import kotlinx.serialization.encodeToString
 
-class YamlWitnessWriter {
-  fun writeWitness(
+class YamlWitnessWriter : XcfaWitnessWriter {
+
+  override val extension: String = "yml"
+
+  override fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,

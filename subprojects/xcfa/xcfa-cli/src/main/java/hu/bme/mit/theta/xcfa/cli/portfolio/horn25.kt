@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -36,9 +35,7 @@ fun hornPortfolio25(
   uniqueLogger: Logger,
 ): STM {
 
-  val checker = { config: XcfaConfig<*, *> ->
-    runConfig(config, logger, uniqueLogger, true) as SafetyResult<*, *>
-  }
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
   var baseConfig =
     XcfaConfig(
@@ -63,23 +60,7 @@ fun hornPortfolio25(
           timeoutMs = 0,
           specConfig = HornConfig(solver = "z3:4.13.0", validateSolver = false),
         ),
-      outputConfig =
-        OutputConfig(
-          versionInfo = false,
-          resultFolder = portfolioConfig.outputConfig.resultFolder, // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 

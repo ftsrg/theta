@@ -77,7 +77,7 @@ data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
   override fun update(): Boolean =
     listOf(inputConfig, frontendConfig, backendConfig, outputConfig, debugConfig)
       .map { it.update() }
-      .any { it == true }
+      .any { it }
 }
 
 data class InputConfig(
@@ -575,10 +575,10 @@ data class Ic3Config(
 data class OutputConfig(
   @Parameter(names = ["--version"], description = "Display version", help = true)
   var versionInfo: Boolean = false,
-  @Parameter(names = ["--enable-output"], description = "Enable output files")
-  var enableOutput: Boolean = false,
+  @Parameter(names = ["--output"], description = "Sets output level")
+  var enabled: OutputLevel = OutputLevel.CUSTOM,
   @Parameter(
-    names = ["--output-directory"],
+    names = ["--output-directory", "--output-dir"],
     description = "Specify the directory where the result files are stored",
   )
   var resultFolder: File = Paths.get("./").toFile(),
@@ -610,23 +610,22 @@ data class OutputConfig(
 }
 
 data class XcfaOutputConfig(
-  @Parameter(names = ["--disable-xcfa-serialization"]) var disable: Boolean = false
+  @Parameter(names = ["--enable-xcfa-serialization"]) var enabled: Boolean = false
 ) : Config
 
 data class ChcOutputConfig(
-  @Parameter(names = ["--disable-chc-serialization"]) var disable: Boolean = false
+  @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
 ) : Config
 
 data class COutputConfig(
-  @Parameter(names = ["--disable-c-serialization"]) var disable: Boolean = false,
+  @Parameter(names = ["--enable-c-serialization"]) var enabled: Boolean = false,
   @Parameter(names = ["--to-c-use-arrays"]) var useArr: Boolean = false,
   @Parameter(names = ["--to-c-use-exact-arrays"]) var useExArr: Boolean = false,
   @Parameter(names = ["--to-c-use-ranges"]) var useRange: Boolean = false,
 ) : Config
 
 data class WitnessConfig(
-  @Parameter(names = ["--disable-witness-generation"]) var disable: Boolean = false,
-  @Parameter(names = ["--only-svcomp-witness"]) var svcomp: Boolean = false,
+  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.NONE,
   @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
   var concretizerSolver: String = "Z3",
   @Parameter(
@@ -638,9 +637,8 @@ data class WitnessConfig(
   @Parameter(names = ["--input-file-for-witness"]) var inputFileForWitness: File? = null,
 ) : Config
 
-data class ArgConfig(
-  @Parameter(names = ["--disable-arg-generation"]) var disable: Boolean = false
-) : Config
+data class ArgConfig(@Parameter(names = ["--enable-arg-generation"]) var enabled: Boolean = false) :
+  Config
 
 data class DebugConfig(
   @Parameter(

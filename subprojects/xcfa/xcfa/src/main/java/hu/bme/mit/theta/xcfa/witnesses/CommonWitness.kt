@@ -85,8 +85,8 @@ fun createTaskHash(programFile: String): String {
   } catch (e: IOException) {
     e.printStackTrace()
   }
-  assert(md != null)
-  val digest = md!!.digest()
+  checkNotNull(md)
+  val digest = md.digest()
   return bytesToHex(digest)
 }
 

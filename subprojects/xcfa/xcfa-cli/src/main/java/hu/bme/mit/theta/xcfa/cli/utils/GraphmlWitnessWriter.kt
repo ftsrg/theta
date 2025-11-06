@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
+import hu.bme.mit.theta.xcfa.witnesses.createTaskHash
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -35,16 +37,19 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class GraphmlWitnessWriter {
+class GraphmlWitnessWriter : XcfaWitnessWriter {
 
-  fun writeWitness(
+  override val extension: String = "graphml"
+
+  override fun writeWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
+    property: XcfaProperty,
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
-    property: XcfaProperty,
     ltlViolationProperty: String?,
+    architecture: ArchitectureConfig.ArchitectureType?,
   ) {
     // TODO eliminate the need for the instanceof check
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
@@ -61,9 +66,9 @@ class GraphmlWitnessWriter {
       val xml = graphmlWitness.toPrettyXml()
       witnessfile.writeText(xml)
     } else if (safetyResult.isSafe) {
+      val taskHash = createTaskHash(inputFile.absolutePath)
       check(ltlViolationProperty == null)
       val ltlViolationProperty = property.verifiedProperty.name
-      val taskHash = WitnessWriter.createTaskHash(inputFile.absolutePath)
       val dummyWitness = StringBuilder()
       dummyWitness
         .append(
