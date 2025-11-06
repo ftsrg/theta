@@ -40,7 +40,6 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import java.nio.file.Paths
 
 fun baseCegarConfig(
   xcfa: XCFA,

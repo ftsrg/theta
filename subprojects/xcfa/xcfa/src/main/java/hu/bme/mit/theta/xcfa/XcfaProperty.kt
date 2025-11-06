@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-
 /**
  * Represents the property to be verified on an XCFA model.
  *
@@ -48,7 +46,8 @@ enum class ErrorDetection(val ltl: (Any) -> String) {
       MemSafetyType.VALID_FREE -> "CHECK( init(main()), LTL(G valid-free) )"
       MemSafetyType.VALID_DEREF -> "CHECK( init(main()), LTL(G valid-deref) )"
       MemSafetyType.VALID_MEMTRACK -> "CHECK( init(main()), LTL(G valid-memtrack) )"
-      Unit -> "CHECK( init(main()), LTL(G valid-free) )\nCHECK( init(main()), LTL(G valid-deref) )\nCHECK( init(main()), LTL(G valid-memtrack) )"
+      Unit ->
+        "CHECK( init(main()), LTL(G valid-free) )\nCHECK( init(main()), LTL(G valid-deref) )\nCHECK( init(main()), LTL(G valid-memtrack) )"
       else -> throw IllegalArgumentException("Invalid parameter type")
     }
   }),

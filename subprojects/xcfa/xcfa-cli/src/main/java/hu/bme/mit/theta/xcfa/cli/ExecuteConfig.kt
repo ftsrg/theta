@@ -164,23 +164,27 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
 }
 
 private fun parseInputFiles(
-  config: XcfaConfig<*, *>, logger: Logger,
-  uniqueLogger: Logger
-): Triple<XCFA?, MCM?, ParseContext?> = if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
-  logger.info("Not parsing input because a worker process will handle it later.")
-  Triple(null, null, null)
-} else {
-  var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+): Triple<XCFA?, MCM?, ParseContext?> =
+  if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+    logger.info("Not parsing input because a worker process will handle it later.")
+    Triple(null, null, null)
+  } else {
+    var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-  applyOptionalWitness(config, logger, xcfa, parseContext)
+    applyOptionalWitness(config, logger, xcfa, parseContext)
 
-  preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-  Triple(xcfa, mcm, parseContext)
-}
+    preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+    Triple(xcfa, mcm, parseContext)
+  }
 
 private fun applyOptionalWitness(
-  config: XcfaConfig<*, *>, logger: Logger,
-  xcfa: XCFA, parseContext: ParseContext
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  xcfa: XCFA,
+  parseContext: ParseContext,
 ): XCFA {
   return config.inputConfig.witness?.let {
     logger.info("Applying witness $it")
@@ -188,10 +192,7 @@ private fun applyOptionalWitness(
       exitProcess(ExitCodes.INVALID_PARAM.code)
     }
     val witness =
-      WitnessYamlConfig.decodeFromString(
-        ListSerializer(YamlWitness.serializer()),
-        it.readText(),
-      )[0]
+      WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), it.readText())[0]
     xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
   } ?: xcfa
 }
@@ -356,7 +357,7 @@ private fun tracegenBackend(
   logger.info(
     "Backend finished (in ${
       stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n",
+    } ms)\n"
   )
 
   return result
@@ -400,13 +401,15 @@ private fun postAnalysisLogging(
   }
 
 internal fun concretizeTrace(
-  trace: Cex?, config: XcfaConfig<*, *>,
-  parseContext: ParseContext
-): Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-  trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-  getSolver(
-    config.outputConfig.witnessConfig.concretizerSolver,
-    config.outputConfig.witnessConfig.validateConcretizerSolver,
-  ),
-  parseContext,
-)
+  trace: Cex?,
+  config: XcfaConfig<*, *>,
+  parseContext: ParseContext,
+): Trace<XcfaState<ExplState>, XcfaAction> =
+  XcfaTraceConcretizer.concretize(
+    trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+    getSolver(
+      config.outputConfig.witnessConfig.concretizerSolver,
+      config.outputConfig.witnessConfig.validateConcretizerSolver,
+    ),
+    parseContext,
+  )
