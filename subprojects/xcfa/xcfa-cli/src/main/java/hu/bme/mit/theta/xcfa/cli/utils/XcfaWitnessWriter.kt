@@ -88,6 +88,7 @@ interface XcfaWitnessWriter {
     cexSolverFactory: SolverFactory,
     parseContext: ParseContext,
     witnessfile: File,
+    ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType? = null,
   )
 }

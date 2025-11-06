@@ -29,6 +29,7 @@ data class CMetaData(
   val offsetEnd: Int?,
   val sourceText: String?,
   val astNodes: List<CStatement>,
+  val functionName: String?,
 ) : MetaData() {
 
   // AST nodes must be in order of combination!
@@ -68,11 +69,14 @@ data class CMetaData(
           } ?: 0,
         sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
         astNodes = astNodes + other.astNodes,
+        functionName = functionName ?: other.functionName,
       )
     } else if (other is EmptyMetaData) {
       return this
     } else {
-      error("Cannot combine metadata of different types: $this vs $other")
+      error(
+        "Cannot combine metadata of different types or different function names: $this vs $other"
+      )
     }
   }
 

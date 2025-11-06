@@ -80,7 +80,7 @@ fun getIc3Checker(
   val checker =
     FormalismPipelineChecker(
       model = parseContext,
-      modelAdapter = XcfaToMonolithicAdapter(xcfa),
+      modelAdapter = XcfaToMonolithicAdapter(xcfa, config.inputConfig.property.verifiedProperty),
       MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
     )
 

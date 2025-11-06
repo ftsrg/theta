@@ -34,7 +34,6 @@ import java.io.*
 
 class InputOptions :
   OptionGroup(name = "Input options", help = "Options related to model and property input") {
-
   val model: File by
     option(
         help =
