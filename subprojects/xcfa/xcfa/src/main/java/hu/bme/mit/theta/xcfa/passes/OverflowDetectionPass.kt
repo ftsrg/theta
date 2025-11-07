@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext
@@ -97,10 +98,11 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
         val conditions =
           label
             .getExpressions {
-              parseContext.metadata
-                .getMetadataValue(it, "cType")
-                .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
-                .orElse(false)
+              it !is RefExpr<*> &&
+                parseContext.metadata
+                  .getMetadataValue(it, "cType")
+                  .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
+                  .orElse(false)
             }
             .map {
               val cType = parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
