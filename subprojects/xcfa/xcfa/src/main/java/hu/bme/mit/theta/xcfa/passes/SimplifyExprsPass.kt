@@ -72,7 +72,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     do {
       lastEdges = edges
 
-      val toVisit = builder.initLoc.outgoingEdges.toMutableList()
+      val toVisit = builder.initLoc.outgoingEdges.toMutableSet()
       val visited = mutableSetOf<XcfaEdge>()
       while (toVisit.isNotEmpty()) {
         val edge =

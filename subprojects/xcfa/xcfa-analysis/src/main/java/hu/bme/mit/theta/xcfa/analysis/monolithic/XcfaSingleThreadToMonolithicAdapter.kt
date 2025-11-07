@@ -27,11 +27,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.NonDetStmt
-import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
@@ -49,14 +45,21 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import kotlin.jvm.optionals.getOrNull
 
 class XcfaSingleThreadToMonolithicAdapter(
-  override val model: XCFA,
+  model: XCFA,
   parseContext: ParseContext,
   private val initValues: Boolean = false,
-) : XcfaToMonolithicAdapter(model, parseContext) {
+) :
+  XcfaToMonolithicAdapter(
+    model,
+    ProcedurePassManager(listOf(DereferenceToArrayPass())),
+    parseContext,
+  ) {
 
   private lateinit var locVar: VarDecl<Type>
   private val edgeVar = Decls.Var("__edge_", intType)

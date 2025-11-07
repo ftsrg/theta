@@ -59,15 +59,15 @@ class XcfaMultiThreadToMonolithicAdapter(
   private val initValues: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
-    model.optimizeFurther(
-      ProcedurePassManager(
-        listOf(
-          EliminateSelfLoops(),
-          RemoveAbortBranchesPass(),
-          LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
-          RemoveUnnecessaryAtomicBlocksPass(),
-          MutexToVarPass(),
-        )
+    model,
+    ProcedurePassManager(
+      listOf(
+        EliminateSelfLoops(),
+        RemoveAbortBranchesPass(),
+        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+        RemoveUnnecessaryAtomicBlocksPass(),
+        MutexToVarPass(),
+        DereferenceToArrayPass(),
       )
     ),
     parseContext,
