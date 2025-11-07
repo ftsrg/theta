@@ -26,22 +26,22 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isRead
 
 /**
  * Remove unused variables from the program. Requires the ProcedureBuilder to be `deterministic`
  * (@see DeterministicPass)
  */
-class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaProperty? = null) : ProcedurePass {
+class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaProperty? = null) :
+  ProcedurePass {
 
   companion object {
     var keepGlobalVariableAccesses = false
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if(property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
-      return builder
-    }
+    val isOverflow = property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()
@@ -67,6 +67,13 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaP
         usedVars.addAll(
           edge.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key }
         )
+        if (isOverflow) {
+          for (label in edge.getFlatLabels()) {
+            if (label is StmtLabel && label.stmt is AssignStmt<*> && label.stmt.expr.ops.size > 1) {
+              usedVars.add(label.stmt.varDecl)
+            }
+          }
+        }
       }
 
       builder.parent.getProcedures().forEach { b ->

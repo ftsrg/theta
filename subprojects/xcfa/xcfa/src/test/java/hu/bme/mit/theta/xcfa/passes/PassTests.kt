@@ -524,7 +524,11 @@ class PassTests {
         PassTestData(
           global = {},
           passes =
-            listOf(NormalizePass(), DeterministicPass(), UnusedVarPass(NullLogger.getInstance(), property)),
+            listOf(
+              NormalizePass(),
+              DeterministicPass(),
+              UnusedVarPass(NullLogger.getInstance(), property),
+            ),
           input = { "tmp" type Int() },
           output = {},
         ),

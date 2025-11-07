@@ -28,13 +28,24 @@ import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
+import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -93,27 +104,31 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
     val limitVisitor = getLimitVisitor(parseContext)
 
     // tracks which edges need work; where we insert an edge to error _before_ the indexed label
-    val toInsert = mutableMapOf<XcfaEdge, MutableList<Pair<Int, StmtLabel>>>()
+    val toInsert = mutableMapOf<XcfaEdge, MutableList<Pair<Int, Expr<BoolType>>>>()
 
     for (edge in builder.getEdges()) {
       edge.getFlatLabels().forEachIndexed { i, label ->
         val conditions =
           label
             .getExpressions {
-              (it is AddExpr || it is SubExpr || it is MulExpr) &&
+              (it is AddExpr || it is SubExpr || it is MulExpr || it is DivExpr || it is NegExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
                   .orElse(false)
             }
             .map {
-              val cType = parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
+              val cType =
+                parseContext.metadata
+                  .getMetadataValue(it, "cType")
+                  .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
+                  .get() as CComplexType
               Not(cType.accept(limitVisitor, it).cond)
             }
 
         if (conditions.isNotEmpty()) {
-          val assumeLabel = StmtLabel(AssumeStmt.of(Or(conditions)), metadata = label.metadata)
-          toInsert.computeIfAbsent(edge) { mutableListOf() }.add(i to assumeLabel)
+          val overflow = Or(conditions)
+          toInsert.computeIfAbsent(edge) { mutableListOf() }.add(i to overflow)
         }
       }
     }
@@ -158,10 +173,13 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
             XcfaEdge(
               source,
               errorLoc,
-              breakpoints[j].second,
-              metadata = breakpoints[j].second.metadata,
+              StmtLabel(AssumeStmt.of(breakpoints[j].second), metadata = oldLabels[i].metadata),
+              metadata = oldLabels[i].metadata,
             )
           )
+          edgeBuilder.add(
+            StmtLabel(AssumeStmt.of(Not(breakpoints[j].second)))
+          ) // so the assumption-branchings look deterministic
           j++
         }
       }
@@ -211,6 +229,31 @@ private fun Stmt.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
   }
 }
 
-private fun Expr<*>.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
-  return ops.flatMap { it.getExpressions(f) }.toSet() + if (f(this)) setOf(this) else setOf()
+private fun Expr<*>.getExpressions(
+  f: (Expr<*>) -> Boolean,
+  shortCircuitCondition: Expr<BoolType> = TrueExpr.getInstance(),
+): Set<Expr<*>> {
+  if (this is DivExpr<*>) {
+    throw UnsupportedOperationException("We cannot soundly detect overflows with divisions.")
+  }
+  var shortCircuitCondition: Expr<BoolType> = shortCircuitCondition
+  val ret = mutableSetOf<Expr<*>>()
+  for (expr in ops) {
+    ret.addAll(expr.getExpressions(f, shortCircuitCondition))
+    shortCircuitCondition =
+      when (this) {
+        is OrExpr -> And(shortCircuitCondition, Not(expr as Expr<BoolType>))
+        is AndExpr -> And(shortCircuitCondition, expr as Expr<BoolType>)
+        else -> shortCircuitCondition
+      }
+  }
+  if (f(this)) {
+    if (shortCircuitCondition == TrueExpr.getInstance()) {
+      ret.add(this)
+    } else {
+      val ite = IteExpr.of(shortCircuitCondition, this as Expr<IntType>, Int(0))
+      ret.add(ite)
+    }
+  }
+  return ret
 }

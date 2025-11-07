@@ -36,6 +36,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.ltlPropertyFromTrace
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
@@ -86,7 +87,7 @@ internal fun postVerificationLogging(
     return
   }
 
-  if (config.outputConfig.enabled != OutputLevel.NONE && mcm != null && parseContext != null) {
+  if (config.outputConfig.enabled != OutputLevel.NONE && parseContext != null) {
     try {
       val resultFolder = config.outputConfig.resultFolder
       resultFolder.mkdirs()
@@ -98,6 +99,13 @@ internal fun postVerificationLogging(
           safetyResult.proof is ARG<out State, out Action>
       ) {
         writeArgAsProof(resultFolder, safetyResult, logger)
+      }
+
+      if (
+        forceEnabledOutput ||
+          config.outputConfig.argConfig.enabled && safetyResult.proof is LocationInvariants
+      ) {
+        writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants, logger)
       }
 
       when {
@@ -227,6 +235,25 @@ private fun writeArgAsProof(resultFolder: File, safetyResult: SafetyResult<*, *>
     argFile.writeText(GraphvizWriter.getInstance().writeString(g))
   } catch (e: Exception) {
     logger.info("Could not emit ARG as DOT file: ${e.stackTraceToString()}")
+  }
+}
+
+private fun writeArgAsLocInvs(
+  resultFolder: File,
+  locationInvariants: LocationInvariants,
+  logger: Logger,
+) {
+  try {
+    val invFile = File(resultFolder, "invariants.txt")
+    invFile.writeText("")
+    for ((location, invariants) in locationInvariants.partitions) {
+      invFile.appendText("${location}:\n")
+      for (inv in invariants) {
+        invFile.appendText("  ${inv.toString().replace(System.lineSeparator(), " ")}\n")
+      }
+    }
+  } catch (e: Exception) {
+    logger.info("Could not emit invariants file: ${e.stackTraceToString()}")
   }
 }
 
