@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
@@ -39,6 +40,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -53,6 +55,9 @@ fun getCegarChecker(
   config: XcfaConfig<*, *>,
   logger: Logger,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+  if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
+    error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
+
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
   val abstractionSolverFactory: SolverFactory =
     getSolver(
@@ -108,7 +113,8 @@ fun getCegarChecker(
       as ExprTraceChecker<Refutation>
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
     cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter
+      cegarConfig.refinerConfig.exprSplitter.exprSplitter,
+      xcfa,
     ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
@@ -197,6 +203,18 @@ fun getCegarChecker(
                       }
                       is PredState -> {
                         PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
+                      }
+                      is Prod2State<*, *> -> {
+                        if (s.state1.isBottom) ExplState.bottom()
+                        else
+                          Prod2State.of(
+                            ExplState.of((s.state1 as ExplState).`val`.changeVars(declMap)),
+                            PredState.of(
+                              (s.state2 as PredState).preds.map {
+                                ExprUtils.changeDecls(it, declMap)
+                              }
+                            ),
+                          )
                       }
                       else -> {
                         error("Unknown state: ${s}")

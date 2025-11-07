@@ -88,6 +88,8 @@ fun getPortfolioChecker(
       "HORN",
       "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       else -> {
         if (File(portfolioName).exists()) {
           val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")

@@ -52,6 +52,9 @@ data class WitnessEdge(
   val assumption_scope: String? = null,
   val assumption_resultfunction: String? = null,
   val control: Boolean? = null,
+  //  val nextStatementStartLine: Int? = null,
+  //  val nextStatementStartCol: Int? = null,
+  //  val nextStatementStartOffset: Int? = null,
   val startline: Int? = null,
   val endline: Int? = null,
   val startoffset: Int? = null,
@@ -82,8 +85,8 @@ fun createTaskHash(programFile: String): String {
   } catch (e: IOException) {
     e.printStackTrace()
   }
-  assert(md != null)
-  val digest = md!!.digest()
+  checkNotNull(md)
+  val digest = md.digest()
   return bytesToHex(digest)
 }
 

@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
@@ -75,7 +77,7 @@ data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
   override fun update(): Boolean =
     listOf(inputConfig, frontendConfig, backendConfig, outputConfig, debugConfig)
       .map { it.update() }
-      .any { it == true }
+      .any { it }
 }
 
 data class InputConfig(
@@ -96,6 +98,8 @@ data class InputConfig(
     description = "Path of the property file (will overwrite --property when given)",
   )
   var propertyFile: File? = null,
+  @Parameter(names = ["--witness"], description = "Witness file (optional)")
+  var witness: File? = null,
   @Parameter(
     names = ["--property-value"],
     description = "Property",
@@ -214,6 +218,7 @@ data class BackendConfig<T : SpecBackendConfig>(
     specConfig =
       when (backend) {
         Backend.CEGAR -> CegarConfig() as T
+        Backend.LIVENESS_CEGAR -> AsgCegarConfig() as T
         Backend.BMC ->
           BoundedConfig(
             indConfig = InductionConfig(disable = true),
@@ -233,8 +238,8 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
+        Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
-        Backend.LASSO_VALIDATION -> LassoValidationConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
       }
@@ -267,6 +272,38 @@ data class CegarConfig(
 
   override fun update(): Boolean =
     listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
+}
+
+data class AsgCegarConfig(
+  @Parameter(names = ["--initprec"], description = "Initial precision")
+  var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--cex-monitor"],
+    description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor",
+  )
+  var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
+  val abstractorConfig: AsgCegarAbstractorConfig = AsgCegarAbstractorConfig(),
+  val refinerConfig: AsgCegarRefinerConfig = AsgCegarRefinerConfig(),
+) : SpecBackendConfig {
+
+  override fun getObjects(): Set<Config> {
+    return super.getObjects() union abstractorConfig.getObjects() union refinerConfig.getObjects()
+  }
+
+  override fun update(): Boolean =
+    listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
+}
+
+data class TracegenConfig(
+  @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
+  var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
+  val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
+) : SpecBackendConfig {
+  override fun getObjects(): Set<Config> {
+    return super.getObjects() union abstractorConfig.getObjects()
+  }
+
+  override fun update(): Boolean = listOf(abstractorConfig).map { it.update() }.any { it }
 }
 
 data class CegarAbstractorConfig(
@@ -315,6 +352,45 @@ data class CegarRefinerConfig(
     description = "Strategy for pruning the ARG after refinement",
   )
   var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
+) : Config
+
+data class AsgCegarAbstractorConfig(
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.EXPL,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(names = ["--search"], description = "Search strategy")
+  var search: LoopCheckerSearchStrategy = LoopCheckerSearchStrategy.NDFS,
+) : Config
+
+data class AsgCegarRefinerConfig(
+  @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
+  var refinementSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-refinement-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateRefinementSolver: Boolean = false,
+  @Parameter(names = ["--refinement"], description = "Refinement strategy")
+  var refinement: ASGTraceCheckerStrategy = ASGTraceCheckerStrategy.DIRECT_REFINEMENT,
+  @Parameter(
+    names = ["--predsplit"],
+    description = "Predicate splitting (for predicate abstraction)",
+  )
+  var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
 ) : Config
 
 data class HornConfig(
@@ -499,10 +575,10 @@ data class Ic3Config(
 data class OutputConfig(
   @Parameter(names = ["--version"], description = "Display version", help = true)
   var versionInfo: Boolean = false,
-  @Parameter(names = ["--enable-output"], description = "Enable output files")
-  var enableOutput: Boolean = false,
+  @Parameter(names = ["--output"], description = "Sets output level")
+  var enabled: OutputLevel = OutputLevel.CUSTOM,
   @Parameter(
-    names = ["--output-directory"],
+    names = ["--output-directory", "--output-dir"],
     description = "Specify the directory where the result files are stored",
   )
   var resultFolder: File = Paths.get("./").toFile(),
@@ -534,23 +610,22 @@ data class OutputConfig(
 }
 
 data class XcfaOutputConfig(
-  @Parameter(names = ["--disable-xcfa-serialization"]) var disable: Boolean = false
+  @Parameter(names = ["--enable-xcfa-serialization"]) var enabled: Boolean = false
 ) : Config
 
 data class ChcOutputConfig(
-  @Parameter(names = ["--disable-chc-serialization"]) var disable: Boolean = false
+  @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
 ) : Config
 
 data class COutputConfig(
-  @Parameter(names = ["--disable-c-serialization"]) var disable: Boolean = false,
+  @Parameter(names = ["--enable-c-serialization"]) var enabled: Boolean = false,
   @Parameter(names = ["--to-c-use-arrays"]) var useArr: Boolean = false,
   @Parameter(names = ["--to-c-use-exact-arrays"]) var useExArr: Boolean = false,
   @Parameter(names = ["--to-c-use-ranges"]) var useRange: Boolean = false,
 ) : Config
 
 data class WitnessConfig(
-  @Parameter(names = ["--disable-witness-generation"]) var disable: Boolean = false,
-  @Parameter(names = ["--only-svcomp-witness"]) var svcomp: Boolean = false,
+  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.NONE,
   @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
   var concretizerSolver: String = "Z3",
   @Parameter(
@@ -562,9 +637,8 @@ data class WitnessConfig(
   @Parameter(names = ["--input-file-for-witness"]) var inputFileForWitness: File? = null,
 ) : Config
 
-data class ArgConfig(
-  @Parameter(names = ["--disable-arg-generation"]) var disable: Boolean = false
-) : Config
+data class ArgConfig(@Parameter(names = ["--enable-arg-generation"]) var enabled: Boolean = false) :
+  Config
 
 data class DebugConfig(
   @Parameter(

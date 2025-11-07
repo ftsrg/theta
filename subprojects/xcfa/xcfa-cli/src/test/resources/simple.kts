@@ -88,14 +88,12 @@ fun portfolio(
         OutputConfig(
           versionInfo = false,
           resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
           witnessConfig =
             WitnessConfig(
-              disable = false,
+              enabled = WitnessLevel.ALL,
               concretizerSolver = "Z3",
               validateConcretizerSolver = false,
             ),
-          argConfig = ArgConfig(disable = true),
         ),
       debugConfig = portfolioConfig.debugConfig,
     )

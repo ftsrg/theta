@@ -79,7 +79,6 @@ fun getMddChecker(
       //        ),
     )
   }
-
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()
 
   if (mddConfig.cegar) {

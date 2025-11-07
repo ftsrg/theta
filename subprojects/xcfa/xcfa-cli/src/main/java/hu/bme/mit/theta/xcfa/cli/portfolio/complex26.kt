@@ -52,7 +52,6 @@ import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
 import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
 import hu.bme.mit.theta.xcfa.utils.dereferences
-import java.nio.file.Paths
 
 @Suppress("LocalVariableName")
 fun complexPortfolio26(
@@ -100,25 +99,7 @@ fun complexPortfolio26(
                 ),
             ),
         ),
-      outputConfig =
-        OutputConfig(
-          resultFolder = Paths.get("./").toFile(), // cwd
-          cOutputConfig = COutputConfig(disable = true),
-          witnessConfig =
-            WitnessConfig(
-              disable = false,
-              concretizerSolver = "Z3",
-              validateConcretizerSolver = false,
-              inputFileForWitness =
-                portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
-                  ?: portfolioConfig.inputConfig.input,
-            ),
-          argConfig = ArgConfig(disable = true),
-          enableOutput = portfolioConfig.outputConfig.enableOutput,
-          acceptUnreliableSafe = portfolioConfig.outputConfig.acceptUnreliableSafe,
-          xcfaOutputConfig = XcfaOutputConfig(disable = true),
-          chcOutputConfig = ChcOutputConfig(disable = true),
-        ),
+      outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
 

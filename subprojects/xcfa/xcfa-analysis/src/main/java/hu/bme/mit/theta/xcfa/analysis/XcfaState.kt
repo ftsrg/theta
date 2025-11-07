@@ -295,6 +295,13 @@ constructor(
     return copy(processes = nP)
   }
 
+  fun withLocation(pid: Int, loc: XcfaLocation): XcfaState<S> {
+    val nP = processes.toMutableMap()
+    nP[pid] =
+      nP[pid]?.withNewLoc(loc) ?: XcfaProcessState(locs = LinkedList(listOf(loc)), LinkedList())
+    return copy(processes = nP)
+  }
+
   fun withState(s: S): XcfaState<S> {
     return copy(sGlobal = s)
   }
