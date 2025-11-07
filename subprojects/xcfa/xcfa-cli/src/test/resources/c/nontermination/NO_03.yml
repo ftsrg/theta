@@ -10,7 +10,7 @@
       input_files:
         - "NO_03.c"
       input_file_hashes:
-        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/NO_03.c": "57953bf177b77bdcba210d5dce369395d242a617ef951a05d4a0af10ca288ca4"
+        "NO_03.c": "57953bf177b77bdcba210d5dce369395d242a617ef951a05d4a0af10ca288ca4"
       specification: "TERMINATION"
       data_model: "LP64"
       language: "C"
