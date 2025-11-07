@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
@@ -42,9 +44,12 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  * variables (that is, variables assigned only once). Requires the ProcedureBuilder to be
  * `deterministic` (@see DeterministicPass) Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
-class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
+class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if(property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
+      return builder
+    }
     checkNotNull(builder.metaData["deterministic"])
     val unusedLocRemovalPass = UnusedLocRemovalPass()
     var edges = LinkedHashSet(builder.getEdges())

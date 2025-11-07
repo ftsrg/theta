@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferences
@@ -30,13 +32,16 @@ import hu.bme.mit.theta.xcfa.utils.isRead
  * Remove unused variables from the program. Requires the ProcedureBuilder to be `deterministic`
  * (@see DeterministicPass)
  */
-class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
+class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaProperty? = null) : ProcedurePass {
 
   companion object {
     var keepGlobalVariableAccesses = false
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if(property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
+      return builder
+    }
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()
