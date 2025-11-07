@@ -88,5 +88,13 @@ fun getMddChecker(
     passes.add(ReverseMEPass())
   }
 
-  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger, true)
+  return XcfaPipelineChecker(
+    xcfa,
+    config.inputConfig.property.verifiedProperty,
+    parseContext,
+    baseChecker,
+    passes,
+    logger,
+    true,
+  )
 }

@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -53,6 +54,7 @@ import org.kframework.mpfr.BigFloat
 
 abstract class XcfaToMonolithicAdapter(
   model: XCFA,
+  protected val property: ErrorDetection,
   furtherPasses: ProcedurePassManager,
   protected val parseContext: ParseContext,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {

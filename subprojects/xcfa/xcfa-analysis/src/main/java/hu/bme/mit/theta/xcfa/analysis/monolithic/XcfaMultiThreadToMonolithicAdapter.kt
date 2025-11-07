@@ -32,7 +32,6 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
@@ -42,6 +41,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -51,15 +51,16 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
-import kotlin.jvm.optionals.getOrNull
 
 class XcfaMultiThreadToMonolithicAdapter(
   model: XCFA,
+  property: ErrorDetection,
   parseContext: ParseContext,
   private val initValues: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
+    property,
     ProcedurePassManager(
       listOf(
         EliminateSelfLoops(),
@@ -213,16 +214,18 @@ class XcfaMultiThreadToMonolithicAdapter(
               )
             }
             .toList() +
-            (proc.errorLoc.getOrNull()?.let { errorLoc ->
-              listOf(
-                SequenceStmt.of(
-                  listOf(
-                    AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[errorLoc]!!))),
-                    AssignStmt.of(locVar, cast(smtInt(locMap[errorLoc]!!), locVar.type)),
+            if (property != ErrorDetection.TERMINATION && proc.errorLoc.isPresent)
+              proc.errorLoc.get().let { errorLoc ->
+                listOf(
+                  SequenceStmt.of(
+                    listOf(
+                      AssumeStmt.of(Eq(locVar.ref, smtInt(locMap[errorLoc]!!))),
+                      AssignStmt.of(locVar, cast(smtInt(locMap[errorLoc]!!), locVar.type)),
+                    )
                   )
                 )
-              )
-            } ?: emptyList<Stmt>())
+              }
+            else listOf()
         }
 
       val trans = NonDetStmt.of(tranList)
@@ -249,15 +252,19 @@ class XcfaMultiThreadToMonolithicAdapter(
 
       // Build property expression
       val propExpr =
-        threads
-          .map { (thread, proc) ->
-            if (proc.errorLoc.isPresent) {
-              Neq(locVars[thread]!!.ref, smtInt(locs[thread]!![proc.errorLoc.get()]!!))
-            } else {
-              True()
+        if (property == ErrorDetection.TERMINATION) {
+          model.initProcedures[0].first.prop
+        } else {
+          threads
+            .map { (thread, proc) ->
+              if (proc.errorLoc.isPresent) {
+                Neq(locVars[thread]!!.ref, smtInt(locs[thread]!![proc.errorLoc.get()]!!))
+              } else {
+                True()
+              }
             }
-          }
-          .let { And(it) }
+            .let { And(it) }
+        }
 
       // Build monolithic expression
       return MonolithicExpr(

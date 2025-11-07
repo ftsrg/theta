@@ -91,7 +91,14 @@ fun getBoundedChecker(
     passes.add(ReverseMEPass())
   }
 
-  return XcfaPipelineChecker(xcfa, parseContext, baseChecker, passes, logger)
+  return XcfaPipelineChecker(
+    xcfa,
+    config.inputConfig.property.verifiedProperty,
+    parseContext,
+    baseChecker,
+    passes,
+    logger,
+  )
 }
 
 private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {
