@@ -205,7 +205,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 
-  fun terminationViolationWitnessFromConcreteTrace(
+  private fun terminationViolationWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
@@ -298,7 +298,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     )
   }
 
-  fun reachabilityViolationWitnessFromConcreteTrace(
+  private fun reachabilityViolationWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
@@ -333,7 +333,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     )
   }
 
-  fun violationWitnessFromConcreteTrace(
+  private fun violationWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
