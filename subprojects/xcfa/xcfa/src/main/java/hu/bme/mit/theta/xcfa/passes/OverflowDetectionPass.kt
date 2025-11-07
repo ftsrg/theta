@@ -27,7 +27,9 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.frontend.ParseContext
@@ -98,7 +100,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
         val conditions =
           label
             .getExpressions {
-              it !is RefExpr<*> &&
+              (it is AddExpr || it is SubExpr || it is MulExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
                   .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
