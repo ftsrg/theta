@@ -252,14 +252,14 @@ public class XcfaTraceConcretizer {
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
-                    if (flatLabel.getMetadata().isSubstantial()) {
-                        var accesses = collectVarsWithAccessType(sbeTrace.getAction(i).getLabel());
-                        varSoFar.addAll(
-                                accesses.entrySet().stream()
-                                        .filter(it -> isWritten(it.getValue()))
-                                        .map(it -> it.getKey())
-                                        .toList());
-                    }
+                    //                    if (flatLabel.getMetadata().isSubstantial()) {
+                    var accesses = collectVarsWithAccessType(flatLabel);
+                    varSoFar.addAll(
+                            accesses.entrySet().stream()
+                                    .filter(it -> isWritten(it.getValue()))
+                                    .map(it -> it.getKey())
+                                    .toList());
+                    //                    }
                 }
             }
         }

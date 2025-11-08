@@ -77,7 +77,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
 
-    if (property.verifiedProperty != ErrorDetection.OVERFLOW) {
+    if (property.inputProperty != ErrorDetection.OVERFLOW) {
       return builder
     }
 

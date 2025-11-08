@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -69,7 +70,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaP
         )
         if (isOverflow) {
           for (label in edge.getFlatLabels()) {
-            if (label is StmtLabel && label.stmt is AssignStmt<*> && label.stmt.expr.ops.size > 1) {
+            if (label is StmtLabel && label.stmt is AssignStmt<*> && label.stmt.expr !is RefExpr) {
               usedVars.add(label.stmt.varDecl)
             }
           }

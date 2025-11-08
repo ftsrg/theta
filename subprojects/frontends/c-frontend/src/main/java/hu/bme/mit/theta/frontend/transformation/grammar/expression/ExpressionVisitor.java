@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Reference;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.getSmallestCommonType;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -180,8 +181,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -212,8 +212,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -244,8 +243,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<BvType>> collect =
                     exprs.stream()
                             .map(
@@ -275,7 +273,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.relationalExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -312,7 +310,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.shiftExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -357,7 +355,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             //noinspection unchecked
             Expr<BvType> expr = (Expr<BvType>) accept;
             CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(
+                    getSmallestCommonType(
                             List.of(CComplexType.getType(accept, parseContext)), parseContext);
             checkState(smallestCommonType.getSmtType() instanceof BvType);
             for (int i = 1; i < ctx.additiveExpression().size(); ++i) {
@@ -402,8 +400,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
-            CComplexType smallestCommonType =
-                    CComplexType.getSmallestCommonType(types, parseContext);
+            CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
                 parseContext
@@ -437,7 +434,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else leftOp = expr;
                 rightOp = ctx.castExpression(i + 1).accept(this);
                 CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(
+                        getSmallestCommonType(
                                 List.of(
                                         CComplexType.getType(leftOp, parseContext),
                                         CComplexType.getType(rightOp, parseContext)),
@@ -641,58 +638,53 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitUnaryExpressionCast(CParser.UnaryExpressionCastContext ctx) {
-        Expr<?> accept = ctx.castExpression().accept(this);
-        CComplexType type;
+        Expr<?> originalOperand = ctx.castExpression().accept(this);
+        CComplexType type = CComplexType.getType(originalOperand, parseContext);
+        type = getSmallestCommonType(List.of(type), parseContext);
+        Expr<?> promotedOperand = type.castTo(originalOperand);
+        parseContext.getMetadata().create(promotedOperand, "cType", type);
         switch (ctx.unaryOperator().getText()) {
             case "-":
                 {
-                    Expr<?> negExpr = AbstractExprs.Neg(accept);
-                    type = CComplexType.getType(accept, parseContext);
-                    parseContext.getMetadata().create(negExpr, "cType", type);
-                    negExpr = type.castTo(negExpr);
+                    Expr<?> negExpr = AbstractExprs.Neg(promotedOperand);
                     parseContext.getMetadata().create(negExpr, "cType", type);
                     return negExpr;
                 }
             case "+":
-                return accept; // no need to update type, it remains the same
+                return promotedOperand; // no need to update type, it remains the same
             case "!":
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                accept =
+                promotedOperand =
                         Ite(
                                 Eq(
-                                        accept,
-                                        CComplexType.getType(accept, parseContext).getNullValue()),
+                                        promotedOperand,
+                                        CComplexType.getType(promotedOperand, parseContext)
+                                                .getNullValue()),
                                 signedInt.getUnitValue(),
                                 signedInt.getNullValue());
-                parseContext.getMetadata().create(accept, "cType", signedInt);
-                return accept;
+                parseContext.getMetadata().create(promotedOperand, "cType", signedInt);
+                return promotedOperand;
             case "~":
-                type = CComplexType.getType(accept, parseContext);
-                CComplexType smallestCommonType =
-                        CComplexType.getSmallestCommonType(List.of(type), parseContext);
-                checkState(accept.getType() instanceof BvType);
-                accept = smallestCommonType.castTo(accept);
                 //noinspection unchecked
-                Expr<?> expr = BvExprs.Not((Expr<BvType>) accept);
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
-                expr = smallestCommonType.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
+                Expr<?> expr = BvExprs.Not((Expr<BvType>) promotedOperand);
+                parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
-                final Expr<?> localAccept = accept;
                 checkState(
-                        localAccept instanceof RefExpr<?>
-                                && ((RefExpr<?>) localAccept).getDecl() instanceof VarDecl,
+                        originalOperand instanceof RefExpr<?>
+                                && ((RefExpr<?>) originalOperand).getDecl() instanceof VarDecl,
                         "Referencing non-variable expressions is not allowed!");
-                return reference((RefExpr<?>) localAccept);
+                return reference((RefExpr<?>) originalOperand);
             case "*":
-                type = CComplexType.getType(accept, parseContext);
+                type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
                 else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
                 return dereference(
-                        accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type);
+                        originalOperand,
+                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
+                        type);
         }
-        return accept;
+        return originalOperand;
     }
 
     @SuppressWarnings("unchecked")
