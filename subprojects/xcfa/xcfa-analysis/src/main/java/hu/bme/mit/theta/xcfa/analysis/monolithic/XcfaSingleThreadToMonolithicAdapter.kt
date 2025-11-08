@@ -57,13 +57,14 @@ class XcfaSingleThreadToMonolithicAdapter(
   model: XCFA,
   property: ErrorDetection,
   parseContext: ParseContext,
-  private val initValues: Boolean = false,
+  initValues: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
     property,
     ProcedurePassManager(listOf(DereferenceToArrayPass())),
     parseContext,
+    initValues,
   ) {
 
   private lateinit var locVar: VarDecl<Type>

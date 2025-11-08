@@ -56,7 +56,7 @@ class XcfaMultiThreadToMonolithicAdapter(
   model: XCFA,
   property: ErrorDetection,
   parseContext: ParseContext,
-  private val initValues: Boolean = false,
+  initValues: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
@@ -72,6 +72,7 @@ class XcfaMultiThreadToMonolithicAdapter(
       )
     ),
     parseContext,
+    initValues,
   ) {
 
   private lateinit var locVars: Map<StartLabel?, VarDecl<Type>>

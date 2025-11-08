@@ -57,6 +57,7 @@ abstract class XcfaToMonolithicAdapter(
   protected val property: ErrorDetection,
   furtherPasses: ProcedurePassManager,
   protected val parseContext: ParseContext,
+  protected val initValues: Boolean,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
   override val model: XCFA = model.optimizeFurther(furtherPasses)
