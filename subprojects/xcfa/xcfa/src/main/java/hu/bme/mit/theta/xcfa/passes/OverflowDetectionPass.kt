@@ -188,7 +188,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
       newEdges.forEach(builder::addEdge)
     }
 
-    return builder
+    return SimplifyExprsPass(parseContext, property).run(builder)
   }
 }
 
