@@ -806,13 +806,22 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = new BigInteger(text, 10);
             }
 
+            final var size = bigInteger.bitLength();
+
+            CComplexType unsignedLongLong = CComplexType.getUnsignedLongLong(parseContext);
+            CComplexType signedLongLong = CComplexType.getSignedLongLong(parseContext);
+            CComplexType unsignedLong = CComplexType.getUnsignedLong(parseContext);
+            CComplexType signedLong = CComplexType.getSignedLong(parseContext);
+            CComplexType unsignedInt = CComplexType.getUnsignedInt(parseContext);
+            CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+
             CComplexType type;
-            if (isLongLong && isUnsigned) type = CComplexType.getUnsignedLongLong(parseContext);
-            else if (isLongLong) type = CComplexType.getSignedLongLong(parseContext);
-            else if (isLong && isUnsigned) type = CComplexType.getUnsignedLong(parseContext);
-            else if (isLong) type = CComplexType.getSignedLong(parseContext);
-            else if (isUnsigned) type = CComplexType.getUnsignedInt(parseContext);
-            else type = CComplexType.getSignedInt(parseContext);
+            if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
+            else if (isLongLong || size >= signedLong.width()) type = signedLongLong;
+            else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
+            else if (isLong || size >= signedInt.width()) type = signedLong;
+            else if (isUnsigned) type = unsignedInt;
+            else type = signedInt;
 
             LitExpr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
