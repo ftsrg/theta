@@ -42,7 +42,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaP
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val isOverflow = property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false
+    val isOverflow = property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false
     checkNotNull(builder.metaData["deterministic"])
 
     val usedVars = LinkedHashSet<VarDecl<*>>()

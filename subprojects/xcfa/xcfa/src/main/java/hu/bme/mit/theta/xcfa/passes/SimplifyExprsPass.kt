@@ -48,7 +48,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
   ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (property?.inputProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
+    if (property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
       return builder
     }
     checkNotNull(builder.metaData["deterministic"])
