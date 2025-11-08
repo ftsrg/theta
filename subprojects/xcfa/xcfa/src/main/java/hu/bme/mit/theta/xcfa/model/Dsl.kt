@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
@@ -156,6 +157,19 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     infix fun VarDecl<*>.assign(to: Expr<*>): SequenceLabel {
       val rhs: Expr<Type> = to as Expr<Type>
       val label = StmtLabel(Assign(this as VarDecl<Type>, rhs))
+      labelList.add(label)
+      return SequenceLabel(labelList)
+    }
+
+    infix fun String.memassign(to: String): SequenceLabel {
+      val lhs: Dereference<Type, Type, Type> =
+        this@XcfaProcedureBuilderContext.builder.parse(this) as Dereference<Type, Type, Type>
+      val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
+      return lhs memassign rhs
+    }
+
+    infix fun Dereference<*, *, *>.memassign(to: Expr<*>): SequenceLabel {
+      val label = StmtLabel(MemoryAssign(this as Dereference<Type, Type, Type>, to as Expr<Type>))
       labelList.add(label)
       return SequenceLabel(labelList)
     }
