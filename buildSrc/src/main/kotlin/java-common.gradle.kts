@@ -13,6 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     java
     id("jacoco-common")
@@ -55,8 +60,17 @@ tasks {
         enableAssertions = true
     }
 
-    named("jacocoTestReport") {
+    named<JacocoReport>("jacocoTestReport") {
         dependsOn(named("test"))
+        
+        // Include source and class directories from all subprojects to capture cross-project coverage
+        rootProject.subprojects.forEach { subproject ->
+            subproject.plugins.withType<JavaPlugin> {
+                val sourceSets = subproject.extensions.getByType<SourceSetContainer>()
+                additionalSourceDirs.from(sourceSets.getByName("main").allSource.srcDirs)
+                additionalClassDirs.from(sourceSets.getByName("main").output)
+            }
+        }
     }
 
     withType<Test> {
