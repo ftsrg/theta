@@ -189,13 +189,13 @@ private fun parseC(
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
-      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger).first
+      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
       if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
-        val xcfa = getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger).first
+        val xcfa = getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
