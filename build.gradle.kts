@@ -14,6 +14,10 @@
  *  limitations under the License.
  */
 
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+
 plugins {
     base
     id("jacoco-common")
@@ -36,7 +40,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "6.24.1"
+    version = "6.24.2"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -70,18 +74,34 @@ tasks {
             csv.required.set(false)
         }
 
-        val reportTasks = subprojects.mapNotNull { subproject ->
-            subproject.tasks.findByName("jacocoTestReport")?.let { it as JacocoReport }
+        // Collect all test tasks from all subprojects to gather execution data
+        val allTestTasks = subprojects.flatMap { subproject ->
+            subproject.tasks.withType<Test>()
         }
 
-        dependsOn(reportTasks.flatMap { it.dependsOn })
+        // Depend on all test tasks to ensure they run before generating the report
+        dependsOn(allTestTasks)
 
-        sourceDirectories.setFrom(files(reportTasks.map { it.allSourceDirs }))
-        classDirectories.setFrom(files(reportTasks.map { it.allClassDirs }))
-        val allExecutionData = files(reportTasks.map { it.executionData })
-        // We only set executionData for declaring dependencies during task graph construction,
-        // subprojects without tests will be filtered out in doFirst.
-        executionData.setFrom(allExecutionData.filter { it.exists() })
+        // Collect all source directories from all subprojects
+        val allSourceDirs = subprojects.flatMap { subproject ->
+            subproject.extensions.findByType<SourceSetContainer>()
+                ?.getByName("main")?.allSource?.srcDirs ?: emptySet()
+        }
+
+        // Collect all class directories from all subprojects
+        val allClassDirs = subprojects.flatMap { subproject ->
+            subproject.extensions.findByType<SourceSetContainer>()
+                ?.getByName("main")?.output?.classesDirs?.files ?: emptySet()
+        }
+
+        // Collect all execution data files from all test tasks
+        val allExecutionData = allTestTasks.map { task ->
+            task.extensions.getByType<JacocoTaskExtension>().destinationFile
+        }
+
+        sourceDirectories.setFrom(files(allSourceDirs))
+        classDirectories.setFrom(files(allClassDirs))
+        executionData.setFrom(files(allExecutionData).filter { it?.exists() == true })
     }
 
     // Dummy test task for generating coverage report after ./gradlew test and ./gradlew check.
