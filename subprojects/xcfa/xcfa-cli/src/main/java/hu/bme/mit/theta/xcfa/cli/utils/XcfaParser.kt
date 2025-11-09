@@ -195,7 +195,8 @@ private fun parseC(
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
-        val xcfa = getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+        val xcfa =
+          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
