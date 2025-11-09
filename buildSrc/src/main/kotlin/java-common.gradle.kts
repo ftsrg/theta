@@ -64,13 +64,28 @@ tasks {
         dependsOn(named("test"))
         
         // Include source and class directories from all subprojects to capture cross-project coverage
+        // Exclude generated sources (build/generated-src) and generated packages with .dsl.gen suffix
         rootProject.subprojects.forEach { subproject ->
             subproject.plugins.withType<JavaPlugin> {
                 val sourceSets = subproject.extensions.getByType<SourceSetContainer>()
-                additionalSourceDirs.from(sourceSets.getByName("main").allSource.srcDirs)
-                additionalClassDirs.from(sourceSets.getByName("main").output)
+                additionalSourceDirs.from(sourceSets.getByName("main").allSource.srcDirs.filter {
+                    !it.path.contains("build/generated-src")
+                })
+                additionalClassDirs.from(files(sourceSets.getByName("main").output).asFileTree.matching {
+                    exclude("**/dsl/gen/**")
+                })
             }
         }
+        
+        // Also exclude from the main source and class directories
+        sourceDirectories.setFrom(files(sourceDirectories.files.filter {
+            !it.path.contains("build/generated-src")
+        }))
+        classDirectories.setFrom(files(classDirectories.files.map {
+            fileTree(it) {
+                exclude("**/dsl/gen/**")
+            }
+        }))
     }
 
     withType<Test> {

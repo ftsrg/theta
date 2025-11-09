@@ -65,7 +65,7 @@ tasks {
         description = "Generates merged code coverage report for all test tasks."
 
         reports {
-            html.required.set(false)
+            html.required.set(true)
             xml.required.set(true)
             csv.required.set(false)
         }
