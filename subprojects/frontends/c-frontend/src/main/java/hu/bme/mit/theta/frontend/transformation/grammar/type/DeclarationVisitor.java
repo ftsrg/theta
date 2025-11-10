@@ -92,15 +92,22 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                 CDeclaration declaration = context.declarator().accept(this);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
-                    if (context.initializer().initializerList() != null) {
+                    if (context.initializer().bracedPrimaryExpression() != null) {
                         checkState(
-                                context.initializer().initializerList().designation().size() == 0,
+                                context.initializer()
+                                        .bracedPrimaryExpression()
+                                        .initializerList()
+                                        .designation()
+                                        .isEmpty(),
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList =
                                 new CInitializerList(cSimpleType.getActualType(), parseContext);
                         try {
                             for (CParser.InitializerContext initializer :
-                                    context.initializer().initializerList().initializers) {
+                                    context.initializer()
+                                            .bracedPrimaryExpression()
+                                            .initializerList()
+                                            .initializers) {
                                 Expr<?> expr =
                                         cSimpleType
                                                 .getActualType()

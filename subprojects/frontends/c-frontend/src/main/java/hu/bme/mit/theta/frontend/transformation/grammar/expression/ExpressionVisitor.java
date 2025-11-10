@@ -848,8 +848,17 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         }
     }
 
+    @Override
+    public Expr<?> visitPrimaryExpressionCompoundStatement(
+            PrimaryExpressionCompoundStatementContext ctx) {
+        throw new UnsupportedFrontendElementException("Compound statement in primary expression");
+    }
 
-
+    @Override
+    public Expr<?> visitPrimaryExpressionTypeInitializer(
+            PrimaryExpressionTypeInitializerContext ctx) {
+        throw new UnsupportedFrontendElementException("Type initializer in primary expression");
+    }
 
     private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
         var assignments = ctx.expression().assignmentExpression();

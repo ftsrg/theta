@@ -184,12 +184,12 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     private CSimpleType createCType(
             List<CastDeclarationSpecifierContext> spec1list, TypeSpecifierPointerContext spec2) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();
-      if (spec2 != null) { //deliberately first!
-        CSimpleType ctype = spec2.accept(this);
-        if (ctype != null) {
-          cSimpleTypes.add(ctype);
+        if (spec2 != null) { // deliberately first!
+            CSimpleType ctype = spec2.accept(this);
+            if (ctype != null) {
+                cSimpleTypes.add(ctype);
+            }
         }
-      }
         for (CastDeclarationSpecifierContext declarationSpecifierContext : spec1list) {
             for (ParseTree child : declarationSpecifierContext.children) {
                 CSimpleType ctype = child.accept(this);
@@ -198,7 +198,6 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 }
             }
         }
-
 
         return mergeCTypes(cSimpleTypes);
     }
@@ -319,7 +318,10 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierPointer(CParser.TypeSpecifierPointerContext ctx) {
-        CSimpleType subtype = ctx.typeSpecifier() == null ? NamedType("", parseContext, uniqueWarningLogger) : ctx.typeSpecifier().accept(this);
+        CSimpleType subtype =
+                ctx.typeSpecifier() == null
+                        ? NamedType("", parseContext, uniqueWarningLogger)
+                        : ctx.typeSpecifier().accept(this);
         if (subtype == null) {
             return null;
         }
