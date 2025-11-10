@@ -492,7 +492,7 @@ statement
     |   selectionStatement
     |   iterationStatement
     |   jumpStatement ';'
-    |   ('__asm' | '__asm__' | 'asm' ) ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (('[' Identifier ']')? logicalOrExpression (',' ('[' Identifier ']')? logicalOrExpression)*)?)* ')' ';'
+    |   ('__asm' | '__asm__' | 'asm' ) ('volatile' | '__volatile__')? '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (('[' Identifier ']')? logicalOrExpression (',' ('[' Identifier ']')? logicalOrExpression)*)?)* ')' ';'
     ;
 
 labeledStatement
