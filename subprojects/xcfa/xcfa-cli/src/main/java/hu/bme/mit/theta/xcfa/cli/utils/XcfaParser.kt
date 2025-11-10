@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlList
+import com.charleskorn.kaml.YamlMap
+import com.charleskorn.kaml.YamlNode
+import com.charleskorn.kaml.YamlScalar
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
@@ -39,6 +44,7 @@ import java.io.FileInputStream
 import java.io.FileReader
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
+import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.exitProcess
 import org.antlr.v4.runtime.CharStreams
@@ -148,6 +154,38 @@ private fun parseC(
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
+  val input =
+    if (input.name.endsWith(".yml")) {
+      try {
+        val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
+        if (parsedYaml is YamlMap) {
+          when (val files = parsedYaml.get<YamlNode>("input_files")) {
+            is YamlList -> {
+              val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
+              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              inputFile
+            }
+            is YamlScalar -> {
+              val inputFile = Path(input.parent).resolve(files.content).toFile()
+              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              inputFile
+            }
+            else -> {
+              logger.info("Unexpected yml content: $files")
+              input
+            }
+          }
+        } else {
+          logger.info("Unexpected yml content: $parsedYaml")
+          input
+        }
+      } catch (ex: Exception) {
+        logger.info("Could not parse YAML data: ${ex.message}")
+        input
+      }
+    } else {
+      input
+    }
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
