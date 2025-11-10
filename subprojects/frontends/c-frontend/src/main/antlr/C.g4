@@ -116,7 +116,7 @@ unaryExpressionCast
     :   unaryOperator castExpression
     ;
 unaryExpressionSizeOrAlignOf
-    :   ('sizeof' | '_Alignof') '(' (typeName | expression) ')'
+    :   ('sizeof' | '_Alignof' | '__alignof__') '(' (typeName | expression) ')'
     ;
 //unaryExpressionAddressof
 //    :   '&&' Identifier
