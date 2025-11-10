@@ -542,9 +542,9 @@ class PassTests {
         PassTestData(
           global = {
             global(
-              "__arrays_Int_Int_Int",
+              "__arrays_Int_Int_Int_false",
               ArrayType.of(Int(), ArrayType.of(Int(), Int())),
-              "(array (default (array (default 0))))",
+              null,
               true,
             )
           },
@@ -555,10 +555,10 @@ class PassTests {
           },
           output = {
             (init to "L1") {
-              "__arrays_Int_Int_Int" assign
-                "(write __arrays_Int_Int_Int 1 (write (read __arrays_Int_Int_Int 1) 0 42))"
+              "__arrays_Int_Int_Int_false" assign
+                "(write __arrays_Int_Int_Int_false 1 (write (read __arrays_Int_Int_Int_false 1) 0 42))"
             }
-            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int 1) 0) 42)") }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_false 1) 0) 42)") }
           },
         ),
       )

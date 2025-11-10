@@ -49,12 +49,14 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
     return varDecl
   }
 
-  fun global(name: String, type: Type, initValue: String, atomic: Boolean): VarDecl<Type> {
+  fun global(name: String, type: Type, initValue: String?, atomic: Boolean): VarDecl<Type> {
     val varDecl = Var(name, type)
     builder.addVar(
       XcfaGlobalVar(
         varDecl,
-        ExpressionWrapper(SimpleScope(SymbolTable()), initValue).instantiate(Env()) as LitExpr<*>,
+        initValue?.let {
+          ExpressionWrapper(SimpleScope(SymbolTable()), it).instantiate(Env()) as LitExpr<*>
+        },
         local,
         atomic,
       )

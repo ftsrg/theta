@@ -82,8 +82,8 @@ class DereferenceToArrayPass : ProcedurePass {
         }
     return cast(
       arraysByType.getOrPut(Tuple4.of(array.type, offset.type, type, isGlobal)) {
-        val decl = Decls.Var("__arrays_${array.type}_${offset.type}_${type}", arrayType)
-        val initLabel =
+        val decl = Decls.Var("__arrays_${array.type}_${offset.type}_${type}_${isGlobal}", arrayType)
+        val (globalDecl, initLabel) =
           if (isGlobal) {
             val defaultValue =
               ArrayLitExpr.of(
@@ -91,11 +91,11 @@ class DereferenceToArrayPass : ProcedurePass {
                 cast(arrayType.elemType.defaultValue, arrayType.elemType),
                 arrayType,
               )
-            xcfa.addVar(XcfaGlobalVar(decl, defaultValue, atomic = true))
-            AssignStmtLabel(decl, defaultValue)
+            XcfaGlobalVar(decl, defaultValue, atomic = true) to AssignStmtLabel(decl, defaultValue)
           } else {
-            StmtLabel(HavocStmt.of(decl))
+            XcfaGlobalVar(decl, atomic = true) to StmtLabel(HavocStmt.of(decl))
           }
+        xcfa.addVar(globalDecl)
         xcfa.getInitProcedures().forEach { (procedure, _) ->
           procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
             procedure.removeEdge(edge)
