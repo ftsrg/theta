@@ -561,6 +561,31 @@ class PassTests {
             ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_false 1) 0) 42)") }
           },
         ),
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            global(
+              "__arrays_Int_Int_Int_true",
+              ArrayType.of(Int(), ArrayType.of(Int(), Int())),
+              "(array (default (array (default 0))))",
+              true,
+            )
+          },
+          passes = listOf(DereferenceToArrayPass()),
+          input = {
+            "y" type Int()
+            (init to "L1") { "(deref x y Int)" memassign "42" }
+            ("L1" to final) { assume("(= (deref x y Int) 42)") }
+          },
+          output = {
+            "y" type Int()
+            (init to "L1") {
+              "__arrays_Int_Int_Int_true" assign
+                "(write __arrays_Int_Int_Int_true x (write (read __arrays_Int_Int_Int_true x) y 42))"
+            }
+            ("L1" to final) { assume("(= (read (read __arrays_Int_Int_Int_true x) y) 42)") }
+          },
+        ),
       )
   }
 
