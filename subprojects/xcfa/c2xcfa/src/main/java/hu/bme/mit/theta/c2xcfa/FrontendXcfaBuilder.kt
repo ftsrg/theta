@@ -23,7 +23,6 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
@@ -57,10 +56,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
-import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
@@ -74,11 +71,6 @@ class FrontendXcfaBuilder(
   val property: XcfaProperty,
   val uniqueWarningLogger: Logger,
 ) : CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
-
-  private val checkOverflow: Boolean =
-    (property.inputProperty == ErrorDetection.OVERFLOW).also {
-      if (it) property.transformSpecification(ErrorDetection.NO_ERROR)
-    }
 
   private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
   private var ptrCnt = 1 // counts up, uses 3k+1
@@ -403,44 +395,8 @@ class FrontendXcfaBuilder(
         }
       }
 
-    val lhs = (label.stmt as? AssignStmt<*>)?.varDecl
-    val type = lhs?.let { CComplexType.getType(it.ref, parseContext) }
-
-    if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
-      xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
-      builder.addEdge(xcfaEdge)
-    } else {
-      lhs!!
-      val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
-      val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
-      xcfaEdge = XcfaEdge(initLoc, middleLoc1, label, metadata = getMetadata(statement))
-      builder.addEdge(xcfaEdge)
-
-      xcfaEdge =
-        XcfaEdge(
-          middleLoc1,
-          location,
-          StmtLabel(type.limit(lhs.ref), metadata = getMetadata(statement)),
-          metadata = getMetadata(statement),
-        )
-      builder.addEdge(xcfaEdge)
-      xcfaEdge =
-        XcfaEdge(
-          middleLoc1,
-          middleLoc2,
-          StmtLabel(Assume(Not(type.limit(lhs.ref).cond)), metadata = getMetadata(statement)),
-          metadata = getMetadata(statement),
-        )
-      builder.addEdge(xcfaEdge)
-      xcfaEdge =
-        XcfaEdge(
-          middleLoc2,
-          location,
-          InvokeLabel("overflow", listOf(), metadata = getMetadata(statement)),
-          metadata = getMetadata(statement),
-        )
-      builder.addEdge(xcfaEdge)
-    }
+    xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
+    builder.addEdge(xcfaEdge)
     return location
   }
 

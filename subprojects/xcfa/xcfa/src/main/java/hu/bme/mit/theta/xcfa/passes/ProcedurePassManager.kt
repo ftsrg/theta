@@ -49,7 +49,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
       // optimizing
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, property),
       LoopUnrollPass(),
       EmptyEdgeRemovalPass(),
     ),
@@ -64,7 +64,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(
       EmptyEdgeRemovalPass(),
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
@@ -81,11 +81,12 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       HavocPromotionAndRange(parseContext),
       DataRaceToReachabilityPass(property),
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(uniqueWarningLogger, property),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),
+    listOf(OverflowDetectionPass(property, parseContext)),
   )
 
 class NontermValidationPasses(
@@ -124,7 +125,7 @@ class NontermValidationPasses(
       NondetFunctionPass(),
       HavocPromotionAndRange(parseContext),
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger),
+      UnusedVarPass(uniqueWarningLogger, property),
       UnusedLocRemovalPass(),
     ),
     //        listOf(FetchExecuteWriteback(parseContext)),

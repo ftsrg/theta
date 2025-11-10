@@ -891,7 +891,7 @@ fun complexPortfolio26(
                 LbePass(parseContext, LBE_LOCAL),
                 NormalizePass(),
                 DeterministicPass(),
-                UnusedVarPass(logger),
+                UnusedVarPass(logger, portfolioConfig.inputConfig.property),
                 EmptyEdgeRemovalPass(),
                 UnusedLocRemovalPass(),
               )
