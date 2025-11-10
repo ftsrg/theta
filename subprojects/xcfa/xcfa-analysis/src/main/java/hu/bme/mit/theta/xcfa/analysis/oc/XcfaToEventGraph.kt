@@ -239,7 +239,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         )
 
         if (current.loc.error) {
-          val errorGuard = Or(current.lastEvents.map { it.guard.toAnd() })
+          val errorGuard = Or(current.guards.map { it.toAnd() })
           violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
           continue
         }
