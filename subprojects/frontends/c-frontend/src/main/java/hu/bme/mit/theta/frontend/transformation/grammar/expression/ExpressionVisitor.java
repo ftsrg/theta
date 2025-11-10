@@ -851,13 +851,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitPrimaryExpressionCompoundStatement(
             PrimaryExpressionCompoundStatementContext ctx) {
-        throw new UnsupportedFrontendElementException("Compound statement in primary expression");
+        uniqueWarningLogger.info("Primary expression compound statement");
+        return null;
     }
 
     @Override
     public Expr<?> visitPrimaryExpressionTypeInitializer(
             PrimaryExpressionTypeInitializerContext ctx) {
-        throw new UnsupportedFrontendElementException("Type initializer in primary expression");
+        uniqueWarningLogger.info("Primary expression type initializer");
+        return null;
     }
 
     private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
