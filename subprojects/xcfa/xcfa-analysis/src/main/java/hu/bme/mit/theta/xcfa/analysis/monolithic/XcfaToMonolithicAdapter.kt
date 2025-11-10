@@ -60,6 +60,12 @@ abstract class XcfaToMonolithicAdapter(
   protected val initValues: Boolean,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
+  init {
+    check(property in listOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.TERMINATION)) {
+      "Unsupported property for monolithic conversion: $property"
+    }
+  }
+
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
