@@ -848,6 +848,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         }
     }
 
+
+
+
     private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
         var assignments = ctx.expression().assignmentExpression();
         var assignment = assignments.get(assignments.size() - 1);
