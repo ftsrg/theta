@@ -269,12 +269,12 @@ typeSpecifier
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
     |   '__typeof__' '(' constantExpression ')'                     # typeSpecifierTypeof
-    |   typeSpecifier '(' '*' ')' '(' parameterTypeList?  ')'       # typeSpecifierFunctionPointer
+    |   typeSpecifier '*'? '(' '*' ')' '(' parameterTypeList?  ')'       # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
 
 typeSpecifierPointer
-    :   typeSpecifier pointer
+    :   typeSpecifier? pointer
     ;
 
 structOrUnionSpecifier
@@ -288,7 +288,7 @@ structOrUnion
     ;
 
 structDeclarationList
-    :   structDeclaration+
+    :   structDeclaration*
     ;
 
 structDeclaration
@@ -374,8 +374,12 @@ directDeclarator
     ;
 
 gccDeclaratorExtension
-    :   ('__asm' | '__asm__') '(' StringLiteral+ ')'
+    :   inlineAssembly
     |   gccAttributeSpecifier
+    ;
+
+inlineAssembly
+    :   ('__asm' | '__asm__') Volatile? '(' StringLiteral+ .*? ')'
     ;
 
 gccAttributeSpecifier
@@ -482,7 +486,7 @@ statement
     |   selectionStatement
     |   iterationStatement
     |   jumpStatement ';'
-//    |   ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (logicalOrExpression (',' logicalOrExpression)*)?)* ')' ';'
+    |   ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (('[' Identifier ']')? logicalOrExpression (',' ('[' Identifier ']')? logicalOrExpression)*)?)* ')' ';'
     ;
 
 labeledStatement
