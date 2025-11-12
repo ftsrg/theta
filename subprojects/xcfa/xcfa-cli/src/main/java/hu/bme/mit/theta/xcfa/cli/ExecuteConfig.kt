@@ -301,10 +301,12 @@ private fun backend(
             checker.check()
           }
           .let ResultMapper@{ result ->
-            result as SafetyResult<*, *>
             when {
-              result.isSafe && xcfa?.unsafeUnrollUsed ?: false -> {
+              result.isSafe &&
+                (xcfa?.unsafeUnrollUsed ?: false) &&
+                !config.outputConfig.acceptUnreliableSafe -> {
                 // cannot report safe if force unroll was used
+                logger.result("Analysis result: $result")
                 logger.result("Incomplete loop unroll used: safe result is unreliable.")
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
@@ -325,9 +327,7 @@ private fun backend(
                 result
               }
 
-              else -> {
-                result
-              }
+              else -> result
             }
           }
 

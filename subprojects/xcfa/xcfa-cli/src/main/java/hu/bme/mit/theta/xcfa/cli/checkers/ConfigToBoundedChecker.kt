@@ -98,6 +98,7 @@ fun getBoundedChecker(
     baseChecker,
     passes,
     logger,
+    config.outputConfig.acceptUnreliableSafe,
   )
 }
 

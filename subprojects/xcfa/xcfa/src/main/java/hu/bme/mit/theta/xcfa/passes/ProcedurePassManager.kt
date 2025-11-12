@@ -158,13 +158,3 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
   )
 
 class LitmusPasses : ProcedurePassManager()
-
-class OcExtraPasses :
-  ProcedurePassManager(
-    listOf(
-      AssumeFalseRemovalPass(),
-      MutexToVarPass(),
-      AtomicReadsOneWritePass(),
-      LoopUnrollPass(2), // force loop unroll for BMC
-    )
-  )

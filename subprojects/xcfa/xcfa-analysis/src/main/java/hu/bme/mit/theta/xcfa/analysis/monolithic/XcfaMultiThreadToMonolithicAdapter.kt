@@ -59,12 +59,14 @@ class XcfaMultiThreadToMonolithicAdapter(
   property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
+  forceUnroll: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
     property,
     ProcedurePassManager(
       listOfNotNull(
+        if (forceUnroll) LoopUnrollPass(2) else null,
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)
@@ -80,6 +82,8 @@ class XcfaMultiThreadToMonolithicAdapter(
     initValues,
   ) {
 
+  // use model of super class in init expressions since it is optimized further
+  private val threads = super.model.staticThreadProcedureMap
   private lateinit var locVars: Map<StartLabel?, VarDecl<Type>>
   private val edgeVar = Decls.Var("__edge_", intType)
   private lateinit var locs: Map<StartLabel?, Map<XcfaLocation, Int>>
@@ -91,7 +95,6 @@ class XcfaMultiThreadToMonolithicAdapter(
     get() {
       // Collect static thread-procedure mapping
       Preconditions.checkArgument(model.initProcedures.size == 1)
-      val threads = model.staticThreadProcedureMap
       val anyAtomicBlock =
         threads.values.any { proc ->
           proc.edges.any { edge -> edge.getFlatLabels().any { it is AtomicFenceLabel } }

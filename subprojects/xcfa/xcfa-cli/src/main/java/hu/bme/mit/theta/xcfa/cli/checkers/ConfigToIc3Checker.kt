@@ -83,5 +83,6 @@ fun getIc3Checker(
     baseChecker,
     passes,
     logger,
+    config.outputConfig.acceptUnreliableSafe,
   )
 }

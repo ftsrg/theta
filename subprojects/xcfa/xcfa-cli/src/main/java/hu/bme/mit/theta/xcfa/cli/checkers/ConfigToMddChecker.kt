@@ -95,6 +95,7 @@ fun getMddChecker(
     baseChecker,
     passes,
     logger,
+    config.outputConfig.acceptUnreliableSafe,
     true,
   )
 }

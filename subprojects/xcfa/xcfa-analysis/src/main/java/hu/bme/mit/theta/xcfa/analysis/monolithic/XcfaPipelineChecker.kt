@@ -15,9 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.monolithic
 
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
@@ -26,6 +29,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.LitExpr
@@ -47,7 +51,8 @@ constructor(
   parseContext: ParseContext,
   checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
-  logger: Logger = NullLogger.getInstance(),
+  private val logger: Logger = NullLogger.getInstance(),
+  private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
 ) :
   FormalismPipelineChecker<
@@ -58,12 +63,37 @@ constructor(
     LocationInvariants,
   >(
     if (parseContext.multiThreading) {
-      XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+      try {
+        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+      } catch (e: IllegalStateException) {
+        if (
+          "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop" in
+            (e.message ?: "")
+        ) {
+          logger.info(
+            "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
+          )
+          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
+        } else throw e
+      }
     } else {
       XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
-  )
+  ) {
+
+  override fun check(
+    input: UnitPrec?
+  ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>> =
+    super.check(input).also {
+      logger.mainStep("XcfaPipelineChecker result: $it")
+      if (it.isSafe && modelAdapter.model.unsafeUnrollUsed && !acceptUnreliableSafe) {
+        logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+        logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
+        throw NotSolvableException()
+      }
+    }
+}
 
 internal val LitExpr<*>.value: Int
   get() =
