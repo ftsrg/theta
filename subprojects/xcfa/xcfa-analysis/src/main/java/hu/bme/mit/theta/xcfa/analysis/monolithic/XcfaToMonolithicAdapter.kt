@@ -42,7 +42,9 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -54,21 +56,21 @@ import org.kframework.mpfr.BigFloat
 
 abstract class XcfaToMonolithicAdapter(
   model: XCFA,
-  protected val property: ErrorDetection,
+  protected val property: XcfaProperty,
   furtherPasses: ProcedurePassManager,
   protected val parseContext: ParseContext,
   protected val initValues: Boolean,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
-  init {
-    check(property in listOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.TERMINATION)) {
-      "Unsupported property for monolithic conversion: $property"
-    }
-  }
-
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
+
+  init {
+    check(property.verifiedProperty in listOf(ERROR_LOCATION, TERMINATION)) {
+      "Unsupported property for monolithic conversion: ${property.verifiedProperty}"
+    }
+  }
 
   protected fun smtInt(value: Int): LitExpr<*> =
     when (intType) {

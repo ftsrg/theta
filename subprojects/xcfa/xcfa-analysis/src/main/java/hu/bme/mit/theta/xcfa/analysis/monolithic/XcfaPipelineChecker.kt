@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -43,7 +43,7 @@ class XcfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
 constructor(
   xcfa: XCFA,
-  property: ErrorDetection,
+  property: XcfaProperty,
   parseContext: ParseContext,
   checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
   passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),

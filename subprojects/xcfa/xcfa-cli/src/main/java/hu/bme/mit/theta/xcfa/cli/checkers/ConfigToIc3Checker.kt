@@ -78,7 +78,7 @@ fun getIc3Checker(
 
   return XcfaPipelineChecker(
     xcfa,
-    config.inputConfig.property.verifiedProperty,
+    config.inputConfig.property,
     parseContext,
     baseChecker,
     passes,

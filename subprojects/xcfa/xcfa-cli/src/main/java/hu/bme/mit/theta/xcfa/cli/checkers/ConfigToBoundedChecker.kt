@@ -93,7 +93,7 @@ fun getBoundedChecker(
 
   return XcfaPipelineChecker(
     xcfa,
-    config.inputConfig.property.verifiedProperty,
+    config.inputConfig.property,
     parseContext,
     baseChecker,
     passes,

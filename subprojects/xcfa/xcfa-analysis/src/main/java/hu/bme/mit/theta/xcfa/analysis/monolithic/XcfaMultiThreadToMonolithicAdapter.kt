@@ -42,6 +42,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -54,7 +56,7 @@ import java.util.*
 
 class XcfaMultiThreadToMonolithicAdapter(
   model: XCFA,
-  property: ErrorDetection,
+  property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
 ) :
@@ -62,9 +64,12 @@ class XcfaMultiThreadToMonolithicAdapter(
     model,
     property,
     ProcedurePassManager(
-      listOf(
+      listOfNotNull(
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
+        if (property.verifiedProperty == ErrorDetection.DATA_RACE)
+          DataRaceToReachabilityPass(property, true)
+        else null,
         LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
         RemoveUnnecessaryAtomicBlocksPass(),
         MutexToVarPass(),
@@ -215,7 +220,7 @@ class XcfaMultiThreadToMonolithicAdapter(
               )
             }
             .toList() +
-            if (property != ErrorDetection.TERMINATION && proc.errorLoc.isPresent)
+            if (property.verifiedProperty != TERMINATION && proc.errorLoc.isPresent)
               proc.errorLoc.get().let { errorLoc ->
                 listOf(
                   SequenceStmt.of(
@@ -253,7 +258,7 @@ class XcfaMultiThreadToMonolithicAdapter(
 
       // Build property expression
       val propExpr =
-        if (property == ErrorDetection.TERMINATION) {
+        if (property.verifiedProperty == TERMINATION) {
           model.initProcedures[0].first.prop
         } else {
           threads

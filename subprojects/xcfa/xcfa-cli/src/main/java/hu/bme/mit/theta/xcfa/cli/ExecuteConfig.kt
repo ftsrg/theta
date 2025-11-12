@@ -286,6 +286,7 @@ private fun backend(
       result
     } else {
       val stopwatch = Stopwatch.createStarted()
+      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
       logger.info(
         "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
@@ -295,7 +296,6 @@ private fun backend(
         "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"
       )
 
-      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
       val result =
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check()
