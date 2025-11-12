@@ -848,6 +848,20 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         }
     }
 
+    @Override
+    public Expr<?> visitPrimaryExpressionCompoundStatement(
+            PrimaryExpressionCompoundStatementContext ctx) {
+        uniqueWarningLogger.info("Primary expression compound statement");
+        return null;
+    }
+
+    @Override
+    public Expr<?> visitPrimaryExpressionTypeInitializer(
+            PrimaryExpressionTypeInitializerContext ctx) {
+        uniqueWarningLogger.info("Primary expression type initializer");
+        return null;
+    }
+
     private Expr<?> getConstExpr(PrimaryExpressionBraceExpressionContext ctx) {
         var assignments = ctx.expression().assignmentExpression();
         var assignment = assignments.get(assignments.size() - 1);
