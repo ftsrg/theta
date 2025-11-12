@@ -48,19 +48,13 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
 import hu.bme.mit.theta.xcfa.cli.utils.*
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPassesManager
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
-import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
-import kotlin.system.exitProcess
-import kotlinx.serialization.builtins.ListSerializer
 
 fun runConfig(
   config: XcfaConfig<*, *>,
@@ -174,28 +168,9 @@ private fun parseInputFiles(
   } else {
     var (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-    xcfa = applyOptionalWitness(config, logger, xcfa, parseContext)
-
     preAnalysisLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
     Triple(xcfa, mcm, parseContext)
   }
-
-private fun applyOptionalWitness(
-  config: XcfaConfig<*, *>,
-  logger: Logger,
-  xcfa: XCFA,
-  parseContext: ParseContext,
-): XCFA {
-  return config.inputConfig.witness?.let {
-    logger.info("Applying witness $it")
-    if (!it.exists()) {
-      exitProcess(ExitCodes.INVALID_PARAM.code)
-    }
-    val witness =
-      WitnessYamlConfig.decodeFromString(ListSerializer(YamlWitness.serializer()), it.readText())[0]
-    xcfa.optimizeFurther(ApplyWitnessPassesManager(parseContext, witness))
-  } ?: xcfa
-}
 
 private fun frontend(
   config: XcfaConfig<*, *>,
