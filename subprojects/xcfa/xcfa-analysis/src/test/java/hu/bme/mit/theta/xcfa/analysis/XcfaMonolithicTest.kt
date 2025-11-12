@@ -145,9 +145,9 @@ class XcfaMonolithicTest {
 
     val adapter =
       if (multithread) {
-        XcfaMultiThreadToMonolithicAdapter(xcfa, property.verifiedProperty, parseContext, true)
+        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, true)
       } else {
-        XcfaSingleThreadToMonolithicAdapter(xcfa, property.verifiedProperty, parseContext, true)
+        XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, true)
       }
     val monolithic = adapter.monolithicExpr
 
