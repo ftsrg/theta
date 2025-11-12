@@ -21,13 +21,16 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.exists
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -40,7 +43,8 @@ class XcfaCliValidateTest {
   companion object {
 
     private val SMTLIB_HOME: Path = SmtLibSolverManager.HOME
-    private val solvers = listOf("z3:4.13.0", "mathsat:5.6.10")
+    private val solvers =
+      listOf("z3:4.13.0", "eldarica:2.1", "golem:0.5.0", "mathsat:5.6.10", "cvc5:1.0.8")
 
     private fun installSolver(name: String) {
       try {
@@ -93,6 +97,8 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/31structaccess.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -111,6 +117,7 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -144,6 +151,7 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
+        Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
 
@@ -162,6 +170,7 @@ class XcfaCliValidateTest {
   @ParameterizedTest
   @MethodSource("cFiles")
   fun testCVerifyDirect(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--input-type",
@@ -171,13 +180,24 @@ class XcfaCliValidateTest {
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("cFilesShort")
   fun testCVerifyServer(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--input-type",
@@ -187,19 +207,24 @@ class XcfaCliValidateTest {
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
       )
-    try {
-      main(params)
-    } catch (e: IllegalStateException) {
-      if (!e.message.equals("Done debugging")) {
-        throw e
-      }
-    }
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("cFilesShort")
   fun testCVerifyPortfolio(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--input-type",
@@ -212,9 +237,17 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
     try {
-      main(params)
+      val output = runCatchingOutput(params)
+      val witness = temp.getWitness()
+      val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+      assertTrue(output.getVerdict() == validationOutput.getVerdict())
+      println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
     } catch (e: Throwable) {
       if (!e.toString().contains("Done debugging")) {
         throw e
@@ -224,6 +257,7 @@ class XcfaCliValidateTest {
 
   @Test
   fun testCVerifyBuiltInPortfolio() {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--input-type",
@@ -236,39 +270,24 @@ class XcfaCliValidateTest {
         javaClass.getResource("/c/dekker.i")!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
     try {
-      main(params)
+      val output = runCatchingOutput(params)
+      val witness = temp.getWitness()
+      val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+      assertTrue(output.getVerdict() == validationOutput.getVerdict())
+      println(
+        "Verification and validation both agree: task ${javaClass.getResource("/c/dekker.i")!!.path} is ${output.getVerdict()}"
+      )
     } catch (e: Throwable) {
       if (!e.toString().contains("Done debugging")) {
         throw e
       }
     }
-  }
-
-  //  @ParameterizedTest
-  //  @MethodSource("cFiles")
-  fun testCWitness(filePath: String, extraArgs: String?) {
-    val temp = createTempDirectory()
-    val params =
-      arrayOf(
-        "--enable-output",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource(filePath)!!.path,
-        "--stacktrace",
-        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-        "--output-directory",
-        temp.absolutePathString(),
-        "--debug",
-      )
-    main(params)
-    Assertions.assertTrue(temp.resolve("xcfa.json").exists())
-    Assertions.assertTrue(
-      temp.resolve("arg-true.dot").exists() || temp.resolve("arg-false.dot").exists()
-    )
-    temp.toFile().deleteRecursively()
   }
 
   @ParameterizedTest
@@ -278,7 +297,8 @@ class XcfaCliValidateTest {
     chcTransformation: ChcFrontend.ChcTransformation,
     extraArgs: String?,
   ) {
-    main(
+    val temp = createTempDirectory()
+    val params =
       arrayOf(
         "--input-type",
         "CHC",
@@ -289,13 +309,24 @@ class XcfaCliValidateTest {
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
       )
-    )
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyKind(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--backend",
@@ -306,14 +337,23 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("finiteStateSpaceC")
   @Timeout(value = 10, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
   fun testCVerifyMDD(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--backend",
@@ -324,13 +364,22 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyIMC(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--backend",
@@ -341,13 +390,22 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyIMCThenKind(filePath: String, extraArgs: String?) {
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--backend",
@@ -358,14 +416,23 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
   fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
+    val temp = createTempDirectory()
     val params =
       arrayOf(
         "--backend",
@@ -378,14 +445,23 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("cFilesShortInt")
   fun testCVerifyCHC(filePath: String, extraArgs: String?) {
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
+    val temp = createTempDirectory()
 
     val params =
       arrayOf(
@@ -397,14 +473,23 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @ParameterizedTest
   @MethodSource("cFilesShortInt")
   fun testCVerifyCHCPortfolio(filePath: String, extraArgs: String?) {
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
+    val temp = createTempDirectory()
 
     val params =
       arrayOf(
@@ -418,7 +503,56 @@ class XcfaCliValidateTest {
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
         "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
       )
-    main(params)
+    val output = runCatchingOutput(params)
+    val witness = temp.getWitness()
+    val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
+
+    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
+  }
+
+  private fun runCatchingOutput(params: Array<String>): String {
+    val temp = createTempDirectory()
+    val output1 = temp.resolve("stdout_stderr_combined").toFile()
+    PrintStream(BufferedOutputStream(FileOutputStream(output1)), true).use { ps ->
+      val savedSysOut = System.out
+      val savedSysErr = System.err
+      System.setOut(ps)
+      System.setErr(ps)
+      try {
+        main(params)
+      } catch (e: IllegalStateException) {
+        if (!e.message.equals("Done debugging")) {
+          throw e
+        }
+      } finally {
+        System.setOut(savedSysOut)
+        System.setErr(savedSysErr)
+        val out = output1.readText()
+        println("============== printing captured output ================")
+        print(out)
+        println("============ end printing captured output ==============")
+      }
+      return output1.readText()
+    }
+  }
+
+  private fun Path.getWitness(): File {
+    assertTrue(toFile().exists()) { "$this does not exists" }
+    assertTrue(toFile().canRead()) { "$this is not readable" }
+    val witnesses = toFile().listFiles().filter { it.name.startsWith("witness") }.toList()
+    assertTrue(witnesses.isNotEmpty() && witnesses.size == 1) {
+      "$this does not contain exactly one witness ($witnesses)"
+    }
+    val witness = witnesses[0]
+    return witness
+  }
+
+  private fun String.getVerdict(): String {
+    return split(System.lineSeparator()).lastOrNull { "SafetyResult" in it } ?: "unsolved"
   }
 }

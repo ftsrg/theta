@@ -25,47 +25,59 @@ import hu.bme.mit.theta.xcfa.WitnessInfo
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.exitProcess
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
-import kotlin.system.exitProcess
+import java.io.FileNotFoundException
 import kotlinx.serialization.builtins.ListSerializer
 
 fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
-  config.inputConfig.propertyFile
-    ?.run {
-      val propertyFile = config.inputConfig.propertyFile!!
-      when {
-        propertyFile.name.endsWith("unreach-call.prp") -> ERROR_LOCATION
-        propertyFile.name.endsWith("no-data-race.prp") -> DATA_RACE
-        propertyFile.name.endsWith("no-overflow.prp") -> OVERFLOW
-        propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
-        propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
-        propertyFile.name.endsWith("termination.prp") -> TERMINATION
+  (config.inputConfig.propertyFile
+      ?.run {
+        val propertyFile = config.inputConfig.propertyFile!!
+        when {
+          propertyFile.name.endsWith("unreach-call.prp") -> ERROR_LOCATION
+          propertyFile.name.endsWith("no-data-race.prp") -> DATA_RACE
+          propertyFile.name.endsWith("no-overflow.prp") -> OVERFLOW
+          propertyFile.name.endsWith("valid-memsafety.prp") -> MEMSAFETY
+          propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
+          propertyFile.name.endsWith("termination.prp") -> TERMINATION
 
-        else -> {
-          logger.write(
-            Logger.Level.INFO,
-            "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
-          )
-          NO_ERROR
+          else -> {
+            logger.write(
+              Logger.Level.INFO,
+              "Unknown property $propertyFile, using full state space exploration (no refinement)\n",
+            )
+            NO_ERROR
+          }
         }
       }
-    }
-    ?.let { iP ->
+      ?.let { XcfaProperty(it) } ?: config.inputConfig.property)
+    .let { iP ->
       config.inputConfig.witness?.let {
         logger.info("Applying witness $it")
         if (!it.exists()) {
-          exitProcess(ExitCodes.INVALID_PARAM.code)
+          exitProcess(
+            config.debugConfig.debug,
+            FileNotFoundException(),
+            ExitCodes.INVALID_PARAM.code,
+          )
         }
         val witness =
           WitnessYamlConfig.decodeFromString(
               ListSerializer(YamlWitness.serializer()),
               it.readText(),
             )[0]
-        XcfaProperty(iP, WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness) }))
-      } ?: XcfaProperty(iP)
-    } ?: config.inputConfig.property
+        logger.mainStep(
+          "Applying ${witness.entryType} witness $witness with size ${witness.content.size}"
+        )
+        XcfaProperty(
+          iP.inputProperty,
+          WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness) }),
+        )
+      } ?: iP
+    }
 
 class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
   override fun convert(input: String): XcfaProperty {

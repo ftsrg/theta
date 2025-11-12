@@ -39,7 +39,7 @@ enum class ExitCodes(val code: Int) {
 
 data class ErrorCodeException(val code: Int) : Exception()
 
-private fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
+fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
   if (debug) {
     throw ErrorCodeException(code)
   } else exitProcess(code)
