@@ -75,6 +75,8 @@ fun getPortfolioChecker(
 
       "EMERGENT",
       "BOUNDED",
+      "BOUNDED26" -> boundedPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)

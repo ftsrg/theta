@@ -101,6 +101,17 @@ class XcfaCliPortfolioTest {
           boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
+      val bounded26Portfolio =
+        {
+            xcfa: XCFA,
+            mcm: MCM,
+            parseContext: ParseContext,
+            portfolioConfig: XcfaConfig<*, *>,
+            logger: Logger,
+            uniqueLogger: Logger ->
+          boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+
       val horn25Portfolio =
         {
           xcfa: XCFA,
@@ -210,6 +221,13 @@ class XcfaCliPortfolioTest {
         arrayOf(Portfolios.bounded25Portfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.bounded25Portfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.bounded26Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.multithread, unsupportedCheck),
         arrayOf(Portfolios.horn25Portfolio, Programs.pointer, defaultCheck),
