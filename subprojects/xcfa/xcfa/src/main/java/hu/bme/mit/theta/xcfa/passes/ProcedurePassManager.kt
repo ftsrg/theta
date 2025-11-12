@@ -79,14 +79,27 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),
       HavocPromotionAndRange(parseContext),
-      DataRaceToReachabilityPass(property),
+    ),
+    property.witness?.let {
+      listOf( // witness
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
+        EliminateSelfLoops(),
+        property.witness.witnessPass(parseContext),
+        LbePass(parseContext),
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
+        SimplifyExprsPass(parseContext),
+      )
+    } ?: emptyList(),
+    listOf(DataRaceToReachabilityPass(property)),
+    listOf(OverflowDetectionPass(property, parseContext)),
+    listOf(
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger, property),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
-    //        listOf(FetchExecuteWriteback(parseContext)),
-    listOf(OverflowDetectionPass(property, parseContext)),
   )
 
 class NontermValidationPasses(

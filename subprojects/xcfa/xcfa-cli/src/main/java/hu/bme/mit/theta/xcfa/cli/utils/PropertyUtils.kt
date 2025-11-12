@@ -18,10 +18,18 @@ package hu.bme.mit.theta.xcfa.cli.utils
 import com.beust.jcommander.IStringConverter
 import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.*
+import hu.bme.mit.theta.xcfa.WitnessInfo
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
+import kotlin.system.exitProcess
+import kotlinx.serialization.builtins.ListSerializer
 
 fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
   config.inputConfig.propertyFile
@@ -44,7 +52,20 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
         }
       }
     }
-    ?.let { XcfaProperty(it) } ?: config.inputConfig.property
+    ?.let { iP ->
+      config.inputConfig.witness?.let {
+        logger.info("Applying witness $it")
+        if (!it.exists()) {
+          exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        val witness =
+          WitnessYamlConfig.decodeFromString(
+              ListSerializer(YamlWitness.serializer()),
+              it.readText(),
+            )[0]
+        XcfaProperty(iP, WitnessInfo(witness, { p: ParseContext -> ApplyWitnessPass(p, witness) }))
+      } ?: XcfaProperty(iP)
+    } ?: config.inputConfig.property
 
 class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
   override fun convert(input: String): XcfaProperty {

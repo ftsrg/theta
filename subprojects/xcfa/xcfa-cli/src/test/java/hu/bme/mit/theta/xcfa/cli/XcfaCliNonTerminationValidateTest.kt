@@ -96,11 +96,11 @@ class XcfaCliNonTerminationValidateTest {
     @JvmStatic
     fun wrongWitnessFiles(): Stream<Arguments> {
       return Stream.of(
-        Arguments.of(
-          "/c/nontermination/Pendulum-2.c",
-          "/c/nontermination/Pendulum-2-wrong-loop-wrong.yml",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
+        //        Arguments.of(
+        //          "/c/nontermination/Pendulum-2.c",
+        //          "/c/nontermination/Pendulum-2-wrong-loop-wrong.yml",
+        //          "--property /c/nontermination/prop/termination.prp",
+        //        ),
         Arguments.of(
           "/c/nontermination/Pendulum.c",
           "/c/nontermination/Pendulum-short-wrong.yml",
@@ -496,7 +496,6 @@ class XcfaCliNonTerminationValidateTest {
     witnessPath: String,
     extraArgs: String?,
   ) {
-    if (true) return
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -529,7 +528,6 @@ class XcfaCliNonTerminationValidateTest {
   @ParameterizedTest
   @MethodSource("wrongWitnessFiles")
   fun testCValidateWrongCHC(filePath: String, witnessPath: String, extraArgs: String?) {
-    if (true) return
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))

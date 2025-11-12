@@ -15,6 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa
 
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
+
+data class WitnessInfo(val witness: YamlWitness, val witnessPass: (ParseContext) -> ProcedurePass)
+
 /**
  * Represents the property to be verified on an XCFA model.
  *
@@ -24,7 +30,7 @@ package hu.bme.mit.theta.xcfa
  * Verifying the `verifiedProperty` on the model should yield equivalent results to verifying the
  * `inputProperty` on the original input task.
  */
-class XcfaProperty(val inputProperty: ErrorDetection) {
+class XcfaProperty(val inputProperty: ErrorDetection, val witness: WitnessInfo? = null) {
   var verifiedProperty: ErrorDetection = inputProperty
     private set
 
@@ -33,7 +39,7 @@ class XcfaProperty(val inputProperty: ErrorDetection) {
   }
 
   fun copy(): XcfaProperty =
-    XcfaProperty(inputProperty).also { it.verifiedProperty = this.verifiedProperty }
+    XcfaProperty(inputProperty, witness).also { it.verifiedProperty = this.verifiedProperty }
 }
 
 // Unit: Safe
