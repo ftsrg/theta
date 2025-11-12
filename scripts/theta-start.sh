@@ -6,14 +6,7 @@ input_file=$1
 
 export VERIFIER_NAME=TOOL_NAME
 export VERIFIER_VERSION=TOOL_VERSION
-export JAVA_VERSION=17
-
-# Java fallback paths (for systems with different OpenJDK locations)
-JAVA_FALLBACK_PATHS=(
-    "/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64/bin/"
-    "/usr/lib/jvm/java-$JAVA_VERSION-openjdk/bin/"
-    "/usr/lib/jvm/java-$JAVA_VERSION/bin/"
-)
+MIN_JAVA_VERSION=17
 
 # ----------------------------------------
 # Helper functions
@@ -22,6 +15,36 @@ JAVA_FALLBACK_PATHS=(
 print_error() {
     echo "Error: $*" >&2
     exit 1
+}
+
+get_java_version() {
+    "$1" -version 2>&1 | awk -F[\".] '/version/ {print $2}'
+}
+
+find_suitable_java() {
+    # Try java from PATH first
+    if command -v java >/dev/null 2>&1; then
+        local version
+        version=$(get_java_version "$(command -v java)" || echo 0)
+        if (( version >= MIN_JAVA_VERSION )); then
+            echo "$(command -v java)"
+            return 0
+        fi
+    fi
+
+    # Try common JVM locations
+    for javadir in /usr/lib/jvm/*; do
+        if [[ -x "$javadir/bin/java" ]]; then
+            local version
+            version=$(get_java_version "$javadir/bin/java" || echo 0)
+            if (( version >= MIN_JAVA_VERSION )); then
+                echo "$javadir/bin/java"
+                return 0
+            fi
+        fi
+    done
+
+    return 1
 }
 
 # ----------------------------------------
@@ -34,16 +57,14 @@ if [[ "${1:-}" == "--version" ]]; then
     exit 0
 fi
 
-if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
-    export PATH="$(IFS=:; echo "${JAVA_FALLBACK_PATHS[*]}"):$PATH"
-fi
-if ! java --version 2>/dev/null | grep -q "openjdk $JAVA_VERSION"; then
-    print_error "Could not set up openjdk-$JAVA_VERSION. Is the JRE/JDK installed?"
-fi
+JAVA_BIN=$(find_suitable_java) || print_error "No suitable Java (>= $MIN_JAVA_VERSION) found."
+
+echo "Using Java: $JAVA_BIN (version $(get_java_version "$JAVA_BIN"))"
 
 echo "Verifying input '$input_file' using arguments '${@:2}'"
 
-echo LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+echo LD_LIBRARY_PATH="$scriptdir/lib" "$JAVA_BIN" -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
     "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"
-LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+
+LD_LIBRARY_PATH="$scriptdir/lib" "$JAVA_BIN" -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
     "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"
