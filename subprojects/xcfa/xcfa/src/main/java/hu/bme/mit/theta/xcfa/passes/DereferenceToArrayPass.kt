@@ -151,7 +151,7 @@ class DereferenceToArrayPass : ProcedurePass {
                         arrayType.elemType,
                       ),
                       cast(deref.offset.getArrayReads(xcfa), arrayType.elemType.indexType),
-                      cast(stmt.expr, arrayType.elemType.elemType),
+                      cast(stmt.expr.getArrayReads(xcfa), arrayType.elemType.elemType),
                     ),
                   ),
                   arrayType,
