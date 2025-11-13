@@ -76,7 +76,7 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          complexPortfolio26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          complexPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
       val bounded24Portfolio =

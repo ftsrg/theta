@@ -28,7 +28,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 
-fun boundedPortfolio25(
+fun emergentPortfolio(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -96,10 +96,6 @@ fun boundedPortfolio25(
       outputConfig = boundedBaseConfig.outputConfig,
       debugConfig = boundedBaseConfig.debugConfig,
     )
-
-  if (parseContext.multiThreading) {
-    throw UnsupportedOperationException("Multithreading for bounded checkers not supported")
-  }
 
   if (!xcfa.isInlined) {
     throw UnsupportedOperationException("Recursive XCFA for bounded checkers not supported")

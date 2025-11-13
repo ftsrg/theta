@@ -54,7 +54,7 @@ import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
 @Suppress("LocalVariableName")
-fun complexPortfolio26(
+fun complexPortfolio(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,

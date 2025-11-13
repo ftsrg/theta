@@ -63,21 +63,9 @@ fun getPortfolioChecker(
   val portfolioStm =
     when (portfolioName) {
       "STABLE",
-      "CEGAR",
-      "COMPLEX",
-      "COMPLEX26" -> complexPortfolio26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX" -> complexPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "COMPLEX25" -> complexPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "EMERGENT",
-      "BOUNDED",
-      "BOUNDED25" -> boundedPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
-      "BOUNDED24" -> boundedPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "EMERGENT" -> emergentPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "CHC-COMP" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
@@ -85,8 +73,7 @@ fun getPortfolioChecker(
 
       "TESTING",
       "CHC",
-      "HORN",
-      "HORN25" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
