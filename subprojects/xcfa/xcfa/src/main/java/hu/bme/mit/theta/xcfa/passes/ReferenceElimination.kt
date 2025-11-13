@@ -65,7 +65,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           .flatMap { p ->
             p.getEdges().flatMap { it -> it.label.getFlatLabels().flatMap { it.references } }
           }
-          .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+          .mapNotNull { (it.expr as? RefExpr<*>)?.decl as? VarDecl<*> }
           .toSet()
           .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
           .associateWith {
@@ -104,7 +104,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder
         .getEdges()
         .flatMap { e -> e.label.getFlatLabels().flatMap { it.references } }
-        .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+        .mapNotNull { (it.expr as? RefExpr<*>)?.decl as? VarDecl<*> }
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
         .associateWith { v ->
@@ -347,7 +347,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     varLut[this]?.first?.let {
       Dereference(
         cast(it.ref, it.type),
-        cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+        cast(CComplexType.getType(it.ref, parseContext).nullValue, it.type),
         this.type,
       )
         as Expr<T>
