@@ -127,6 +127,7 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
                 } catch (Throwable e) {
                     // we don't do anything, we'll throw an error later if something crucial is
                     // missing
+                    e.printStackTrace();
                 }
             }
         }

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
@@ -104,17 +105,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         postfixVisitor = new PostfixVisitor();
     }
 
-    protected VarDecl<?> getVar(String name) {
+    protected Optional<VarDecl<?>> getVar(String name) {
         for (Tuple2<String, Map<String, VarDecl<?>>> variableList : variables) {
             if (variableList.get2().containsKey(name)) {
                 VarDecl<?> varDecl = variableList.get2().get(name);
                 if (functions.containsKey(varDecl)) {
                     parseContext.getMetadata().create(name, "shouldInline", false);
                 }
-                return varDecl;
+                return Optional.of(varDecl);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public List<CStatement> getPostStatements() {
@@ -575,11 +576,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                     .map(it -> (CComplexType) it))
                             .or(
                                     () ->
-                                            Optional.ofNullable(
-                                                    CComplexType.getType(
-                                                            getVar(ctx.typeName().getText())
-                                                                    .getRef(),
-                                                            parseContext)));
+                                            getVar(ctx.typeName().getText())
+                                                    .map(
+                                                            it ->
+                                                                    CComplexType.getType(
+                                                                            it.getRef(),
+                                                                            parseContext)));
 
             if (type.isPresent()) {
                 LitExpr<?> value =
@@ -671,11 +673,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
-                checkState(
-                        originalOperand instanceof RefExpr<?>
-                                && ((RefExpr<?>) originalOperand).getDecl() instanceof VarDecl,
-                        "Referencing non-variable expressions is not allowed!");
-                return reference((RefExpr<?>) originalOperand);
+                return reference(originalOperand);
             case "*":
                 type = CComplexType.getType(originalOperand, parseContext);
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
@@ -698,7 +696,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return of;
     }
 
-    private Expr<?> reference(RefExpr<?> accept) {
+    private Expr<?> reference(Expr<?> accept) {
         final var newType =
                 new CPointer(null, CComplexType.getType(accept, parseContext), parseContext);
         Reference<Type, ?> of = Reference(accept, newType.getSmtType());
@@ -739,13 +737,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
         final var name = ctx.Identifier().getText();
         final var variable = getVar(name);
-        if (variable == null) {
+        if (variable.isEmpty()) {
             // no variable found, we try some macros..
             final var ret = fromName(name, parseContext);
             if (ret != null) {
                 return ret;
             }
-            throw new RuntimeException("No such variable or macro: " + name);
+            //throw new RuntimeException("No such variable or macro: " + name);
+            return Var(name, BoolType.getInstance()).getRef();
         } else {
             return variable.getRef();
         }
