@@ -373,7 +373,7 @@ class XcfaCliVerifyTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--input",

@@ -56,12 +56,12 @@ jobs:
           - SV-COMP25_valid-memsafety
           - SV-COMP25_no-overflow
           - SV-COMP25_termination
-        portfolio: [CEGAR, BOUNDED, HORN]
+        portfolio: [COMPLEX, EMERGENT, HORN]
         include:
           - tool: Theta_SV-COMP
-            portfolio: CEGAR
+            portfolio: COMPLEX
           - tool: EmergenTheta_SV-COMP
-            portfolio: BOUNDED
+            portfolio: EMERGENT
           - tool: Thorn_SV-COMP
             portfolio: HORN
     runs-on: ubuntu-24.04
