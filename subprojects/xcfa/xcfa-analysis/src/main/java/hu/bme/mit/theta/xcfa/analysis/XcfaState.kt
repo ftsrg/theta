@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -144,7 +145,7 @@ constructor(
 
           is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
 
-          is StartLabel -> changes.add { state -> state.start(label) }.let { null }
+          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
           is JoinLabel -> {
             changes.add { state ->
               val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
@@ -170,7 +171,7 @@ constructor(
     )
   }
 
-  private fun start(startLabel: StartLabel): XcfaState<S> {
+  private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
     val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
@@ -192,7 +193,7 @@ constructor(
       )
 
     val pid = pidCnt++
-    val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
+    val lookup = procedure.createLookup("T$pid")
     newThreadLookup[startLabel.pidVar] = pid
     newProcesses[pid] =
       XcfaProcessState(
@@ -234,6 +235,11 @@ constructor(
             )
           ),
       )
+
+    newProcesses[startingPid] =
+      newProcesses[startingPid]!!.let {
+        it.copy(invokeParameterCounter = it.invokeParameterCounter + 1)
+      }
 
     return copy(processes = newProcesses, threadLookup = newThreadLookup)
   }
@@ -313,6 +319,7 @@ data class XcfaProcessState(
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
+  val invokeParameterCounter: Int = 0,
 ) {
 
   internal var popped: XcfaLocation? =
@@ -343,7 +350,7 @@ data class XcfaProcessState(
     val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
     val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
     deque.push(xcfaProcedure.initLoc)
-    val lookup = createLookup(xcfaProcedure, prefix, "P${procCnt++}")
+    val lookup = xcfaProcedure.createLookup(prefix, "P${procCnt++}")
     varLookup.push(lookup)
     returnStmts.push(returnStmt)
     paramStmts.push(
@@ -382,6 +389,7 @@ data class XcfaProcessState(
       returnStmts = returnStmts,
       paramStmts = paramStmts,
       paramsInitialized = false,
+      invokeParameterCounter = invokeParameterCounter + 1,
     )
   }
 
@@ -422,12 +430,11 @@ data class XcfaProcessState(
 
   companion object {
 
-    fun createLookup(
-      proc: XcfaProcedure,
-      threadPrefix: String,
-      procPrefix: String,
+    fun XcfaProcedure.createLookup(
+      threadPrefix: String = "",
+      procPrefix: String = "",
     ): Map<VarDecl<*>, VarDecl<*>> =
-      listOf(proc.params.map { it.first }, proc.vars)
+      listOf(params.map { it.first }, vars)
         .flatten()
         .associateWith {
           val sj = StringJoiner("::")

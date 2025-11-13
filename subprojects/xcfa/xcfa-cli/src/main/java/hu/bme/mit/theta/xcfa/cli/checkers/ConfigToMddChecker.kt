@@ -18,9 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MEPipelineCheckerConstructorArguments
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.MonolithicExprPass
-import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.FormalismPipelineChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
@@ -35,7 +33,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverPool
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaToMonolithicAdapter
+import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.MddConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -89,14 +87,15 @@ fun getMddChecker(
   if (mddConfig.reversed) {
     passes.add(ReverseMEPass())
   }
-  return FormalismPipelineChecker(
-    model = parseContext,
-    modelAdapter =
-      XcfaToMonolithicAdapter(
-        xcfa,
-        config.inputConfig.property.verifiedProperty,
-        initValues = true,
-      ),
-    MEPipelineCheckerConstructorArguments(baseChecker, passes, logger = logger),
+
+  return XcfaPipelineChecker(
+    xcfa,
+    config.inputConfig.property,
+    parseContext,
+    baseChecker,
+    passes,
+    logger,
+    config.outputConfig.acceptUnreliableSafe,
+    true,
   )
 }

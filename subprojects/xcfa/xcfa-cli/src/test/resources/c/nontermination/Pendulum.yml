@@ -10,7 +10,7 @@
       input_files:
         - "Pendulum.c"
       input_file_hashes:
-        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/Pendulum.c": "8a09f35af29d06b0ca7ab67795124d95f0aff5bcafd8a5ac9480d8525ca55422"
+        "Pendulum.c": "8a09f35af29d06b0ca7ab67795124d95f0aff5bcafd8a5ac9480d8525ca55422"
       specification: "TERMINATION"
       data_model: "LP64"
       language: "C"

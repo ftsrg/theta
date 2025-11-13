@@ -10,7 +10,7 @@
       input_files:
       - "Swingers.c"
       input_file_hashes:
-        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/Swingers.c": "979bf81231d85b3bd3be96ca9c795b59e6636e16367d6fd923131e434b6e2abd"
+        "Swingers.c": "979bf81231d85b3bd3be96ca9c795b59e6636e16367d6fd923131e434b6e2abd"
       specification: "TERMINATION"
       data_model: "LP64"
       language: "C"

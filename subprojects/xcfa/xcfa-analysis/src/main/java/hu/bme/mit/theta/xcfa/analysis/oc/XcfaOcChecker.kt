@@ -33,7 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.OcExtraPasses
+import hu.bme.mit.theta.xcfa.passes.*
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
@@ -57,7 +57,18 @@ class XcfaOcChecker(
     }
   }
 
-  private val xcfa = xcfa.optimizeFurther(OcExtraPasses())
+  private val xcfa =
+    xcfa.optimizeFurther(
+      ProcedurePassManager(
+        listOf(
+          AssumeFalseRemovalPass(),
+          MutexToVarPass(),
+          AtomicReadsOneWritePass(),
+          LoopUnrollPass(2), // force loop unroll for BMC
+        )
+      )
+    )
+
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private val ocChecker: OcChecker<E> =

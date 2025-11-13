@@ -10,7 +10,7 @@
       input_files:
         - "Ex02.c"
       input_file_hashes:
-        "/home/solarowl/Repositories/theta/subprojects/xcfa/xcfa-cli/src/test/resources/c/nontermination/Ex02.c": "afd40820c7a09c073d225c09c6690862ff04506300463cb312087d541b42d981"
+        "Ex02.c": "afd40820c7a09c073d225c09c6690862ff04506300463cb312087d541b42d981"
       specification: "TERMINATION"
       data_model: "LP64"
       language: "C"
