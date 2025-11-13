@@ -43,8 +43,10 @@ public class CCompound extends CStatement {
     }
 
     public void addCStatement(CStatement cStatement) {
-        cStatementList.add(cStatement);
-        cStatement.setParent(this);
+        if (cStatement != null) {
+            cStatementList.add(cStatement);
+            cStatement.setParent(this);
+        }
     }
 
     @Override
