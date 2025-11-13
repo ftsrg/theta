@@ -68,15 +68,18 @@ fun complexPortfolio26(
   var baseConfig =
     XcfaConfig<CFrontendConfig, CegarConfig>(
       inputConfig =
-        InputConfig(
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
-          property = portfolioConfig.inputConfig.property,
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx =
+            if (portfolioConfig.backendConfig.parseInProcess) null
+            else Triple(xcfa, mcm, parseContext)
         ),
+      frontendConfig = portfolioConfig.frontendConfig as FrontendConfig<CFrontendConfig>,
       backendConfig =
         BackendConfig(
           backend = CEGAR,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
+          parseInProcess = portfolioConfig.backendConfig.parseInProcess,
           specConfig =
             CegarConfig(
               initPrec = EMPTY,
@@ -931,6 +934,7 @@ fun complexPortfolio26(
                 backend = OC,
                 solverHome = baseConfig.backendConfig.solverHome,
                 inProcess = inProcess,
+                parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
                 specConfig = OcConfig(decisionProcedure = OcDecisionProcedureType.BASIC),
               ),
             outputConfig = baseConfig.outputConfig,

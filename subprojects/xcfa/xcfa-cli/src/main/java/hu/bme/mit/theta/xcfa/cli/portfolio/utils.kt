@@ -153,6 +153,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
       backendConfig.copy(
         timeoutMs = timeoutMs,
         inProcess = inProcess,
+        parseInProcess = inProcess && this.backendConfig.parseInProcess,
         specConfig =
           backendConfig.specConfig!!.copy(
             initPrec = initPrec,
