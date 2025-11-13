@@ -44,17 +44,19 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
-      CLibraryFunctionsPass(),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(
       // optimizing
+      LoopUnrollPass(),
       SimplifyExprsPass(parseContext, property),
       LoopUnrollPass(),
       EmptyEdgeRemovalPass(),
+      ReferenceDereferenceSimplifier(parseContext),
     ),
     listOf(
-      // trying to inline procedures
+      // trying to inline procedures, but transform C library functions first
+      CLibraryFunctionsPass(),
       InlineProceduresPass(parseContext),
       NondetFunctionPass(),
     ),

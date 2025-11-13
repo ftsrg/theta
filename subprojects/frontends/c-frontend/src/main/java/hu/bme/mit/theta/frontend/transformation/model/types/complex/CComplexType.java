@@ -173,7 +173,7 @@ public abstract class CComplexType {
         }
     }
 
-    private static CComplexType getType(Type type, ParseContext parseContext) {
+    public static CComplexType getType(Type type, ParseContext parseContext) {
         if (type instanceof IntType) {
             return new CSignedInt(null, parseContext);
         } else if (type instanceof ArrayType<?, ?> aType) {

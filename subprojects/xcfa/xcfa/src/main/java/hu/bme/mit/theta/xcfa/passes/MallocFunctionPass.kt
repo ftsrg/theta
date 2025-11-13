@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -37,7 +37,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
     private fun XcfaBuilder.mallocVar(parseContext: ParseContext) =
-      mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
+      mallocVars.getOrPut(this) { Var("__malloc", CSignedInt(null, parseContext).smtType) }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -71,7 +71,10 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                   StmtLabel(
                     Assign(
                       cast(mallocVar, mallocVar.type),
-                      cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type),
+                      cast(
+                        CComplexType.getType(mallocVar.ref, parseContext).nullValue,
+                        mallocVar.type,
+                      ),
                     )
                   )
                 val newEdges =
@@ -90,8 +93,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val assign1 =
               AssignStmtLabel(
                 mallocVar,
-                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                ret.type,
+                Add(mallocVar.ref, CComplexType.getType(mallocVar.ref, parseContext).getValue("3")),
+                mallocVar.type,
                 EmptyMetaData,
               )
             val assign2 = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -177,6 +178,97 @@ fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Decl<T>
 
 fun <T : Type> VarDecl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
   (varLut[this] ?: this) as VarDecl<T>
+
+@JvmOverloads
+fun XcfaLabel.changeSubexpr(
+  exprLut: Map<Expr<*>, Expr<*>>,
+  parseContext: ParseContext? = null,
+): XcfaLabel =
+  if (exprLut.isNotEmpty()) {
+    when (this) {
+      is InvokeLabel -> copy(params = params.map { it.changeSubexpr(exprLut, parseContext) })
+
+      is JoinLabel -> copy(pidVar = pidVar.changeSubexpr(exprLut))
+      is NondetLabel ->
+        copy(labels = labels.map { it.changeSubexpr(exprLut, parseContext) }.toSet())
+
+      is SequenceLabel -> copy(labels = labels.map { it.changeSubexpr(exprLut, parseContext) })
+
+      is StartLabel ->
+        copy(
+          params = params.map { it.changeSubexpr(exprLut, parseContext) },
+          pidVar = pidVar.changeSubexpr(exprLut),
+        )
+
+      is StmtLabel -> copy(stmt = stmt.changeSubexpr(exprLut, parseContext))
+
+      is ReturnLabel -> copy(enclosedLabel = enclosedLabel.changeSubexpr(exprLut))
+
+      is FenceLabel -> {
+        when (this) {
+          is MutexLockLabel -> copy(handle = handle.changeSubexpr(exprLut))
+          is MutexTryLockLabel ->
+            copy(
+              handle = handle.changeSubexpr(exprLut),
+              successVar = successVar.changeSubexpr(exprLut),
+            )
+
+          is MutexUnlockLabel -> copy(handle = handle.changeSubexpr(exprLut))
+          is RWLockReadLockLabel -> copy(handle = handle.changeSubexpr(exprLut))
+          is RWLockWriteLockLabel -> copy(handle = handle.changeSubexpr(exprLut))
+          is RWLockUnlockLabel -> copy(handle = handle.changeSubexpr(exprLut))
+          else -> this
+        }
+      }
+
+      else -> this
+    }
+  } else this
+
+@JvmOverloads
+fun Stmt.changeSubexpr(exprLut: Map<Expr<*>, Expr<*>>, parseContext: ParseContext? = null): Stmt {
+  val stmt =
+    when (this) {
+      is AssignStmt<*> ->
+        AssignStmt.of(
+          cast(varDecl.changeSubexpr(exprLut), varDecl.type),
+          cast(expr.changeSubexpr(exprLut, parseContext), varDecl.type),
+        )
+
+      is MemoryAssignStmt<*, *, *> ->
+        MemoryAssignStmt.create(
+          deref.changeSubexpr(exprLut) as Dereference<out Type, *, *>,
+          expr.changeSubexpr(exprLut),
+        )
+
+      is HavocStmt<*> -> HavocStmt.of(varDecl.changeSubexpr(exprLut))
+      is AssumeStmt -> AssumeStmt.of(cond.changeSubexpr(exprLut, parseContext))
+      is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeSubexpr(exprLut, parseContext) })
+      is SkipStmt -> this
+      else -> TODO("Not yet implemented")
+    }
+  val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")
+  if (metadataValue?.isPresent == true)
+    parseContext.getMetadata().create(stmt, "sourceStatement", metadataValue.get())
+  return stmt
+}
+
+@JvmOverloads
+fun <T : Type> Expr<T>.changeSubexpr(
+  exprLut: Map<Expr<*>, Expr<*>>,
+  parseContext: ParseContext? = null,
+): Expr<T> {
+  val ret = ExprUtils.changeSubexpr(this, exprLut)
+  if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
+    parseContext.metadata?.create(ret, "cType", CComplexType.getType(this, parseContext))
+  }
+  return ret
+}
+
+fun <T : Type> VarDecl<T>.changeSubexpr(exprLut: Map<Expr<*>, Expr<*>>): VarDecl<T> {
+  val changed = ExprUtils.changeSubexpr(this.ref, exprLut)
+  return if (changed is RefExpr<*>) (changed.decl as VarDecl<T>) else this
+}
 
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 

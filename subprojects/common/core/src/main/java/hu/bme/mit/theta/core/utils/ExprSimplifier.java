@@ -29,10 +29,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -207,8 +204,7 @@ public final class ExprSimplifier {
                     // Reference
 
                     .addCase(Dereference.class, this::simplifyDereference)
-
-                    //            .addCase(Reference.class, this::simplifyReference)
+                    .addCase(Reference.class, this::simplifyReference)
 
                     // Default
 
@@ -265,6 +261,10 @@ public final class ExprSimplifier {
     }
 
     private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
+        return expr.map(it -> simplify(it, val));
+    }
+
+    private Expr<?> simplifyReference(final Reference<?, ?> expr, final Valuation val) {
         return expr.map(it -> simplify(it, val));
     }
 
