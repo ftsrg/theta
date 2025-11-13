@@ -511,7 +511,7 @@ private fun getUnitXcfaInitFunc(
           XcfaProcessState(
             initLocStack,
             prefix = "T$i",
-            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", ""))),
+            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "", true))),
           ),
         )
       }
