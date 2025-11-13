@@ -392,32 +392,38 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
+    functionReturnOnly: Boolean = false,
   ): YamlWitness {
     val witnessTrace =
       traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
 
-    return YamlWitness(
-      entryType = EntryType.VIOLATION,
-      metadata = metadata,
-      content =
-        (0..(witnessTrace.length()))
-          .flatMap {
-            listOfNotNull(
-              witnessTrace.states[it]?.toSegment(
-                witnessTrace.actions.getOrNull(it - 1),
-                witnessTrace.actions.getOrNull(it),
-                inputFile,
-                parseContext = parseContext,
-                violation =
-                  witnessTrace.states[it].violation ||
-                    witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
-              ),
-              witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
-            )
+    val content =
+      (0..(witnessTrace.length()))
+        .flatMap {
+          listOfNotNull(
+            witnessTrace.states[it]?.toSegment(
+              witnessTrace.actions.getOrNull(it - 1),
+              witnessTrace.actions.getOrNull(it),
+              inputFile,
+              parseContext = parseContext,
+              violation =
+                witnessTrace.states[it].violation ||
+                  witnessTrace.states.getOrNull(it + 1)?.violation ?: false,
+            ),
+            witnessTrace.actions.getOrNull(it)?.toSegment(inputFile),
+          )
+        }
+        .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
+        .let { list ->
+          list.filter {
+            !functionReturnOnly ||
+              it.type == WaypointType.TARGET ||
+              it.type == WaypointType.FUNCTION_RETURN
           }
-          .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
-          .map { ContentItem(it) },
-    )
+        }
+        .map { ContentItem(it) }
+
+    return YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = content)
   }
 
   private fun violationWitnessFromConcreteTrace(

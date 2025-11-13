@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -133,9 +132,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               }
             }
             WaypointType.BRANCHING -> {
-              // we handle branching not at the 'w' of 'while' (and similar), but at its body.
-              // therefore, we need to query the ast node here.
-              val (guard, body) =
+              val branching =
                 statementToEdge
                   .mapNotNull { (statement, _, _) ->
                     if (
@@ -147,25 +144,19 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   }
                   .map {
                     when (it) {
-                      is CWhile -> Pair(it.guard, it.body)
-                      is CFor -> Pair(it.guard, it.body)
-                      is CIf -> Pair(it.guard, it.body)
-                      is CDoWhile -> Pair(it.guard, it.body)
+                      is CWhile,
+                      is CFor,
+                      is CIf,
+                      is CDoWhile -> it
                       else -> error("Branching not on iteration/branching statement.")
                     }
                   }
                   .first() // we hope it's a single ast node..
 
-              loc =
-                wp.waypoint.location.copy(
-                  line = body.lineNumberStart,
-                  column = body.colNumberStart + 1,
-                )
-
               val guardAssume =
                 statementToEdge.mapNotNull {
                   if (
-                    it.first == body /* now assumes are body-labelled */ &&
+                    it.first == branching &&
                       it.second is StmtLabel &&
                       (it.second as StmtLabel).stmt is AssumeStmt &&
                       (it.second as StmtLabel).choiceType != ChoiceType.NONE
