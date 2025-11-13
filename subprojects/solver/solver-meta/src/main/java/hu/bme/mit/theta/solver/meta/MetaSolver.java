@@ -110,6 +110,7 @@ class MetaSolver implements  Solver {
         }
         catch (Exception|Error e) {
             switchSolvers();
+            check();
             return getModel();
         }
     }
