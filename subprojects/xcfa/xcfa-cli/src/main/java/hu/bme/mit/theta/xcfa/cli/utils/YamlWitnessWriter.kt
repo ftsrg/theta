@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
@@ -25,6 +26,8 @@ import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -68,56 +71,140 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
+    logger: Logger,
   ) {
     val metadata = getMetadata(inputFile, ltlSpecification, architecture)
 
     if (safetyResult.isUnsafe) {
-      val trace =
-        safetyResult.asUnsafe().cex.let {
-          if (it is HackyAsgTrace<*>) {
-            val actions = (it as HackyAsgTrace<*>).trace.actions
-            val explStates = (it as HackyAsgTrace<*>).trace.states
-            val states =
-              (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
-                state as XcfaState<PtrState<*>>
-                state.withState(PtrState(explStates[i]))
-              }
+      try {
+        val trace =
+          safetyResult.asUnsafe().cex.let {
+            if (it is HackyAsgTrace<*>) {
+              val actions = (it as HackyAsgTrace<*>).trace.actions
+              val explStates = (it as HackyAsgTrace<*>).trace.states
+              val states =
+                (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+                  state as XcfaState<PtrState<*>>
+                  state.withState(PtrState(explStates[i]))
+                }
 
-            Trace.of(states, actions)
-          } else if (it is ASGTrace<*, *>) {
-            (it as ASGTrace<*, *>).toTrace()
-          } else {
-            it
+              Trace.of(states, actions)
+            } else if (it is ASGTrace<*, *>) {
+              (it as ASGTrace<*, *>).toTrace()
+            } else {
+              it
+            }
+          }
+        if (trace is Trace<*, *>) {
+          val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+            XcfaTraceConcretizer.concretize(
+              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+              cexSolverFactory,
+              parseContext,
+            )
+
+          violationWitnessFromConcreteTrace(
+            concrTrace,
+            metadata,
+            inputFile,
+            property,
+            parseContext,
+            witnessfile,
+          )
+        }
+      } catch (e: Exception) {
+        logger.info(
+          "Could not emit witness, writing reachability witness with target only if possible"
+        )
+
+        if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
+          val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
+          val call =
+            lastAction.edge.getCMetaData()?.astNodes?.find { it ->
+              it is CCall && it.functionId == "reach_error"
+            }
+          call?.let {
+            val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart)
+            writeTrivialViolationWitness(
+              safetyResult = safetyResult,
+              inputFile = inputFile,
+              property = property,
+              parseContext = parseContext,
+              witnessfile = witnessfile,
+              ltlSpecification = ltlSpecification,
+              architecture = architecture,
+              targetLocation = loc,
+            )
           }
         }
-      if (trace is Trace<*, *>) {
-        val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-          XcfaTraceConcretizer.concretize(
-            trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-            cexSolverFactory,
-            parseContext,
-          )
-
-        violationWitnessFromConcreteTrace(
-          concrTrace,
-          metadata,
-          inputFile,
-          property,
-          parseContext,
-          witnessfile,
-        )
       }
     } else if (safetyResult.isSafe) {
+      try {
+        val witness =
+          YamlWitness(
+            entryType = EntryType.INVARIANTS,
+            metadata = metadata,
+            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
+          )
 
-      val witness =
-        YamlWitness(
-          entryType = EntryType.INVARIANTS,
-          metadata = metadata,
-          content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
-        )
-
-      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+        witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+      } catch (e: Exception) {
+        logger.info("Could not emit witness, outputting empty witness")
+      }
     }
+  }
+
+  override fun writeTrivialCorrectnessWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ) {
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val witness =
+      YamlWitness(
+        entryType = EntryType.INVARIANTS,
+        metadata = metadata,
+        content = EmptyProof.getInstance().toContent(inputFile, parseContext),
+      )
+    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+  }
+
+  override fun writeTrivialViolationWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+    targetLocation: Location,
+  ) {
+    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val witness =
+      YamlWitness(
+        entryType = EntryType.VIOLATION,
+        metadata = metadata,
+        content =
+          listOf(
+            ContentItem(
+              listOf(
+                Waypoint(
+                  WaypointContent(
+                    WaypointType.TARGET,
+                    null,
+                    location = targetLocation,
+                    Action.FOLLOW,
+                  )
+                )
+              )
+            )
+          ),
+      )
+    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 
   fun getMetadata(

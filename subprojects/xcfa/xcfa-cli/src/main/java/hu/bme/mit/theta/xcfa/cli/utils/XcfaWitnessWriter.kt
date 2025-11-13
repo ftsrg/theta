@@ -16,11 +16,13 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.witnesses.Location
 import java.io.File
 
 interface XcfaWitnessWriter {
@@ -90,5 +92,27 @@ interface XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType? = null,
+    logger: Logger,
+  )
+
+  fun writeTrivialCorrectnessWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType? = null,
+  )
+
+  fun writeTrivialViolationWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType? = null,
+    targetLocation: Location,
   )
 }

@@ -52,9 +52,10 @@ fun baseCegarConfig(
     XcfaConfig(
       inputConfig =
         if (serialize)
-          InputConfig(
-            input = null,
-            xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          portfolioConfig.inputConfig.copy(
+            xcfaWCtx =
+              if (portfolioConfig.backendConfig.parseInProcess) null
+              else Triple(xcfa, mcm, parseContext),
             propertyFile = null,
             property = portfolioConfig.inputConfig.property,
           )
@@ -190,8 +191,7 @@ fun baseAsgCegarConfig(
   XcfaConfig(
     inputConfig =
       if (serialize)
-        InputConfig(
-          input = null,
+        portfolioConfig.inputConfig.copy(
           xcfaWCtx = Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
@@ -256,6 +256,7 @@ fun XcfaConfig<*, AsgCegarConfig>.adaptConfig(
       backendConfig.copy(
         timeoutMs = timeoutMs,
         inProcess = inProcess,
+        parseInProcess = inProcess && backendConfig.parseInProcess,
         specConfig =
           backendConfig.specConfig!!.copy(
             initPrec = initPrec,
@@ -291,8 +292,7 @@ fun baseBoundedConfig(
   XcfaConfig(
     inputConfig =
       if (serialize)
-        InputConfig(
-          input = null,
+        portfolioConfig.inputConfig.copy(
           xcfaWCtx = Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
@@ -336,8 +336,7 @@ fun baseMddConfig(
   XcfaConfig(
     inputConfig =
       if (serialize)
-        InputConfig(
-          input = null,
+        portfolioConfig.inputConfig.copy(
           xcfaWCtx = Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
@@ -409,6 +408,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
                 .itpConfig
                 .copy(disable = !itpEnabled, itpSolver = itpSolver),
           ),
+        parseInProcess = inProcess && backendConfig.parseInProcess,
       )
   )
 

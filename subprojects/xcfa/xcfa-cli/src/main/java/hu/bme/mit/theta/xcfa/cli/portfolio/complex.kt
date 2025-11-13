@@ -912,7 +912,11 @@ fun complexPortfolio(
         val multithreadCegarBaseConfig =
           baseConfig.copy(
             inputConfig =
-              baseConfig.inputConfig.copy(xcfaWCtx = Triple(cegarXcfa, mcm, parseContext)),
+              baseConfig.inputConfig.copy(
+                xcfaWCtx =
+                  if (portfolioConfig.backendConfig.parseInProcess) null
+                  else Triple(xcfa, mcm, parseContext)
+              ),
             frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
           )
 
