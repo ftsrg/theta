@@ -44,7 +44,6 @@ constructor(
   logger: Logger = NullLogger.getInstance(),
 ) :
   FormalismPipelineChecker<STS, ExplState, StsAction, Pr, InvariantProof>(
-    sts,
-    StsToMonolithicAdapter(),
+    StsToMonolithicAdapter(sts),
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, validators, logger),
   )

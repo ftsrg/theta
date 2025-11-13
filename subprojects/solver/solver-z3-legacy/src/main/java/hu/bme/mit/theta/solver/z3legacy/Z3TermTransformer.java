@@ -360,9 +360,15 @@ final class Z3TermTransformer {
                 createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
 
-        final ArraySort sort = (ArraySort) funcDecl.getRange();
-
-        return createArrayLitExpr(sort, entryExprs, elseExpr);
+        if (funcDecl.getRange() instanceof ArraySort sort) {
+            return createArrayLitExpr(sort, entryExprs, elseExpr);
+        } else {
+            return this.createIndexValueArrayLitExpr(
+                    transformSort(funcDecl.getDomain()[0]),
+                    transformSort(funcDecl.getRange()),
+                    entryExprs,
+                    elseExpr);
+        }
     }
 
     private Expr<?> createArrayLitExpr(
@@ -518,6 +524,28 @@ final class Z3TermTransformer {
             return environment.get(key1).apply(term, model, vars);
         } else if (environment.containsKey(key2)) {
             return environment.get(key2).apply(term, model, vars);
+        } else if ("as-array".equals(symbol)) {
+            final var termString = term.toString();
+            final var pattern = Pattern.compile("\\(_\\s+as-array\\s+\\S+!(\\S+)\\)");
+            final var matcher = pattern.matcher(termString);
+            if (matcher.find()) {
+                final var funcName = matcher.group(1);
+                final var funcDeclInModel = Arrays.stream(model.getFuncDecls());
+                final FuncDecl asArrayDecl =
+                        funcDeclInModel
+                                .filter(fd -> fd.getName().toString().equals(funcName))
+                                .findFirst()
+                                .orElseThrow(
+                                        () ->
+                                                new Z3Exception(
+                                                        format(
+                                                                "Function '%s' not found in the"
+                                                                        + " model.",
+                                                                funcName)));
+                return toArrayLitExpr(asArrayDecl, model, vars);
+            } else {
+                throw new Z3Exception("Could not parse as-array term: " + termString);
+            }
         } else {
             final Expr<?> funcExpr;
             if (symbolTable.definesSymbol(funcDecl)) {
@@ -709,6 +737,10 @@ final class Z3TermTransformer {
             final com.microsoft.z3legacy.BitVecSort bvSort =
                     (com.microsoft.z3legacy.BitVecSort) sort;
             return BvType(bvSort.getSize());
+        } else if (sort instanceof com.microsoft.z3legacy.ArraySort) {
+            return ArrayType.of(
+                    transformSort(((com.microsoft.z3legacy.ArraySort) sort).getDomain()),
+                    transformSort(((com.microsoft.z3legacy.ArraySort) sort).getRange()));
         } else {
             throw new AssertionError("Unsupported sort: " + sort);
         }

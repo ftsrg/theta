@@ -18,16 +18,13 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.Predicate
-import kotlin.collections.plus
 
 fun XCFA.collectVars(): Iterable<VarDecl<*>> =
   globalVars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
@@ -137,20 +134,6 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
         is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
         is AssignStmt<*> ->
           ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-
-        is MemoryAssignStmt<*, *, *> -> {
-          var expr: Expr<*> = stmt.deref
-          while (expr is Dereference<*, *, *>) {
-            expr = expr.array
-          }
-          ExprUtils.getVars(stmt.expr).associateWith { READ } +
-            when (expr) {
-              is RefExpr<*> ->
-                mapOf(expr.decl as VarDecl<*> to READ) // the memory address is read, not written
-              is LitExpr<*> -> mapOf()
-              else -> error("MemoryAssignStmts's dereferences should only contain refs or lits")
-            }
-        }
 
         else -> StmtUtils.getVars(stmt).associateWith { READ }
       }
@@ -277,7 +260,7 @@ val Stmt.dereferences: List<Dereference<*, *, *>>
     when (this) {
       is AssumeStmt -> cond.dereferences
       is AssignStmt<*> -> expr.dereferences
-      is MemoryAssignStmt<*, *, *> -> expr.dereferences + listOf(deref)
+      is MemoryAssignStmt<*, *, *> -> deref.dereferences + expr.dereferences
       else -> emptyList()
     }
 
@@ -304,7 +287,12 @@ val Stmt.dereferencesWithAccessType: DereferenceAccessMap
   get() =
     when (this) {
       is MemoryAssignStmt<*, *, *> ->
-        listOfNotNull(expr.dereferences.associateWith { READ }, mapOf(deref to WRITE)).mergeDerefs()
+        listOfNotNull(
+            mapOf(deref to WRITE),
+            (deref.dereferences - deref).associateWith { READ },
+            expr.dereferences.associateWith { READ },
+          )
+          .mergeDerefs()
 
       is AssignStmt<*> -> expr.dereferences.associateWith { READ }
       is AssumeStmt -> cond.dereferences.associateWith { READ }

@@ -286,6 +286,7 @@ private fun backend(
       result
     } else {
       val stopwatch = Stopwatch.createStarted()
+      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
       logger.info(
         "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}"
@@ -295,16 +296,17 @@ private fun backend(
         "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}"
       )
 
-      val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
       val result =
         exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
             checker.check()
           }
           .let ResultMapper@{ result ->
-            result as SafetyResult<*, *>
             when {
-              result.isSafe && xcfa?.unsafeUnrollUsed ?: false -> {
+              result.isSafe &&
+                (xcfa?.unsafeUnrollUsed ?: false) &&
+                !config.outputConfig.acceptUnreliableSafe -> {
                 // cannot report safe if force unroll was used
+                logger.result("Analysis result: $result")
                 logger.result("Incomplete loop unroll used: safe result is unreliable.")
                 if (config.outputConfig.acceptUnreliableSafe)
                   result // for comparison with BMC tools
@@ -325,9 +327,7 @@ private fun backend(
                 result
               }
 
-              else -> {
-                result
-              }
+              else -> result
             }
           }
 

@@ -81,7 +81,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled) return builder
+    if (!enabled || property.inputProperty != ErrorDetection.DATA_RACE) return builder
 
     removeOriginalErrorEdges(builder)
     val potentialRacingVars = collectPotentialRacingVars(builder)
