@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 
-fun hornPortfolio25(
+fun hornPortfolio(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,

@@ -73,7 +73,7 @@ fun getPortfolioChecker(
 
       "TESTING",
       "CHC",
-      "HORN" -> hornPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
