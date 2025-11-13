@@ -346,6 +346,9 @@ final class Z3TermTransformer {
                 model,
                 "Unsupported function '" + funcDecl.getName() + "' in Z3 back-transformation.");
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+        if (funcInterp == null) {
+            return null;
+        }
         final List<ParamDecl<?>> paramDecls = transformParams(vars, funcDecl.getDomain());
         pushParams(vars, paramDecls);
         final Expr<?> funcLitExpr = transformFuncInterp(funcInterp, model, vars);
@@ -356,6 +359,9 @@ final class Z3TermTransformer {
     public Expr<?> toArrayLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
         final com.microsoft.z3legacy.FuncInterp funcInterp = model.getFuncInterp(funcDecl);
+        if (funcInterp == null) {
+            return null;
+        }
         final List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs =
                 createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
