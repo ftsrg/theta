@@ -42,8 +42,8 @@ public class MetaItpSolver implements ItpSolver, Solver {
     public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
         Map<ItpSolver, ItpPattern> patternMap = new HashMap<>();
         // copy tree for each solver
-        List<SolverResult<ItpMarkerTree<? extends ItpMarker>>> solverResultList = allResults(solver -> new SolverResult<>(copyTree(root, solver), solver));
-        for (final SolverResult<ItpMarkerTree<? extends ItpMarker>> result : solverResultList) {
+        List<SolverResult<ItpMarkerTree<ItpMarker>>> solverResultList = allResults(solver -> new SolverResult<>(copyTree(root, solver), solver));
+        for (final SolverResult<ItpMarkerTree<ItpMarker>> result : solverResultList) {
             patternMap.put(result.solver, result.solver.createTreePattern(result.result));
         }
         MetaItpPattern pattern = new MetaItpPattern(patternMap);
@@ -51,15 +51,17 @@ public class MetaItpSolver implements ItpSolver, Solver {
         return pattern;
     }
 
-    private ItpMarkerTree<? extends ItpMarker> copyTree(ItpMarkerTree<? extends ItpMarker> root, ItpSolver solver) {
+    private ItpMarkerTree<ItpMarker> copyTree(ItpMarkerTree<? extends ItpMarker> root, ItpSolver solver) {
         checkArgument(root.getMarker() instanceof MetaItpMarker);
         final MetaItpMarker metaMarker = (MetaItpMarker) root.getMarker();
         final ItpMarker marker = metaMarker.getMarker(solver);
         if (root.getChildrenNumber() == 0) {
             return ItpMarkerTree.Leaf(marker);
         }
-        List<? extends ItpMarkerTree<? extends ItpMarker>> subtrees = root.getChildren().stream().map(child -> copyTree(child,solver)).toList();
-        return ItpMarkerTree.Tree(marker,subtrees.toArray(new ItpMarkerTree[subtrees.size()]));
+        ItpMarkerTree<ItpMarker>[] subtrees = (ItpMarkerTree<ItpMarker>[]) root.getChildren().stream()
+                .map(child -> copyTree(child,solver))
+                .toArray();
+        return ItpMarkerTree.Tree(marker, subtrees);
     }
 
     @Override
