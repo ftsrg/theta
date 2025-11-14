@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -100,7 +101,8 @@ class CLibraryFunctionsPass : ProcedurePass {
                 }
 
                 "pthread_join" -> {
-                  val handle = invokeLabel.getParam(1)
+                  val handle =
+                    invokeLabel.params[1] as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
                   listOf(
                     JoinLabel(handle, metadata),
                     AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
@@ -108,7 +110,8 @@ class CLibraryFunctionsPass : ProcedurePass {
                 }
 
                 "pthread_create" -> {
-                  val handle = invokeLabel.getParam(1)
+                  val handle =
+                    invokeLabel.params[1] as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
                   val funcptr = invokeLabel.getParam(3)
                   val param = invokeLabel.params[4]
                   // int(0) to solve StartLabel not handling return params
