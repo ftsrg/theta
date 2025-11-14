@@ -20,19 +20,17 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class MetaItpPattern implements ItpPattern {
 
     private final Map<ItpSolver, ItpPattern> patternMap;
 
     public MetaItpPattern(Map<ItpSolver, ItpPattern> patternMap) {
-        this.patternMap = patternMap;
+        this.patternMap = new ConcurrentHashMap<>(patternMap);
     }
 
     @Override
