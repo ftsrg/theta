@@ -27,6 +27,15 @@ subprojects {
     tasks.matching { it.name == "test" }.configureEach {
         dependsOn(rootProject.tasks.named("downloadJavaSmtLibs"))
     }
+
+    plugins.withId("application") {
+        plugins.withId("java") {
+            apply<WslJarPlugin>()
+        }
+        plugins.withId("kotlin-common") {
+            apply<WslJarPlugin>()
+        }
+    }
 }
 
 buildscript {
