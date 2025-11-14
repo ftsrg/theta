@@ -157,16 +157,12 @@ class XcfaMultiThreadToMonolithicAdapter(
                   label.getFlatLabels().flatMap { l ->
                     when (l) {
                       is StartLabel -> {
-                        val pidVar = l.pidVar.changeVars(varLookUp)
                         val startedLocVar = locVars[l]!!
                         val startedLocMap = locs[l]!!
                         val startedInitLoc = threads[l]!!.initLoc
                         listOf(
                           AssumeStmt.of(Eq(startedLocVar.ref, smtInt(-1))),
-                          AssignStmt.of(
-                            cast(pidVar, pidVar.type),
-                            cast(smtInt(threadIds[l]!!), pidVar.type),
-                          ),
+                          l.getHandleAssignment(smtInt(threadIds[l]!!), varLookUp),
                           AssignStmt.of(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
@@ -184,20 +180,20 @@ class XcfaMultiThreadToMonolithicAdapter(
                       }
 
                       is JoinLabel -> {
-                        val pidVar = l.pidVar.changeVars(varLookUp)
+                        val handle = l.handle.changeVars(varLookUp)
                         val potentialJoinedThreads =
                           threadIds.entries.filter { (start, _) ->
-                            start != null && start.pidVar == l.pidVar
+                            start != null && start.handle == l.handle
                           }
                         val joinCondition =
                           if (potentialJoinedThreads.isEmpty())
-                            error("No thread found for join with pid var ${l.pidVar}")
+                            error("No thread found for join with pid var ${l.handle}")
                           else {
                             And(
                               potentialJoinedThreads.map { (startLabel, pid) ->
                                 val finalLoc = threads[startLabel]!!.finalLoc
                                 Imply(
-                                  Eq(pidVar.ref, smtInt(pid)),
+                                  Eq(handle, smtInt(pid)),
                                   if (finalLoc.isPresent) {
                                     val joinedLocMap = locs[startLabel]!!
                                     val finalLocValue = joinedLocMap[finalLoc.get()]!!

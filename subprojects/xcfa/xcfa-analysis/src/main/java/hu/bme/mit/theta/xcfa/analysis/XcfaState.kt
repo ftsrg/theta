@@ -42,7 +42,7 @@ constructor(
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
   val mutexes: Map<String, Set<Int>> = mapOf(),
-  val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
+  val threadLookup: Map<Expr<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
 ) : ExprState {
 
@@ -148,7 +148,7 @@ constructor(
           is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
           is JoinLabel -> {
             changes.add { state ->
-              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
+              val joinedPid = state.threadLookup[label.handle] ?: error("No such thread.")
               if (joinedPid in state.processes) copy(bottom = true) else state
             }
             null
@@ -173,7 +173,7 @@ constructor(
 
   private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {
     val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-    val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
+    val newThreadLookup: MutableMap<Expr<*>, Int> = LinkedHashMap(threadLookup)
 
     val procedure = xcfa?.procedures?.find { it.name == startLabel.name }!!
     val paramList = procedure.params.toMap()
@@ -194,7 +194,7 @@ constructor(
 
     val pid = pidCnt++
     val lookup = procedure.createLookup("T$pid")
-    newThreadLookup[startLabel.pidVar] = pid
+    newThreadLookup[startLabel.handle] = pid
     newProcesses[pid] =
       XcfaProcessState(
         LinkedList(listOf(procedure.initLoc)),

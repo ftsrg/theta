@@ -79,47 +79,28 @@ fun XcfaLabel.changeVars(
 ): XcfaLabel =
   if (varLut.isNotEmpty())
     when (this) {
-      is InvokeLabel ->
-        InvokeLabel(
-          name,
-          params.map { it.changeVars(varLut, parseContext) },
-          metadata = metadata,
-          isLibraryFunction = isLibraryFunction,
-        )
-
-      is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
-      is NondetLabel ->
-        NondetLabel(labels.map { it.changeVars(varLut, parseContext) }.toSet(), metadata = metadata)
-
-      is SequenceLabel ->
-        SequenceLabel(labels.map { it.changeVars(varLut, parseContext) }, metadata = metadata)
+      is StmtLabel -> copy(stmt = stmt.changeVars(varLut, parseContext))
+      is InvokeLabel -> copy(params = params.map { it.changeVars(varLut, parseContext) })
+      is ReturnLabel -> copy(enclosedLabel = enclosedLabel.changeVars(varLut))
+      is NondetLabel -> copy(labels = labels.map { it.changeVars(varLut, parseContext) }.toSet())
+      is SequenceLabel -> SequenceLabel(labels = labels.map { it.changeVars(varLut, parseContext) })
 
       is StartLabel ->
-        StartLabel(
-          name,
-          params.map { it.changeVars(varLut, parseContext) },
-          pidVar.changeVars(varLut),
-          metadata = metadata,
+        copy(
+          params = params.map { it.changeVars(varLut, parseContext) },
+          handle = handle.changeVars(varLut),
         )
-
-      is StmtLabel ->
-        StmtLabel(
-          stmt.changeVars(varLut, parseContext),
-          metadata = metadata,
-          choiceType = this.choiceType,
-        )
-
-      is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
+      is JoinLabel -> copy(handle = handle.changeVars(varLut))
 
       is FenceLabel -> {
         when (this) {
-          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is MutexLockLabel -> copy(handle = handle.changeVars(varLut))
           is MutexTryLockLabel ->
-            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
-          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
-          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
+            copy(handle = handle.changeVars(varLut), successVar = successVar.changeVars(varLut))
+          is MutexUnlockLabel -> copy(handle = handle.changeVars(varLut))
+          is RWLockReadLockLabel -> copy(handle = handle.changeVars(varLut))
+          is RWLockWriteLockLabel -> copy(handle = handle.changeVars(varLut))
+          is RWLockUnlockLabel -> copy(handle = handle.changeVars(varLut))
           else -> this
         }
       }
@@ -188,7 +169,7 @@ fun XcfaLabel.changeSubexpr(
     when (this) {
       is InvokeLabel -> copy(params = params.map { it.changeSubexpr(exprLut, parseContext) })
 
-      is JoinLabel -> copy(pidVar = pidVar.changeSubexpr(exprLut))
+      is JoinLabel -> copy(handle = handle.changeSubexpr(exprLut))
       is NondetLabel ->
         copy(labels = labels.map { it.changeSubexpr(exprLut, parseContext) }.toSet())
 
@@ -197,7 +178,7 @@ fun XcfaLabel.changeSubexpr(
       is StartLabel ->
         copy(
           params = params.map { it.changeSubexpr(exprLut, parseContext) },
-          pidVar = pidVar.changeSubexpr(exprLut),
+          handle = handle.changeSubexpr(exprLut),
         )
 
       is StmtLabel -> copy(stmt = stmt.changeSubexpr(exprLut, parseContext))

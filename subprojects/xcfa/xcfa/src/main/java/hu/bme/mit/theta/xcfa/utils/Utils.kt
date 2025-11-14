@@ -178,8 +178,17 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     is InvokeLabel -> {
       copy(params = params.map { ExprUtils.simplify(it, valuation) })
     }
+    is ReturnLabel -> {
+      copy(enclosedLabel = enclosedLabel.simplify(valuation, parseContext))
+    }
     is StartLabel -> {
-      copy(params = params.map { ExprUtils.simplify(it, valuation) })
+      copy(
+        params = params.map { ExprUtils.simplify(it, valuation) },
+        handle = ExprUtils.simplify(handle, valuation),
+      )
+    }
+    is JoinLabel -> {
+      copy(handle = ExprUtils.simplify(handle, valuation))
     }
 
     else -> this
@@ -206,21 +215,21 @@ fun getNonConcurrentEdges(
     }
 
   val starts = mutableSetOf<XcfaEdge>()
-  val startedThreadVars = mutableSetOf<VarDecl<*>>()
+  val startedThreadHandles = mutableSetOf<Expr<*>>()
   val joins = mutableSetOf<XcfaEdge>()
-  val joinedThreadVars = mutableSetOf<VarDecl<*>>()
+  val joinedThreadHandles = mutableSetOf<Expr<*>>()
   initProcedure.getEdges().forEach { edge ->
     edge.getFlatLabels().forEach { label ->
       if (label is StartLabel) {
-        if (label.pidVar in startedThreadVars) {
-          potentialNotJoinedThread = false
+        if (label.handle in startedThreadHandles) {
+          potentialNotJoinedThread = true
         }
         starts.add(edge)
-        startedThreadVars.add(label.pidVar)
+        startedThreadHandles.add(label.handle)
       }
       if (label is JoinLabel) {
         joins.add(edge)
-        joinedThreadVars.add(label.pidVar)
+        joinedThreadHandles.add(label.handle)
       }
     }
   }
@@ -237,7 +246,9 @@ fun getNonConcurrentEdges(
   val edgesBeforeAllStarts = initProcedure.getEdges() - edgesAfterAnyStart
 
   if (
-    potentialNotJoinedThread || onlyInitPhase || !startedThreadVars.all { it in joinedThreadVars }
+    potentialNotJoinedThread ||
+      onlyInitPhase ||
+      !startedThreadHandles.all { it in joinedThreadHandles }
   ) {
     return edgesBeforeAllStarts to null
   }
