@@ -18,6 +18,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply<ApplicationPlugin>()
 apply<ShadowPlugin>()
+apply<WslJarPlugin>()
 
 tasks {
     val libPath: String by rootProject.extra

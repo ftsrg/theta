@@ -15,8 +15,10 @@
  */
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.plugins.JavaApplication
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.kotlin.dsl.withType
 import java.io.File
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -36,44 +38,29 @@ class WslJarPlugin : Plugin<Project> {
         "WslJarPlugin requires the 'application' plugin to be applied."
       )
     }
-    val application = project.extensions.getByType(JavaApplication::class.java)
-    val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
 
-    project.tasks.register("wslJar") {
+    val wslJar = project.tasks.register("wslJar") {
       dependsOn(project.tasks.named("jar"))
 
       doLast {
         check(System.getProperty("os.name").lowercase().contains("windows")) {
           "The WSL jar can only be created on Windows hosts."
         }
-        val wslPath: File.() -> String = {
-          absolutePath.let {
-            val drive = it[0].lowercase()
-            "/mnt/$drive${it.substring(2).replace("\\", "/")}"
-          }
-        }
-        val relativePath: String.(String) -> String = { base ->
-          val thisSplit = this.split("/").filter { it.isNotEmpty() }
-          val baseSplit = base.split("/").filter { it.isNotEmpty() }
-          val commonLength = thisSplit.zip(baseSplit).takeWhile { it.first == it.second }.count()
-          val upLevels = baseSplit.size - commonLength
-          val downLevels = thisSplit.drop(commonLength)
-          buildString {
-            repeat(upLevels) { append("../") }
-            append(downLevels.joinToString("/"))
-          }
-        }
 
         val artifactDir = project.layout.buildDirectory.dir("libs").get().asFile
-        val artifactPath = artifactDir.wslPath()
+        val artifactPath = artifactDir.wslPath
         val artifact = File(artifactDir, "${project.name}-${project.version}.jar")
+        val application = project.extensions.getByType(JavaApplication::class.java)
+        val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+
         JarFile(artifact).use { jar ->
           val manifest = jar.manifest
           val attrs = manifest.mainAttributes
           attrs.putValue("Main-Class", application.mainClass.get())
-          val classPath = sourceSets.getByName("main").runtimeClasspath.files.joinToString(" ") { f ->
-            f.wslPath().relativePath(artifactPath)
-          }
+          val classPath =
+            sourceSets.getByName("main").runtimeClasspath.files.joinToString(" ") { f ->
+              f.wslPath.relativePath(artifactPath)
+            }
           attrs.putValue("Class-Path", classPath)
 
           val wslJar = File(artifact.parentFile, "${project.name}-${project.version}-wsl.jar")
@@ -90,6 +77,37 @@ class WslJarPlugin : Plugin<Project> {
           }
         }
       }
+    }
+
+    project.afterEvaluate {
+      project
+        .configurations
+        .getByName("runtimeClasspath")
+        .allDependencies
+        .withType<ProjectDependency>()
+        .forEach { dependency ->
+          wslJar.configure {
+            dependsOn(dependency.dependencyProject.tasks.named("jar"))
+          }
+        }
+    }
+  }
+
+  private val File.wslPath: String get() =
+    absolutePath.let {
+      val drive = it[0].lowercase()
+      "/mnt/$drive${it.substring(2).replace("\\", "/")}"
+    }
+
+  private fun String.relativePath(base: String): String {
+    val thisSplit = this.split("/").filter { it.isNotEmpty() }
+    val baseSplit = base.split("/").filter { it.isNotEmpty() }
+    val commonLength = thisSplit.zip(baseSplit).takeWhile { it.first == it.second }.count()
+    val upLevels = baseSplit.size - commonLength
+    val downLevels = thisSplit.drop(commonLength)
+    return buildString {
+      repeat(upLevels) { append("../") }
+      append(downLevels.joinToString("/"))
     }
   }
 }
