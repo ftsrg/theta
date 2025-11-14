@@ -45,6 +45,7 @@ import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
@@ -123,7 +124,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     private lateinit var edge: XcfaEdge
     private var inEdge = false
     private var atomicBlock: Int? = null
-    private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
+    private val multipleUseHandles = mutableSetOf<Expr<*>>()
 
     init {
       if (addMemoryGarbage) {
@@ -191,7 +192,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       return listOf(e)
     }
 
-    private fun <T : Type> Expr<T>.toEvents(
+    private fun <T : Type> Expr<T>.toReadEvents(
       consts: Map<Any, IndexedConstDecl<*>>? = null,
       useProvidedConst: Boolean = false,
     ): Map<Any, IndexedConstDecl<*>> {
@@ -326,7 +327,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     }
 
     private fun AssignStmt<*>.process() {
-      val consts = this.expr.toEvents()
+      val consts = this.expr.toReadEvents()
       last = event(this.varDecl, WRITE)
       last.first().assignment = Eq(last.first().const.ref, this.expr.with(consts))
     }
@@ -348,7 +349,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
-      this.cond.toEvents(consts, true)
+      this.cond.toReadEvents(consts, true)
       if ((edge.source.outgoingEdges.size == 1 || !firstLabel) && asAssign) {
         last.first().assignment = condWithConsts
       }
@@ -360,15 +361,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     }
 
     private fun MemoryAssignStmt<*, *, *>.process() {
-      val exprConsts = this.expr.toEvents()
-      val arrayConsts = this.deref.array.toEvents(exprConsts)
-      val offsetConsts = this.deref.offset.toEvents(arrayConsts)
+      val exprConsts = this.expr.toReadEvents()
+      val arrayConsts = this.deref.array.toReadEvents(exprConsts)
+      val offsetConsts = this.deref.offset.toReadEvents(arrayConsts)
       last = memoryEvent(this.deref, arrayConsts + offsetConsts, WRITE)
       last.first().assignment = Eq(last.first().const.ref, this.expr.with(exprConsts))
     }
 
     private fun StartLabel.process(
-      threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
+      threadLookup: MutableMap<Expr<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
     ) {
       if (this.name in thread.startHistory) {
         exit("recursive thread start")
@@ -379,7 +380,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       val newPid = Thread.uniqueId()
 
       // assign parameter
-      val consts = this.params[1].toEvents()
+      val consts = this.params[1].toReadEvents()
       procedure.params
         .firstOrNull { it.second != ParamDirection.OUT }
         ?.first
@@ -388,31 +389,36 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
         }
 
-      last = event(this.pidVar, WRITE)
-      val pidVar = this.pidVar.threadVar(pid)
-      if (threads.any { it.pidVar == pidVar }) {
-        multipleUsePidVars.add(pidVar)
+      when (val assignment = this.getHandleAssignment(Int(newPid))) {
+        is AssignStmt<*> -> assignment.process()
+        is MemoryAssignStmt<*, *, *> -> assignment.process()
+        else -> exit("unsupported handle assignment: $assignment")
+      }
+
+      val handle = this.handle.threadHandle
+      if (threads.any { it.handle == handle }) {
+        multipleUseHandles.add(handle)
       }
       val newHistory = thread.startHistory + thread.procedure.name
-      val newThread = Thread(newPid, procedure, guard, pidVar, last.first(), newHistory, lastWrites)
-      last.first().assignment = Eq(last.first().const.ref, Int(newPid))
-      threadLookup[pidVar] = setOf(Pair(guard, newThread))
+      val newThread = Thread(newPid, procedure, guard, handle, last.first(), newHistory, lastWrites)
+      threadLookup[handle] = setOf(Pair(guard, newThread))
       ThreadProcessor(newThread).process()
     }
 
     private fun JoinLabel.process(
-      threadLookup: MutableMap<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
+      threadLookup: MutableMap<Expr<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>
     ) {
       val incomingGuard = guard
       val lastEvents = mutableListOf<E>()
       val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
-      val pidVar = this.pidVar.threadVar(pid)
-      if (pidVar in multipleUsePidVars) {
+      val handle = this.handle.threadHandle
+      if (handle in multipleUseHandles) {
         exit("join on a pthread_t variable used in multiple pthread_create calls")
       }
-      threadLookup[pidVar]?.forEach { (g, thread) ->
+      threadLookup[handle]?.forEach { (g, thread) ->
         guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
-        val joinEvent = event(this.pidVar, READ).first()
+        this.handle.toReadEvents()
+        val joinEvent = last.first()
         thread.finalEvents.forEach { final -> po(final, joinEvent) }
         lastEvents.add(joinEvent)
         joinGuards.add(guard)
@@ -474,6 +480,14 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         }
       }
     }
+
+    private val Expr<*>.threadHandle: Expr<*>
+      get() =
+        when (this) {
+          is RefExpr<*> -> (decl as VarDecl<*>).threadVar(pid).ref
+          is Dereference<*, *, *> -> changeVars(vars.associateWith { it.threadVar(pid) })
+          else -> exit("unsupported handle expression: $this")
+        }
   }
 
   private fun po(from: E?, to: E) {

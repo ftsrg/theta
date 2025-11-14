@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -65,26 +66,26 @@ fun XcfaLabel.collectHavocs(): Set<HavocStmt<*>> =
         else -> setOf()
       }
 
-    is NondetLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
-    is SequenceLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
+    is NondetLabel -> labels.flatMap { it.collectHavocs() }.toSet()
+    is SequenceLabel -> labels.flatMap { it.collectHavocs() }.toSet()
     else -> setOf()
   }
 
 fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> =
   when (this) {
     is StmtLabel -> StmtUtils.getVars(stmt)
-    is NondetLabel -> labels.map { it.collectVars() }.flatten()
-    is SequenceLabel -> labels.map { it.collectVars() }.flatten()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
-    is JoinLabel -> setOf(pidVar)
-    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
+    is NondetLabel -> labels.flatMap { it.collectVars() }
+    is SequenceLabel -> labels.flatMap { it.collectVars() }
+    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }
+    is StartLabel -> params.flatMap { ExprUtils.getVars(it) } union ExprUtils.getVars(handle)
+    is JoinLabel -> ExprUtils.getVars(handle)
     is FenceLabel ->
       when (this) {
-        is AtomicFenceLabel -> setOf()
-        is MutexTryLockLabel -> setOf(handle, successVar)
-        else -> setOf(handle)
+        is AtomicFenceLabel -> emptyList()
+        is MutexTryLockLabel -> listOf(handle, successVar)
+        else -> listOf(handle)
       }
-    else -> emptySet()
+    else -> emptyList()
   }
 
 // Complex var access requests
@@ -141,16 +142,18 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
-    is InvokeLabel ->
-      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
+    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }.associateWith { READ }
     is StartLabel ->
-      params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to WRITE)
+      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } +
+        ExprUtils.getVars(handle).associateWith {
+          if (it == (handle as? RefExpr<*>)?.decl) WRITE else READ
+        }
 
-    is JoinLabel -> mapOf(pidVar to READ)
+    is JoinLabel -> ExprUtils.getVars(handle).associateWith { READ }
     is FenceLabel -> {
       when (this) {
-        is AtomicFenceLabel -> mapOf()
-        is MutexTryLockLabel -> mapOf(handle to READ) + mapOf(successVar to WRITE)
+        is AtomicFenceLabel -> emptyMap()
+        is MutexTryLockLabel -> mapOf(handle to READ, successVar to WRITE)
         else -> mapOf(handle to READ)
       }
     }
@@ -232,7 +235,8 @@ val XcfaLabel.references: List<Reference<*, *>>
       is InvokeLabel -> params.flatMap { it.references }
       is NondetLabel -> labels.flatMap { it.references }
       is SequenceLabel -> labels.flatMap { it.references }
-      is StartLabel -> params.flatMap { it.references }
+      is StartLabel -> params.flatMap { it.references } + handle.references
+      is JoinLabel -> handle.references
       else -> emptyList()
     }
 
@@ -251,7 +255,8 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
       is InvokeLabel -> params.flatMap { it.dereferences }
       is NondetLabel -> labels.flatMap { it.dereferences }
       is SequenceLabel -> labels.flatMap { it.dereferences }
-      is StartLabel -> params.flatMap { it.dereferences }
+      is StartLabel -> params.flatMap { it.dereferences } + handle.dereferences
+      is JoinLabel -> handle.dereferences
       else -> emptyList()
     }
 
@@ -278,7 +283,11 @@ val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
       is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
       is SequenceLabel -> labels.map(XcfaLabel::dereferencesWithAccessType).mergeDerefs()
       is InvokeLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
-      is StartLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
+      is StartLabel ->
+        (params.map { it.dereferences.associateWith { READ } } +
+            listOf(handle.dereferences.associateWith { if (it == handle) WRITE else READ }))
+          .mergeDerefs()
+      is JoinLabel -> handle.dereferences.associateWith { READ }
       is StmtLabel -> stmt.dereferencesWithAccessType
       else -> mapOf()
     }

@@ -71,8 +71,8 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
   private fun XcfaLabel.replaceDerefs(builder: XcfaProcedureBuilder): XcfaLabel =
     if (dereferences.isNotEmpty()) {
       when (this) {
-        is NondetLabel -> NondetLabel(labels.map { it.replaceDerefs(builder) }.toSet(), metadata)
-        is SequenceLabel -> SequenceLabel(labels.map { it.replaceDerefs(builder) }, metadata)
+        is NondetLabel -> copy(labels = labels.map { it.replaceDerefs(builder) }.toSet())
+        is SequenceLabel -> copy(labels = labels.map { it.replaceDerefs(builder) })
         is InvokeLabel -> {
           val lut = getDerefLut(dereferences, builder)
           SequenceLabel(
@@ -83,14 +83,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                   cast(it.key.map { it.replaceDerefs(lut) }, it.value.type),
                 )
               )
-            } +
-              InvokeLabel(
-                this.name,
-                this.params.map { it.replaceDerefs(lut) },
-                metadata,
-                tempLookup,
-                isLibraryFunction,
-              ),
+            } + copy(params = this.params.map { it.replaceDerefs(lut) }),
             metadata,
           )
         }
@@ -106,16 +99,15 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                 )
               )
             } +
-              StartLabel(name, params.map { it.replaceDerefs(lut) }, pidVar, metadata, tempLookup),
+              copy(
+                params = params.map { it.replaceDerefs(lut) },
+                handle = handle.replaceDerefs(lut),
+              ),
             metadata,
           )
         }
 
-        is StmtLabel ->
-          SequenceLabel(
-            stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
-            metadata,
-          )
+        is StmtLabel -> SequenceLabel(stmt.replaceDerefs(builder).map { copy(stmt = it) }, metadata)
 
         else -> error("Not implemented for ${this.javaClass.simpleName}")
       }

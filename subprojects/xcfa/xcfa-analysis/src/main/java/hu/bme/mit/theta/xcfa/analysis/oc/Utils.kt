@@ -63,7 +63,7 @@ internal data class Thread(
   val pid: Int = uniqueId(),
   val procedure: XcfaProcedure,
   val guard: Set<Expr<BoolType>> = setOf(),
-  val pidVar: VarDecl<*>? = null,
+  val handle: Expr<*>? = null,
   val startEvent: XcfaEvent? = null,
   val startHistory: List<String> = listOf(),
   val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
@@ -85,7 +85,7 @@ internal data class SearchItem(val loc: XcfaLocation) {
   val guards: MutableList<Set<Expr<BoolType>>> = mutableListOf()
   val lastEvents: MutableList<XcfaEvent> = mutableListOf()
   val lastWrites: MutableList<Map<VarDecl<*>, Set<XcfaEvent>>> = mutableListOf()
-  val threadLookups: MutableList<Map<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>> =
+  val threadLookups: MutableList<Map<Expr<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>> =
     mutableListOf()
   val atomics: MutableList<Int?> = mutableListOf()
   var incoming: Int = 0
