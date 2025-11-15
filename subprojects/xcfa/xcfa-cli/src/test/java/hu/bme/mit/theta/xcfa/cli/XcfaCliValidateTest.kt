@@ -334,7 +334,7 @@ class XcfaCliValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "EMERGENT",
+        "BOUNDED",
         "--input-type",
         "C",
         "--input",
@@ -351,7 +351,7 @@ class XcfaCliValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "EMERGENT",
+        "BOUNDED",
         "--input-type",
         "C",
         "--input",
