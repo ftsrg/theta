@@ -625,7 +625,7 @@ data class COutputConfig(
 ) : Config
 
 data class WitnessConfig(
-  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.NONE,
+  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.ALL,
   @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
   var concretizerSolver: String = "Z3",
   @Parameter(

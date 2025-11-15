@@ -300,7 +300,7 @@ class XcfaCliNonTerminationVerifyTest {
 
   @ParameterizedTest
   @MethodSource("cFilesAdvanced")
-  fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
+  fun testCVerifyEmergentPortfolio(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -309,7 +309,7 @@ class XcfaCliNonTerminationVerifyTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",

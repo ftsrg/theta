@@ -334,7 +334,7 @@ class XcfaCliValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--input",
@@ -351,7 +351,7 @@ class XcfaCliValidateTest {
     val params =
       arrayOf(
         "--backend",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--input",
@@ -364,14 +364,14 @@ class XcfaCliValidateTest {
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
-  fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
+  fun testCVerifyEmergentPortfolio(filePath: String, extraArgs: String?) {
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
     val params =
       arrayOf(
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--input",
