@@ -124,7 +124,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               it is CCall && it.functionId == "reach_error"
             }
           call?.let {
-            val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart)
+            val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
             writeTrivialViolationWitness(
               safetyResult = safetyResult,
               inputFile = inputFile,
@@ -534,7 +534,7 @@ private fun WitnessNode.toSegment(
       val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
       check(varsOnEdge.size == 1) // this has to be the havoced variable
       val varOnEdge = varsOnEdge.first()
-      val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge]
+      val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
 
       val constraint = "\\result == $assignedValue"
       loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
