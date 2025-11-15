@@ -34,11 +34,13 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.NopLabel.metadata
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.LinkedList
+import kotlin.jvm.optionals.getOrNull
 
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -275,6 +277,20 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.add(oldLabels[i++])
       }
       builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
+    }
+
+    if (firstCycle == -1) { // we are checking reachability, TODO refactor
+      builder.errorLoc.getOrNull()?.incomingEdges?.toSet()?.forEach {
+        builder.removeEdge(it)
+        builder.addEdge(
+          it.withLabel(
+            SequenceLabel(
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
+              metadata = it.label.metadata,
+            )
+          )
+        )
+      }
     }
 
     builder.prop = segmentFlag.ref
