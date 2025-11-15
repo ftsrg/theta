@@ -35,7 +35,7 @@ public class MetaItpSolver implements ItpSolver, Solver {
     private final List<MetaItpPattern> patterns = new ArrayList<>();
 
     public MetaItpSolver(List<ItpSolver> solvers) {
-        this.solvers = Collections.synchronizedList(solvers);
+        this.solvers = solvers;
     }
 
     @Override
@@ -67,12 +67,10 @@ public class MetaItpSolver implements ItpSolver, Solver {
     @Override
     public ItpMarker createMarker() {
         Map<ItpSolver, ItpMarker> markersMap = new HashMap<>();
-        
-        forSolvers(solver -> {
+
+        for (ItpSolver solver : solvers) {
             markersMap.put(solver, solver.createMarker());
-                    return null;
-            }
-        );
+        }
         
         MetaItpMarker marker = new MetaItpMarker(markersMap);
         markers.add(marker);
@@ -84,15 +82,17 @@ public class MetaItpSolver implements ItpSolver, Solver {
         checkArgument(marker instanceof MetaItpMarker);
 
         assertions.add(assertion);
-        forSolvers(solver -> {
+
+        List<ItpSolver> solversToRemove = new ArrayList<>();
+        for (ItpSolver solver : solvers) {
             try {
                 solver.add(((MetaItpMarker) marker).getMarker(solver), assertion);
             } catch (Exception e) {
-                remove(solver);
+                solversToRemove.add(solver);
             }
-            return null;
-        });
+        }
 
+        solversToRemove.forEach(this::remove);
     }
 
     @Override
@@ -100,7 +100,9 @@ public class MetaItpSolver implements ItpSolver, Solver {
         checkArgument(pattern instanceof MetaItpPattern);
 
         List<SolverResult<Interpolant>> interpolants = allResults(solver ->
-                new SolverResult<>(solver.getInterpolant(((MetaItpPattern) pattern).getPattern(solver)), solver));
+                new SolverResult<>(
+                        solver.getInterpolant(((MetaItpPattern) pattern).getPattern(solver)),
+                        solver));
 
         SolverResult<Interpolant> strongest = interpolants.stream().min(MetaItpSolver::selectStronger).orElseThrow();
         return new MetaInterpolant(strongest.solver, strongest.result);
@@ -114,14 +116,17 @@ public class MetaItpSolver implements ItpSolver, Solver {
     @Override
     public void add(Expr<BoolType> assertion) {
         assertions.add(assertion);
-        forSolvers(solver -> {
+
+        List<ItpSolver> solversToRemove = new ArrayList<>();
+        for (ItpSolver solver : solvers) {
             try {
                 ((Solver) solver).add(assertion);
             } catch (Exception e) {
-                remove(solver);
+                solversToRemove.add(solver);
             }
-            return null;
-        });
+        }
+
+        solversToRemove.forEach(this::remove);
     }
 
     @Override
@@ -133,27 +138,24 @@ public class MetaItpSolver implements ItpSolver, Solver {
     @Override
     public void push() {
         markers.push();
-        forSolvers(solver -> {
+        for (ItpSolver solver : solvers) {
             solver.push();
-            return null;
-        });
+        }
     }
 
     @Override
     public void pop(int n) {
         markers.pop(n);
-        forSolvers(solver -> {
+        for (ItpSolver solver : solvers) {
             solver.pop(n);
-            return null;
-        });
+        }
     }
 
     @Override
     public void reset() {
-        forSolvers(solver -> {
+        for (ItpSolver solver : solvers) {
             solver.reset();
-            return null;
-        });
+        }
     }
 
     @Override
@@ -203,22 +205,28 @@ public class MetaItpSolver implements ItpSolver, Solver {
         ExecutorService executorService = Executors.newFixedThreadPool(solvers.size());
         List<Callable<T>> tasks = new ArrayList<>();
 
-        forSolvers(solver -> tasks.add(() -> {
-            T result;
-            try {
-               result = action.run(solver);
-            } catch (Exception e) {
-                remove(solver);
-                // ignore this task's result
-                throw new IllegalStateException();
-            }
-            return result;
-        }));
+        List<ItpSolver> solversToRemove = new ArrayList<>();
+        for (ItpSolver solver : solvers) {
+            tasks.add(() -> {
+                T result;
+                try {
+                   result = action.run(solver);
+                } catch (Exception e) {
+                    solversToRemove.add(solver);
+                    // ignore this task's result
+                    throw new IllegalStateException();
+                }
+                return result;
+            });
+        }
 
         try {
             return executorService.invokeAny(tasks);
         } catch (ExecutionException | InterruptedException e) {
             throw new MetaSolverException(e);
+        } finally {
+            solversToRemove.forEach(this::remove);
+            executorService.shutdown();
         }
     }
 
@@ -226,23 +234,26 @@ public class MetaItpSolver implements ItpSolver, Solver {
         ExecutorService executorService = Executors.newFixedThreadPool(solvers.size());
         List<Callable<T>> tasks = new ArrayList<>();
 
-        forSolvers(solver ->
+        List<ItpSolver> solversToRemove = new ArrayList<>();
+        for (ItpSolver solver : solvers) {
             tasks.add(() -> {
                 T result = null;
                 try {
                     result = action.run(solver);
                 } catch (Exception e) {
-                    remove(solver);
+                    solversToRemove.add(solver);
                 }
                 return result;
-            })
-        );
+            });
+        }
 
         List<Future<T>> futureItems;
         try {
             futureItems = executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
             throw new MetaSolverException(e);
+        } finally {
+            solversToRemove.forEach(this::remove);
         }
 
         List<T> items = futureItems.stream()
@@ -272,13 +283,5 @@ public class MetaItpSolver implements ItpSolver, Solver {
     private static int selectStronger(SolverResult<Interpolant> a, SolverResult<Interpolant> b) {
         // todo choose strongest
         return 0;
-    }
-
-    private <T> void forSolvers(SolverAction<T> actions) {
-        synchronized (solvers) {
-            for (ItpSolver solver : solvers) {
-                actions.run(solver);
-            }
-        }
     }
 }
