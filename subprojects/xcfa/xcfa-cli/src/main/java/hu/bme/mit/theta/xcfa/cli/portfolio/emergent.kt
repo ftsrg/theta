@@ -28,7 +28,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 
-fun boundedPortfolio25(
+fun emergentPortfolio(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -42,14 +42,15 @@ fun boundedPortfolio25(
   var boundedBaseConfig =
     XcfaConfig(
       inputConfig =
-        InputConfig(
-          input = null,
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx =
+            if (portfolioConfig.backendConfig.parseInProcess) null
+            else Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
         ),
       frontendConfig =
-        FrontendConfig(
+        (portfolioConfig.frontendConfig as FrontendConfig<CFrontendConfig>).copy(
           lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
@@ -68,6 +69,7 @@ fun boundedPortfolio25(
               indConfig = InductionConfig(true),
               itpConfig = InterpolationConfig(true),
             ),
+          parseInProcess = portfolioConfig.backendConfig.parseInProcess,
         ),
       outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
@@ -96,10 +98,6 @@ fun boundedPortfolio25(
       outputConfig = boundedBaseConfig.outputConfig,
       debugConfig = boundedBaseConfig.debugConfig,
     )
-
-  if (parseContext.multiThreading) {
-    throw UnsupportedOperationException("Multithreading for bounded checkers not supported")
-  }
 
   if (!xcfa.isInlined) {
     throw UnsupportedOperationException("Recursive XCFA for bounded checkers not supported")
@@ -144,6 +142,7 @@ fun boundedPortfolio25(
         backendConfig.copy(
           timeoutMs = timeoutMs,
           inProcess = inProcess,
+          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
           specConfig =
             backendConfig.specConfig!!.copy(
               reversed = reversed,
@@ -170,7 +169,14 @@ fun boundedPortfolio25(
     timeoutMs: Long = 0,
     inProcess: Boolean = this.backendConfig.inProcess,
   ): XcfaConfig<*, MddConfig> {
-    return copy(backendConfig = backendConfig.copy(timeoutMs = timeoutMs, inProcess = inProcess))
+    return copy(
+      backendConfig =
+        backendConfig.copy(
+          timeoutMs = timeoutMs,
+          inProcess = inProcess,
+          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
+        )
+    )
   }
 
   val canUseMathsat = !parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)

@@ -190,7 +190,7 @@ fun WitnessNode.toXml(): String =
 
 fun WitnessEdge.toXml(): String =
   """
-        <edge source="$sourceId" target="$targetId">
+        <edge source="${source.id}" target="${target.id}">
             ${if (assumption != null) "<data key=\"assumption\">$assumption</data>" else ""}
             ${if (assumption_scope != null) "<data key=\"assumption.scope\">$assumption_scope</data>" else ""}
             ${if (assumption_resultfunction != null) "<data key=\"assumption.resultfunction\">$assumption_resultfunction</data>" else ""}

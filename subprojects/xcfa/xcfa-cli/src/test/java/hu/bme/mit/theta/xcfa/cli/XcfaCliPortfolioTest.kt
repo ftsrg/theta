@@ -35,7 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource
 class XcfaCliPortfolioTest {
   companion object {
     private object Portfolios {
-      val complex23Portfolio =
+      val complexPortfolio =
         {
           xcfa: XCFA,
           mcm: MCM,
@@ -43,10 +43,10 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          complexPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
-      val complex24Portfolio =
+      val emergentPortfolio =
         {
           xcfa: XCFA,
           mcm: MCM,
@@ -54,10 +54,10 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          emergentPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
-      val complex25Portfolio =
+      val hornPortfolio =
         {
           xcfa: XCFA,
           mcm: MCM,
@@ -65,51 +65,7 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          complexPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }
-
-      val complex26Portfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          complexPortfolio26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }
-
-      val bounded24Portfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          boundedPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }
-
-      val bounded25Portfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          boundedPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-        }
-
-      val horn25Portfolio =
-        {
-          xcfa: XCFA,
-          mcm: MCM,
-          parseContext: ParseContext,
-          portfolioConfig: XcfaConfig<*, *>,
-          logger: Logger,
-          uniqueLogger: Logger ->
-          hornPortfolio25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          hornPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
     }
 
@@ -168,55 +124,27 @@ class XcfaCliPortfolioTest {
     @JvmStatic
     fun data(): Collection<Array<Any>> =
       listOf(
-        arrayOf(Portfolios.complex23Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.multithread, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.complex23Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.multithread, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.complex24Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.multithread, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.complex25Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.multithread, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.complex26Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.multithread, unsupportedCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.bounded24Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.multithread, unsupportedCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.bounded25Portfolio, Programs.nonlin, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.multithread, unsupportedCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.pointer, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.float, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.arr, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.bitwise, defaultCheck),
-        arrayOf(Portfolios.horn25Portfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.complexPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.emergentPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.multithread, unsupportedCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.nonlin, defaultCheck),
       )
   }
 

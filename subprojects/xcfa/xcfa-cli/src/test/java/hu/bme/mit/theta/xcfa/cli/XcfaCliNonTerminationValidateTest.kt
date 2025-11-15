@@ -323,7 +323,7 @@ class XcfaCliNonTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("witnessFilesAdvanced")
-  fun testCValidateBoundedPortfolio(filePath: String, witnessPath: String, extraArgs: String?) {
+  fun testCValidateEmergentPortfolio(filePath: String, witnessPath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
@@ -332,7 +332,7 @@ class XcfaCliNonTerminationValidateTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",
@@ -388,7 +388,7 @@ class XcfaCliNonTerminationValidateTest {
   private fun isWitnessViolation(temp: Path): Boolean {
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    return "entry_type: \"violation_sequence\"" in witnessContents
+    return "entry_type: violation_sequence" in witnessContents
   }
 
   /////////// wrong witnesses ///////////
@@ -505,7 +505,7 @@ class XcfaCliNonTerminationValidateTest {
         "--backend",
         "PORTFOLIO",
         "--portfolio",
-        "BOUNDED",
+        "EMERGENT",
         "--input-type",
         "C",
         "--loglevel",

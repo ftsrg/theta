@@ -149,6 +149,7 @@ internal fun postVerificationLogging(
                 parseContext,
                 witnessFile,
                 ltlSpecification,
+                logger = logger,
               )
           } catch (e: Exception) {
             logger.info("Could not emit witness as GraphML file: ${e.stackTraceToString()}")
@@ -169,6 +170,7 @@ internal fun postVerificationLogging(
                 yamlWitnessFile,
                 ltlSpecification,
                 (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+                logger,
               )
           } catch (e: Exception) {
             logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
@@ -309,6 +311,7 @@ private fun writeSvcompWitness(
         witnessFile,
         ltlSpecification,
         (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+        logger,
       )
     } else {
       logger.info(

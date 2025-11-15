@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 
-fun hornPortfolio25(
+fun hornPortfolio(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -40,9 +40,10 @@ fun hornPortfolio25(
   var baseConfig =
     XcfaConfig(
       inputConfig =
-        InputConfig(
-          input = null,
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx =
+            if (portfolioConfig.backendConfig.parseInProcess) null
+            else Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
         ),
