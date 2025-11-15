@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -535,8 +536,11 @@ private fun WitnessNode.toSegment(
       check(varsOnEdge.size == 1) // this has to be the havoced variable
       val varOnEdge = varsOnEdge.first()
       val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
+      val valueString =
+        if (assignedValue is BvLitExpr) assignedValue.toString().replace("#", "0")
+        else assignedValue.toString()
 
-      val constraint = "\\result == $assignedValue"
+      val constraint = "\\result == $valueString"
       loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
