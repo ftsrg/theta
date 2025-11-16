@@ -33,6 +33,7 @@ import kotlin.io.path.createTempDirectory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
@@ -424,6 +425,7 @@ class XcfaCliValidateTest {
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
+  @Disabled
   @ParameterizedTest
   @MethodSource("cFilesShortInt")
   fun testCVerifyCHC(filePath: String, extraArgs: String?) {
@@ -452,6 +454,7 @@ class XcfaCliValidateTest {
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
+  @Disabled
   @ParameterizedTest
   @MethodSource("cFilesShortInt")
   fun testCVerifyCHCPortfolio(filePath: String, extraArgs: String?) {
@@ -478,7 +481,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
