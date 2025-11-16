@@ -191,7 +191,9 @@ class XcfaCliValidateTest {
     if (witness.extension == "yml") {
       val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-      assertTrue(output.getVerdict() == validationOutput.getVerdict())
+      assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+        "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+      }
       println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
     }
   }
@@ -219,12 +221,15 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
   @Test
   fun testCVerifyBuiltInPortfolio() {
+    Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
     val temp = createTempDirectory()
     val params =
       arrayOf(
@@ -247,7 +252,9 @@ class XcfaCliValidateTest {
       val witness = temp.getWitness()
       val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-      assertTrue(output.getVerdict() == validationOutput.getVerdict())
+      assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+        "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+      }
       println(
         "Verification and validation both agree: task ${javaClass.getResource("/c/dekker.i")!!.path} is ${output.getVerdict()}"
       )
@@ -287,7 +294,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -313,7 +322,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -340,7 +351,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -366,7 +379,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -392,7 +407,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -421,7 +438,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
@@ -450,7 +469,9 @@ class XcfaCliValidateTest {
     val witness = temp.getWitness()
     val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
 
-    assertTrue(output.getVerdict() == validationOutput.getVerdict())
+    assertTrue(output.getVerdict() == validationOutput.getVerdict()) {
+      "${output.getVerdict()} != ${validationOutput.getVerdict()}"
+    }
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
 
