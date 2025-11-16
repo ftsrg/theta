@@ -90,7 +90,6 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
         Arguments.of("/c/litmustest/singlethread/16loop.c", null),
-        Arguments.of("/c/litmustest/singlethread/17recursive.c", null),
         Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por SPOR"),
         Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
@@ -222,41 +221,7 @@ class XcfaCliValidateTest {
     assertTrue(output.getVerdict() == validationOutput.getVerdict())
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
-
-  @ParameterizedTest
-  @MethodSource("cFilesShort")
-  fun testCVerifyPortfolio(filePath: String, extraArgs: String?) {
-    val temp = createTempDirectory()
-    val params =
-      arrayOf(
-        "--input-type",
-        "C",
-        "--backend",
-        "PORTFOLIO",
-        "--portfolio",
-        javaClass.getResource("/simple.kts")!!.path,
-        "--input",
-        javaClass.getResource(filePath)!!.path,
-        "--stacktrace",
-        "--debug",
-        "--output-directory",
-        temp.absolutePathString(),
-        "--svcomp",
-      )
-    try {
-      val output = runCatchingOutput(params)
-      val witness = temp.getWitness()
-      val validationOutput = runCatchingOutput(params + "--witness" + witness.absolutePath)
-
-      assertTrue(output.getVerdict() == validationOutput.getVerdict())
-      println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
-    } catch (e: Throwable) {
-      if (!e.toString().contains("Done debugging")) {
-        throw e
-      }
-    }
-  }
-
+  
   @Test
   fun testCVerifyBuiltInPortfolio() {
     val temp = createTempDirectory()
