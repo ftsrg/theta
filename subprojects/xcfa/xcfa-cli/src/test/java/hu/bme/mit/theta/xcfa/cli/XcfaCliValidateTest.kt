@@ -221,7 +221,7 @@ class XcfaCliValidateTest {
     assertTrue(output.getVerdict() == validationOutput.getVerdict())
     println("Verification and validation both agree: task $filePath is ${output.getVerdict()}")
   }
-  
+
   @Test
   fun testCVerifyBuiltInPortfolio() {
     val temp = createTempDirectory()
