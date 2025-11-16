@@ -181,9 +181,8 @@ public class MetaItpSolver implements ItpSolver, Solver {
     }
 
     private void remove(ItpSolver solver) {
-        synchronized (solvers) {
-            solvers.remove(solver);
-        }
+        solvers.remove(solver);
+
         for (MetaItpPattern pattern : patterns) {
             pattern.remove(solver);
         }
