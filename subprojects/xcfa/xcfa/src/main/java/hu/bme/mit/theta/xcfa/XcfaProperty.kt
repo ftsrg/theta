@@ -29,6 +29,8 @@ data class WitnessInfo(val witness: YamlWitness, val witnessPass: (ParseContext)
  *
  * Verifying the `verifiedProperty` on the model should yield equivalent results to verifying the
  * `inputProperty` on the original input task.
+ *
+ * Witness (information) is added in case Theta is used as a validator.
  */
 class XcfaProperty(val inputProperty: ErrorDetection, val witness: WitnessInfo? = null) {
   var verifiedProperty: ErrorDetection = inputProperty
