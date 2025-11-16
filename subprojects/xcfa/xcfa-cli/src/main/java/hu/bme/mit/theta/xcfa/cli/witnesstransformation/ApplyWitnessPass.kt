@@ -34,11 +34,13 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.NopLabel.metadata
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.LinkedList
+import kotlin.jvm.optionals.getOrNull
 
 class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -192,18 +194,17 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         )
 
       val segmentUpdate =
-        if (!segments.hasNext()) {
+        if (!segments.hasNext() && firstCycle > -1) {
           Pair(currentSegmentPred, Int(firstCycle))
-        } else {
+        } else if (segments.hasNext()) {
           Pair(currentSegmentPred, Int(i)) // here i was already incremented
+        } else {
+          null
         }
 
       val segmentFlagUpdate =
         if (i == segmentCount) {
-          AssignStmtLabel(
-            segmentFlag,
-            Ite<BoolType>(currentSegmentPred, currentSegmentPred, segmentFlag.ref),
-          )
+          AssignStmtLabel(segmentFlag, Ite(currentSegmentPred, currentSegmentPred, segmentFlag.ref))
         } else null
 
       val labelsOnEdges =
@@ -267,7 +268,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.addAll(annots.map { it.assumption })
         newLabels.addAll(annots.mapNotNull { it.flagUpdate })
         var expr = segmentCounter.ref as Expr<IntType>
-        for ((cond, then) in annots.map { it.segmentUpdate }) {
+        for ((cond, then) in annots.mapNotNull { it.segmentUpdate }) {
           expr = Ite(cond, then, expr)
         }
         newLabels.add(AssignStmtLabel(segmentCounter, expr))
@@ -276,6 +277,20 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         newLabels.add(oldLabels[i++])
       }
       builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.label.metadata)))
+    }
+
+    if (firstCycle == -1) { // we are checking reachability, TODO refactor
+      builder.errorLoc.getOrNull()?.incomingEdges?.toSet()?.forEach {
+        builder.removeEdge(it)
+        builder.addEdge(
+          it.withLabel(
+            SequenceLabel(
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
+              metadata = it.label.metadata,
+            )
+          )
+        )
+      }
     }
 
     builder.prop = segmentFlag.ref
@@ -328,6 +343,6 @@ private data class Annotation(
   val edge: XcfaEdge,
   val beforeLabel: XcfaLabel,
   val assumption: XcfaLabel,
-  val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>,
+  val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
 ) {}

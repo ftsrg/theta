@@ -666,7 +666,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return promotedOperand;
             case "~":
                 //noinspection unchecked
-                Expr<?> expr = BvExprs.Not((Expr<BvType>) promotedOperand);
+                Expr<?> expr = BvExprs.Not(cast(promotedOperand, BvType.of(type.width())));
                 parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":
@@ -782,6 +782,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
         } else {
 
+            boolean negativeIsUnaryMinus = false;
+
             boolean isLongLong = text.endsWith("l");
             if (isLongLong) text = text.substring(0, text.length() - 1);
             boolean isUnsigned = text.endsWith("u");
@@ -804,6 +806,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf((int) text.charAt(1));
             } else {
                 bigInteger = new BigInteger(text, 10);
+                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
             final var size = bigInteger.bitLength();
@@ -817,9 +820,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
             CComplexType type;
             if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (isLongLong || size >= signedLong.width()) type = signedLongLong;
+            else if (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus)
+                type = signedLongLong;
             else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (isLong || size >= signedInt.width()) type = signedLong;
+            else if (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus)
+                type = signedLong;
             else if (isUnsigned) type = unsignedInt;
             else type = signedInt;
 

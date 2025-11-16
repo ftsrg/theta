@@ -235,6 +235,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         propagateFunctionName(statement.getCompound(), statement.getFuncDecl().getName());
     }
 
+    public void recordMetadata(ParserRuleContext ctx, CCall statement) {
+        ctx = (ParserRuleContext) ctx.parent.parent;
+        recordMetadataCommon(ctx, statement);
+    }
+
     private void propagateFunctionName(CStatement stmt, String name) {
         if (stmt.getFunctionName() == null) {
             // only overwrite if null, because
