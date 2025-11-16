@@ -666,7 +666,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return promotedOperand;
             case "~":
                 //noinspection unchecked
-                Expr<?> expr = BvExprs.Not((Expr<BvType>) promotedOperand);
+                Expr<?> expr = BvExprs.Not(cast(promotedOperand, BvType.of(type.width())));
                 parseContext.getMetadata().create(expr, "cType", type);
                 return expr;
             case "&":

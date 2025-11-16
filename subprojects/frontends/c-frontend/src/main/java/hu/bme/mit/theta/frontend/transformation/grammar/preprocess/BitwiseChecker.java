@@ -135,4 +135,12 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
         }
         return super.visitMultiplicativeExpression(ctx);
     }
+
+    @Override
+    public Void visitUnaryOperator(CParser.UnaryOperatorContext ctx) {
+        if (ctx.getText().equals("~")) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
+        }
+        return super.visitUnaryOperator(ctx);
+    }
 }

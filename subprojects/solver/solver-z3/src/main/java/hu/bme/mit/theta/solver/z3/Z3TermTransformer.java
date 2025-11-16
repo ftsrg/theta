@@ -54,6 +54,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
@@ -119,8 +120,8 @@ final class Z3TermTransformer {
         //        environment.put("to_int", exprUnaryOperator(RatToIntExpr::create));
         //        environment.put("mod", exprBinaryOperator(IntModExpr::create));
 
-        //        this.addFunc("deref", dereference());
-        //        this.addFunc("ref", reference());
+        this.addFunc("deref", dereference());
+        this.addFunc("ref", reference());
         this.addFunc("and", this.exprMultiaryOperator(AndExpr::create));
         this.addFunc("false", this.exprNullaryOperator(FalseExpr::getInstance));
         this.addFunc("true", this.exprNullaryOperator(TrueExpr::getInstance));
@@ -888,5 +889,33 @@ final class Z3TermTransformer {
             case "roundTowardZero" -> FpRoundingMode.RTZ;
             default -> throw new com.microsoft.z3.Z3Exception("Unexpected value: " + s);
         };
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>>>
+            reference() {
+        return Tuple2.of(
+                1,
+                (term, model, vars) -> {
+                    final com.microsoft.z3.Expr[] args = term.getArgs();
+                    checkArgument(args.length == 1, "Number of arguments must be one");
+                    final Expr<?> op = transform(args[0], model, vars);
+                    return Exprs.Reference(op, transformSort(term.getSort()));
+                });
+    }
+
+    private <T extends Type>
+            Tuple2<Integer, TriFunction<com.microsoft.z3.Expr, Model, List<Decl<?>>, Expr<?>>>
+                    dereference() {
+        return Tuple2.of(
+                3,
+                (term, model, vars) -> {
+                    final com.microsoft.z3.Expr[] args = term.getArgs();
+                    checkArgument(args.length == 3, "Number of arguments must be three");
+                    final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
+                    final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
+                    final Expr<IntType> op3 = (Expr<IntType>) transform(args[2], model, vars);
+                    return Exprs.Dereference(op1, op2, transformSort(term.getSort()))
+                            .withUniquenessExpr(op3);
+                });
     }
 }
