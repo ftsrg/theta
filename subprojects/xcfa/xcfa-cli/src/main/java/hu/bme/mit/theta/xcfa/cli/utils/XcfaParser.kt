@@ -227,10 +227,10 @@ private fun parseC(
         copied.appendText(System.lineSeparator())
       }
 
-      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only".runCommand()
+      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only".runCommand(frontendConfig.cirDir)
       val mlir = temp.resolve("input.mlir").toFile()
       val transformed = temp.resolve("input-transformed.c").toFile()
-      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}".runCommand()
+      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}".runCommand(frontendConfig.cirDir)
       transformed
     } else {
       input
@@ -320,8 +320,9 @@ private fun parseBTOR2(
   return xcfa
 }
 
-private fun String.runCommand() {
+private fun String.runCommand(wd: File) {
   ProcessBuilder(*split(" ").toTypedArray())
+    .directory(wd)
     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
     .redirectError(ProcessBuilder.Redirect.INHERIT)
     .start()
