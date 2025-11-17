@@ -286,5 +286,5 @@ private fun String.runCommand(wd: File) {
     .redirectOutput(ProcessBuilder.Redirect.INHERIT)
     .redirectError(ProcessBuilder.Redirect.INHERIT)
     .start()
-    .waitFor(60, TimeUnit.SECONDS)
+    .waitFor(15, TimeUnit.MINUTES)
 }
