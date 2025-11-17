@@ -62,7 +62,7 @@
                 }
             ]
         },
-        "license": "cc-by-4.0",
+        "license": "apache2.0",
         "imprint_publisher": "Zenodo",
         "upload_type": "software"
     }
