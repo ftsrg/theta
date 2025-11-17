@@ -64,9 +64,7 @@ class DereferenceToArrayPass : ProcedurePass {
   private val arraysByType =
     mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
 
-  /**
-   * Maps a dereference to an identifying type key
-   */
+  /** Maps a dereference to an identifying type key */
   private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey(
     xcfa: XcfaBuilder
   ): Tuple4<Type, Type, Type, Boolean> {
@@ -86,9 +84,7 @@ class DereferenceToArrayPass : ProcedurePass {
     return Tuple4.of(array.type, offset.type, type, isGlobal)
   }
 
-  /**
-   * Returns an array from the pre-generated lookup of types
-   */
+  /** Returns an array from the pre-generated lookup of types */
   private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
     xcfa: XcfaBuilder
   ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
@@ -97,9 +93,7 @@ class DereferenceToArrayPass : ProcedurePass {
     return cast(arraysByType[getTypeKey(xcfa)]!!, arrayType)
   }
 
-  /**
-   * Creates arrays from dereference types
-   */
+  /** Creates arrays from dereference types */
   private fun createArray(
     key: Tuple4<Type, Type, Type, Boolean>,
     xcfa: XcfaBuilder,
