@@ -44,6 +44,7 @@ import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.kframework.mpfr.BigFloat
@@ -109,6 +110,11 @@ class DereferenceToArrayPass : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    // we need this to re-set the initial edges
+    // TODO: do this in a more elegant way?
+    builder.getEdges().toList().forEach {
+      it.label.dereferences.forEach { it.getArrays(builder.parent) }
+    }
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.replaceDereferences(builder.parent)
       if (newLabel != edge.label) {
