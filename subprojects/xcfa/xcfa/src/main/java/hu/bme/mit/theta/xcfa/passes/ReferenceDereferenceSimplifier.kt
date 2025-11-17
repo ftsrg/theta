@@ -15,18 +15,40 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import java.math.BigInteger
 
 class ReferenceDereferenceSimplifier(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+
+    val withOffset = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
+    fun VarDecl<*>.withOffset(offset: BigInteger): VarDecl<*> =
+      withOffset.computeIfAbsent(this to offset) {
+        val newVar = Var(name + "_offset$offset", type)
+        if (builder.getVars().contains(this)) {
+          builder.addVar(newVar)
+        } else if (builder.parent.getVars().any { it.wrappedVar == this }) {
+          val oldVar = builder.parent.getVars().first { it.wrappedVar == this }
+          builder.parent.addVar(oldVar.copy(wrappedVar = newVar))
+        }
+        newVar
+      }
 
     val references =
       builder.getEdges().flatMap {
@@ -41,8 +63,21 @@ class ReferenceDereferenceSimplifier(val parseContext: ParseContext) : Procedure
         .mapNotNull {
           val deref = (it.expr as Dereference<*, *, *>)
           val offset = deref.offset
+          val array = deref.array
           if (offset is LitExpr<*>) {
-            it to deref.array // TODO: only this if offset == 0, otherwise, create a new temp var
+            val offsetValue =
+              when (offset.type) {
+                is IntType -> (offset as IntLitExpr).value
+                is BvType -> BvUtils.neutralBvLitExprToBigInteger(offset as BvLitExpr)
+                else -> error("Unsupported offset type ${offset.type}")
+              }
+            if (offsetValue.equals(BigInteger.ZERO)) {
+              it to array
+            } else if (array is RefExpr<*>) {
+              it to (array.decl as VarDecl).withOffset(offsetValue).ref
+            } else {
+              null
+            }
           } else {
             null
           }
