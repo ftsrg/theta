@@ -66,6 +66,8 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
             that = CComplexType.getUnsignedLong(parseContext);
+        } else if (that instanceof CVoid) {
+            that = CComplexType.getType(param.getType(), parseContext);
         }
         if (that instanceof CReal) {
             //noinspection unchecked

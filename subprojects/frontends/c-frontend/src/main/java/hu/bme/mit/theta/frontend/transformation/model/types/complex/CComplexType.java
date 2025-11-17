@@ -173,7 +173,7 @@ public abstract class CComplexType {
         }
     }
 
-    private static CComplexType getType(Type type, ParseContext parseContext) {
+    public static CComplexType getType(Type type, ParseContext parseContext) {
         if (type instanceof IntType) {
             return new CSignedInt(null, parseContext);
         } else if (type instanceof ArrayType<?, ?> aType) {
@@ -213,6 +213,10 @@ public abstract class CComplexType {
                     switch (s) {
                         case "bool":
                             return new CBool(null, parseContext);
+                        case "char":
+                            return ((BvType) type).getSigned()
+                                    ? new CSignedChar(null, parseContext)
+                                    : new CUnsignedChar(null, parseContext);
                         case "short":
                             return ((BvType) type).getSigned()
                                     ? new CSignedShort(null, parseContext)

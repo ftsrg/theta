@@ -20,7 +20,7 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 import java.lang.reflect.Type
 
 class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) :
@@ -56,7 +56,7 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
     check(reader.nextName() == "mutexes")
     val mutexes: Map<String, Set<Int>> = gson.fromJson(reader, Map::class.java)
     check(reader.nextName() == "threadLookup")
-    val threadLookup: Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
+    val threadLookup: Map<Expr<*>, Int> = gson.fromJson(reader, Map::class.java)
     check(reader.nextName() == "bottom")
     val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
 

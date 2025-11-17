@@ -192,7 +192,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
   }
 }
 
-private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
+private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> =
   when (this) {
     is AtomicBeginLabel,
     is AtomicEndLabel,
@@ -202,19 +202,18 @@ private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
     is RWLockReadLockLabel,
     is RWLockUnlockLabel,
     is RWLockWriteLockLabel,
-    is JoinLabel,
-    NopLabel -> return setOf()
-    is InvokeLabel -> return params.flatMap { it.getExpressions(f) }.toSet()
-    is NondetLabel -> return labels.flatMap { it.getExpressions(f) }.toSet()
-    is ReturnLabel -> return enclosedLabel.getExpressions(f)
-    is SequenceLabel -> return labels.flatMap { it.getExpressions(f) }.toSet()
-    is StartLabel -> return params.flatMap { it.getExpressions(f) }.toSet()
-    is StmtLabel -> return stmt.getExpressions(f).toSet()
+    NopLabel -> setOf()
+    is InvokeLabel -> params.flatMap { it.getExpressions(f) }.toSet()
+    is NondetLabel -> labels.flatMap { it.getExpressions(f) }.toSet()
+    is ReturnLabel -> enclosedLabel.getExpressions(f)
+    is SequenceLabel -> labels.flatMap { it.getExpressions(f) }.toSet()
+    is StartLabel -> (params.flatMap { it.getExpressions(f) } + handle.getExpressions(f)).toSet()
+    is JoinLabel -> handle.getExpressions(f)
+    is StmtLabel -> stmt.getExpressions(f)
   }
-}
 
-private fun Stmt.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
-  return when (this) {
+private fun Stmt.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> =
+  when (this) {
     is AssignStmt<*> -> expr.getExpressions(f)
     is AssumeStmt -> cond.getExpressions(f)
     is HavocStmt<*> -> setOf()
@@ -227,7 +226,6 @@ private fun Stmt.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
     is SkipStmt -> setOf()
     else -> throw IllegalArgumentException("Unknown stmt type: $this")
   }
-}
 
 private fun Expr<*>.getExpressions(
   f: (Expr<*>) -> Boolean,

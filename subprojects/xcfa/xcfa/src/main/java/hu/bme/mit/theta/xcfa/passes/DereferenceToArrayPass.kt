@@ -63,6 +63,17 @@ class DereferenceToArrayPass : ProcedurePass {
   private val arraysByType =
     mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
 
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    builder.getEdges().toList().forEach { edge ->
+      val newLabel = edge.label.replaceDereferences(builder.parent)
+      if (newLabel != edge.label) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(newLabel))
+      }
+    }
+    return builder
+  }
+
   private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
     xcfa: XcfaBuilder
   ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
@@ -108,16 +119,60 @@ class DereferenceToArrayPass : ProcedurePass {
     )
   }
 
-  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    builder.getEdges().toList().forEach { edge ->
-      val newLabel = edge.label.replaceDereferences(builder.parent)
-      if (newLabel != edge.label) {
-        builder.removeEdge(edge)
-        builder.addEdge(edge.withLabel(newLabel))
-      }
-    }
-    return builder
+  /*
+   * (deref array offset) := expr  -> arrays[array][offset] := expr
+   * -> Assign(
+   *      arrays,
+   *      ArrayWrite(arrays, array, ArrayWrite(ArrayRead(arrays, array), offset, expr))
+   *    )
+   */
+  private fun Dereference<*, *, *>.getArrayWrite(expr: Expr<*>, xcfa: XcfaBuilder): AssignStmt<*> {
+    val arrayType = ArrayType.of(this.array.type, ArrayType.of(this.offset.type, this.type))
+    val arrays = this.getArrays(xcfa)
+    return AssignStmt.of(
+      cast(arrays, arrayType),
+      cast(
+        ArrayWriteExpr.of(
+          cast(arrays.ref, arrayType),
+          cast(this.array.getArrayReads(xcfa), arrayType.indexType),
+          ArrayWriteExpr.of(
+            cast(
+              ArrayReadExpr.of(
+                cast(arrays.ref, arrayType),
+                cast(this.array.getArrayReads(xcfa), arrayType.indexType),
+              ),
+              arrayType.elemType,
+            ),
+            cast(this.offset.getArrayReads(xcfa), arrayType.elemType.indexType),
+            cast(expr.getArrayReads(xcfa), arrayType.elemType.elemType),
+          ),
+        ),
+        arrayType,
+      ),
+    )
   }
+
+  /*
+   * (deref array offset) -> arrays[array][offset]
+   * -> ArrayRead(ArrayRead(arrays, array), offset)
+   */
+  private fun <T : Type> Dereference<*, *, T>.getArrayRead(xcfa: XcfaBuilder): Expr<T> {
+    val arrayType = ArrayType.of(this.array.type, ArrayType.of(this.offset.type, this.type))
+    return ArrayReadExpr.of(
+      ArrayReadExpr.of(
+        cast(this.getArrays(xcfa).ref, arrayType),
+        cast(this.array.getArrayReads(xcfa), this.array.type),
+      ),
+      cast(this.offset.getArrayReads(xcfa), this.offset.type),
+    )
+  }
+
+  private fun <T : Type> Expr<T>.getArrayReads(xcfa: XcfaBuilder): Expr<T> =
+    if (this is Dereference<*, *, T>) {
+      this.getArrayRead(xcfa)
+    } else {
+      withOps(ops.map { it.getArrayReads(xcfa) })
+    }
 
   private fun XcfaLabel.replaceDereferences(xcfa: XcfaBuilder): XcfaLabel {
     return when (this) {
@@ -126,38 +181,7 @@ class DereferenceToArrayPass : ProcedurePass {
       is StmtLabel -> {
         StmtLabel(
           when (stmt) {
-            is MemoryAssignStmt<*, *, *> -> {
-              // (deref array offset) := expr  -> arrays[array][offset] := expr
-              // -> Assign(
-              //      arrays,
-              //      ArrayWrite(arrays, array, ArrayWrite(ArrayRead(arrays, array), offset, expr))
-              //    )
-              val deref = stmt.deref
-              val arrayType =
-                ArrayType.of(deref.array.type, ArrayType.of(deref.offset.type, deref.type))
-              val arrays = deref.getArrays(xcfa)
-              AssignStmt.of(
-                cast(arrays, arrayType),
-                cast(
-                  ArrayWriteExpr.of(
-                    cast(arrays.ref, arrayType),
-                    cast(deref.array.getArrayReads(xcfa), arrayType.indexType),
-                    ArrayWriteExpr.of(
-                      cast(
-                        ArrayReadExpr.of(
-                          cast(arrays.ref, arrayType),
-                          cast(deref.array.getArrayReads(xcfa), arrayType.indexType),
-                        ),
-                        arrayType.elemType,
-                      ),
-                      cast(deref.offset.getArrayReads(xcfa), arrayType.elemType.indexType),
-                      cast(stmt.expr.getArrayReads(xcfa), arrayType.elemType.elemType),
-                    ),
-                  ),
-                  arrayType,
-                ),
-              )
-            }
+            is MemoryAssignStmt<*, *, *> -> stmt.deref.getArrayWrite(stmt.expr, xcfa)
 
             is AssignStmt<*> ->
               AssignStmt.of(
@@ -184,28 +208,18 @@ class DereferenceToArrayPass : ProcedurePass {
         )
 
       is StartLabel ->
-        StartLabel(name, params.map { it.getArrayReads(xcfa) }, pidVar, metadata, tempLookup)
+        copy(
+          params = params.map { it.getArrayReads(xcfa) },
+          dereferenceAsArrayWrite =
+            (handle as? Dereference<*, *, *>)?.let { deref ->
+              { expr -> deref.getArrayWrite(expr, xcfa) }
+            },
+        )
 
       is ReturnLabel -> ReturnLabel(enclosedLabel.replaceDereferences(xcfa))
       else -> this
     }
   }
-
-  private fun <T : Type> Expr<T>.getArrayReads(xcfa: XcfaBuilder): Expr<T> =
-    if (this is Dereference<*, *, *>) {
-      val arrayType = ArrayType.of(this.array.type, ArrayType.of(this.offset.type, this.type))
-      // (deref array offset) -> arrays[array][offset]
-      // -> ArrayRead(ArrayRead(arrays, array), offset)
-      ArrayReadExpr.of(
-        ArrayReadExpr.of(
-          cast(this.getArrays(xcfa).ref, arrayType),
-          cast(this.array.getArrayReads(xcfa), this.array.type),
-        ),
-        cast(this.offset.getArrayReads(xcfa), this.offset.type),
-      ) as Expr<T>
-    } else {
-      withOps(ops.map { it.getArrayReads(xcfa) })
-    }
 
   private val Type.defaultValue: LitExpr<out Type>
     get() =
