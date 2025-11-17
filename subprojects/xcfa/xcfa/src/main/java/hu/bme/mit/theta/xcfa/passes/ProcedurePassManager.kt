@@ -44,6 +44,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       FinalLocationPass(property),
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
+      AtomicBuiltinsToExprsPass(parseContext),
     ),
     listOf(ReferenceElimination(parseContext), MallocFunctionPass(parseContext)),
     listOf(

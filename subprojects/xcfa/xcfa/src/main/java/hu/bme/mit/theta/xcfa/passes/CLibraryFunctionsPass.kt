@@ -19,15 +19,22 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
+import java.math.BigInteger
 
 /**
  * Transforms the library procedure calls with names in supportedFunctions into model elements.
@@ -102,22 +109,34 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                 "pthread_join" -> {
                   val handle =
-                    invokeLabel.params[1] as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
+                    invokeLabel.params[1] // as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
                   listOf(
                     JoinLabel(handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      getNullForType(invokeLabel.params[0].type),
+                      metadata,
+                    ),
                   )
                 }
 
                 "pthread_create" -> {
                   val handle =
-                    invokeLabel.params[1] as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
+                    Exprs.Dereference(
+                      invokeLabel.params[1],
+                      getNullForType(invokeLabel.params[0].type),
+                      invokeLabel.params[0].type,
+                    ) // as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
                   val funcptr = invokeLabel.getParam(3)
                   val param = invokeLabel.params[4]
                   // int(0) to solve StartLabel not handling return params
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(invokeLabel.params[0] as RefExpr<*>, Int(0), metadata),
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      getNullForType(invokeLabel.params[0].type),
+                      metadata,
+                    ),
                   )
                 }
 
@@ -214,6 +233,13 @@ class CLibraryFunctionsPass : ProcedurePass {
       "Non-static mutex handles (multiple writes) are not supported: ${mutex.name}"
     }
   }
+
+  private fun <T : Type> getNullForType(t: T): Expr<T> =
+    when (t) {
+      is IntType -> Int(0) as Expr<T>
+      is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, t.size) as Expr<T>
+      else -> error("Unsupported type: $t")
+    }
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 

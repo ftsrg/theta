@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -108,7 +109,11 @@ data class StartLabel(
   ) : this(name, params, handle as Expr<*>, metadata, tempLookup, dereferenceAsArrayWrite)
 
   init {
-    check((handle is RefExpr && handle.decl is VarDecl<*>) || handle is Dereference<*, *, *>) {
+    check(
+      (handle is RefExpr && handle.decl is VarDecl<*>) ||
+        handle is Dereference<*, *, *> ||
+        handle is LitExpr<*>
+    ) {
       "Handle must be a variable reference or dereference expression."
     }
   }
