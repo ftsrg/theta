@@ -132,7 +132,7 @@ class DereferenceToArrayPass : ProcedurePass {
         .flatMap { it.label.dereferences }
         .map { it.getTypeKey(builder.parent) }
         .toSet()
-    types.forEach { createArray(it, builder.parent) }
+    types.forEach { arraysByType[it] = createArray(it, builder.parent) }
 
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.replaceDereferences(builder.parent)
