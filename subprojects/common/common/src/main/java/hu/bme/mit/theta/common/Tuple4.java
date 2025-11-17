@@ -51,4 +51,20 @@ public final class Tuple4<T1, T2, T3, T4> extends Tuple {
         final T4 result = (T4) elem(3);
         return result;
     }
+
+    public T1 component1() {
+        return get1();
+    }
+
+    public T2 component2() {
+        return get2();
+    }
+
+    public T3 component3() {
+        return get3();
+    }
+
+    public T4 component4() {
+        return get4();
+    }
 }
