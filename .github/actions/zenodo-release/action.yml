@@ -1,5 +1,5 @@
 name: 'Create zenodo release'
-description: 'Create release and deploy JARs'
+description: 'Create release and deploy to zenodo'
 inputs:
     tool:
         required: true
@@ -15,58 +15,25 @@ runs:
         fetch-depth: 0
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
       with:
-        name: ThetaJars
-        path: jar/
-    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v3.0.2
-      with:
         name: ${{inputs.tool}}_SV-COMP
         path: upload/
 
-    - run: |
-        url='https://zenodo.org/records/${{inputs.prevrecord}}'
-        token='${{inputs.token}}'
-        file='${{inputs.tool}}'
-        RECORD_ID=$(basename "$url")
-        echo "Creating new version for record $RECORD_ID"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Python dependencies
+      run: pip install -r ${{github.action_path}}/requirements.txt
+      shell: bash
 
-        NEW_VERSION=$(curl --silent -X POST \
-            -H "Authorization: Bearer $token" \
-            "https://zenodo.org/api/deposit/depositions/$RECORD_ID/actions/newversion")
-
-        NEW_VERSION_URL=$(echo "$NEW_VERSION" | jq -r '.links.bucket')
-        PUBLISH_URL=$(echo "$NEW_VERSION" | jq -r '.links.publish')
-        DEPOSITION_ID=$(echo "$NEW_VERSION" | jq -r '.links.self')
-
-        if [ "$NEW_VERSION_URL" == "null" ]; then
-            echo "Failed to create new version. Message: $NEW_VERSION"
-            exit 1
-        fi
-
-        echo "New bucket URL: $NEW_VERSION_URL"
-
-        FILE="upload/$file.zip"
-        if [ ! -f "$FILE" ]; then
-            echo "File not found: $FILE"
-            exit 1
-        fi
-
-        TODAY=$(date +'%Y-%m-%d')
-        curl --silent --fail -X PUT \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $token" \
-            --data "$(sed 's/__TODAY__/'$TODAY'/g;s/__TOOL__/'$file'/g' ${{github.action_path}}/metadata.json)" \
-            "$DEPOSITION_ID" \
-            || { echo "Metadata update failed"; exit 1; }
-
-        echo "Metadata update succeeded (date := $TODAY)"
-
-        curl --fail --silent -H "Authorization: Bearer $token" --upload-file "$FILE" "$NEW_VERSION_URL"/"$file.zip" || { echo "Upload failed"; exit 1; }
-
-        echo "Upload successful"
-
-        echo curl --fail --silent -X POST -H "Authorization: Bearer $token" "$PUBLISH_URL"
-
-        curl --fail --silent -X POST -H "Authorization: Bearer $token" "$PUBLISH_URL" || { echo "Publish failed"; exit 1; }
-
-        echo "Publish successful"
+    - name: Create Zenodo release
+      run: |
+        python3 ${{github.action_path}}/zenodo_release.py \
+          --token '${{inputs.token}}' \
+          --record-id '${{inputs.prevrecord}}' \
+          --tool '${{inputs.tool}}' \
+          --file 'upload/${{inputs.tool}}.zip' \
+          --metadata '${{github.action_path}}/metadata.json' \
+          --cleanup-drafts
       shell: bash

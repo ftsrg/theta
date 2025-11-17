@@ -18,7 +18,13 @@ print_error() {
 }
 
 get_java_version() {
-    "$1" -version 2>&1 | awk -F[\".] '/version/ {print $2}'
+  local version_raw
+  version_raw="$("$1" -version 2>&1 | head -n 1)"
+
+  local version
+  version=$(echo "$version_raw" | sed -E 's/.*"([0-9]+).*/\1/')
+
+  echo "$version"
 }
 
 find_suitable_java() {
