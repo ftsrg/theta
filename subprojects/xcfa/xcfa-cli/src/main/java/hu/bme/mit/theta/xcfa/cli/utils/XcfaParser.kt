@@ -198,22 +198,23 @@ private fun parseC(
       val copied = temp.resolve("input.c").toFile()
       var curlyBraceCount = 0
       input.readLines().forEach { line ->
-        line.forEach { c -> if(c == '{') curlyBraceCount++ else if(c == '}') curlyBraceCount-- }
-        val newLine = if(curlyBraceCount == 0 && '{' !in line) {
-          "([^(]*)\\(\\s*\\)".toRegex().replace(line) {
-            it.groups[1]!!.value + "(void)"
+        line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
+        val newLine =
+          if (curlyBraceCount == 0 && '{' !in line) {
+            "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
+          } else {
+            line
           }
-        } else {
-          line
-        }
         copied.appendText(newLine)
         copied.appendText(System.lineSeparator())
       }
 
-      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only".runCommand(frontendConfig.cirDir)
+      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only"
+        .runCommand(frontendConfig.cirDir)
       val mlir = temp.resolve("input.mlir").toFile()
       val transformed = temp.resolve("input-transformed.c").toFile()
-      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}".runCommand(frontendConfig.cirDir)
+      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}"
+        .runCommand(frontendConfig.cirDir)
       transformed
     } else {
       input
