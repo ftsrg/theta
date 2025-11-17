@@ -64,10 +64,12 @@ class DereferenceToArrayPass : ProcedurePass {
   private val arraysByType =
     mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
 
-  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
+  /**
+   * Maps a dereference to an identifying type key
+   */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey(
     xcfa: XcfaBuilder
-  ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
-    val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
+  ): Tuple4<Type, Type, Type, Boolean> {
     val globalVars = xcfa.getVars().map { it.wrappedVar }
     val isGlobal =
       (array as? RefExpr<*>)?.decl in globalVars ||
@@ -81,40 +83,63 @@ class DereferenceToArrayPass : ProcedurePass {
             }
           }
         }
-    return cast(
-      arraysByType.getOrPut(Tuple4.of(array.type, offset.type, type, isGlobal)) {
-        val decl = Decls.Var("__arrays_${array.type}_${offset.type}_${type}_${isGlobal}", arrayType)
-        val (globalDecl, initLabel) =
-          if (isGlobal) {
-            val defaultValue =
-              ArrayLitExpr.of(
-                listOf(),
-                cast(arrayType.elemType.defaultValue, arrayType.elemType),
-                arrayType,
-              )
-            XcfaGlobalVar(decl, defaultValue, atomic = true) to AssignStmtLabel(decl, defaultValue)
-          } else {
-            XcfaGlobalVar(decl, atomic = true) to StmtLabel(HavocStmt.of(decl))
-          }
-        xcfa.addVar(globalDecl)
-        xcfa.getInitProcedures().forEach { (procedure, _) ->
-          procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
-            procedure.removeEdge(edge)
-            procedure.addEdge(edge.withLabel(SequenceLabel(listOf(initLabel, edge.label))))
-          }
-        }
-        decl as VarDecl<out ArrayType2D>
-      },
-      arrayType,
-    )
+    return Tuple4.of(array.type, offset.type, type, isGlobal)
+  }
+
+  /**
+   * Returns an array from the pre-generated lookup of types
+   */
+  private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getArrays(
+    xcfa: XcfaBuilder
+  ): VarDecl<ArrayType<A, ArrayType<O, T>>> {
+    val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
+
+    return cast(arraysByType[getTypeKey(xcfa)]!!, arrayType)
+  }
+
+  /**
+   * Creates arrays from dereference types
+   */
+  private fun createArray(
+    key: Tuple4<Type, Type, Type, Boolean>,
+    xcfa: XcfaBuilder,
+  ): VarDecl<out ArrayType2D> {
+    val (derefArrayType, derefOffsetType, derefType, isGlobal) = key
+    val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
+
+    val decl =
+      Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}_${isGlobal}", arrayType)
+    val (globalDecl, initLabel) =
+      if (isGlobal) {
+        val defaultValue =
+          ArrayLitExpr.of(
+            listOf(),
+            cast(arrayType.elemType.defaultValue, arrayType.elemType),
+            arrayType,
+          )
+        XcfaGlobalVar(decl, defaultValue, atomic = true) to AssignStmtLabel(decl, defaultValue)
+      } else {
+        XcfaGlobalVar(decl, atomic = true) to StmtLabel(HavocStmt.of(decl))
+      }
+    xcfa.addVar(globalDecl)
+    xcfa.getInitProcedures().forEach { (procedure, _) ->
+      procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
+        procedure.removeEdge(edge)
+        procedure.addEdge(edge.withLabel(SequenceLabel(listOf(initLabel, edge.label))))
+      }
+    }
+    return decl as VarDecl<out ArrayType2D>
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    // we need this to re-set the initial edges
-    // TODO: do this in a more elegant way?
-    builder.getEdges().toList().forEach {
-      it.label.dereferences.forEach { it.getArrays(builder.parent) }
-    }
+    val types =
+      builder
+        .getEdges()
+        .flatMap { it.label.dereferences }
+        .map { it.getTypeKey(builder.parent) }
+        .toSet()
+    types.forEach { createArray(it, builder.parent) }
+
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.replaceDereferences(builder.parent)
       if (newLabel != edge.label) {
