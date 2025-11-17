@@ -78,7 +78,12 @@ class LoopUnrollPass(alwaysForceUnroll: Int = -1) : ProcedurePass {
     }
 
     fun unroll(builder: XcfaProcedureBuilder) {
-      val c = count()
+      val c =
+        try {
+          count()
+        } catch (_: Throwable) {
+          null
+        }
       if (c != null) {
         unroll(builder, c, true)
       } else if (forceUnrollLimit != -1) {
