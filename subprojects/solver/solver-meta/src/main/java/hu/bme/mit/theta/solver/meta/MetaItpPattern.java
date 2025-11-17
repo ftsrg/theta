@@ -20,7 +20,6 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -42,14 +41,13 @@ public class MetaItpPattern implements ItpPattern {
             tasks.add( () -> pattern.visit( visitor ) );
         }
 
-        E item;
         try {
-            item = executorService.invokeAny(tasks);
+            return executorService.invokeAny(tasks);
         } catch (InterruptedException | ExecutionException e) {
             throw new MetaSolverException(e);
+        } finally {
+            executorService.shutdown();
         }
-        executorService.shutdown();
-        return item;
     }
 
     public ItpPattern getPattern(ItpSolver solver) {
