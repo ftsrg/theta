@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTra
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.InputType
@@ -43,9 +44,11 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
 import org.antlr.v4.runtime.CharStreams
 
@@ -70,6 +73,7 @@ fun getXcfa(
 
       InputType.C -> {
         parseC(
+          config.frontendConfig.specConfig as CFrontendConfig,
           config.inputConfig.input!!,
           config.inputConfig.property,
           parseContext,
@@ -148,13 +152,14 @@ private fun CFA.toXcfa(): XCFA {
 }
 
 private fun parseC(
+  frontendConfig: CFrontendConfig,
   input: File,
   property: XcfaProperty,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
-  val input =
+  var input =
     if (input.name.endsWith(".yml")) {
       try {
         val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
@@ -186,6 +191,34 @@ private fun parseC(
     } else {
       input
     }
+
+  input =
+    if (frontendConfig.useCir) {
+      val temp = createTempDirectory()
+      val copied = temp.resolve("input.c").toFile()
+      var curlyBraceCount = 0
+      input.readLines().forEach { line ->
+        line.forEach { c -> if(c == '{') curlyBraceCount++ else if(c == '}') curlyBraceCount-- }
+        val newLine = if(curlyBraceCount == 0 && '{' !in line) {
+          "([^(]*)\\(\\s*\\)".toRegex().replace(line) {
+            it.groups[1]!!.value + "(void)"
+          }
+        } else {
+          line
+        }
+        copied.appendText(newLine)
+        copied.appendText(System.lineSeparator())
+      }
+
+      "./clang ${copied.absolutePath} -Xclang -emit-cir-flat -fsyntax-only".runCommand()
+      val mlir = temp.resolve("input.mlir").toFile()
+      val transformed = temp.resolve("input-transformed.c").toFile()
+      "./xcfa-mapper ${mlir.absolutePath} ${transformed.absolutePath}".runCommand()
+      transformed
+    } else {
+      input
+    }
+
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
@@ -244,4 +277,12 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun String.runCommand() {
+  ProcessBuilder(*split(" ").toTypedArray())
+    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+    .redirectError(ProcessBuilder.Redirect.INHERIT)
+    .start()
+    .waitFor(60, TimeUnit.SECONDS)
 }
