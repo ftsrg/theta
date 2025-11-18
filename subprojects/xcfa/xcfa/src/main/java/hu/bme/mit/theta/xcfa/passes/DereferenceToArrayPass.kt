@@ -104,7 +104,7 @@ class DereferenceToArrayPass : ProcedurePass {
     val decl =
       Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}_${isGlobal}", arrayType)
     val (globalDecl, initLabel) =
-      if (true) {
+      if (isGlobal) {
         val defaultValue =
           ArrayLitExpr.of(
             listOf(),
