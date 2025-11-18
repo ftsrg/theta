@@ -39,7 +39,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.core.utils.changeVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -73,7 +72,7 @@ class XcfaMultiThreadToMonolithicAdapter(
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)
           DataRaceToReachabilityPass(property, true)
         else null,
-        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
         RemoveUnnecessaryAtomicBlocksPass(),
         MutexToVarPass(),
         DereferenceToArrayPass(),
@@ -172,7 +171,16 @@ class XcfaMultiThreadToMonolithicAdapter(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
                           ),
-                        ) + threads[l]!!.params.filter { it.second != ParamDirection.OUT }.mapIndexed{ i, p -> AssignStmt.of(cast(p.first.changeVars(varLookUps[l]!!),p.first.type), cast(l.params[i + 1].changeVars(varLookUp), p.first.type)) }
+                        ) +
+                          threads[l]!!
+                            .params
+                            .filter { it.second != ParamDirection.OUT }
+                            .mapIndexed { i, p ->
+                              AssignStmt.of(
+                                cast(p.first.changeVars(varLookUps[l]!!), p.first.type),
+                                cast(l.params[i + 1].changeVars(varLookUp), p.first.type),
+                              )
+                            }
                       }
 
                       is JoinLabel -> {
