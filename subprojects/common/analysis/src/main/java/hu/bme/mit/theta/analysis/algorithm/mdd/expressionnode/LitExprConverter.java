@@ -87,8 +87,8 @@ public class LitExprConverter {
                     BigInteger.valueOf(integer), ((BvType) type).getSize());
         }
         if (type instanceof ArrayType<?, ?> || type instanceof FpType || type instanceof RatType) {
-          if (!objToInt.inverse().containsKey(integer)) return new InvalidLitExpr<>(type);
-          return (LitExpr<?>) objToInt.inverse().get(integer);
+            if (!objToInt.inverse().containsKey(integer)) return new InvalidLitExpr<>(type);
+            return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         if (type instanceof EnumType) {
             return ((EnumType) type).litFromIntValue(integer);

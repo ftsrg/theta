@@ -222,7 +222,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound =
                         LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (decl.getType().getDomainSize().isInfinite() && decl.getType() instanceof Ordered) { // TODO delete
+                if (decl.getType().getDomainSize().isInfinite()
+                        && decl.getType() instanceof Ordered) { // TODO delete
                     if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
