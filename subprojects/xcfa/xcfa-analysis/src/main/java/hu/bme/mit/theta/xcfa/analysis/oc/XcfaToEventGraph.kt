@@ -25,13 +25,10 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -39,8 +36,10 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -49,6 +48,7 @@ import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import java.math.BigInteger
 
 internal class XcfaToEventGraph(private val xcfa: XCFA) {
 
@@ -64,8 +64,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     val wss: Map<VarDecl<*>, Set<R>>,
     val violations: List<Violation>, // OR!
     val branchingConditions: List<Expr<BoolType>>,
-    val memoryDecl: VarDecl<IntType>,
-    val memoryGarbage: IndexedConstDecl<IntType>,
+    val memoryDecls: Collection<VarDecl<Type>>,
+    val memoryGarbages: Collection<IndexedConstDecl<Type>>,
   )
 
   private val threads = mutableSetOf<Thread>()
@@ -79,11 +79,11 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
   private val violations: MutableList<Violation> = mutableListOf()
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
 
-  private val memoryDecl: VarDecl<IntType> = Decls.Var("__oc_memory_declaration__", Int())
-  private val memoryGarbage = // the value of this declaration is not constrained
-    memoryDecl.getNewIndexed().also { XcfaEvent.memoryGarbage = it }
+  private lateinit var memoryDecls: Map<Type, VarDecl<Type>>
+  private lateinit var memoryGarbages: Map<Type, IndexedConstDecl<Type>> // unconstrained values
 
   fun create(): EventGraph {
+    initializeMemoryDeclarations()
     ThreadProcessor(Thread(procedure = xcfa.initProcedures.first().first), true).process()
     addCrossThreadRelations()
     return EventGraph(
@@ -94,9 +94,28 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       wss,
       violations,
       branchingConditions,
-      memoryDecl,
-      memoryGarbage,
+      memoryDecls.values,
+      memoryGarbages.values,
     )
+  }
+
+  private fun initializeMemoryDeclarations() {
+    val memoryDeclarations = mutableMapOf<Type, VarDecl<Type>>()
+    val memoryGarbages = mutableMapOf<Type, IndexedConstDecl<Type>>()
+    xcfa.procedures.forEach { p ->
+      p.edges.forEach { e ->
+        e.label.dereferences.forEach { deref ->
+          memoryDeclarations.computeIfAbsent(deref.type) { type ->
+            Decls.Var("__oc_memory_declaration_${type}__", type).also {
+              memoryGarbages[type] = it.getNewIndexed()
+            }
+          }
+        }
+      }
+    }
+    memoryDecls = memoryDeclarations
+    this.memoryGarbages = memoryGarbages
+    XcfaEvent.memoryGarbages = memoryGarbages.values.toSet()
   }
 
   private fun addCrossThreadRelations() {
@@ -120,7 +139,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     private var last = listOf<E>()
     private var guard = setOf<Expr<BoolType>>()
     private lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
-    private val memoryWrites = mutableSetOf<E>()
+    private val memoryWrites = mutableMapOf<Type, MutableSet<E>>()
     private lateinit var edge: XcfaEdge
     private var inEdge = false
     private var atomicBlock: Int? = null
@@ -129,14 +148,19 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     init {
       if (addMemoryGarbage) {
         val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
-        val e = E(memoryGarbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
-        e.assignment = True()
-        memoryWrites.add(e)
-        events
-          .getOrPut(memoryDecl) { mutableMapOf() }
-          .getOrPut(thread.pid) { mutableListOf() }
-          .add(e)
-        last = listOf(e)
+        val clkId = E.uniqueClkId()
+        memoryDecls.forEach { (type, memoryDecl) ->
+          val e =
+            E(this@XcfaToEventGraph.memoryGarbages[type]!!, WRITE, setOf(), pid, firstEdge, clkId)
+          e.assignment = True()
+          memoryWrites[type] = mutableSetOf(e)
+          events
+            .getOrPut(memoryDecl) { mutableMapOf() }
+            .getOrPut(thread.pid) { mutableListOf() }
+            .add(e)
+          last.forEach { po(it, e) }
+          last = listOf(e)
+        }
       }
     }
 
@@ -169,6 +193,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
       check(!inEdge || last.size == 1)
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
+      val constType = deref.type
       val clkId =
         when {
           inEdge -> last.first().clkId
@@ -179,16 +204,19 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         if (useProvidedConst && deref in consts) {
           consts[deref]!!
         } else {
-          memoryDecl.getNewIndexed()
+          memoryDecls[constType]!!.getNewIndexed()
         }
       val e = E(const, type, guard, pid, edge, clkId, array, offset)
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
-        READ -> memoryWrites.forEach { rfs.add(RelationType.RF, it, e) }
-        WRITE -> memoryWrites.add(e)
+        READ -> memoryWrites[constType]?.forEach { rfs.add(RelationType.RF, it, e) }
+        WRITE -> memoryWrites.getOrPut(constType) { mutableSetOf() }.add(e)
       }
-      events.getOrPut(memoryDecl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
+      events
+        .getOrPut(memoryDecls[constType]!!) { mutableMapOf() }
+        .getOrPut(pid) { mutableListOf() }
+        .add(e)
       return listOf(e)
     }
 
@@ -338,7 +366,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     ) {
       val consts =
         this.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
-          this.cond.dereferences.associateWith { memoryDecl.getNewIndexed(true) }
+          this.cond.dereferences.associateWith { memoryDecls[it.type]!!.getNewIndexed(true) }
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&
@@ -389,7 +417,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
           last.first().assignment = Eq(last.first().const.ref, this.params[1].with(consts))
         }
 
-      when (val assignment = this.getHandleAssignment(Int(newPid))) {
+      when (val assignment = this.getHandleAssignment(smtInt(newPid, handle.type))) {
         is AssignStmt<*> -> assignment.process()
         is MemoryAssignStmt<*, *, *> -> assignment.process()
         else -> exit("unsupported handle assignment: $assignment")
@@ -449,26 +477,26 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
         "pthread_setspecific" -> {
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
           val key = (params[1] as Dereference<*, *, *>).array
+          val value = params[2]
           val deref = Dereference.of(key, Int(pid), Int())
-          val memAssign = MemoryAssignStmt.of(deref, cast(params[2], Int()))
+          val memAssign = MemoryAssignStmt.of(deref, cast(value, Int()))
           memAssign.process()
-          val assign = Assign(cast(ret, Int()), Int(0))
+          val assign = Assign(cast(ret, ret.type), cast(smtInt(0, ret.type), ret.type))
           assign.process()
         }
 
         "pthread_key_create" -> {
-          val isNull = Eq(params[2], Int(0))
+          val isNull = Eq(params[2], smtInt(0, params[2].type))
           if (ExprSimplifier.create().simplify(isNull, ImmutableValuation.empty()) != True()) {
             exit("pthread_key_create with non-null destructor")
           }
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
-          val key = (params[1] as RefExpr<*>).decl as VarDecl<*>
           repeat(maxPid) { i ->
-            val deref = Dereference.of(key.ref, Int(i), Int())
-            val default = MemoryAssignStmt.of(deref, Int(0))
+            val deref = Dereference.of(params[1], Int(i), Int())
+            val default = MemoryAssignStmt.of(deref, cast(smtInt(0, Int()), Int()))
             default.process()
           }
-          val assign = Assign(cast(ret, Int()), Int(0))
+          val assign = Assign(cast(ret, ret.type), cast(smtInt(0, ret.type), ret.type))
           assign.process()
         }
 
@@ -526,7 +554,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
   }
 
   private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
-    if (this !== memoryDecl && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }) {
+    if (
+      memoryDecls.none { it.value === this } &&
+        xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
+    ) {
       // if not global var
       cast(
         localVars
@@ -556,6 +587,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     explore(initProc, setOf(initProc.name))
     counter
   }
+
+  private fun smtInt(value: Int, type: Type): LitExpr<*> =
+    when (type) {
+      is IntType -> Int(value)
+      is BvType ->
+        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), type.size)
+
+      else -> error("Unknown integer type: $type")
+    }
 
   private fun exit(msg: String): Nothing {
     error("Feature not supported by OC checker: $msg.")
