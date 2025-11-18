@@ -383,6 +383,7 @@ class FrontendXcfaBuilder(
           ) {
             throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
           }
+          // TODO: check if assignment to structs, arrays (stack AND heap) are value- or pointer-based
           AssignStmtLabel(
             lValue,
             cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
