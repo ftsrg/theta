@@ -36,6 +36,7 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -221,7 +222,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound =
                         LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (decl.getType().getDomainSize().isInfinite()) { // TODO delete
+                if (decl.getType().getDomainSize().isInfinite() && decl.getType() instanceof Ordered) { // TODO delete
                     if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
