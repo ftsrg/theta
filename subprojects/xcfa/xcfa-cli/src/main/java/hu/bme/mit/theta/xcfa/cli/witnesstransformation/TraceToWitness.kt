@@ -132,8 +132,8 @@ private fun labelToEdge(
   edge: XcfaEdge,
 ): WitnessEdge {
   return WitnessEdge(
-    sourceId = lastNode.id,
-    targetId = node.id,
+    source = lastNode,
+    target = node,
     assumption =
       if (xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
         val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl

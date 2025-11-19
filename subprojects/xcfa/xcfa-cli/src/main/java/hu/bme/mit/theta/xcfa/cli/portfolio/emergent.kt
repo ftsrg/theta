@@ -42,14 +42,15 @@ fun emergentPortfolio(
   var boundedBaseConfig =
     XcfaConfig(
       inputConfig =
-        InputConfig(
-          input = null,
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx =
+            if (portfolioConfig.backendConfig.parseInProcess) null
+            else Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
         ),
       frontendConfig =
-        FrontendConfig(
+        (portfolioConfig.frontendConfig as FrontendConfig<CFrontendConfig>).copy(
           lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
@@ -68,6 +69,7 @@ fun emergentPortfolio(
               indConfig = InductionConfig(true),
               itpConfig = InterpolationConfig(true),
             ),
+          parseInProcess = portfolioConfig.backendConfig.parseInProcess,
         ),
       outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
@@ -140,6 +142,7 @@ fun emergentPortfolio(
         backendConfig.copy(
           timeoutMs = timeoutMs,
           inProcess = inProcess,
+          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
           specConfig =
             backendConfig.specConfig!!.copy(
               reversed = reversed,
@@ -166,7 +169,14 @@ fun emergentPortfolio(
     timeoutMs: Long = 0,
     inProcess: Boolean = this.backendConfig.inProcess,
   ): XcfaConfig<*, MddConfig> {
-    return copy(backendConfig = backendConfig.copy(timeoutMs = timeoutMs, inProcess = inProcess))
+    return copy(
+      backendConfig =
+        backendConfig.copy(
+          timeoutMs = timeoutMs,
+          inProcess = inProcess,
+          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
+        )
+    )
   }
 
   val canUseMathsat = !parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)

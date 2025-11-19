@@ -202,10 +202,10 @@ data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
   @Parameter(
-    names = ["--parse-in-process"],
-    description = "Parse input in process instead of passing intermediate",
+    names = ["--no-parse-in-process"],
+    description = "Don't parse input in process instead of passing intermediate",
   )
-  var parseInProcess: Boolean = false,
+  var parseInProcess: Boolean = true,
   @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
@@ -625,7 +625,7 @@ data class COutputConfig(
 ) : Config
 
 data class WitnessConfig(
-  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.NONE,
+  @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.ALL,
   @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
   var concretizerSolver: String = "Z3",
   @Parameter(

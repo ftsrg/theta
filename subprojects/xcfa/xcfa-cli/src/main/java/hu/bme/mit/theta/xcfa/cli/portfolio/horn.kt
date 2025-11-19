@@ -40,9 +40,10 @@ fun hornPortfolio(
   var baseConfig =
     XcfaConfig(
       inputConfig =
-        InputConfig(
-          input = null,
-          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx =
+            if (portfolioConfig.backendConfig.parseInProcess) null
+            else Triple(xcfa, mcm, parseContext),
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
         ),

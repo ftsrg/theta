@@ -63,6 +63,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
       if (config.backendConfig.parseInProcess) {
         val config =
           config.copy(
+            inputConfig = config.inputConfig.copy(xcfaWCtx = null),
             outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
             backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
           )
