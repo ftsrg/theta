@@ -736,6 +736,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
+        if (ctx.getText().equals("NULL") || ctx.getText().equals("nullptr")) {
+            return new CPointer(null, null, parseContext).getNullValue();
+        }
         final var variable = getVar(ctx.Identifier().getText());
         return variable.getRef();
     }

@@ -175,6 +175,13 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
+  @Parameter(names = ["--use-cir"], description = "Use ClangIR to preprocess files")
+  var useCir: Boolean = false,
+  @Parameter(
+    names = ["--cir-dir", "--cir-directory"],
+    description = "Folder with clang and mapper binaries",
+  )
+  var cirDir: File = File("."),
 ) : SpecFrontendConfig
 
 data class CHCFrontendConfig(
