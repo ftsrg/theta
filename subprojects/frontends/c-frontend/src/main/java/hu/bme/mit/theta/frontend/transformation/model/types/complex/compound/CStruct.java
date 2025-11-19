@@ -66,11 +66,13 @@ public class CStruct extends CInteger {
         return new CUnsignedLong(null, parseContext).getTypeName();
     }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    CStruct cStruct = (CStruct) o;
-    final Function<Tuple2<String, CComplexType>, Tuple2<String, Class<?>>> mapper = (Tuple2<String, CComplexType> it) -> Tuple2.of(it.get1(), it.get2().getClass());
-    return Objects.equals(fields.stream().map(mapper).toList(), cStruct.fields.stream().map(mapper).toList());
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CStruct cStruct = (CStruct) o;
+        final Function<Tuple2<String, CComplexType>, Tuple2<String, Class<?>>> mapper =
+                (Tuple2<String, CComplexType> it) -> Tuple2.of(it.get1(), it.get2().getClass());
+        return Objects.equals(
+                fields.stream().map(mapper).toList(), cStruct.fields.stream().map(mapper).toList());
+    }
 }

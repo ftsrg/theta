@@ -54,7 +54,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -575,35 +574,44 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             }
             if (declaration.getInitExpr() != null) {
                 if (declaration.getActualType() instanceof CStruct) {
-                  if(declaration.getInitExpr() instanceof CInitializerList) {
-                    final var initializerList = (CInitializerList) declaration.getInitExpr();
-                    List<VarDecl<?>> varDecls = declaration.getVarDecls();
-                    VarDecl<?> varDecl = varDecls.get(0);
-                    final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                    LitExpr<?> currentValue = ptrType.getNullValue();
-                    LitExpr<?> unitValue = ptrType.getUnitValue();
-                    for (Tuple2<Optional<CStatement>, CStatement> statement :
-                        initializerList.getStatements()) {
-                      final var expr = statement.get2().getExpression();
-                      final var deref =
-                          Exprs.Dereference(
-                              cast(varDecl.getRef(), currentValue.getType()),
-                              cast(currentValue, currentValue.getType()),
-                              expr.getType());
-                      CAssignment cAssignment =
-                          new CAssignment(deref, statement.get2(), "=", parseContext);
-                      recordMetadata(ctx, cAssignment);
-                      compound.addCStatement(cAssignment);
-                      currentValue =
-                          Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                    if (declaration.getInitExpr() instanceof CInitializerList) {
+                        final var initializerList = (CInitializerList) declaration.getInitExpr();
+                        List<VarDecl<?>> varDecls = declaration.getVarDecls();
+                        VarDecl<?> varDecl = varDecls.get(0);
+                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        LitExpr<?> currentValue = ptrType.getNullValue();
+                        LitExpr<?> unitValue = ptrType.getUnitValue();
+                        for (Tuple2<Optional<CStatement>, CStatement> statement :
+                                initializerList.getStatements()) {
+                            final var expr = statement.get2().getExpression();
+                            final var deref =
+                                    Exprs.Dereference(
+                                            cast(varDecl.getRef(), currentValue.getType()),
+                                            cast(currentValue, currentValue.getType()),
+                                            expr.getType());
+                            CAssignment cAssignment =
+                                    new CAssignment(deref, statement.get2(), "=", parseContext);
+                            recordMetadata(ctx, cAssignment);
+                            compound.addCStatement(cAssignment);
+                            currentValue =
+                                    Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                        }
+                    } else {
+                        Expr<?> expression = declaration.getInitExpr().getExpression();
+                        checkState(
+                                expression instanceof RefExpr<?>,
+                                "Initializer type not handled for structs: " + expression);
+                        final var type = CComplexType.getType(expression, parseContext);
+                        checkState(
+                                type instanceof CStruct,
+                                "Initializer type not handled for structs: " + type);
+                        checkState(
+                                type.equals(declaration.getActualType()),
+                                "Mismatching types: "
+                                        + type
+                                        + " vs. "
+                                        + declaration.getActualType());
                     }
-                  } else {
-                    Expr<?> expression = declaration.getInitExpr().getExpression();
-                    checkState(expression instanceof RefExpr<?>, "Initializer type not handled for structs: " + expression);
-                    final var type = CComplexType.getType(expression, parseContext);
-                    checkState(type instanceof CStruct, "Initializer type not handled for structs: " + type);
-                    checkState(type.equals(declaration.getActualType()), "Mismatching types: " + type + " vs. " + declaration.getActualType());
-                  }
                 } else {
                     checkState(
                             declaration.getVarDecls().size() == 1,
