@@ -331,6 +331,13 @@ class FrontendXcfaBuilder(
             )
           )
         )
+        if (MemsafetyPass.enabled) {
+          val fitsall = Fitsall(null, parseContext)
+          val size = type.fields.size
+          initStmtList.add(
+            builder.parent.allocate(parseContext, flatVariable.ref, fitsall.getValue("$size"))
+          )
+        }
       }
     }
     builder.createInitLoc(getMetadata(function))
