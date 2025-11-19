@@ -31,6 +31,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -71,7 +73,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
-                val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+                val t = ptrType.embeddedType
+                val assign2 =
+                  if (t is CStruct) {
+                    val type = Fitsall(null, parseContext)
+                    builder.parent.allocate(
+                      parseContext,
+                      varDecl.ref,
+                      type.getValue("${t.fields.size}"),
+                    )
+                  } else {
+                    builder.parent.allocateUnit(parseContext, varDecl.ref)
+                  }
 
                 listOf(assign, assign2)
               } else {
