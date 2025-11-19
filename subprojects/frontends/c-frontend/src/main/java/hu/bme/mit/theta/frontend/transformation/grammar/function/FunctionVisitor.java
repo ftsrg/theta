@@ -238,6 +238,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public void recordMetadata(ParserRuleContext ctx, CCall statement) {
         ctx = (ParserRuleContext) ctx.parent.parent;
         recordMetadataCommon(ctx, statement);
+        statement.setColNumberStop(statement.getColNumberStop() + 2);
     }
 
     private void propagateFunctionName(CStatement stmt, String name) {
