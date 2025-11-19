@@ -31,6 +31,8 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -50,7 +52,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       ptrVars.getOrPut(this) { Var("__sp", CPointer(null, null, parseContext).smtType) }
   }
 
+  private lateinit var currentBuilder: XcfaProcedureBuilder
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    currentBuilder = builder
     val ptrVar = builder.parent.ptrVar(parseContext)
     val globalReferredVars =
       builder.parent.metaData.computeIfAbsent("references") {
@@ -71,7 +76,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
-                val assign2 = builder.parent.allocateUnit(parseContext, varDecl.ref)
+                val t = ptrType.embeddedType
+                val assign2 =
+                  if (t is CStruct) {
+                    val type = Fitsall(null, parseContext)
+                    builder.parent.allocate(
+                      parseContext,
+                      varDecl.ref,
+                      type.getValue("${t.fields.size}"),
+                    )
+                  } else {
+                    builder.parent.allocateUnit(parseContext, varDecl.ref)
+                  }
 
                 listOf(assign, assign2)
               } else {
@@ -204,7 +220,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   @JvmOverloads
   fun XcfaLabel.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
-    parseContext: ParseContext? = null,
+    parseContext: ParseContext,
   ): XcfaLabel =
     if (varLut.isNotEmpty())
       when (this) {
@@ -251,23 +267,25 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   @JvmOverloads
   fun Stmt.changeReferredVars(
     varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, XcfaLabel>>,
-    parseContext: ParseContext? = null,
+    parseContext: ParseContext,
   ): List<Stmt> {
     val stmts =
       when (this) {
         is AssignStmt<*> ->
           if (this.varDecl in varLut.keys) {
             val newVar = varLut[this.varDecl]!!.first
-            listOf(
-              MemoryAssignStmt.create(
-                Dereference(
-                  cast(newVar.ref, newVar.type),
-                  cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
-                  this.expr.type,
-                ),
-                this.expr.changeReferredVars(varLut, parseContext),
+            val deref =
+              Dereference(
+                cast(newVar.ref, newVar.type),
+                cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
+                this.expr.type,
               )
-            )
+            listOf(
+              MemoryAssignStmt.create(deref, this.expr.changeReferredVars(varLut, parseContext))
+            ) +
+              if (MemsafetyPass.enabled) {
+                getAllocation(parseContext, deref, CComplexType.getType(varDecl.ref, parseContext))
+              } else emptyList<Stmt>()
           } else {
             listOf(
               AssignStmt.of(
@@ -301,6 +319,23 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       }
     }
     return stmts
+  }
+
+  private fun getAllocation(
+    parseContext: ParseContext,
+    newDeref: Expr<*>,
+    type: CComplexType,
+  ): List<Stmt> {
+    return listOf(
+      if (type is CStruct) {
+        val fitsall = CComplexType.getFitsall(parseContext)
+        currentBuilder.parent
+          .allocate(parseContext, newDeref, fitsall.getValue("${type.fields.size}"))
+          .stmt
+      } else {
+        currentBuilder.parent.allocateUnit(parseContext, newDeref).stmt
+      }
+    )
   }
 
   @JvmOverloads

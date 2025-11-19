@@ -54,7 +54,6 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
   ) {
 
     val taskHash = createTaskHash(inputFile.absolutePath)
-    check(ltlSpecification == null)
     val ltlSpecification = property.verifiedProperty.name
     val dummyWitness = StringBuilder()
     dummyWitness
