@@ -123,8 +123,8 @@ class CLibraryFunctionsPass : ProcedurePass {
                   val handle =
                     Exprs.Dereference(
                       invokeLabel.params[1],
-                      getNullForType(invokeLabel.params[0].type),
-                      invokeLabel.params[0].type,
+                      getNullForType(invokeLabel.params[1].type),
+                      invokeLabel.params[1].type,
                     ) // as? Dereference<*, *, *> ?: invokeLabel.getParam(1).ref
                   val funcptr = invokeLabel.getParam(3)
                   val param = invokeLabel.params[4]
