@@ -179,6 +179,22 @@ class FrontendXcfaBuilder(
           )
           initStmtList.add(builder.allocate(parseContext, globalDeclaration.get2().ref, bounds))
         }
+      } else if (type is CStruct) {
+        initStmtList.add(
+          StmtLabel(
+            Stmts.Assign(
+              cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+              cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type),
+            )
+          )
+        )
+        if (MemsafetyPass.enabled) {
+          val fitsall = Fitsall(null, parseContext)
+          val size = type.fields.size
+          initStmtList.add(
+            builder.allocate(parseContext, globalDeclaration.get2().ref, fitsall.getValue("$size"))
+          )
+        }
       } else {
         if (
           globalDeclaration.get1().initExpr != null &&
@@ -315,6 +331,13 @@ class FrontendXcfaBuilder(
             )
           )
         )
+        if (MemsafetyPass.enabled) {
+          val fitsall = Fitsall(null, parseContext)
+          val size = type.fields.size
+          initStmtList.add(
+            builder.parent.allocate(parseContext, flatVariable.ref, fitsall.getValue("$size"))
+          )
+        }
       }
     }
     builder.createInitLoc(getMetadata(function))
@@ -383,6 +406,8 @@ class FrontendXcfaBuilder(
           ) {
             throw UnsupportedFrontendElementException("Pointer arithmetic not supported.")
           }
+          // TODO: check if assignment to structs, arrays (stack AND heap) are value- or
+          // pointer-based
           AssignStmtLabel(
             lValue,
             cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type),
