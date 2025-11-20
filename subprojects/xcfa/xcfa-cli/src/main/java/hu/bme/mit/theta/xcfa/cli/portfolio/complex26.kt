@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
@@ -266,7 +265,8 @@ fun complex26(
             val mddCegarMS = mddCegar(100_000, "mathsat:5.6.12")
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seq = cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            val expl_pred_seq =
+              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
             val ic3 = ic3(100_000, "Z3")
             val ic3Cegar = ic3Cegar(100_000, "cvc5:1.2.0")
             val mddCegar = mddCegar(100_000, "cvc5:1.2.0")
@@ -368,7 +368,12 @@ fun complex26(
             ic3Cegar onSolverError ic3CegarMS
             mddCegar onSolverError mddCegarMS
 
-            expl_pred_nwtMS then expl_pred_seqMS then ic3MS then ic3CegarMS then mddCegarMS then complex
+            expl_pred_nwtMS then
+              expl_pred_seqMS then
+              ic3MS then
+              ic3CegarMS then
+              mddCegarMS then
+              complex
 
             expl_pred_nwt to mddCegar
           }
@@ -380,7 +385,7 @@ fun complex26(
 
             val mddMS = mdd(600_000, "mathsat:5.6.12")
             val bmcMS = bmc(150_000, "mathsat:5.6.12")
-            //val kindMS = kind(150_000, "mathsat:5.6.12")
+            // val kindMS = kind(150_000, "mathsat:5.6.12")
 
             mdd then bmc
 
@@ -394,8 +399,6 @@ fun complex26(
           TERMINATION -> {
             termination to termination
           }
-
-
         }
       } else {
         val expl_pred_nwt = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
@@ -422,7 +425,8 @@ fun complex26(
 
   val mainTrait =
     when {
-      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION -> MainTrait.TERMINATION
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION ->
+        MainTrait.TERMINATION
       parseContext.multiThreading -> MULTITHREAD
       xcfa.procedures.any { p -> p.edges.any { it.label.dereferences.isNotEmpty() } } -> PTR
       ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
