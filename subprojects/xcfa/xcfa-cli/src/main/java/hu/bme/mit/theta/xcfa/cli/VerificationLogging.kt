@@ -195,7 +195,7 @@ private fun retrieveTrace(safetyResult: SafetyResult<*, *>): Cex? =
 private fun writeSequenceTrace(
   sequenceFile: File,
   trace: Trace<XcfaState<ExplState>, XcfaAction>,
-  printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> Sequence<String>,
+  printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>,
 ) {
   sequenceFile.writeText("@startuml\n")
   var maxWidth = 0
@@ -363,8 +363,7 @@ private fun writeTraceAsCinPlantUml(
     writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
       val proc = state.processes[act.pid]
       val loc = proc?.locs?.peek()
-      (loc?.metadata as? CMetaData)?.sourceText?.split("\n")?.asSequence()
-        ?: sequenceOf("<unknown>")
+      (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
     }
   } catch (e: Exception) {
     logger.info("Could not emit C trace as PlantUML file: ${e.stackTraceToString()}")

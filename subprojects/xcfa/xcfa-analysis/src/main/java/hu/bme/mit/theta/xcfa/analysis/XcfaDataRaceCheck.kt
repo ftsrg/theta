@@ -62,8 +62,8 @@ fun getDataRaceDetector() =
               val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
               val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
 
-              val globals1 = edge1.label.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-              val globals2 = edge2.label.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+              val globals1 = label1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+              val globals2 = label2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
               for (v1 in globals1) {
                 for (v2 in globals2) {
                   if (
@@ -257,10 +257,15 @@ private fun mayBeSameMemoryLocation(
     (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
       ?: ExprUtils.simplify(expr)
   val possibleSameLocation =
-    WithPushPop(dependencySolver).use {
-      dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
-      dependencySolver.add(PathUtils.unfold(expr, 0))
-      dependencySolver.check().isSat
+    try {
+      WithPushPop(dependencySolver).use {
+        dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
+        dependencySolver.add(PathUtils.unfold(expr, 0))
+        dependencySolver.check().isSat
+      }
+    } catch (_: Exception) {
+      // TODO this is reached when having incomplete dereferences, we should do it properly
+      true
     }
   if (!possibleSameLocation) return false
 

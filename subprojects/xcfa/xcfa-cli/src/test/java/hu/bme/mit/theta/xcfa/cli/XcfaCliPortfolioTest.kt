@@ -44,7 +44,7 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          complexPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
       val emergentPortfolio =

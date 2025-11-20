@@ -108,6 +108,7 @@ class XcfaDataRaceTest {
 
     val lts = XcfaSporLts(xcfa)
 
+    val errorDetector = getXcfaErrorDetector(property.verifiedProperty)
     val abstractor =
       getXcfaAbstractor(
         analysis,
@@ -117,7 +118,7 @@ class XcfaDataRaceTest {
         StopCriterions.firstCex<XcfaState<PtrState<ExplState>>, XcfaAction>(),
         ConsoleLogger(Logger.Level.DETAIL),
         lts,
-        property.verifiedProperty,
+        errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>>
 
