@@ -13,15 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.portfolio
+package hu.bme.mit.theta.frontend.stdlib
 
-enum class MainTrait {
-  LIN_INT,
-  NONLIN_INT,
-  BITWISE,
-  FLOAT,
-  ARR,
-  MULTITHREAD,
-  PTR,
-  TERMINATION,
-}
+internal val signal_h =
+  """
+extern void (*signal(int sig, void (*func)(int)))(int);
+extern int raise(int sig);
+"""
+    .trimIndent()

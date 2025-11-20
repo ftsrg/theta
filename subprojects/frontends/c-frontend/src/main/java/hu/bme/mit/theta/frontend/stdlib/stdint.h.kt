@@ -13,15 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.portfolio
+package hu.bme.mit.theta.frontend.stdlib
 
-enum class MainTrait {
-  LIN_INT,
-  NONLIN_INT,
-  BITWISE,
-  FLOAT,
-  ARR,
-  MULTITHREAD,
-  PTR,
-  TERMINATION,
-}
+internal val stdint_h =
+  """
+typedef char int8_t;
+typedef short int16_t;
+typedef long int32_t;
+typedef long long int64_t;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+"""
+    .trimIndent()

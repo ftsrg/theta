@@ -23,19 +23,24 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
 import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
+import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.COI
 import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
 import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
 import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
+import hu.bme.mit.theta.xcfa.cli.params.POR.AASPOR
 import hu.bme.mit.theta.xcfa.cli.params.POR.NOPOR
+import hu.bme.mit.theta.xcfa.cli.params.POR.SPOR
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.BFS
+import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
 import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -104,7 +109,20 @@ fun baseCegarConfig(
       debugConfig = portfolioConfig.debugConfig,
     )
 
-  if (!xcfa.isInlined) {
+  if (parseContext.multiThreading) {
+    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+    val verifiedProperty = baseConfig.inputConfig.property.verifiedProperty
+    val multiThreadedCegarConfig =
+      baseCegarConfig.copy(
+        coi = if (verifiedProperty == ERROR_LOCATION) COI else NO_COI,
+        por = if (verifiedProperty == ERROR_LOCATION) AASPOR else SPOR,
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
+      )
+    baseConfig =
+      baseConfig.copy(
+        backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
+      )
+  } else if (!xcfa.isInlined) {
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val recursiveConfig =
       baseCegarConfig.copy(
@@ -410,6 +428,45 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
           ),
         parseInProcess = inProcess && backendConfig.parseInProcess,
       )
+  )
+
+fun baseIc3Config(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  serialize: Boolean,
+): XcfaConfig<*, Ic3Config> =
+  XcfaConfig(
+    inputConfig =
+      if (serialize)
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          propertyFile = null,
+          property = portfolioConfig.inputConfig.property,
+        )
+      else portfolioConfig.inputConfig,
+    frontendConfig =
+      if (serialize)
+        FrontendConfig(
+          lbeLevel = LbePass.defaultLevel,
+          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          inputType = InputType.C,
+          specConfig = CFrontendConfig(arithmetic = efficient),
+        )
+      else (portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>),
+    backendConfig =
+      BackendConfig(
+        backend = Backend.IC3,
+        memlimit = portfolioConfig.backendConfig.memlimit,
+        solverHome = portfolioConfig.backendConfig.solverHome,
+        timeoutMs = 0,
+        parseInProcess = !serialize,
+        specConfig =
+          Ic3Config(solver = "Z3", validateSolver = false, reversed = false, cegar = true),
+      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
+    debugConfig = portfolioConfig.debugConfig,
   )
 
 fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =

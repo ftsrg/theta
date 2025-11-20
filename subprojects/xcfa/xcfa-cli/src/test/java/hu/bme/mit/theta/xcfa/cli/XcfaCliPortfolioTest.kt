@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.cli.XcfaCliPortfolioTest.Companion.Portfolios.emergentPortfolio
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -54,7 +55,7 @@ class XcfaCliPortfolioTest {
           portfolioConfig: XcfaConfig<*, *>,
           logger: Logger,
           uniqueLogger: Logger ->
-          emergentPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+          emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
       val hornPortfolio =

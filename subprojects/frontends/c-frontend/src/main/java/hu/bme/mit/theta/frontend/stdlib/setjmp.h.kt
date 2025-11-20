@@ -13,15 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.portfolio
+package hu.bme.mit.theta.frontend.stdlib
 
-enum class MainTrait {
-  LIN_INT,
-  NONLIN_INT,
-  BITWISE,
-  FLOAT,
-  ARR,
-  MULTITHREAD,
-  PTR,
-  TERMINATION,
-}
+internal val setjmp_h =
+  """
+typedef void* jmp_buf;
+extern int setjmp(jmp_buf __jmpb);
+extern void longjmp(jmp_buf __jmpb, int __ret);
+"""
+    .trimIndent()

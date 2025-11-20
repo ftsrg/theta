@@ -13,15 +13,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.portfolio
+package hu.bme.mit.theta.frontend.stdlib
 
-enum class MainTrait {
-  LIN_INT,
-  NONLIN_INT,
-  BITWISE,
-  FLOAT,
-  ARR,
-  MULTITHREAD,
-  PTR,
-  TERMINATION,
-}
+internal val ctype_h =
+  """
+extern int isalnum(int c);
+extern int isalpha(int c);
+extern int isblank(int c);
+extern int iscntrl(int c);
+extern int isdigit(int c);
+extern int isgraph(int c);
+extern int islower(int c);
+extern int isprint(int c);
+extern int ispunct(int c);
+extern int isspace(int c);
+extern int isupper(int c);
+extern int isxdigit(int c);
+extern int tolower(int c);
+extern int toupper(int c);
+"""
+    .trimIndent()

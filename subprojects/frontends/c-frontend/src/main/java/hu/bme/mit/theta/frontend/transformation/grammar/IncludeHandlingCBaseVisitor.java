@@ -13,15 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.portfolio
+package hu.bme.mit.theta.frontend.transformation.grammar;
 
-enum class MainTrait {
-  LIN_INT,
-  NONLIN_INT,
-  BITWISE,
-  FLOAT,
-  ARR,
-  MULTITHREAD,
-  PTR,
-  TERMINATION,
+import static hu.bme.mit.theta.frontend.stdlib.HeaderFileKt.parseHeaderFile;
+import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
+
+import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+
+public abstract class IncludeHandlingCBaseVisitor<T> extends CBaseVisitor<T> {
+
+    @Override
+    public final T visitIncludeDirective(CParser.IncludeDirectiveContext ctx) {
+        return parseHeaderFile(textWithWS(ctx), this);
+    }
 }
