@@ -584,7 +584,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (type.isPresent()) {
                 LitExpr<?> value =
                         CComplexType.getSignedInt(parseContext)
-                                .getValue("" + type.get().width() / 8);
+                                .getValue("" + Math.max(type.get().width() / 8, 1));
                 return value;
             } else {
                 uniqueWarningLogger.write(
