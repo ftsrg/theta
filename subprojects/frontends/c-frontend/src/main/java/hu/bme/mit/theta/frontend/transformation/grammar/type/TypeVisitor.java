@@ -17,7 +17,6 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.*;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
@@ -27,6 +26,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class TypeVisitor extends CBaseVisitor<CSimpleType> {
+public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     private final DeclarationVisitor declarationVisitor;
     private final TypedefVisitor typedefVisitor;
     private final ParseContext parseContext;

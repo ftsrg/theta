@@ -54,7 +54,9 @@ fun multithreadPortfolio(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  var baseConfig: XcfaConfig<CFrontendConfig, CegarConfig> =
+    baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+      as XcfaConfig<CFrontendConfig, CegarConfig>
 
   val baseCegarConfig = baseConfig.backendConfig.specConfig!!
   val verifiedProperty = baseConfig.inputConfig.property.verifiedProperty
