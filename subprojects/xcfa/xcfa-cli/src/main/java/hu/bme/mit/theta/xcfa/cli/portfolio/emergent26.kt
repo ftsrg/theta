@@ -267,7 +267,7 @@ fun emergent26(
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq =
               cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
+            val ic3 = ic3(100_000, "Z3:new")
             val ic3Cegar = ic3Cegar(100_000, "cvc5:1.2.0")
             val mddCegar = mddCegar(100_000, "cvc5:1.2.0")
 
@@ -296,7 +296,7 @@ fun emergent26(
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
+            val ic3 = ic3(100_000, "Z3:new")
             val ic3Cegar = ic3Cegar(100_000, "Z3")
             val mddCegar = mddCegar(100_000, "Z3")
 
@@ -327,7 +327,7 @@ fun emergent26(
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
+            val ic3 = ic3(100_000, "Z3:new")
             val ic3Cegar = ic3Cegar(100_000, "Z3")
             val mddCegar = mddCegar(100_000, "Z3")
 
@@ -348,7 +348,7 @@ fun emergent26(
           ARR -> {
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
+            val ic3 = ic3(100_000, "Z3:new")
             val ic3Cegar = ic3Cegar(100_000, "Z3")
             val mddCegar = mddCegar(100_000, "Z3")
 
@@ -379,8 +379,8 @@ fun emergent26(
           }
           MULTITHREAD -> {
 
-            val mdd = mdd(600_000, "Z3")
-            val bmc = bmc(150_000, "Z3")
+            val mdd = mdd(600_000, "Z3:new")
+            val bmc = bmc(150_000, "Z3:new")
             val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
             val mddMS = mdd(600_000, "mathsat:5.6.12")
