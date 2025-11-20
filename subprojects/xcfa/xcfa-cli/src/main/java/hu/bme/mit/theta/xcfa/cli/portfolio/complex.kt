@@ -915,7 +915,7 @@ fun complexPortfolio(
               baseConfig.inputConfig.copy(
                 xcfaWCtx =
                   if (portfolioConfig.backendConfig.parseInProcess) null
-                  else Triple(xcfa, mcm, parseContext)
+                  else Triple(cegarXcfa, mcm, parseContext)
               ),
             frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
           )
