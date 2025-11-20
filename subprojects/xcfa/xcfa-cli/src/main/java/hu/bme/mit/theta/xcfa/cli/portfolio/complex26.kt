@@ -238,6 +238,29 @@ fun complex26(
         checker,
       )
 
+    val multithread =
+      ConfigNode(
+        "MultiThread-$inProcess",
+        XcfaConfig(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx =
+                if (portfolioConfig.backendConfig.parseInProcess) null
+                else Triple(xcfa, mcm, parseContext),
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig = portfolioConfig.frontendConfig,
+          backendConfig =
+            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
+              specConfig = PortfolioConfig("MULTITHREAD")
+            ),
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
+
     val types = xcfa.collectVars().map { it.type }.toSet()
 
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
@@ -253,169 +276,62 @@ fun complex26(
     val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
-          BITWISE -> {
-            // MS by default, Z3 fallback, but if ITP, use CVC instead of Z3
-
-            val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(100_000, "mathsat:5.6.12")
-            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(100_000, "mathsat:5.6.12")
-
-            val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seq =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
-            val ic3Cegar = ic3Cegar(100_000, "cvc5:1.2.0")
-            val mddCegar = mddCegar(100_000, "cvc5:1.2.0")
-
-            expl_pred_nwtMS then expl_pred_seqMS then ic3MS then ic3CegarMS then mddCegarMS
-
-            expl_pred_nwtMS onSolverError expl_pred_nwt
-            expl_pred_seqMS onSolverError expl_pred_seq
-            ic3MS onSolverError ic3
-            ic3CegarMS onSolverError ic3Cegar
-            mddCegarMS onSolverError mddCegar
-
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar then complex
-
-            expl_pred_nwtMS to mddCegarMS
-          }
-          FLOAT -> {
-            // CVC by default, Z3 fallback
-
-            val expl_pred_nwtCVC =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seqCVC =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3CVC = ic3(100_000, "cvc5:1.2.0")
-            val ic3CegarCVC = ic3Cegar(100_000, "cvc5:1.2.0")
-            val mddCegarCVC = mddCegar(100_000, "cvc5:1.2.0")
-
-            val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
-            val ic3Cegar = ic3Cegar(100_000, "Z3")
-            val mddCegar = mddCegar(100_000, "Z3")
-
-            expl_pred_nwtCVC then expl_pred_seqCVC then ic3CVC then ic3CegarCVC then mddCegarCVC
-
-            expl_pred_nwtCVC onSolverError expl_pred_nwt
-            expl_pred_seqCVC onSolverError expl_pred_seq
-            ic3CVC onSolverError ic3
-            ic3CegarCVC onSolverError ic3Cegar
-            mddCegarCVC onSolverError mddCegar
-
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar then complex
-
-            expl_pred_nwtCVC to mddCegarCVC
-          }
-
+          BITWISE,
+          FLOAT,
+          PTR,
+          ARR,
           NONLIN_INT,
           LIN_INT -> {
-            // MS by default, Z3 fallback
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
 
-            val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(100_000, "mathsat:5.6.12")
-            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(100_000, "mathsat:5.6.12")
-
-            val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
-            val ic3Cegar = ic3Cegar(100_000, "Z3")
-            val mddCegar = mddCegar(100_000, "Z3")
-
-            expl_pred_nwtMS then expl_pred_seqMS then ic3MS then ic3CegarMS then mddCegarMS
-
-            expl_pred_nwtMS onSolverError expl_pred_nwt
-            expl_pred_seqMS onSolverError expl_pred_seq
-            ic3MS onSolverError ic3
-            ic3CegarMS onSolverError ic3Cegar
-            mddCegarMS onSolverError mddCegar
-
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar then complex
-
-            expl_pred_nwtMS to mddCegarMS
-          }
-
-          PTR,
-          ARR -> {
-            val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(100_000, "Z3")
-            val ic3Cegar = ic3Cegar(100_000, "Z3")
-            val mddCegar = mddCegar(100_000, "Z3")
-
-            val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-            val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(100_000, "mathsat:5.6.12")
-            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(100_000, "mathsat:5.6.12")
-
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar
-
-            expl_pred_nwt onSolverError expl_pred_nwtMS
-            expl_pred_seq onSolverError expl_pred_seqMS
-            ic3 onSolverError ic3MS
-            ic3Cegar onSolverError ic3CegarMS
-            mddCegar onSolverError mddCegarMS
-
-            expl_pred_nwtMS then
-              expl_pred_seqMS then
-              ic3MS then
-              ic3CegarMS then
-              mddCegarMS then
-              complex
-
-            expl_pred_nwt to mddCegar
-          }
-          MULTITHREAD -> {
-
-            val mdd = mdd(600_000, "Z3")
-            val bmc = bmc(150_000, "Z3")
-            val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-
-            val mddMS = mdd(600_000, "mathsat:5.6.12")
+            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val pred_bwMS =
+              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
             val bmcMS = bmc(150_000, "mathsat:5.6.12")
-            // val kindMS = kind(150_000, "mathsat:5.6.12")
 
-            mdd then bmc
+            kind then pred_bw then expl then bmc
 
-            mdd onSolverError mddMS
-            bmc onSolverError bmcMS
+            kind onSolverError kindMS
+            pred_bw onSolverError pred_bwMS
+            expl onSolverError explMS
 
-            mddMS then bmcMS then complex
+            kindMS then pred_bwMS then explMS then bmcMS
 
-            mdd to bmc
+            kind to bmc
+          }
+
+          MULTITHREAD -> {
+            multithread to multithread
           }
           TERMINATION -> {
             termination to termination
           }
         }
       } else {
-        val expl_pred_nwt = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-        val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-        val expl_pred_nwtMS =
-          cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
-        val expl_pred_seqMS =
-          cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+        val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+        val expl = cegar(300_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+        val pred_seq = cegar(150_000, "Z3", Domain.PRED_CART, Refinement.SEQ_ITP)
+        val expl_seq = cegar(150_000, "Z3", Domain.EXPL, Refinement.SEQ_ITP)
 
-        expl_pred_nwtMS then expl_pred_seqMS
+        val pred_bwMS = cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+        val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
+        val pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.SEQ_ITP)
+        val expl_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL, Refinement.SEQ_ITP)
 
-        expl_pred_nwtMS onSolverError expl_pred_nwt
-        expl_pred_seqMS onSolverError expl_pred_seq
+        pred_bw then expl then pred_seq then expl_seq
 
-        expl_pred_nwt then expl_pred_seq then complex
+        pred_bw onSolverError pred_bwMS
+        expl onSolverError explMS
+        pred_seq onSolverError pred_seqMS
+        expl_seq onSolverError expl_seqMS
 
-        expl_pred_nwtMS to expl_pred_seqMS
+        pred_bwMS then explMS then pred_seqMS then expl_seqMS
+
+        pred_bw to expl_seq
       }
 
     endConfig then complex
