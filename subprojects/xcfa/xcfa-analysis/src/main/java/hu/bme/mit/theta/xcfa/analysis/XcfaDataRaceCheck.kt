@@ -45,46 +45,46 @@ import java.util.function.Predicate
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
 /** Returns a predicate that checks whether data race is possible after the given state. */
-fun getDataRacePredicate(): Predicate<XcfaState<out PtrState<out ExprState>>> {
-  val lts = getXcfaLts()
-  return Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
+fun getDataRacePredicate() =
+  Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
     val xcfa = s.xcfa!!
-    val enabledActions = lts.getEnabledActionsFor(s).toList()
-    for (i in enabledActions.indices) {
-      val action1 = enabledActions[i]
-      for (j in i + 1 until enabledActions.size) {
-        val action2 = enabledActions[j]
-        if (action1.pid != action2.pid) {
-          val edge1 = action1.edge
-          val edge2 = action2.edge
-          val mutexes1 = s.mutexes.filterValues { action1.pid in it }.keys
-          val mutexes2 = s.mutexes.filterValues { action2.pid in it }.keys
+    val processes = s.processes.entries.toList()
+    for (i in processes.indices) {
+      val process1 = processes[i]
+      for (j in i + 1 until processes.size) {
+        val process2 = processes[j]
+        check(process1.key != process2.key)
+        for (edge1 in process1.value.locs.peek().outgoingEdges) {
+          for (edge2 in process2.value.locs.peek().outgoingEdges) {
+            val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
+            val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
 
-          val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-          val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-          for (v1 in globals1) {
-            for (v2 in globals2) {
-              if (
-                v1.globalVar == v2.globalVar &&
-                  !v1.globalVar.atomic &&
-                  (v1.access.isWritten || v2.access.isWritten) &&
-                  canExecuteConcurrently(v1, v2)
-              )
-                return@Predicate true
+            val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+            val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+            for (v1 in globals1) {
+              for (v2 in globals2) {
+                if (
+                  v1.globalVar == v2.globalVar &&
+                    !v1.globalVar.atomic &&
+                    (v1.access.isWritten || v2.access.isWritten) &&
+                    canExecuteConcurrently(v1, v2)
+                )
+                  return@Predicate true
+              }
             }
-          }
 
-          val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
-          val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
-          for (m1 in mems1) {
-            for (m2 in mems2) {
-              if (
-                (m1.access.isWritten || m2.access.isWritten) &&
-                  canExecuteConcurrently(m1, m2) &&
-                  mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
-              )
-                return@Predicate true
-              // TODO: refiner needs to check that the memory locations are really the same
+            val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
+            val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
+            for (m1 in mems1) {
+              for (m2 in mems2) {
+                if (
+                  (m1.access.isWritten || m2.access.isWritten) &&
+                    canExecuteConcurrently(m1, m2) &&
+                    mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                )
+                  return@Predicate true
+                // TODO: refiner needs to check that the memory locations are really the same
+              }
             }
           }
         }
@@ -92,7 +92,6 @@ fun getDataRacePredicate(): Predicate<XcfaState<out PtrState<out ExprState>>> {
     }
     false
   }
-}
 
 private sealed class GlobalAccessWithMutexes(
   val access: AccessType,
