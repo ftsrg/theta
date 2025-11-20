@@ -96,7 +96,7 @@ fun XcfaProcedure.toCHC(
           }
           newLabels
         } else {
-          it.label.getFlatLabels()
+          it.label.getFlatLabels().toList()
         }
         .map(XcfaLabel::toStmt)
 

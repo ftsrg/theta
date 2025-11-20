@@ -47,6 +47,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.isEmpty
 import hu.bme.mit.theta.xcfa.utils.references
 
 internal class XcfaToEventGraph(private val xcfa: XCFA) {

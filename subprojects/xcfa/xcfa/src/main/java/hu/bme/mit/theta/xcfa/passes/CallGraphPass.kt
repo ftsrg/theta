@@ -30,8 +30,7 @@ class CallGraphPass : ProcedurePass {
     val calledProcedures = LinkedHashSet<String>()
     builder
       .getEdges()
-      .map { it.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }
-      .flatten()
+      .flatMap { e -> e.getFlatLabels().filter { it is InvokeLabel || it is StartLabel } }
       .forEach {
         when (it) {
           is InvokeLabel -> calledProcedures.add(it.name)
