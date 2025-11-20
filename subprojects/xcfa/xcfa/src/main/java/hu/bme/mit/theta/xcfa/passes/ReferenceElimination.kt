@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -177,7 +178,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           labels.find {
             it is StmtLabel &&
               it.stmt is AssignStmt<*> &&
-              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> }
+              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> } &&
+              it.stmt.expr is ArrayLitExpr<*, *>
           }
         val spInit =
           labels.find {
@@ -282,10 +284,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               )
             listOf(
               MemoryAssignStmt.create(deref, this.expr.changeReferredVars(varLut, parseContext))
-            ) +
-              if (MemsafetyPass.enabled) {
-                getAllocation(parseContext, deref, CComplexType.getType(varDecl.ref, parseContext))
-              } else emptyList<Stmt>()
+            )
           } else {
             listOf(
               AssignStmt.of(
@@ -319,23 +318,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       }
     }
     return stmts
-  }
-
-  private fun getAllocation(
-    parseContext: ParseContext,
-    newDeref: Expr<*>,
-    type: CComplexType,
-  ): List<Stmt> {
-    return listOf(
-      if (type is CStruct) {
-        val fitsall = CComplexType.getFitsall(parseContext)
-        currentBuilder.parent
-          .allocate(parseContext, newDeref, fitsall.getValue("${type.fields.size}"))
-          .stmt
-      } else {
-        currentBuilder.parent.allocateUnit(parseContext, newDeref).stmt
-      }
-    )
   }
 
   @JvmOverloads

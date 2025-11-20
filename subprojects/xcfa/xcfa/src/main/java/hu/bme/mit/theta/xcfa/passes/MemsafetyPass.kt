@@ -166,7 +166,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (deref((it.label as SequenceLabel).labels[0])) {
+          if (
+            deref((it.label as SequenceLabel).labels[0]) &&
+              !builder.ptrSizeAssign(it.label.labels[0])
+          ) {
             // if dereference is in a short-circuiting path, add prior assumptions as well.
             val derefAssume =
               Or(
@@ -264,6 +267,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
 
   private fun deref(it: XcfaLabel): Boolean {
     return it.dereferences.isNotEmpty()
+  }
+
+  private fun XcfaProcedureBuilder.ptrSizeAssign(it: XcfaLabel): Boolean {
+    return it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == parent.getPtrSizeVar()
   }
 
   private val XcfaLabel.derefsWithShortCircuitCond:
