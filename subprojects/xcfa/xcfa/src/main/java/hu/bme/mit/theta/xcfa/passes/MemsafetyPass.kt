@@ -117,12 +117,12 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             val sizeVar = builder.parent.getPtrSizeVar()
             val derefAssume =
               Or(
-                Leq(argument, pointerType.nullValue), // uninit ptr
+                Lt(argument, pointerType.nullValue), // uninit ptr
                 // freed/not big enough ptr
-                Leq(
+                Lt(
                   ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument),
                   pointerType.nullValue,
-                ), // freed/not big enough ptr
+                )
               )
 
             builder.addEdge(
@@ -132,7 +132,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 SequenceLabel(
                   listOf(
                     StmtLabel(Assume(Not(derefAssume))),
-                    builder.parent.allocate(parseContext, argument, fitsall.nullValue),
+                    builder.parent.deallocate(parseContext, argument),
                   )
                 ),
                 it.metadata,
