@@ -285,7 +285,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         builder.addEdge(
           it.withLabel(
             SequenceLabel(
-              (it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref))).toList(),
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
               metadata = it.label.metadata,
             )
           )

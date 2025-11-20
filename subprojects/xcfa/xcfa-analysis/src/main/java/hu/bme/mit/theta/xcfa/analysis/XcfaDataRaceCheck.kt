@@ -15,82 +15,114 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.model.FenceLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
-import hu.bme.mit.theta.xcfa.utils.AccessType
-import hu.bme.mit.theta.xcfa.utils.WRITE
-import hu.bme.mit.theta.xcfa.utils.collectGlobalVars
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isWritten
-import java.util.function.Predicate
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.*
 
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
 /** Returns a predicate that checks whether data race is possible after the given state. */
-fun getDataRacePredicate() =
-  Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
-    val xcfa = s.xcfa!!
-    val processes = s.processes.entries.toList()
-    for (i in processes.indices) {
-      val process1 = processes[i]
-      for (j in i + 1 until processes.size) {
-        val process2 = processes[j]
-        check(process1.key != process2.key)
-        for (edge1 in process1.value.locs.peek().outgoingEdges) {
-          for (edge2 in process2.value.locs.peek().outgoingEdges) {
-            val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
-            val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
+fun getDataRaceDetector() =
+  object : XcfaErrorDetector {
 
-            val globals1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-            val globals2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
-            for (v1 in globals1) {
-              for (v2 in globals2) {
-                if (
-                  v1.globalVar == v2.globalVar &&
-                    !v1.globalVar.atomic &&
-                    (v1.access.isWritten || v2.access.isWritten) &&
-                    canExecuteConcurrently(v1, v2)
-                )
-                  return@Predicate true
+    override fun test(s: XcfaState<out PtrState<out ExprState>>): Boolean =
+      getDataRaceCondition(s) != null
+
+    private fun getDataRaceCondition(s: XcfaState<out PtrState<out ExprState>>): Expr<BoolType>? {
+      val xcfa = s.xcfa!!
+      val processes = s.processes.entries.toList()
+      for (i in processes.indices) {
+        val process1 = processes[i]
+        for (j in i + 1 until processes.size) {
+          val process2 = processes[j]
+          check(process1.key != process2.key)
+          for (edge1 in process1.value.locs.peek().outgoingEdges) {
+            for (edge2 in process2.value.locs.peek().outgoingEdges) {
+              val label1 = edge1.label.changeVars(process1.value.varLookup.peek())
+              val label2 = edge2.label.changeVars(process2.value.varLookup.peek())
+              val mutexes1 = s.mutexes.filterValues { process1.key in it }.keys
+              val mutexes2 = s.mutexes.filterValues { process2.key in it }.keys
+
+              val globals1 = edge1.label.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+              val globals2 = edge2.label.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+              for (v1 in globals1) {
+                for (v2 in globals2) {
+                  if (
+                    v1.globalVar == v2.globalVar &&
+                      !v1.globalVar.atomic &&
+                      (v1.access.isWritten || v2.access.isWritten) &&
+                      canExecuteConcurrently(v1, v2)
+                  )
+                    return True()
+                }
               }
-            }
 
-            val mems1 = edge1.getMemoryAccessesWithMutexes(mutexes1)
-            val mems2 = edge2.getMemoryAccessesWithMutexes(mutexes2)
-            for (m1 in mems1) {
-              for (m2 in mems2) {
-                if (
-                  (m1.access.isWritten || m2.access.isWritten) &&
-                    canExecuteConcurrently(m1, m2) &&
-                    mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
-                )
-                  return@Predicate true
-                // TODO: refiner needs to check that the memory locations are really the same
+              val mems1 = label1.getMemoryAccessesWithMutexes(mutexes1)
+              val mems2 = label2.getMemoryAccessesWithMutexes(mutexes2)
+              for (m1 in mems1) {
+                for (m2 in mems2) {
+                  if (
+                    (m1.access.isWritten || m2.access.isWritten) &&
+                      canExecuteConcurrently(m1, m2) &&
+                      mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                  ) {
+                    return And(Eq(m1.array, m2.array), Eq(m1.offset, m2.offset))
+                  }
+                }
               }
             }
           }
         }
       }
+      return null
     }
-    false
+
+    override fun exprTraceCheckerWrapper(
+      exprTraceChecker: ExprTraceChecker<Refutation>
+    ): ExprTraceChecker<Refutation> = ExprTraceChecker { trace ->
+      val t =
+        if (
+          trace.states.isEmpty() ||
+            trace.actions.isEmpty() ||
+            trace.states.last() !is XcfaState<*> ||
+            trace.actions.last() !is XcfaAction
+        ) {
+          trace
+        } else {
+          val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
+          getDataRaceCondition(lastState)?.let { extraAssumption ->
+            Trace.of(
+              trace.states,
+              trace.actions.subList(0, trace.actions.size - 1) +
+                trace.actions.last().let {
+                  (it as XcfaAction).withLabel(
+                    SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
+                  )
+                },
+            )
+          } ?: trace
+        }
+      exprTraceChecker.check(t)
+    }
   }
 
 private sealed class GlobalAccessWithMutexes(
@@ -123,13 +155,13 @@ private class MemoryAccessWithMutexes(
 ) : GlobalAccessWithMutexes(access, acquiredMutexes, blockingMutexes)
 
 /**
- * Returns the global variable accesses of the edge.
+ * Returns the global variable accesses of the label.
  *
- * @param xcfa the XCFA that contains the edge
- * @param currentMutexes the set of mutexes currently acquired by the process of the edge
+ * @param xcfa the XCFA that contains the label
+ * @param currentMutexes the set of mutexes currently acquired by the process of the label
  * @return the list of global variable accesses (c.f., [GlobalVarAccessWithMutexes])
  */
-private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
+private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   xcfa: XCFA,
   currentMutexes: Set<String>,
 ): List<GlobalVarAccessWithMutexes> {
@@ -155,12 +187,12 @@ private fun XcfaEdge.getGlobalVarsWithNeededMutexes(
 }
 
 /**
- * Returns the memory accesses of the edge.
+ * Returns the memory accesses of the label.
  *
- * @param currentMutexes the set of mutexes currently acquired by the process of the edge
+ * @param currentMutexes the set of mutexes currently acquired by the process of the label
  * @return the list of memory accesses (c.f., [MemoryAccessWithMutexes])
  */
-private fun XcfaEdge.getMemoryAccessesWithMutexes(
+private fun XcfaLabel.getMemoryAccessesWithMutexes(
   currentMutexes: Set<String>
 ): List<MemoryAccessWithMutexes> {
   val acquiredMutexes = currentMutexes.toMutableSet()

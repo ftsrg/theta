@@ -37,18 +37,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.ltlPropertyFromTrace
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
-import hu.bme.mit.theta.xcfa.cli.params.Backend
-import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
-import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.utils.GraphmlWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.YamlWitnessWriter
-import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.cli.utils.writeModel
+import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -205,7 +195,7 @@ private fun retrieveTrace(safetyResult: SafetyResult<*, *>): Cex? =
 private fun writeSequenceTrace(
   sequenceFile: File,
   trace: Trace<XcfaState<ExplState>, XcfaAction>,
-  printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>,
+  printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> Sequence<String>,
 ) {
   sequenceFile.writeText("@startuml\n")
   var maxWidth = 0
@@ -341,7 +331,7 @@ private fun writeTraceAsPlantuml(resultFolder: File, trace: Cex?, logger: Logger
   try {
     val sequenceFile = File(resultFolder, "trace.plantuml")
     writeSequenceTrace(sequenceFile, trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
-      act.label.getFlatLabels().map(XcfaLabel::toString).toList()
+      act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
     logger.info("Could not emit trace as PlantUML file: ${e.stackTraceToString()}")
@@ -356,7 +346,7 @@ private fun writeTraceAsOptimizedPlantuml(
   try {
     val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
     writeSequenceTrace(optSequenceFile, concrTrace) { (_, act) ->
-      act.label.getFlatLabels().map(XcfaLabel::toString).toList()
+      act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
     logger.info("Could not emit optimized trace as PlantUML file: ${e.stackTraceToString()}")
@@ -373,7 +363,8 @@ private fun writeTraceAsCinPlantUml(
     writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
       val proc = state.processes[act.pid]
       val loc = proc?.locs?.peek()
-      (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
+      (loc?.metadata as? CMetaData)?.sourceText?.split("\n")?.asSequence()
+        ?: sequenceOf("<unknown>")
     }
   } catch (e: Exception) {
     logger.info("Could not emit C trace as PlantUML file: ${e.stackTraceToString()}")
