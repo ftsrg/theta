@@ -215,7 +215,7 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
 fun getXcfaErrorPredicate(
   errorDetection: ErrorDetection
 ): Predicate<XcfaState<out PtrState<out ExprState>>> =
-  when (errorDetection) {
+  when (errorDetection) { // TODO: when refactoring prop in xcfa, it has to be added here as well(?)
     ErrorDetection.ERROR_LOCATION ->
       Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
         s.processes.any { it.value.locs.peek().error }
