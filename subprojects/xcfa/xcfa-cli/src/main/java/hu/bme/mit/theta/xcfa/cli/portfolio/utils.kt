@@ -445,12 +445,7 @@ fun baseIc3Config(
         timeoutMs = 0,
         parseInProcess = !serialize,
         specConfig =
-          Ic3Config(
-            solver = "Z3",
-            validateSolver = false,
-            reversed = false,
-            cegar = true,
-          ),
+          Ic3Config(solver = "Z3", validateSolver = false, reversed = false, cegar = true),
       ),
     outputConfig = getDefaultOutputConfig(portfolioConfig),
     debugConfig = portfolioConfig.debugConfig,

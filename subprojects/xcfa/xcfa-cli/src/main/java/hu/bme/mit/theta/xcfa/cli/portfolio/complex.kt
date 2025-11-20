@@ -148,6 +148,7 @@ fun complexPortfolio(
     val edges = LinkedHashSet<Edge>()
 
     return when (trait) {
+      TERMINATION,
       BITWISE -> {
         val config_BITWISE_EXPL_NWT_IT_WP_cvc5 =
           ConfigNode(
