@@ -37,7 +37,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
-fun emergent26(
+fun complex26(
   xcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
@@ -376,19 +376,18 @@ fun emergent26(
 
             val mdd = mdd(600_000, "Z3")
             val bmc = bmc(150_000, "Z3")
-            val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
             val mddMS = mdd(600_000, "mathsat:5.6.12")
             val bmcMS = bmc(150_000, "mathsat:5.6.12")
-            val expl_pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            //val kindMS = kind(150_000, "mathsat:5.6.12")
 
-            mdd then bmc then expl_pred_seq
+            mdd then bmc
 
             mdd onSolverError mddMS
             bmc onSolverError bmcMS
-            expl_pred_seq onSolverError expl_pred_seqMS
 
-            mddMS then bmcMS then expl_pred_seqMS then complex
+            mddMS then bmcMS then complex
 
             mdd to bmc
           }

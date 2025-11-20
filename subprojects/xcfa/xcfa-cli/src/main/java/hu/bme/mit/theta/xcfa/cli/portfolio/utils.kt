@@ -23,19 +23,24 @@ import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType.efficient
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.Backend.CEGAR
 import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions.CHECK
+import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.COI
 import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
 import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
 import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
+import hu.bme.mit.theta.xcfa.cli.params.POR.AASPOR
 import hu.bme.mit.theta.xcfa.cli.params.POR.NOPOR
+import hu.bme.mit.theta.xcfa.cli.params.POR.SPOR
 import hu.bme.mit.theta.xcfa.cli.params.Refinement.SEQ_ITP
 import hu.bme.mit.theta.xcfa.cli.params.Search.BFS
+import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
 import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -104,7 +109,20 @@ fun baseCegarConfig(
       debugConfig = portfolioConfig.debugConfig,
     )
 
-  if (!xcfa.isInlined) {
+  if (parseContext.multiThreading) {
+    val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+    val verifiedProperty = baseConfig.inputConfig.property.verifiedProperty
+    val multiThreadedCegarConfig =
+      baseCegarConfig.copy(
+        coi = if (verifiedProperty == ERROR_LOCATION) COI else NO_COI,
+        por = if (verifiedProperty == ERROR_LOCATION) AASPOR else SPOR,
+        abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = DFS),
+      )
+    baseConfig =
+      baseConfig.copy(
+        backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
+      )
+  } else if (!xcfa.isInlined) {
     val baseCegarConfig = baseConfig.backendConfig.specConfig!!
     val recursiveConfig =
       baseCegarConfig.copy(
