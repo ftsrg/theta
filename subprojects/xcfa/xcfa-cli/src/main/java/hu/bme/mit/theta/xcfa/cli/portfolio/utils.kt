@@ -412,6 +412,50 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
       )
   )
 
+fun baseIc3Config(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  serialize: Boolean,
+): XcfaConfig<*, Ic3Config> =
+  XcfaConfig(
+    inputConfig =
+      if (serialize)
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          propertyFile = null,
+          property = portfolioConfig.inputConfig.property,
+        )
+      else portfolioConfig.inputConfig,
+    frontendConfig =
+      if (serialize)
+        FrontendConfig(
+          lbeLevel = LbePass.defaultLevel,
+          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          inputType = InputType.C,
+          specConfig = CFrontendConfig(arithmetic = efficient),
+        )
+      else (portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>),
+    backendConfig =
+      BackendConfig(
+        backend = Backend.IC3,
+        memlimit = portfolioConfig.backendConfig.memlimit,
+        solverHome = portfolioConfig.backendConfig.solverHome,
+        timeoutMs = 0,
+        parseInProcess = !serialize,
+        specConfig =
+          Ic3Config(
+            solver = "Z3",
+            validateSolver = false,
+            reversed = false,
+            cegar = true,
+          ),
+      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
+    debugConfig = portfolioConfig.debugConfig,
+  )
+
 fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
   OutputConfig(
     enabled = portfolioConfig.outputConfig.enabled,
