@@ -65,7 +65,7 @@ fun getPortfolioChecker(
       "STABLE",
       "COMPLEX" -> complexPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-      "EMERGENT" -> emergentPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "CHC-COMP" ->
         if (!chcModels) chcCompPortfolio25(xcfa, mcm, parseContext, config, logger, uniqueLogger)
