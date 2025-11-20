@@ -135,7 +135,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
 
     toInsert.forEach { (edge, breakpoints) ->
       val newEdges = mutableListOf<XcfaEdge>()
-      val oldLabels = edge.getFlatLabels()
+      val oldLabels = edge.getFlatLabels().toList()
       val edgeBuilder = mutableListOf<XcfaLabel>()
       var i = 0
       var j = 0

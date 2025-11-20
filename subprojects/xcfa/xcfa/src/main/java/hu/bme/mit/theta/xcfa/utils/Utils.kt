@@ -43,22 +43,28 @@ import hu.bme.mit.theta.xcfa.passes.getLoopElements
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 import java.util.*
 
-/** Get flattened (sequential) label list (without sequence labels). */
-fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
+fun <T> Sequence<T>.isEmpty(): Boolean = !this.iterator().hasNext()
 
-fun XcfaLabel.getFlatLabels(): List<XcfaLabel> =
+fun <T> Sequence<T>.isNotEmpty(): Boolean = this.iterator().hasNext()
+
+/** Get flattened (sequential) label list (without sequence labels). */
+fun XcfaEdge.getFlatLabels(): Sequence<XcfaLabel> = label.getFlatLabels()
+
+fun XcfaLabel.getFlatLabels(): Sequence<XcfaLabel> =
   when (this) {
-    is SequenceLabel -> labels.flatMap { it.getFlatLabels() }
-    else -> listOf(this)
+    is SequenceLabel -> labels.asSequence().flatMap { it.getFlatLabels() }
+    else -> sequenceOf(this)
   }
 
-fun XcfaEdge.getAllLabels(): List<XcfaLabel> = label.getAllLabels()
+fun XcfaLabel.getFlatLabelsAsList(): List<XcfaLabel> = getFlatLabels().toList()
 
-fun XcfaLabel.getAllLabels(): List<XcfaLabel> =
+fun XcfaEdge.getAllLabels(): Sequence<XcfaLabel> = label.getAllLabels()
+
+fun XcfaLabel.getAllLabels(): Sequence<XcfaLabel> =
   when (this) {
-    is SequenceLabel -> labels.flatMap { it.getAllLabels() }
-    is NondetLabel -> labels.flatMap { it.getAllLabels() }
-    else -> listOf(this)
+    is SequenceLabel -> labels.asSequence().flatMap { it.getAllLabels() }
+    is NondetLabel -> labels.asSequence().flatMap { it.getAllLabels() }
+    else -> sequenceOf(this)
   }
 
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {

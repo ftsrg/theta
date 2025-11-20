@@ -144,7 +144,7 @@ class DataRaceToReachabilityPass(private val property: XcfaProperty, enabled: Bo
           }
 
         if (anyChange) {
-          replaceEdge(builder, loc, edge, index0, newLabels)
+          replaceEdge(builder, loc, edge, index0, newLabels.toList())
         }
 
         locationsToVisit.add(Triple(edge.target, atomic, initial))

@@ -78,7 +78,7 @@ class XcfaSingleThreadToMonolithicAdapter(
       Preconditions.checkArgument(model.initProcedures.size == 1)
       val proc = model.initProcedures.stream().findFirst().orElse(null).first
       Preconditions.checkArgument(
-        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
+        proc.edges.flatMap { it.getFlatLabels() }.none { it !is StmtLabel }
       )
 
       // Initialize location var, location and edge mappings
