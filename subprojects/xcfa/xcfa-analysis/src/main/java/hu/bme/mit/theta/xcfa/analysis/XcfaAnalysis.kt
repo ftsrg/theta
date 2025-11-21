@@ -126,78 +126,72 @@ fun getCoreXcfaLts() =
           var invokeParameterCount = proc.value.invokeParameterCounter
           proc.value.locs.peek().outgoingEdges.map { edge ->
             val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
-            val flatLabels = newLabel.getFlatLabels().toList()
+            val flatLabels = newLabel.getFlatLabels()
             if (flatLabels.any { it is InvokeLabel || it is StartLabel }) {
               val newNewLabel =
                 SequenceLabel(
                   flatLabels.map { label ->
-                    when (label) {
-                      is InvokeLabel -> {
-                        val procedure =
-                          s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                            ?: error("No such method ${label.name}.")
-                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                        SequenceLabel(
-                          listOf(
-                              procedure.params
-                                .withIndex()
-                                .filter { it.value.second != ParamDirection.OUT }
-                                .map { iVal ->
-                                  val originalVar = iVal.value.first
-                                  val tempVar = getTmpVar(originalVar, invokeParameterCount++)
-                                  lookup[originalVar] = tempVar
-                                  StmtLabel(
-                                    Stmts.Assign(
-                                      TypeUtils.cast(tempVar, tempVar.type),
-                                      TypeUtils.cast(label.params[iVal.index], tempVar.type),
-                                    ),
-                                    metadata = label.metadata,
-                                  )
-                                },
-                              listOf(label.copy(tempLookup = lookup)),
-                            )
-                            .flatten()
-                        )
-                      }
-
-                      is StartLabel -> {
-                        val procedure =
-                          s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                            ?: error("No such method ${label.name}.")
-                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                        SequenceLabel(
-                          listOf(
-                              procedure.params
-                                .withIndex()
-                                .filter { it.value.second != ParamDirection.OUT }
-                                .mapNotNull { iVal ->
-                                  val originalVar = iVal.value.first
-                                  val tempVar = getTmpVar(originalVar, invokeParameterCount++)
-                                  lookup[originalVar] = tempVar
-                                  val trial =
-                                    Try.attempt {
-                                      StmtLabel(
-                                        Stmts.Assign(
-                                          TypeUtils.cast(tempVar, tempVar.type),
-                                          TypeUtils.cast(label.params[iVal.index], tempVar.type),
-                                        ),
-                                        metadata = label.metadata,
-                                      )
-                                    }
-                                  if (trial.isSuccess) {
-                                    trial.asSuccess().value
-                                  } else {
-                                    null
+                    if (label is InvokeLabel) {
+                      val procedure =
+                        s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                          ?: error("No such method ${label.name}.")
+                      val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                      SequenceLabel(
+                        listOf(
+                            procedure.params
+                              .withIndex()
+                              .filter { it.value.second != ParamDirection.OUT }
+                              .map { iVal ->
+                                val originalVar = iVal.value.first
+                                val tempVar = getTmpVar(originalVar, invokeParameterCount++)
+                                lookup[originalVar] = tempVar
+                                StmtLabel(
+                                  Stmts.Assign(
+                                    TypeUtils.cast(tempVar, tempVar.type),
+                                    TypeUtils.cast(label.params[iVal.index], tempVar.type),
+                                  ),
+                                  metadata = label.metadata,
+                                )
+                              },
+                            listOf(label.copy(tempLookup = lookup)),
+                          )
+                          .flatten()
+                      )
+                    } else if (label is StartLabel) {
+                      val procedure =
+                        s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                          ?: error("No such method ${label.name}.")
+                      val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                      SequenceLabel(
+                        listOf(
+                            procedure.params
+                              .withIndex()
+                              .filter { it.value.second != ParamDirection.OUT }
+                              .mapNotNull { iVal ->
+                                val originalVar = iVal.value.first
+                                val tempVar = getTmpVar(originalVar, invokeParameterCount++)
+                                lookup[originalVar] = tempVar
+                                val trial =
+                                  Try.attempt {
+                                    StmtLabel(
+                                      Stmts.Assign(
+                                        TypeUtils.cast(tempVar, tempVar.type),
+                                        TypeUtils.cast(label.params[iVal.index], tempVar.type),
+                                      ),
+                                      metadata = label.metadata,
+                                    )
                                   }
-                                },
-                              listOf(label.copy(tempLookup = lookup)),
-                            )
-                            .flatten()
-                        )
-                      }
-
-                      else -> label
-                    }
+                                if (trial.isSuccess) {
+                                  trial.asSuccess().value
+                                } else {
+                                  null
+                                }
+                              },
+                            listOf(label.copy(tempLookup = lookup)),
+                          )
+                          .flatten()
+                      )
+                    } else label
                   }
                 )
               XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)

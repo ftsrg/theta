@@ -103,7 +103,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
           builder.removeEdge(edge)
           valuations.remove(edge)
           if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
-            val newEdge = edge.withLabel(SequenceLabel(newLabels.toList()))
+            val newEdge = edge.withLabel(SequenceLabel(newLabels))
             builder.addEdge(newEdge)
             visited.add(newEdge)
             valuations[newEdge] = localValuation

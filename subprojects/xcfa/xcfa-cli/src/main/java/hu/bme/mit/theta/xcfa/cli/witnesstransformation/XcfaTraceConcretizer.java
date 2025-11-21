@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.c2xcfa.CMetaDataKt.getCMetaData;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.collectVarsWithAccessType;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.isWritten;
-import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabelsAsList;
+import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabels;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
@@ -130,7 +130,7 @@ public class XcfaTraceConcretizer {
                 new XcfaLocation("__THETA__placeholder__", EmptyMetaData.INSTANCE);
         for (int i = 0; i < trace.getActions().size(); ++i) {
             final var action = trace.getAction(i);
-            var labels = getFlatLabelsAsList(action.getLabel());
+            var labels = getFlatLabels(action.getLabel());
             final var groupedLabels = new ArrayList<XcfaLabel>();
             var currentList = new ArrayList<XcfaLabel>();
             for (XcfaLabel label : labels) {
@@ -251,7 +251,7 @@ public class XcfaTraceConcretizer {
                                                                             ::getKey,
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
-                for (XcfaLabel flatLabel : getFlatLabelsAsList(sbeTrace.getAction(i).getLabel())) {
+                for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
                     var accesses = collectVarsWithAccessType(flatLabel);
                     varSoFar.addAll(

@@ -199,7 +199,7 @@ class LbePass(val parseContext: ParseContext, level: LbeLevel = defaultLevel) : 
             edgesToTarget
               .flatMap { edge ->
                 builder.removeEdge(edge)
-                getNonDetBranch(edge.getFlatLabels().toList())
+                getNonDetBranch(edge.getFlatLabels())
               }
               .toSet()
           )

@@ -228,7 +228,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
 
       for ((edge, labels) in edgeLabels) {
-        val oldLabels = edge.getFlatLabels().toList()
+        val oldLabels = edge.getFlatLabels()
         val labels =
           labels
             .map { label ->
@@ -256,7 +256,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
     modifications.forEach { (edge, allAnnots) ->
       builder.removeEdge(edge)
-      val oldLabels = edge.getFlatLabels().toList()
+      val oldLabels = edge.getFlatLabels()
       val newLabels = LinkedList<XcfaLabel>()
       val indexToAnnots =
         allAnnots.groupBy { oldLabels.indexOf(it.beforeLabel) }.toList().sortedBy { it.first }
@@ -285,7 +285,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         builder.addEdge(
           it.withLabel(
             SequenceLabel(
-              (it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref))).toList(),
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
               metadata = it.label.metadata,
             )
           )

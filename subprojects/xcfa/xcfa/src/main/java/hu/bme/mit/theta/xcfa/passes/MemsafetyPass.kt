@@ -119,7 +119,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               Or(
                 Lt(argument, pointerType.nullValue), // uninit ptr
                 // freed/not big enough ptr
-                Lt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), pointerType.nullValue),
+                Lt(
+                  ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument),
+                  pointerType.nullValue,
+                )
               )
 
             builder.addEdge(

@@ -67,8 +67,7 @@ class MutexToVarPass : ProcedurePass {
           initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }
         ) {
           val assign = StmtLabel(AssignStmt.of(v, Int(0)))
-          val label =
-            SequenceLabel((initLabels + assign).toList(), metadata = initEdge.label.metadata)
+          val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
           proc.removeEdge(initEdge)
           proc.addEdge(initEdge.withLabel(label))
         }

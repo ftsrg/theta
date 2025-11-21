@@ -91,78 +91,75 @@ constructor(
     }
 
     val newLabels: List<XcfaLabel> =
-      a.edge
-        .getFlatLabels()
-        .mapNotNull { label ->
-          when (label) {
-            is FenceLabel -> {
-              when (label) {
-                is AtomicBeginLabel,
-                is MutexLockLabel,
-                is RWLockReadLockLabel,
-                is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
+      a.edge.getFlatLabels().mapNotNull { label ->
+        when (label) {
+          is FenceLabel -> {
+            when (label) {
+              is AtomicBeginLabel,
+              is MutexLockLabel,
+              is RWLockReadLockLabel,
+              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
-                is AtomicEndLabel,
-                is MutexUnlockLabel,
-                is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
+              is AtomicEndLabel,
+              is MutexUnlockLabel,
+              is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
 
-                is MutexTryLockLabel -> {
-                  var success = false
-                  changes.add { state ->
-                    val newState = state.enterMutex(label, a.pid)
-                    success = !newState.isBottom
-                    if (newState.isBottom) state else newState
-                  }
-                  AssignStmtLabel(
-                    label.successVar.ref,
-                    Int(if (success) 1 else 0),
-                    metadata = label.metadata,
-                  )
+              is MutexTryLockLabel -> {
+                var success = false
+                changes.add { state ->
+                  val newState = state.enterMutex(label, a.pid)
+                  success = !newState.isBottom
+                  if (newState.isBottom) state else newState
                 }
-              }.let { it as? XcfaLabel }
-            }
-
-            is InvokeLabel -> {
-              val proc =
-                xcfa?.procedures?.find { proc -> proc.name == label.name }
-                  ?: error("No such method ${label.name}.")
-              val returnStmt =
-                SequenceLabel(
-                  proc.params
-                    .withIndex()
-                    .filter { it.value.second != ParamDirection.IN }
-                    .map { iVal ->
-                      AssignStmtLabel(
-                        label.params[iVal.index] as RefExpr<*>,
-                        cast(iVal.value.first.ref, iVal.value.first.type),
-                        metadata = label.metadata,
-                      )
-                    }
+                AssignStmtLabel(
+                  label.successVar.ref,
+                  Int(if (success) 1 else 0),
+                  metadata = label.metadata,
                 )
-              changes.add { state ->
-                state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
               }
-              null
-            }
-
-            is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
-
-            is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
-            is JoinLabel -> {
-              changes.add { state ->
-                val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
-                if (joinedPid in state.processes) copy(bottom = true) else state
-              }
-              null
-            }
-
-            is SequenceLabel -> label
-            is NondetLabel -> label
-            is StmtLabel -> label
-            NopLabel -> null
+            }.let { it as? XcfaLabel }
           }
+
+          is InvokeLabel -> {
+            val proc =
+              xcfa?.procedures?.find { proc -> proc.name == label.name }
+                ?: error("No such method ${label.name}.")
+            val returnStmt =
+              SequenceLabel(
+                proc.params
+                  .withIndex()
+                  .filter { it.value.second != ParamDirection.IN }
+                  .map { iVal ->
+                    AssignStmtLabel(
+                      label.params[iVal.index] as RefExpr<*>,
+                      cast(iVal.value.first.ref, iVal.value.first.type),
+                      metadata = label.metadata,
+                    )
+                  }
+              )
+            changes.add { state ->
+              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
+            }
+            null
+          }
+
+          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
+
+          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
+          is JoinLabel -> {
+            changes.add { state ->
+              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
+              if (joinedPid in state.processes) copy(bottom = true) else state
+            }
+            null
+          }
+
+          is SequenceLabel -> label
+          is NondetLabel -> label
+          is StmtLabel -> label
+          NopLabel -> null
         }
-        .toList()
+      }
 
     changes.add { state ->
       if (state.processes[a.pid]!!.locs.isEmpty()) state.endProcess(a.pid) else state

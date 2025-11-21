@@ -42,7 +42,7 @@ class StaticCoiPass : ProcedurePass {
 
     builder.parent.getProcedures().forEach { procedure ->
       procedure.getEdges().forEach { edge ->
-        val flatLabels = edge.getFlatLabels().toList()
+        val flatLabels = edge.getFlatLabels()
         flatLabels.forEachIndexed { index, label ->
           if (label is StmtLabel) {
             findDirectObservers(edge, label, flatLabels.subList(index + 1, flatLabels.size))
@@ -53,7 +53,7 @@ class StaticCoiPass : ProcedurePass {
     }
 
     builder.getEdges().toSet().forEach { edge ->
-      val labels = edge.getFlatLabels().toList()
+      val labels = edge.getFlatLabels()
       val kept = mutableListOf<XcfaLabel>()
       labels.forEach { label ->
         if (!label.canBeSimplified || isObserved(label)) {
@@ -86,7 +86,7 @@ class StaticCoiPass : ProcedurePass {
     while (toVisit.isNotEmpty()) {
       val visiting = toVisit.removeFirst()
       visited.add(visiting)
-      val labels = if (visiting == edge) remaining else visiting.getFlatLabels().toList()
+      val labels = if (visiting == edge) remaining else visiting.getFlatLabels()
       labels.forEach { target ->
         val vars = target.collectVarsWithAccessType()
         if (vars.any { it.key in writtenVars && it.value.isRead }) {

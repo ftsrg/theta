@@ -331,7 +331,7 @@ private fun writeTraceAsPlantuml(resultFolder: File, trace: Cex?, logger: Logger
   try {
     val sequenceFile = File(resultFolder, "trace.plantuml")
     writeSequenceTrace(sequenceFile, trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
-      act.label.getFlatLabels().map(XcfaLabel::toString).toList()
+      act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
     logger.info("Could not emit trace as PlantUML file: ${e.stackTraceToString()}")
@@ -346,7 +346,7 @@ private fun writeTraceAsOptimizedPlantuml(
   try {
     val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
     writeSequenceTrace(optSequenceFile, concrTrace) { (_, act) ->
-      act.label.getFlatLabels().map(XcfaLabel::toString).toList()
+      act.label.getFlatLabels().map(XcfaLabel::toString)
     }
   } catch (e: Exception) {
     logger.info("Could not emit optimized trace as PlantUML file: ${e.stackTraceToString()}")

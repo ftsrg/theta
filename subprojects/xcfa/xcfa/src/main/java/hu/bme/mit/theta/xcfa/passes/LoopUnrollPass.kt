@@ -28,7 +28,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isEmpty
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.util.*
 import kotlin.math.max
