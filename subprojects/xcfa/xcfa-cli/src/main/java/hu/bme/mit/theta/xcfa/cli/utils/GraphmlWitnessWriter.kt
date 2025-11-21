@@ -19,6 +19,8 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -27,7 +29,9 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
+import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
 import hu.bme.mit.theta.xcfa.witnesses.Location
 import hu.bme.mit.theta.xcfa.witnesses.createTaskHash
@@ -161,11 +165,24 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType?,
     targetLocation: Location,
   ) {
-    val witnessTrace =
-      traceToWitness(trace = TODO(), parseContext = parseContext, property = property)
-    val graphmlWitness = GraphmlWitness(witnessTrace, inputFile)
+    val witnessTrace = targetToWitness(targetLocation = targetLocation, property = property)
+    val graphmlWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
     val xml = graphmlWitness.toPrettyXml()
+    val builder = StringBuilder()
+    builder.append(xml)
+    builder.removeSuffix("]")
+    builder.append(witnessTrace)
+    builder.append("]")
     witnessfile.writeText(xml)
+  }
+
+  private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
+    val line =
+      (metadata as? CMetaData)?.lineNumberStart
+        ?: (metadata as? CMetaData)?.lineNumberStop
+        ?: return null
+    val column = (metadata as? CMetaData)?.colNumberStart ?: (metadata as? CMetaData)?.colNumberStop
+    return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
   }
 
   override fun writeWitness(
@@ -196,17 +213,21 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
         witnessfile.writeText(xml)
       } catch (e: Exception) {
         logger.info("Could not emit witness, keeping target only")
-
-        writeTrivialViolationWitness(
-          safetyResult = safetyResult,
-          inputFile = inputFile,
-          property = property,
-          parseContext = parseContext,
-          witnessfile = witnessfile,
-          ltlSpecification = ltlSpecification,
-          architecture = architecture,
-          targetLocation = TODO(),
-        )
+        val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
+        val metadata = lastAction.edge.getCMetaData()
+        val loc =
+          getLocation(inputFile, metadata)?.let {
+            writeTrivialViolationWitness(
+              safetyResult = safetyResult,
+              inputFile = inputFile,
+              property = property,
+              parseContext = parseContext,
+              witnessfile = witnessfile,
+              ltlSpecification = ltlSpecification,
+              architecture = architecture,
+              targetLocation = it,
+            )
+          }
       }
     } else if (safetyResult.isSafe) {
       writeTrivialCorrectnessWitness(

@@ -37,6 +37,9 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.analysis.getXcfaErrorPredicate
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.witnesses.Location
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
@@ -47,6 +50,61 @@ enum class Verbosity {
   SOURCE_EXISTS,
   STMT_EXISTS,
   EVERYTHING,
+}
+
+fun targetToWitness(
+  verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
+  targetLocation: Location,
+  property: XcfaProperty,
+): String {
+  return "asd"
+  //  val initNode =
+  //    WitnessNode(
+  //      id = "N0",
+  //      entry = false,
+  //      sink = false,
+  //      violation =
+  //        false,
+  //      xcfaLocations = initState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+  //      cSources =
+  //        initState.processes
+  //          .map {
+  //            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+  //          }
+  //          .toMap(),
+  //      globalState = initState.sGlobal,
+  //      // localState = //state
+  //    )
+  //  val targetNode =
+  //    WitnessNode(
+  //      id = "N0",
+  //      entry = false,
+  //      sink = false,
+  //      violation =
+  //        true,
+  //      xcfaLocations = initState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+  //      cSources =
+  //        initState.processes
+  //          .map {
+  //            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+  //          }
+  //          .toMap(),
+  //      globalState = initState.sGlobal,
+  //      // localState = //state
+  //    )
+  //
+  //  val edge =
+  //    labelToEdge(
+  //      initNode,
+  //      targetNode,
+  //      lastAction.edge.label,
+  //      lastAction.pid,
+  //      ImmutableValuation.empty(),
+  //      parseContext,
+  //      lastAction.edge,
+  //    )
+  //
+  //  return Trace.of(listOf(initNode, targetNode), listOf(edge))
 }
 
 fun traceToWitness(
