@@ -481,7 +481,7 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
 private fun getStopLocation(inputFile: File, metadata: MetaData?): Location? {
   val line = (metadata as? CMetaData)?.lineNumberStop ?: return null
   val column = (metadata as? CMetaData)?.colNumberStop ?: return null
-  return Location(fileName = inputFile.name, line = line, column = column)
+  return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
