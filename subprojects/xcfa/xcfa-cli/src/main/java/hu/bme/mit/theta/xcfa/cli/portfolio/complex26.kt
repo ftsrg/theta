@@ -33,7 +33,6 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
 fun complex26(
@@ -261,8 +260,6 @@ fun complex26(
         checker,
       )
 
-    val types = xcfa.collectVars().map { it.type }.toSet()
-
     infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
       return node
@@ -276,8 +273,53 @@ fun complex26(
     val (startingConfig, endConfig) =
       if (xcfa.isInlined) {
         when (mainTrait) {
-          BITWISE,
-          FLOAT,
+          BITWISE -> {
+
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
+
+            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val pred_bwMS =
+              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+
+            kind then pred_bw then expl then bmc
+
+            kindMS onSolverError kind
+            pred_bwMS onSolverError pred_bw
+            explMS onSolverError expl
+
+            kindMS then pred_bwMS then explMS then bmcMS
+
+            kindMS to bmcMS
+          }
+          FLOAT -> {
+            // CVC by default, Z3 as fallback
+
+            val kind = kind(300_000, "Z3:new")
+            val pred_bw = cegar(300_000, "Z3", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmc = bmc(150_000, "Z3:new")
+
+            val kindCVC = kind(300_000, "cvc5:1.2.0")
+            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
+
+            kind then pred_bw then expl then bmc
+
+            kindCVC onSolverError kind
+            pred_bwCVC onSolverError pred_bw
+            explCVC onSolverError expl
+            bmcCVC onSolverError bmc
+
+            kindCVC then pred_bwCVC then explCVC then bmcCVC
+
+            kindCVC to bmcCVC
+          }
           PTR,
           ARR,
           NONLIN_INT,
