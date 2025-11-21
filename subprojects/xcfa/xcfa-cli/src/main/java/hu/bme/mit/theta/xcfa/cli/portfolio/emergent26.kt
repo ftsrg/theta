@@ -375,7 +375,7 @@ fun emergent26(
           }
           MULTITHREAD -> {
 
-            val mdd = mdd(600_000, "Z3:new")
+            val mdd = mdd(600_000, "Z3")
             val bmc = bmc(150_000, "Z3:new")
             val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
