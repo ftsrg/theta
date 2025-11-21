@@ -117,13 +117,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         logger.info(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
+        val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
+        val metadata = lastAction.edge.getCMetaData()
 
         if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
-          val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
           val call =
-            lastAction.edge.getCMetaData()?.astNodes?.find { it ->
-              it is CCall && it.functionId == "reach_error"
-            }
+            metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
           call?.let {
             val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
             writeTrivialViolationWitness(
@@ -137,6 +136,20 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               targetLocation = loc,
             )
           }
+        } else if (property.inputProperty == ErrorDetection.OVERFLOW) {
+          val loc =
+            getLocation(inputFile, metadata)?.let {
+              writeTrivialViolationWitness(
+                safetyResult = safetyResult,
+                inputFile = inputFile,
+                property = property,
+                parseContext = parseContext,
+                witnessfile = witnessfile,
+                ltlSpecification = ltlSpecification,
+                architecture = architecture,
+                targetLocation = it,
+              )
+            }
         }
       }
     } else if (safetyResult.isSafe) {
