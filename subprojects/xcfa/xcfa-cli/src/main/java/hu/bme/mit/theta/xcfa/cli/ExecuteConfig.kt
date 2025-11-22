@@ -298,6 +298,7 @@ private fun backend(
                       result.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>
                     )
                   } catch (e: UnknownResultException) {
+                    logger.result("Property couldn't be determined: ${e.message}")
                     return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                   }
                 property?.also { logger.result("(Property %s)", it.name) }

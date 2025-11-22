@@ -112,45 +112,41 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             parseContext,
             witnessfile,
           )
+          if (content.isEmpty()) {
+            val witness =
+              generateBestEffortWitness(
+                safetyResult,
+                property,
+                inputFile,
+                parseContext,
+                witnessfile,
+                ltlSpecification,
+                architecture,
+              )
+            if (witness != null) return witness
+            else
+              return YamlWitness(
+                entryType = EntryType.VIOLATION,
+                metadata = metadata,
+                content = content,
+              )
+          }
         }
       } catch (e: Exception) {
         logger.info(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
-        val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
-        val metadata = lastAction.edge.getCMetaData()
-
-        if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
-          val call =
-            metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
-          call?.let {
-            val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
-            writeTrivialViolationWitness(
-              safetyResult = safetyResult,
-              inputFile = inputFile,
-              property = property,
-              parseContext = parseContext,
-              witnessfile = witnessfile,
-              ltlSpecification = ltlSpecification,
-              architecture = architecture,
-              targetLocation = loc,
-            )
-          }
-        } else if (property.inputProperty == ErrorDetection.OVERFLOW) {
-          val loc =
-            getLocation(inputFile, metadata)?.let {
-              writeTrivialViolationWitness(
-                safetyResult = safetyResult,
-                inputFile = inputFile,
-                property = property,
-                parseContext = parseContext,
-                witnessfile = witnessfile,
-                ltlSpecification = ltlSpecification,
-                architecture = architecture,
-                targetLocation = it,
-              )
-            }
-        }
+        val witness =
+          generateBestEffortWitness(
+            safetyResult,
+            property,
+            inputFile,
+            parseContext,
+            witnessfile,
+            ltlSpecification,
+            architecture,
+          )
+        witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
       }
     } else if (safetyResult.isSafe) {
       try {
@@ -166,6 +162,58 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         logger.info("Could not emit witness, outputting empty witness")
       }
     }
+  }
+
+  private fun generateBestEffortWitness(
+    safetyResult: SafetyResult<*, *>,
+    property: XcfaProperty,
+    inputFile: File,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): YamlWitness {
+    // TODO: find last action that has substantial metadata
+    val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
+    val metadata = lastAction.edge.getCMetaData()
+
+    var witness: YamlWitness
+    if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
+      val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
+      call?.let {
+        val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
+        witness =
+          generateTrivialViolationWitness(
+            safetyResult = safetyResult,
+            inputFile = inputFile,
+            property = property,
+            parseContext = parseContext,
+            witnessfile = witnessfile,
+            ltlSpecification = ltlSpecification,
+            architecture = architecture,
+            targetLocation = loc,
+          )
+      }
+    } else if (
+      listOf(ErrorDetection.OVERFLOW, ErrorDetection.MEMCLEANUP, ErrorDetection.MEMSAFETY)
+        .contains(property.inputProperty)
+    ) {
+      val loc =
+        getLocation(inputFile, metadata)?.let {
+          witness =
+            generateTrivialViolationWitness(
+              safetyResult = safetyResult,
+              inputFile = inputFile,
+              property = property,
+              parseContext = parseContext,
+              witnessfile = witnessfile,
+              ltlSpecification = ltlSpecification,
+              architecture = architecture,
+              targetLocation = it,
+            )
+        }
+    }
+    return witness
   }
 
   override fun writeTrivialCorrectnessWitness(
@@ -187,7 +235,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 
-  override fun writeTrivialViolationWitness(
+  override fun generateTrivialViolationWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
@@ -196,7 +244,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
     targetLocation: Location,
-  ) {
+  ): YamlWitness {
     val metadata = getMetadata(inputFile, ltlSpecification, architecture)
     val witness =
       YamlWitness(
@@ -218,7 +266,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             )
           ),
       )
-    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+    return witness
   }
 
   fun getMetadata(
@@ -447,7 +495,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
-  ) {
+  ): YamlWitness {
     val witness =
       if (property.inputProperty == ErrorDetection.TERMINATION) {
         terminationViolationWitnessFromConcreteTrace(
@@ -468,7 +516,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           witnessfile,
         )
       }
-
+    return witness
     witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
   }
 }

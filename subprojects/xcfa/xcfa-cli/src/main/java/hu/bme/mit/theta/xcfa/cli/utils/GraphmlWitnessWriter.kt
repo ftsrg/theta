@@ -155,7 +155,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     }
   }
 
-  override fun writeTrivialViolationWitness(
+  override fun generateTrivialViolationWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
@@ -217,7 +217,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
         val metadata = lastAction.edge.getCMetaData()
         val loc =
           getLocation(inputFile, metadata)?.let {
-            writeTrivialViolationWitness(
+            generateTrivialViolationWitness(
               safetyResult = safetyResult,
               inputFile = inputFile,
               property = property,

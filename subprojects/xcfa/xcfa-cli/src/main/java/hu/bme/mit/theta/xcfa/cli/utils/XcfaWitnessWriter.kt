@@ -23,6 +23,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.witnesses.Location
+import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.File
 
 interface XcfaWitnessWriter {
@@ -105,7 +106,7 @@ interface XcfaWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType? = null,
   )
 
-  fun writeTrivialViolationWitness(
+  fun generateTrivialViolationWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
@@ -114,5 +115,5 @@ interface XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType? = null,
     targetLocation: Location,
-  )
+  ): YamlWitness
 }
