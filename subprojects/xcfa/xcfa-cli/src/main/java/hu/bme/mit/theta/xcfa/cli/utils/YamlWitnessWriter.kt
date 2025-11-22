@@ -539,15 +539,15 @@ private fun WitnessNode.toSegment(
       val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
       check(varsOnEdge.size == 1) // this has to be the havoced variable
       val varOnEdge = varsOnEdge.first()
+      val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
       val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
-      val valueString =
-        if (assignedValue is BvLitExpr) assignedValue.toString().replace("#", "0")
+      val (cast, valueString) =
+        if (assignedValue is BvLitExpr) "" to assignedValue.toString().replace("#", "0")
         else if (assignedValue is FpLitExpr)
-          FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+          (typeName?.let { "($it)" } ?: "") to FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
             .toString()
-        else assignedValue.toString()
+        else "" to assignedValue.toString()
 
-      val cast = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName?.let { "($it)" } ?: ""
       val constraint = "\\result == $cast$valueString"
       loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
       return WaypointContent(
