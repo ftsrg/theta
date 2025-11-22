@@ -128,7 +128,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.target,
                 SequenceLabel(
                   listOf(
-                    StmtLabel(Assume(Not(derefAssume))),
+                    StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
                     builder.parent.deallocate(parseContext, argument),
                   )
                 ),
@@ -139,7 +139,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               XcfaEdge(
                 it.source,
                 invalidFree,
-                SequenceLabel(listOf(StmtLabel(Assume(derefAssume)))),
+                SequenceLabel(
+                  listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
+                ),
                 it.metadata,
               )
             )
@@ -189,14 +191,21 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 }
               )
             builder.addEdge(
-              it.withLabel(SequenceLabel(listOf(StmtLabel(Assume(Not(derefAssume))), it.label)))
+              it.withLabel(
+                SequenceLabel(
+                  listOf(
+                    StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
+                    it.label,
+                  )
+                )
+              )
             )
             builder.addEdge(
               XcfaEdge(
                 it.source,
                 badDeref,
                 SequenceLabel(
-                  listOf(StmtLabel(Assume(derefAssume)))
+                  listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
                 ), // deref(x a), x <= 0 || a >= sizeof(x)
                 it.metadata,
               )

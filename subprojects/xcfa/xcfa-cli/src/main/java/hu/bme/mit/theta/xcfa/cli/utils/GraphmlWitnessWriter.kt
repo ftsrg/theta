@@ -19,6 +19,8 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -27,9 +29,9 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
-import hu.bme.mit.theta.xcfa.witnesses.Location
 import hu.bme.mit.theta.xcfa.witnesses.createTaskHash
 import java.io.BufferedWriter
 import java.io.File
@@ -151,7 +153,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     }
   }
 
-  override fun writeTrivialViolationWitness(
+  fun generateTrivialViolationWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
@@ -159,13 +161,28 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
-    targetLocation: Location,
-  ) {
-    val witnessTrace =
-      traceToWitness(trace = TODO(), parseContext = parseContext, property = property)
-    val graphmlWitness = GraphmlWitness(witnessTrace, inputFile)
-    val xml = graphmlWitness.toPrettyXml()
-    witnessfile.writeText(xml)
+    startline: Int,
+    endline: Int,
+    startoffset: Int,
+    endoffset: Int,
+  ): String {
+    val witnessTrace = targetToWitness(startline, endline, startoffset, endoffset)
+    val xml = generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+    val builder = StringBuilder()
+    builder.append(xml)
+    builder.removeSuffix("]")
+    builder.append(witnessTrace)
+    builder.append("]")
+    return builder.toString()
+  }
+
+  override fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String {
+    val emptyWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
+    return emptyWitness.toPrettyXml()
   }
 
   override fun writeWitness(
@@ -196,17 +213,31 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
         witnessfile.writeText(xml)
       } catch (e: Exception) {
         logger.info("Could not emit witness, keeping target only")
-
-        writeTrivialViolationWitness(
-          safetyResult = safetyResult,
-          inputFile = inputFile,
-          property = property,
-          parseContext = parseContext,
-          witnessfile = witnessfile,
-          ltlSpecification = ltlSpecification,
-          architecture = architecture,
-          targetLocation = TODO(),
-        )
+        val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
+        val metadata = lastAction.edge.getCMetaData()
+        val startline: Int? = (metadata as? CMetaData)?.lineNumberStart
+        val endline: Int? = (metadata as? CMetaData)?.lineNumberStop
+        val startoffset: Int? = (metadata as? CMetaData)?.offsetStart
+        val endoffset: Int? = (metadata as? CMetaData)?.offsetEnd
+        val witness =
+          if (startline != null && endline != null && startoffset != null && endoffset != null) {
+            generateTrivialViolationWitness(
+              safetyResult = safetyResult,
+              inputFile = inputFile,
+              property = property,
+              parseContext = parseContext,
+              witnessfile = witnessfile,
+              ltlSpecification = ltlSpecification,
+              architecture = architecture,
+              startline,
+              endline,
+              startoffset,
+              endoffset,
+            )
+          } else {
+            generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+          }
+        witnessfile.writeText(witness)
       }
     } else if (safetyResult.isSafe) {
       writeTrivialCorrectnessWitness(
