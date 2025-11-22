@@ -92,6 +92,9 @@ fun getHornChecker(
   }
 
   try {
+    if (parseContext.multiThreading) {
+      error("Current CHC encoding does not support multithreading")
+    }
     val (vars, chc) =
       xcfa.initProcedures[0]
         .first
