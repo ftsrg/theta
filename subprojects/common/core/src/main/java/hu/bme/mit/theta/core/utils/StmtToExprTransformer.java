@@ -216,10 +216,10 @@ final class StmtToExprTransformer {
                 final int thenIndex = thenIndexing.get(decl);
                 final int elzeIndex = elzeIndexing.get(decl);
                 final BiFunction<Expr<?>, Expr<?>, Expr<BoolType>> assign =
-                    decl.getType() instanceof FpType
-                        ? (Expr<?> e1, Expr<?> e2) ->
-                        FpExprs.FpAssign((Expr<FpType>) e1, (Expr<FpType>) e2)
-                        : (Expr<?> e1, Expr<?> e2) -> Eq(e1, e2);
+                        decl.getType() instanceof FpType
+                                ? (Expr<?> e1, Expr<?> e2) ->
+                                        FpExprs.FpAssign((Expr<FpType>) e1, (Expr<FpType>) e2)
+                                : (Expr<?> e1, Expr<?> e2) -> Eq(e1, e2);
                 if (thenIndex < elzeIndex) {
                     if (thenIndex > 0) {
                         thenAdditions.add(
@@ -266,5 +266,4 @@ final class StmtToExprTransformer {
                     String.format("Loop statement %s was not unrolled", stmt));
         }
     }
-
 }

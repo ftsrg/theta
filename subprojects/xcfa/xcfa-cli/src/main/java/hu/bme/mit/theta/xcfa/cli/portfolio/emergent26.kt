@@ -355,11 +355,7 @@ fun emergent26(
             ic3Cegar onSolverError ic3CegarMS
             mddCegar onSolverError mddCegarMS
 
-            expl_pred_nwtMS then
-              expl_pred_seqMS then
-              ic3CegarMS then
-              mddCegarMS then
-              complex
+            expl_pred_nwtMS then expl_pred_seqMS then ic3CegarMS then mddCegarMS then complex
 
             expl_pred_nwt to mddCegar
           }
