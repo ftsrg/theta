@@ -23,6 +23,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
 
   PTHREAD_MUTEX_INITIALIZER("PTHREAD_MUTEX_INITIALIZER", { UnsupportedInitializer() }),
+  PTHREAD_MUTEX_ERRORCHECK("PTHREAD_MUTEX_ERRORCHECK", { UnsupportedInitializer() }),
+  PTHREAD_RWLOCK_INITIALIZER("PTHREAD_RWLOCK_INITIALIZER", { UnsupportedInitializer() }),
   NULL("NULL", { CComplexType.getSignedInt(it).nullValue }),
 
   // Integer characteristics
