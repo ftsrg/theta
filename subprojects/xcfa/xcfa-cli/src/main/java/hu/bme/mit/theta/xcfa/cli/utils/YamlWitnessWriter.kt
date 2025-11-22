@@ -478,6 +478,25 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                 lassoTrace.actions.getOrNull(it)?.toSegment(inputFile, Action.CYCLE),
               )
             }
+            .ifEmpty {
+              val lastLoc =
+                lassoTrace.actions
+                  .flatMap { it.edge?.getFlatLabels() ?: listOf() }
+                  .reversed()
+                  .first { it.metadata.isSubstantial() }
+              listOf(
+                WaypointContent(
+                  WaypointType.ASSUMPTION,
+                  Constraint("1", Format.C_EXPRESSION),
+                  Location(
+                    fileName = inputFile.name,
+                    line = (lastLoc.metadata as? CMetaData)?.lineNumberStart ?: -1,
+                    column = (lastLoc.metadata as? CMetaData)?.colNumberStart?.plus(1) ?: -1,
+                  ),
+                  Action.CYCLE,
+                )
+              )
+            }
             .map { ContentItem(it) },
     )
   }
