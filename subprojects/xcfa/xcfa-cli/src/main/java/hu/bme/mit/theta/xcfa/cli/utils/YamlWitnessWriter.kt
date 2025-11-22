@@ -120,6 +120,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             )
 
           if (witness.content.isEmpty()) {
+            logger.result("Encountered empty witness, trying best-effort witness now.")
             val bestEffortWitness =
               generateBestEffortWitness(
                 safetyResult,
@@ -136,7 +137,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         }
       } catch (e: Exception) {
-        logger.info(
+        logger.result(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
         val bestEffortWitness =
@@ -176,8 +177,28 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
   ): String {
+
+    val trace =
+      safetyResult.asUnsafe().cex.let {
+        if (it is HackyAsgTrace<*>) {
+          val actions = (it as HackyAsgTrace<*>).trace.actions
+          val explStates = (it as HackyAsgTrace<*>).trace.states
+          val states =
+            (it as HackyAsgTrace<*>).originalStates.mapIndexed { i, state ->
+              state as XcfaState<PtrState<*>>
+              state.withState(PtrState(explStates[i]))
+            }
+
+          Trace.of(states, actions)
+        } else if (it is ASGTrace<*, *>) {
+          (it as ASGTrace<*, *>).toTrace()
+        } else {
+          it as Trace<*, XcfaAction>
+        }
+      }
+
     val lastLabel =
-      (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>)
+      (trace as Trace<*, XcfaAction>)
         .actions
         .flatMap { it.label.getFlatLabels() }
         .findLast { it -> it.metadata.isSubstantial() }
