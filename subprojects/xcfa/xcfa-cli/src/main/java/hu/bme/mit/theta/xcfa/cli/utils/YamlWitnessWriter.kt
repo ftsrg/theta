@@ -36,7 +36,10 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
@@ -538,6 +541,9 @@ private fun WitnessNode.toSegment(
       val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
       val valueString =
         if (assignedValue is BvLitExpr) assignedValue.toString().replace("#", "0")
+        else if (assignedValue is FpLitExpr)
+          FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+            .toString()
         else assignedValue.toString()
 
       val constraint = "\\result == $valueString"
