@@ -245,7 +245,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     )
   }
 
-  override fun generateTrivialViolationWitness(
+  fun generateTrivialViolationWitness(
     safetyResult: SafetyResult<*, *>,
     inputFile: File,
     property: XcfaProperty,
