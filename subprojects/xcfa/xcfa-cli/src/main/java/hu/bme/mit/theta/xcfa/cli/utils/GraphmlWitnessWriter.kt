@@ -29,7 +29,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
@@ -164,16 +163,27 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
     targetLocation: Location,
-  ) {
-    val witnessTrace = targetToWitness(targetLocation = targetLocation, property = property)
-    val graphmlWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
-    val xml = graphmlWitness.toPrettyXml()
-    val builder = StringBuilder()
-    builder.append(xml)
-    builder.removeSuffix("]")
-    builder.append(witnessTrace)
-    builder.append("]")
-    witnessfile.writeText(xml)
+  ): String {
+    return TODO()
+    //    val witnessTrace = TODO() // targetToWitness(TODO(), TODO(), TODO(), verbosity = versb
+    // property = property)
+    //    val graphmlWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
+    //    val xml = graphmlWitness.toPrettyXml()
+    //    val builder = StringBuilder()
+    //    builder.append(xml)
+    //    builder.removeSuffix("]")
+    //    builder.append(witnessTrace)
+    //    builder.append("]")
+    //    return builder.toString()
+  }
+
+  override fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String {
+    val emptyWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
+    return emptyWitness.toPrettyXml()
   }
 
   private fun getLocation(inputFile: File, metadata: MetaData?): Location? {

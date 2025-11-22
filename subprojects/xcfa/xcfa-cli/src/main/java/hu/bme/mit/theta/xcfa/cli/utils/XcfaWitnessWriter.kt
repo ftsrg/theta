@@ -23,7 +23,6 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.witnesses.Location
-import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.File
 
 interface XcfaWitnessWriter {
@@ -115,5 +114,11 @@ interface XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType? = null,
     targetLocation: Location,
-  ): YamlWitness
+  ): String?
+
+  fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String
 }

@@ -37,7 +37,6 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.witnesses.Location
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
 import java.math.BigInteger
@@ -52,57 +51,27 @@ enum class Verbosity {
 
 fun targetToWitness(
   verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
-  targetLocation: Location,
   property: XcfaProperty,
+  startline: Int,
+  endline: Int,
+  startoffset: Int,
+  endoffset: Int,
 ): String {
-  return "asd"
-  //  val initNode =
-  //    WitnessNode(
-  //      id = "N0",
-  //      entry = false,
-  //      sink = false,
-  //      violation =
-  //        false,
-  //      xcfaLocations = initState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-  //      cSources =
-  //        initState.processes
-  //          .map {
-  //            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
-  //          }
-  //          .toMap(),
-  //      globalState = initState.sGlobal,
-  //      // localState = //state
-  //    )
-  //  val targetNode =
-  //    WitnessNode(
-  //      id = "N0",
-  //      entry = false,
-  //      sink = false,
-  //      violation =
-  //        true,
-  //      xcfaLocations = initState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-  //      cSources =
-  //        initState.processes
-  //          .map {
-  //            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
-  //          }
-  //          .toMap(),
-  //      globalState = initState.sGlobal,
-  //      // localState = //state
-  //    )
-  //
-  //  val edge =
-  //    labelToEdge(
-  //      initNode,
-  //      targetNode,
-  //      lastAction.edge.label,
-  //      lastAction.pid,
-  //      ImmutableValuation.empty(),
-  //      parseContext,
-  //      lastAction.edge,
-  //    )
-  //
-  //  return Trace.of(listOf(initNode, targetNode), listOf(edge))
+  return """
+  <node id="N0">
+  <data key="violation">false</data>
+  </node>
+  <node id="N1">
+  <data key="violation">true</data>
+  </node>
+  
+  <edge source="N0" target="N1">
+    <data key="startline">$startline</data>
+    <data key="endline">$endline</data>
+    <data key="startoffset">$startoffset</data>
+    <data key="endoffset">$endoffset</data>
+  </edge>
+  """
 }
 
 fun traceToWitness(
