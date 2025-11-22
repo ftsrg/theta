@@ -935,7 +935,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         public Function<Expr<?>, Expr<?>> visitPostfixExpressionBraces(
                 PostfixExpressionBracesContext ctx) {
             return (expr) -> {
-                checkState(expr instanceof RefExpr<?>, "Only variables are callable now.");
+                checkState(
+                        expr instanceof RefExpr<?>
+                                && functions.containsKey(
+                                        (VarDecl<?>) ((RefExpr<?>) expr).getDecl()),
+                        "Only variable-backed functions are callable.");
                 CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
                 List<CStatement> arguments;
                 if (exprList == null) arguments = List.of();
