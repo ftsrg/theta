@@ -44,6 +44,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -546,7 +547,8 @@ private fun WitnessNode.toSegment(
             .toString()
         else assignedValue.toString()
 
-      val constraint = "\\result == $valueString"
+      val cast = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName?.let { "($it)" } ?: ""
+      val constraint = "\\result == $cast$valueString"
       loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
