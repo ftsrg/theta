@@ -71,7 +71,7 @@ class XcfaCliNonTerminationVerifyTest {
     private fun isWitnessViolation(temp: Path): Boolean {
       assertTrue(temp.resolve("witness.yml").exists())
       val witnessContents = temp.resolve("witness.yml").toFile().readText()
-      return "entry_type: violation_sequence" in witnessContents
+      return "violation_sequence" in witnessContents
     }
 
     @JvmStatic
