@@ -544,8 +544,9 @@ private fun WitnessNode.toSegment(
       val (cast, valueString) =
         if (assignedValue is BvLitExpr) "" to assignedValue.toString().replace("#", "0")
         else if (assignedValue is FpLitExpr)
-          (typeName?.let { "($it)" } ?: "") to FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
-            .toString()
+          (typeName?.let { "($it)" } ?: "") to
+            FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+              .toString()
         else "" to assignedValue.toString()
 
       val constraint = "\\result == $cast$valueString"
