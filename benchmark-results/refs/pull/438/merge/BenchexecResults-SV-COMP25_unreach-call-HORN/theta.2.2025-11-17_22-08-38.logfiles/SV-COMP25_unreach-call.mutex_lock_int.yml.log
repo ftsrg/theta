@@ -1,0 +1,210 @@
+Thorn/theta-start.sh sv-benchmarks/c/ldv-regression/mutex_lock_int.i --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/ldv-regression/mutex_lock_int.i' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/ldv-regression/mutex_lock_int.i --smt-home /home/runner/work/theta/theta/Thorn/solvers
+ParsingResult Success
+Arithmetic: []
+ParsingResult Success
+Using CHC portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: []
+server: ParsingResult Success
+server: Exception in thread "main" java.lang.IllegalStateException: Nullary functions aren't handled here.
+server: 	at hu.bme.mit.theta.core.ChcUtilsKt.funcType(ChcUtils.kt:49)
+server: 	at hu.bme.mit.theta.core.Relation.<init>(ChcUtils.kt:56)
+server: 	at hu.bme.mit.theta.xcfa2chc.Xcfa2ChcKt.toCHC(Xcfa2Chc.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:266)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:141)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:97)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: []
+server: ParsingResult Success
+server: Exception in thread "main" java.lang.IllegalStateException: Nullary functions aren't handled here.
+server: 	at hu.bme.mit.theta.core.ChcUtilsKt.funcType(ChcUtils.kt:49)
+server: 	at hu.bme.mit.theta.core.Relation.<init>(ChcUtils.kt:56)
+server: 	at hu.bme.mit.theta.xcfa2chc.Xcfa2ChcKt.toCHC(Xcfa2Chc.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:266)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:141)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:97)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=eldarica:2.1, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: []
+server: ParsingResult Success
+server: Exception in thread "main" java.lang.IllegalStateException: Nullary functions aren't handled here.
+server: 	at hu.bme.mit.theta.core.ChcUtilsKt.funcType(ChcUtils.kt:49)
+server: 	at hu.bme.mit.theta.core.Relation.<init>(ChcUtils.kt:56)
+server: 	at hu.bme.mit.theta.xcfa2chc.Xcfa2ChcKt.toCHC(Xcfa2Chc.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:266)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:141)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:97)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=true, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=golem:0.5.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+server: ParsingResult Success
+server: Arithmetic: []
+server: ParsingResult Success
+server: Exception in thread "main" java.lang.IllegalStateException: Nullary functions aren't handled here.
+server: 	at hu.bme.mit.theta.core.ChcUtilsKt.funcType(ChcUtils.kt:49)
+server: 	at hu.bme.mit.theta.core.Relation.<init>(ChcUtils.kt:56)
+server: 	at hu.bme.mit.theta.xcfa2chc.Xcfa2ChcKt.toCHC(Xcfa2Chc.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToHornCheckerKt.getHornChecker(ConfigToHornChecker.kt:74)
+server: 	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToCheckerKt.getSafetyChecker(ConfigToChecker.kt:68)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:266)
+server: 	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+server: 	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+ErrorCodeException(code=1)
+	at hu.bme.mit.theta.xcfa.cli.checkers.InProcessChecker.check(InProcessChecker.kt:141)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HornKt$hornPortfolio$checker$1.invoke(horn.kt:38)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode.execute(stm.kt:70)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.HierarchicalNode.execute(stm.kt:35)
+	at hu.bme.mit.theta.xcfa.cli.portfolio.STM.execute(stm.kt:154)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:97)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:278)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt$backend$result$1.invoke(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:277)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:76)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:118)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)
+Caught exception: ErrorCodeException(code=1)
+Could not handle trigger ErrorCodeException(code=1) (Available triggers: [])
+Caught exception: ErrorCodeException(code=1)
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=z3:4.13.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+ParsingResult Success
+Caught exception: java.lang.IllegalStateException: Nullary functions aren't handled here.
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=100000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=Z3:new, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+ParsingResult Success
+Caught exception: java.lang.IllegalStateException: Nullary functions aren't handled here.
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=500000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=eldarica:2.1, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+ParsingResult Success
+Caught exception: java.lang.IllegalStateException: Nullary functions aren't handled here.
+Handling exception as Anything
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=sv-benchmarks/c/ldv-regression/mutex_lock_int.i, catFile=null, parseCtx=null, xcfaWCtx=missing, propertyFile=null, inputProperty=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, enableStaticCoi=false, loopUnroll=1000, forceUnroll=-1, enableDataRaceToReachability=false, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=CHC, solverHome=/home/runner/work/theta/theta/Thorn/solvers, timeoutMs=300000, inProcess=false, parseInProcess=true, memlimit=0, specConfig=HornConfig(solver=golem:0.5.0, validateSolver=false, rankingFuncConstr=ADD)), outputConfig=OutputConfig(versionInfo=false, enabled=CUSTOM, resultFolder=., acceptUnreliableSafe=false, cOutputConfig=COutputConfig(enabled=false, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(enabled=false), chcOutputConfig=ChcOutputConfig(enabled=false), witnessConfig=WitnessConfig(enabled=SVCOMP, concretizerSolver=Z3, validateConcretizerSolver=false, inputFileForWitness=sv-benchmarks/c/ldv-regression/mutex_lock_int.i), argConfig=ArgConfig(enabled=false)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=RESULT, argdebug=false, argToFile=false))
+ParsingResult Success
+Arithmetic: []
+ParsingResult Success
+Caught exception: java.lang.IllegalStateException: Nullary functions aren't handled here.
+Could not handle trigger java.lang.IllegalStateException: Nullary functions aren't handled here. (Available triggers: [])
+Caught exception: java.lang.IllegalStateException: Nullary functions aren't handled here.
+Could not handle trigger java.lang.IllegalStateException: Nullary functions aren't handled here. (Available triggers: [])
+Process failed! (hu.bme.mit.theta.core.ChcUtilsKt.funcType(ChcUtils.kt:49), java.lang.IllegalStateException: Nullary functions aren't handled here.)

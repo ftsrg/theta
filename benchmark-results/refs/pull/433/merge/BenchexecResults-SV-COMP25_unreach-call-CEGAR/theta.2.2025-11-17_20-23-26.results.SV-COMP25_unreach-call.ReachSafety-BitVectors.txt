@@ -1,0 +1,110 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-BitVectors
+date:                    Mon, 2025-11-17 20:23:26 UTC
+tool:                    Theta 6.26.2
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3210.609 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-BitVectors
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                   status                       cpu time   wall time        host
+-------------------------------------------------------------------------------------------------------------------------
+bitvector/byte_add-1.yml                                    ERROR (server error, after parsing finished)        2.48        1.05        None
+bitvector/byte_add_1-1.yml                                  ERROR (server error, after parsing finished)        2.26        0.94        None
+bitvector/byte_add_2-2.yml                                  ERROR (server error, after parsing finished)        3.20        1.06        None
+bitvector/gcd_1.yml                                         ERROR (server error, after parsing finished)        1.62        0.69        None
+bitvector/gcd_2.yml                                         ERROR (server error, after parsing finished)        2.23        0.84        None
+bitvector/gcd_3.yml                                         ERROR (server error, after parsing finished)        2.18        0.82        None
+bitvector/gcd_4.yml                                         ERROR (server error, after parsing finished)        1.92        0.84        None
+bitvector/interleave_bits.yml                               ERROR (server error, after parsing finished)        2.02        0.86        None
+bitvector/jain_1-1.yml                                      ERROR (server error, after parsing finished)        1.73        0.76        None
+bitvector/jain_2-1.yml                                      ERROR (server error, after parsing finished)        1.53        0.67        None
+bitvector/jain_4-2.yml                                      ERROR (server error, after parsing finished)        1.72        0.75        None
+bitvector/jain_5-2.yml                                      ERROR (server error, after parsing finished)        1.75        0.77        None
+bitvector/jain_6-1.yml                                      ERROR (server error, after parsing finished)        1.86        0.83        None
+bitvector/jain_7-2.yml                                      ERROR (server error, after parsing finished)        1.60        0.70        None
+bitvector/modulus-2.yml                                     ERROR (server error, after parsing finished)        1.89        0.83        None
+bitvector/num_conversion_1.yml                              ERROR (server error, after parsing finished)        1.97        0.85        None
+bitvector/num_conversion_2.yml                              ERROR (server error, after parsing finished)        2.20        0.98        None
+bitvector/parity.yml                                        ERROR (server error, after parsing finished)        2.67        0.95        None
+bitvector/s3_clnt_2.BV.c.cil-1a.yml                         ERROR (server error, after parsing finished)        3.14        1.31        None
+bitvector/s3_clnt_2.BV.c.cil-2a.yml                         ERROR (server error, after parsing finished)        4.03        1.37        None
+bitvector/s3_clnt_3.BV.c.cil-1a.yml                         ERROR (server error, after parsing finished)        4.17        1.41        None
+bitvector/s3_clnt_3.BV.c.cil-2a.yml                         ERROR (server error, after parsing finished)        4.29        1.51        None
+bitvector/s3_srvr_1a.BV.c.cil.yml                           ERROR (server error, after parsing finished)        4.35        1.41        None
+bitvector/s3_srvr_2a.BV.c.cil.yml                           ERROR (server error, after parsing finished)        4.33        1.45        None
+bitvector/s3_srvr_2a_alt.BV.c.cil.yml                       ERROR (server error, after parsing finished)        4.31        1.45        None
+bitvector/s3_srvr_3a.BV.c.cil.yml                           ERROR (server error, after parsing finished)        4.33        1.43        None
+bitvector/s3_srvr_3a_alt.BV.c.cil.yml                       ERROR (server error, after parsing finished)        4.31        1.39        None
+bitvector/soft_float_1-2a.c.cil.yml                         ERROR (server error, after parsing finished)        2.33        0.95        None
+bitvector/soft_float_1-3a.c.cil.yml                         ERROR (server error, after parsing finished)        3.38        1.12        None
+bitvector/soft_float_2a.c.cil.yml                           ERROR (server error, after parsing finished)        2.21        0.92        None
+bitvector/soft_float_3a.c.cil.yml                           ERROR (server error, after parsing finished)        2.35        0.99        None
+bitvector/soft_float_4-2a.c.cil.yml                         ERROR (server error, after parsing finished)        2.53        1.05        None
+bitvector/soft_float_4-3a.c.cil.yml                         ERROR (server error, after parsing finished)        3.12        1.09        None
+bitvector/soft_float_5a.c.cil.yml                           ERROR (server error, after parsing finished)        3.27        1.12        None
+bitvector/sum02-1.yml                                       ERROR (server error, after parsing finished)        2.09        0.81        None
+bitvector/sum02-2.yml                                       ERROR (server error, after parsing finished)        2.17        0.82        None
+bitvector-regression/implicitfloatconversion.yml            ERROR (server error, after parsing finished)        1.89        0.83        None
+bitvector-regression/implicitunsignedconversion-1.yml       ERROR (server error, after parsing finished)        1.43        0.64        None
+bitvector-regression/implicitunsignedconversion-2.yml       ERROR (server error, after parsing finished)        1.58        0.70        None
+bitvector-regression/integerpromotion-2.yml                 ERROR (server error, after parsing finished)        1.61        0.72        None
+bitvector-regression/integerpromotion-3.yml                 ERROR (server error, after parsing finished)        1.85        0.75        None
+bitvector-regression/recHanoi03-1.yml                       ERROR (server error, after parsing finished)        2.06        0.78        None
+bitvector-regression/signextension-1.yml                    ERROR (server error, after parsing finished)        1.56        0.72        None
+bitvector-regression/signextension-2.yml                    ERROR (server error, after parsing finished)        1.95        0.79        None
+bitvector-regression/signextension2-1.yml                   ERROR (server error, after parsing finished)        1.95        0.78        None
+bitvector-regression/signextension2-2.yml                   ERROR (server error, after parsing finished)        1.94        0.78        None
+bitvector-loops/diamond_2-1.yml                             ERROR (server error, after parsing finished)        2.44        0.90        None
+bitvector-loops/overflow_1-2.yml                            ERROR (server error, after parsing finished)        2.50        0.95        None
+bitvector-loops/verisec_sendmail_tTflag_arr_one_loop.yml    ERROR (server error, after parsing finished)        2.76        1.03        None
+-------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                   done                           123.69       52.55           -
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination
+Run set 6 of 6: skipped
+
+Statistics:             49 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              49
+  Score:                 0 (max: 83)

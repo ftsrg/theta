@@ -1,0 +1,13 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/longjmp/68-longjmp_15-counting-global-one-method_true.i --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/longjmp/68-longjmp_15-counting-global-one-method_true.i' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture LP64 --input sv-benchmarks/c/longjmp/68-longjmp_15-counting-global-one-method_true.i --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+ParsingResult Success
+Arithmetic: [ARR]
+ParsingResult Success
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:92), java.lang.IllegalStateException: No such file or built-in config: BOUNDED)

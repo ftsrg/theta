@@ -1,0 +1,10 @@
+Theta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_54_good.i --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_54_good.i' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE401_Memory_Leak---s01---CWE401_Memory_Leak__int64_t_malloc_54_good.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(ExpressionVisitor.java:116), java.lang.RuntimeException: No such variable: printLine)

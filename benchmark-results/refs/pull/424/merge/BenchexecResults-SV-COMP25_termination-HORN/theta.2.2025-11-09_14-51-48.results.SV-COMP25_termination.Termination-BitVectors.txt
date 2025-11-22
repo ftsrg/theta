@@ -1,0 +1,96 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Sun, 2025-11-09 14:51:48 UTC
+tool:                    Theta 6.24.2
+tool executable:         ./Thorn/theta-start.sh
+options:                 --svcomp --portfolio HORN --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmw9dnm
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.538944 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio HORN --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            TIMEOUT                         41.02       38.33        None
+and-02.yml                            TIMEOUT                         40.99       38.41        None
+and-03-false.yml                      false(termination)               5.01        2.68        None
+and-03.yml                            TIMEOUT                         41.02       38.15        None
+and-04-false.yml                      false(termination)               7.48        4.07        None
+and-04.yml                            TIMEOUT                         17.11       91.01        None
+and-05-false.yml                      false(termination)               6.38        3.97        None
+and-05.yml                            
+and-06.yml                            
+and-assume.yml                        
+consecutive-zero-bits-trailing.yml    
+counting-bits-BK.yml                  
+counting-bits-BK1.yml                 
+counting-bits-set.yml                 
+not-01.yml                            
+not-02-false.yml                      
+not-02.yml                            
+not-03-false.yml                      
+not-03.yml                            
+not-04-false.yml                      
+not-04.yml                            
+not-05-false.yml                      
+not-05.yml                            
+or-01.yml                             
+or-02.yml                             
+or-03.yml                             
+or-04.yml                             
+or-05-false.yml                       
+or-05.yml                             
+or-06.yml                             
+parity0.yml                           
+parity1.yml                           
+reverse-bits1.yml                     
+xor-01.yml                            
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                            18.34      224.54           -
+
+Statistics:              7 Files
+  correct:               3
+    correct true:        0
+    correct false:       3
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               4
+  Score:                 3 (max: 11)

@@ -1,0 +1,13 @@
+Thorn/theta-start.sh sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c' using arguments '--svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Thorn/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Thorn/theta.jar --svcomp --portfolio HORN --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/product-lines/elevator_spec2_product26.cil.c --smt-home /home/runner/work/theta/theta/Thorn/solvers
+line 2102:18 no viable alternative at input '(int(**'
+line 2102:18 no viable alternative at input '(int(**'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.assignmentExpression(CParser.java:2598), org.antlr.v4.runtime.misc.ParseCancellationException)
+Error: class org.antlr.v4.runtime.misc.ParseCancellationException - (org.antlr.v4.runtime.BailErrorStrategy#recover:51, hu.bme.mit.theta.c.frontend.dsl.gen.CParser#assignmentExpression:2598)

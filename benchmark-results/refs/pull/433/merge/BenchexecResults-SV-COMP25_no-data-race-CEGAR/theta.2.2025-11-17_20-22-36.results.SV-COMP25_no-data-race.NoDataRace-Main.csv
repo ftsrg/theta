@@ -1,0 +1,1032 @@
+tool		Theta 6.26.2	Theta 6.26.2	Theta 6.26.2	Theta 6.26.2
+run set		SV-COMP25_no-data-race.NoDataRace-Main	SV-COMP25_no-data-race.NoDataRace-Main	SV-COMP25_no-data-race.NoDataRace-Main	SV-COMP25_no-data-race.NoDataRace-Main
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+pthread/bigshot_p.yml	false	ERROR (server error, after parsing finished)	3.456908	1.7174022350000087	242.601984
+pthread/bigshot_s.yml	true	ERROR (server error, after parsing finished)	4.381054	1.4782469189999858	262.819840
+pthread/bigshot_s2.yml	true	ERROR (server error, after parsing finished)	4.489345	1.5208401440000046	266.989568
+pthread/butterfly.yml	true	true	3.305947	1.445511161000013	254.488576
+pthread/fib_safe-10-racy.yml	false	ERROR (server error, after parsing finished)	3.48007	1.522891861000005	271.056896
+pthread/fib_safe-10.yml	true	true	3.517321	1.5344119429999807	263.921664
+pthread/fib_safe-11-racy.yml	false	ERROR (server error, after parsing finished)	4.602076	1.5145477689999893	279.207936
+pthread/fib_safe-11.yml	true	true	4.413329	1.429609935000002	294.227968
+pthread/fib_safe-12-racy.yml	false	ERROR (server error, after parsing finished)	4.545589	1.4952987549999932	270.270464
+pthread/fib_safe-12.yml	true	true	4.692854	1.5506639060000111	284.848128
+pthread/fib_safe-5-racy.yml	false	ERROR (server error, after parsing finished)	4.370799	1.452314967999996	277.049344
+pthread/fib_safe-5.yml	true	true	3.545469	1.5610067180000158	265.043968
+pthread/fib_safe-6-racy.yml	false	ERROR (server error, after parsing finished)	3.459548	1.4986601080000241	269.574144
+pthread/fib_safe-6.yml	true	true	4.48661	1.4837373619999994	291.844096
+pthread/fib_safe-7-racy.yml	false	ERROR (server error, after parsing finished)	4.449665	1.4731102009999972	272.347136
+pthread/fib_safe-7.yml	true	true	4.502802	1.6734295290000318	291.241984
+pthread/fib_unsafe-10-racy.yml	false	ERROR (server error, after parsing finished)	4.535081	1.5004166370000007	266.375168
+pthread/fib_unsafe-10.yml	true	true	4.749429	1.5543565250000029	287.170560
+pthread/fib_unsafe-11-racy.yml	false	ERROR (server error, after parsing finished)	4.760889	1.5813147520000257	280.285184
+pthread/fib_unsafe-11.yml	true	true	4.515917	1.4860770550000098	292.278272
+pthread/fib_unsafe-12-racy.yml	false	ERROR (server error, after parsing finished)	3.527152	1.534584146000043	268.931072
+pthread/fib_unsafe-12.yml	true	true	4.494306	1.4645729350000352	295.415808
+pthread/fib_unsafe-5-racy.yml	false	ERROR (server error, after parsing finished)	4.599053	1.5215816379999865	274.075648
+pthread/fib_unsafe-5.yml	true	true	4.178219	1.3955768769999963	293.019648
+pthread/fib_unsafe-6-racy.yml	false	ERROR (server error, after parsing finished)	4.559802	1.498963630999981	282.206208
+pthread/fib_unsafe-6.yml	true	true	4.637727	1.5264733030000457	291.508224
+pthread/fib_unsafe-7-racy.yml	false	ERROR (server error, after parsing finished)	4.463047	1.489011156999993	279.076864
+pthread/fib_unsafe-7.yml	true	true	3.395842	1.4711137209999947	272.617472
+pthread/indexer.yml	false	ERROR (frontend failed, after parsing finished)	5.623676	1.843035766000014	289.284096
+pthread/lazy01.yml	true	ERROR (frontend failed, after parsing finished)	3.691316	1.2693095870000093	264.044544
+pthread/queue.yml	true	ERROR (frontend failed, after parsing finished)	5.263164	1.7102838829999882	285.458432
+pthread/queue_longer.yml	true	ERROR (frontend failed, after parsing finished)	7.405156	2.602645553000002	325.169152
+pthread/queue_longest.yml	true	ERROR (frontend failed, after parsing finished)	9.230415	4.0040995260000045	396.234752
+pthread/queue_ok.yml	true	ERROR (frontend failed, after parsing finished)	4.875095	1.6216464359999918	271.839232
+pthread/queue_ok_longer.yml	true	ERROR (frontend failed, after parsing finished)	8.442772	2.862136506000013	326.123520
+pthread/queue_ok_longest.yml	true	ERROR (frontend failed, after parsing finished)	9.619412	3.8951582450000046	391.442432
+pthread/reorder_2-race.yml	false	ERROR (frontend failed, after parsing finished)	4.884735	1.6277299119999498	303.845376
+pthread/reorder_2.yml	true	ERROR (frontend failed, after parsing finished)	5.087481	1.6868032339999672	314.187776
+pthread/reorder_5-race.yml	false	ERROR (frontend failed, after parsing finished)	5.125292	1.7516209760000265	302.903296
+pthread/reorder_5.yml	true	ERROR (frontend failed, after parsing finished)	5.42502	1.7922505589999673	302.845952
+pthread/sigma.yml	false	ERROR (server error, after parsing finished)	5.056094	1.7071779740000466	301.985792
+pthread/singleton-b.yml	false	ERROR (server error, after parsing finished)	4.222263	1.3906569220000051	255.762432
+pthread/singleton.yml	true	ERROR (server error, after parsing finished)	4.585468	1.5421480730000212	264.450048
+pthread/singleton_with-uninit-problems-b.yml	false	ERROR (server error, after parsing finished)	4.657143	1.5717213489999722	265.068544
+pthread/singleton_with-uninit-problems.yml	true	ERROR (server error, after parsing finished)	4.448947	1.4874634629999832	262.516736
+pthread/stack-1.yml	true	ERROR (frontend failed, after parsing finished)	4.809623	1.633792624000023	282.308608
+pthread/stack-2.yml	true	ERROR (frontend failed, after parsing finished)	4.612679	1.5398291349999909	286.150656
+pthread/stack_longer-1.yml	true	ERROR (frontend failed, after parsing finished)	7.93058	2.872213109000029	376.725504
+pthread/stack_longer-2.yml	true	ERROR (frontend failed, after parsing finished)	8.158171	3.0954286440000374	383.438848
+pthread/stack_longest-1.yml	true	ERROR (frontend failed, after parsing finished)	11.575317	5.888671318999968	416.428032
+pthread/stack_longest-2.yml	true	ERROR (frontend failed, after parsing finished)	11.217762	5.7815927670000065	405.352448
+pthread/stateful01-1.yml	true	ERROR (frontend failed, after parsing finished)	3.597448	1.2205286970000202	264.691712
+pthread/stateful01-2.yml	true	ERROR (frontend failed, after parsing finished)	3.699997	1.2593619579999995	262.991872
+pthread/sync01.yml	true	ERROR (frontend failed, after parsing finished)	3.815701	1.2702301040000066	269.189120
+pthread/triangular-1.yml	true	true	4.40488	1.4776185630000214	290.750464
+pthread/triangular-2.yml	true	true	4.347132	1.4616244050000091	288.153600
+pthread/triangular-longer-1.yml	true	true	4.407181	1.480013786000029	296.783872
+pthread/triangular-longer-2.yml	true	true	4.403847	1.4675227930000005	295.362560
+pthread/triangular-longest-1.yml	true	true	4.403663	1.4330177960000015	314.654720
+pthread/triangular-longest-2.yml	true	true	4.624791	1.5191338409999844	298.033152
+pthread/twostage_3-race.yml	false	ERROR (frontend failed, after parsing finished)	4.925233	1.6172980989999814	319.401984
+pthread/twostage_3.yml	true	ERROR (frontend failed, after parsing finished)	5.456926	1.8269933349999974	315.441152
+pthread-atomic/dekker-b-unfair.yml	false	ERROR (server error, after parsing finished)	3.995298	1.3387108279999893	244.772864
+pthread-atomic/dekker-b.yml	false	ERROR (server error, after parsing finished)	3.759641	1.2710830820000183	249.880576
+pthread-atomic/dekker-unfair.yml	true	ERROR (server error, after parsing finished)	3.779711	1.266530481000018	250.589184
+pthread-atomic/dekker.yml	true	ERROR (server error, after parsing finished)	3.277482	1.4669085909999922	230.404096
+pthread-atomic/gcd-2.yml	false	ERROR (server error, after parsing finished)	3.246838	1.4151809859999958	246.595584
+pthread-atomic/lamport-b.yml	false	ERROR (server error, after parsing finished)	3.734532	1.2329509649999864	244.703232
+pthread-atomic/lamport.yml	true	ERROR (server error, after parsing finished)	4.272491	1.4319758440000214	248.582144
+pthread-atomic/peterson-b.yml	false	ERROR (server error, after parsing finished)	3.887576	1.3116301270000008	258.498560
+pthread-atomic/peterson.yml	true	ERROR (server error, after parsing finished)	3.834323	1.2988995530000125	263.356416
+pthread-atomic/qrcu-1.yml	false	ERROR (frontend failed, after parsing finished)	4.205142	1.3984770289999915	250.470400
+pthread-atomic/qrcu-2.yml	false	ERROR (frontend failed, after parsing finished)	4.256736	1.4018019809999487	243.781632
+pthread-atomic/read_write_lock-1.yml	true	ERROR (frontend failed, after parsing finished)	3.098732	1.3925955359999875	232.157184
+pthread-atomic/read_write_lock-1b.yml	false	ERROR (frontend failed, after parsing finished)	3.617951	1.2395302629999492	256.155648
+pthread-atomic/read_write_lock-2.yml	true	true	4.017496	1.344921577999969	240.394240
+pthread-atomic/read_write_lock-2b.yml	false	ERROR (server error, after parsing finished)	3.496852	1.5672828730000106	228.741120
+pthread-atomic/scull.yml	false	ERROR (frontend failed, after parsing finished)	4.100287	1.3448114490000194	243.564544
+pthread-atomic/szymanski-b.yml	false	ERROR (server error, after parsing finished)	4.037549	1.3506809559999624	259.739648
+pthread-atomic/szymanski.yml	true	ERROR (server error, after parsing finished)	4.015016	1.3537142749999589	262.574080
+pthread-atomic/time_var_mutex.yml	true	ERROR (frontend failed, after parsing finished)	3.728544	1.269406851000042	241.131520
+pthread-ext/01_inc.yml	false	ERROR (server error, after parsing finished)	3.840996	1.3093398429999752	240.877568
+pthread-ext/01b_inc.yml	true	ERROR (frontend failed, after parsing finished)	3.372212	1.1296431530000177	245.530624
+pthread-ext/02_inc_cas.yml	true	ERROR (server error, after parsing finished)	3.919128	1.3281285110000454	262.029312
+pthread-ext/03_incdec.yml	true	ERROR (frontend failed, after parsing finished)	3.801461	1.2975646500000266	258.572288
+pthread-ext/04_incdec_cas-race.yml	false	ERROR (server error, after parsing finished)	3.39637	1.5304950770000119	245.264384
+pthread-ext/04_incdec_cas.yml	true	ERROR (server error, after parsing finished)	4.42289	1.4625002719999998	262.348800
+pthread-ext/05_tas.yml	false	ERROR (server error, after parsing finished)	4.123938	1.3820797430000198	262.078464
+pthread-ext/06_ticket.yml	false	ERROR (server error, after parsing finished)	4.047438	1.3650588500000254	240.451584
+pthread-ext/07_rand.yml	false	ERROR (server error, after parsing finished)	4.111656	1.3814772199999652	231.931904
+pthread-ext/08_rand_cas-race.yml	false	ERROR (server error, after parsing finished)	3.973737	1.317736329000013	249.270272
+pthread-ext/08_rand_cas.yml	true	ERROR (server error, after parsing finished)	4.336981	1.4496709190000274	237.236224
+pthread-ext/09_fmaxsym-race.yml	false	ERROR (frontend failed, after parsing finished)	3.834316	1.2642206630000032	271.896576
+pthread-ext/09_fmaxsym-zero.yml	true	ERROR (frontend failed, after parsing finished)	3.657188	1.2551291230000174	237.723648
+pthread-ext/09_fmaxsym.yml	true	ERROR (frontend failed, after parsing finished)	4.420564	1.5044568650000087	258.666496
+pthread-ext/10_fmaxsym_cas.yml	false	ERROR (server error, after parsing finished)	4.075181	1.366049901999986	231.059456
+pthread-ext/11_fmaxsymopt-race.yml	false	ERROR (frontend failed, after parsing finished)	4.241978	1.4044778749999978	267.763712
+pthread-ext/11_fmaxsymopt-zero.yml	true	ERROR (frontend failed, after parsing finished)	3.886475	1.3129445660000556	242.466816
+pthread-ext/11_fmaxsymopt.yml	true	ERROR (frontend failed, after parsing finished)	4.143387	1.3800702300000012	262.778880
+pthread-ext/12_fmaxsymopt_cas.yml	false	ERROR (server error, after parsing finished)	4.106386	1.3739128729999948	233.639936
+pthread-ext/13_unverif.yml	false	ERROR (server error, after parsing finished)	3.395494	1.1447738370000025	223.207424
+pthread-ext/14_spin2003.yml	true	ERROR (frontend failed, after parsing finished)	3.756156	1.2743979619999664	259.420160
+pthread-ext/17_szymanski.yml	false	ERROR (server error, after parsing finished)	4.074435	1.356244815000025	260.268032
+pthread-ext/18_read_write_lock.yml	true	ERROR (frontend failed, after parsing finished)	3.651524	1.2450970699999857	260.059136
+pthread-ext/23_lu-fig2.fixed.yml	false	ERROR (server error, after parsing finished)	3.886	1.3146517870000025	238.149632
+pthread-ext/25_stack-race.yml	false	ERROR (server error, after parsing finished)	4.255602	1.3840725400000338	243.773440
+pthread-ext/25_stack.yml	true	ERROR (frontend failed, after parsing finished)	4.098819	1.350627932000009	261.799936
+pthread-ext/25_stack_longer-1-race.yml	false	ERROR (server error, after parsing finished)	5.410381	1.7703361850000192	268.476416
+pthread-ext/25_stack_longer-1.yml	true	ERROR (frontend failed, after parsing finished)	4.566526	1.500410864999992	265.240576
+pthread-ext/25_stack_longer-2-race.yml	false	ERROR (server error, after parsing finished)	4.057615	1.7674003149999749	244.256768
+pthread-ext/25_stack_longer-2.yml	true	ERROR (frontend failed, after parsing finished)	3.466656	1.5154404210000507	249.581568
+pthread-ext/25_stack_longest-1-race.yml	false	ERROR (server error, after parsing finished)	5.735384	1.8504584230000205	296.321024
+pthread-ext/25_stack_longest-1.yml	true	ERROR (frontend failed, after parsing finished)	5.192479	1.701791739999976	299.679744
+pthread-ext/25_stack_longest-2-race.yml	false	ERROR (server error, after parsing finished)	5.992371	1.9321953590000476	329.494528
+pthread-ext/25_stack_longest-2.yml	true	ERROR (frontend failed, after parsing finished)	5.182127	1.708157133000043	292.540416
+pthread-ext/26_stack_cas-race.yml	false	ERROR (server error, after parsing finished)	4.511647	1.4862322140000401	249.135104
+pthread-ext/26_stack_cas.yml	true	ERROR (server error, after parsing finished)	4.120881	1.3744949410000231	233.431040
+pthread-ext/26_stack_cas_longer-1-race.yml	false	ERROR (server error, after parsing finished)	4.961329	1.6210718539999789	267.358208
+pthread-ext/26_stack_cas_longer-1.yml	true	ERROR (server error, after parsing finished)	5.208473	1.7058421290000183	285.605888
+pthread-ext/26_stack_cas_longer-2-race.yml	false	ERROR (server error, after parsing finished)	4.989818	1.63211798399999	274.116608
+pthread-ext/26_stack_cas_longer-2.yml	true	ERROR (server error, after parsing finished)	5.014614	1.6173026330000084	278.769664
+pthread-ext/26_stack_cas_longest-1-race.yml	false	ERROR (server error, after parsing finished)	5.671818	1.8503626120000263	297.795584
+pthread-ext/26_stack_cas_longest-1.yml	true	ERROR (server error, after parsing finished)	5.831675	1.9108768120000263	347.996160
+pthread-ext/26_stack_cas_longest-2-race.yml	false	ERROR (server error, after parsing finished)	5.584145	1.7914318210000033	298.549248
+pthread-ext/26_stack_cas_longest-2.yml	true	ERROR (server error, after parsing finished)	5.963012	1.9396135800000138	352.477184
+pthread-ext/27_Boop_simple_vf.yml	false	ERROR (server error, after parsing finished)	4.044606	1.3521109380000098	260.907008
+pthread-ext/28_buggy_simple_loop1_vf.yml	true	true	3.744635	1.2547474319999878	261.099520
+pthread-ext/29_conditionals_vs.yml	true	true	3.892808	1.328647530000012	242.323456
+pthread-ext/30_Function_Pointer3_vs.yml	false	ERROR (server error, after parsing finished)	4.094293	1.377183897000009	245.071872
+pthread-ext/31_simple_loop5_vs.yml	true	ERROR (frontend failed, after parsing finished)	3.828666	1.3154608250000024	259.002368
+pthread-ext/32_pthread5_vs.yml	false	ERROR (server error, after parsing finished)	4.123507	1.3795900970000048	235.511808
+pthread-ext/33_double_lock_p1_vs.yml	false	ERROR (server error, after parsing finished)	3.152602	1.3645018810000238	230.928384
+pthread-ext/34_double_lock_p2_vs.yml	false	ERROR (server error, after parsing finished)	4.056991	1.336689067000009	246.345728
+pthread-ext/35_double_lock_p3_vs.yml	true	ERROR (frontend failed, after parsing finished)	3.707007	1.2558296700000255	259.366912
+pthread-ext/36_stack_cas_p0_vs_concur-race.yml	false	ERROR (server error, after parsing finished)	3.139356	1.3726369760000239	231.874560
+pthread-ext/36_stack_cas_p0_vs_concur.yml	true	ERROR (server error, after parsing finished)	4.178199	1.3906434090000062	249.978880
+pthread-ext/37_stack_lock_p0_vs_concur-race.yml	false	ERROR (frontend failed, after parsing finished)	3.68106	1.235196918999975	245.133312
+pthread-ext/37_stack_lock_p0_vs_concur.yml	true	ERROR (frontend failed, after parsing finished)	3.966702	1.3194796699999642	243.249152
+pthread-ext/38_rand_cas_vs_concur.yml	false	ERROR (server error, after parsing finished)	3.888048	1.2996220890000245	259.186688
+pthread-ext/39_rand_lock_p0_vs-b.yml	false	ERROR (server error, after parsing finished)	3.878112	1.3127273110000033	225.312768
+pthread-ext/39_rand_lock_p0_vs.yml	true	ERROR (frontend failed, after parsing finished)	3.151964	1.4064402569999856	227.561472
+pthread-ext/40_barrier_vf-b.yml	false	ERROR (server error, after parsing finished)	3.905592	1.3172340730000087	241.188864
+pthread-ext/40_barrier_vf.yml	true	ERROR (frontend failed, after parsing finished)	3.448217	1.179524602000015	257.490944
+pthread-ext/41_FreeBSD_abd_kbd_sliced.yml	false	ERROR (server error, after parsing finished)	4.217648	1.4053961849999723	241.586176
+pthread-ext/42_FreeBSD_rdma_addr_sliced.yml	false	ERROR (server error, after parsing finished)	4.516314	1.4937197029999538	235.220992
+pthread-ext/43_NetBSD_sysmon_power_sliced-pthread.yml	true	ERROR (frontend failed, after parsing finished)	4.262088	1.4021435259999748	260.296704
+pthread-ext/43_NetBSD_sysmon_power_sliced.yml	true	ERROR (server error, after parsing finished)	5.112367	1.6651774210000099	248.422400
+pthread-ext/43_NetBSD_sysmon_power_sliced_2.yml	false	ERROR (server error, after parsing finished)	4.895646	1.591234466000003	250.077184
+pthread-ext/44_Solaris_space_map_sliced.yml	false	ERROR (server error, after parsing finished)	4.66446	1.5319687740000063	236.113920
+pthread-ext/45_monabsex1_vs-b.yml	false	ERROR (server error, after parsing finished)	3.835163	1.2971000079999726	260.415488
+pthread-ext/45_monabsex1_vs.yml	true	true	3.520744	1.1847185120000177	258.138112
+pthread-ext/46_monabsex2_vs-b.yml	false	ERROR (server error, after parsing finished)	3.67406	1.2713515359999974	264.224768
+pthread-ext/46_monabsex2_vs.yml	true	true	3.733079	1.2703972050000516	257.581056
+pthread-ext/47_ticket_lock_hc_backoff_vs.yml	false	ERROR (server error, after parsing finished)	4.045404	1.3592879710000147	245.616640
+pthread-ext/48_ticket_lock_low_contention_vs-b.yml	false	ERROR (server error, after parsing finished)	3.904223	1.3165176929999802	244.105216
+pthread-ext/48_ticket_lock_low_contention_vs-pthread.yml	true	ERROR (frontend failed, after parsing finished)	3.760222	1.2771084219999693	250.335232
+pthread-ext/48_ticket_lock_low_contention_vs.yml	true	ERROR (server error, after parsing finished)	3.555705	1.185937492999983	226.152448
+pthread-wmm/mix000.oepc.yml	true	true	4.560192	1.4843678330000216	237.768704
+pthread-wmm/mix000.opt.yml	true	true	4.507237	1.4608971499999939	250.839040
+pthread-wmm/mix001.oepc.yml	true	true	4.797261	1.5664278659999695	248.492032
+pthread-wmm/mix001.opt.yml	true	true	4.536625	1.4864813039999945	234.631168
+pthread-wmm/mix002.oepc.yml	true	true	4.57808	1.5101434649999987	249.483264
+pthread-wmm/mix002.opt.yml	true	true	4.375449	1.417540563999978	252.964864
+pthread-wmm/mix003.oepc.yml	true	true	4.299153	1.4000063329999648	252.329984
+pthread-wmm/mix003_power.opt_pso.opt_rmo.opt_tso.opt.yml	true	true	4.735746	1.5467114570000149	240.578560
+pthread-wmm/mix004.oepc.yml	true	true	4.674899	1.5332189160000098	244.924416
+pthread-wmm/mix004.opt.yml	true	true	4.75404	1.5410470979999218	251.944960
+pthread-wmm/mix005.opt.yml	true	true	4.708915	1.529455860999974	248.680448
+pthread-wmm/mix005_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.458473	1.4371921850000717	237.604864
+pthread-wmm/mix005_tso.oepc.yml	true	true	4.851591	1.579933933999996	244.166656
+pthread-wmm/mix006.opt.yml	true	true	4.557687	1.4914768779999577	245.731328
+pthread-wmm/mix006_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.772169	1.5576979469999515	250.368000
+pthread-wmm/mix006_tso.oepc.yml	true	true	5.089189	1.639528745000007	237.457408
+pthread-wmm/mix007.oepc.yml	true	true	3.664247	1.5866957800000137	237.723648
+pthread-wmm/mix007.opt.yml	true	true	4.553972	1.487463129000048	237.223936
+pthread-wmm/mix008.opt.yml	true	true	4.815985	1.5619779199998902	246.976512
+pthread-wmm/mix008_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.686799	1.5327280050000809	249.049088
+pthread-wmm/mix008_tso.oepc.yml	true	true	4.988582	1.5993523059999006	253.730816
+pthread-wmm/mix009.oepc.yml	true	true	4.531347	1.4837718670000868	250.851328
+pthread-wmm/mix009.opt.yml	true	true	4.481297	1.4596717220000528	249.204736
+pthread-wmm/mix010.oepc.yml	true	true	4.761133	1.5668759229999978	249.663488
+pthread-wmm/mix010.opt.yml	true	true	4.703305	1.5341425309999295	253.886464
+pthread-wmm/mix011.opt.yml	true	true	4.655398	1.5124139629999718	249.528320
+pthread-wmm/mix011_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.55849	1.5072422099999585	249.647104
+pthread-wmm/mix011_tso.oepc.yml	true	true	4.372399	1.4212464130000626	251.330560
+pthread-wmm/mix012_power.oepc_power.opt_pso.oepc_rmo.oepc_rmo.opt_tso.oepc.yml	true	true	4.426283	1.4473596609999504	246.288384
+pthread-wmm/mix012_pso.opt_tso.opt.yml	true	true	4.353844	1.4026897659999804	252.530688
+pthread-wmm/mix013.oepc.yml	true	true	4.728447	1.5329084510000257	249.634816
+pthread-wmm/mix013.opt.yml	true	true	4.898624	1.6116428340000084	250.519552
+pthread-wmm/mix014.opt.yml	true	true	4.423888	1.4250070750000532	248.860672
+pthread-wmm/mix014_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.980538	1.6303762369999504	250.839040
+pthread-wmm/mix014_tso.oepc.yml	true	true	5.148962	1.6582224400000314	248.188928
+pthread-wmm/mix015.oepc.yml	true	true	4.581559	1.5043819260000646	249.634816
+pthread-wmm/mix015.opt.yml	true	true	4.678192	1.5237289130000136	254.226432
+pthread-wmm/mix016.oepc.yml	true	true	4.755502	1.5528304599999956	248.569856
+pthread-wmm/mix016_power.opt_rmo.opt.yml	true	true	4.205103	1.376595954000095	247.017472
+pthread-wmm/mix016_pso.opt_tso.opt.yml	true	true	4.65155	1.5246970299999703	248.967168
+pthread-wmm/mix017.oepc.yml	true	true	4.376125	1.4072231650000049	253.325312
+pthread-wmm/mix017_power.opt_rmo.opt.yml	true	true	4.593291	1.5085574539999698	236.953600
+pthread-wmm/mix017_pso.opt_tso.opt.yml	true	true	4.752722	1.5472554830000718	250.884096
+pthread-wmm/mix018.opt.yml	true	true	4.831099	1.5946231259999877	244.289536
+pthread-wmm/mix018_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.644561	1.5335839959999475	248.406016
+pthread-wmm/mix018_tso.oepc.yml	true	true	4.428464	1.4129379199999903	254.021632
+pthread-wmm/mix019.opt.yml	true	true	4.597022	1.5077575239999987	234.053632
+pthread-wmm/mix019_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.590393	1.5117470650000087	246.636544
+pthread-wmm/mix019_tso.oepc.yml	true	true	4.750179	1.5572384640000791	247.967744
+pthread-wmm/mix020.oepc.yml	true	true	4.484012	1.4483455149999145	252.231680
+pthread-wmm/mix020.opt.yml	true	true	4.462929	1.418407602000002	250.130432
+pthread-wmm/mix021.opt.yml	true	true	4.721512	1.5372124959999383	246.243328
+pthread-wmm/mix021_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.436802	1.428197151000063	254.722048
+pthread-wmm/mix021_tso.oepc.yml	true	true	4.672337	1.523411044999989	247.193600
+pthread-wmm/mix022_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.43843	1.4578756180000028	235.630592
+pthread-wmm/mix022_tso.yml	true	true	3.694854	1.588560904000019	219.201536
+pthread-wmm/mix023_power.oepc_pso.oepc_rmo.oepc.yml	true	true	3.839526	1.641399438999997	232.755200
+pthread-wmm/mix023_power.opt_pso.opt_rmo.opt.yml	true	true	4.56815	1.4871828789999881	247.787520
+pthread-wmm/mix023_tso.yml	true	true	5.27042	1.694464131000018	238.776320
+pthread-wmm/mix024_power.oepc_pso.oepc_rmo.oepc_tso.oepc_tso.opt.yml	true	true	4.329062	1.394203057000027	255.410176
+pthread-wmm/mix024_power.opt_pso.opt_rmo.opt.yml	true	true	4.518408	1.476327187000038	250.384384
+pthread-wmm/mix025_power.oepc_power.opt_pso.oepc_rmo.oepc_tso.oepc_tso.opt.yml	true	true	4.303157	1.38151256499998	252.706816
+pthread-wmm/mix025_pso.opt_rmo.opt.yml	true	true	4.522082	1.464608457000054	253.165568
+pthread-wmm/mix026.oepc.yml	true	true	4.83746	1.5729096910000635	250.671104
+pthread-wmm/mix026_power.opt_tso.opt.yml	true	true	4.701883	1.5335836840000638	252.276736
+pthread-wmm/mix026_pso.opt_rmo.opt.yml	true	true	4.609861	1.502528954000013	252.116992
+pthread-wmm/mix027_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.407098	1.4223719899999878	255.356928
+pthread-wmm/mix027_power.opt_pso.opt_rmo.opt.yml	true	true	4.762071	1.5530288470000642	248.291328
+pthread-wmm/mix027_tso.yml	true	true	4.743862	1.5140848769999593	249.909248
+pthread-wmm/mix028_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.526108	1.4817979860000605	236.257280
+pthread-wmm/mix028_power.opt_pso.opt_rmo.opt.yml	true	true	4.301675	1.3787041780000209	253.378560
+pthread-wmm/mix028_tso.yml	true	true	3.936839	1.68698336500006	234.852352
+pthread-wmm/mix029_power.oepc_pso.oepc_rmo.oepc_tso.oepc_tso.opt.yml	true	true	4.655079	1.517039158999978	248.102912
+pthread-wmm/mix029_power.opt_pso.opt_rmo.opt.yml	true	true	4.714599	1.54009487299993	249.053184
+pthread-wmm/mix030_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.619409	1.5128554780000059	248.995840
+pthread-wmm/mix030_power.opt_pso.opt_rmo.opt.yml	true	true	4.633506	1.5252882260000433	234.065920
+pthread-wmm/mix030_tso.yml	true	true	4.527698	1.4504848840000477	253.304832
+pthread-wmm/mix031.oepc.yml	true	true	4.225133	1.365293716999986	252.411904
+pthread-wmm/mix031.opt.yml	true	true	4.574639	1.5078245549999565	230.690816
+pthread-wmm/mix032.oepc.yml	true	true	4.716015	1.5404558889999862	240.697344
+pthread-wmm/mix032.opt.yml	true	true	4.467283	1.441535536999936	249.679872
+pthread-wmm/mix033.opt.yml	true	true	4.357248	1.4085824710000452	252.833792
+pthread-wmm/mix033_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.645297	1.5081685209999023	246.665216
+pthread-wmm/mix033_tso.oepc.yml	true	true	4.692679	1.5341268810000201	248.766464
+pthread-wmm/mix034_power.oepc_power.opt_pso.oepc_rmo.oepc_rmo.opt_tso.oepc.yml	true	true	4.559535	1.502656160000015	245.833728
+pthread-wmm/mix034_pso.opt_tso.opt.yml	true	true	4.375833	1.442218521999962	249.647104
+pthread-wmm/mix035.oepc.yml	true	true	4.56817	1.4996529160000591	252.022784
+pthread-wmm/mix035_power.opt_rmo.opt.yml	true	true	4.525115	1.494994773999906	249.667584
+pthread-wmm/mix035_pso.opt_tso.opt.yml	true	true	4.46394	1.4766304089999949	247.332864
+pthread-wmm/mix036.oepc.yml	true	true	4.51335	1.4633116290000316	251.117568
+pthread-wmm/mix036_power.opt_rmo.opt.yml	true	true	3.417061	1.4574710099999493	218.112000
+pthread-wmm/mix036_pso.opt_tso.opt.yml	true	true	4.735769	1.5542713950000007	250.441728
+pthread-wmm/mix037.opt.yml	true	true	4.340318	1.3978740610000386	246.734848
+pthread-wmm/mix037_power.oepc_pso.oepc_rmo.oepc.yml	true	true	3.649648	1.5606743939999888	235.565056
+pthread-wmm/mix037_tso.oepc.yml	true	true	4.675054	1.5291049159999375	248.442880
+pthread-wmm/mix038.opt.yml	true	true	4.544692	1.496319341000003	235.892736
+pthread-wmm/mix038_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.84453	1.5961285189999899	250.077184
+pthread-wmm/mix038_tso.oepc.yml	true	true	4.828844	1.5736829399999124	247.373824
+pthread-wmm/mix039.oepc.yml	true	true	4.611077	1.521183581999935	235.466752
+pthread-wmm/mix039.opt.yml	true	true	4.393736	1.4284450879999895	253.358080
+pthread-wmm/mix040.opt.yml	true	true	4.617003	1.5087585830000307	248.827904
+pthread-wmm/mix040_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.575086	1.4925888179999447	247.500800
+pthread-wmm/mix040_tso.oepc.yml	true	true	4.444854	1.4387991209999882	251.346944
+pthread-wmm/mix041_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.433313	1.428430875999993	250.535936
+pthread-wmm/mix041_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.406088	1.4368050970000468	233.062400
+pthread-wmm/mix042.oepc.yml	true	true	4.313411	1.3918592980000994	254.222336
+pthread-wmm/mix042.opt.yml	true	true	4.631275	1.5074629110000615	239.005696
+pthread-wmm/mix043.oepc.yml	true	true	4.317702	1.4112539440000091	247.910400
+pthread-wmm/mix043.opt.yml	true	true	4.372873	1.4204987309999524	234.086400
+pthread-wmm/mix044.opt.yml	true	true	4.356716	1.4048608360000117	253.992960
+pthread-wmm/mix044_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.730395	1.5439308940000274	249.438208
+pthread-wmm/mix044_tso.oepc.yml	true	true	4.943833	1.6118686540000908	248.647680
+pthread-wmm/mix045_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.306276	1.3919581049999579	255.578112
+pthread-wmm/mix045_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.527133	1.4867253709999204	245.952512
+pthread-wmm/mix046.oepc.yml	true	true	4.908188	1.600814076000006	249.004032
+pthread-wmm/mix046.opt.yml	true	true	4.743881	1.5323147329999074	248.180736
+pthread-wmm/mix047_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.636771	1.5079919339999606	233.885696
+pthread-wmm/mix047_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.386537	1.427102246000004	253.161472
+pthread-wmm/mix048_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt_tso.oepc_tso.opt-podwr000_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.424888	1.4527432959999942	235.188224
+pthread-wmm/mix049_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt_tso.oepc_tso.opt-podwr001_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.582701	1.5003320249999206	248.422400
+pthread-wmm/mix050.yml	true	true	4.622139	1.5120200509999222	233.693184
+pthread-wmm/mix051_power.oepc_power.opt_pso.oepc_rmo.oepc.yml	true	true	3.632185	1.563735371000007	231.759872
+pthread-wmm/mix051_pso.opt_rmo.opt_tso.opt.yml	true	true	4.492803	1.4644128070000306	253.345792
+pthread-wmm/mix051_tso.oepc.yml	true	true	4.420082	1.438884540999993	254.521344
+pthread-wmm/mix052_power.oepc_power.opt_pso.oepc_rmo.oepc.yml	true	true	4.65742	1.5265556740000648	236.855296
+pthread-wmm/mix052_pso.opt_rmo.opt_tso.opt.yml	true	true	4.530041	1.4903363060000174	251.621376
+pthread-wmm/mix052_tso.oepc.yml	true	true	4.326181	1.388853825999945	232.017920
+pthread-wmm/mix053.opt.yml	true	true	4.459142	1.4445668149999165	236.265472
+pthread-wmm/mix053_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.604769	1.518199009	234.729472
+pthread-wmm/mix053_tso.oepc.yml	true	true	4.46108	1.4322601940000368	253.136896
+pthread-wmm/mix054_power.oepc_power.opt_pso.oepc_rmo.oepc.yml	true	true	4.216999	1.3613110630000165	253.652992
+pthread-wmm/mix054_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	3.488846	1.5275586859999066	231.489536
+pthread-wmm/mix055.opt.yml	true	true	4.713802	1.5289945099999613	248.758272
+pthread-wmm/mix055_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.697103	1.5389590839999983	246.587392
+pthread-wmm/mix055_tso.oepc.yml	true	true	4.780386	1.5605727470000375	251.703296
+pthread-wmm/mix056_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.566437	1.4858003630000667	253.177856
+pthread-wmm/mix056_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.575775	1.4970385849999275	248.197120
+pthread-wmm/mix057_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.605274	1.5124843159999273	244.174848
+pthread-wmm/mix057_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.354649	1.4086167589999832	254.431232
+pthread-wmm/rfi000_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.908518	1.612503777000029	248.713216
+pthread-wmm/rfi000_power.opt_pso.opt_rmo.opt.yml	true	true	3.686638	1.5947340499999427	221.450240
+pthread-wmm/rfi000_tso.yml	true	true	4.946753	1.6001025829999662	250.986496
+pthread-wmm/rfi001_power.oepc_pso.oepc_rmo.oepc.yml	true	true	3.393489	1.4595218800000112	231.849984
+pthread-wmm/rfi001_power.opt_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.440813	1.4502102819999436	247.853056
+pthread-wmm/rfi002_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.719173	1.5448401830000194	252.698624
+pthread-wmm/rfi002_tso.yml	true	true	3.81954	1.636358868000002	235.450368
+pthread-wmm/rfi003_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.230883	1.3756443160000345	241.651712
+pthread-wmm/rfi003_tso.yml	true	true	4.478663	1.4494783849999067	249.573376
+pthread-wmm/rfi004.yml	true	true	4.496624	1.4799428879999823	250.531840
+pthread-wmm/rfi005.yml	true	true	4.641525	1.5072518059999993	246.398976
+pthread-wmm/rfi006_power.oepc.yml	true	true	4.635769	1.5057011810000631	247.287808
+pthread-wmm/rfi006_power.opt.yml	true	true	4.761074	1.5395222120000653	248.160256
+pthread-wmm/rfi006_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.514468	1.465689737000048	255.328256
+pthread-wmm/rfi006_rmo.yml	true	true	4.31124	1.3894973430000164	249.782272
+pthread-wmm/rfi007_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.132122	1.337371112000028	247.963648
+pthread-wmm/rfi007_tso.yml	true	true	3.601594	1.5475237979999292	235.454464
+pthread-wmm/rfi008.oepc.yml	true	true	4.56151	1.4981763629999705	248.688640
+pthread-wmm/rfi008.opt.yml	true	true	4.227932	1.3732273829999713	252.514304
+pthread-wmm/rfi009_power.oepc.yml	true	true	4.509802	1.4580174909999641	248.606720
+pthread-wmm/rfi009_power.opt_pso.oepc_pso.opt_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.637266	1.5098965309999812	253.251584
+pthread-wmm/rfi009_rmo.oepc.yml	true	true	4.703779	1.526561519999973	247.918592
+pthread-wmm/rfi010.yml	true	true	4.54752	1.507926268999995	236.699648
+pthread-wmm/safe000_power.oepc.yml	true	true	4.882621	1.5843136539999705	249.860096
+pthread-wmm/safe000_power.opt.yml	true	true	4.98078	1.6206555979999848	251.125760
+pthread-wmm/safe000_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.048992	1.3544422029999623	246.710272
+pthread-wmm/safe000_rmo.yml	true	true	5.016051	1.6298359610000261	249.081856
+pthread-wmm/safe001_power.oepc.yml	true	true	4.810291	1.5563326190000453	242.216960
+pthread-wmm/safe001_power.opt_pso.oepc_pso.opt_rmo.opt.yml	true	true	4.592759	1.506178953000017	247.304192
+pthread-wmm/safe001_rmo.oepc.yml	true	true	4.847547	1.5863611230000743	235.298816
+pthread-wmm/safe001_tso.yml	true	true	3.959083	1.3214267119999477	244.748288
+pthread-wmm/safe002_power.oepc.yml	true	true	4.769193	1.5412714269999697	248.934400
+pthread-wmm/safe002_power.opt_pso.oepc_pso.opt_rmo.opt.yml	true	true	4.511763	1.4673764850000452	247.676928
+pthread-wmm/safe002_rmo.oepc.yml	true	true	4.574896	1.4705593469999485	253.128704
+pthread-wmm/safe002_tso.yml	true	true	4.276988	1.437016402999916	248.832000
+pthread-wmm/safe003_power.oepc_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.53896	1.4703940670000293	249.049088
+pthread-wmm/safe003_power.opt.yml	true	true	4.600454	1.4931229879999819	246.136832
+pthread-wmm/safe003_tso.yml	true	true	4.061283	1.3337738839999247	234.647552
+pthread-wmm/safe004_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.530519	1.461605645000077	253.296640
+pthread-wmm/safe004_power.opt_pso.opt_rmo.opt.yml	true	true	3.561389	1.5381445230000281	231.833600
+pthread-wmm/safe004_tso.yml	true	true	3.359128	1.4633438309999747	231.047168
+pthread-wmm/safe005_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.497873	1.4802229329999363	238.395392
+pthread-wmm/safe005_tso.yml	true	true	4.025267	1.3430813800000578	245.850112
+pthread-wmm/safe006_power.oepc-thin000_power.oepc.yml	true	true	4.494154	1.4733142779999753	247.947264
+pthread-wmm/safe006_power.opt-thin000_power.opt.yml	true	true	4.580938	1.497388575000059	249.188352
+pthread-wmm/safe006_pso.oepc_pso.opt_tso.oepc_tso.opt-thin000_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	3.254738	1.4344043350000675	214.904832
+pthread-wmm/safe006_rmo.oepc_rmo.opt-thin000_rmo.oepc_rmo.opt.yml	true	true	3.972018	1.757409708999944	234.389504
+pthread-wmm/safe007_power.oepc-thin001_power.oepc.yml	true	true	4.609432	1.5083615820000205	247.885824
+pthread-wmm/safe007_power.opt-thin001_power.opt.yml	true	true	4.707712	1.5299326020000308	246.448128
+pthread-wmm/safe007_pso.oepc_pso.opt_tso.oepc_tso.opt-thin001_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.162768	1.400877107000042	232.345600
+pthread-wmm/safe007_rmo.oepc_rmo.opt-thin001_rmo.oepc_rmo.opt.yml	true	true	4.510297	1.4732690949999778	248.913920
+pthread-wmm/safe008_power.oepc_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.529868	1.4900916450000068	235.421696
+pthread-wmm/safe008_power.opt.yml	true	true	4.749487	1.5633710559999372	249.778176
+pthread-wmm/safe008_tso.yml	true	true	3.148086	1.3767690549999543	231.186432
+pthread-wmm/safe009_power.oepc.yml	true	true	4.834626	1.5658178910000515	248.565760
+pthread-wmm/safe009_power.opt.yml	true	true	4.923311	1.6101398819999986	248.455168
+pthread-wmm/safe009_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.127348	1.3651789329999247	244.715520
+pthread-wmm/safe009_rmo.oepc.yml	true	true	4.72011	1.534118858999932	252.284928
+pthread-wmm/safe009_rmo.opt.yml	true	true	4.787355	1.5723782339999843	251.654144
+pthread-wmm/safe010_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	3.695378	1.5851173749999816	235.032576
+pthread-wmm/safe010_tso.yml	true	true	3.727469	1.2726426420000507	249.933824
+pthread-wmm/safe011_power.oepc_pso.oepc_rmo.oepc_rmo.opt.yml	true	true	4.705163	1.5398920630000248	241.340416
+pthread-wmm/safe011_power.opt_pso.opt.yml	true	true	4.64426	1.5358326830000806	246.722560
+pthread-wmm/safe011_tso.yml	true	true	3.955166	1.333277718999966	237.133824
+pthread-wmm/safe012_power.oepc.yml	true	true	4.655058	1.5131351530000074	250.347520
+pthread-wmm/safe012_power.opt.yml	true	true	4.773379	1.5444545490000792	251.199488
+pthread-wmm/safe012_pso.oepc_pso.opt_rmo.opt.yml	true	true	4.465068	1.4646832150000364	249.544704
+pthread-wmm/safe012_rmo.oepc.yml	true	true	4.311315	1.3947957149999866	253.808640
+pthread-wmm/safe012_tso.yml	true	true	3.32889	1.432366409999986	231.612416
+pthread-wmm/safe013_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.548507	1.4838271239999585	247.009280
+pthread-wmm/safe013_tso.yml	true	true	4.063474	1.370242648000044	249.745408
+pthread-wmm/safe014_power.oepc.yml	true	true	3.522421	1.508406237000031	218.816512
+pthread-wmm/safe014_power.opt.yml	true	true	4.411248	1.41124154299996	250.953728
+pthread-wmm/safe014_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.043807	1.3558142350000253	235.384832
+pthread-wmm/safe014_rmo.oepc.yml	true	true	4.52377	1.4855626450000727	247.144448
+pthread-wmm/safe014_rmo.opt.yml	true	true	5.132934	1.6658782460000339	250.408960
+pthread-wmm/safe015_power.oepc.yml	true	true	4.945788	1.5962089930000047	248.774656
+pthread-wmm/safe015_power.opt.yml	true	true	4.940484	1.5999469560000534	252.284928
+pthread-wmm/safe015_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.069861	1.346014236999963	239.837184
+pthread-wmm/safe015_rmo.yml	true	true	4.963297	1.6054997500000354	236.982272
+pthread-wmm/safe016_power.oepc.yml	true	true	4.923167	1.6127731249999897	250.851328
+pthread-wmm/safe016_power.opt.yml	true	true	4.908331	1.587199241999997	248.180736
+pthread-wmm/safe016_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.033135	1.332832628999995	234.635264
+pthread-wmm/safe016_rmo.oepc.yml	true	true	4.528876	1.4562780809999367	247.422976
+pthread-wmm/safe016_rmo.opt.yml	true	true	4.729477	1.5368444069999896	239.190016
+pthread-wmm/safe017_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.521486	1.4918447510000306	237.215744
+pthread-wmm/safe017_tso.yml	true	true	3.307133	1.4599894970000378	214.552576
+pthread-wmm/safe018_power.oepc.yml	true	true	3.590465	1.5648349209999424	235.429888
+pthread-wmm/safe018_power.opt.yml	true	true	3.922675	1.6694920350000757	222.867456
+pthread-wmm/safe018_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.037165	1.3556642989999546	235.945984
+pthread-wmm/safe018_rmo.oepc.yml	true	true	4.350143	1.395581902999993	247.066624
+pthread-wmm/safe018_rmo.opt.yml	true	true	4.687835	1.5313003579999531	248.549376
+pthread-wmm/safe019_power.oepc.yml	true	true	4.769222	1.5402424220000057	248.905728
+pthread-wmm/safe019_power.opt.yml	true	true	4.719688	1.5293058849999852	245.637120
+pthread-wmm/safe019_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.097523	1.3656413129999692	244.862976
+pthread-wmm/safe019_rmo.oepc.yml	true	true	4.855144	1.57390603500005	247.898112
+pthread-wmm/safe019_rmo.opt.yml	true	true	4.778109	1.538031644000057	248.897536
+pthread-wmm/safe020_power.yml	true	true	4.900431	1.5967664400000103	250.818560
+pthread-wmm/safe020_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	3.796303	1.2483740559999887	253.857792
+pthread-wmm/safe020_rmo.yml	true	true	4.627523	1.498881143999938	249.196544
+pthread-wmm/safe021_power.oepc_pso.oepc_rmo.oepc_rmo.opt.yml	true	true	4.423683	1.4564534410000078	238.534656
+pthread-wmm/safe021_power.opt_pso.opt.yml	true	true	4.879097	1.5852458350000234	249.094144
+pthread-wmm/safe021_tso.yml	true	true	3.967441	1.3371284380000361	241.639424
+pthread-wmm/safe022_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.430836	1.4647093659999655	237.809664
+pthread-wmm/safe022_tso.yml	true	true	3.962864	1.3371188170000323	232.792064
+pthread-wmm/safe023_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.506503	1.4449497339999198	255.160320
+pthread-wmm/safe023_tso.yml	true	true	4.066901	1.3464632609999398	236.859392
+pthread-wmm/safe024_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.566834	1.4912304939999785	248.549376
+pthread-wmm/safe024_tso.yml	true	true	4.233696	1.4288916059999792	228.995072
+pthread-wmm/safe025_power.yml	true	true	4.172112	1.79310891800003	221.065216
+pthread-wmm/safe025_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	3.449898	1.5206607039999653	217.780224
+pthread-wmm/safe025_rmo.yml	true	true	4.855022	1.5728617539999732	253.386752
+pthread-wmm/safe026_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.387195	1.4290763850000303	253.468672
+pthread-wmm/safe026_tso.yml	true	true	3.805663	1.2748728940000547	253.939712
+pthread-wmm/safe027_power.oepc.yml	true	true	4.733141	1.5124241299999994	250.601472
+pthread-wmm/safe027_power.opt.yml	true	true	3.844859	1.6360303879999947	232.280064
+pthread-wmm/safe027_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	3.250086	1.4313683039999887	221.413376
+pthread-wmm/safe027_rmo.yml	true	true	4.754545	1.5479659630000242	252.116992
+pthread-wmm/safe028_power.yml	true	true	4.703272	1.5280234929999779	251.265024
+pthread-wmm/safe028_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.013901	1.340292274000035	244.146176
+pthread-wmm/safe028_rmo.yml	true	true	4.339143	1.3911093210000445	230.592512
+pthread-wmm/safe029_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.515747	1.4957513770000332	231.895040
+pthread-wmm/safe029_power.opt_pso.opt_rmo.opt.yml	true	true	4.467144	1.4654234739999765	251.699200
+pthread-wmm/safe029_tso.yml	true	true	3.677322	1.2343483849999757	245.837824
+pthread-wmm/safe030_power.oepc_pso.oepc_rmo.oepc.yml	true	true	4.490914	1.448884420000013	247.222272
+pthread-wmm/safe030_power.opt_pso.opt_rmo.opt.yml	true	true	4.416985	1.4380406350001067	249.516032
+pthread-wmm/safe030_tso.yml	true	true	4.106621	1.3779582770000616	245.981184
+pthread-wmm/safe031_power.oepc_pso.oepc_rmo.oepc.yml	true	true	3.466337	1.4998546269999906	231.849984
+pthread-wmm/safe031_power.opt_pso.opt_rmo.opt.yml	true	true	4.638121	1.527204203999986	234.160128
+pthread-wmm/safe031_tso.yml	true	true	3.37683	1.4715135709999458	230.498304
+pthread-wmm/safe032_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.510545	1.4415628220000372	253.132800
+pthread-wmm/safe032_tso.yml	true	true	4.135092	1.3799735879999844	245.080064
+pthread-wmm/safe033_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	4.160829	1.3691047180000169	254.763008
+pthread-wmm/safe033_tso.yml	true	true	3.401969	1.5139243260000512	230.236160
+pthread-wmm/safe034_power.oepc_power.opt_pso.oepc_pso.opt_rmo.oepc_rmo.opt.yml	true	true	3.498461	1.5096895899999936	231.759872
+pthread-wmm/safe034_tso.yml	true	true	3.438174	1.518553053000005	231.006208
+pthread-wmm/safe035_power.yml	true	true	3.919062	1.6594447830000263	224.989184
+pthread-wmm/safe035_pso.oepc_pso.opt_rmo.oepc_rmo.opt_tso.oepc_tso.opt.yml	true	true	4.039203	1.3448580329999231	239.497216
+pthread-wmm/safe036.yml	true	true	3.667379	1.2297796999999946	246.169600
+pthread-wmm/safe037.yml	true	true	4.133728	1.3690323879999369	253.038592
+pthread-wmm/thin002_power.oepc.yml	true	true	4.792682	1.5554625140000553	247.644160
+pthread-wmm/thin002_power.opt.yml	true	true	4.886004	1.5784202679999453	243.777536
+pthread-wmm/thin002_pso.oepc_pso.opt_tso.oepc_tso.opt.yml	true	true	4.165801	1.3778060520000963	247.144448
+pthread-wmm/thin002_rmo.yml	true	true	4.46645	1.4449320380000472	250.175488
+pthread-lit/fk2012.yml	false	ERROR (server error, after parsing finished)	4.506619	1.4948839859999907	264.376320
+pthread-lit/fkp2013-1.yml	false	ERROR (server error, after parsing finished)	4.620141	1.536815041000068	314.073088
+pthread-lit/fkp2013-2.yml	false	ERROR (server error, after parsing finished)	4.593097	1.5315465190000168	309.694464
+pthread-lit/fkp2013_variant-1.yml	false	ERROR (server error, after parsing finished)	4.056744	1.37215602699996	255.942656
+pthread-lit/fkp2013_variant-2.yml	false	ERROR (server error, after parsing finished)	3.996842	1.3593002569999726	248.713216
+pthread-lit/fkp2014.yml	false	ERROR (server error, after parsing finished)	3.903186	1.3271054260000028	258.879488
+pthread-lit/qw2004-1.yml	false	ERROR (server error, after parsing finished)	3.236749	1.4344909379999535	255.770624
+pthread-lit/qw2004-2.yml	false	ERROR (server error, after parsing finished)	4.182666	1.386272587999997	259.190784
+pthread-lit/qw2004-2b.yml	true	true	4.117331	1.3678373919999558	271.319040
+pthread-lit/qw2004_variant.yml	false	ERROR (server error, after parsing finished)	4.348928	1.4729729439999346	295.182336
+pthread-lit/sssc12.yml	true	ERROR (frontend failed, after parsing finished)	3.749236	1.7023745159999635	276.508672
+pthread-lit/sssc12_variant.yml	true	ERROR (frontend failed, after parsing finished)	4.464095	1.4915260289999424	288.583680
+ldv-races/race-1_1-join.yml	true	ERROR (frontend failed, after parsing finished)	5.121203	1.7077384660000234	287.916032
+ldv-races/race-1_2-join.yml	true	ERROR (frontend failed, after parsing finished)	4.417166	1.4634148640000149	282.963968
+ldv-races/race-1_2b-join.yml	false	ERROR (frontend failed, after parsing finished)	4.317506	1.430370612000047	289.251328
+ldv-races/race-1_3-join.yml	true	ERROR (frontend failed, after parsing finished)	3.885746	1.753374534000045	283.545600
+ldv-races/race-1_3b-join.yml	false	ERROR (frontend failed, after parsing finished)	4.851765	1.6200342020000562	289.525760
+ldv-races/race-2_1-container_of.yml	true	ERROR (frontend failed, before parsing finished)	3.753394	1.329416235999929	278.368256
+ldv-races/race-2_2-container_of.yml	true	ERROR (frontend failed, before parsing finished)	3.840451	1.3468047650000017	282.607616
+ldv-races/race-2_2b-container_of.yml	false	ERROR (frontend failed, before parsing finished)	3.715217	1.3018885970000156	274.444288
+ldv-races/race-2_3-container_of.yml	true	ERROR (frontend failed, before parsing finished)	3.274258	1.1718542889999526	267.104256
+ldv-races/race-2_3b-container_of.yml	false	ERROR (frontend failed, before parsing finished)	3.618343	1.2697443049999038	269.414400
+ldv-races/race-2_4-container_of.yml	true	ERROR (frontend failed, before parsing finished)	3.343452	1.5812657349999881	271.785984
+ldv-races/race-2_4b-container_of.yml	false	ERROR (frontend failed, before parsing finished)	3.777437	1.311709384999972	279.031808
+ldv-races/race-2_5-container_of.yml	true	ERROR (frontend failed, before parsing finished)	3.222355	1.13697614900002	268.517376
+ldv-races/race-2_5b-container_of.yml	false	ERROR (frontend failed, before parsing finished)	2.93122	1.3603102160000162	254.267392
+ldv-races/race-3_1-container_of-global.yml	true	ERROR (frontend failed, before parsing finished)	3.874619	1.3530806410000196	284.684288
+ldv-races/race-3_2-container_of-global.yml	true	ERROR (frontend failed, before parsing finished)	3.65182	1.2804953070000238	278.716416
+ldv-races/race-3_2b-container_of-global.yml	false	ERROR (frontend failed, before parsing finished)	3.72561	1.3039535309999337	277.884928
+ldv-races/race-4_1-thread_local_vars.yml	true	ERROR (frontend failed, after parsing finished)	5.290917	1.7519406719999324	296.644608
+ldv-races/race-4_2-thread_local_vars.yml	false	ERROR (frontend failed, after parsing finished)	5.325646	1.7627584820000948	284.401664
+ldv-linux-3.14-races/linux-3.14--drivers--media--platform--marvell-ccic--cafe_ccic.ko.cil-1.yml	true	ERROR (frontend failed, before parsing finished)	6.830763	2.2157699220000495	367.820800
+ldv-linux-3.14-races/linux-3.14--drivers--media--platform--marvell-ccic--cafe_ccic.ko.cil-2.yml	true	ERROR (frontend failed, before parsing finished)	7.737022	2.644943818999991	359.530496
+ldv-linux-3.14-races/linux-3.14--drivers--net--irda--nsc-ircc.ko.cil.yml	true	ERROR (frontend failed, before parsing finished)	7.416857	2.4694832229999975	363.212800
+ldv-linux-3.14-races/linux-3.14--drivers--net--irda--w83977af_ir.ko.cil.yml	true	ERROR (frontend failed, before parsing finished)	6.744577	2.2584160210000164	353.177600
+ldv-linux-3.14-races/linux-3.14--drivers--spi--spi-tegra20-slink.ko.cil.yml	true	ERROR (frontend failed, before parsing finished)	6.294578	2.077287788000035	353.746944
+ldv-linux-3.14-races/linux-3.14--drivers--usb--misc--adutux.ko.cil.yml	true	ERROR (frontend failed, before parsing finished)	5.360809	1.7559795500000064	348.909568
+pthread-complex/bounded_buffer.yml	true	ERROR (frontend failed, before parsing finished)	4.395589	1.5070813129999578	288.079872
+pthread-complex/elimination_backoff_stack-race.yml	false	ERROR (frontend failed, before parsing finished)	4.493734	1.523702391000029	286.507008
+pthread-complex/elimination_backoff_stack.yml	true	ERROR (frontend failed, before parsing finished)	4.441108	1.4965232470000274	284.520448
+pthread-complex/safestack_relacy.yml	true	ERROR (server error, after parsing finished)	5.513706	1.8668868429999748	315.613184
+pthread-complex/workstealqueue_mutex-1.yml	false	ERROR (frontend failed, after parsing finished)	5.741174	1.9004366030000028	315.346944
+pthread-complex/workstealqueue_mutex-2.yml	true	ERROR (frontend failed, after parsing finished)	5.416427	1.7403755259999798	315.023360
+pthread-driver-races/char_generic_nvram_nvram_unlocked_ioctl_write_nvram.yml	true	ERROR (frontend failed, before parsing finished)	6.881721	2.561459806999892	391.479296
+pthread-driver-races/char_generic_nvram_read_nvram_nvram_unlocked_ioctl.yml	true	ERROR (frontend failed, before parsing finished)	7.020383	2.577436764999902	382.394368
+pthread-driver-races/char_generic_nvram_read_nvram_write_nvram-race.yml	false	ERROR (frontend failed, before parsing finished)	6.844191	2.5710270090000904	390.787072
+pthread-driver-races/char_generic_nvram_read_nvram_write_nvram.yml	true	ERROR (frontend failed, before parsing finished)	6.930218	2.271087994999789	401.354752
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_configure.yml	true	ERROR (frontend failed, before parsing finished)	7.290148	2.6569396259999394	425.709568
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_current-race.yml	false	ERROR (frontend failed, before parsing finished)	6.543669	2.5545653669998956	424.665088
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_current.yml	true	ERROR (frontend failed, before parsing finished)	6.424565	2.4810541760000433	433.209344
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_get.yml	true	ERROR (frontend failed, before parsing finished)	6.77207	2.5976297699999122	426.061824
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_set-race.yml	false	ERROR (frontend failed, before parsing finished)	6.323021	2.435213486000066	414.564352
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_change_pc8736x_gpio_set.yml	true	ERROR (frontend failed, before parsing finished)	7.215965	2.607337875999974	431.202304
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_configure_pc8736x_gpio_current.yml	true	ERROR (frontend failed, before parsing finished)	6.662093	2.594485665000093	418.181120
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_configure_pc8736x_gpio_get.yml	true	ERROR (frontend failed, before parsing finished)	7.295974	2.6484605259997807	430.817280
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_configure_pc8736x_gpio_set.yml	true	ERROR (frontend failed, before parsing finished)	6.905064	2.640620664999915	408.379392
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_current_pc8736x_gpio_get.yml	true	ERROR (frontend failed, before parsing finished)	7.185621	2.3526972969998496	409.444352
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_current_pc8736x_gpio_set-race.yml	false	ERROR (frontend failed, before parsing finished)	6.894611	2.6659449210001185	429.416448
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_current_pc8736x_gpio_set.yml	true	ERROR (frontend failed, before parsing finished)	6.570545	2.4752414029999272	422.535168
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_get_pc8736x_gpio_set.yml	true	ERROR (frontend failed, before parsing finished)	6.489013	2.5127712160001465	423.571456
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_open_pc8736x_gpio_change.yml	true	ERROR (frontend failed, before parsing finished)	6.634452	2.5605969709999954	423.636992
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_open_pc8736x_gpio_configure.yml	true	ERROR (frontend failed, before parsing finished)	6.472482	2.4600948830000107	416.047104
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_open_pc8736x_gpio_current.yml	true	ERROR (frontend failed, before parsing finished)	7.225967	2.752540229000033	426.635264
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_open_pc8736x_gpio_get.yml	true	ERROR (frontend failed, before parsing finished)	7.130052	2.3430846169999313	428.032000
+pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_open_pc8736x_gpio_set.yml	true	ERROR (frontend failed, before parsing finished)	7.288424	2.71369936699989	424.390656
+pthread-C-DAC/pthread-demo-datarace-1.yml	true	ERROR (frontend failed, after parsing finished)	5.327938	1.802832485000181	314.654720
+pthread-C-DAC/pthread-demo-datarace-2.yml	false	ERROR (server error, after parsing finished)	5.02194	1.6403161430000637	317.755392
+pthread-C-DAC/pthread-demo-datarace-3.yml	true	true	5.456274	1.7873356110001168	312.598528
+pthread-C-DAC/pthread-finding-k-matches.yml	true	ERROR (frontend failed, after parsing finished)	10.554673	4.806408179000073	344.391680
+pthread-C-DAC/pthread-numerical-integration.yml	true	ERROR (frontend failed, before parsing finished)	4.236699	1.4457902609999564	281.997312
+pthread-divine/barrier_2t.yml	false	ERROR (frontend failed, before parsing finished)	3.131601	1.096977693000099	238.043136
+pthread-divine/barrier_3t.yml	false	ERROR (frontend failed, before parsing finished)	3.065813	1.064152884999885	237.944832
+pthread-divine/condvar.yml	false	ERROR (frontend failed, after parsing finished)	4.134485	1.3618372830001135	292.401152
+pthread-divine/condvar_spurious_wakeup.yml	false	ERROR (frontend failed, after parsing finished)	4.012714	1.3300221059998876	290.533376
+pthread-divine/divinefifo-bug_1w1r.yml	false	ERROR (frontend failed, before parsing finished)	3.800015	1.306882776999828	283.213824
+pthread-divine/divinefifo_1w1r.yml	false	ERROR (frontend failed, before parsing finished)	3.793411	1.3079234649999307	280.637440
+pthread-divine/one_time_barrier_2t.yml	false	ERROR (frontend failed, before parsing finished)	3.301607	1.154972497000017	244.326400
+pthread-divine/one_time_barrier_3t.yml	false	ERROR (frontend failed, before parsing finished)	3.119092	1.0644835539999349	234.762240
+pthread-divine/one_time_barrier_twice_2t.yml	false	ERROR (frontend failed, before parsing finished)	3.347694	1.1509146160001364	254.062592
+pthread-divine/one_time_barrier_twice_3t.yml	false	ERROR (frontend failed, before parsing finished)	3.074219	1.0503284809999514	233.385984
+pthread-divine/ring_1w1r-1.yml	false	ERROR (frontend failed, before parsing finished)	3.248064	1.1355836330001239	268.189696
+pthread-divine/ring_1w1r-2.yml	false	ERROR (frontend failed, before parsing finished)	3.42964	1.1806977720000305	282.607616
+pthread-divine/ring_2w1r-1.yml	false	ERROR (frontend failed, before parsing finished)	3.94794	1.3525317380001525	278.003712
+pthread-divine/ring_2w1r-2.yml	false	ERROR (frontend failed, before parsing finished)	3.911915	1.3411693769999147	283.500544
+pthread-divine/tls_basic.yml	true	true	3.865502	1.280965495999908	269.832192
+pthread-divine/tls_destructor_worker.yml	true	true	3.863018	1.3265214349999042	265.850880
+pthread-nondet/nondet-array-1.yml	false	ERROR (server error, after parsing finished)	4.031399	1.3609716640000897	258.416640
+pthread-nondet/nondet-array-2.yml	false	ERROR (server error, after parsing finished)	3.863445	1.3048879469999974	263.155712
+pthread-nondet/nondet-loop-bound-1.yml	false	ERROR (server error, after parsing finished)	3.992116	1.3396854580000763	260.546560
+pthread-nondet/nondet-loop-bound-2.yml	false	ERROR (server error, after parsing finished)	3.738159	1.2532945530001598	262.475776
+pthread-nondet/nondet-loop-bound-variant-1.yml	false	ERROR (frontend failed, after parsing finished)	3.841876	1.2980369829999745	254.382080
+pthread-nondet/nondet-loop-bound-variant-2.yml	false	ERROR (frontend failed, after parsing finished)	3.636406	1.2177403330001653	261.574656
+goblint-regression/00-sanity_09-include.yml	false	ERROR (frontend failed, after parsing finished)	1.535428	0.6002998439998919	105.299968
+goblint-regression/02-base_24-malloc_races.yml	false	ERROR (frontend failed, after parsing finished)	1.540543	0.6167602990001342	109.170688
+goblint-regression/02-base_25-malloc_race_cp.yml	false	ERROR (frontend failed, after parsing finished)	1.595219	0.6321437460001107	109.707264
+goblint-regression/02-base_26-malloc_struct.yml	false	ERROR (frontend failed, after parsing finished)	1.649213	0.6449082650001401	108.281856
+goblint-regression/03-practical_07-nonterm.yml	false	ERROR (frontend failed, after parsing finished)	1.538746	0.6004774619998443	107.622400
+goblint-regression/03-practical_08-nonterm1.yml	false	ERROR (frontend failed, after parsing finished)	1.562977	0.6163427980000051	104.177664
+goblint-regression/03-practical_15-exit_problems.yml	false	ERROR (frontend failed, after parsing finished)	1.595744	0.6257363510001142	108.953600
+goblint-regression/04-mutex_01-simple_rc.yml	false	ERROR (frontend failed, after parsing finished)	1.552692	0.6031441610000456	107.536384
+goblint-regression/04-mutex_02-simple_nr.yml	true	ERROR (frontend failed, after parsing finished)	1.576522	0.6117789879999691	105.857024
+goblint-regression/04-mutex_03-munge_rc.yml	false	ERROR (frontend failed, after parsing finished)	1.562711	0.607431497999869	106.835968
+goblint-regression/04-mutex_04-munge_nr.yml	true	ERROR (frontend failed, after parsing finished)	1.591667	0.6143951110000216	107.716608
+goblint-regression/04-mutex_05-lockfuns.yml	true	ERROR (frontend failed, after parsing finished)	1.5147	0.606208388999903	107.786240
+goblint-regression/04-mutex_06-ps_rc.yml	false	ERROR (frontend failed, after parsing finished)	1.567296	0.6331445309999708	106.274816
+goblint-regression/04-mutex_07-ps_nr.yml	true				
+goblint-regression/04-mutex_09-ptrmunge_rc.yml	false				
+goblint-regression/04-mutex_10-ptrmunge_nr.yml	true				
+goblint-regression/04-mutex_11-ptr_rc.yml	false				
+goblint-regression/04-mutex_12-ptr_nr.yml	true				
+goblint-regression/04-mutex_14-funarg_rc.yml	false				
+goblint-regression/04-mutex_15-funarg_nr.yml	true				
+goblint-regression/04-mutex_16-ps_add1_rc.yml	false				
+goblint-regression/04-mutex_17-ps_add1_nr.yml	true				
+goblint-regression/04-mutex_18-glob_guards.yml	true				
+goblint-regression/04-mutex_19-call_by_ptr_rc.yml	false				
+goblint-regression/04-mutex_20-stdfun_rc.yml	false				
+goblint-regression/04-mutex_21-sound_base.yml	false				
+goblint-regression/04-mutex_22-deref_read.yml	true				
+goblint-regression/04-mutex_23-sound_unlock.yml	false				
+goblint-regression/04-mutex_24-sound_lock.yml	false				
+goblint-regression/04-mutex_25-single_acc.yml	false				
+goblint-regression/04-mutex_27-base_rc.yml	false				
+goblint-regression/04-mutex_28-base_nr.yml	true				
+goblint-regression/04-mutex_35-trylock_rc.yml	false				
+goblint-regression/04-mutex_36-trylock_nr.yml	true				
+goblint-regression/04-mutex_37-indirect_rc.yml	false				
+goblint-regression/04-mutex_38-indexing_malloc.yml	false				
+goblint-regression/04-mutex_41-pt_rwlock.yml	true				
+goblint-regression/04-mutex_42-trylock_2mutex.yml	true				
+goblint-regression/04-mutex_43-thread_create_nr.yml	true				
+goblint-regression/04-mutex_44-malloc_sound.yml	false				
+goblint-regression/04-mutex_45-escape_rc.yml	false				
+goblint-regression/04-mutex_46-escape_nr.yml	true				
+goblint-regression/04-mutex_47-fun_write.yml	false				
+goblint-regression/04-mutex_50-funptr_rc.yml	false				
+goblint-regression/04-mutex_51-mutex_ptr.yml	true				
+goblint-regression/04-mutex_54-pt_rwlock_ww.yml	true				
+goblint-regression/04-mutex_55-pt_rwlock_rr.yml	false				
+goblint-regression/05-lval_ls_01-idx_rc.yml	false				
+goblint-regression/05-lval_ls_02-idx_nr.yml	true				
+goblint-regression/05-lval_ls_03-fld_rc.yml	false				
+goblint-regression/05-lval_ls_04-fld_nr.yml	true				
+goblint-regression/05-lval_ls_05-glob_idx_rc.yml	false				
+goblint-regression/05-lval_ls_07-glob_fld_rc.yml	false				
+goblint-regression/05-lval_ls_08-glob_fld_2_rc.yml	false				
+goblint-regression/05-lval_ls_09-idxsense_rc.yml	false				
+goblint-regression/05-lval_ls_11-fldsense_rc.yml	false				
+goblint-regression/05-lval_ls_12-fldsense_nr.yml	true				
+goblint-regression/05-lval_ls_13-idxunknown_lock.yml	false				
+goblint-regression/05-lval_ls_14-idxunknown_access.yml	false				
+goblint-regression/05-lval_ls_15-fldunknown_access.yml	false				
+goblint-regression/05-lval_ls_16-idxunknown_unlock.yml	false				
+goblint-regression/06-symbeq_02-funloop_norace.yml	true				
+goblint-regression/06-symbeq_03-funloop_simple.yml	false				
+goblint-regression/06-symbeq_04-funloop_hard1.yml	false				
+goblint-regression/06-symbeq_05-funloop_hard2.yml	true				
+goblint-regression/06-symbeq_06-tricky_address1.yml	true				
+goblint-regression/06-symbeq_07-tricky_address2.yml	true				
+goblint-regression/06-symbeq_08-tricky_address3.yml	true				
+goblint-regression/06-symbeq_09-tricky_address4.yml	false				
+goblint-regression/06-symbeq_10-equ_rc.yml	false				
+goblint-regression/06-symbeq_11-equ_nr.yml	true				
+goblint-regression/06-symbeq_13-equ_proc_nr.yml	true				
+goblint-regression/06-symbeq_14-list_entry_rc.yml	true				
+goblint-regression/06-symbeq_15-list_entry_nr.yml	true				
+goblint-regression/06-symbeq_23-idxsense_nr.yml	true				
+goblint-regression/09-regions_01-list_rc.yml	false				
+goblint-regression/09-regions_02-list_nr.yml	true				
+goblint-regression/09-regions_03-list2_rc.yml	false				
+goblint-regression/09-regions_04-list2_nr.yml	true				
+goblint-regression/09-regions_05-ptra_rc.yml	false				
+goblint-regression/09-regions_06-ptra_nr.yml	true				
+goblint-regression/09-regions_09-arraylist.yml	true				
+goblint-regression/09-regions_10-arraylist_rc.yml	false				
+goblint-regression/09-regions_11-arraylist_nr.yml	true				
+goblint-regression/09-regions_12-arraycollapse_rc.yml	true				
+goblint-regression/09-regions_13-arraycollapse_nr.yml	true				
+goblint-regression/09-regions_16-arrayloop_rc.yml	false				
+goblint-regression/09-regions_17-arrayloop_nr.yml	true				
+goblint-regression/09-regions_18-nested_rc.yml	false				
+goblint-regression/09-regions_19-nested_nr.yml	true				
+goblint-regression/09-regions_20-arrayloop2_rc.yml	false				
+goblint-regression/09-regions_21-arrayloop2_nr.yml	true				
+goblint-regression/09-regions_22-nocollapse.yml	true				
+goblint-regression/09-regions_23-evilcollapse_rc.yml	false				
+goblint-regression/09-regions_24-evilcollapse_nr.yml	true				
+goblint-regression/09-regions_26-alloc_region_rc.yml	false				
+goblint-regression/09-regions_28-list2alloc.yml	false				
+goblint-regression/10-synch_01-thread_unique.yml	true				
+goblint-regression/10-synch_02-thread_nonunique.yml	false				
+goblint-regression/10-synch_03-two_unique.yml	true				
+goblint-regression/13-privatized_01-priv_nr_true.yml	true				
+goblint-regression/13-privatized_03-priv_inv.yml	true				
+goblint-regression/13-privatized_04-priv_multi_true.yml	true				
+goblint-regression/13-privatized_18-first-reads_true.yml	true				
+goblint-regression/13-privatized_18-first-reads_unknown_1_neg.yml	true				
+goblint-regression/13-privatized_18-first-reads_unknown_1_pos.yml	true				
+goblint-regression/13-privatized_18-first-reads_unknown_2_neg.yml	true				
+goblint-regression/13-privatized_18-first-reads_unknown_2_pos.yml	true				
+goblint-regression/13-privatized_19-publish-precision_true.yml	true				
+goblint-regression/13-privatized_19-publish-precision_unknown_1_neg.yml	true				
+goblint-regression/13-privatized_19-publish-precision_unknown_1_pos.yml	true				
+goblint-regression/13-privatized_19-publish-precision_unknown_2_neg.yml	true				
+goblint-regression/13-privatized_19-publish-precision_unknown_2_pos.yml	true				
+goblint-regression/13-privatized_20-publish-regression_true.yml	true				
+goblint-regression/13-privatized_24-multiple-protecting_true.yml	true				
+goblint-regression/13-privatized_25-struct_nr_true.yml	true				
+goblint-regression/13-privatized_27-multiple-protecting2_true.yml	true				
+goblint-regression/13-privatized_29-multiple-protecting2-vesal_true.yml	true				
+goblint-regression/13-privatized_30-traces-oplus-vs-meet_true.yml	true				
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml	true				
+goblint-regression/13-privatized_32-traces-mine-vs-oplus-vs-meet_true.yml	true				
+goblint-regression/13-privatized_33-traces-v-matters_true.yml	true				
+goblint-regression/13-privatized_34-traces-minepp-L-needs-to-be-um_true.yml	true				
+goblint-regression/13-privatized_35-traces-ex-2_true.yml	true				
+goblint-regression/13-privatized_36-traces-ex-3_true.yml	true				
+goblint-regression/13-privatized_37-traces-ex-4_true.yml	true				
+goblint-regression/13-privatized_38-traces-ex-4-switch_true.yml	true				
+goblint-regression/13-privatized_40-traces-ex-6_true.yml	true				
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_neg.yml	true				
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml	true				
+goblint-regression/13-privatized_42-traces-ex-mini_true.yml	true				
+goblint-regression/13-privatized_44-traces-mine2_true.yml	true				
+goblint-regression/13-privatized_45-traces-per-global-and-current-lock-mine-incomparable_true.yml	true				
+goblint-regression/13-privatized_46-refine-protected1_true.yml	true				
+goblint-regression/13-privatized_47-refine-protected2_true.yml	true				
+goblint-regression/13-privatized_52-refine-protected-loop2-small_true.yml	true				
+goblint-regression/13-privatized_57-singlethreaded-unlock_true.yml	true				
+goblint-regression/13-privatized_58-singlethreaded-lock_true.yml	true				
+goblint-regression/13-privatized_66-mine-W-init_true.yml	true				
+goblint-regression/13-privatized_67-pthread_cond_wait_true.yml	true				
+goblint-regression/13-privatized_67-pthread_cond_wait_unknown_1_neg.yml	true				
+goblint-regression/13-privatized_67-pthread_cond_wait_unknown_1_pos.yml	true				
+goblint-regression/13-privatized_68-pfscan_protected_loop_minimal_interval_true.yml	true				
+goblint-regression/13-privatized_69-refine-protected-loop-interval_true.yml	true				
+goblint-regression/28-race_reach_01-simple_racing.yml	true				
+goblint-regression/28-race_reach_02-simple_racefree.yml	true				
+goblint-regression/28-race_reach_03-munge_racing.yml	true				
+goblint-regression/28-race_reach_04-munge_racefree.yml	true				
+goblint-regression/28-race_reach_05-lockfuns_racefree.yml	true				
+goblint-regression/28-race_reach_06-cond_racing1.yml	true				
+goblint-regression/28-race_reach_07-cond_racing2.yml	true				
+goblint-regression/28-race_reach_08-cond_racefree.yml	true				
+goblint-regression/28-race_reach_09-ptrmunge_racing.yml	true				
+goblint-regression/28-race_reach_10-ptrmunge_racefree.yml	true				
+goblint-regression/28-race_reach_11-ptr_racing.yml	true				
+goblint-regression/28-race_reach_12-ptr_racefree.yml	true				
+goblint-regression/28-race_reach_19-callback_racing.yml	true				
+goblint-regression/28-race_reach_20-callback_racefree.yml	true				
+goblint-regression/28-race_reach_21-deref_read_racing.yml	true				
+goblint-regression/28-race_reach_22-deref_read_racefree.yml	true				
+goblint-regression/28-race_reach_23-sound_unlock_racing.yml	true				
+goblint-regression/28-race_reach_24-sound_lock_racing.yml	true				
+goblint-regression/28-race_reach_27-funptr_racing.yml	true				
+goblint-regression/28-race_reach_28-funptr_racefree.yml	true				
+goblint-regression/28-race_reach_36-indirect_racefree.yml	true				
+goblint-regression/28-race_reach_37-indirect_racing.yml	true				
+goblint-regression/28-race_reach_40-trylock_racing.yml	true				
+goblint-regression/28-race_reach_41-trylock_racefree.yml	true				
+goblint-regression/28-race_reach_42-trylock2_racefree.yml	true				
+goblint-regression/28-race_reach_45-escape_racing.yml	true				
+goblint-regression/28-race_reach_46-escape_racefree.yml	true				
+goblint-regression/28-race_reach_51-mutexptr_racefree.yml	true				
+goblint-regression/28-race_reach_60-invariant_racefree.yml	true				
+goblint-regression/28-race_reach_61-invariant_racing-2.yml	false				
+goblint-regression/28-race_reach_61-invariant_racing.yml	true				
+goblint-regression/28-race_reach_70-funloop_racefree.yml	true				
+goblint-regression/28-race_reach_71-funloop_racing.yml	true				
+goblint-regression/28-race_reach_72-funloop_hard_racing.yml	true				
+goblint-regression/28-race_reach_73-funloop_hard_racefree.yml	true				
+goblint-regression/28-race_reach_74-tricky_address1_racefree.yml	true				
+goblint-regression/28-race_reach_75-tricky_address2_racefree.yml	true				
+goblint-regression/28-race_reach_76-tricky_address3_racefree.yml	true				
+goblint-regression/28-race_reach_77-tricky_address4_racing.yml	true				
+goblint-regression/28-race_reach_78-equ_racing.yml	true				
+goblint-regression/28-race_reach_79-equ_racefree.yml	true				
+goblint-regression/28-race_reach_81-list_racing.yml	true				
+goblint-regression/28-race_reach_82-list_racefree.yml	true				
+goblint-regression/28-race_reach_83-list2_racing1.yml	true				
+goblint-regression/28-race_reach_84-list2_racing2.yml	true				
+goblint-regression/28-race_reach_85-list2_racefree.yml	true				
+goblint-regression/28-race_reach_86-lists_racing.yml	true				
+goblint-regression/28-race_reach_87-lists_racefree.yml	true				
+goblint-regression/28-race_reach_90-arrayloop2_racing.yml	true				
+goblint-regression/28-race_reach_91-arrayloop2_racefree.yml	true				
+goblint-regression/28-race_reach_92-evilcollapse_racing.yml	true				
+goblint-regression/28-race_reach_93-evilcollapse_racefree.yml	true				
+goblint-regression/28-race_reach_94-alloc_region_racing.yml	true				
+goblint-regression/36-apron_11-traces-max-simple_true.yml	true				
+goblint-regression/36-apron_16-traces-unprot2_true.yml	true				
+goblint-regression/36-apron_17-traces-rpb-litmus_unknown_1_neg.yml	true				
+goblint-regression/36-apron_17-traces-rpb-litmus_unknown_1_pos.yml	true				
+goblint-regression/36-apron_21-traces-cluster-based_true.yml	true				
+goblint-regression/36-apron_22-traces-write-centered-vs-meet-mutex_true_no-overflow.yml	true				
+goblint-regression/36-apron_41-threadenter-no-locals_unknown_1_neg.yml	true				
+goblint-regression/36-apron_41-threadenter-no-locals_unknown_1_pos.yml	true				
+weaver/array-eq-symm.wvr.yml	true				
+weaver/array-eq-trans.wvr.yml	true				
+weaver/bench-exp1x3.wvr.yml	true				
+weaver/bench-exp2x3.wvr.yml	true				
+weaver/bench-exp2x4.wvr.yml	true				
+weaver/bench-exp2x6.wvr.yml	true				
+weaver/bench-exp2x9.wvr.yml	true				
+weaver/bench-exp3x3-opt.wvr.yml	true				
+weaver/bench-exp3x3.wvr.yml	true				
+weaver/chl-array-int-subst.wvr.yml	true				
+weaver/chl-array-int-symm.wvr.yml	true				
+weaver/chl-array-int-trans.wvr.yml	true				
+weaver/chl-chromosome-opt-symm.wvr.yml	true				
+weaver/chl-chromosome-subst.wvr.yml	true				
+weaver/chl-chromosome-symm.wvr.yml	true				
+weaver/chl-chromosome-trans.wvr.yml	true				
+weaver/chl-collitem-subst.wvr.yml	true				
+weaver/chl-collitem-symm.wvr.yml	true				
+weaver/chl-collitem-trans.wvr.yml	true				
+weaver/chl-exp-term-subst.wvr.yml	true				
+weaver/chl-exp-term-symm.wvr.yml	true				
+weaver/chl-file-item-subst.wvr.yml	true				
+weaver/chl-file-item-symm.wvr.yml	true				
+weaver/chl-file-item-trans.wvr.yml	true				
+weaver/chl-match-subst.wvr.yml	true				
+weaver/chl-match-symm.wvr.yml	true				
+weaver/chl-match-trans.wvr.yml	true				
+weaver/chl-name-comparator-subst.wvr.yml	true				
+weaver/chl-name-comparator-symm.wvr.yml	true				
+weaver/chl-name-comparator-trans.wvr.yml	true				
+weaver/chl-node-subst.wvr.yml	true				
+weaver/chl-node-symm.wvr.yml	true				
+weaver/chl-node-trans.wvr.yml	true				
+weaver/chl-nzb-file-subst.wvr.yml	true				
+weaver/chl-nzb-file-symm.wvr.yml	true				
+weaver/chl-nzb-file-trans.wvr.yml	true				
+weaver/chl-poker-hand-subst.wvr.yml	true				
+weaver/chl-poker-hand-symm.wvr.yml	true				
+weaver/chl-poker-hand-trans.wvr.yml	true				
+weaver/chl-simpl-str-subst.wvr.yml	true				
+weaver/chl-simpl-str-symm.wvr.yml	true				
+weaver/chl-simpl-str-trans.wvr.yml	true				
+weaver/chl-sre-subst.wvr.yml	true				
+weaver/chl-sre-symm.wvr.yml	true				
+weaver/chl-sre-trans.wvr.yml	true				
+weaver/chl-time-subst.wvr.yml	true				
+weaver/chl-time-symm.wvr.yml	true				
+weaver/chl-time-trans.wvr.yml	true				
+weaver/chl-word-subst.wvr.yml	true				
+weaver/chl-word-symm.wvr.yml	true				
+weaver/chl-word-trans.wvr.yml	true				
+weaver/clever.wvr.yml	true				
+weaver/fibonacci.wvr.yml	true				
+weaver/loop-tiling-eq.wvr.yml	true				
+weaver/mult-comm.wvr.yml	true				
+weaver/mult-dist.wvr.yml	true				
+weaver/mult-flipped-dist.wvr.yml	true				
+weaver/parallel-bakery-2.wvr.yml	true				
+weaver/parallel-bakery-3.wvr.yml	true				
+weaver/parallel-bakery-4.wvr.yml	true				
+weaver/parallel-barrier-loop.wvr.yml	true				
+weaver/parallel-barrier.wvr.yml	true				
+weaver/parallel-bluetooth.wvr.yml	true				
+weaver/parallel-lamport.wvr.yml	true				
+weaver/parallel-min-max-1.wvr.yml	true				
+weaver/parallel-misc-1.wvr.yml	true				
+weaver/parallel-misc-2-unrolled-atomic.wvr.yml	true				
+weaver/parallel-misc-2-unrolled.wvr.yml	true				
+weaver/parallel-misc-2.wvr.yml	true				
+weaver/parallel-misc-3-extended.wvr.yml	true				
+weaver/parallel-misc-3.wvr.yml	true				
+weaver/parallel-misc-4.wvr.yml	true				
+weaver/parallel-misc-5.wvr.yml	true				
+weaver/parallel-parallel-sum-1-dsl.wvr.yml	true				
+weaver/parallel-parallel-sum-1.wvr.yml	true				
+weaver/parallel-parallel-sum-2.wvr.yml	true				
+weaver/parallel-parallel-sum-equiv.wvr.yml	true				
+weaver/parallel-simple-equiv.wvr.yml	true				
+weaver/parallel-ticket-2.wvr.yml	true				
+weaver/parallel-ticket-3.wvr.yml	true				
+weaver/parallel-ticket-4.wvr.yml	true				
+weaver/parallel-ticket-5.wvr.yml	true				
+weaver/parallel-ticket-6.wvr.yml	true				
+weaver/parallel-ticket-7.wvr.yml	true				
+weaver/parallel-ticket-8.wvr.yml	true				
+weaver/popl20-bad-buffer-mult-alt.wvr.yml	true				
+weaver/popl20-bad-buffer-mult-alt2.wvr.yml	true				
+weaver/popl20-bad-buffer-mult-alt3.wvr.yml	true				
+weaver/popl20-bad-commit-1.wvr-bad.yml	true				
+weaver/popl20-bad-commit-2.wvr-bad.yml	true				
+weaver/popl20-bad-counter-queue.wvr.yml	true				
+weaver/popl20-bad-counter-queue2.wvr.yml	true				
+weaver/popl20-bad-dot-product-alt.wvr.yml	true				
+weaver/popl20-bad-dot-product.wvr.yml	true				
+weaver/popl20-bad-ring-nondet.wvr.yml	true				
+weaver/popl20-bad-ring.wvr.yml	true				
+weaver/popl20-bad-threaded-sum-2.wvr.yml	true				
+weaver/popl20-bad-three-array-sum-alt.wvr.yml	true				
+weaver/popl20-channel-sum.wvr.yml	true				
+weaver/popl20-commit-1.wvr.yml	true				
+weaver/popl20-commit-2.wvr.yml	true				
+weaver/popl20-counter-determinism.wvr.yml	true				
+weaver/popl20-counter-fun.wvr.yml	true				
+weaver/popl20-difference-det.wvr.yml	true				
+weaver/popl20-figure1-alt.wvr.yml	true				
+weaver/popl20-figure1.wvr.yml	true				
+weaver/popl20-figure3.wvr.yml	true				
+weaver/popl20-horseshoe.wvr.yml	true				
+weaver/popl20-min-max-dec.wvr.yml	true				
+weaver/popl20-min-max-inc-dec.wvr.yml	true				
+weaver/popl20-min-max-inc.wvr.yml	true				
+weaver/popl20-more-array-sum-alt.wvr.yml	true				
+weaver/popl20-more-array-sum-alt2.wvr.yml	true				
+weaver/popl20-more-array-sum.wvr.yml	true				
+weaver/popl20-more-array-sum2.wvr.yml	true				
+weaver/popl20-more-buffer-mult.wvr.yml	true				
+weaver/popl20-more-buffer-mult2.wvr.yml	true				
+weaver/popl20-more-buffer-mult3.wvr.yml	true				
+weaver/popl20-more-buffer-series.wvr.yml	true				
+weaver/popl20-more-buffer-series2.wvr.yml	true				
+weaver/popl20-more-buffer-series3.wvr.yml	true				
+weaver/popl20-more-dec-subseq.wvr.yml	true				
+weaver/popl20-more-inc-subseq.wvr.yml	true				
+weaver/popl20-more-max-array-hom.wvr.yml	true				
+weaver/popl20-more-max-array.wvr.yml	true				
+weaver/popl20-more-min-array-hom.wvr.yml	true				
+weaver/popl20-more-min-array.wvr.yml	true				
+weaver/popl20-more-min-le-max.wvr.yml	true				
+weaver/popl20-more-mts.wvr.yml	true				
+weaver/popl20-more-multiply-verify.wvr.yml	true				
+weaver/popl20-more-nonblocking-counter-alt2.wvr.yml	true				
+weaver/popl20-more-parray-copy.wvr.yml	false				
+weaver/popl20-more-queue-add-2-nl.wvr.yml	true				
+weaver/popl20-more-queue-add-3-nl.wvr.yml	true				
+weaver/popl20-more-sorted.wvr.yml	true				
+weaver/popl20-more-sum-array-hom.wvr.yml	true				
+weaver/popl20-more-vector-add.wvr.yml	true				
+weaver/popl20-mult-4.wvr.yml	true				
+weaver/popl20-mult-equiv.wvr.yml	true				
+weaver/popl20-nonblocking-cntr-alt.wvr.yml	true				
+weaver/popl20-nonblocking-cntr.wvr.yml	true				
+weaver/popl20-prod-cons-eq.wvr.yml	true				
+weaver/popl20-prod-cons.wvr.yml	true				
+weaver/popl20-prod-cons3.wvr.yml	true				
+weaver/popl20-proofs-counter-add-4-semi-Q67.wvr.yml	true				
+weaver/popl20-queue-add-2.wvr.yml	true				
+weaver/popl20-queue-add-3.wvr.yml	true				
+weaver/popl20-send-receive-alt.wvr.yml	true				
+weaver/popl20-send-receive.wvr.yml	true				
+weaver/popl20-simple-array-sum.wvr.yml	true				
+weaver/popl20-simple-queue.wvr.yml	true				
+weaver/popl20-threaded-sum-3.wvr.yml	true				
+weaver/popl20-three-array-max.wvr.yml	true				
+weaver/popl20-three-array-min.wvr.yml	true				
+weaver/popl20-three-array-sum.wvr.yml	true				
+weaver/popl20-two-queue.wvr.yml	true				
+weaver/security.wvr.yml	true				
+weaver/spaghetti.wvr.yml	true				
+weaver/test-context1.wvr.yml	true				
+weaver/test-easy1.wvr.yml	true				
+weaver/test-easy10.wvr.yml	true				
+weaver/test-easy11.wvr.yml	true				
+weaver/test-easy6.wvr.yml	true				
+weaver/test-easy7.wvr.yml	true				
+weaver/test-easy8.wvr.yml	true				
+weaver/test-hard1.wvr.yml	true				
+weaver/test-semi1.wvr.yml	true				
+weaver/unroll-2.wvr.yml	true				
+weaver/unroll-3.wvr.yml	true				
+weaver/unroll-4.wvr.yml	true				
+weaver/unroll-5.wvr.yml	true				
+weaver/unroll-cond-2.wvr.yml	true				
+weaver/unroll-cond-3.wvr.yml	true				
+weaver/unroll-cond-4.wvr.yml	true				
+weaver/unroll-cond-5.wvr.yml	true				
+pthread-deagle/airline-10.yml	false				
+pthread-deagle/airline-15.yml	false				
+pthread-deagle/airline-20.yml	false				
+pthread-deagle/airline-25.yml	false				
+pthread-deagle/airline-5.yml	false				
+pthread-deagle/arithmetic_prog_bad.yml	true				
+pthread-deagle/arithmetic_prog_ok.yml	true				
+pthread-deagle/circular_buffer_bad.yml	true				
+pthread-deagle/circular_buffer_ok.yml	true				
+pthread-deagle/floating_read-10.yml	false				
+pthread-deagle/floating_read-15.yml	false				
+pthread-deagle/floating_read-20.yml	false				
+pthread-deagle/floating_read-25.yml	false				
+pthread-deagle/floating_read-5.yml	false				
+pthread-deagle/reorder_c11_bad-10.yml	false				
+pthread-deagle/reorder_c11_bad-20.yml	false				
+pthread-deagle/reorder_c11_bad-30.yml	false				
+pthread-deagle/reorder_c11_bad-40.yml	false				
+pthread-deagle/reorder_c11_bad-50.yml	false				
+pthread-deagle/reorder_c11_good-10.yml	false				
+pthread-deagle/reorder_c11_good-20.yml	false				
+pthread-deagle/reorder_c11_good-30.yml	false				
+pthread-deagle/reorder_c11_good-40.yml	false				
+pthread-deagle/reorder_c11_good-50.yml	false				
+pthread-race-challenges/atomic-gcc.yml	true				
+pthread-race-challenges/per-thread-array-index-race-2.yml	false				
+pthread-race-challenges/per-thread-array-index-race.yml	false				
+pthread-race-challenges/per-thread-array-index.yml	true				
+pthread-race-challenges/per-thread-array-init-race.yml	false				
+pthread-race-challenges/per-thread-array-init.yml	true				
+pthread-race-challenges/per-thread-array-join-counter-2.yml	true				
+pthread-race-challenges/per-thread-array-join-counter-race-2.yml	false				
+pthread-race-challenges/per-thread-array-join-counter-race-3.yml	false				
+pthread-race-challenges/per-thread-array-join-counter-race-4.yml	false				
+pthread-race-challenges/per-thread-array-join-counter-race.yml	false				
+pthread-race-challenges/per-thread-array-join-counter.yml	true				
+pthread-race-challenges/per-thread-array-ptr-race.yml	false				
+pthread-race-challenges/per-thread-array-ptr.yml	true				
+pthread-race-challenges/per-thread-index-bitmask-race-2.yml	false				
+pthread-race-challenges/per-thread-index-bitmask-race-3.yml	false				
+pthread-race-challenges/per-thread-index-bitmask-race.yml	false				
+pthread-race-challenges/per-thread-index-bitmask.yml	true				
+pthread-race-challenges/per-thread-index-inc-race-2.yml	false				
+pthread-race-challenges/per-thread-index-inc-race.yml	false				
+pthread-race-challenges/per-thread-index-inc.yml	true				
+pthread-race-challenges/per-thread-struct-in-array-race.yml	false				
+pthread-race-challenges/per-thread-struct-in-array.yml	true				
+pthread-race-challenges/per-thread-struct-race.yml	false				
+pthread-race-challenges/per-thread-struct-tid-join.yml	true				
+pthread-race-challenges/per-thread-struct-tid.yml	true				
+pthread-race-challenges/per-thread-struct.yml	true				
+pthread-race-challenges/semaphore-posix-race-2.yml	false				
+pthread-race-challenges/semaphore-posix-race.yml	false				
+pthread-race-challenges/semaphore-posix.yml	true				
+pthread-race-challenges/thread-join-array-const-race-2.yml	false				
+pthread-race-challenges/thread-join-array-const-race-3.yml	false				
+pthread-race-challenges/thread-join-array-const-race.yml	false				
+pthread-race-challenges/thread-join-array-const.yml	true				
+pthread-race-challenges/thread-join-array-dynamic-race-2.yml	false				
+pthread-race-challenges/thread-join-array-dynamic-race-3.yml	false				
+pthread-race-challenges/thread-join-array-dynamic-race.yml	false				
+pthread-race-challenges/thread-join-array-dynamic.yml	true				
+pthread-race-challenges/thread-join-binomial-race-2.yml	false				
+pthread-race-challenges/thread-join-binomial-race-3.yml	false				
+pthread-race-challenges/thread-join-binomial-race.yml	false				
+pthread-race-challenges/thread-join-binomial.yml	true				
+pthread-race-challenges/thread-join-counter-inner-2.yml	true				
+pthread-race-challenges/thread-join-counter-inner-3.yml	true				
+pthread-race-challenges/thread-join-counter-inner-race-2.yml	false				
+pthread-race-challenges/thread-join-counter-inner-race-3.yml	false				
+pthread-race-challenges/thread-join-counter-inner-race-4.yml	false				
+pthread-race-challenges/thread-join-counter-inner-race-5.yml	false				
+pthread-race-challenges/thread-join-counter-inner-race.yml	false				
+pthread-race-challenges/thread-join-counter-inner.yml	true				
+pthread-race-challenges/thread-join-counter-outer-race-2.yml	false				
+pthread-race-challenges/thread-join-counter-outer-race-3.yml	false				
+pthread-race-challenges/thread-join-counter-outer-race-4.yml	false				
+pthread-race-challenges/thread-join-counter-outer-race.yml	false				
+pthread-race-challenges/thread-join-counter-outer.yml	true				
+pthread-race-challenges/thread-local-pthread-value-cond.yml	true				
+pthread-race-challenges/thread-local-pthread-value.yml	true				
+pthread-race-challenges/thread-local-value-cond.yml	true				
+pthread-race-challenges/thread-local-value-dynamic.yml	true				
+pthread-race-challenges/thread-local-value-race.yml	false				
+pthread-race-challenges/thread-local-value.yml	true				
+pthread-race-challenges/value-barrier-race.yml	false				
+pthread-race-challenges/value-barrier.yml	true				
+libvsync/arraylock.yml	true				
+libvsync/bounded_mpmc_check_full.yml	true				
+libvsync/bounded_spsc.yml	false				
+libvsync/caslock.yml	false				
+libvsync/cnalock.yml	true				
+libvsync/hclhlock.yml	true				
+libvsync/hemlock.yml	false				
+libvsync/hmcslock.yml	true				
+libvsync/mcslock.yml	true				
+libvsync/rec_mcslock.yml	true				
+libvsync/rec_spinlock.yml	false				
+libvsync/rec_ticketlock.yml	true				
+libvsync/rwlock.yml	true				
+libvsync/semaphore.yml	true				
+libvsync/ticketlock.yml	true				
+libvsync/ttaslock.yml	true				
+libvsync/twalock.yml	false				
+pthread-theta/exponential-4.yml	true				
+pthread-theta/exponential-64.yml	true				
+pthread-theta/exponential-nondet.yml	true				
+pthread-theta/unwind1-1.yml	true				
+pthread-theta/unwind1-100.yml	true				
+pthread-theta/unwind1-nondet.yml	true				
+pthread-theta/unwind2-1.yml	true				
+pthread-theta/unwind2-100.yml	true				
+pthread-theta/unwind2-nondet.yml	true				
+pthread-theta/unwind3-1.yml	true				
+pthread-theta/unwind3-100.yml	true				
+pthread-theta/unwind3-nondet.yml	true				
+pthread-theta/wsc.yml	true				

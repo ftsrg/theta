@@ -1,0 +1,215 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Recursive
+date:                    Sun, 2025-11-16 20:34:34 UTC
+tool:                    Theta 6.26.1
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3247.852 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Recursive
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                              status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------
+recursive/Ackermann01-2.yml                                                            ERROR (server error, after parsing finished)        2.14        0.82        None
+recursive/Ackermann02.yml                                                              ERROR (server error, after parsing finished)        2.05        0.79        None
+recursive/Ackermann03.yml                                                              ERROR (server error, after parsing finished)        2.06        0.77        None
+recursive/Ackermann04.yml                                                              ERROR (server error, after parsing finished)        2.09        0.83        None
+recursive/Addition01-2.yml                                                             ERROR (server error, after parsing finished)        2.12        0.81        None
+recursive/Addition02.yml                                                               ERROR (server error, after parsing finished)        2.17        0.81        None
+recursive/Addition03-1.yml                                                             ERROR (server error, after parsing finished)        2.03        0.78        None
+recursive/BallRajamani-SPIN2000-Fig1.yml                                               ERROR (server error, after parsing finished)        1.95        0.77        None
+recursive/EvenOdd01-1.yml                                                              ERROR (server error, after parsing finished)        2.21        0.85        None
+recursive/EvenOdd03.yml                                                                ERROR (server error, after parsing finished)        2.01        0.79        None
+recursive/Fibonacci01-1.yml                                                            ERROR (server error, after parsing finished)        1.96        0.78        None
+recursive/Fibonacci02.yml                                                              ERROR (server error, after parsing finished)        1.99        0.78        None
+recursive/Fibonacci03.yml                                                              ERROR (server error, after parsing finished)        2.01        0.77        None
+recursive/Fibonacci04.yml                                                              ERROR (server error, after parsing finished)        2.03        0.77        None
+recursive/Fibonacci05.yml                                                              ERROR (server error, after parsing finished)        1.95        0.77        None
+recursive/McCarthy91-1.yml                                                             ERROR (server error, after parsing finished)        2.02        0.78        None
+recursive/McCarthy91-2.yml                                                             ERROR (server error, after parsing finished)        1.88        0.75        None
+recursive/MultCommutative-2.yml                                                        ERROR (server error, after parsing finished)        2.12        0.79        None
+recursive/Primes.yml                                                                   ERROR (server error, after parsing finished)        2.34        0.86        None
+recursive/gcd01-1.yml                                                                  ERROR (server error, after parsing finished)        2.09        0.79        None
+recursive/gcd02.yml                                                                    ERROR (server error, after parsing finished)        2.20        0.83        None
+recursive/recHanoi01.yml                                                               ERROR (server error, after parsing finished)        2.10        0.81        None
+recursive/recHanoi02-2.yml                                                             ERROR (server error, after parsing finished)        1.97        0.78        None
+recursive/recHanoi03-2.yml                                                             ERROR (server error, after parsing finished)        2.00        0.77        None
+recursive-simple/afterrec-1.yml                                                        ERROR (server error, after parsing finished)        1.84        0.75        None
+recursive-simple/afterrec-2.yml                                                        ERROR (server error, after parsing finished)        1.81        0.73        None
+recursive-simple/afterrec_2calls-1.yml                                                 ERROR (server error, after parsing finished)        1.89        0.75        None
+recursive-simple/afterrec_2calls-2.yml                                                 ERROR (server error, after parsing finished)        1.93        0.76        None
+recursive-simple/fibo_10-1.yml                                                         ERROR (server error, after parsing finished)        1.98        0.77        None
+recursive-simple/fibo_10-2.yml                                                         ERROR (server error, after parsing finished)        2.01        0.77        None
+recursive-simple/fibo_15-1.yml                                                         ERROR (server error, after parsing finished)        1.99        0.76        None
+recursive-simple/fibo_15-2.yml                                                         ERROR (server error, after parsing finished)        1.95        0.76        None
+recursive-simple/fibo_20-1.yml                                                         ERROR (server error, after parsing finished)        1.88        0.74        None
+recursive-simple/fibo_20-2.yml                                                         ERROR (server error, after parsing finished)        1.96        0.77        None
+recursive-simple/fibo_25-1.yml                                                         ERROR (server error, after parsing finished)        2.03        0.78        None
+recursive-simple/fibo_25-2.yml                                                         ERROR (server error, after parsing finished)        1.92        0.76        None
+recursive-simple/fibo_2calls_10-1.yml                                                  ERROR (server error, after parsing finished)        2.05        0.80        None
+recursive-simple/fibo_2calls_10-2.yml                                                  ERROR (server error, after parsing finished)        2.03        0.79        None
+recursive-simple/fibo_2calls_15-1.yml                                                  ERROR (server error, after parsing finished)        2.10        0.80        None
+recursive-simple/fibo_2calls_15-2.yml                                                  ERROR (server error, after parsing finished)        2.01        0.79        None
+recursive-simple/fibo_2calls_2-1.yml                                                   ERROR (server error, after parsing finished)        2.06        0.80        None
+recursive-simple/fibo_2calls_2-2.yml                                                   ERROR (server error, after parsing finished)        2.04        0.80        None
+recursive-simple/fibo_2calls_20-1.yml                                                  ERROR (server error, after parsing finished)        2.11        0.81        None
+recursive-simple/fibo_2calls_20-2.yml                                                  ERROR (server error, after parsing finished)        2.12        0.81        None
+recursive-simple/fibo_2calls_25-1.yml                                                  ERROR (server error, after parsing finished)        2.04        0.80        None
+recursive-simple/fibo_2calls_25-2.yml                                                  ERROR (server error, after parsing finished)        2.08        0.79        None
+recursive-simple/fibo_2calls_4-1.yml                                                   ERROR (server error, after parsing finished)        2.06        0.80        None
+recursive-simple/fibo_2calls_4-2.yml                                                   ERROR (server error, after parsing finished)        2.11        0.79        None
+recursive-simple/fibo_2calls_5-1.yml                                                   ERROR (server error, after parsing finished)        2.01        0.80        None
+recursive-simple/fibo_2calls_5-2.yml                                                   ERROR (server error, after parsing finished)        2.07        0.80        None
+recursive-simple/fibo_2calls_6-1.yml                                                   ERROR (server error, after parsing finished)        2.15        0.80        None
+recursive-simple/fibo_2calls_6-2.yml                                                   ERROR (server error, after parsing finished)        2.07        0.80        None
+recursive-simple/fibo_2calls_8-1.yml                                                   ERROR (server error, after parsing finished)        2.00        0.78        None
+recursive-simple/fibo_2calls_8-2.yml                                                   ERROR (server error, after parsing finished)        2.07        0.80        None
+recursive-simple/fibo_5-1.yml                                                          ERROR (server error, after parsing finished)        1.92        0.75        None
+recursive-simple/fibo_5-2.yml                                                          ERROR (server error, after parsing finished)        1.97        0.75        None
+recursive-simple/fibo_7-1.yml                                                          ERROR (server error, after parsing finished)        1.98        0.75        None
+recursive-simple/fibo_7-2.yml                                                          ERROR (server error, after parsing finished)        1.97        0.76        None
+recursive-simple/id2_b2_o3.yml                                                         ERROR (server error, after parsing finished)        2.09        0.80        None
+recursive-simple/id2_b3_o2.yml                                                         ERROR (server error, after parsing finished)        2.10        0.80        None
+recursive-simple/id2_b3_o5.yml                                                         ERROR (server error, after parsing finished)        2.10        0.81        None
+recursive-simple/id2_b5_o10.yml                                                        ERROR (server error, after parsing finished)        2.05        0.78        None
+recursive-simple/id2_i5_o5-1.yml                                                       ERROR (server error, after parsing finished)        1.99        0.78        None
+recursive-simple/id2_i5_o5-2.yml                                                       ERROR (server error, after parsing finished)        2.04        0.77        None
+recursive-simple/id_b2_o3.yml                                                          ERROR (server error, after parsing finished)        1.93        0.77        None
+recursive-simple/id_b3_o2-2.yml                                                        ERROR (server error, after parsing finished)        2.00        0.75        None
+recursive-simple/id_b3_o5-2.yml                                                        ERROR (server error, after parsing finished)        1.97        0.75        None
+recursive-simple/id_b5_o10-2.yml                                                       ERROR (server error, after parsing finished)        1.97        0.78        None
+recursive-simple/id_i10_o10-1.yml                                                      ERROR (server error, after parsing finished)        1.82        0.74        None
+recursive-simple/id_i10_o10-2.yml                                                      ERROR (server error, after parsing finished)        1.91        0.74        None
+recursive-simple/id_i15_o15-1.yml                                                      ERROR (server error, after parsing finished)        1.80        0.73        None
+recursive-simple/id_i15_o15-2.yml                                                      ERROR (server error, after parsing finished)        1.86        0.73        None
+recursive-simple/id_i20_o20-1.yml                                                      ERROR (server error, after parsing finished)        1.85        0.73        None
+recursive-simple/id_i20_o20-2.yml                                                      ERROR (server error, after parsing finished)        1.84        0.75        None
+recursive-simple/id_i25_o25-1.yml                                                      ERROR (server error, after parsing finished)        1.83        0.73        None
+recursive-simple/id_i25_o25-2.yml                                                      ERROR (server error, after parsing finished)        1.83        0.74        None
+recursive-simple/id_i5_o5-1.yml                                                        ERROR (server error, after parsing finished)        2.01        0.80        None
+recursive-simple/id_i5_o5-2.yml                                                        ERROR (server error, after parsing finished)        1.88        0.77        None
+recursive-simple/id_o10.yml                                                            ERROR (server error, after parsing finished)        2.00        0.76        None
+recursive-simple/id_o100.yml                                                           ERROR (server error, after parsing finished)        1.96        0.77        None
+recursive-simple/id_o1000.yml                                                          ERROR (server error, after parsing finished)        1.88        0.75        None
+recursive-simple/id_o20.yml                                                            ERROR (server error, after parsing finished)        1.93        0.75        None
+recursive-simple/id_o200.yml                                                           ERROR (server error, after parsing finished)        1.93        0.74        None
+recursive-simple/id_o3.yml                                                             ERROR (server error, after parsing finished)        1.88        0.74        None
+recursive-simple/sum_10x0-1.yml                                                        ERROR (server error, after parsing finished)        2.01        0.77        None
+recursive-simple/sum_10x0-2.yml                                                        ERROR (server error, after parsing finished)        1.98        0.80        None
+recursive-simple/sum_15x0-1.yml                                                        ERROR (server error, after parsing finished)        1.95        0.77        None
+recursive-simple/sum_15x0-2.yml                                                        ERROR (server error, after parsing finished)        1.94        0.76        None
+recursive-simple/sum_20x0-1.yml                                                        ERROR (server error, after parsing finished)        1.91        0.77        None
+recursive-simple/sum_20x0-2.yml                                                        ERROR (server error, after parsing finished)        1.89        0.76        None
+recursive-simple/sum_25x0-1.yml                                                        ERROR (server error, after parsing finished)        1.97        0.78        None
+recursive-simple/sum_25x0-2.yml                                                        ERROR (server error, after parsing finished)        1.95        0.76        None
+recursive-simple/sum_2x3-1.yml                                                         ERROR (server error, after parsing finished)        1.91        0.77        None
+recursive-simple/sum_2x3-2.yml                                                         ERROR (server error, after parsing finished)        1.89        0.76        None
+recursive-simple/sum_non_eq-2.yml                                                      ERROR (server error, after parsing finished)        2.03        0.78        None
+recursive-simple/sum_non_eq-3.yml                                                      ERROR (server error, after parsing finished)        1.92        0.76        None
+recursive-with-pointer/simple-recursive.yml                                            ERROR (frontend failed, before parsing finished)        1.57        0.60        None
+recursified_loop-crafted/recursified_simple_array_index_value_1-1.yml                  ERROR (frontend failed, before parsing finished)        1.73        0.66        None
+recursified_loop-crafted/recursified_simple_array_index_value_1-2.yml                  ERROR (frontend failed, before parsing finished)        1.89        0.71        None
+recursified_loop-crafted/recursified_simple_array_index_value_2.yml                    ERROR (frontend failed, before parsing finished)        1.76        0.68        None
+recursified_loop-crafted/recursified_simple_array_index_value_3.yml                    ERROR (frontend failed, before parsing finished)        1.77        0.66        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+lhb-reducer.yml    ERROR (frontend failed, before parsing finished)        1.64        0.63        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.i.v+nlh-reducer.yml    ERROR (frontend failed, before parsing finished)        1.68        0.63        None
+recursified_loop-crafted/recursified_simple_array_index_value_4.yml                    ERROR (frontend failed, before parsing finished)        1.82        0.68        None
+recursified_loop-crafted/recursified_simple_vardep_1.yml                               ERROR (server error, after parsing finished)        2.17        0.81        None
+recursified_loop-crafted/recursified_simple_vardep_2.yml                               ERROR (server error, after parsing finished)        2.22        0.81        None
+recursified_loop-invariants/recursified_bin-suffix-5.yml                               ERROR (server error, after parsing finished)        2.06        0.81        None
+recursified_loop-invariants/recursified_const.yml                                      ERROR (server error, after parsing finished)        2.08        0.80        None
+recursified_loop-invariants/recursified_eq1.yml                                        ERROR (server error, after parsing finished)        2.17        0.83        None
+recursified_loop-invariants/recursified_eq2.yml                                        ERROR (server error, after parsing finished)        2.16        0.81        None
+recursified_loop-invariants/recursified_even.yml                                       ERROR (server error, after parsing finished)        2.11        0.79        None
+recursified_loop-invariants/recursified_linear-inequality-inv-a.yml                    ERROR (server error, after parsing finished)        2.29        0.84        None
+recursified_loop-invariants/recursified_linear-inequality-inv-b.yml                    ERROR (server error, after parsing finished)        2.28        0.84        None
+recursified_loop-invariants/recursified_mod4.yml                                       ERROR (server error, after parsing finished)        2.04        0.80        None
+recursified_loop-invariants/recursified_odd.yml                                        ERROR (server error, after parsing finished)        2.00        0.80        None
+recursified_loop-simple/recursified_deep-nested.yml                                    ERROR (frontend failed, before parsing finished)        1.82        0.68        None
+recursified_loop-simple/recursified_nested_1.yml                                       ERROR (server error, after parsing finished)        2.03        0.78        None
+recursified_loop-simple/recursified_nested_1b.yml                                      ERROR (server error, after parsing finished)        2.00        0.78        None
+recursified_loop-simple/recursified_nested_2.yml                                       ERROR (frontend failed, before parsing finished)        1.58        0.63        None
+recursified_loop-simple/recursified_nested_3.yml                                       ERROR (frontend failed, before parsing finished)        1.68        0.66        None
+recursified_loop-simple/recursified_nested_4.yml                                       ERROR (frontend failed, before parsing finished)        1.67        0.65        None
+recursified_loop-simple/recursified_nested_5.yml                                       ERROR (frontend failed, before parsing finished)        1.70        0.66        None
+recursified_loop-simple/recursified_nested_6.yml                                       ERROR (frontend failed, before parsing finished)        1.72        0.65        None
+recursified_nla-digbench/recursified_bresenham-ll.yml                                  ERROR (server error, after parsing finished)        2.77        0.98        None
+recursified_nla-digbench/recursified_cohencu-ll.yml                                    ERROR (server error, after parsing finished)        2.95        1.01        None
+recursified_nla-digbench/recursified_cohendiv-ll.yml                                   ERROR (frontend failed, before parsing finished)        1.80        0.67        None
+recursified_nla-digbench/recursified_dijkstra-u.yml                                    ERROR (server error, after parsing finished)        3.46        1.14        None
+recursified_nla-digbench/recursified_divbin.yml                                        ERROR (server error, after parsing finished)        2.81        1.00        None
+recursified_nla-digbench/recursified_divbin2.yml                                       ERROR (server error, after parsing finished)        2.73        0.97        None
+recursified_nla-digbench/recursified_egcd-ll.yml                                       ERROR (server error, after parsing finished)        2.74        0.98        None
+recursified_nla-digbench/recursified_egcd2-ll.yml                                      ERROR (frontend failed, before parsing finished)        2.22        0.81        None
+recursified_nla-digbench/recursified_egcd3-ll.yml                                      ERROR (frontend failed, before parsing finished)        2.00        0.74        None
+recursified_nla-digbench/recursified_fermat1-ll.yml                                    ERROR (frontend failed, before parsing finished)        1.95        0.72        None
+recursified_nla-digbench/recursified_fermat2-ll.yml                                    ERROR (server error, after parsing finished)        2.66        0.94        None
+recursified_nla-digbench/recursified_geo1-ll.yml                                       ERROR (server error, after parsing finished)        2.49        0.89        None
+recursified_nla-digbench/recursified_geo1-u.yml                                        ERROR (server error, after parsing finished)        2.46        0.90        None
+recursified_nla-digbench/recursified_geo2-ll.yml                                       ERROR (server error, after parsing finished)        2.44        0.89        None
+recursified_nla-digbench/recursified_geo3-ll.yml                                       ERROR (server error, after parsing finished)        2.50        0.92        None
+recursified_nla-digbench/recursified_hard-ll.yml                                       ERROR (server error, after parsing finished)        2.64        0.95        None
+recursified_nla-digbench/recursified_hard-u.yml                                        ERROR (server error, after parsing finished)        2.67        0.96        None
+recursified_nla-digbench/recursified_knuth.yml                                         ERROR (server error, after parsing finished)        3.85        1.29        None
+recursified_nla-digbench/recursified_lcm1.yml                                          ERROR (frontend failed, before parsing finished)        1.87        0.71        None
+recursified_nla-digbench/recursified_lcm2.yml                                          ERROR (server error, after parsing finished)        2.52        0.91        None
+recursified_nla-digbench/recursified_mannadiv.yml                                      ERROR (server error, after parsing finished)        2.53        0.92        None
+recursified_nla-digbench/recursified_prod4br-ll.yml                                    ERROR (server error, after parsing finished)        2.82        0.99        None
+recursified_nla-digbench/recursified_prodbin-ll.yml                                    ERROR (server error, after parsing finished)        2.52        0.91        None
+recursified_nla-digbench/recursified_ps2-ll.yml                                        ERROR (server error, after parsing finished)        2.41        0.87        None
+recursified_nla-digbench/recursified_ps3-ll.yml                                        ERROR (server error, after parsing finished)        2.55        0.91        None
+recursified_nla-digbench/recursified_ps4-ll.yml                                        ERROR (server error, after parsing finished)        2.68        0.96        None
+recursified_nla-digbench/recursified_ps5-ll.yml                                        ERROR (server error, after parsing finished)        2.81        0.96        None
+recursified_nla-digbench/recursified_ps6-ll.yml                                        ERROR (server error, after parsing finished)        2.97        1.02        None
+recursified_nla-digbench/recursified_sqrt1-ll.yml                                      ERROR (server error, after parsing finished)        2.55        0.93        None
+fuzzle-programs/01_fuzzle_30x30.yml                                                    ERROR (server error, after parsing finished)       54.74       39.36        None
+fuzzle-programs/02_fuzzle_40x40.yml                                                    
+fuzzle-programs/03_fuzzle_50x50.yml                                                    
+fuzzle-programs/04_fuzzle_60x60.yml                                                    
+fuzzle-programs/05_fuzzle_70x70.yml                                                    
+fuzzle-programs/06_fuzzle_50x50_0-cycle.yml                                            
+fuzzle-programs/07_fuzzle_50x50_25-cycle.yml                                           
+fuzzle-programs/08_fuzzle_50x50_50-cycle.yml                                           
+fuzzle-programs/09_fuzzle_50x50_75-cycle.yml                                           
+fuzzle-programs/10_fuzzle_50x50_CVE-2016-4487.yml                                      
+fuzzle-programs/11_fuzzle_50x50_CVE-2016-4489.yml                                      
+fuzzle-programs/12_fuzzle_50x50_CVE-2016-4492.yml                                      
+fuzzle-programs/13_fuzzle_50x50_CVE-2016-4493.yml                                      
+fuzzle-programs/14_fuzzle_50x50_CVE-2016-6131.yml                                      
+fuzzle-programs/15_fuzzle_50x50_equality-checks.yml                                    
+verifythis/prefixsum_rec.yml                                                           
+verifythis/tree_del_rec.yml                                                            
+verifythis/tree_del_rec_incorrect.yml                                                  
+verifythis/tree_max.yml                                                                
+verifythis/tree_max_incorrect.yml                                                      
+verifythis/elimination_max_rec.yml                                                     
+verifythis/elimination_max_rec_onepoint.yml                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                              done                           374.05      224.59           -
+
+Statistics:            153 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:             153
+  Score:                 0 (max: 254)

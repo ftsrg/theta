@@ -1,0 +1,12 @@
+EmergenTheta/theta-start.sh sv-benchmarks/c/product-lines/email_spec7_product24.cil.c --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/product-lines/email_spec7_product24.cil.c' using arguments '--svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/EmergenTheta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/EmergenTheta/theta.jar --svcomp --portfolio BOUNDED --loglevel RESULT --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --input sv-benchmarks/c/product-lines/email_spec7_product24.cil.c --smt-home /home/runner/work/theta/theta/EmergenTheta/solvers
+line 309:18 no viable alternative at input '(int(**'
+line 309:18 no viable alternative at input '(int(**'
+Frontend failed! (hu.bme.mit.theta.c.frontend.dsl.gen.CParser.assignmentExpression(CParser.java:2598), org.antlr.v4.runtime.misc.ParseCancellationException)

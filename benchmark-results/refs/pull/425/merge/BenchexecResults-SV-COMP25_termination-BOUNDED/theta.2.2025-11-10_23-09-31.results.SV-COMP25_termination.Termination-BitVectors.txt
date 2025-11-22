@@ -1,0 +1,95 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-BitVectors
+date:                    Mon, 2025-11-10 23:09:31 UTC
+tool:                    Theta 6.24.3
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmw9dnm
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3251.364 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-BitVectors
+Run set 6 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                             status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------
+and-01.yml                            true                             6.38        3.95        None
+and-02.yml                            true                             5.42        2.70        None
+and-03-false.yml                      true                             4.81        2.60        None
+and-03.yml                            true                             5.31        2.67        None
+and-04-false.yml                      true                             5.52        2.69        None
+and-04.yml                            true                             4.76        2.61        None
+and-05-false.yml                      false(termination)              26.09       19.01        None
+and-05.yml                            true                             5.42        2.70        None
+and-06.yml                            true                             5.64        2.72        None
+and-assume.yml                        true                             6.63        3.01        None
+consecutive-zero-bits-trailing.yml    ERROR (frontend failed, after parsing finished)        1.56        0.63        None
+counting-bits-BK.yml                  true                             4.76        2.55        None
+counting-bits-BK1.yml                 true                             5.40        2.64        None
+counting-bits-set.yml                 ERROR (frontend failed, after parsing finished)        1.52        0.63        None
+not-01.yml                            ERROR (frontend failed, after parsing finished)        1.51        0.61        None
+not-02-false.yml                      ERROR (frontend failed, after parsing finished)        1.48        0.59        None
+not-02.yml                            ERROR (frontend failed, after parsing finished)        1.48        0.60        None
+not-03-false.yml                      ERROR (frontend failed, after parsing finished)        1.48        0.61        None
+not-03.yml                            ERROR (frontend failed, after parsing finished)        1.50        0.60        None
+not-04-false.yml                      ERROR (frontend failed, after parsing finished)        1.49        0.59        None
+not-04.yml                            ERROR (frontend failed, after parsing finished)        1.49        0.61        None
+not-05-false.yml                      ERROR (frontend failed, after parsing finished)        1.48        0.60        None
+not-05.yml                            ERROR (frontend failed, after parsing finished)        1.50        0.60        None
+or-01.yml                             true                             5.45        2.73        None
+or-02.yml                             true                             4.95        2.68        None
+or-03.yml                             true                             4.49        2.49        None
+or-04.yml                             false(termination)              24.12       17.59        None
+or-05-false.yml                       false(termination)              26.19       19.15        None
+or-05.yml                             false(termination)              26.67       19.08        None
+or-06.yml                             true                             5.84        2.78        None
+parity0.yml                           true                             5.66        2.75        None
+parity1.yml                           true                             5.85        2.77        None
+reverse-bits1.yml                     ERROR (frontend failed, after parsing finished)        1.59        0.65        None
+xor-01.yml                            TIMEOUT                        600.79      585.69        None
+---------------------------------------------------------------------------------------------------
+Run set 6                             done                           214.08      719.22           -
+
+Statistics:             34 Files
+  correct:              19
+    correct true:       15
+    correct false:       4
+  incorrect:             2
+    incorrect true:      2
+    incorrect false:     0
+  unknown:              13
+  Score:               -30 (max: 57)

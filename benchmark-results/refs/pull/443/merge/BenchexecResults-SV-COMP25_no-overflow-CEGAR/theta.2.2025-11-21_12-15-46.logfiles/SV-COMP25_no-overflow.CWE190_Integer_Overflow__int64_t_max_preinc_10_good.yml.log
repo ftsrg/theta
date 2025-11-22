@@ -1,0 +1,13 @@
+Theta/theta-start.sh sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_max_preinc_10_good.i --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64
+
+
+--------------------------------------------------------------------------------
+
+
+Using Java: /usr/bin/java (version 17)
+Verifying input 'sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_max_preinc_10_good.i' using arguments '--svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64'
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --svcomp --portfolio CEGAR --loglevel RESULT --property sv-benchmarks/c/properties/no-overflow.prp --architecture LP64 --input sv-benchmarks/c/Juliet_Test/CWE190_Integer_Overflow__int64_t_max_preinc_10_good.i --smt-home /home/runner/work/theta/theta/Theta/solvers
+ParsingResult Success
+Arithmetic: [ARR]
+ParsingResult Success
+Process failed! (hu.bme.mit.theta.xcfa.cli.checkers.ConfigToPortfolioKt.getPortfolioChecker$lambda$0(ConfigToPortfolio.kt:92), java.lang.IllegalStateException: No such file or built-in config: CEGAR)

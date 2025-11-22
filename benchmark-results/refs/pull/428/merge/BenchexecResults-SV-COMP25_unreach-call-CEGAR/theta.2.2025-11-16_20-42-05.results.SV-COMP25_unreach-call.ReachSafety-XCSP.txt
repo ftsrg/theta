@@ -1,0 +1,160 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-XCSP
+date:                    Sun, 2025-11-16 20:42:05 UTC
+tool:                    Theta 6.26.1
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio CEGAR --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3237.384 MHz
+ram:                     16772.575232 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-XCSP
+Run set 1 of 6 with options '--svcomp --portfolio CEGAR --loglevel RESULT' and propertyfile 'None'
+
+inputfile                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------
+AllInterval-005.yml        ERROR (server error, after parsing finished)        2.75        0.96        None
+AllInterval-006.yml        ERROR (server error, after parsing finished)        2.98        1.03        None
+AllInterval-007.yml        ERROR (server error, after parsing finished)        3.12        1.07        None
+AllInterval-008.yml        ERROR (server error, after parsing finished)        3.25        1.11        None
+AllInterval-009.yml        ERROR (server error, after parsing finished)        3.46        1.18        None
+AllInterval-010.yml        ERROR (server error, after parsing finished)        3.51        1.17        None
+AllInterval-011.yml        ERROR (server error, after parsing finished)        3.97        1.31        None
+AllInterval-012.yml        ERROR (server error, after parsing finished)        3.79        1.29        None
+AllInterval-013.yml        ERROR (server error, after parsing finished)        4.10        1.42        None
+AllInterval-014.yml        ERROR (server error, after parsing finished)        4.50        1.55        None
+AllInterval-015.yml        ERROR (server error, after parsing finished)        4.49        1.53        None
+AllInterval-016.yml        ERROR (server error, after parsing finished)        5.03        1.74        None
+AllInterval-017.yml        ERROR (server error, after parsing finished)        5.30        1.87        None
+AllInterval-018.yml        ERROR (server error, after parsing finished)        5.30        1.82        None
+AllInterval-019.yml        ERROR (server error, after parsing finished)        5.96        2.14        None
+AllInterval-020.yml        ERROR (server error, after parsing finished)        6.15        2.12        None
+AllInterval-025.yml        ERROR (server error, after parsing finished)        7.78        2.91        None
+AllInterval-030.yml        ERROR (server error, after parsing finished)       10.17        4.47        None
+AllInterval-035.yml        ERROR (server error, after parsing finished)       12.99        6.43        None
+CostasArray-10.yml         ERROR (server error, after parsing finished)        5.41        1.87        None
+CostasArray-11.yml         ERROR (server error, after parsing finished)        6.42        2.28        None
+CostasArray-12.yml         ERROR (server error, after parsing finished)        7.16        2.55        None
+CostasArray-13.yml         ERROR (server error, after parsing finished)        8.30        3.10        None
+CostasArray-14.yml         ERROR (server error, after parsing finished)        9.48        3.71        None
+CostasArray-15.yml         ERROR (server error, after parsing finished)       10.65        4.68        None
+CostasArray-16.yml         ERROR (server error, after parsing finished)       12.69        6.04        None
+CostasArray-17.yml         ERROR (server error, after parsing finished)       13.54        7.09        None
+Dubois-015.yml             ERROR (server error, after parsing finished)        3.89        1.27        None
+Dubois-016.yml             ERROR (server error, after parsing finished)        3.89        1.30        None
+Dubois-017.yml             ERROR (server error, after parsing finished)        4.14        1.36        None
+Dubois-018.yml             ERROR (server error, after parsing finished)        4.28        1.44        None
+Dubois-019.yml             ERROR (server error, after parsing finished)        4.65        1.56        None
+Dubois-020.yml             ERROR (server error, after parsing finished)        4.75        1.58        None
+Dubois-021.yml             ERROR (server error, after parsing finished)        4.47        1.48        None
+Dubois-022.yml             ERROR (server error, after parsing finished)        4.65        1.58        None
+Dubois-023.yml             ERROR (server error, after parsing finished)        4.81        1.63        None
+Dubois-024.yml             ERROR (server error, after parsing finished)        4.78        1.61        None
+Dubois-025.yml             ERROR (server error, after parsing finished)        5.28        1.75        None
+Dubois-026.yml             ERROR (server error, after parsing finished)        4.82        1.63        None
+Dubois-027.yml             ERROR (server error, after parsing finished)        5.28        1.77        None
+Dubois-028.yml             ERROR (server error, after parsing finished)        5.15        1.74        None
+Dubois-029.yml             ERROR (server error, after parsing finished)        5.13        1.70        None
+Dubois-030.yml             ERROR (server error, after parsing finished)        5.55        1.89        None
+Dubois-035.yml             ERROR (server error, after parsing finished)        5.66        1.97        None
+Dubois-040.yml             ERROR (server error, after parsing finished)        6.32        2.20        None
+Dubois-045.yml             ERROR (server error, after parsing finished)        7.22        2.55        None
+Dubois-050.yml             ERROR (server error, after parsing finished)        7.55        2.69        None
+Dubois-055.yml             ERROR (server error, after parsing finished)        8.30        2.96        None
+Dubois-060.yml             ERROR (server error, after parsing finished)        8.65        3.19        None
+Dubois-065.yml             ERROR (server error, after parsing finished)        8.78        3.34        None
+Dubois-070.yml             ERROR (server error, after parsing finished)        8.88        3.39        None
+Dubois-075.yml             ERROR (server error, after parsing finished)        9.59        3.71        None
+Dubois-080.yml             ERROR (server error, after parsing finished)        9.95        4.13        None
+Dubois-085.yml             ERROR (server error, after parsing finished)       10.40        4.28        None
+Dubois-090.yml             ERROR (server error, after parsing finished)       10.96        4.68        None
+Dubois-095.yml             ERROR (server error, after parsing finished)       11.74        5.06        None
+Dubois-100.yml             ERROR (server error, after parsing finished)       11.66        5.16        None
+Haystacks-06.yml           ERROR (server error, after parsing finished)        4.18        1.45        None
+Haystacks-07.yml           ERROR (server error, after parsing finished)        5.12        1.78        None
+Haystacks-08.yml           ERROR (server error, after parsing finished)        6.46        2.30        None
+Haystacks-09.yml           ERROR (server error, after parsing finished)        7.65        2.90        None
+Haystacks-10.yml           ERROR (server error, after parsing finished)        9.70        3.86        None
+Haystacks-11.yml           ERROR (server error, after parsing finished)       11.25        4.95        None
+Haystacks-12.yml           ERROR (server error, after parsing finished)       14.28        7.30        None
+Haystacks-13.yml           ERROR (server error, after parsing finished)       16.71        9.36        None
+Haystacks-14.yml           ERROR (server error, after parsing finished)       20.07       12.03        None
+Haystacks-15.yml           ERROR (server error, after parsing finished)       25.84       16.95        None
+Haystacks-16.yml           
+Haystacks-17.yml           
+Haystacks-18.yml           
+Haystacks-19.yml           
+aim-100-1-6-sat-1.yml      
+aim-100-1-6-sat-2.yml      
+aim-100-1-6-sat-3.yml      
+aim-100-1-6-sat-4.yml      
+aim-100-1-6-unsat-1.yml    
+aim-100-1-6-unsat-2.yml    
+aim-100-1-6-unsat-3.yml    
+aim-100-1-6-unsat-4.yml    
+aim-100-2-0-sat-1.yml      
+aim-100-2-0-sat-2.yml      
+aim-100-2-0-sat-3.yml      
+aim-100-2-0-sat-4.yml      
+aim-100-2-0-unsat-1.yml    
+aim-100-2-0-unsat-2.yml    
+aim-100-2-0-unsat-3.yml    
+aim-100-2-0-unsat-4.yml    
+aim-100-3-4-sat-1.yml      
+aim-100-3-4-sat-2.yml      
+aim-100-3-4-sat-3.yml      
+aim-100-3-4-sat-4.yml      
+aim-100-6-0-sat-1.yml      
+aim-100-6-0-sat-2.yml      
+aim-100-6-0-sat-3.yml      
+aim-100-6-0-sat-4.yml      
+aim-200-1-6-sat-1.yml      
+aim-200-1-6-sat-2.yml      
+aim-200-1-6-sat-3.yml      
+aim-200-1-6-sat-4.yml      
+aim-200-1-6-unsat-1.yml    
+aim-200-1-6-unsat-2.yml    
+aim-200-1-6-unsat-3.yml    
+aim-200-1-6-unsat-4.yml    
+aim-200-2-0-sat-1.yml      
+aim-200-2-0-sat-2.yml      
+aim-200-2-0-sat-3.yml      
+aim-200-2-0-sat-4.yml      
+aim-200-2-0-unsat-1.yml    
+aim-200-2-0-unsat-2.yml    
+aim-200-2-0-unsat-3.yml    
+aim-200-2-0-unsat-4.yml    
+aim-200-3-4-sat-1.yml      
+aim-200-3-4-sat-2.yml      
+aim-200-3-4-sat-3.yml      
+aim-200-3-4-sat-4.yml      
+aim-200-6-0-sat-1.yml      
+aim-200-6-0-sat-2.yml      
+aim-200-6-0-sat-3.yml      
+aim-200-6-0-sat-4.yml      
+----------------------------------------------------------------------------------------
+Run set 1                  done                           495.48      224.69           -
+
+Statistics:             67 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              67
+  Score:                 0 (max: 107)

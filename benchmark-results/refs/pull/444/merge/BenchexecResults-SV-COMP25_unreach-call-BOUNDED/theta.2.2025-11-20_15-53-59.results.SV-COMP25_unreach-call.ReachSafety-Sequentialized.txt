@@ -1,0 +1,626 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-Sequentialized
+date:                    Thu, 2025-11-20 15:53:59 UTC
+tool:                    Theta 6.26.6
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3208.125 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-Sequentialized
+Run set 1 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                                    status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+systemc/bist_cell.cil.yml                                                                    ERROR (server error, after parsing finished)        3.46        1.17        None
+systemc/kundu.cil.yml                                                                        ERROR (server error, after parsing finished)        4.05        1.35        None
+systemc/kundu1.cil.yml                                                                       ERROR (server error, after parsing finished)        3.52        1.20        None
+systemc/kundu2.cil.yml                                                                       ERROR (server error, after parsing finished)        4.02        1.33        None
+systemc/mem_slave_tlm.1.cil.yml                                                              ERROR (server error, after parsing finished)        5.71        1.93        None
+systemc/mem_slave_tlm.2.cil.yml                                                              ERROR (server error, after parsing finished)        5.72        1.94        None
+systemc/mem_slave_tlm.3.cil.yml                                                              ERROR (server error, after parsing finished)        5.72        1.90        None
+systemc/mem_slave_tlm.4.cil.yml                                                              ERROR (server error, after parsing finished)        5.83        1.98        None
+systemc/mem_slave_tlm.5.cil.yml                                                              ERROR (server error, after parsing finished)        6.02        2.06        None
+systemc/pc_sfifo_1.cil-1.yml                                                                 ERROR (server error, after parsing finished)        3.10        1.06        None
+systemc/pc_sfifo_1.cil-2.yml                                                                 ERROR (server error, after parsing finished)        3.12        1.06        None
+systemc/pc_sfifo_2.cil-1.yml                                                                 ERROR (server error, after parsing finished)        3.26        1.12        None
+systemc/pc_sfifo_2.cil-2.yml                                                                 ERROR (server error, after parsing finished)        3.40        1.14        None
+systemc/pc_sfifo_3.cil.yml                                                                   ERROR (server error, after parsing finished)        3.52        1.21        None
+systemc/pipeline.cil-1.yml                                                                   ERROR (server error, after parsing finished)        5.86        1.91        None
+systemc/pipeline.cil-2.yml                                                                   ERROR (server error, after parsing finished)        5.74        1.87        None
+systemc/token_ring.03.cil-1.yml                                                              ERROR (server error, after parsing finished)        4.56        1.51        None
+systemc/token_ring.03.cil-2.yml                                                              ERROR (server error, after parsing finished)        4.32        1.47        None
+systemc/token_ring.04.cil-1.yml                                                              ERROR (server error, after parsing finished)        4.85        1.58        None
+systemc/token_ring.04.cil-2.yml                                                              ERROR (server error, after parsing finished)        4.94        1.62        None
+systemc/token_ring.05.cil-1.yml                                                              ERROR (server error, after parsing finished)        5.53        1.80        None
+systemc/token_ring.05.cil-2.yml                                                              ERROR (server error, after parsing finished)        5.69        1.84        None
+systemc/token_ring.06.cil-1.yml                                                              ERROR (server error, after parsing finished)        6.46        2.07        None
+systemc/token_ring.06.cil-2.yml                                                              ERROR (server error, after parsing finished)        5.39        1.71        None
+systemc/token_ring.07.cil-1.yml                                                              ERROR (server error, after parsing finished)        6.42        2.09        None
+systemc/token_ring.07.cil-2.yml                                                              ERROR (server error, after parsing finished)        6.53        2.14        None
+systemc/token_ring.08.cil-1.yml                                                              ERROR (server error, after parsing finished)        7.07        2.34        None
+systemc/token_ring.08.cil-2.yml                                                              ERROR (server error, after parsing finished)        6.61        2.17        None
+systemc/token_ring.09.cil-1.yml                                                              ERROR (server error, after parsing finished)        6.58        2.12        None
+systemc/token_ring.09.cil-2.yml                                                              ERROR (server error, after parsing finished)        7.19        2.33        None
+systemc/token_ring.10.cil-1.yml                                                              ERROR (server error, after parsing finished)        7.77        2.58        None
+systemc/token_ring.10.cil-2.yml                                                              ERROR (server error, after parsing finished)        7.70        2.50        None
+systemc/token_ring.11.cil-1.yml                                                              ERROR (server error, after parsing finished)        8.96        2.95        None
+systemc/token_ring.11.cil-2.yml                                                              ERROR (server error, after parsing finished)        8.81        2.93        None
+systemc/token_ring.12.cil-1.yml                                                              ERROR (server error, after parsing finished)        9.14        3.13        None
+systemc/token_ring.12.cil-2.yml                                                              ERROR (server error, after parsing finished)        9.14        3.14        None
+systemc/token_ring.13.cil-1.yml                                                              ERROR (server error, after parsing finished)        9.94        3.42        None
+systemc/token_ring.13.cil-2.yml                                                              ERROR (server error, after parsing finished)       10.48        3.61        None
+systemc/token_ring.14.cil.yml                                                                ERROR (server error, after parsing finished)        8.42        2.88        None
+systemc/token_ring.15.cil.yml                                                                ERROR (server error, after parsing finished)        9.95        3.36        None
+systemc/toy.cil.yml                                                                          ERROR (server error, after parsing finished)        4.29        1.41        None
+systemc/toy1.cil.yml                                                                         ERROR (server error, after parsing finished)        4.18        1.37        None
+systemc/toy2.cil.yml                                                                         ERROR (server error, after parsing finished)        4.07        1.32        None
+systemc/transmitter.01.cil.yml                                                               ERROR (server error, after parsing finished)        3.24        1.15        None
+systemc/transmitter.02.cil.yml                                                               ERROR (server error, after parsing finished)        3.47        1.21        None
+systemc/transmitter.03.cil.yml                                                               ERROR (server error, after parsing finished)        3.83        1.32        None
+systemc/transmitter.04.cil.yml                                                               ERROR (server error, after parsing finished)        4.38        1.43        None
+systemc/transmitter.05.cil.yml                                                               ERROR (server error, after parsing finished)        4.99        1.59        None
+systemc/transmitter.06.cil.yml                                                               ERROR (server error, after parsing finished)        6.01        1.94        None
+systemc/transmitter.07.cil.yml                                                               ERROR (server error, after parsing finished)        6.45        2.09        None
+systemc/transmitter.08.cil.yml                                                               ERROR (server error, after parsing finished)        6.83        2.26        None
+systemc/transmitter.09.cil.yml                                                               ERROR (server error, after parsing finished)        7.29        2.39        None
+systemc/transmitter.10.cil.yml                                                               ERROR (server error, after parsing finished)        7.41        2.46        None
+systemc/transmitter.11.cil.yml                                                               ERROR (server error, after parsing finished)        7.97        2.61        None
+systemc/transmitter.12.cil.yml                                                               ERROR (server error, after parsing finished)        8.94        2.99        None
+systemc/transmitter.13.cil.yml                                                               ERROR (server error, after parsing finished)        8.84        3.00        None
+systemc/transmitter.15.cil.yml                                                               ERROR (server error, after parsing finished)        9.46        3.15        None
+systemc/transmitter.16.cil.yml                                                               ERROR (server error, after parsing finished)       10.01        3.44        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.1.ufo.BOUNDED-10.pals.yml                         ERROR (server error, after parsing finished)        9.64        3.70        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.1.ufo.UNBOUNDED.pals.yml                          ERROR (server error, after parsing finished)        5.28        1.69        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_1.ufo.BOUNDED-10.pals.yml                       ERROR (server error, after parsing finished)       10.39        3.85        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_1.ufo.UNBOUNDED.pals.yml                        ERROR (server error, after parsing finished)        5.30        1.69        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_2.ufo.BOUNDED-10.pals.yml                       ERROR (server error, after parsing finished)        9.80        3.75        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.4_2.ufo.UNBOUNDED.pals.yml                        ERROR (server error, after parsing finished)        5.22        1.66        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.5.ufo.BOUNDED-10.pals.yml                         ERROR (server error, after parsing finished)       10.57        4.04        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.5.ufo.UNBOUNDED.pals.yml                          ERROR (server error, after parsing finished)        5.33        1.68        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.ufo.BOUNDED-10.pals.yml                           ERROR (server error, after parsing finished)        9.98        3.78        None
+seq-mthreaded/pals_STARTPALS_ActiveStandby.ufo.UNBOUNDED.pals.yml                            ERROR (server error, after parsing finished)        5.21        1.65        None
+seq-mthreaded/pals_STARTPALS_Triplicated.1.ufo.BOUNDED-10.pals.yml                           ERROR (server error, after parsing finished)       10.85        4.30        None
+seq-mthreaded/pals_STARTPALS_Triplicated.1.ufo.UNBOUNDED.pals.yml                            ERROR (server error, after parsing finished)        6.17        2.10        None
+seq-mthreaded/pals_STARTPALS_Triplicated.2.ufo.BOUNDED-10.pals.yml                           ERROR (server error, after parsing finished)       11.08        4.31        None
+seq-mthreaded/pals_STARTPALS_Triplicated.2.ufo.UNBOUNDED.pals.yml                            ERROR (server error, after parsing finished)        6.67        2.19        None
+seq-mthreaded/pals_STARTPALS_Triplicated.ufo.BOUNDED-10.pals.yml                             ERROR (server error, after parsing finished)       10.51        4.15        None
+seq-mthreaded/pals_STARTPALS_Triplicated.ufo.UNBOUNDED.pals.yml                              ERROR (server error, after parsing finished)        6.53        2.22        None
+seq-mthreaded/pals_floodmax.3.1.ufo.BOUNDED-6.pals.yml                                       ERROR (server error, after parsing finished)        5.38        1.75        None
+seq-mthreaded/pals_floodmax.3.1.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        4.45        1.44        None
+seq-mthreaded/pals_floodmax.3.2.ufo.BOUNDED-6.pals.yml                                       ERROR (server error, after parsing finished)        5.18        1.63        None
+seq-mthreaded/pals_floodmax.3.2.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        4.46        1.44        None
+seq-mthreaded/pals_floodmax.3.3.ufo.BOUNDED-6.pals.yml                                       ERROR (server error, after parsing finished)        5.81        1.98        None
+seq-mthreaded/pals_floodmax.3.3.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        4.50        1.47        None
+seq-mthreaded/pals_floodmax.3.4.ufo.BOUNDED-6.pals.yml                                       ERROR (server error, after parsing finished)        5.44        1.79        None
+seq-mthreaded/pals_floodmax.3.4.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        4.55        1.48        None
+seq-mthreaded/pals_floodmax.3.ufo.BOUNDED-6.pals.yml                                         ERROR (server error, after parsing finished)        5.85        1.89        None
+seq-mthreaded/pals_floodmax.3.ufo.UNBOUNDED.pals.yml                                         ERROR (server error, after parsing finished)        4.72        1.54        None
+seq-mthreaded/pals_floodmax.3_overflow.ufo.UNBOUNDED.pals.yml                                ERROR (server error, after parsing finished)        4.49        1.44        None
+seq-mthreaded/pals_floodmax.4.1.ufo.BOUNDED-8.pals.yml                                       ERROR (server error, after parsing finished)        8.04        2.63        None
+seq-mthreaded/pals_floodmax.4.1.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        6.26        2.01        None
+seq-mthreaded/pals_floodmax.4.2.ufo.BOUNDED-8.pals.yml                                       ERROR (server error, after parsing finished)        8.66        2.84        None
+seq-mthreaded/pals_floodmax.4.2.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        6.12        2.03        None
+seq-mthreaded/pals_floodmax.4.3.ufo.BOUNDED-8.pals.yml                                       ERROR (server error, after parsing finished)        7.63        2.49        None
+seq-mthreaded/pals_floodmax.4.3.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        6.65        2.19        None
+seq-mthreaded/pals_floodmax.4.4.ufo.BOUNDED-8.pals.yml                                       ERROR (server error, after parsing finished)        8.74        2.91        None
+seq-mthreaded/pals_floodmax.4.4.ufo.UNBOUNDED.pals.yml                                       ERROR (server error, after parsing finished)        6.57        2.17        None
+seq-mthreaded/pals_floodmax.4.ufo.BOUNDED-8.pals.yml                                         ERROR (server error, after parsing finished)        8.80        3.00        None
+seq-mthreaded/pals_floodmax.4.ufo.UNBOUNDED.pals.yml                                         ERROR (server error, after parsing finished)        6.60        2.20        None
+seq-mthreaded/pals_floodmax.4_overflow.ufo.UNBOUNDED.pals.yml                                ERROR (server error, after parsing finished)        6.51        2.16        None
+seq-mthreaded/pals_floodmax.5.1.ufo.BOUNDED-10.pals.yml                                      
+seq-mthreaded/pals_floodmax.5.1.ufo.UNBOUNDED.pals.yml                                       
+seq-mthreaded/pals_floodmax.5.2.ufo.BOUNDED-10.pals.yml                                      
+seq-mthreaded/pals_floodmax.5.2.ufo.UNBOUNDED.pals.yml                                       
+seq-mthreaded/pals_floodmax.5.3.ufo.BOUNDED-10.pals.yml                                      
+seq-mthreaded/pals_floodmax.5.3.ufo.UNBOUNDED.pals.yml                                       
+seq-mthreaded/pals_floodmax.5.4.ufo.BOUNDED-10.pals.yml                                      
+seq-mthreaded/pals_floodmax.5.4.ufo.UNBOUNDED.pals.yml                                       
+seq-mthreaded/pals_floodmax.5.ufo.BOUNDED-10.pals.yml                                        
+seq-mthreaded/pals_floodmax.5.ufo.UNBOUNDED.pals.yml                                         
+seq-mthreaded/pals_floodmax.5_overflow.ufo.UNBOUNDED.pals.yml                                
+seq-mthreaded/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.3.ufo.BOUNDED-6.pals.yml                               
+seq-mthreaded/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.yml                               
+seq-mthreaded/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.4.1.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.4.2.ufo.BOUNDED-8.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.4.2.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.4.ufo.BOUNDED-8.pals.yml                               
+seq-mthreaded/pals_lcr-var-start-time.4.ufo.UNBOUNDED.pals.yml                               
+seq-mthreaded/pals_lcr-var-start-time.5.1.ufo.BOUNDED-10.pals.yml                            
+seq-mthreaded/pals_lcr-var-start-time.5.1.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.yml                            
+seq-mthreaded/pals_lcr-var-start-time.5.2.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.5.ufo.BOUNDED-10.pals.yml                              
+seq-mthreaded/pals_lcr-var-start-time.5.ufo.UNBOUNDED.pals.yml                               
+seq-mthreaded/pals_lcr-var-start-time.6.1.ufo.BOUNDED-12.pals.yml                            
+seq-mthreaded/pals_lcr-var-start-time.6.1.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.6.2.ufo.BOUNDED-12.pals.yml                            
+seq-mthreaded/pals_lcr-var-start-time.6.2.ufo.UNBOUNDED.pals.yml                             
+seq-mthreaded/pals_lcr-var-start-time.6.ufo.BOUNDED-12.pals.yml                              
+seq-mthreaded/pals_lcr-var-start-time.6.ufo.UNBOUNDED.pals.yml                               
+seq-mthreaded/pals_lcr.3.1.ufo.BOUNDED-6.pals.yml                                            
+seq-mthreaded/pals_lcr.3.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.3.ufo.BOUNDED-6.pals.yml                                              
+seq-mthreaded/pals_lcr.3.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.3_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_lcr.4.1.ufo.BOUNDED-8.pals.yml                                            
+seq-mthreaded/pals_lcr.4.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.4.ufo.BOUNDED-8.pals.yml                                              
+seq-mthreaded/pals_lcr.4.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.4_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_lcr.5.1.ufo.BOUNDED-10.pals.yml                                           
+seq-mthreaded/pals_lcr.5.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.5.ufo.BOUNDED-10.pals.yml                                             
+seq-mthreaded/pals_lcr.5.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.5_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_lcr.6.1.ufo.BOUNDED-12.pals.yml                                           
+seq-mthreaded/pals_lcr.6.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.6.ufo.BOUNDED-12.pals.yml                                             
+seq-mthreaded/pals_lcr.6.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.6_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_lcr.7.1.ufo.BOUNDED-14.pals.yml                                           
+seq-mthreaded/pals_lcr.7.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.7.ufo.BOUNDED-14.pals.yml                                             
+seq-mthreaded/pals_lcr.7.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.7_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_lcr.8.1.ufo.BOUNDED-16.pals.yml                                           
+seq-mthreaded/pals_lcr.8.1.ufo.UNBOUNDED.pals.yml                                            
+seq-mthreaded/pals_lcr.8.ufo.BOUNDED-16.pals.yml                                             
+seq-mthreaded/pals_lcr.8.ufo.UNBOUNDED.pals.yml                                              
+seq-mthreaded/pals_lcr.8_overflow.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.3.1.ufo.BOUNDED-6.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.2.ufo.BOUNDED-6.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.2.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.3.ufo.BOUNDED-6.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.3.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.4.ufo.BOUNDED-6.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.4.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.3.ufo.BOUNDED-6.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.3.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.3_overflow.ufo.UNBOUNDED.pals.yml                            
+seq-mthreaded/pals_opt-floodmax.4.1.ufo.BOUNDED-8.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.1.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.2.ufo.BOUNDED-8.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.2.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.3.ufo.BOUNDED-8.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.3.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.4.ufo.BOUNDED-8.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.4.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.4.ufo.BOUNDED-8.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.4.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.4_overflow.ufo.UNBOUNDED.pals.yml                            
+seq-mthreaded/pals_opt-floodmax.5.1.ufo.BOUNDED-10.pals.yml                                  
+seq-mthreaded/pals_opt-floodmax.5.1.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.5.2.ufo.BOUNDED-10.pals.yml                                  
+seq-mthreaded/pals_opt-floodmax.5.2.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.5.3.ufo.BOUNDED-10.pals.yml                                  
+seq-mthreaded/pals_opt-floodmax.5.3.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.5.4.ufo.BOUNDED-10.pals.yml                                  
+seq-mthreaded/pals_opt-floodmax.5.4.ufo.UNBOUNDED.pals.yml                                   
+seq-mthreaded/pals_opt-floodmax.5.ufo.BOUNDED-10.pals.yml                                    
+seq-mthreaded/pals_opt-floodmax.5.ufo.UNBOUNDED.pals.yml                                     
+seq-mthreaded/pals_opt-floodmax.5_overflow.ufo.UNBOUNDED.pals.yml                            
+seq-mthreaded/rekcba_aso.1.M1-1.yml                                                          
+seq-mthreaded/rekcba_aso.1.M1-2.yml                                                          
+seq-mthreaded/rekcba_aso.1.M4-1.yml                                                          
+seq-mthreaded/rekcba_aso.1.M4-2.yml                                                          
+seq-mthreaded/rekcba_aso.2.M1-1.yml                                                          
+seq-mthreaded/rekcba_aso.2.M1-2.yml                                                          
+seq-mthreaded/rekcba_aso.2.M4-1.yml                                                          
+seq-mthreaded/rekcba_aso.2.M4-2.yml                                                          
+seq-mthreaded/rekcba_aso.3.M1.yml                                                            
+seq-mthreaded/rekcba_aso.3.M4.yml                                                            
+seq-mthreaded/rekcba_aso.4.M1.yml                                                            
+seq-mthreaded/rekcba_aso.4.M4.yml                                                            
+seq-mthreaded/rekcba_ctm.1.yml                                                               
+seq-mthreaded/rekcba_ctm.2-1.yml                                                             
+seq-mthreaded/rekcba_ctm.2-2.yml                                                             
+seq-mthreaded/rekcba_ctm.3-1.yml                                                             
+seq-mthreaded/rekcba_ctm.3-2.yml                                                             
+seq-mthreaded/rekcba_ctm.4.yml                                                               
+seq-mthreaded/rekcba_nxt.1.M1-1.yml                                                          
+seq-mthreaded/rekcba_nxt.1.M1-2.yml                                                          
+seq-mthreaded/rekcba_nxt.1.M4-1.yml                                                          
+seq-mthreaded/rekcba_nxt.1.M4-2.yml                                                          
+seq-mthreaded/rekcba_nxt.2.M1-1.yml                                                          
+seq-mthreaded/rekcba_nxt.2.M1-2.yml                                                          
+seq-mthreaded/rekcba_nxt.2.M4-1.yml                                                          
+seq-mthreaded/rekcba_nxt.2.M4-2.yml                                                          
+seq-mthreaded/rekcba_nxt.3.M1.yml                                                            
+seq-mthreaded/rekcba_nxt.3.M4.yml                                                            
+seq-mthreaded/rekh_aso.1.M1-1.yml                                                            
+seq-mthreaded/rekh_aso.1.M1-2.yml                                                            
+seq-mthreaded/rekh_aso.1.M4-1.yml                                                            
+seq-mthreaded/rekh_aso.1.M4-2.yml                                                            
+seq-mthreaded/rekh_aso.2.M1-1.yml                                                            
+seq-mthreaded/rekh_aso.2.M1-2.yml                                                            
+seq-mthreaded/rekh_aso.2.M4-1.yml                                                            
+seq-mthreaded/rekh_aso.2.M4-2.yml                                                            
+seq-mthreaded/rekh_aso.3.M1.yml                                                              
+seq-mthreaded/rekh_aso.3.M4.yml                                                              
+seq-mthreaded/rekh_aso.4.M1.yml                                                              
+seq-mthreaded/rekh_aso.4.M4.yml                                                              
+seq-mthreaded/rekh_ctm.1.yml                                                                 
+seq-mthreaded/rekh_ctm.2-1.yml                                                               
+seq-mthreaded/rekh_ctm.2-2.yml                                                               
+seq-mthreaded/rekh_ctm.3-1.yml                                                               
+seq-mthreaded/rekh_ctm.3-2.yml                                                               
+seq-mthreaded/rekh_ctm.4.yml                                                                 
+seq-mthreaded/rekh_nxt.1.M1-1.yml                                                            
+seq-mthreaded/rekh_nxt.1.M1-2.yml                                                            
+seq-mthreaded/rekh_nxt.1.M4-1.yml                                                            
+seq-mthreaded/rekh_nxt.1.M4-2.yml                                                            
+seq-mthreaded/rekh_nxt.2.M1-1.yml                                                            
+seq-mthreaded/rekh_nxt.2.M1-2.yml                                                            
+seq-mthreaded/rekh_nxt.2.M4-1.yml                                                            
+seq-mthreaded/rekh_nxt.2.M4-2.yml                                                            
+seq-mthreaded/rekh_nxt.3.M1.yml                                                              
+seq-mthreaded/rekh_nxt.3.M4.yml                                                              
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.4.ufo.BOUNDED-8.pals.c.p+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.ufo.UNBOUNDED.pals.c.p+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                 
+seq-mthreaded-reduced/pals_floodmax.5.1.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.1.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.5.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml               
+seq-mthreaded-reduced/pals_floodmax.5.3.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.3.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.4.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.4.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml              
+seq-mthreaded-reduced/pals_floodmax.5.4.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml              
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.BOUNDED-6.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.BOUNDED-6.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.2.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.BOUNDED-6.pals.c.v+sep-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.c.p+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.BOUNDED-8.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.BOUNDED-8.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.2.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.BOUNDED-8.pals.c.v+sep-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.4.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.BOUNDED-10.pals.c.v+sep-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.2.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml      
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml      
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml      
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.5.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml       
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.1.ufo.BOUNDED-12.pals.c.v+cfa-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.1.ufo.BOUNDED-12.pals.c.v+nlh-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.2.ufo.BOUNDED-12.pals.c.p+lhb-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.2.ufo.BOUNDED-12.pals.c.v+cfa-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.2.ufo.BOUNDED-12.pals.c.v+nlh-reducer.yml    
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml     
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.ufo.BOUNDED-12.pals.c.v+cfa-reducer.yml      
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.ufo.BOUNDED-12.pals.c.v+nlh-reducer.yml      
+seq-mthreaded-reduced/pals_lcr-var-start-time.6.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml       
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.BOUNDED-6.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.BOUNDED-6.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.3.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.BOUNDED-8.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.BOUNDED-8.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.4.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.BOUNDED-10.pals.c.v+sep-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.UNBOUNDED.pals.c.p+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.5.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.5.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.5.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.5.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.5.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.5.ufo.BOUNDED-10.pals.c.v+sep-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.5.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.5.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.5.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.5.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.BOUNDED-12.pals.c.p+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.BOUNDED-12.pals.c.v+cfa-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.BOUNDED-12.pals.c.v+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.BOUNDED-12.pals.c.v+nlh-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.BOUNDED-12.pals.c.v+sep-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.UNBOUNDED.pals.c.p+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.6.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.6.ufo.BOUNDED-12.pals.c.p+lhb-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.6.ufo.BOUNDED-12.pals.c.v+cfa-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.6.ufo.BOUNDED-12.pals.c.v+lhb-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.6.ufo.BOUNDED-12.pals.c.v+nlh-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.6.ufo.BOUNDED-12.pals.c.v+sep-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.6.ufo.UNBOUNDED.pals.c.p+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.6.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.6.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.6.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.6.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.BOUNDED-14.pals.c.v+cfa-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.BOUNDED-14.pals.c.v+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.BOUNDED-14.pals.c.v+nlh-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.BOUNDED-14.pals.c.v+sep-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.7.1.ufo.UNBOUNDED.pals.c.v+sep-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.7.ufo.BOUNDED-14.pals.c.v+cfa-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.7.ufo.BOUNDED-14.pals.c.v+lhb-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.7.ufo.BOUNDED-14.pals.c.v+nlh-reducer.yml                     
+seq-mthreaded-reduced/pals_lcr.7.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.7.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                      
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.BOUNDED-16.pals.c.v+cfa-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.BOUNDED-16.pals.c.v+lhb-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.BOUNDED-16.pals.c.v+nlh-reducer.yml                   
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml                    
+seq-mthreaded-reduced/pals_lcr.8.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml                    
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.2.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.2.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.3.ufo.BOUNDED-6.pals.c.v+cfa-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.3.ufo.BOUNDED-6.pals.c.v+lhb-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.3.ufo.BOUNDED-6.pals.c.v+nlh-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.4.1.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.1.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.1.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.1.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.1.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.3.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.4.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.4.ufo.BOUNDED-8.pals.c.v+cfa-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.4.ufo.BOUNDED-8.pals.c.v+lhb-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.4.ufo.BOUNDED-8.pals.c.v+nlh-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.4.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.4.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml             
+seq-mthreaded-reduced/pals_opt-floodmax.5.1.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.1.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.1.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.UNBOUNDED.pals.c.v+cfa-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.UNBOUNDED.pals.c.v+lhb-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.5.2.ufo.UNBOUNDED.pals.c.v+nlh-reducer.yml           
+seq-mthreaded-reduced/pals_opt-floodmax.5.3.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.3.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.3.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.4.ufo.BOUNDED-10.pals.c.p+lhb-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.4.ufo.BOUNDED-10.pals.c.v+cfa-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.4.ufo.BOUNDED-10.pals.c.v+lhb-reducer.yml          
+seq-mthreaded-reduced/pals_opt-floodmax.5.4.ufo.BOUNDED-10.pals.c.v+nlh-reducer.yml          
+seq-pthread/cs_dekker.yml                                                                    
+seq-pthread/cs_dekker_unfair.yml                                                             
+seq-pthread/cs_fib-1.yml                                                                     
+seq-pthread/cs_fib-2.yml                                                                     
+seq-pthread/cs_fib_longer-1.yml                                                              
+seq-pthread/cs_fib_longer-2.yml                                                              
+seq-pthread/cs_lamport.yml                                                                   
+seq-pthread/cs_peterson.yml                                                                  
+seq-pthread/cs_queue-1.yml                                                                   
+seq-pthread/cs_queue-2.yml                                                                   
+seq-pthread/cs_read_write_lock-1.yml                                                         
+seq-pthread/cs_read_write_lock-2.yml                                                         
+seq-pthread/cs_stack-1.yml                                                                   
+seq-pthread/cs_stack-2.yml                                                                   
+seq-pthread/cs_stateful-1.yml                                                                
+seq-pthread/cs_stateful-2.yml                                                                
+seq-pthread/cs_sync.yml                                                                      
+seq-pthread/cs_szymanski.yml                                                                 
+seq-pthread/cs_time_var_mutex.yml                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                                    done                           620.87      224.19           -
+
+Statistics:             96 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              96
+  Score:                 0 (max: 127)

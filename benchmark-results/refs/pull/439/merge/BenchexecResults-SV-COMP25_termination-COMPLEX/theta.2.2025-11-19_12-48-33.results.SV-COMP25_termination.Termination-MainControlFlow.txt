@@ -1,0 +1,342 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_termination.Termination-MainControlFlow
+date:                    Wed, 2025-11-19 12:48:33 UTC
+tool:                    Theta 6.26.6
+tool executable:         ./Theta/theta-start.sh
+options:                 --svcomp --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  600 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3241.849 MHz
+ram:                     16772.579328 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call
+Run set 1 of 6: skipped
+
+
+SV-COMP25_no-data-race
+Run set 2 of 6: skipped
+
+
+SV-COMP25_valid-memcleanup
+Run set 3 of 6: skipped
+
+
+SV-COMP25_valid-memsafety
+Run set 4 of 6: skipped
+
+
+SV-COMP25_no-overflow
+Run set 5 of 6: skipped
+
+
+SV-COMP25_termination.Termination-MainControlFlow
+Run set 6 of 6 with options '--svcomp --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                            status                       cpu time   wall time        host
+--------------------------------------------------------------------------------------------------------------------------------------------------
+termination-crafted/2Nested-1.yml                                                    ERROR (server error, after parsing finished)        6.86        3.90        None
+termination-crafted/4BitCounterPointer.yml                                           ERROR (frontend failed, before parsing finished)        1.10        0.52        None
+termination-crafted/4NestedWith3Variables-1.yml                                      ERROR (server error, after parsing finished)        9.03        5.53        None
+termination-crafted/Ackermann-2.yml                                                  ERROR (server error, after parsing finished)        6.82        3.84        None
+termination-crafted/Arrays01-EquivalentConstantIndices-1.yml                         ERROR (server error, after parsing finished)        5.44        3.17        None
+termination-crafted/Arrays02-EquivalentConstantIndices.yml                           ERROR (server error, after parsing finished)        4.90        2.83        None
+termination-crafted/Arrays03-ValueRestictsIndex-2.yml                                ERROR (server error, after parsing finished)        6.23        3.27        None
+termination-crafted/Bangalore-2.yml                                                  ERROR (server error, after parsing finished)        6.29        3.82        None
+termination-crafted/Bangalore_v2.yml                                                 ERROR (server error, after parsing finished)        6.53        3.79        None
+termination-crafted/Bangalore_v4.yml                                                 ERROR (server error, after parsing finished)        6.49        3.75        None
+termination-crafted/Benghazi.yml                                                     ERROR (server error, after parsing finished)        6.27        3.71        None
+termination-crafted/Benghazi_nondet-2.yml                                            ERROR (server error, after parsing finished)        7.17        4.05        None
+termination-crafted/Binary_Search-2.yml                                              ERROR (server error, after parsing finished)        9.44        5.35        None
+termination-crafted/Cairo.yml                                                        ERROR (server error, after parsing finished)        6.05        3.68        None
+termination-crafted/Cairo_step2-1.yml                                                ERROR (server error, after parsing finished)        5.81        3.66        None
+termination-crafted/Cairo_step2-3.yml                                                ERROR (server error, after parsing finished)        5.60        3.53        None
+termination-crafted/Collatz_bounded.yml                                              ERROR (server error, after parsing finished)        8.51        5.45        None
+termination-crafted/Copenhagen.yml                                                   ERROR (server error, after parsing finished)        5.93        3.72        None
+termination-crafted/Copenhagen_disj-2.yml                                            ERROR (server error, after parsing finished)        6.56        3.74        None
+termination-crafted/Division-2.yml                                                   ERROR (server error, after parsing finished)        8.36        5.32        None
+termination-crafted/Gothenburg-1.yml                                                 ERROR (server error, after parsing finished)        6.91        3.94        None
+termination-crafted/Gothenburg_v2-1.yml                                              ERROR (server error, after parsing finished)        6.99        3.91        None
+termination-crafted/LexIndexValue-Array-1.yml                                        ERROR (server error, after parsing finished)        5.74        3.32        None
+termination-crafted/LexIndexValue-Pointer-2.yml                                      ERROR (frontend failed, after parsing finished)        1.67        0.65        None
+termination-crafted/Lobnya-Boolean-Reordered-2.yml                                   ERROR (server error, after parsing finished)        6.30        3.71        None
+termination-crafted/Madrid.yml                                                       ERROR (frontend failed, before parsing finished)        1.40        0.56        None
+termination-crafted/McCarthy91_Iteration.yml                                         ERROR (server error, after parsing finished)        6.43        3.85        None
+termination-crafted/McCarthy91_Recursion.yml                                         ERROR (server error, after parsing finished)        5.67        3.56        None
+termination-crafted/MenloPark.yml                                                    ERROR (server error, after parsing finished)        6.13        3.67        None
+termination-crafted/MutualRecursion_1a.yml                                           ERROR (server error, after parsing finished)        6.38        3.76        None
+termination-crafted/MutualRecursion_1b.yml                                           ERROR (server error, after parsing finished)        5.78        3.62        None
+termination-crafted/Mysore-2.yml                                                     ERROR (server error, after parsing finished)        6.62        3.80        None
+termination-crafted/NestedRecursion_1a-2.yml                                         ERROR (server error, after parsing finished)        6.05        3.68        None
+termination-crafted/NestedRecursion_1b.yml                                           ERROR (server error, after parsing finished)        6.36        3.71        None
+termination-crafted/NestedRecursion_1c.yml                                           ERROR (server error, after parsing finished)        6.47        3.75        None
+termination-crafted/NestedRecursion_1d.yml                                           ERROR (server error, after parsing finished)        6.13        3.74        None
+termination-crafted/NestedRecursion_2b.yml                                           ERROR (server error, after parsing finished)        5.85        3.67        None
+termination-crafted/NestedRecursion_2c.yml                                           ERROR (server error, after parsing finished)        5.68        3.54        None
+termination-crafted/NonTermination3-1.yml                                            ERROR (server error, after parsing finished)        6.22        3.27        None
+termination-crafted/NonTermination3-2.yml                                            ERROR (server error, after parsing finished)        5.49        3.17        None
+termination-crafted/NonTerminationSimple7.yml                                        ERROR (server error, after parsing finished)        6.08        3.66        None
+termination-crafted/Nyala-2lex-2.yml                                                 ERROR (server error, after parsing finished)        5.95        3.75        None
+termination-crafted/Parallel.yml                                                     ERROR (server error, after parsing finished)        6.22        3.69        None
+termination-crafted/Piecewise.yml                                                    ERROR (server error, after parsing finished)        6.54        3.75        None
+termination-crafted/Pure2Phase-1.yml                                                 ERROR (server error, after parsing finished)        6.00        3.63        None
+termination-crafted/Pure3Phase-1.yml                                                 ERROR (server error, after parsing finished)        6.75        3.76        None
+termination-crafted/RecursiveMultiplication-1.yml                                    ERROR (server error, after parsing finished)        8.52        5.30        None
+termination-crafted/RecursiveNonterminating-1.yml                                    ERROR (server error, after parsing finished)        8.95        5.50        None
+termination-crafted/Rotation180-1.yml                                                ERROR (frontend failed, before parsing finished)        1.48        0.59        None
+termination-crafted/Singapore-2.yml                                                  ERROR (server error, after parsing finished)        6.69        3.89        None
+termination-crafted/Stockholm-1.yml                                                  ERROR (server error, after parsing finished)        6.46        3.93        None
+termination-crafted/SyntaxSupportPointer01-1.yml                                     ERROR (server error, after parsing finished)        5.19        2.92        None
+termination-crafted/SyntaxSupportPointer01-2.yml                                     ERROR (server error, after parsing finished)        4.60        2.81        None
+termination-crafted/TelAviv-Amir-Minimum.yml                                         ERROR (server error, after parsing finished)        6.80        3.92        None
+termination-crafted/Thun-2.yml                                                       ERROR (server error, after parsing finished)        9.34        5.52        None
+termination-crafted/Toulouse-BranchesToLoop-2.yml                                    ERROR (server error, after parsing finished)        6.57        3.75        None
+termination-crafted/Toulouse-MultiBranchesToLoop-2.yml                               ERROR (server error, after parsing finished)        8.28        4.17        None
+termination-crafted/Waldkirch.yml                                                    ERROR (server error, after parsing finished)        6.00        3.68        None
+termination-crafted/WhileFalse.yml                                                   ERROR (frontend failed, before parsing finished)        1.34        0.55        None
+termination-crafted/WhileTrue.yml                                                    ERROR (frontend failed, before parsing finished)        1.05        0.50        None
+termination-crafted/aaron2-1.yml                                                     ERROR (server error, after parsing finished)        6.34        3.86        None
+termination-crafted/aaron3-1.yml                                                     ERROR (server error, after parsing finished)        7.18        4.02        None
+termination-crafted/easy1.yml                                                        ERROR (server error, after parsing finished)        6.04        3.73        None
+termination-crafted/easy2-2.yml                                                      ERROR (server error, after parsing finished)        6.27        3.70        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-Fig1.yml                  ERROR (server error, after parsing finished)        6.72        3.83        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-cousot9.yml               ERROR (server error, after parsing finished)        6.18        3.79        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-easy1.yml                 ERROR (server error, after parsing finished)        5.74        3.62        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-easy2-2.yml               ERROR (server error, after parsing finished)        5.54        3.52        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-loops.yml                 ERROR (server error, after parsing finished)        8.74        5.49        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-nestedLoop-1.yml          ERROR (server error, after parsing finished)        6.97        3.96        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-random1d-2.yml            ERROR (server error, after parsing finished)        5.86        3.59        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-random2d.yml              ERROR (server error, after parsing finished)        6.48        3.82        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi2.yml            ERROR (server error, after parsing finished)        6.63        3.84        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi3.yml            ERROR (server error, after parsing finished)        6.17        3.77        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-speedpldi4.yml            ERROR (server error, after parsing finished)        6.06        3.71        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-wcet2.yml                 ERROR (server error, after parsing finished)        5.84        3.63        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-while2.yml                ERROR (server error, after parsing finished)        6.32        3.73        None
+termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-wise.yml                  ERROR (server error, after parsing finished)        6.41        3.82        None
+termination-crafted-lit/Avery-FLOPS2006-Table1.yml                                   ERROR (server error, after parsing finished)        6.87        3.86        None
+termination-crafted-lit/BradleyMannaSipma-CAV2005-Fig1-modified.yml                  ERROR (server error, after parsing finished)        6.31        3.72        None
+termination-crafted-lit/BradleyMannaSipma-CAV2005-Fig1.yml                           ERROR (server error, after parsing finished)        6.47        3.77        None
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig1.yml                        ERROR (server error, after parsing finished)        6.15        3.87        None
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Fig9a.yml                       ERROR (server error, after parsing finished)        6.17        3.79        None
+termination-crafted-lit/BrockschmidtCookFuhs-CAV2013-Introduction.yml                ERROR (server error, after parsing finished)        6.19        3.72        None
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-easy1.yml             ERROR (server error, after parsing finished)        5.54        3.54        None
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-easy2.yml             ERROR (server error, after parsing finished)        5.56        3.54        None
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-random1d.yml          ERROR (server error, after parsing finished)        6.37        3.77        None
+termination-crafted-lit/ChawdharyCookGulwaniSagivYang-ESOP2008-random2d.yml          ERROR (server error, after parsing finished)        6.99        3.90        None
+termination-crafted-lit/ChenCookFuhsNimkarOHearn-TACAS2014-Introduction.yml          ERROR (server error, after parsing finished)        6.25        3.63        None
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.20.yml                      ERROR (server error, after parsing finished)        5.81        3.63        None
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex3.01.yml                      ERROR (server error, after parsing finished)        6.44        3.74        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig1.yml                            ERROR (server error, after parsing finished)        5.80        3.64        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig7a.yml                           ERROR (server error, after parsing finished)        6.55        3.78        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig7b.yml                           ERROR (server error, after parsing finished)        6.66        3.75        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8a-modified.yml                  ERROR (server error, after parsing finished)        5.60        3.48        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8a.yml                           ERROR (server error, after parsing finished)        6.37        3.77        None
+termination-crafted-lit/CookSeeZuleger-TACAS2013-Fig8b.yml                           ERROR (server error, after parsing finished)        6.25        3.73        None
+termination-crafted-lit/GopanReps-CAV2006-Fig1a.yml                                  ERROR (server error, after parsing finished)        6.13        3.58        None
+termination-crafted-lit/HarrisLalNoriRajamani-SAS2010-Fig1.yml                       ERROR (server error, after parsing finished)        9.07        5.59        None
+termination-crafted-lit/HarrisLalNoriRajamani-SAS2010-Fig3.yml                       ERROR (server error, after parsing finished)        5.81        3.65        None
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig1.yml              ERROR (server error, after parsing finished)        5.73        3.67        None
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig4.yml              ERROR (server error, after parsing finished)        5.57        3.54        None
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig5.yml              ERROR (server error, after parsing finished)        7.94        5.15        None
+termination-crafted-lit/HeizmannHoenickeLeikePodelski-ATVA2013-Fig6.yml              ERROR (server error, after parsing finished)        6.36        3.74        None
+termination-crafted-lit/HenzingerJhalaMajumdarSutre-POPL2002-LockingExample.yml      ERROR (server error, after parsing finished)        6.32        3.68        None
+termination-crafted-lit/KroeningSharyginaTsitovichWintersteiger-CAV2010-Ex.yml       ERROR (server error, after parsing finished)        6.30        3.70        None
+termination-crafted-lit/KroeningSharyginaTsitovichWintersteiger-CAV2010-Fig1.yml     ERROR (server error, after parsing finished)        8.20        5.18        None
+termination-crafted-lit/LarrazOliverasRodriguez-CarbonellRubio-FMCAD2013-Fig1.yml    ERROR (server error, after parsing finished)        6.46        3.78        None
+termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex4.yml                           ERROR (server error, after parsing finished)        6.59        3.80        None
+termination-crafted-lit/LeeJonesBen-Amram-POPL2001-Ex5.yml                           ERROR (server error, after parsing finished)        6.28        3.66        None
+termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex1.yml                              ERROR (server error, after parsing finished)        6.20        3.67        None
+termination-crafted-lit/LeikeHeizmann-TACAS2014-Ex9.yml                              ERROR (server error, after parsing finished)        6.24        3.68        None
+termination-crafted-lit/LeikeHeizmann-WST2014-Ex9.yml                                ERROR (server error, after parsing finished)        8.33        5.23        None
+termination-crafted-lit/PodelskiRybalchenko-LICS2004-Fig1.yml                        ERROR (server error, after parsing finished)        8.73        5.51        None
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig1.yml                       ERROR (server error, after parsing finished)        6.16        3.75        None
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig2.yml                       ERROR (server error, after parsing finished)        5.90        3.67        None
+termination-crafted-lit/PodelskiRybalchenko-TACAS2011-Fig4.yml                       ERROR (server error, after parsing finished)        5.77        3.61        None
+termination-crafted-lit/Urban-WST2013-Fig1.yml                                       ERROR (server error, after parsing finished)        6.15        3.74        None
+termination-crafted-lit/Urban-WST2013-Fig2-modified1000.yml                          ERROR (server error, after parsing finished)       18.90        8.82        None
+termination-crafted-lit/Urban-WST2013-Fig2.yml                                       ERROR (server error, after parsing finished)        8.00        4.25        None
+termination-crafted-lit/UrbanMine-ESOP2014-Fig3.yml                                  ERROR (server error, after parsing finished)        7.53        4.02        None
+termination-crafted-lit/Velroyen.yml                                                 ERROR (server error, after parsing finished)        6.86        3.86        None
+termination-crafted-lit/aviad.yml                                                    ERROR (server error, after parsing finished)        9.51        5.66        None
+termination-crafted-lit/cstrcmp.yml                                                  ERROR (frontend failed, after parsing finished)        1.79        0.68        None
+termination-crafted-lit/cstrcspn.yml                                                 ERROR (frontend failed, after parsing finished)        1.75        0.66        None
+termination-crafted-lit/cstrlen.yml                                                  ERROR (frontend failed, after parsing finished)        1.73        0.66        None
+termination-crafted-lit/cstrpbrk.yml                                                 ERROR (frontend failed, after parsing finished)        1.77        0.68        None
+termination-crafted-lit/cstrspn.yml                                                  ERROR (frontend failed, after parsing finished)        1.71        0.64        None
+termination-crafted-lit/genady.yml                                                   ERROR (server error, after parsing finished)        6.18        3.62        None
+termination-crafted-lit/strchr-2.yml                                                 ERROR (frontend failed, after parsing finished)        1.80        0.67        None
+termination-numeric/Ackermann01-1.yml                                                ERROR (server error, after parsing finished)        7.84        3.97        None
+termination-numeric/Binomial.yml                                                     ERROR (server error, after parsing finished)       10.99        5.87        None
+termination-numeric/EvenOdd01-2.yml                                                  ERROR (server error, after parsing finished)        7.02        3.97        None
+termination-numeric/Fibonacci01-2.yml                                                ERROR (server error, after parsing finished)        7.55        4.01        None
+termination-numeric/LeUserDefRec.yml                                                 ERROR (server error, after parsing finished)        7.16        3.93        None
+termination-numeric/LogRecursive.yml                                                 ERROR (server error, after parsing finished)        9.47        5.66        None
+termination-numeric/Parts.yml                                                        ERROR (server error, after parsing finished)        7.10        3.91        None
+termination-numeric/TerminatorRec02.yml                                              ERROR (server error, after parsing finished)        9.21        5.46        None
+termination-numeric/TwoWay.yml                                                       ERROR (server error, after parsing finished)        9.84        5.69        None
+termination-numeric/gcd01-2.yml                                                      ERROR (server error, after parsing finished)        8.19        4.13        None
+termination-numeric/java_LogBuiltIn.yml                                              ERROR (server error, after parsing finished)        9.36        5.42        None
+termination-numeric/recHanoi02-1.yml                                                 ERROR (server error, after parsing finished)       10.56        5.82        None
+termination-numeric/rec_counter1.yml                                                 ERROR (server error, after parsing finished)        6.63        3.75        None
+termination-numeric/rec_counter3.yml                                                 ERROR (server error, after parsing finished)        7.08        3.85        None
+termination-numeric/twisted.yml                                                      ERROR (server error, after parsing finished)       10.19        5.67        None
+termination-restricted-15/AlternKonv.yml                                             ERROR (server error, after parsing finished)       10.30        5.80        None
+termination-restricted-15/ComplInterv2.yml                                           ERROR (server error, after parsing finished)        6.80        3.78        None
+termination-restricted-15/ConvLower.yml                                              ERROR (server error, after parsing finished)        6.65        3.77        None
+termination-restricted-15/DivMinus.yml                                               ERROR (server error, after parsing finished)        6.76        3.79        None
+termination-restricted-15/DivMinus2.yml                                              ERROR (server error, after parsing finished)        7.33        3.91        None
+termination-restricted-15/Ex02.yml                                                   ERROR (server error, after parsing finished)        6.31        3.72        None
+termination-restricted-15/Ex03.yml                                                   ERROR (server error, after parsing finished)        6.78        3.85        None
+termination-restricted-15/Ex05.yml                                                   ERROR (frontend failed, before parsing finished)        1.44        0.58        None
+termination-restricted-15/Ex06.yml                                                   ERROR (server error, after parsing finished)        6.95        3.85        None
+termination-restricted-15/Ex07.yml                                                   ERROR (frontend failed, before parsing finished)        1.45        0.58        None
+termination-restricted-15/Ex08.yml                                                   ERROR (server error, after parsing finished)        7.26        3.99        None
+termination-restricted-15/Flip.yml                                                   ERROR (server error, after parsing finished)        7.01        3.87        None
+termination-restricted-15/Flip2.yml                                                  ERROR (server error, after parsing finished)        7.24        3.90        None
+termination-restricted-15/GCD-1.yml                                                  ERROR (server error, after parsing finished)        7.40        3.90        None
+termination-restricted-15/GCD2.yml                                                   ERROR (server error, after parsing finished)        7.16        3.89        None
+termination-restricted-15/GCD3.yml                                                   ERROR (server error, after parsing finished)        8.01        4.15        None
+termination-restricted-15/GCD4.yml                                                   ERROR (server error, after parsing finished)        6.73        3.81        None
+termination-restricted-15/IntPath.yml                                                ERROR (server error, after parsing finished)        6.70        3.71        None
+termination-restricted-15/Log.yml                                                    ERROR (server error, after parsing finished)        7.37        4.02        None
+termination-restricted-15/LogAG.yml                                                  ERROR (server error, after parsing finished)        7.45        4.06        None
+termination-restricted-15/Loop-2.yml                                                 ERROR (server error, after parsing finished)        7.90        4.27        None
+termination-restricted-15/McCarthyIterative.yml                                      ERROR (server error, after parsing finished)        6.98        3.95        None
+termination-restricted-15/MinusBuiltIn.yml                                           ERROR (server error, after parsing finished)        7.08        4.00        None
+termination-restricted-15/MinusUserDefined.yml                                       ERROR (server error, after parsing finished)        7.74        4.06        None
+termination-restricted-15/MirrorIntervSim.yml                                        ERROR (server error, after parsing finished)        6.71        3.78        None
+termination-restricted-15/NO_00.yml                                                  ERROR (server error, after parsing finished)        7.67        4.23        None
+termination-restricted-15/NO_01.yml                                                  ERROR (server error, after parsing finished)       14.14        7.20        None
+termination-restricted-15/NO_02.yml                                                  ERROR (server error, after parsing finished)       18.45        7.76        None
+termination-restricted-15/NO_03.yml                                                  ERROR (server error, after parsing finished)        8.31        4.38        None
+termination-restricted-15/NO_04.yml                                                  ERROR (server error, after parsing finished)       28.50       14.49        None
+termination-restricted-15/NO_13.yml                                                  ERROR (server error, after parsing finished)        6.95        3.79        None
+termination-restricted-15/NO_21.yml                                                  ERROR (server error, after parsing finished)        8.00        4.27        None
+termination-restricted-15/NO_22.yml                                                  ERROR (server error, after parsing finished)        6.64        3.71        None
+termination-restricted-15/NO_23.yml                                                  ERROR (server error, after parsing finished)        6.74        3.78        None
+termination-restricted-15/NO_24.yml                                                  ERROR (server error, after parsing finished)        6.65        3.74        None
+termination-restricted-15/NarrowKonv.yml                                             ERROR (server error, after parsing finished)        7.20        4.00        None
+termination-restricted-15/Narrowing.yml                                              ERROR (server error, after parsing finished)        7.68        4.05        None
+termination-restricted-15/Nested-2.yml                                               ERROR (server error, after parsing finished)       21.87       10.51        None
+termination-restricted-15/PastaA1.yml                                                ERROR (server error, after parsing finished)        6.79        3.81        None
+termination-restricted-15/PastaA10.yml                                               ERROR (server error, after parsing finished)        7.10        3.85        None
+termination-restricted-15/PastaA4.yml                                                ERROR (server error, after parsing finished)        6.64        3.74        None
+termination-restricted-15/PastaA7.yml                                                ERROR (server error, after parsing finished)        6.85        3.78        None
+termination-restricted-15/PastaB1.yml                                                ERROR (server error, after parsing finished)        6.55        3.72        None
+termination-restricted-15/PastaB14.yml                                               ERROR (server error, after parsing finished)        7.02        3.88        None
+termination-restricted-15/PastaB15.yml                                               ERROR (server error, after parsing finished)        7.21        3.96        None
+termination-restricted-15/PastaB16.yml                                               ERROR (server error, after parsing finished)        7.11        3.87        None
+termination-restricted-15/PastaB17.yml                                               ERROR (server error, after parsing finished)        6.94        3.82        None
+termination-restricted-15/PastaB2.yml                                                ERROR (server error, after parsing finished)        6.67        3.78        None
+termination-restricted-15/PastaB4.yml                                                ERROR (server error, after parsing finished)        6.81        3.79        None
+termination-restricted-15/PastaB6.yml                                                ERROR (server error, after parsing finished)        6.89        3.79        None
+termination-restricted-15/PastaB7.yml                                                ERROR (server error, after parsing finished)        6.80        3.81        None
+termination-restricted-15/PastaC3.yml                                                ERROR (server error, after parsing finished)        6.90        3.81        None
+termination-restricted-15/PastaC7.yml                                                ERROR (server error, after parsing finished)        6.89        3.87        None
+termination-restricted-15/PastaC9.yml                                                ERROR (server error, after parsing finished)        7.25        3.88        None
+termination-restricted-15/Sequence.yml                                               ERROR (server error, after parsing finished)        9.42        4.58        None
+termination-restricted-15/Sunset.yml                                                 ERROR (server error, after parsing finished)        6.87        3.82        None
+termination-restricted-15/Swingers.yml                                               ERROR (server error, after parsing finished)        6.81        3.76        None
+termination-restricted-15/TwoFloatInterv.yml                                         ERROR (server error, after parsing finished)        7.17        3.89        None
+termination-restricted-15/UpAndDown.yml                                              ERROR (server error, after parsing finished)        7.35        4.00        None
+termination-restricted-15/UpAndDownIneq.yml                                          ERROR (server error, after parsing finished)        7.26        3.96        None
+termination-restricted-15/WhileDecr.yml                                              ERROR (server error, after parsing finished)        6.54        3.77        None
+termination-restricted-15/WhilePart.yml                                              ERROR (server error, after parsing finished)        6.66        3.79        None
+termination-restricted-15/WhileSingle.yml                                            ERROR (server error, after parsing finished)        6.62        3.79        None
+termination-restricted-15/a.01.yml                                                   ERROR (server error, after parsing finished)        6.89        3.83        None
+termination-restricted-15/a.04.yml                                                   ERROR (server error, after parsing finished)        6.87        3.86        None
+termination-restricted-15/a.05.yml                                                   ERROR (server error, after parsing finished)        6.87        3.87        None
+termination-restricted-15/a.06.yml                                                   ERROR (server error, after parsing finished)        7.26        3.88        None
+termination-restricted-15/a.07.yml                                                   ERROR (server error, after parsing finished)        7.02        3.87        None
+termination-restricted-15/a.08.yml                                                   ERROR (server error, after parsing finished)        6.81        3.81        None
+termination-restricted-15/a.09_assume.yml                                            ERROR (server error, after parsing finished)        6.92        3.82        None
+termination-restricted-15/a.10.yml                                                   ERROR (server error, after parsing finished)        7.06        3.85        None
+termination-restricted-15/b.01.yml                                                   ERROR (server error, after parsing finished)        6.70        3.78        None
+termination-restricted-15/b.02.yml                                                   ERROR (server error, after parsing finished)        6.98        3.85        None
+termination-restricted-15/b.03-no-inv_assume.yml                                     ERROR (server error, after parsing finished)        6.76        3.84        None
+termination-restricted-15/b.03_assume.yml                                            ERROR (server error, after parsing finished)        6.75        3.75        None
+termination-restricted-15/b.04.yml                                                   ERROR (server error, after parsing finished)        6.84        3.77        None
+termination-restricted-15/b.05.yml                                                   ERROR (server error, after parsing finished)        9.96        5.71        None
+termination-restricted-15/b.06.yml                                                   ERROR (server error, after parsing finished)        6.96        3.93        None
+termination-restricted-15/b.07.yml                                                   ERROR (server error, after parsing finished)        7.00        3.87        None
+termination-restricted-15/b.09-no-inv_assume.yml                                     
+termination-restricted-15/b.09_assume.yml                                            
+termination-restricted-15/b.10.yml                                                   
+termination-restricted-15/b.11.yml                                                   
+termination-restricted-15/b.12.yml                                                   
+termination-restricted-15/b.13.yml                                                   
+termination-restricted-15/b.14.yml                                                   
+termination-restricted-15/b.15.yml                                                   
+termination-restricted-15/b.16.yml                                                   
+termination-restricted-15/b.17.yml                                                   
+termination-restricted-15/b.18.yml                                                   
+termination-restricted-15/c.01-no-inv.yml                                            
+termination-restricted-15/c.01_assume.yml                                            
+termination-restricted-15/c.02.yml                                                   
+termination-restricted-15/c.03.yml                                                   
+termination-restricted-15/c.07.yml                                                   
+termination-restricted-15/c.08.yml                                                   
+termination-restricted-15/ex3a.yml                                                   
+termination-restricted-15/ex3b.yml                                                   
+termination-restricted-15/java_AG313.yml                                             
+termination-restricted-15/java_Break.yml                                             
+termination-restricted-15/java_Continue1.yml                                         
+termination-restricted-15/java_Nested.yml                                            
+termination-restricted-15/java_Sequence.yml                                          
+termination-nla/cohencu1-both-t.yml                                                  
+termination-nla/cohencu2-both-t.yml                                                  
+termination-nla/cohencu3-both-t.yml                                                  
+termination-nla/cohencu4-both-t.yml                                                  
+termination-nla/cohencu5-both-t.yml                                                  
+termination-nla/cohencu6-both-t.yml                                                  
+termination-nla/cohencu7-both-t.yml                                                  
+termination-nla/dijkstra1-both-nt-2.yml                                              
+termination-nla/dijkstra1-both-nt.yml                                                
+termination-nla/dijkstra1-both-t.yml                                                 
+termination-nla/dijkstra2-both-nt.yml                                                
+termination-nla/dijkstra2-both-t.yml                                                 
+termination-nla/dijkstra3-both-t.yml                                                 
+termination-nla/dijkstra4-both-t.yml                                                 
+termination-nla/dijkstra5-both-t.yml                                                 
+termination-nla/dijkstra6-both-t.yml                                                 
+termination-nla/divbin1-both-nt.yml                                                  
+termination-nla/divbin1-both-t.yml                                                   
+termination-nla/egcd2-both-t.yml                                                     
+termination-nla/hard2-both-t.yml                                                     
+termination-nla/knuth-both-nt.yml                                                    
+termination-nla/knuth-both-t.yml                                                     
+termination-nla/knuth-nosqrt-both-nt.yml                                             
+termination-nla/knuth-nosqrt-both-t.yml                                              
+termination-nla/lcm1-both-nt.yml                                                     
+termination-nla/lcm1-both-t.yml                                                      
+termination-nla/mannadiv-both-t.yml                                                  
+termination-nla/ps2-both-t.yml                                                       
+termination-nla/ps3-both-t.yml                                                       
+termination-nla/ps4-both-t.yml                                                       
+termination-nla/ps5-both-t.yml                                                       
+termination-nla/ps6-both-t.yml                                                       
+termination-nla/sqrt1-both-t.yml                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------
+Run set 6                                                                            done                          1539.96      899.38           -
+
+Statistics:            224 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:             224
+  Score:                 0 (max: 394)

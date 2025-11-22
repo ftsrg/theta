@@ -1,0 +1,115 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta.2
+run sets:                SV-COMP25_unreach-call.ReachSafety-ControlFlow
+date:                    Mon, 2025-11-17 18:25:34 UTC
+tool:                    Theta 6.26.2
+tool executable:         ./EmergenTheta/theta-start.sh
+options:                 --svcomp --portfolio BOUNDED --loglevel RESULT
+resource limits:
+- time:                  40 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    runnervmg1sw1
+os:                      Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+cpu:                     Intel Xeon Platinum 8370C CPU @ 2.80GHz
+- cores:                 4
+- max frequency:         2800.0 MHz
+- turbo boost enabled:   True
+ram:                     16771.538944 MB
+------------------------------------------------------------
+
+
+
+SV-COMP25_unreach-call.ReachSafety-ControlFlow
+Run set 1 of 6 with options '--svcomp --portfolio BOUNDED --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                                                  status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------------------------
+openssl-simplified/s3_srvr_1b.cil.yml                                      ERROR (server error, after parsing finished)        2.18        0.80        None
+locks/test_locks_10.yml                                                    ERROR (server error, after parsing finished)        1.71        0.73        None
+locks/test_locks_11.yml                                                    ERROR (server error, after parsing finished)        1.80        0.78        None
+locks/test_locks_12.yml                                                    ERROR (server error, after parsing finished)        1.89        0.81        None
+locks/test_locks_13.yml                                                    ERROR (server error, after parsing finished)        2.60        0.92        None
+locks/test_locks_14-1.yml                                                  ERROR (server error, after parsing finished)        2.72        0.97        None
+locks/test_locks_14-2.yml                                                  ERROR (server error, after parsing finished)        2.74        0.95        None
+locks/test_locks_15-1.yml                                                  ERROR (server error, after parsing finished)        2.76        0.98        None
+locks/test_locks_15-2.yml                                                  ERROR (server error, after parsing finished)        2.72        0.98        None
+locks/test_locks_5.yml                                                     ERROR (server error, after parsing finished)        2.19        0.85        None
+locks/test_locks_6.yml                                                     ERROR (server error, after parsing finished)        1.60        0.72        None
+locks/test_locks_7.yml                                                     ERROR (server error, after parsing finished)        1.64        0.71        None
+locks/test_locks_8.yml                                                     ERROR (server error, after parsing finished)        1.91        0.84        None
+locks/test_locks_9.yml                                                     ERROR (server error, after parsing finished)        1.82        0.80        None
+ntdrivers/cdaudio.i.cil-1.yml                                              ERROR (frontend failed, before parsing finished)        5.88        1.95        None
+ntdrivers/diskperf.i.cil-1.yml                                             ERROR (frontend failed, before parsing finished)        4.23        1.41        None
+ntdrivers/diskperf.i.cil-2.yml                                             ERROR (frontend failed, before parsing finished)        4.78        1.62        None
+ntdrivers/floppy.i.cil-1.yml                                               ERROR (frontend failed, before parsing finished)        5.96        2.05        None
+ntdrivers/floppy.i.cil-3.yml                                               ERROR (frontend failed, before parsing finished)        5.03        1.68        None
+ntdrivers/kbfiltr.i.cil-2.yml                                              ERROR (frontend failed, before parsing finished)        3.61        1.22        None
+ntdrivers/parport.i.cil-1.yml                                              ERROR (frontend failed, before parsing finished)        5.51        1.84        None
+ntdrivers/parport.i.cil-2.yml                                              ERROR (frontend failed, before parsing finished)        5.47        1.95        None
+memory-model/2SB.yml                                                       ERROR (frontend failed, before parsing finished)        2.21        0.81        None
+memory-model/4SB.yml                                                       ERROR (frontend failed, before parsing finished)        2.69        0.95        None
+unsignedintegeroverflow-sas23/bilinear_interpolation.yml                   ERROR (server error, after parsing finished)        2.83        1.01        None
+unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml              ERROR (server error, after parsing finished)        2.22        0.83        None
+unsignedintegeroverflow-sas23/distance_through_overflow.yml                ERROR (server error, after parsing finished)        2.05        0.77        None
+unsignedintegeroverflow-sas23/linear_interpolation.yml                     ERROR (server error, after parsing finished)        2.32        0.83        None
+unsignedintegeroverflow-sas23/linear_interpolation_2.yml                   ERROR (server error, after parsing finished)        2.30        0.83        None
+longjmp/68-longjmp_04-counting-local_true.yml                              ERROR (server error, after parsing finished)        2.18        0.78        None
+longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml                     ERROR (server error, after parsing finished)        2.26        0.84        None
+longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml                     ERROR (server error, after parsing finished)        2.15        0.78        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_true.yml             ERROR (frontend failed, before parsing finished)        2.66        0.95        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_neg.yml    ERROR (frontend failed, before parsing finished)        2.72        0.97        None
+longjmp/68-longjmp_05-heap-counting-return-one-method_unknown_1_pos.yml    ERROR (frontend failed, before parsing finished)        2.73        0.98        None
+longjmp/68-longjmp_07-returns_true.yml                                     ERROR (server error, after parsing finished)        2.16        0.80        None
+longjmp/68-longjmp_11-counting-return_true.yml                             ERROR (server error, after parsing finished)        2.17        0.82        None
+longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml                    ERROR (server error, after parsing finished)        2.32        0.86        None
+longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml                    ERROR (server error, after parsing finished)        2.36        0.88        None
+longjmp/68-longjmp_12-counting-global_true.yml                             ERROR (server error, after parsing finished)        2.31        0.87        None
+longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml                    ERROR (server error, after parsing finished)        2.34        0.87        None
+longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml                    ERROR (server error, after parsing finished)        2.28        0.87        None
+longjmp/68-longjmp_14-counting-return-one-method_true.yml                  ERROR (server error, after parsing finished)        2.21        0.80        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml         ERROR (server error, after parsing finished)        2.25        0.84        None
+longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml         ERROR (server error, after parsing finished)        2.35        0.86        None
+longjmp/68-longjmp_15-counting-global-one-method_true.yml                  ERROR (server error, after parsing finished)        2.28        0.85        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml         ERROR (server error, after parsing finished)        2.18        0.80        None
+longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml         ERROR (server error, after parsing finished)        2.33        0.87        None
+longjmp/68-longjmp_16-counting-local-one-method_true.yml                   ERROR (server error, after parsing finished)        2.19        0.80        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml          ERROR (server error, after parsing finished)        2.31        0.86        None
+longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml          
+longjmp/68-longjmp_18-simple-else_true.yml                                 
+longjmp/68-longjmp_18-simple-else_unknown_1_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_neg.yml                        
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml                        
+longjmp/68-longjmp_19-simpler_true.yml                                     
+longjmp/68-longjmp_20-simpler-multifun_true.yml                            
+longjmp/68-longjmp_21-multifun_true.yml                                    
+longjmp/68-longjmp_22-multifun-arg_true.yml                                
+longjmp/68-longjmp_42-poison-reduced_true.yml                              
+longjmp/68-longjmp_44-simple-else-path_true.yml                            
+longjmp/68-longjmp_51-worries_true.yml                                     
+infeasible-control-flow/conflict_branch1.yml                               
+infeasible-control-flow/conflict_branch2.yml                               
+infeasible-control-flow/conflict_branch3.yml                               
+infeasible-control-flow/conflict_branch4.yml                               
+infeasible-control-flow/conflict_branch5.yml                               
+infeasible-control-flow/unreach_branch1.yml                                
+infeasible-control-flow/unreach_branch2.yml                                
+infeasible-control-flow/unreach_branch3.yml                                
+infeasible-control-flow/unreach_branch4.yml                                
+infeasible-control-flow/unreach_branch5.yml                                
+----------------------------------------------------------------------------------------------------------------------------------------
+Run set 1                                                                  done                           136.85       55.70           -
+
+Statistics:             50 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              50
+  Score:                 0 (max: 78)
