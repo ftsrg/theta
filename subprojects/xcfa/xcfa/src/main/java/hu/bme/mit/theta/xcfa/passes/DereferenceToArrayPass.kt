@@ -61,8 +61,8 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  */
 class DereferenceToArrayPass : ProcedurePass {
 
-  private val arraysByType =
-    mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
+  private lateinit var arraysByType:
+    Map<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>
 
   /** Maps a dereference to an identifying type key */
   private fun <A : Type, O : Type, T : Type> Dereference<A, O, T>.getTypeKey(
@@ -126,13 +126,17 @@ class DereferenceToArrayPass : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val types =
-      builder
-        .getEdges()
-        .flatMap { it.label.dereferences }
-        .map { it.getTypeKey(builder.parent) }
-        .toSet()
-    types.forEach { arraysByType[it] = createArray(it, builder.parent) }
+    if (!::arraysByType.isInitialized) {
+      val arrays = mutableMapOf<Tuple4<Type, Type, Type, Boolean>, VarDecl<out ArrayType2D>>()
+      val types = mutableSetOf<Tuple4<Type, Type, Type, Boolean>>()
+      builder.parent.getProcedures().forEach { p ->
+        p.getEdges().forEach { e ->
+          e.label.dereferences.forEach { deref -> types.add(deref.getTypeKey(builder.parent)) }
+        }
+      }
+      types.forEach { arrays[it] = createArray(it, builder.parent) }
+      arraysByType = arrays
+    }
 
     builder.getEdges().toList().forEach { edge ->
       val newLabel = edge.label.replaceDereferences(builder.parent)

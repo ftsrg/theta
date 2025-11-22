@@ -72,7 +72,7 @@ class XcfaMultiThreadToMonolithicAdapter(
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)
           DataRaceToReachabilityPass(property, true)
         else null,
-        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL),
+        LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
         RemoveUnnecessaryAtomicBlocksPass(),
         MutexToVarPass(),
         DereferenceToArrayPass(),
@@ -171,7 +171,16 @@ class XcfaMultiThreadToMonolithicAdapter(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
                           ),
-                        )
+                        ) +
+                          threads[l]!!
+                            .params
+                            .filter { it.second != ParamDirection.OUT }
+                            .mapIndexed { i, p ->
+                              AssignStmt.of(
+                                cast(p.first.changeVars(varLookUps[l]!!), p.first.type),
+                                cast(l.params[i + 1].changeVars(varLookUp), p.first.type),
+                              )
+                            }
                       }
 
                       is JoinLabel -> {
