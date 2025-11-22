@@ -20,21 +20,34 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.chc.CexTree
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
 import hu.bme.mit.theta.analysis.algorithm.chc.Invariant
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.FalseExpr
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.ProofNode
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -45,6 +58,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa2chc.toCHC
+import kotlin.collections.plus
 import kotlin.jvm.optionals.getOrNull
 
 fun getHornChecker(
@@ -52,6 +66,7 @@ fun getHornChecker(
   mcm: MCM,
   config: XcfaConfig<*, *>,
   logger: Logger,
+  parseContext: ParseContext,
 ): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
   checkState(xcfa.isInlined, "Only inlined XCFAs work right now")
@@ -68,64 +83,137 @@ fun getHornChecker(
       )
     )
 
-  val (vars, chc) =
-    xcfa.initProcedures[0]
-      .first
-      .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
-
-  val checker =
+  val hornChecker = { chc: List<Relation> ->
     HornChecker(
       relations = chc,
       hornSolverFactory = getSolver(hornConfig.solver, hornConfig.validateSolver),
       logger = logger,
     )
+  }
 
-  return SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-    val result = checker.check(null)
-
-    if (result.isSafe) {
-      //      if (property == ErrorDetection.TERMINATION) {
-      //        val invariant = result.asSafe().proof
-      //        val finalFunc = invariant.lookup.keys.first { it.name.contains("_final") }.constDecl
-      //        val params = vars.map { Param(it.name, it.type).ref }.toList()
-      //        val noRankFunc = params.filter { it.decl.name != "__ranking_function" }
-      //        val rankFunc = params.filter { it.decl.name == "__ranking_function" }.first()
-      //        val lhs = App(finalFunc.ref as Expr<FuncType<in Type, BoolType>>, params)
-      //        val f = Const("f", funcType(noRankFunc.map { it.type }, rankFunc.type))
-      //        val rhs = Eq(App(f.ref as Expr<FuncType<in Type, Type>>, noRankFunc), rankFunc)
-      //        val solver = Z3SolverFactory.getInstance().createSolver()
-      //        WithPushPop(solver).use {
-      //          solver.add(Eq(lhs, rhs))
-      //          val status = solver.check()
-      //          check(status.isSat)
-      //          val model = solver.model
-      //          System.err.println(model.toMap()[f])
-      //        }
-      //      }
-      SafetyResult.safe(EmptyProof.getInstance())
-    } else if (result.isUnsafe) {
-      try {
-        getProperTrace(xcfa, result, vars)
-      } catch (t: Throwable) {
-        logger.writeln(Logger.Level.INFO, "Could not get proper trace: ${t.stackTraceToString()}\n")
-        SafetyResult.unsafe(
-          Trace.of(
-            listOf(
-              XcfaState(
-                xcfa,
-                xcfa.initProcedures.get(0).first.errorLoc.getOrNull()
-                  ?: XcfaLocation("<missing!>", metadata = EmptyMetaData),
-                PtrState(PredState.of(True())),
-              )
-            ),
-            listOf(),
-          ),
-          EmptyProof.getInstance(),
-        )
-      }
-    } else {
-      SafetyResult.unknown()
+  try {
+    if (parseContext.multiThreading) {
+      error("Current CHC encoding does not support multithreading")
     }
+    val (vars, chc) =
+      xcfa.initProcedures[0]
+        .first
+        .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
+    val checker = hornChecker(chc)
+
+    return SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+      val result = checker.check(null)
+
+      if (result.isSafe) {
+        SafetyResult.safe(EmptyProof.getInstance())
+      } else if (result.isUnsafe) {
+        try {
+          getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
+        } catch (t: Throwable) {
+          logger.writeln(
+            Logger.Level.INFO,
+            "Could not get proper trace: ${t.stackTraceToString()}\n",
+          )
+          SafetyResult.unsafe(
+            Trace.of(
+              listOf(
+                XcfaState(
+                  xcfa,
+                  xcfa.initProcedures.get(0).first.errorLoc.getOrNull()
+                    ?: XcfaLocation("<missing!>", metadata = EmptyMetaData),
+                  PtrState(PredState.of(True())),
+                )
+              ),
+              listOf(),
+            ),
+            EmptyProof.getInstance(),
+          )
+        }
+      } else {
+        SafetyResult.unknown()
+      }
+    }
+  } catch (t: Throwable) {
+    logger.result(
+      "Error initializing XCFA procedure as CHC, falling back to monolithic (due to %s)",
+      t.message,
+    )
+
+    return getPipelineChecker(
+      config,
+      xcfa,
+      parseContext,
+      { monolithicExpr ->
+        val vars = monolithicExpr.vars
+        val types = vars.map { it.type }.toTypedArray()
+        val oldParams = vars.associateWith { Param("|" + it.name + "|", it.type) }
+        val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
+        val newParams = vars.associateWith { Param("|" + it.name + "_new|", it.type) }
+        val inv = Relation("inv", *types)
+
+        inv(*oldParamList) += ExprUtils.changeDecls(monolithicExpr.initExpr, oldParams)
+
+        !(inv(*oldParamList) with Not(ExprUtils.changeDecls(monolithicExpr.propExpr, oldParams)))
+
+        val expr = PathUtils.unfold(monolithicExpr.transExpr, VarIndexingFactory.indexing(0))
+        // var[0] is oldParam, var[-1]is newParam, everything else is a fresh param
+        var cnt = 0
+        val consts =
+          ExprUtils.getIndexedConstants(expr).associateWith {
+            if (it.index == 0) oldParams[it.varDecl]!!
+            else if (it.index == monolithicExpr.transOffsetIndex[it.varDecl])
+              newParams[it.varDecl]!!
+            else Param("__tmp_${cnt++}", it.type)
+          }
+        val newParamList =
+          vars
+            .map {
+              if (monolithicExpr.transOffsetIndex[it] == 0) oldParams[it]!!.ref
+              else newParams[it]!!.ref
+            }
+            .toTypedArray()
+        val paramdExpr = ExprUtils.changeDecls(expr, consts)
+        inv(*newParamList) += inv(*oldParamList).expr + paramdExpr
+
+        SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec> { prec ->
+          val result = hornChecker(listOf(inv)).check(null)
+          if (result.isSafe) {
+            SafetyResult.safe(PredState.of())
+          } else if (result.isUnsafe) {
+            var proofNode: ProofNode? = result.asUnsafe().cex.proofNode
+            val states = mutableListOf<ExplState>()
+            while (proofNode != null) {
+              val state =
+                if (proofNode.expr is FuncAppExpr<*, *>) {
+                  var f: Expr<*> = proofNode.expr
+                  val values = mutableMapOf<Decl<*>, LitExpr<*>>()
+                  var i = vars.size - 1
+                  while (f is FuncAppExpr<*, *>) {
+                    values[vars[i--]] = f.param.eval(ImmutableValuation.empty())
+                    f = f.func
+                  }
+                  ExplState.of(ImmutableValuation.from(values))
+                } else if (proofNode.expr is FalseExpr) {
+                  null
+                } else if (proofNode.expr is TrueExpr) {
+                  // init expr?
+                  null
+                } else ExplState.top()
+              if (state != null) states.add(state)
+              proofNode = proofNode.children.getOrNull(0)
+            }
+            SafetyResult.unsafe(
+              Trace.of(states.reversed(), (1 until states.size).map { monolithicExpr.action() }),
+              PredState.of(),
+            )
+          } else {
+            SafetyResult.unknown()
+          }
+        }
+      },
+      logger,
+    )
+      as SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
   }
 }
 

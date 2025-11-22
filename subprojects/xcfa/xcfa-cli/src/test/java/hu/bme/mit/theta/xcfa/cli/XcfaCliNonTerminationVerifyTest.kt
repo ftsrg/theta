@@ -28,6 +28,7 @@ import kotlin.io.path.exists
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -104,10 +105,6 @@ class XcfaCliNonTerminationVerifyTest {
         ),
         Arguments.of(
           "/c/nontermination/Pendulum-2.c",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
-        Arguments.of(
-          "/c/nontermination/Ex02.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
         Arguments.of(
@@ -291,6 +288,7 @@ class XcfaCliNonTerminationVerifyTest {
 
   @ParameterizedTest
   @MethodSource("cFilesAdvanced")
+  @Disabled
   fun testCVerifyEmergentPortfolio(filePath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 

@@ -140,7 +140,7 @@ class XcfaCliPortfolioTest {
         arrayOf(Portfolios.emergentPortfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.basic, defaultCheck),
-        arrayOf(Portfolios.hornPortfolio, Programs.multithread, unsupportedCheck),
+        arrayOf(Portfolios.hornPortfolio, Programs.multithread, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.pointer, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.float, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.arr, defaultCheck),

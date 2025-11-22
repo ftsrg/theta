@@ -36,11 +36,15 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -605,12 +609,17 @@ private fun WitnessNode.toSegment(
       val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
       check(varsOnEdge.size == 1) // this has to be the havoced variable
       val varOnEdge = varsOnEdge.first()
+      val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
       val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
-      val valueString =
-        if (assignedValue is BvLitExpr) assignedValue.toString().replace("#", "0")
-        else assignedValue.toString()
+      val (cast, valueString) =
+        if (assignedValue is BvLitExpr) "" to assignedValue.toString().replace("#", "0")
+        else if (assignedValue is FpLitExpr)
+          (typeName?.let { "($it)" } ?: "") to
+            FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
+              .toString()
+        else "" to assignedValue.toString()
 
-      val constraint = "\\result == $valueString"
+      val constraint = "\\result == $cast$valueString"
       loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
