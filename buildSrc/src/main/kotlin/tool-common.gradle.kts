@@ -18,6 +18,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply<ApplicationPlugin>()
 apply<ShadowPlugin>()
+apply<WslJarPlugin>()
 
 tasks {
     val libPath: String by rootProject.extra
@@ -32,7 +33,7 @@ tasks {
     named("runShadow", JavaExec::class).configure { setupEnvironment() }
 }
 
-tasks.withType<ShadowJar>() {
+tasks.withType<ShadowJar> {
     manifest {
         attributes["Implementation-Version"] = archiveVersion
     }
