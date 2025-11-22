@@ -116,6 +116,24 @@ fun traceToWitness(
   return Trace.of(newStates, newActions)
 }
 
+fun targetToWitness(startline: Int, endline: Int, startoffset: Int, endoffset: Int): String {
+  return """
+  <node id="N0">
+  <data key="violation">false</data>
+  </node>
+  <node id="N1">
+  <data key="violation">true</data>
+  </node>
+  
+  <edge source="N0" target="N1">
+    <data key="startline">$startline</data>
+    <data key="endline">$endline</data>
+    <data key="startoffset">$startoffset</data>
+    <data key="endoffset">$endoffset</data>
+  </edge>
+  """
+}
+
 fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
   when (verbosity) {
     Verbosity.NECESSARY ->

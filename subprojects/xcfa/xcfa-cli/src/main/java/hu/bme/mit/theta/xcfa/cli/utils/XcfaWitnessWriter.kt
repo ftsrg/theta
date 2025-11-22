@@ -22,7 +22,6 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.witnesses.Location
 import java.io.File
 
 interface XcfaWitnessWriter {
@@ -105,14 +104,9 @@ interface XcfaWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType? = null,
   )
 
-  fun writeTrivialViolationWitness(
-    safetyResult: SafetyResult<*, *>,
+  fun generateEmptyViolationWitness(
     inputFile: File,
-    property: XcfaProperty,
-    parseContext: ParseContext,
-    witnessfile: File,
     ltlSpecification: String,
-    architecture: ArchitectureConfig.ArchitectureType? = null,
-    targetLocation: Location,
-  )
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String
 }

@@ -44,7 +44,6 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
@@ -123,7 +122,7 @@ constructor(
 
     val transNodes = mutableListOf<MddHandle>()
     val descriptors = mutableListOf<AbstractNextStateDescriptor>()
-    for (expr in listOf(Or(monolithicExpr.split))) {
+    for (expr in listOf(monolithicExpr.transExpr)) {
       val transExpr =
         And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
       val transitionNode =

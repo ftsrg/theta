@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -139,6 +140,10 @@ fun hornPortfolio(
   }
 
   logger.write(Logger.Level.RESULT, "Using CHC portfolio\n")
+
+  if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) {
+    throw UnsupportedOperationException("CHC portfolio does not support floating points")
+  }
 
   val inProcess = HierarchicalNode("InProcess", getStm(true))
   val notInProcess = HierarchicalNode("NotInprocess", getStm(false))

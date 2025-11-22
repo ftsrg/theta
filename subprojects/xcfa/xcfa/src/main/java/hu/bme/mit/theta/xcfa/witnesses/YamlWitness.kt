@@ -27,8 +27,8 @@ val WitnessYamlConfig =
       Yaml.default.configuration.copy(
         encodeDefaults = false,
         strictMode = false,
-        singleLineStringStyle = SingleLineStringStyle.Plain,
-        multiLineStringStyle = MultiLineStringStyle.Plain,
+        singleLineStringStyle = SingleLineStringStyle.SingleQuoted,
+        multiLineStringStyle = MultiLineStringStyle.SingleQuoted,
       )
   )
 

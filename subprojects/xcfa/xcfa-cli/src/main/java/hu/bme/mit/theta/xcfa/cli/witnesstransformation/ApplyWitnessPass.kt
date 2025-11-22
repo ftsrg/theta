@@ -34,7 +34,6 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.model.NopLabel.metadata
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels

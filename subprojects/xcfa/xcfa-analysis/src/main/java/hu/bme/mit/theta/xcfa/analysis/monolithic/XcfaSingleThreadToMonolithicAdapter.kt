@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -78,7 +79,7 @@ class XcfaSingleThreadToMonolithicAdapter(
       Preconditions.checkArgument(model.initProcedures.size == 1)
       val proc = model.initProcedures.stream().findFirst().orElse(null).first
       Preconditions.checkArgument(
-        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel }
+        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel && it !is NopLabel }
       )
 
       // Initialize location var, location and edge mappings

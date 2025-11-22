@@ -40,7 +40,6 @@ import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class GsonTest {
@@ -88,7 +87,6 @@ class GsonTest {
   }
 
   @Test
-  @Disabled
   fun testRoundtrip() {
     val xcfaSource =
       xcfa("example") {
@@ -111,7 +109,6 @@ class GsonTest {
   }
 
   @Test
-  @Disabled
   fun testAsyncRoundtrip() {
     val xcfaSource =
       xcfa("example") {
@@ -143,7 +140,6 @@ class GsonTest {
   }
 
   @Test
-  @Disabled
   fun testParseContextRoundTrip() {
     val parseContext = ParseContext()
     parseContext.metadata.create("owner", "key", "value")

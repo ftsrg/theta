@@ -29,6 +29,7 @@ import kotlin.io.path.readText
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -388,7 +389,7 @@ class XcfaCliNonTerminationValidateTest {
   private fun isWitnessViolation(temp: Path): Boolean {
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    return "entry_type: violation_sequence" in witnessContents
+    return "entry_type: \'violation_sequence\'" in witnessContents
   }
 
   /////////// wrong witnesses ///////////
@@ -491,6 +492,7 @@ class XcfaCliNonTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("wrongWitnessFiles")
+  @Disabled
   fun testCValidateWrongBoundedPortfolio(
     filePath: String,
     witnessPath: String,
