@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -52,6 +52,8 @@ fun hornPortfolio(
           lbeLevel = LbePass.defaultLevel,
           loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
+          enableDataRaceToReachability =
+            portfolioConfig.inputConfig.property.verifiedProperty == DATA_RACE,
           specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
         ),
       backendConfig =
@@ -59,19 +61,11 @@ fun hornPortfolio(
           backend = Backend.CHC,
           solverHome = portfolioConfig.backendConfig.solverHome,
           timeoutMs = 0,
-          specConfig = HornConfig(solver = "z3:4.13.0", validateSolver = false),
+          specConfig = HornConfig(solver = "Z3:new", validateSolver = false),
         ),
       outputConfig = getDefaultOutputConfig(portfolioConfig),
       debugConfig = portfolioConfig.debugConfig,
     )
-
-  if (parseContext.multiThreading) {
-    throw UnsupportedOperationException("Multithreading for horn checkers not supported")
-  }
-
-  if (!xcfa.isInlined) {
-    throw UnsupportedOperationException("Recursive XCFA for horn checkers not supported")
-  }
 
   val timeoutOrNotSolvableError =
     ExceptionTrigger(
@@ -95,7 +89,7 @@ fun hornPortfolio(
   val anyError = ExceptionTrigger(label = "Anything")
 
   fun XcfaConfig<*, HornConfig>.adaptConfig(
-    solver: String = "z3:4.13.0",
+    solver: String = "Z3:new",
     timeoutMs: Long = 0,
     inProcess: Boolean = this.backendConfig.inProcess,
   ): XcfaConfig<*, HornConfig> {
@@ -104,6 +98,7 @@ fun hornPortfolio(
         backendConfig.copy(
           timeoutMs = timeoutMs,
           inProcess = inProcess,
+          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
           specConfig = backendConfig.specConfig!!.copy(solver = solver),
         )
     )
@@ -111,10 +106,16 @@ fun hornPortfolio(
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
-    val configZ3 =
+    val configEldarica =
       ConfigNode(
-        "Z3-$inProcess",
-        baseConfig.adaptConfig(inProcess = inProcess, timeoutMs = 100_000),
+        "Eldarica-$inProcess",
+        baseConfig.adaptConfig(inProcess = inProcess, solver = "eldarica:2.2", timeoutMs = 500_000),
+        checker,
+      )
+    val configGolem =
+      ConfigNode(
+        "Golem-$inProcess",
+        baseConfig.adaptConfig(inProcess = inProcess, solver = "golem:0.9.0", timeoutMs = 300_000),
         checker,
       )
     val configZ3native =
@@ -123,24 +124,18 @@ fun hornPortfolio(
         baseConfig.adaptConfig(inProcess = inProcess, solver = "Z3:new", timeoutMs = 100_000),
         checker,
       )
-    val configEldarica =
+    val configZ3 =
       ConfigNode(
-        "Eldarica-$inProcess",
-        baseConfig.adaptConfig(inProcess = inProcess, solver = "eldarica:2.1", timeoutMs = 500_000),
-        checker,
-      )
-    val configGolem =
-      ConfigNode(
-        "Golem-$inProcess",
-        baseConfig.adaptConfig(inProcess = inProcess, solver = "golem:0.5.0", timeoutMs = 300_000),
+        "Z3-$inProcess",
+        baseConfig.adaptConfig(inProcess = inProcess, solver = "z3:4.15.3", timeoutMs = 100_000),
         checker,
       )
 
-    edges.add(Edge(configZ3, configZ3native, anyError))
-    edges.add(Edge(configZ3native, configEldarica, anyError))
     edges.add(Edge(configEldarica, configGolem, anyError))
+    edges.add(Edge(configGolem, configZ3native, anyError))
+    edges.add(Edge(configZ3native, configZ3, anyError))
 
-    return STM(configZ3, edges)
+    return STM(configEldarica, edges)
   }
 
   logger.write(Logger.Level.RESULT, "Using CHC portfolio\n")
