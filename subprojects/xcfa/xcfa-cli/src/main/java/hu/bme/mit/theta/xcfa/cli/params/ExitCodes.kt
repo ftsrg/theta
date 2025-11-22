@@ -40,6 +40,13 @@ enum class ExitCodes(val code: Int) {
 data class ErrorCodeException(val code: Int) : Exception()
 
 fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
+  try {
+    println(
+      "Error: ${e.javaClass} ${e.message ?: "-"} (${e.stackTrace.toList().subList(0, 2).joinToString { it.className + "#" + it.methodName + ":" + it.lineNumber }})"
+    )
+  } catch (t: Throwable) {
+    // ignore at this point..
+  }
   if (debug) {
     throw ErrorCodeException(code)
   } else exitProcess(code)
