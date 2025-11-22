@@ -72,6 +72,9 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
   } catch (e: Z3Exception) {
     e.printCauseAndTrace(stacktrace)
     exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
+  } catch (e: com.microsoft.z3legacy.Z3Exception) {
+    e.printCauseAndTrace(stacktrace)
+    exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
   } catch (e: ClassCastException) {
     e.printCauseAndTrace(stacktrace)
     if (e.message?.contains("com.microsoft.z3") == true)
