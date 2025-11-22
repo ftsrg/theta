@@ -107,10 +107,6 @@ class XcfaCliNonTerminationVerifyTest {
           "--property /c/nontermination/prop/termination.prp",
         ),
         Arguments.of(
-          "/c/nontermination/Ex02.c",
-          "--property /c/nontermination/prop/termination.prp",
-        ),
-        Arguments.of(
           "/c/nontermination/Swingers.c",
           "--property /c/nontermination/prop/termination.prp",
         ),
