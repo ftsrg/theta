@@ -142,7 +142,7 @@ fun hornPortfolio(
   logger.write(Logger.Level.RESULT, "Using CHC portfolio\n")
 
   if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) {
-    error("CHC portfolio does not support floating points")
+    throw UnsupportedOperationException("CHC portfolio does not support floating points")
   }
 
   val inProcess = HierarchicalNode("InProcess", getStm(true))
