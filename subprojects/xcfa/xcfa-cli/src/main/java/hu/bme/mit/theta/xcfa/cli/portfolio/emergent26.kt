@@ -259,26 +259,23 @@ fun emergent26(
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(50_000, "mathsat:5.6.12")
             val ic3CegarMS = ic3Cegar(50_000, "mathsat:5.6.12")
             val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq =
               cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(50_000, "Z3:new")
             val ic3Cegar = ic3Cegar(50_000, "cvc5:1.2.0")
             val mddCegar = mddCegar(50_000, "cvc5:1.2.0")
 
-            expl_pred_nwtMS then expl_pred_seqMS then ic3MS then ic3CegarMS then mddCegarMS
+            expl_pred_nwtMS then expl_pred_seqMS then ic3CegarMS then mddCegarMS
 
             expl_pred_nwtMS onSolverError expl_pred_nwt
             expl_pred_seqMS onSolverError expl_pred_seq
-            ic3MS onSolverError ic3
             ic3CegarMS onSolverError ic3Cegar
             mddCegarMS onSolverError mddCegar
 
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar then complex
+            expl_pred_nwt then expl_pred_seq then ic3Cegar then mddCegar then complex
 
             expl_pred_nwtMS to mddCegarMS
           }
@@ -317,25 +314,22 @@ fun emergent26(
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(50_000, "mathsat:5.6.12")
-            val ic3CegarMS = ic3Cegar(50_000, "mathsat:5.6.12")
+            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
             val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(50_000, "Z3:new")
-            val ic3Cegar = ic3Cegar(50_000, "Z3")
+            val ic3Cegar = ic3Cegar(100_000, "Z3")
             val mddCegar = mddCegar(50_000, "Z3")
 
-            expl_pred_nwtMS then expl_pred_seqMS then ic3MS then ic3CegarMS then mddCegarMS
+            expl_pred_nwtMS then expl_pred_seqMS then ic3CegarMS then mddCegarMS
 
             expl_pred_nwtMS onSolverError expl_pred_nwt
             expl_pred_seqMS onSolverError expl_pred_seq
-            ic3MS onSolverError ic3
             ic3CegarMS onSolverError ic3Cegar
             mddCegarMS onSolverError mddCegar
 
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar then complex
+            expl_pred_nwt then expl_pred_seq then ic3Cegar then mddCegar then complex
 
             expl_pred_nwtMS to mddCegarMS
           }
@@ -344,29 +338,25 @@ fun emergent26(
           ARR -> {
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3 = ic3(50_000, "Z3:new")
-            val ic3Cegar = ic3Cegar(50_000, "Z3")
+            val ic3Cegar = ic3Cegar(100_000, "Z3")
             val mddCegar = mddCegar(50_000, "Z3")
 
             val expl_pred_nwtMS =
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
               cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3MS = ic3(50_000, "mathsat:5.6.12")
-            val ic3CegarMS = ic3Cegar(50_000, "mathsat:5.6.12")
+            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
             val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
 
-            expl_pred_nwt then expl_pred_seq then ic3 then ic3Cegar then mddCegar
+            expl_pred_nwt then expl_pred_seq then ic3Cegar then mddCegar
 
             expl_pred_nwt onSolverError expl_pred_nwtMS
             expl_pred_seq onSolverError expl_pred_seqMS
-            ic3 onSolverError ic3MS
             ic3Cegar onSolverError ic3CegarMS
             mddCegar onSolverError mddCegarMS
 
             expl_pred_nwtMS then
               expl_pred_seqMS then
-              ic3MS then
               ic3CegarMS then
               mddCegarMS then
               complex
