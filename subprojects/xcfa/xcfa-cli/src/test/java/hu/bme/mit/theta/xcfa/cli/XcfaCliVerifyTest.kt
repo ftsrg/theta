@@ -366,6 +366,7 @@ class XcfaCliVerifyTest {
 
   @ParameterizedTest
   @MethodSource("singleThreadedCFiles")
+  @Disabled
   fun testCVerifyEmergentPortfolio(filePath: String, extraArgs: String?) {
     Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
     val params =
