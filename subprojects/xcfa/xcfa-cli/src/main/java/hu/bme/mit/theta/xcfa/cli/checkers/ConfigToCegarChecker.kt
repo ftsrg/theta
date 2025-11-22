@@ -89,6 +89,7 @@ fun getCegarChecker(
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
     else getStackPartialOrder(globalStatePartialOrd)
+  val errorDetector = getXcfaErrorDetector(config.inputConfig.property.verifiedProperty)
   val abstractor: ArgAbstractor<ExprState, ExprAction, Prec> =
     cegarConfig.abstractorConfig.domain.abstractor(
       xcfa,
@@ -98,7 +99,7 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.stopCriterion,
       logger,
       lts,
-      config.inputConfig.property.verifiedProperty,
+      errorDetector,
       if (cegarConfig.por.isDynamic) {
         XcfaDporLts.getPartialOrder(corePartialOrd)
       } else {
@@ -109,8 +110,10 @@ fun getCegarChecker(
     ) as ArgAbstractor<ExprState, ExprAction, Prec>
 
   val ref: ExprTraceChecker<Refutation> =
-    cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
-      as ExprTraceChecker<Refutation>
+    errorDetector.exprTraceCheckerWrapper(
+      cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
+        as ExprTraceChecker<Refutation>
+    )
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
     cegarConfig.abstractorConfig.domain.itpPrecRefiner(
       cegarConfig.refinerConfig.exprSplitter.exprSplitter,

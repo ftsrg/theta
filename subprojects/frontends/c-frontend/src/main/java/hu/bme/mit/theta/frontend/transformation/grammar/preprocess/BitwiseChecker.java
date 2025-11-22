@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray1Context;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray2Context;
@@ -23,10 +22,11 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray3Context
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray4Context;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.MultiplicativeExpressionContext;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import java.util.List;
 import java.util.Set;
 
-public class BitwiseChecker extends CBaseVisitor<Void> {
+public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
     private final ParseContext parseContext;
 
     private BitwiseChecker(ParseContext parseContext) {

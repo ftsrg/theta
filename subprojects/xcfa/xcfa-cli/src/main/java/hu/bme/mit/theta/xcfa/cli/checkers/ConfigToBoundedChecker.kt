@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.refinement.createFwBinItpCheckerFactory
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -71,23 +72,42 @@ fun getBoundedChecker(
     )
   }
 
+  return getPipelineChecker(
+    config,
+    xcfa,
+    parseContext,
+    baseChecker,
+    logger,
+    boundedConfig.cegar,
+    boundedConfig.reversed,
+    boundedConfig.bmcConfig.bmcSolver,
+    boundedConfig.bmcConfig.validateBMCSolver,
+  )
+}
+
+internal fun getPipelineChecker(
+  config: XcfaConfig<*, *>,
+  xcfa: XCFA,
+  parseContext: ParseContext,
+  baseChecker: (MonolithicExpr) -> SafetyChecker<PredState, Trace<ExplState, ExprAction>, UnitPrec>,
+  logger: Logger,
+  cegar: Boolean = false,
+  reversed: Boolean = false,
+  cegarSolver: String = "Z3",
+  cegarSolverValidate: Boolean = false,
+): XcfaPipelineChecker<PredState> {
   val passes = mutableListOf<MonolithicExprPass<PredState>>()
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
     passes.add(L2SMEPass())
   }
-  if (boundedConfig.cegar) {
+  if (cegar) {
     passes.add(
       PredicateAbstractionMEPass(
-        createFwBinItpCheckerFactory(
-          tryGetSolver(
-            boundedConfig.bmcConfig.bmcSolver,
-            boundedConfig.bmcConfig.validateBMCSolver,
-          )!!
-        )
+        createFwBinItpCheckerFactory(tryGetSolver(cegarSolver, cegarSolverValidate)!!)
       )
     )
   }
-  if (boundedConfig.reversed) {
+  if (reversed) {
     passes.add(ReverseMEPass())
   }
 

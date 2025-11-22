@@ -22,7 +22,6 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -40,6 +39,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
@@ -56,8 +56,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.*;
 
 /**
  * FunctionVisitor is responsible for the instantiation of high-level model elements, such as
@@ -66,7 +65,7 @@ import org.antlr.v4.runtime.Token;
  * and local, complete with initializations) and an ExpressionVisitor instance to provide
  * information on Expressions in the source code.
  */
-public class FunctionVisitor extends CBaseVisitor<CStatement> {
+public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private final ParseContext parseContext;
     private final DeclarationVisitor declarationVisitor;
     private final GlobalDeclUsageVisitor globalDeclUsageVisitor;

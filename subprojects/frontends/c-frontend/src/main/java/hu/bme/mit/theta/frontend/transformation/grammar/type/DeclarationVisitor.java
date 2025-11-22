@@ -17,13 +17,13 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -35,7 +35,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
+public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration> {
     private final ParseContext parseContext;
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
