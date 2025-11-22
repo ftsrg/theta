@@ -19,5 +19,6 @@ internal val assert_h =
   """
 extern void abort(void);
 extern int printf(const char * format, ...);
+extern void assert(int expression);
 """
     .trimIndent()
