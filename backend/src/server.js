@@ -618,12 +618,12 @@ app.post('/api/verify/stream', async (req, res) => {
       const containerArgs = [
         '--dir', runDir,
         '--container',
-        '--timelimit', '60',
-        '--memlimit', '5120',
+        '--timelimit', '60s',
+        '--memlimit', '5120MB',
         '--read-only-dir', '/',
         '--hidden-dir', '/home',
         '--read-only-dir', backendRoot,
-        '--overlay-dir', runDir,
+        '--full-access-dir', runDir,
         '--',
         'java', ...finalArgs
       ];
