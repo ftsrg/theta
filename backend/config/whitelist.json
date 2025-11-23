@@ -1,0 +1,10 @@
+{
+  "binaries": [
+    {
+      "name": "theta-jar",
+      "type": "theta-jar",
+      "repo": "https://github.com/ftsrg/theta.git"
+    }
+  ],
+  "raw": []
+}

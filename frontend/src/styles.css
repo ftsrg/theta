@@ -1,0 +1,69 @@
+/* FTSRG Color Palette */
+:root {
+  --ftsrg-accent-blue: rgb(20, 70, 160);
+  --ftsrg-accent-red: rgb(150, 0, 24);
+  --ftsrg-accent-purple: rgb(82, 43, 71);
+  --ftsrg-accent-orange: rgb(251, 139, 36);
+  --ftsrg-accent-light-blue: rgb(68, 114, 196);
+  --ftsrg-accent-green: rgb(112, 173, 71);
+}
+
+/* Global dark background to avoid white edges */
+html,body,#root { height: 100%; margin: 0; font-family: Roboto, Arial, sans-serif; background: #0b0c0e; color: #ddd }
+
+.split-pane { position: relative }
+
+/* split container children should blend in */
+.split > div { height: 100%; display: flex; flex-direction: column; background: transparent; min-height: 0; }
+.split > div:first-child { background: #1b1b1b; }
+.split > div:last-child { background: #0f1115; }
+
+/* ensure inner containers don't show borders and can shrink */
+.split > div > * { border: none; min-height: 0; }
+
+/* Tighter overall spacing for a less bulky look */
+.app-toolbar { min-height: 40px; }
+.app-toolbar .MuiToolbar-root { min-height: 40px; padding-left: 12px; padding-right: 12px; }
+
+/* AppBar appearance: flatter */
+.MuiAppBar-root { box-shadow: none; background-color: var(--ftsrg-accent-blue) !important; }
+
+/* Output pre block styling */
+.output-pre {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-size: 12px;
+	line-height: 1.45;
+	padding-bottom: 8px;
+}
+
+/* remove focus outline from nested interactive controls for a cleaner look */
+.no-focus-outline :focus { outline: none !important; }
+
+/* Thin translucent gutter for react-split */
+.gutter {
+	background-color: rgba(255,255,255,0.03);
+	transition: background-color 120ms ease;
+}
+.gutter:hover { background-color: rgba(255,255,255,0.06); }
+.gutter.gutter-horizontal { width: 8px; cursor: col-resize; }
+
+/* reduce contrast of the split handle by adding subtle inner shadow */
+.gutter::after { content: ''; display:block; height:100%; width:2px; margin:0 auto; background: rgba(255,255,255,0.03); border-radius: 2px }
+
+/* Footer styling to match dark UI */
+footer { background: #08090a; color: #cfd8e3; padding: 6px 12px; font-size: 12px; border-top: none }
+
+/* Make MUI Select and menu blend in */
+.MuiSelect-select { color: #fff !important; }
+.MuiInputBase-root { color: #fff }
+.MuiPaper-root { background: transparent }
+
+/* Ensure no stray white lines from MUI Tabs */
+.MuiTabs-root { border-bottom: none }
+.MuiTab-root { min-width: 80px }
+
+/* Tidy up Tab focus and selected state */
+.MuiTabs-root .MuiButtonBase-root:focus { outline: none; }
+.MuiTabs-flexContainer { gap: 6px; }
