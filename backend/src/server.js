@@ -350,6 +350,227 @@ app.post('/api/theta/build', expressBasicAuth, async (req, res) => {
 // Active retrieval controllers for cancellation: version -> AbortController
 const activeRetrieval = new Map();
 
+// Track last checked release to avoid duplicate downloads
+let lastCheckedRelease = null;
+
+// Periodic release checker - runs every 10 minutes
+async function checkAndRetrieveNewRelease() {
+  try {
+    console.log('[Auto-Retrieval] Checking for new releases...');
+    const resp = await fetch(GITHUB_RELEASES_API, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!resp.ok) {
+      console.error(`[Auto-Retrieval] GitHub API error ${resp.status}`);
+      return;
+    }
+    const releases = await resp.json();
+    if (!releases || releases.length === 0) {
+      console.log('[Auto-Retrieval] No releases found');
+      return;
+    }
+    
+    // Get the latest release
+    const latestRelease = releases[0];
+    const latestTag = latestRelease.tag_name || latestRelease.name;
+    
+    // Check if this is a new release
+    if (lastCheckedRelease === latestTag) {
+      console.log(`[Auto-Retrieval] Latest release ${latestTag} already retrieved`);
+      return;
+    }
+    
+    console.log(`[Auto-Retrieval] New release detected: ${latestTag}`);
+    
+    // Find xcfa jar asset
+    const xcfaAsset = (latestRelease.assets || []).find(a => 
+      a.name && a.name.endsWith('.jar') && a.name.includes('xcfa')
+    );
+    
+    if (!xcfaAsset) {
+      console.log(`[Auto-Retrieval] No xcfa jar found in release ${latestTag}`);
+      lastCheckedRelease = latestTag; // Mark as checked to avoid repeated attempts
+      return;
+    }
+    
+    // Check if already downloaded
+    const targetDir = path.join(THETA_CACHE_DIR, latestTag);
+    const destFile = path.join(targetDir, xcfaAsset.name);
+    if (fs.existsSync(destFile)) {
+      console.log(`[Auto-Retrieval] Asset ${xcfaAsset.name} already exists`);
+      lastCheckedRelease = latestTag;
+      return;
+    }
+    
+    // Prevent parallel retrieval
+    if (activeRetrieval.has(latestTag)) {
+      console.log(`[Auto-Retrieval] Retrieval already in progress for ${latestTag}`);
+      return;
+    }
+    
+    // Download the asset
+    console.log(`[Auto-Retrieval] Downloading ${xcfaAsset.name} (${xcfaAsset.size} bytes)`);
+    await fsp.mkdir(targetDir, { recursive: true });
+    
+    const tmpName = `${latestTag}_${xcfaAsset.name}_${Date.now()}`;
+    const tmpFile = path.join(THETA_TEMP_DIR, tmpName);
+    
+    const controller = new AbortController();
+    activeRetrieval.set(latestTag, controller);
+    
+    try {
+      const dlResp = await fetch(xcfaAsset.browser_download_url, { signal: controller.signal });
+      if (!dlResp.ok) {
+        throw new Error(`HTTP ${dlResp.status}`);
+      }
+      
+      const fileStream = fs.createWriteStream(tmpFile);
+      let received = 0;
+      const size = xcfaAsset.size || 0;
+      const reader = dlResp.body.getReader();
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        fileStream.write(value);
+        
+        if (controller.signal.aborted) {
+          fileStream.close();
+          fs.unlink(tmpFile, ()=>{});
+          throw new Error('Download cancelled');
+        }
+      }
+      
+      fileStream.end();
+      
+      // Move to final location
+      try {
+        await fsp.rename(tmpFile, destFile);
+      } catch (renameErr) {
+        if (renameErr.code === 'EXDEV') {
+          await fsp.copyFile(tmpFile, destFile);
+          fs.unlink(tmpFile, ()=>{});
+        } else {
+          throw renameErr;
+        }
+      }
+      
+      console.log(`[Auto-Retrieval] Successfully downloaded ${xcfaAsset.name} for ${latestTag}`);
+      lastCheckedRelease = latestTag;
+    } catch (err) {
+      console.error(`[Auto-Retrieval] Download failed: ${err.message}`);
+      fs.unlink(tmpFile, ()=>{});
+    } finally {
+      activeRetrieval.delete(latestTag);
+    }
+  } catch (err) {
+    console.error(`[Auto-Retrieval] Error checking releases: ${err.message}`);
+  }
+}
+
+// Calculate directory size recursively
+async function getDirectorySize(dirPath) {
+  let totalSize = 0;
+  try {
+    const entries = await fsp.readdir(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        totalSize += await getDirectorySize(fullPath);
+      } else if (entry.isFile()) {
+        const stat = await fsp.stat(fullPath).catch(() => ({ size: 0 }));
+        totalSize += stat.size;
+      }
+    }
+  } catch (err) {
+    // Ignore errors for missing/inaccessible directories
+  }
+  return totalSize;
+}
+
+// Cleanup old versions if cache exceeds size limit
+async function cleanupCacheIfNeeded() {
+  const MAX_CACHE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB in bytes
+  
+  try {
+    console.log('[Cleanup] Checking cache size...');
+    const totalSize = await getDirectorySize(THETA_CACHE_DIR);
+    const sizeGB = (totalSize / (1024 * 1024 * 1024)).toFixed(2);
+    console.log(`[Cleanup] Current cache size: ${sizeGB} GB`);
+    
+    if (totalSize <= MAX_CACHE_SIZE) {
+      console.log('[Cleanup] Cache size within limits, no cleanup needed');
+      return;
+    }
+    
+    console.log(`[Cleanup] Cache exceeds 5GB limit, cleaning up old versions...`);
+    
+    // Get all version directories with their sizes and mtimes
+    const entries = await fsp.readdir(THETA_CACHE_DIR).catch(() => []);
+    const versions = [];
+    
+    for (const entry of entries) {
+      const fullPath = path.join(THETA_CACHE_DIR, entry);
+      const stat = await fsp.stat(fullPath).catch(() => null);
+      if (!stat || !stat.isDirectory()) continue;
+      
+      const size = await getDirectorySize(fullPath);
+      versions.push({ 
+        name: entry, 
+        path: fullPath, 
+        mtime: stat.mtimeMs,
+        size: size
+      });
+    }
+    
+    if (versions.length === 0) {
+      console.log('[Cleanup] No versions to clean up');
+      return;
+    }
+    
+    // Sort by modification time (oldest first)
+    versions.sort((a, b) => a.mtime - b.mtime);
+    
+    // Delete oldest versions until we're under the limit
+    let currentSize = totalSize;
+    let deletedCount = 0;
+    
+    for (const version of versions) {
+      if (currentSize <= MAX_CACHE_SIZE) break;
+      
+      // Keep at least the most recent version
+      if (versions.length - deletedCount <= 1) {
+        console.log('[Cleanup] Keeping at least one version');
+        break;
+      }
+      
+      console.log(`[Cleanup] Deleting old version: ${version.name} (${(version.size / (1024 * 1024)).toFixed(2)} MB)`);
+      await fsp.rm(version.path, { recursive: true, force: true }).catch((err) => {
+        console.error(`[Cleanup] Failed to delete ${version.name}: ${err.message}`);
+      });
+      
+      currentSize -= version.size;
+      deletedCount++;
+    }
+    
+    const newSizeGB = (currentSize / (1024 * 1024 * 1024)).toFixed(2);
+    console.log(`[Cleanup] Cleanup complete. Deleted ${deletedCount} version(s). New size: ${newSizeGB} GB`);
+  } catch (err) {
+    console.error(`[Cleanup] Error during cleanup: ${err.message}`);
+  }
+}
+
+// Periodic maintenance task
+async function periodicMaintenance() {
+  await checkAndRetrieveNewRelease();
+  await cleanupCacheIfNeeded();
+}
+
+// Start periodic checker (every 10 minutes)
+const AUTO_RETRIEVAL_INTERVAL = 10 * 60 * 1000; // 10 minutes
+setInterval(periodicMaintenance, AUTO_RETRIEVAL_INTERVAL);
+// Run once at startup (after a short delay to let server initialize)
+setTimeout(periodicMaintenance, 10000);
+
 // Streaming retrieval of a single jar asset
 app.post('/api/theta/retrieve/stream', expressBasicAuth, async (req, res) => {
   const version = String(req.body.version || '').trim();
