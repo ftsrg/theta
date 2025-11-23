@@ -48,3 +48,7 @@ tmp/
 
 # Credentials (keep structure but ignore actual files)
 backend/config/credentials.json
+
+# SSL certificates
+backend/certs/
+*.pem

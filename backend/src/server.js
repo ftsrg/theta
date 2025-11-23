@@ -1,4 +1,5 @@
 const express = require('express');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
@@ -7,6 +8,9 @@ const { execFile } = require('child_process');
 
 // --- Config & Constants ----------------------------------------------------
 const PORT = process.env.PORT || 5175;
+const USE_HTTPS = process.env.USE_HTTPS !== 'false';
+const CERT_FILE = process.env.CERT_FILE || path.join(__dirname, '..', 'certs', 'cert.pem');
+const KEY_FILE = process.env.KEY_FILE || path.join(__dirname, '..', 'certs', 'key.pem');
 const BASIC_AUTH_FILE = process.env.BASIC_AUTH_FILE || path.join(__dirname, '..', 'config', 'credentials.json');
 const WHITELIST_FILE = path.join(__dirname, '..', 'config', 'whitelist.json');
 const EXAMPLES_DIR = path.join(__dirname, '..', '..', 'examples');
@@ -710,6 +714,30 @@ app.post('/api/verify/cancel', (req, res) => {
 app.get('/api/health', (req,res)=>res.json({ status: 'ok' }));
 
 // --- Start -----------------------------------------------------------------
-app.listen(PORT, () => {
-  console.log(`theta-ui backend listening on ${PORT}`);
-});
+if (USE_HTTPS) {
+  // Check if certificates exist
+  if (!fs.existsSync(CERT_FILE) || !fs.existsSync(KEY_FILE)) {
+    console.error('ERROR: SSL certificates not found!');
+    console.error(`Certificate: ${CERT_FILE}`);
+    console.error(`Private Key: ${KEY_FILE}`);
+    console.error('\nRun: ./scripts/generate-certs.sh to create self-signed certificates');
+    console.error('Or set USE_HTTPS=false to use HTTP instead');
+    process.exit(1);
+  }
+
+  const httpsOptions = {
+    key: fs.readFileSync(KEY_FILE),
+    cert: fs.readFileSync(CERT_FILE)
+  };
+
+  https.createServer(httpsOptions, app).listen(PORT, () => {
+    console.log(`theta-ui backend listening on https://localhost:${PORT}`);
+    console.log('Using HTTPS with self-signed certificates');
+    console.log('Note: Browsers will show security warnings for self-signed certificates');
+  });
+} else {
+  app.listen(PORT, () => {
+    console.log(`theta-ui backend listening on http://localhost:${PORT}`);
+    console.log('Using HTTP (set USE_HTTPS=true to enable HTTPS)');
+  });
+}
