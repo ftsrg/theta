@@ -621,9 +621,8 @@ app.post('/api/verify/stream', async (req, res) => {
         '--timelimit', '60',
         '--memlimit', '5120',
         '--read-only-dir', '/',
-        '--read-only-dir', backendRoot,
-        '--read-only-dir', homeDir,
         '--hidden-dir', '/home',
+        '--read-only-dir', backendRoot,
         '--overlay-dir', runDir,
         '--',
         'java', ...finalArgs
