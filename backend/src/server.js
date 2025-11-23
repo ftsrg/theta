@@ -484,10 +484,9 @@ app.post('/api/verify', async (req, res) => {
   const { code, binaryName, args, thetaVersion, jarFile } = req.body || {};
   if (!code || typeof code !== 'string') return res.status(400).json({ error: 'code missing' });
   if (!binaryName) return res.status(400).json({ error: 'binaryName missing' });
-  const whitelist = loadJSONSync(WHITELIST_FILE, { binaries: [], raw: [] });
+  const whitelist = loadJSONSync(WHITELIST_FILE, { binaries: []});
   const thetaJarEntry = whitelist.binaries.find(b => b.name === binaryName && b.type === 'theta-jar');
-  const rawEntry = whitelist.raw.find(b => b.name === binaryName);
-  if (!thetaJarEntry && !rawEntry) return res.status(400).json({ error: 'binary not whitelisted' });
+  if (!thetaJarEntry) return res.status(400).json({ error: 'binary not whitelisted' });
 
   const safeArgs = sanitizeArgs(Array.isArray(args) ? args : []);
   console.log(`Verify request: binary=${binaryName}, thetaVersion=${thetaVersion || ''}, jarFile=${jarFile || ''}, args=[${safeArgs.join(', ')}]`);
@@ -501,28 +500,20 @@ app.post('/api/verify', async (req, res) => {
   const start = Date.now();
   let result;
   try {
-    if (thetaJarEntry) {
-      const version = String(thetaVersion || '').trim();
-      if (!version) return res.status(400).json({ error: 'thetaVersion required for theta-jar' });
-      const jar = String(jarFile || '').trim();
-      if (!jar) return res.status(400).json({ error: 'jarFile required' });
-      const jarPath = path.join(THETA_CACHE_DIR, version, jar);
-      const resolvedJar = path.resolve(jarPath);
-      const cacheRoot = path.resolve(THETA_CACHE_DIR);
-      if (!resolvedJar.startsWith(cacheRoot + path.sep)) return res.status(400).json({ error: 'invalid jar path' });
-      if (!fs.existsSync(resolvedJar)) return res.status(404).json({ error: 'jar not found' });
-      const { expanded, used } = expandInputPlaceholders(safeArgs, srcFile);
-      const finalArgs = [resolvedJar, ...expanded];
-      // java -jar <jar> [args with %in replaced or <source> [args]]
-      result = await execFileAsync('java', ['-jar', ...finalArgs], { cwd: runDir });
-      result.meta = { binary: 'theta-jar', version, jar: jar, args: finalArgs, placeholderUsed: used };
-    } else if (rawEntry) {
-      if (!fs.existsSync(rawEntry.path)) return res.status(500).json({ error: 'raw binary path missing on server' });
-      const { expanded, used } = expandInputPlaceholders(safeArgs, srcFile);
-      const finalArgs = expanded;
-      result = await execFileAsync(rawEntry.path, finalArgs, { cwd: runDir });
-      result.meta = { binary: rawEntry.name, path: rawEntry.path, args: finalArgs, placeholderUsed: used };
-    }
+    const version = String(thetaVersion || '').trim();
+    if (!version) return res.status(400).json({ error: 'thetaVersion required for theta-jar' });
+    const jar = String(jarFile || '').trim();
+    if (!jar) return res.status(400).json({ error: 'jarFile required' });
+    const jarPath = path.join(THETA_CACHE_DIR, version, jar);
+    const resolvedJar = path.resolve(jarPath);
+    const cacheRoot = path.resolve(THETA_CACHE_DIR);
+    if (!resolvedJar.startsWith(cacheRoot + path.sep)) return res.status(400).json({ error: 'invalid jar path' });
+    if (!fs.existsSync(resolvedJar)) return res.status(404).json({ error: 'jar not found' });
+    const { expanded, used } = expandInputPlaceholders(safeArgs, srcFile);
+    const finalArgs = [resolvedJar, ...expanded];
+    // java -jar <jar> [args with %in replaced or <source> [args]]
+    result = await execFileAsync('java', ['-jar', ...finalArgs], { cwd: runDir });
+    result.meta = { binary: 'theta-jar', version, jar: jar, args: finalArgs, placeholderUsed: used };
   } catch (err) {
     result = { code: 1, stdout: '', stderr: '', error: String(err.message || err), meta: { binary: binaryName } };
   } finally {
@@ -574,10 +565,9 @@ app.post('/api/verify/stream', async (req, res) => {
   const { code, binaryName, args, thetaVersion, jarFile } = req.body || {};
   if (!code || typeof code !== 'string') return res.status(400).json({ error: 'code missing' });
   if (!binaryName) return res.status(400).json({ error: 'binaryName missing' });
-  const whitelist = loadJSONSync(WHITELIST_FILE, { binaries: [], raw: [] });
+  const whitelist = loadJSONSync(WHITELIST_FILE, { binaries: [] });
   const thetaJarEntry = whitelist.binaries.find(b => b.name === binaryName && b.type === 'theta-jar');
-  const rawEntry = whitelist.raw.find(b => b.name === binaryName);
-  if (!thetaJarEntry && !rawEntry) return res.status(400).json({ error: 'binary not whitelisted' });
+  if (!thetaJarEntry) return res.status(400).json({ error: 'binary not whitelisted' });
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
@@ -620,43 +610,19 @@ app.post('/api/verify/stream', async (req, res) => {
       await fsp.mkdir(homeDir, { recursive: true }).catch(()=>{});
       const env = { ...process.env, HOME: homeDir, LD_LIBRARY_PATH: libPath + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '') };
       const runExec = path.join(__dirname, '..', '..', 'benchexec', 'bin', 'runexec');
-      const thetaUiRoot = path.join(__dirname, '..', '..');
+      const backendRoot = path.join(__dirname, '..');
       const containerArgs = [
         '--dir', runDir,
         '--container',
         '--timelimit', '60',
         '--memlimit', '5120',
         '--read-only-dir', '/',
-        '--read-only-dir', thetaUiRoot,
+        '--read-only-dir', backendRoot,
         '--read-only-dir', homeDir,
         '--hidden-dir', '/home',
         '--overlay-dir', runDir,
         '--',
         'java', ...finalArgs
-      ];
-      child = spawn(runExec, containerArgs, { env });
-    } else if (rawEntry) {
-      if (!fs.existsSync(rawEntry.path)) return endErr('raw binary path missing on server');
-      const { expanded, used } = expandInputPlaceholders(safeArgs, srcFile);
-      const finalArgs = expanded;
-      meta = { binary: rawEntry.name, path: rawEntry.path, args: finalArgs, placeholderUsed: used };
-      const libPath = path.join(__dirname, '..', '..', 'lib');
-      const homeDir = path.join(process.env.HOME || '/home/' + process.env.USER, '.theta');
-      await fsp.mkdir(homeDir, { recursive: true }).catch(()=>{});
-      const env = { ...process.env, HOME: homeDir, LD_LIBRARY_PATH: libPath + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '') };
-      const runExec = path.join(__dirname, '..', '..', 'benchexec', 'bin', 'runexec');
-      const thetaUiRoot = path.join(__dirname, '..', '..');
-      const containerArgs = [
-        '--dir', runDir,
-        '--timelimit', '60',
-        '--memlimit', '5120',
-        '--read-only-dir', '/',
-        '--read-only-dir', thetaUiRoot,
-        '--read-only-dir', homeDir,
-        '--hidden-dir', '/home',
-        '--overlay-dir', runDir,
-        '--',
-        rawEntry.path, ...finalArgs
       ];
       child = spawn(runExec, containerArgs, { env });
     }
