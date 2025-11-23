@@ -615,19 +615,21 @@ app.post('/api/verify/stream', async (req, res) => {
       const env = { ...process.env, HOME: homeDir, LD_LIBRARY_PATH: libPath + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '') };
       const runExec = path.join(__dirname, '..', '..', 'benchexec', 'bin', 'runexec');
       const backendRoot = path.join(__dirname, '..');
+      const lib = path.join(__dirname, '..', '..', 'lib');
       const containerArgs = [
         '--dir', runDir,
         '--container',
-        '--timelimit', '60s',
+        '--timelimit', '60',
         '--memlimit', '5120MB',
         '--read-only-dir', '/',
         '--hidden-dir', '/home',
         '--read-only-dir', backendRoot,
+        '--read-only-dir', lib,
         '--full-access-dir', runDir,
         '--',
         'java', ...finalArgs
       ];
-      child = spawn(runExec, containerArgs, { env });
+      child = spawn(runExec, containerArgs, { cwd: runDir, env });
     }
     if (!child) return endErr('spawn failed');
 
