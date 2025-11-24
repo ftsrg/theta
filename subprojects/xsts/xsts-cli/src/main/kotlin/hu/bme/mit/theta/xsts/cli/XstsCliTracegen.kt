@@ -23,10 +23,8 @@ import com.google.common.io.Files
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.utils.AbstractTraceSummaryVisualizer
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -57,8 +55,8 @@ class XstsCliTracegen :
     option(help = "If this flag is present, a concretized summary is generated.")
       .flag(default = false)
   val generateTraces: Boolean by
-    option(help = "If this flag is present, concretized traces are generated.")
-      .flag(default = false)
+    option(help = "If this flag is set to false, concretized traces are not generated.")
+      .flag(default = true)
 
   private fun toCexs(
     summaryStateMap:
@@ -88,25 +86,25 @@ class XstsCliTracegen :
   }
 
   private fun printResult(
-    abstractSummary: AbstractTraceSummary<out State, out Action>,
+    abstractResult: AbstractTraceSet<out State, out Action>,
     totalTimeMs: Long,
     traceDirPath: File,
     xsts: XSTS,
   ) {
     logger.write(
       Logger.Level.RESULT,
-      "Successfully generated a summary of ${abstractSummary.sourceTraces.size} traces in ${totalTimeMs}ms\n",
+      "Successfully generated a summary of ${abstractResult.sourceTraces.size} traces in ${totalTimeMs}ms\n",
     )
 
     // TODO print coverage (full or not)?
-    val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
+    // val graph = AbstractTraceSummaryVisualizer.visualize(abstractSummary)
     val visFile =
       traceDirPath.absolutePath +
         File.separator +
         inputOptions.model.name +
         ".abstract-trace-summary.png"
-    GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
-    logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
+    // GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+    // logger.write(Logger.Level.SUBSTEP, "Abstract trace summary was visualized in ${visFile}\n")
 
     // trace concretization
     if (generateTraces) {
@@ -114,7 +112,7 @@ class XstsCliTracegen :
 
       val concretizationResultTuple =
         XstsTraceGenerationConcretizerUtil.concretizeTraceList(
-          abstractSummary.sourceTraces.map {
+          abstractResult.sourceTraces.map {
             it.toTrace() as Trace<XstsState<ExplState>, XstsAction>
           },
           Z3LegacySolverFactory.getInstance(),
@@ -146,26 +144,27 @@ class XstsCliTracegen :
     }
 
     // summary concretization
-    if (generateSummary) {
-      val concretizationResult =
-        XstsTraceGenerationConcretizerUtil.concretizeSummary(
-          abstractSummary as AbstractTraceSummary<XstsState<*>, XstsAction>,
-          Z3LegacySolverFactory.getInstance(),
-          xsts,
-        )
-
-      val concreteSummaryFile =
-        traceDirPath.absolutePath +
-          File.separator +
-          inputOptions.model.nameWithoutExtension +
-          ".cexs"
-      val cexsString = toCexs(concretizationResult)
-      PrintWriter(File(concreteSummaryFile)).use { printWriter -> printWriter.write(cexsString) }
-      logger.write(
-        Logger.Level.SUBSTEP,
-        "Concrete trace summary exported to ${concreteSummaryFile}\n",
-      )
-    }
+    //    if (generateSummary) {
+    //      val concretizationResult =
+    //        XstsTraceGenerationConcretizerUtil.concretizeSummary(
+    //          abstractResult as AbstractTraceSummary<XstsState<*>, XstsAction>,
+    //          Z3LegacySolverFactory.getInstance(),
+    //          xsts,
+    //        )
+    //
+    //      val concreteSummaryFile =
+    //        traceDirPath.absolutePath +
+    //          File.separator +
+    //          inputOptions.model.nameWithoutExtension +
+    //          ".cexs"
+    //      val cexsString = toCexs(concretizationResult)
+    //      PrintWriter(File(concreteSummaryFile)).use { printWriter ->
+    // printWriter.write(cexsString) }
+    //      logger.write(
+    //        Logger.Level.SUBSTEP,
+    //        "Concrete trace summary exported to ${concreteSummaryFile}\n",
+    //      )
+    //    }
   }
 
   override fun run() {
@@ -211,7 +210,7 @@ class XstsCliTracegen :
         .setGetFullTraces(false)
         .build(xsts)
     val result = checker.check()
-    val summary = result.summary as AbstractTraceSummary<XstsState<*>, XstsAction>
+    val summary = result.summary as AbstractTraceSet
 
     sw.stop()
     printResult(summary, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath, xsts)
