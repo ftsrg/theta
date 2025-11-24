@@ -1004,13 +1004,21 @@ app.post('/api/verify/stream', async (req, res) => {
             if ((ent.name === 'witness.yml' || ent.name === 'witness.graphml') && fs.existsSync(runExec) && fs.existsSync(svWitnessesDir)) {
               const linterScript = path.join(svWitnessesDir, 'linter', 'witnesslinter.py');
               if (fs.existsSync(linterScript) && fs.existsSync(srcFile)) {
+                const lintOutputPath = path.join(runDir, 'output.log');
                 const lintOutputRel = baseRel ? path.join(path.dirname(baseRel), `${ent.name}.lint.txt`) : `${ent.name}.lint.txt`;
                 try {
                   const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
                   const lintResult = await execFileAsync(runExec, linterArgs, { cwd: runDir });
-                  // Collect linter output (stdout/stderr) regardless of exit code
-                  const lintContent = `Exit Code: ${lintResult.code}\n\n=== STDOUT ===\n${lintResult.stdout}\n\n=== STDERR ===\n${lintResult.stderr}`;
-                  files.push({ path: lintOutputRel, size: Buffer.byteLength(lintContent, 'utf8'), truncated: false, content: lintContent, generated: true });
+                  if (fs.existsSync(lintOutputPath)) {
+                  const lintStat = await fsp.stat(svgPath).catch(()=>null);
+                  if (lintStat && lintStat.size > 0) {
+                    const lintSize = lintStat.size;
+                    const svgSliceSize = Math.min(lintSize, MAX_FILE);
+                    const lintBuf = await fsp.readFile(lintOutputPath);
+                    const lintContent = lintBuf.slice(0, svgSliceSize).toString('utf8');
+                    files.push({ path: lintOutputRel, size: lintSize, truncated: lintSize > MAX_FILE, content: lintContent, generated: true });
+                  }
+                }
                 } catch (lintErr) {
                   // Silently ignore linter errors
                 }
