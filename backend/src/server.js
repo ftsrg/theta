@@ -1004,7 +1004,6 @@ app.post('/api/verify/stream', async (req, res) => {
             if ((ent.name === 'witness.yml' || ent.name === 'witness.graphml') && fs.existsSync(runExec) && fs.existsSync(svWitnessesDir)) {
               const linterScript = path.join(svWitnessesDir, 'linter', 'witnesslinter.py');
               if (fs.existsSync(linterScript) && fs.existsSync(srcFile)) {
-                const lintOutputPath = path.join(runDir, 'output.files', `${ent.name}.lint.txt`);
                 const lintOutputRel = baseRel ? path.join(path.dirname(baseRel), `${ent.name}.lint.txt`) : `${ent.name}.lint.txt`;
                 try {
                   const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
