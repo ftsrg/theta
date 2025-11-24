@@ -88,7 +88,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           when (wp.waypoint.type) {
             WaypointType.ASSUMPTION -> {
               val constraint = wp.waypoint.constraint!!
-              check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+              check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
               getExpressionFromC(
                 constraint.value,
                 parseContext,
@@ -118,7 +118,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
                 if (cNameOpt.isPresent) {
                   val constraint = wp.waypoint.constraint!!
-                  check(constraint.format!! == Format.C_EXPRESSION) { "Not handled: $constraint" }
+                  check(constraint.format!! == Format.C_EXPRESSION || constraint.format!! == Format.EXT_C_EXPRESSION) { "Not handled: $constraint" }
                   getExpressionFromC(
                     constraint.value.replace("\\result", cNameOpt.get() as String),
                     parseContext,
