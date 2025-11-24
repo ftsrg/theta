@@ -13,7 +13,7 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 BUILD_OUTPUT="$FRONTEND_DIR/dist"
 
 # Parse arguments
-API_ROOT="${1:-http://localhost:5175}"
+API_ROOT="${1:-https://localhost:5175}"
 
 echo "=========================================="
 echo "Building theta-ui frontend"

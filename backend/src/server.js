@@ -314,19 +314,47 @@ app.get('/api/theta/versions', async (req, res) => {
   }
 });
 
-// List releases (public) with jar assets metadata (tag + asset names)
+// List releases with jar assets metadata (tag + asset names)
+// If authenticated (valid CSRF token), fetch live data from GitHub
+// Otherwise, return locally cached releases only
 app.get('/api/theta/releases', async (req, res) => {
   try {
-    const resp = await fetch(GITHUB_RELEASES_API, { headers: { 'Accept': 'application/vnd.github+json' } });
-    if (!resp.ok) return res.status(resp.status).json({ error: `GitHub API error ${resp.status} (${resp.statusText})` });
-    const data = await resp.json();
-    const releases = [];
-    for (const r of data) {
-      const tag = r.tag_name || r.name || r.id;
-      const assets = (r.assets || []).filter(a=>a.name && a.name.endsWith('.jar')).map(a=>({ name: a.name, size: a.size, downloadUrl: a.browser_download_url }));
-      if (assets.length) releases.push({ tag, assets });
+    const csrf = req.headers['x-csrf-token'];
+    const isAuthenticated = validateCsrfToken(csrf);
+    console.log(`[Releases] Authenticated: ${isAuthenticated} (${csrf ? 'token provided' : 'no token'})`);
+    if (isAuthenticated) {
+      // Fetch live data from GitHub API
+      const resp = await fetch(GITHUB_RELEASES_API, { headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!resp.ok) return res.status(resp.status).json({ error: `GitHub API error ${resp.status} (${resp.statusText})` });
+      const data = await resp.json();
+      const releases = [];
+      for (const r of data) {
+        const tag = r.tag_name || r.name || r.id;
+        const assets = (r.assets || []).filter(a=>a.name && a.name.endsWith('.jar')).map(a=>({ name: a.name, size: a.size, downloadUrl: a.browser_download_url }));
+        if (assets.length) releases.push({ tag, assets });
+      }
+      res.json({ releases, source: 'github' });
+    } else {
+      // Return locally cached releases only
+      const entries = await fsp.readdir(THETA_CACHE_DIR).catch(()=>[]);
+      const releases = [];
+      for (const e of entries) {
+        const full = path.join(THETA_CACHE_DIR, e);
+        const stat = await fsp.stat(full).catch(()=>null);
+        if (stat && stat.isDirectory()) {
+          const jarFiles = await fsp.readdir(full).catch(()=>[]);
+          const assets = jarFiles
+            .filter(f=>f.endsWith('.jar'))
+            .map(name => {
+              const jarPath = path.join(full, name);
+              const jarStat = fs.statSync(jarPath, { throwIfNoEntry: false });
+              return { name, size: jarStat ? jarStat.size : 0 };
+            });
+          if (assets.length) releases.push({ tag: e, assets });
+        }
+      }
+      res.json({ releases, source: 'cache' });
     }
-    res.json({ releases });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
@@ -750,6 +778,9 @@ app.post('/api/verify', async (req, res) => {
   // Collect generated files from runDir (excluding source file) up to 1MB each
   try {
     const files = [];
+    const runExec = path.join(__dirname, '..', '..', 'benchexec', 'bin', 'runexec');
+    const svWitnessesDir = path.join(__dirname, '..', '..', 'sv-witnesses');
+    
     async function walk(dir, baseRel) {
       const entries = await fsp.readdir(dir, { withFileTypes: true });
       for (const ent of entries) {
@@ -772,6 +803,49 @@ app.post('/api/verify', async (req, res) => {
               if (size > MAX_FILE) truncated = true;
             }
           files.push({ path: rel, size, truncated, content });
+          
+          // Special handlers for certain file types
+          // Handler for .dot files - generate SVG
+          if (ent.name.endsWith('.dot') && fs.existsSync(runExec)) {
+            const svgPath = full.replace(/\.dot$/, '.svg');
+            const svgRel = rel.replace(/\.dot$/, '.svg');
+            try {
+              const dotArgs = ['--dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--', 'dot', '-Tsvg', full, '-o', svgPath];
+              const dotResult = await execFileAsync(runExec, dotArgs, { cwd: runDir });
+              if (dotResult.code === 0 && fs.existsSync(svgPath)) {
+                const svgStat = await fsp.stat(svgPath).catch(()=>null);
+                if (svgStat && svgStat.size > 0) {
+                  const svgSize = svgStat.size;
+                  const svgSliceSize = Math.min(svgSize, MAX_FILE);
+                  const svgBuf = await fsp.readFile(svgPath);
+                  const svgContent = svgBuf.slice(0, svgSliceSize).toString('utf8');
+                  files.push({ path: svgRel, size: svgSize, truncated: svgSize > MAX_FILE, content: svgContent, generated: true });
+                }
+              }
+            } catch (dotErr) {
+              // Silently ignore dot transformation errors
+            }
+          }
+          
+          // Handler for witness files - run linter
+          if ((ent.name === 'witness.yml' || ent.name === 'witness.graphml') && fs.existsSync(runExec) && fs.existsSync(svWitnessesDir)) {
+            const linterScript = path.join(svWitnessesDir, 'linter', 'witnesslinter.py');
+            if (fs.existsSync(linterScript) && fs.existsSync(srcFile)) {
+              const lintOutputPath = path.join(runDir, `${ent.name}.lint.txt`);
+              const lintOutputRel = baseRel ? path.join(path.dirname(baseRel), `${ent.name}.lint.txt`) : `${ent.name}.lint.txt`;
+              try {
+                const linterArgs = ['--dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
+                const lintResult = await execFileAsync(runExec, linterArgs, { cwd: runDir });
+                // Collect linter output (stdout/stderr) regardless of exit code
+                const lintContent = `Exit Code: ${lintResult.code}\n\n=== STDOUT ===\n${lintResult.stdout}\n\n=== STDERR ===\n${lintResult.stderr}`;
+                await fsp.writeFile(lintOutputPath, lintContent, 'utf8');
+                const lintSize = Buffer.byteLength(lintContent, 'utf8');
+                files.push({ path: lintOutputRel, size: lintSize, truncated: false, content: lintContent, generated: true });
+              } catch (lintErr) {
+                // Silently ignore linter errors
+              }
+            }
+          }
         }
       }
     }
@@ -877,6 +951,9 @@ app.post('/api/verify/stream', async (req, res) => {
     // Collect generated files up to 1MB each
     try {
       const files = [];
+      const runExec = path.join(__dirname, '..', '..', 'benchexec', 'bin', 'runexec');
+      const svWitnessesDir = path.join(__dirname, '..', '..', 'sv-witnesses');
+      
       async function walk(dir, baseRel) {
         const entries = await fsp.readdir(dir, { withFileTypes: true });
         for (const ent of entries) {
@@ -899,6 +976,47 @@ app.post('/api/verify/stream', async (req, res) => {
               if (size > MAX_FILE) truncated = true;
             }
             files.push({ path: rel, size, truncated, content });
+            
+            // Special handlers for certain file types
+            // Handler for .dot files - generate SVG
+            if (ent.name.endsWith('.dot') && fs.existsSync(runExec)) {
+              const svgPath = path.join(runDir, 'output.files', 'out.svg');
+              const svgRel = rel.replace(/\.dot$/, '.svg');
+              try {
+                const dotArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--', 'dot', '-Tsvg', full, '-o', 'out.svg'];
+                const dotResult = await execFileAsync(runExec, dotArgs, { cwd: runDir });
+                if (dotResult.code === 0 && fs.existsSync(svgPath)) {
+                  const svgStat = await fsp.stat(svgPath).catch(()=>null);
+                  if (svgStat && svgStat.size > 0) {
+                    const svgSize = svgStat.size;
+                    const svgSliceSize = Math.min(svgSize, MAX_FILE);
+                    const svgBuf = await fsp.readFile(svgPath);
+                    const svgContent = svgBuf.slice(0, svgSliceSize).toString('utf8');
+                    files.push({ path: svgRel, size: svgSize, truncated: svgSize > MAX_FILE, content: svgContent, generated: true });
+                  }
+                }
+              } catch (dotErr) {
+                // Silently ignore dot transformation errors
+              }
+            }
+            
+            // Handler for witness files - run linter
+            if ((ent.name === 'witness.yml' || ent.name === 'witness.graphml') && fs.existsSync(runExec) && fs.existsSync(svWitnessesDir)) {
+              const linterScript = path.join(svWitnessesDir, 'linter', 'witnesslinter.py');
+              if (fs.existsSync(linterScript) && fs.existsSync(srcFile)) {
+                const lintOutputPath = path.join(runDir, 'output.files', `${ent.name}.lint.txt`);
+                const lintOutputRel = baseRel ? path.join(path.dirname(baseRel), `${ent.name}.lint.txt`) : `${ent.name}.lint.txt`;
+                try {
+                  const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
+                  const lintResult = await execFileAsync(runExec, linterArgs, { cwd: runDir });
+                  // Collect linter output (stdout/stderr) regardless of exit code
+                  const lintContent = `Exit Code: ${lintResult.code}\n\n=== STDOUT ===\n${lintResult.stdout}\n\n=== STDERR ===\n${lintResult.stderr}`;
+                  files.push({ path: lintOutputRel, size: Buffer.byteLength(lintContent, 'utf8'), truncated: false, content: lintContent, generated: true });
+                } catch (lintErr) {
+                  // Silently ignore linter errors
+                }
+              }
+            }
           }
         }
       }

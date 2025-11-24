@@ -6,7 +6,7 @@ import Toolbar from './components/Toolbar'
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, LinearProgress, Box, Button, Typography } from '@mui/material'
 import { api, setAuthRequiredHandler, setCsrfToken, getCsrfToken } from './api'
 
-const API_ROOT = import.meta.env.VITE_API_ROOT || 'http://localhost:5175'
+const API_ROOT = import.meta.env.VITE_API_ROOT || 'https://localhost:5175'
 
 export default function App() {
   const [examples, setExamples] = useState([])
@@ -57,18 +57,19 @@ export default function App() {
       const exs = r.data || []
       setExamples(exs)
     }).catch(()=>{})
-    refreshThetaVersions()
-    refreshThetaReleases()
+    if(signedIn) { 
+      api.post('/api/auth/csrf').then((resp) => {    
+      if (resp.data?.token) setCsrfToken(resp.data.token)
+        refreshThetaVersions()
+        refreshThetaReleases()
+      })
+    } else {
+        refreshThetaVersions()
+        refreshThetaReleases()
+    }
     const iv = setInterval(() => { refreshThetaVersions() }, 30000) // periodic refresh of versions
     return () => clearInterval(iv)
   }, [])
-
-  const refreshThetaVersions = () => {
-    api.get('/api/theta/versions').then(r => setThetaVersions(r.data.versions || [])).catch(()=>{})
-  }
-  const refreshThetaReleases = () => {
-    api.get('/api/theta/releases').then(r => setThetaReleases(r.data.releases || [])).catch(()=>{})
-  }
 
   useEffect(() => { if (selectedExample) api.get(`/api/examples/${selectedExample}`).then(r => setCode(r.data.content || '')) }, [selectedExample])
 
@@ -78,6 +79,17 @@ export default function App() {
   const fetchCsrf = async () => {
     try { const resp = await api.post('/api/auth/csrf'); if (resp.data?.token) setCsrfToken(resp.data.token) } catch { setAuthNoticeMsg('Failed to obtain CSRF'); setAuthNoticeOpen(true) }
   }
+
+  const refreshThetaVersions = () => {
+    api.get('/api/theta/versions').then(r => setThetaVersions(r.data.versions || [])).catch(()=>{})
+  }
+  const refreshThetaReleases = () => {
+    const headers = {};
+    const csrf = getCsrfToken();
+    if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+    api.get('/api/theta/releases', { headers }).then(r => setThetaReleases(r.data.releases || [])).catch(()=>{})
+  }
+
 
   const doLogin = async () => {
     const candidate = 'Basic ' + btoa(`${username}:${password}`)

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_ROOT = import.meta.env.VITE_API_ROOT || 'http://localhost:5175';
+const API_ROOT = import.meta.env.VITE_API_ROOT || 'https://localhost:5175';
 
 let onAuthRequired = null;
 export function setAuthRequiredHandler(cb) { onAuthRequired = cb; }
@@ -22,11 +22,8 @@ api.interceptors.request.use((config) => {
       config.headers = config.headers || {};
       // Always send Authorization if we have it; backend only enforces on protected routes.
       config.headers.Authorization = token;
-      // Attach CSRF token only for build endpoint.
-      if (config.url && /\/api\/theta\/build$/.test(config.url)) {
-        const c = getCsrfToken();
-        if (c) config.headers['X-CSRF-TOKEN'] = c;
-      }
+      const c = getCsrfToken();
+      if (c) config.headers['X-CSRF-TOKEN'] = c;
     }
   } catch (_) {}
   return config;
