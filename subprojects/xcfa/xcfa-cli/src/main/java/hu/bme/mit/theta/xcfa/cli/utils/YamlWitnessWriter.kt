@@ -376,10 +376,32 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         .toMutableList()
 
     if (waypoints.isNotEmpty() && !waypoints.any { wp -> wp.type == WaypointType.TARGET }) {
-      val last = waypoints.last()
-      val newLast =
-        last.copy(type = WaypointType.TARGET, constraint = null) // change last follow to be target
-      waypoints[waypoints.size - 1] = newLast
+      val target = "reach_error();"
+
+      var foundLine: Int? = null
+      var foundColumn: Int? = null
+
+      // Read file line by line and find target
+      inputFile.readLines().forEachIndexed { index, line ->
+        val col = line.indexOf(target)
+        if (col != -1) {
+          foundLine = index + 1 // 1-based line number
+          foundColumn = col + 1 // 1-based column (position of 'r')
+          return@forEachIndexed
+        }
+      }
+
+      if (foundLine != null) {
+        waypoints.add(
+          WaypointContent(
+            WaypointType.TARGET,
+            constraint = null,
+            location =
+              Location(fileName = inputFile.name, line = foundLine!!, column = foundColumn),
+            action = Action.FOLLOW,
+          )
+        )
+      }
     }
     val witnessContent = waypoints.map { ContentItem(it) }
 
