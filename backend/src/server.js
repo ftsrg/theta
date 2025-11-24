@@ -1009,7 +1009,7 @@ app.post('/api/verify/stream', async (req, res) => {
                 const lintOutputPath = path.join(runDir, 'output.log');
                 const lintOutputRel = baseRel ? path.join(path.dirname(baseRel), `${ent.name}.lint.txt`) : `${ent.name}.lint.txt`;
                 try {
-                  const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
+                  const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
                   const lintResult = await execFileAsync(runExec, linterArgs, { cwd: runDir });
                   if (fs.existsSync(lintOutputPath)) {
                     const lintStat = await fsp.stat(lintOutputPath).catch(()=>null);

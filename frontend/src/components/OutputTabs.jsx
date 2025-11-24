@@ -47,9 +47,17 @@ export default function OutputTabs({ result }) {
           </div>
           <Collapse in={isOpen} unmountOnExit>
             {file && (
-              <pre style={{ margin: '4px 0 8px', padding: '4px 6px', background:'#1b1f24', border:'1px solid #2a3138', borderRadius:4, whiteSpace:'pre-wrap', color:'#d0d0d0' }}>
-                {file.content || '// empty file'}
-              </pre>
+              <>
+                {file.path.endsWith('.svg') ? (
+                  <div style={{ margin: '4px 0 8px', padding: '4px 6px', background:'#1b1f24', border:'1px solid #2a3138', borderRadius:4 }}>
+                    <div dangerouslySetInnerHTML={{ __html: file.content }} style={{ maxWidth: '100%', overflow: 'auto' }} />
+                  </div>
+                ) : (
+                  <pre style={{ margin: '4px 0 8px', padding: '4px 6px', background:'#1b1f24', border:'1px solid #2a3138', borderRadius:4, whiteSpace:'pre-wrap', color:'#d0d0d0' }}>
+                    {file.content || '// empty file'}
+                  </pre>
+                )}
+              </>
             )}
             {hasChildren && renderNode(data.__children, relPath)}
           </Collapse>
