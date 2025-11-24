@@ -51,7 +51,7 @@ class InputOptions :
           "Depth to which the statements of the XSTS model should be flattened. -1 means fully flattened, 0 means no flattening."
       )
       .int()
-      .default(2)
+      .default(0)
   private val initialmarking: String by
     option(help = "Initial marking of the pnml model").default("")
   val pnProperty: PropType by
@@ -62,6 +62,7 @@ class InputOptions :
   fun isPnml() = model.path.endsWith("pnml")
 
   fun loadXsts(): XSTS {
+    if(flattenDepth != 0) throw UnsupportedOperationException("XSTS flattening is incorrect, don't use it for now! (--flatten-depth must be 0)")
     val propertyStream =
       if (property != null) property
       else
