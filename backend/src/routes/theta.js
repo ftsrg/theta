@@ -193,6 +193,12 @@ router.post('/build', expressBasicAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/theta/retrieve/stream
+ * Streaming retrieval of a jar asset (handled in verification routes)
+ * Note: This is mounted separately to handle the complex streaming logic
+ */
+
+/**
  * POST /api/theta/retrieve/cancel
  * Cancels an active retrieval (requires Basic Auth)
  */

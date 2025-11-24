@@ -35,9 +35,11 @@ app.use('/api/examples', examplesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/theta', thetaRoutes);
 
-// Import and mount verification routes (separate due to complexity)
+// Mount verification routes (includes streaming verification and retrieval)
+const { retrieveStreamRouter } = require('./routes/verification');
 const verificationRoutes = require('./routes/verification');
 app.use('/api/verify', verificationRoutes);
+app.use('/api', retrieveStreamRouter); // Mounts /api/theta/retrieve/stream
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
