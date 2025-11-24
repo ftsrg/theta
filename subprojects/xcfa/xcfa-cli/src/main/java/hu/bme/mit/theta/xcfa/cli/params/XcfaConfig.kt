@@ -298,6 +298,7 @@ data class TracegenConfig(
   @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
   var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
   val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
+  var initPrec: InitPrec = InitPrec.ALLVARS,
 ) : SpecBackendConfig {
   override fun getObjects(): Set<Config> {
     return super.getObjects() union abstractorConfig.getObjects()

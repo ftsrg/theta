@@ -32,8 +32,10 @@ import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.YamlWitnessWriter
+import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import java.io.File
 import java.io.PrintWriter
+import kotlinx.serialization.encodeToString
 
 internal fun postTraceGenerationLogging(
   result:
@@ -84,6 +86,7 @@ internal fun postTraceGenerationLogging(
 
         val yamlWitnessFile =
           writeTraceAsYaml(
+            logger,
             resultFolder,
             concreteTraces,
             config,
@@ -92,10 +95,17 @@ internal fun postTraceGenerationLogging(
             parseContext,
           )
 
-        logger.write(
-          Logger.Level.RESULT,
-          "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}\n",
-        )
+        if (yamlWitnessFile != null) {
+          logger.write(
+            Logger.Level.RESULT,
+            "Concrete trace exported to ${concreteTraceFile}, ${yamlWitnessFile} and ${concreteDotFile}\n",
+          )
+        } else {
+          logger.write(
+            Logger.Level.RESULT,
+            "Concrete trace exported to ${concreteTraceFile}, and ${concreteDotFile}\n Witness export failed\n",
+          )
+        }
         concreteTraces++
       } catch (e: IllegalArgumentException) {
         logger.write(Logger.Level.SUBSTEP, e.toString())
@@ -112,29 +122,37 @@ internal fun postTraceGenerationLogging(
 }
 
 private fun writeTraceAsYaml(
+  logger: Logger,
   resultFolder: File,
   concreteTraces: Int,
   config: XcfaConfig<*, *>,
   input: File?,
   concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
   parseContext: ParseContext,
-): File {
+): File? {
   val yamlWitnessFile = File(resultFolder, "witness-$concreteTraces.yml")
   val inputfile = config.outputConfig.witnessConfig.inputFileForWitness ?: input!!
   val property = ErrorDetection.ERROR_LOCATION
   val ltlSpecification = ErrorDetection.ERROR_LOCATION.ltl(Unit)
   val architecture = (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture
   val witnessWriter = YamlWitnessWriter()
-  witnessWriter.tracegenWitnessFromConcreteTrace(
-    concrTrace,
-    witnessWriter.getMetadata(inputfile, ltlSpecification, architecture),
-    inputfile,
-    property,
-    ltlSpecification,
-    parseContext!!,
-    yamlWitnessFile,
-  )
-  return yamlWitnessFile
+  val witness =
+    witnessWriter.generateTracegenWitnessFromConcreteTrace(
+      concrTrace,
+      witnessWriter.getMetadata(inputfile, ltlSpecification, architecture),
+      inputfile,
+      property,
+      ltlSpecification,
+      parseContext!!,
+      yamlWitnessFile,
+    )
+
+  if (witness.content.isNotEmpty()) {
+    yamlWitnessFile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+    return yamlWitnessFile
+  } else {
+    return null
+  }
 }
 
 private fun writeTraceAsDot(

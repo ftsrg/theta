@@ -168,7 +168,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     }
   }
 
-  private fun generateBestEffortWitness(
+  fun generateBestEffortWitness(
     safetyResult: SafetyResult<*, *>,
     property: XcfaProperty,
     inputFile: File,
@@ -335,7 +335,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     )
   }
 
-  fun tracegenWitnessFromConcreteTrace(
+  fun generateTracegenWitnessFromConcreteTrace(
     concrTrace: Trace<XcfaState<ExplState>, XcfaAction>,
     metadata: Metadata,
     inputFile: File,
@@ -343,7 +343,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     ltlViolationProperty: String,
     parseContext: ParseContext,
     witnessfile: File,
-  ) {
+  ): YamlWitness {
     check(property == ErrorDetection.ERROR_LOCATION)
     val witnessTrace =
       traceToWitness(
@@ -375,7 +375,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         }
         .toMutableList()
 
-    if (!waypoints.any { wp -> wp.type == WaypointType.TARGET }) {
+    if (waypoints.isNotEmpty() && !waypoints.any { wp -> wp.type == WaypointType.TARGET }) {
       val last = waypoints.last()
       val newLast =
         last.copy(type = WaypointType.TARGET, constraint = null) // change last follow to be target
@@ -386,7 +386,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val witness =
       YamlWitness(entryType = EntryType.VIOLATION, metadata = metadata, content = witnessContent)
 
-    witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+    return witness
   }
 
   private fun terminationViolationWitnessFromConcreteTrace(
