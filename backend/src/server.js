@@ -995,7 +995,7 @@ app.post('/api/verify/stream', async (req, res) => {
                     files.push({ path: svgRel, size: svgSize, truncated: svgSize > MAX_FILE, content: svgContent, generated: true });
                   }
                 } else {
-                  throw new Error('dot output not found, exit code ' + dotResult.code + ', stdout: ' + dotResult.stdout + ', stderr: ' + dotResult.stderr + ', output: ' + fsp.readFileSync(path.join(runDir, 'output.log'), 'utf8'));
+                  throw new Error('dot output not found, exit code ' + dotResult.code + ', stdout: ' + dotResult.stdout + ', stderr: ' + dotResult.stderr + ', output: ' + await fsp.readFile(path.join(runDir, 'output.log'), 'utf8'));
                 }
               } catch (dotErr) {
                 console.error('Dot transformation error:', dotErr);
@@ -1021,7 +1021,7 @@ app.post('/api/verify/stream', async (req, res) => {
                       files.push({ path: lintOutputRel, size: lintSize, truncated: lintSize > MAX_FILE, content: lintContent, generated: true });
                     }
                   } else {
-                    throw new Error('linter output not found, exit code ' + lintResult.code + ', stdout: ' + lintResult.stdout + ', stderr: ' + lintResult.stderr + ', output: ' + fsp.readFileSync(path.join(runDir, 'output.log'), 'utf8'));
+                    throw new Error('linter output not found, exit code ' + lintResult.code + ', stdout: ' + lintResult.stdout + ', stderr: ' + lintResult.stderr + ', output: ' + await fsp.readFile(path.join(runDir, 'output.log'), 'utf8'));
                   }
                 } catch (lintErr) {
                   console.error('Linter error:', lintErr);
