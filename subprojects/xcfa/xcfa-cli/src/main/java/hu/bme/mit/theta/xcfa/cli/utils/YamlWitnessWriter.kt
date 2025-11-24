@@ -665,7 +665,7 @@ private fun WitnessNode.toSegment(
         type = WaypointType.FUNCTION_RETURN,
         location = loc,
         action = action,
-        constraint = Constraint(constraint, Format.C_EXPRESSION),
+        constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
       )
     } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
       val constraintValue =

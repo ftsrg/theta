@@ -265,6 +265,7 @@ enum class WaypointType {
 @Serializable
 enum class Format {
   @SerialName("c_expression") C_EXPRESSION,
+  @SerialName("ext_c_expression") EXT_C_EXPRESSION,
   @SerialName("acsl_expression") ACSL_EXPRESSION,
 }
 
