@@ -994,9 +994,11 @@ app.post('/api/verify/stream', async (req, res) => {
                     const svgContent = svgBuf.slice(0, svgSliceSize).toString('utf8');
                     files.push({ path: svgRel, size: svgSize, truncated: svgSize > MAX_FILE, content: svgContent, generated: true });
                   }
+                } else {
+                  throw new Error('dot output not found, exit code ' + dotResult.code + ', stdout: ' + dotResult.stdout + ', stderr: ' + dotResult.stderr);
                 }
               } catch (dotErr) {
-                // Silently ignore dot transformation errors
+                console.error('Dot transformation error:', dotErr);
               }
             }
             
@@ -1010,17 +1012,19 @@ app.post('/api/verify/stream', async (req, res) => {
                   const linterArgs = ['--read-only-dir', '/', '--hidden-dir', '/home', '--dir', runDir, '--full-access-dir', runDir, '--timelimit', '15', '--memlimit', '1024MB', '--read-only-dir', svWitnessesDir, '--', 'python3', linterScript, '--witness', full, srcFile];
                   const lintResult = await execFileAsync(runExec, linterArgs, { cwd: runDir });
                   if (fs.existsSync(lintOutputPath)) {
-                  const lintStat = await fsp.stat(svgPath).catch(()=>null);
-                  if (lintStat && lintStat.size > 0) {
-                    const lintSize = lintStat.size;
-                    const svgSliceSize = Math.min(lintSize, MAX_FILE);
-                    const lintBuf = await fsp.readFile(lintOutputPath);
-                    const lintContent = lintBuf.slice(0, svgSliceSize).toString('utf8');
-                    files.push({ path: lintOutputRel, size: lintSize, truncated: lintSize > MAX_FILE, content: lintContent, generated: true });
+                    const lintStat = await fsp.stat(lintOutputPath).catch(()=>null);
+                    if (lintStat && lintStat.size > 0) {
+                      const lintSize = lintStat.size;
+                      const lintSliceSize = Math.min(lintSize, MAX_FILE);
+                      const lintBuf = await fsp.readFile(lintOutputPath);
+                      const lintContent = lintBuf.slice(0, lintSliceSize).toString('utf8');
+                      files.push({ path: lintOutputRel, size: lintSize, truncated: lintSize > MAX_FILE, content: lintContent, generated: true });
+                    }
+                  } else {
+                    throw new Error('linter output not found, exit code ' + lintResult.code + ', stdout: ' + lintResult.stdout + ', stderr: ' + lintResult.stderr);
                   }
-                }
                 } catch (lintErr) {
-                  // Silently ignore linter errors
+                  console.error('Linter error:', lintErr);
                 }
               }
             }
