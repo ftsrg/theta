@@ -44,6 +44,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -614,10 +615,10 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
-private fun getStopLocation(inputFile: File, metadata: MetaData?): Location? {
-  val line = (metadata as? CMetaData)?.lineNumberStop ?: return null
-  val column = (metadata as? CMetaData)?.colNumberStop ?: return null
-  return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
+private fun getStopLocation(inputFile: File, statement: CStatement): Location {
+  val line = statement.lineNumberStop
+  val column = statement.colNumberStop
+  return Location(fileName = inputFile.name, line = line, column = column.plus(1))
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -682,12 +683,18 @@ private fun WitnessNode.toSegment(
         else "" to assignedValue.toString()
 
       val constraint = "\\result == $cast$valueString"
-      loc = getStopLocation(inputFile, outgoingEdge.edge?.metadata) ?: return null
+      loc =
+        getStopLocation(
+          inputFile,
+          (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
+            it is CCall && it.functionId.contains("__VERIFIER_nondet_")
+          },
+        ) ?: return null
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
         location = loc,
         action = action,
-        constraint = Constraint(constraint, Format.C_EXPRESSION),
+        constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
       )
     } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
       val constraintValue =
@@ -698,7 +705,7 @@ private fun WitnessNode.toSegment(
         type = WaypointType.BRANCHING,
         location = loc,
         action = action,
-        constraint = Constraint(constraintValue, format = Format.C_EXPRESSION),
+        constraint = Constraint(constraintValue),
       )
     } else {
       // we only want assumptions that are actually about something in a function
