@@ -99,11 +99,10 @@ fun getPortfolioChecker(
   val result =
     portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  logger.write(
-    Logger.Level.RESULT,
-    "Config ${result.first.second} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n",
+  logger.result(
+    "Config ${result.first.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n"
   )
-  logger.write(Logger.Level.RESULT, "success-result: ${result.first.first}\n")
+  logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<
