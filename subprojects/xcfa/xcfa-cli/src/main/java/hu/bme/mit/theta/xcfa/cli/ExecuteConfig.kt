@@ -242,9 +242,13 @@ private fun backend(
   } else if (config.backendConfig.backend == Backend.TRACEGEN) {
     tracegenBackend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
   } else {
+    // we would not do post analysis logging if running in a portfolio otherwise
+    val portfolioRun =
+      (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO)
     if (
       config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
-        (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
+        (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false) &&
+        !portfolioRun
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.result("Input is trivially safe")
@@ -253,7 +257,8 @@ private fun backend(
     } else if (
       config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
         xcfa != null &&
-        !isDataRacePossible(xcfa, logger)
+        !isDataRacePossible(xcfa, logger) &&
+        !portfolioRun
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.result(
