@@ -151,7 +151,7 @@ router.get('/releases', async (req, res) => {
       }
       
       console.log(`[Releases] Retrieved ${releases.length} cached release(s)`);
-      res.json({ releases, source: 'cache' });
+      res.json({ releases: releases.reverse(), source: 'cache' });
     }
     
   } catch (err) {
