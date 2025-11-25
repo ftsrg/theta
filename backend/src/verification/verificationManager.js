@@ -41,6 +41,10 @@ async function collectGeneratedFiles(runDir, srcFile) {
           if (full === srcFile) {
             continue;
           }
+          // Skip benchexec output log
+          if (ent.name === 'output.log') {
+            continue;
+          }
           
           const stat = await fsp.stat(full).catch((err) => {
             console.warn(`[Verification] Failed to stat ${rel}:`, err.message);

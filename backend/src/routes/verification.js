@@ -209,6 +209,7 @@ router.post('/stream', async (req, res) => {
     console.log(`[VerifyStream] Starting run ${runId}`);
     
     let child;
+    let tailProc;
     
     if (thetaJarEntry) {
       const version = String(thetaVersion || '').trim();
@@ -283,6 +284,25 @@ router.post('/stream', async (req, res) => {
     }
     
     activeVerify.set(runId, child);
+
+    // Start tailing Benchexec's output.log and stream as OUT
+    const outputLogPath = path.join(runDir, 'output.log');
+    try {
+      await fsp.mkdir(runDir, { recursive: true }).catch(() => {});
+      await fsp.appendFile(outputLogPath, '').catch(() => {});
+      tailProc = spawn('tail', ['-n', '0', '-f', outputLogPath], { cwd: runDir });
+      tailProc.stdout.on('data', d => splitLines(d).forEach(l => l && send(`OUT: ${l}`)));
+      // Send tail stderr also as OUT per requirement
+      tailProc.stderr.on('data', d => splitLines(d).forEach(l => l && send(`ERR: ${l}`)));
+      tailProc.on('error', e => {
+        console.error('[VerifyStream] Tail process error:', e.message);
+      });
+      tailProc.on('close', code => {
+        console.log(`[VerifyStream] Tail process closed with code ${code}`);
+      });
+    } catch (tailErr) {
+      console.error('[VerifyStream] Failed to start tail on output.log:', tailErr.message);
+    }
     
     // Stream stdout and stderr
     child.stdout.on('data', d => splitLines(d).forEach(l => l && send(`OUT: ${l}`)));
@@ -295,6 +315,13 @@ router.post('/stream', async (req, res) => {
       exitCode = typeof code === 'number' ? code : 1;
       activeVerify.delete(runId);
       console.log(`[VerifyStream] Process closed with code ${exitCode}`);
+      if (tailProc) {
+        try {
+          tailProc.kill('SIGTERM');
+        } catch (kErr) {
+          console.error('[VerifyStream] Failed to kill tail process:', kErr.message);
+        }
+      }
     });
     
     // Handle client disconnect
@@ -308,6 +335,13 @@ router.post('/stream', async (req, res) => {
           console.error('[VerifyStream] Failed to kill process:', err.message);
         }
         activeVerify.delete(runId);
+      }
+      if (tailProc) {
+        try {
+          tailProc.kill('SIGTERM');
+        } catch (kErr) {
+          console.error('[VerifyStream] Failed to kill tail process on disconnect:', kErr.message);
+        }
       }
     });
     
@@ -594,6 +628,7 @@ async function collectGeneratedFiles(runDir, srcFile) {
           await walk(full, rel);
         } else if (ent.isFile()) {
           if (full === srcFile) continue;
+          if (ent.name === 'output.log') continue;
           
           const stat = await fsp.stat(full).catch((err) => {
             console.warn('[CollectFiles] Failed to stat file:', err.message);
@@ -691,6 +726,7 @@ async function collectGeneratedFilesStreaming(runDir, srcFile) {
           await walk(full, rel);
         } else if (ent.isFile()) {
           if (full === srcFile) continue;
+          if (ent.name === 'output.log') continue;
           
           const stat = await fsp.stat(full).catch((err) => {
             console.warn('[CollectFilesStream] Failed to stat:', err.message);
