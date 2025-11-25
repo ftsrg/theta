@@ -59,7 +59,7 @@ fun getXcfaFromC(
 
   val program = context.accept(FunctionVisitor(parseContext, warningLogger))
   check(program is CProgram)
-  logger.result("ParsingResult Success")
+  logger.benchmark("ParsingResult Success")
 
   val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
   val builder = frontendXcfaBuilder.buildXcfa(program)

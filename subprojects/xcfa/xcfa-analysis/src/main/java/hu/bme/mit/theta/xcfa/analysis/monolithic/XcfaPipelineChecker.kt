@@ -89,7 +89,7 @@ constructor(
       logger.mainStep("XcfaPipelineChecker result: $it")
       if (it.isSafe && modelAdapter.model.unsafeUnrollUsed && !acceptUnreliableSafe) {
         logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-        logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
+        logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
         throw NotSolvableException()
       }
     }

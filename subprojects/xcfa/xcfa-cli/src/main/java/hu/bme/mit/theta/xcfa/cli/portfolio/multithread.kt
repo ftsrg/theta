@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
@@ -357,7 +356,7 @@ fun multithreadPortfolio(
     return STM(startNode, edges)
   }
 
-  logger.write(RESULT, "Using portfolio: MULTITHREAD\n")
+  logger.benchmark("Using portfolio: MULTITHREAD\n")
 
   if (portfolioConfig.debugConfig.debug) {
     return getStm(false)
