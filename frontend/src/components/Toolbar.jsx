@@ -25,7 +25,7 @@ export default function Toolbar({
   const [selectedRelease, setSelectedRelease] = useState('')
   const [availableJars, setAvailableJars] = useState([])
   const [selectedJar, setSelectedJar] = useState('')
-  const [args, setArgs] = useState('--input %in --svcomp --portfolio STABLE')
+  const [args, setArgs] = useState('--input %in --backend PORTFOLIO')
   const [retrieving, setRetrieving] = useState(false)
   const [shouldWrap, setShouldWrap] = useState(false)
 
