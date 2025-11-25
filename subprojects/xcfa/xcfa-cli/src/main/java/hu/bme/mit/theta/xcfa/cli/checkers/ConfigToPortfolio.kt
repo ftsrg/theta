@@ -96,7 +96,8 @@ fun getPortfolioChecker(
       }
     }
 
-  val result = portfolioStm.execute() as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+  val result =
+    portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
   logger.write(
     Logger.Level.RESULT,
