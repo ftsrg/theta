@@ -48,7 +48,7 @@ router.get('/versions', async (req, res) => {
     }
     
     console.log(`[Theta] Found ${versions.length} cached version(s)`);
-    res.json({ versions });
+    res.json({ versions: versions.reverse() });
     
   } catch (err) {
     console.error('[Theta] Error listing versions:', err.message);
