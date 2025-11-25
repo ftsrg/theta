@@ -67,6 +67,7 @@ class ConfigNode(
 ) : Node(name) {
 
   override fun execute(logger: Logger): Pair<Any, Any> {
+    logger.result("Current configuration: $name")
     logger.benchmark("Current configuration: $config")
     return Pair(Pair(name, config), check(config))
   }
