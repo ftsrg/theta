@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: frontend
+        run: VITE_API_ROOT=https://theta.fured.cloud.bme.hu npm run build
+      
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-branch
+      
+      - name: Copy assets and index.html
+        run: |
+          # Remove old assets and index.html from gh-pages
+          rm -rf gh-pages-branch/assets
+          rm -f gh-pages-branch/index.html
+          
+          # Copy new assets and index.html
+          cp -r frontend/dist/assets gh-pages-branch/
+          cp frontend/dist/index.html gh-pages-branch/
+      
+      - name: Deploy to gh-pages
+        working-directory: gh-pages-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets index.html
+          git diff --staged --quiet || (git commit -m "Deploy frontend to gh-pages" && git push)
