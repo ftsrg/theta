@@ -120,6 +120,7 @@ fun targetToWitness(startline: Int, endline: Int, startoffset: Int, endoffset: I
   return """
   <node id="N0">
   <data key="violation">false</data>
+  <data key="entry">true</data>
   </node>
   <node id="N1">
   <data key="violation">true</data>

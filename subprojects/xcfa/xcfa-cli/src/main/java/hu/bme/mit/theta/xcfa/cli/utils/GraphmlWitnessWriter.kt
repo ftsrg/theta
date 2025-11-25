@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.GraphmlWitness
 import hu.bme.mit.theta.xcfa.witnesses.createTaskHash
 import java.io.BufferedWriter
@@ -56,7 +57,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
   ) {
 
     val taskHash = createTaskHash(inputFile.absolutePath)
-    val ltlSpecification = property.verifiedProperty.name
+    val ltlSpecification = property.inputProperty.name
     val dummyWitness = StringBuilder()
     dummyWitness
       .append(
@@ -167,12 +168,20 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     endoffset: Int,
   ): String {
     val witnessTrace = targetToWitness(startline, endline, startoffset, endoffset)
-    val xml = generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
+    val emptyWitness = GraphmlWitness(null, inputFile, ltlSpecification)
+    val xml = emptyWitness.toPrettyXml()
+    return injectContent(xml, witnessTrace)
+  }
+
+  private fun injectContent(xml: String, content: String): String {
+    val closingGraph = "</graph>"
+    val index = xml.indexOf(closingGraph)
+    require(index != -1) { "No </graph> tag found in XML" }
     val builder = StringBuilder()
-    builder.append(xml)
-    builder.removeSuffix("]")
-    builder.append(witnessTrace)
-    builder.append("]")
+    builder.append(xml.substring(0, index)) // everything before </graph>
+    builder.append(content) // insert your content inside <graph>
+    builder.append(closingGraph) // re-add </graph>
+    builder.append(xml.substring(index + closingGraph.length)) // rest of file (</graphml> etc.)
     return builder.toString()
   }
 
@@ -181,8 +190,17 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
   ): String {
-    val emptyWitness = GraphmlWitness(Trace.of(listOf(), listOf()), inputFile)
-    return emptyWitness.toPrettyXml()
+    val emptyWitnessContent =
+      """
+      <node id="N0">
+      <data key="violation">true</data>
+      <data key="entry">true</data>
+      </node>
+  """
+        .trimIndent()
+    val emptyWitness = GraphmlWitness(null, inputFile, ltlSpecification)
+    val xml = emptyWitness.toPrettyXml()
+    return injectContent(xml, emptyWitnessContent)
   }
 
   override fun writeWitness(
@@ -208,13 +226,17 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
 
         val witnessTrace =
           traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
-        val graphmlWitness = GraphmlWitness(witnessTrace, inputFile)
+        val graphmlWitness = GraphmlWitness(witnessTrace, inputFile, ltlSpecification)
         val xml = graphmlWitness.toPrettyXml()
         witnessfile.writeText(xml)
       } catch (e: Exception) {
-        logger.info("Could not emit witness, keeping target only")
-        val lastAction = (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>).actions.last()
-        val metadata = lastAction.edge.getCMetaData()
+        logger.info("Could not emit witness, keeping target only: ${e.message}")
+        val lastLabel =
+          (safetyResult.asUnsafe().cex as Trace<*, XcfaAction>)
+            .actions
+            .flatMap { it.label.getFlatLabels() }
+            .findLast { it -> it.metadata.isSubstantial() }
+        val metadata = lastLabel?.getCMetaData()
         val startline: Int? = (metadata as? CMetaData)?.lineNumberStart
         val endline: Int? = (metadata as? CMetaData)?.lineNumberStop
         val startoffset: Int? = (metadata as? CMetaData)?.offsetStart
