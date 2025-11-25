@@ -245,6 +245,9 @@ private fun backend(
     if (
       config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
         (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false)
+        // we would not do post analysis logging if running in a portfolio otherwise
+        &&
+        !(config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO)
     ) {
       val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
       logger.result("Input is trivially safe")
