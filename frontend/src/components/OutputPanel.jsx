@@ -17,7 +17,8 @@ export default function OutputPanel({
   onRequestLogin,
   onStreamRetrieve,
   onJarContextChange,
-  onCancelVerification
+  onCancelVerification,
+  onWitnessAnnotate
 }) {
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -50,7 +51,7 @@ export default function OutputPanel({
         </Box>
       )}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <OutputTabs result={result} />
+        <OutputTabs result={result} onWitnessAnnotate={onWitnessAnnotate} />
       </Box>
     </Box>
   )

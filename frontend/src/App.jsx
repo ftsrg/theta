@@ -57,6 +57,7 @@ export default function App() {
   const [verifyRunId, setVerifyRunId] = useState('')
   const [safetyResult, setSafetyResult] = useState('')
   const [verificationValid, setVerificationValid] = useState(false)
+  const [witnessData, setWitnessData] = useState(null)
   // Control single active verification run
   const verifyControllerRef = useRef(null)
   const verifySeqRef = useRef(0)
@@ -113,6 +114,7 @@ export default function App() {
     // Clear verification status when mode changes
     setSafetyResult('')
     setVerificationValid(false)
+    setWitnessData(null)
     // Immediately load saved code for the new mode (or default)
     const key = `thetaCode_${m}`
     const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
@@ -265,17 +267,20 @@ export default function App() {
   const onSelectExample = (path) => {
     setSelectedExample(path)
     setVerificationValid(false)
+    setWitnessData(null)
   }
 
   const handleSelectProperty = (prop) => {
     setSelectedProperty(prop)
     setVerificationValid(false)
+    setWitnessData(null)
     try { window.localStorage.setItem(`thetaProperty_${mode}`, prop) } catch {}
   }
 
   const handleCodeChange = (val) => {
     setCode(val)
     setVerificationValid(false)
+    setWitnessData(null)
   }
 
   const cancelVerification = async () => {
@@ -439,6 +444,7 @@ export default function App() {
                 safetyResult={safetyResult}
                 verifyRunning={verifyRunning}
                 verificationValid={verificationValid}
+                witnessData={witnessData}
                 onSelectExample={onSelectExample}
                 onSelectProperty={handleSelectProperty}
               />
@@ -457,6 +463,7 @@ export default function App() {
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
+                onWitnessAnnotate={setWitnessData}
                 presets={(modesConfig[mode]?.presets)||[]}
                 jar={(modesConfig[mode]?.jar)||''}
               />
@@ -479,6 +486,7 @@ export default function App() {
                 safetyResult={safetyResult}
                 verifyRunning={verifyRunning}
                 verificationValid={verificationValid}
+                witnessData={witnessData}
                 onSelectExample={onSelectExample}
                 onSelectProperty={handleSelectProperty}
               />
@@ -497,6 +505,7 @@ export default function App() {
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
+                onWitnessAnnotate={setWitnessData}
                 presets={(modesConfig[mode]?.presets)||[]}
                 jar={(modesConfig[mode]?.jar)||''}
               />

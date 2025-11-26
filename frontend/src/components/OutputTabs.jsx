@@ -1,17 +1,33 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Tabs, Tab, Box, Collapse, IconButton, Button } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import DownloadIcon from '@mui/icons-material/Download'
+import yaml from 'js-yaml'
 
-export default function OutputTabs({ result }) {
+export default function OutputTabs({ result, onWitnessAnnotate }) {
   const [tab, setTab] = useState(0)
   const stderr = result ? (result.stderr || '') : ''
   const stdout = result ? (result.stdout || '') : ''
   const generated = Array.isArray(result?.generatedFiles) ? result.generatedFiles : []
   const [openMap, setOpenMap] = useState({})
   const toggle = (p) => setOpenMap(m => ({ ...m, [p]: !m[p] }))
+
+  // Auto-apply witness.yml when it becomes available
+  useEffect(() => {
+    if (onWitnessAnnotate && generated.length > 0) {
+      const witnessFile = generated.find(f => f.path.endsWith('witness.yml'))
+      if (witnessFile) {
+        try {
+          const parsed = yaml.load(witnessFile.content)
+          onWitnessAnnotate(parsed)
+        } catch (err) {
+          console.error('Failed to parse witness YAML:', err)
+        }
+      }
+    }
+  }, [generated, onWitnessAnnotate])
 
   // Download all generated files as zip
   const downloadAllFiles = async () => {

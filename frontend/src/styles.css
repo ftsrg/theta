@@ -74,3 +74,22 @@ footer { background: #08090a; color: #cfd8e3; padding: 6px 12px; font-size: 12px
   height: auto;
   display: block;
 }
+
+/* Witness marker styles */
+.witness-marker-line {
+  background-color: rgba(251, 139, 36, 0.15) !important;
+}
+
+.witness-marker-glyph {
+  background-color: var(--ftsrg-accent-orange);
+  width: 4px !important;
+  margin-left: 2px;
+}
+
+.witness-inline-text {
+  color: var(--ftsrg-accent-orange) !important;
+  opacity: 0.7;
+  font-style: italic;
+  margin-left: 8px;
+  font-size: 0.9em;
+}
