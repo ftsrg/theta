@@ -18,6 +18,7 @@ const CSRF_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
 // Application paths
 const WHITELIST_FILE = path.join(__dirname, '..', '..', 'config', 'whitelist.json');
 const EXAMPLES_DIR = path.join(__dirname, '..', '..', '..', 'examples');
+const PROPERTIES_DIR = path.join(__dirname, '..', '..', 'properties');
 const THETA_CACHE_DIR = process.env.THETA_CACHE_DIR || path.join(__dirname, '..', '..', 'data', 'theta-cache');
 const THETA_TEMP_DIR = path.join(__dirname, '..', '..', 'data', 'theta-temp');
 
@@ -52,6 +53,7 @@ module.exports = {
   CSRF_TOKEN_TTL_MS,
   WHITELIST_FILE,
   EXAMPLES_DIR,
+  PROPERTIES_DIR,
   THETA_CACHE_DIR,
   THETA_TEMP_DIR,
   THETA_REPO_URL_DEFAULT,

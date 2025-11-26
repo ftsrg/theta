@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
+import { Box } from '@mui/material'
+import EditorToolbar from './EditorToolbar'
 
-export default function Editor({ code, onChange, onPositionChange }) {
+export default function Editor({ code, onChange, onPositionChange, examples, properties, onSelectExample }) {
   const ref = useRef(null)
   const editorRef = useRef(null)
 
@@ -36,5 +38,10 @@ export default function Editor({ code, onChange, onPositionChange }) {
     if (model && model.getValue() !== code) model.setValue(code)
   }, [code])
 
-  return <div ref={ref} style={{ width: '100%', height: '100%' }} />
+  return (
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <EditorToolbar examples={examples} properties={properties} onSelectExample={onSelectExample} />
+      <Box ref={ref} sx={{ flex: 1, minHeight: 0 }} />
+    </Box>
+  )
 }

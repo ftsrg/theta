@@ -67,3 +67,10 @@ footer { background: #08090a; color: #cfd8e3; padding: 6px 12px; font-size: 12px
 /* Tidy up Tab focus and selected state */
 .MuiTabs-root .MuiButtonBase-root:focus { outline: none; }
 .MuiTabs-flexContainer { gap: 6px; }
+
+/* SVG constraint - keep within pane width */
+.output-svg-container svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}

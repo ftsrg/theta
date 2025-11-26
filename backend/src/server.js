@@ -13,6 +13,7 @@ const { periodicMaintenance } = require('./theta/releaseManager');
 
 // Import route modules
 const examplesRoutes = require('./routes/examples');
+const propertiesRoutes = require('./routes/properties');
 const authRoutes = require('./routes/auth');
 const thetaRoutes = require('./routes/theta');
 
@@ -32,6 +33,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // Mount route modules
 app.use('/api/examples', examplesRoutes);
+app.use('/api/properties', propertiesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/theta', thetaRoutes);
 

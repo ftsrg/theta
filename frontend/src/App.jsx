@@ -1,15 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react'
 import Split from 'react-split'
 import Editor from './components/Editor'
-import OutputTabs from './components/OutputTabs'
+import OutputPanel from './components/OutputPanel'
 import Toolbar from './components/Toolbar'
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, LinearProgress, Box, Button, Typography } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, LinearProgress, Box, Button, Typography, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { api, setAuthRequiredHandler, setCsrfToken, getCsrfToken } from './api'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || 'https://localhost:5175'
 
 export default function App() {
+  const theme = useTheme()
+  const isNarrow = useMediaQuery('(max-width:1000px)')
   const [examples, setExamples] = useState([])
+  const [properties, setProperties] = useState([])
   const [selectedExample, setSelectedExample] = useState('')
   const [code, setCode] = useState(() => {
     const saved = window.localStorage.getItem('thetaCode')
@@ -56,6 +60,10 @@ export default function App() {
     api.get('/api/examples').then(r => {
       const exs = r.data || []
       setExamples(exs)
+    }).catch(()=>{})
+    api.get('/api/properties').then(r => {
+      const props = r.data || []
+      setProperties(props)
     }).catch(()=>{})
     if(signedIn) { 
       api.post('/api/auth/csrf').then((resp) => {    
@@ -207,37 +215,69 @@ export default function App() {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Toolbar
-        examples={examples}
-        versions={thetaVersions}
-        releases={thetaReleases}
         signedIn={signedIn}
-        onSelectExample={onSelectExample}
-        onRefreshVersions={refreshThetaVersions}
-        onRun={runVerification}
-        onRequestLogin={(version) => requestLoginForVersion(version, null)}
-        onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
         onOpenLogin={openLogin}
         onLogout={doLogout}
       />
 
       <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        <Split sizes={[50,50]} minSize={200} gutterSize={8} gutterAlign="center" className="split" style={{ display:'flex', width:'100%', height:'100%' }}>
-          <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
-            <Box sx={{ flex:1, minHeight:0 }}>
-              <Editor code={code} onChange={setCode} onPositionChange={setPosition} />
+        {isNarrow ? (
+          // Stacked layout for narrow screens
+          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+            <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column', borderBottom: '1px solid #2a3138' }}>
+              <Editor
+                code={code}
+                onChange={setCode}
+                onPositionChange={setPosition}
+                examples={examples}
+                properties={properties}
+                onSelectExample={onSelectExample}
+              />
             </Box>
-          </div>
-          <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
-            {verifyRunning && (
-              <Box sx={{ p:0.5, display:'flex', justifyContent:'flex-end', bgcolor:'#1b1f24', borderBottom:'1px solid #2a3138' }}>
-                <Button size="small" color="error" variant="outlined" onClick={cancelVerification}>Cancel verification</Button>
-              </Box>
-            )}
-            <div className="no-focus-outline" style={{ flex:1, height:'100%' }}>
-              <OutputTabs result={verifyOutput} />
+            <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              <OutputPanel
+                result={verifyOutput}
+                versions={thetaVersions}
+                releases={thetaReleases}
+                signedIn={signedIn}
+                verifyRunning={verifyRunning}
+                onRun={runVerification}
+                onRefreshVersions={refreshThetaVersions}
+                onRequestLogin={(version) => requestLoginForVersion(version, null)}
+                onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
+                onCancelVerification={cancelVerification}
+              />
+            </Box>
+          </Box>
+        ) : (
+          // Split layout for wide screens
+          <Split sizes={[50,50]} minSize={200} gutterSize={8} gutterAlign="center" className="split" style={{ display:'flex', width:'100%', height:'100%' }}>
+            <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
+              <Editor
+                code={code}
+                onChange={setCode}
+                onPositionChange={setPosition}
+                examples={examples}
+                properties={properties}
+                onSelectExample={onSelectExample}
+              />
             </div>
-          </div>
-        </Split>
+            <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
+              <OutputPanel
+                result={verifyOutput}
+                versions={thetaVersions}
+                releases={thetaReleases}
+                signedIn={signedIn}
+                verifyRunning={verifyRunning}
+                onRun={runVerification}
+                onRefreshVersions={refreshThetaVersions}
+                onRequestLogin={(version) => requestLoginForVersion(version, null)}
+                onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
+                onCancelVerification={cancelVerification}
+              />
+            </div>
+          </Split>
+        )}
       </Box>
 
       <Box component="footer" className="footer" sx={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
