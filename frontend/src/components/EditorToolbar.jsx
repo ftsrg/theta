@@ -4,10 +4,9 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import DescriptionIcon from '@mui/icons-material/Description'
 import ExampleTree from './ExampleTree'
 
-export default function EditorToolbar({ examples = [], properties = [], onSelectExample }) {
+export default function EditorToolbar({ examples = [], properties = [], selectedProperty = 'unreach-call.prp', onSelectExample, onSelectProperty }) {
   const [examplesAnchor, setExamplesAnchor] = useState(null)
   const [propertiesAnchor, setPropertiesAnchor] = useState(null)
-  const [selectedProperty, setSelectedProperty] = useState('unreach-call.prp')
   
   const openExamples = Boolean(examplesAnchor)
   const openProperties = Boolean(propertiesAnchor)
@@ -31,7 +30,7 @@ export default function EditorToolbar({ examples = [], properties = [], onSelect
   const handleOpenProperties = (e) => setPropertiesAnchor(e.currentTarget)
   const handleCloseProperties = () => setPropertiesAnchor(null)
   const handleSelectProperty = (prop) => {
-    setSelectedProperty(prop)
+    onSelectProperty(prop)
     handleCloseProperties()
   }
 

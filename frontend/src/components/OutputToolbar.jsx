@@ -6,6 +6,7 @@ export default function OutputToolbar({
   versions = [],
   releases = [],
   signedIn = false,
+  selectedProperty = 'unreach-call.prp',
   onRun,
   onRefreshVersions,
   onRequestLogin,
@@ -14,7 +15,7 @@ export default function OutputToolbar({
   const [selectedRelease, setSelectedRelease] = useState('')
   const [availableJars, setAvailableJars] = useState([])
   const [selectedJar, setSelectedJar] = useState('')
-  const [args, setArgs] = useState('--input %in --backend PORTFOLIO')
+  const [args, setArgs] = useState('--input %in --property %prop --backend PORTFOLIO')
 
   // Auto-select latest release
   useEffect(() => {
@@ -49,7 +50,9 @@ export default function OutputToolbar({
   }
 
   const run = () => {
-    const argList = args.split(/\s+/).filter(Boolean)
+    const argList = args.split(/\s+/).filter(Boolean).map(arg => 
+      arg === '%prop' ? selectedProperty : arg
+    )
     onRun({
       binaryName: 'theta-jar',
       args: argList,

@@ -15,6 +15,7 @@ export default function App() {
   const [examples, setExamples] = useState([])
   const [properties, setProperties] = useState([])
   const [selectedExample, setSelectedExample] = useState('')
+  const [selectedProperty, setSelectedProperty] = useState('unreach-call.prp')
   const [code, setCode] = useState(() => {
     const saved = window.localStorage.getItem('thetaCode')
     return saved || '// select an example or start typing...'
@@ -231,7 +232,9 @@ export default function App() {
                 onPositionChange={setPosition}
                 examples={examples}
                 properties={properties}
+                selectedProperty={selectedProperty}
                 onSelectExample={onSelectExample}
+                onSelectProperty={setSelectedProperty}
               />
             </Box>
             <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -241,6 +244,7 @@ export default function App() {
                 releases={thetaReleases}
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
+                selectedProperty={selectedProperty}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
@@ -259,7 +263,9 @@ export default function App() {
                 onPositionChange={setPosition}
                 examples={examples}
                 properties={properties}
+                selectedProperty={selectedProperty}
                 onSelectExample={onSelectExample}
+                onSelectProperty={setSelectedProperty}
               />
             </div>
             <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
@@ -269,6 +275,7 @@ export default function App() {
                 releases={thetaReleases}
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
+                selectedProperty={selectedProperty}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}

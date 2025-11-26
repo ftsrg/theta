@@ -9,6 +9,7 @@ export default function OutputPanel({
   releases,
   signedIn,
   verifyRunning,
+  selectedProperty,
   onRun,
   onRefreshVersions,
   onRequestLogin,
@@ -21,6 +22,7 @@ export default function OutputPanel({
         versions={versions}
         releases={releases}
         signedIn={signedIn}
+        selectedProperty={selectedProperty}
         onRun={onRun}
         onRefreshVersions={onRefreshVersions}
         onRequestLogin={onRequestLogin}
