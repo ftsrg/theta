@@ -23,16 +23,30 @@ export default function OutputToolbar({
   const XCFA_DEFAULT = '--input %in --property %prop --backend PORTFOLIO'
   const XSTS_DEFAULT = 'CEGAR --model %in --inline-property %prop'
 
+  // Restore release from localStorage if valid; else pick latest
   useEffect(() => {
-    if (releases.length > 0 && !selectedRelease) setSelectedRelease(releases[0].tag)
+    if (releases.length === 0) return
+    const saved = localStorage.getItem('theta.selectedRelease')
+    const tags = releases.map(r => r.tag)
+    if (saved && tags.includes(saved)) {
+      if (selectedRelease !== saved) setSelectedRelease(saved)
+    } else if (!selectedRelease) {
+      setSelectedRelease(releases[0].tag)
+    }
   }, [releases, selectedRelease])
 
+  // Update jars when release changes and restore saved jar if available
   useEffect(() => {
     const rel = releases.find(r => r.tag === selectedRelease)
     const jars = rel ? rel.assets.map(a => a.name) : []
     setAvailableJars(jars)
-    const xcfaJar = jars.find(j => j.includes('xcfa'))
-    setSelectedJar(xcfaJar || '')
+    const savedJar = localStorage.getItem('theta.selectedJar')
+    if (savedJar && jars.includes(savedJar)) {
+      setSelectedJar(savedJar)
+    } else {
+      const xcfaJar = jars.find(j => j.includes('xcfa'))
+      setSelectedJar(xcfaJar || '')
+    }
   }, [selectedRelease, releases])
 
   const currentVersion = versions.find(v => v.name === selectedRelease)
@@ -44,16 +58,24 @@ export default function OutputToolbar({
     return (presets || []).filter(p => (p.type || '') === t)
   }, [presets, isXsts])
 
+  // Restore preset from localStorage if valid for current jar type; else first preset or Custom
   useEffect(() => {
-    if (filteredPresets.length > 0) {
-      const current = filteredPresets.find(p => p.name === selectedPresetName)
-      if (!current) {
-        setSelectedPresetName(filteredPresets[0].name)
-        setArgs(filteredPresets[0].args || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+    const names = filteredPresets.map(p => p.name)
+    const savedPreset = localStorage.getItem('theta.selectedPresetName')
+    if (names.length > 0) {
+      if (savedPreset && names.includes(savedPreset)) {
+        setSelectedPresetName(savedPreset)
+        const preset = filteredPresets.find(p => p.name === savedPreset)
+        setArgs((preset && preset.args) || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+      } else if (!selectedPresetName || !names.includes(selectedPresetName)) {
+        setSelectedPresetName(names[0])
+        const preset0 = filteredPresets[0]
+        setArgs((preset0 && preset0.args) || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
       }
     } else {
       setSelectedPresetName('')
-      setArgs(isXsts ? XSTS_DEFAULT : XCFA_DEFAULT)
+      const savedCustomArgs = localStorage.getItem('theta.customArgs')
+      setArgs(savedCustomArgs || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isXsts, filteredPresets.map(p => p.name).join('|')])
@@ -61,6 +83,22 @@ export default function OutputToolbar({
   useEffect(() => {
     if (onJarContextChange) onJarContextChange({ selectedRelease, selectedJar, isXsts })
   }, [selectedRelease, selectedJar, isXsts, onJarContextChange])
+
+  // Persist release/jar/preset/args selections
+  useEffect(() => {
+    if (selectedRelease) localStorage.setItem('theta.selectedRelease', selectedRelease)
+  }, [selectedRelease])
+  useEffect(() => {
+    if (selectedJar) localStorage.setItem('theta.selectedJar', selectedJar)
+  }, [selectedJar])
+  useEffect(() => {
+    // Empty string represents Custom
+    localStorage.setItem('theta.selectedPresetName', selectedPresetName || '')
+  }, [selectedPresetName])
+  useEffect(() => {
+    // Only persist custom args (when Custom selected)
+    if (!selectedPresetName) localStorage.setItem('theta.customArgs', args)
+  }, [args, selectedPresetName])
 
   useEffect(() => {
     const isDefaultLike = (val) => !val || val.trim() === '' || val.trim() === XCFA_DEFAULT || val.trim() === XSTS_DEFAULT
@@ -176,6 +214,8 @@ export default function OutputToolbar({
             setSelectedPresetName(name === 'Custom' ? '' : name)
             const preset = filteredPresets.find(p => p.name === name)
             if (preset && preset.args) setArgs(preset.args)
+            // Persist selection
+            localStorage.setItem('theta.selectedPresetName', name === 'Custom' ? '' : name)
           }}
           sx={{
             flexGrow: 1,

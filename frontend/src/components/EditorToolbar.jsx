@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Box, Button, Popover, TextField, Tooltip } from '@mui/material'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import DescriptionIcon from '@mui/icons-material/Description'
@@ -31,8 +31,28 @@ export default function EditorToolbar({ examples = [], properties = [], selected
   const handleCloseProperties = () => setPropertiesAnchor(null)
   const handleSelectProperty = (prop) => {
     onSelectProperty(prop)
+    // Persist selected property (xcfa case)
+    try { localStorage.setItem('theta.selectedProperty', prop) } catch {}
     handleCloseProperties()
   }
+
+  // Restore previously selected property on load
+  useEffect(() => {
+    const saved = localStorage.getItem('theta.selectedProperty')
+    if (!saved) return
+    if (!isXsts) {
+      // xcfa: only apply if still in list
+      if (properties.includes(saved) && saved !== selectedProperty) {
+        onSelectProperty && onSelectProperty(saved)
+      }
+    } else {
+      // xsts: any text is acceptable
+      if (saved !== selectedProperty) {
+        onSelectProperty && onSelectProperty(saved)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isXsts, properties.join('|')])
 
   return (
     <Box
@@ -130,7 +150,12 @@ export default function EditorToolbar({ examples = [], properties = [], selected
             size="small"
             placeholder="x > 5"
             value={selectedProperty || ''}
-            onChange={(e) => onSelectProperty && onSelectProperty(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value
+              onSelectProperty && onSelectProperty(val)
+              // Persist inline property (xsts case)
+              try { localStorage.setItem('theta.selectedProperty', val) } catch {}
+            }}
             sx={{
               width: 260,
               '& .MuiOutlinedInput-root': {
