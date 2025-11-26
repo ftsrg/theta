@@ -88,7 +88,7 @@ object XstsTraceGenerationConcretizerUtil {
       // another xsts specific thing - if the env is more complicated, trace might end in env
       // sending something, which might seem weird
       val lastState = abstractTrace.states[abstractTrace.states.size - 1]
-      if (lastState.toString().contains("last_env")) {
+      if (lastState.toString().contains("last_env") && abstractTrace.states.size >= 2) {
         resultingTrace = shortenTrace(abstractTrace, abstractTrace.states.size - 2)
       }
 

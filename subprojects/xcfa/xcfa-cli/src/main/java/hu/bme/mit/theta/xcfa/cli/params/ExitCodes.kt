@@ -62,7 +62,7 @@ fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T):
   try {
     return body()
   } catch (e: ErrorCodeException) {
-    e.printStackTrace()
+    e.printCauseAndTrace(stacktrace)
     exitProcess(throwDontExit, e, e.code)
   } catch (e: UnsupportedFrontendElementException) {
     e.printCauseAndTrace(stacktrace)

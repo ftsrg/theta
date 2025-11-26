@@ -203,7 +203,7 @@ private fun parseC(
         throw e
       }
     }
-  logger.write(Logger.Level.RESULT, "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 

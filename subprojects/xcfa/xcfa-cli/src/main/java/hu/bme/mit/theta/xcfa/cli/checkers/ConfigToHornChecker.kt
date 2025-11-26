@@ -134,7 +134,7 @@ fun getHornChecker(
       }
     }
   } catch (t: Throwable) {
-    logger.result(
+    logger.benchmark(
       "Error initializing XCFA procedure as CHC, falling back to monolithic (due to %s)",
       t.message,
     )

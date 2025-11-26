@@ -139,7 +139,7 @@ fun hornPortfolio(
     return STM(configEldarica, edges)
   }
 
-  logger.write(Logger.Level.RESULT, "Using CHC portfolio\n")
+  logger.benchmark("Using CHC portfolio\n")
 
   if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) {
     throw UnsupportedOperationException("CHC portfolio does not support floating points")

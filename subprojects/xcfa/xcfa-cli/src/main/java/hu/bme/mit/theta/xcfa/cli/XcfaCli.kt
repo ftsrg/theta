@@ -64,6 +64,16 @@ class XcfaCli(private val args: Array<String>) {
         if ("--backend" !in remainingFlags) {
           remainingFlags.addAll(listOf("--backend", "PORTFOLIO"))
         }
+        if ("--loglevel" !in remainingFlags) {
+          remainingFlags.addAll(listOf("--loglevel", "BENCHMARK"))
+        } else {
+          val index = remainingFlags.indexOfFirst { it == "--loglevel" }
+          if (remainingFlags.getOrNull(index + 1) == "RESULT") {
+            println("Deprecated logLevel for --svcomp: RESULT. Changing to BENCHMARK.")
+            remainingFlags.removeAt(index + 1)
+            remainingFlags.add(index + 1, "BENCHMARK")
+          }
+        }
       }
       while (remainingFlags.isNotEmpty()) {
         val nextArgs = remainingFlags.toTypedArray()

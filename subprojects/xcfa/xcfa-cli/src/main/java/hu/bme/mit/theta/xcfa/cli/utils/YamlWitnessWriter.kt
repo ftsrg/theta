@@ -121,7 +121,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             )
 
           if (witness.content.isEmpty()) {
-            logger.result("Encountered empty witness, trying best-effort witness now.")
+            logger.benchmark("Encountered empty witness, trying best-effort witness now.")
             val bestEffortWitness =
               generateBestEffortWitness(
                 safetyResult,
@@ -138,7 +138,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         }
       } catch (e: Exception) {
-        logger.result(
+        logger.benchmark(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
         val bestEffortWitness =
