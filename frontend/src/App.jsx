@@ -110,6 +110,9 @@ export default function App() {
     window.localStorage.setItem('thetaMode', m)
     // Clear selected example to avoid auto-overwriting code on mode switch
     setSelectedExample('')
+    // Clear verification status when mode changes
+    setSafetyResult('')
+    setVerificationValid(false)
     // Immediately load saved code for the new mode (or default)
     const key = `thetaCode_${m}`
     const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
