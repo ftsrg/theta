@@ -146,7 +146,7 @@ class XcfaOcChecker(
         logger.mainStep("OC checker result: $it")
         if (it.isSafe && xcfa.unsafeUnrollUsed && !acceptUnreliableSafe) {
           logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-          logger.result(SafetyResult.unknown<EmptyProof, Cex>().toString())
+          logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
           throw NotSolvableException()
         }
       }

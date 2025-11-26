@@ -394,7 +394,7 @@ fun complex26(
       else -> LIN_INT
     }
 
-  logger.result("Using portfolio: $mainTrait\n")
+  logger.benchmark("Using portfolio: $mainTrait\n")
 
   val inProcessStm = getStm(mainTrait, true)
   val notInProcessStm = getStm(mainTrait, false)
