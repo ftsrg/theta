@@ -4,6 +4,7 @@
       "property": "select",
       "color": "ftsrg-accent-blue",
       "jar": "theta-xcfa-cli.jar",
+      "language": "c",
       "extensions": [".c", ".i", ".cpp"],
       "presets": [
         {
@@ -23,6 +24,7 @@
     "CHC": {
       "color": "ftsrg-accent-orange",
       "jar": "theta-xcfa-cli.jar",
+      "language": "smtlib",
       "extensions": [".smt2"],
       "presets": [
         {
@@ -39,6 +41,7 @@
       "property": "text",
       "color": "ftsrg-accent-green",
       "jar": "theta-xsts-cli.jar",
+      "language": "xsts",
       "extensions": [".xsts"],
       "presets": [
         {

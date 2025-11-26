@@ -2,15 +2,26 @@ import React, { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
 import { Box } from '@mui/material'
 import EditorToolbar from './EditorToolbar'
+import { registerSmtLib } from '../monaco-languages/smtlib'
+import { registerXsts } from '../monaco-languages/xsts'
+
+// Register custom languages once
+let languagesRegistered = false
+if (!languagesRegistered) {
+  registerSmtLib(monaco)
+  registerXsts(monaco)
+  languagesRegistered = true
+}
 
 export default function Editor({ code, onChange, onPositionChange, examples, properties, selectedProperty, mode, modesConfig, safetyResult, verifyRunning, verificationValid, onSelectExample, onSelectProperty }) {
   const ref = useRef(null)
   const editorRef = useRef(null)
+  const language = modesConfig[mode]?.language || 'plaintext'
 
   useEffect(() => {
     editorRef.current = monaco.editor.create(ref.current, {
       value: code || '',
-      language: 'cpp',
+      language: language,
       automaticLayout: true,
       theme: 'vs-dark',
       minimap: { enabled: false },
@@ -37,6 +48,13 @@ export default function Editor({ code, onChange, onPositionChange, examples, pro
     const model = editorRef.current && editorRef.current.getModel()
     if (model && model.getValue() !== code) model.setValue(code)
   }, [code])
+
+  useEffect(() => {
+    const model = editorRef.current && editorRef.current.getModel()
+    if (model) {
+      monaco.editor.setModelLanguage(model, language)
+    }
+  }, [language])
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
