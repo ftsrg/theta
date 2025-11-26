@@ -49,6 +49,10 @@ export default function App() {
   const [verifyRunId, setVerifyRunId] = useState('')
   const [safetyResult, setSafetyResult] = useState('')
   const [verificationValid, setVerificationValid] = useState(false)
+  // Control single active verification run
+  const verifyControllerRef = useRef(null)
+  const verifySeqRef = useRef(0)
+  const verifyRunIdRef = useRef('')
 
   // Save code to localStorage on every change
   useEffect(() => {
@@ -130,32 +134,95 @@ export default function App() {
 
   // Verification (streaming)
   const runVerification = async ({ binaryName, args, thetaVersion, jarFile }) => {
+    // Cancel previous run if any
+    try {
+      if (verifyControllerRef.current) {
+        verifyControllerRef.current.abort()
+      }
+      if (verifyRunIdRef.current) {
+        try { await api.post('/api/verify/cancel', { runId: verifyRunIdRef.current }) } catch {}
+      }
+    } catch {}
+
+    const seq = ++verifySeqRef.current
+    const controller = new AbortController()
+    verifyControllerRef.current = controller
+
     setVerifyOutput({ stdout: '', stderr: '' })
     setSafetyResult('')
     setVerificationValid(false)
     setVerifyRunning(true)
     setVerifyRunId('')
+    verifyRunIdRef.current = ''
     try {
       const resp = await fetch(`${API_ROOT}/api/verify/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, binaryName, args, thetaVersion, jarFile })
+        body: JSON.stringify({ code, binaryName, args, thetaVersion, jarFile }),
+        signal: controller.signal
       })
       if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`)
       const reader = resp.body.getReader(); const decoder = new TextDecoder(); let buf=''; let sawResult=false
-      while(true){ const {done,value}=await reader.read(); if(done) break; buf+=decoder.decode(value,{stream:true}); let idx; while((idx=buf.indexOf('\n'))>=0){ const line=buf.slice(0,idx).replace(/\r$/,''); buf=buf.slice(idx+1); if(!line) continue; if(line.startsWith('RUN: ')){ setVerifyRunId(line.slice(5).trim()) } else if(line.startsWith('OUT: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stdout:(prev.stdout?prev.stdout+'\n':'')+msg})); if(/SafetyResult/i.test(msg)){ const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i); if(m){ setSafetyResult(m[1].toLowerCase()); } } } else if(line.startsWith('ERR: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stderr:(prev.stderr?prev.stderr+'\n':'')+msg})); if(/SafetyResult/i.test(msg)){ const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i); if(m){ setSafetyResult(m[1].toLowerCase()); } } } else if(line.startsWith('RESULT: ')){ try{ const obj=JSON.parse(line.slice(8)); sawResult=true; setVerifyOutput(prev=>({ ...obj, stdout: prev.stdout||'', stderr: prev.stderr||'' })) ; setToastMsg('Verification finished'); setToastSeverity(obj.code===0?'success':'warning'); setToastOpen(true);}catch(e){ /* ignore parse error */ } } }
+      while(true){
+        const {done,value}=await reader.read();
+        if (seq !== verifySeqRef.current) { try { reader.cancel() } catch {} break }
+        if(done) break;
+        buf+=decoder.decode(value,{stream:true});
+        let idx;
+        while((idx=buf.indexOf('\n'))>=0){
+          if (seq !== verifySeqRef.current) { try { reader.cancel() } catch {} break }
+          const line=buf.slice(0,idx).replace(/\r$/,'');
+          buf=buf.slice(idx+1);
+          if(!line) continue;
+          if(line.startsWith('RUN: ')){
+            const id=line.slice(5).trim();
+            setVerifyRunId(id);
+            verifyRunIdRef.current = id;
+          } else if(line.startsWith('OUT: ')){
+            const msg=line.slice(5);
+            setVerifyOutput(prev=>({...prev, stdout:(prev.stdout?prev.stdout+'\n':'')+msg}));
+            if(/SafetyResult/i.test(msg)){
+              const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i);
+              if(m){ setSafetyResult(m[1].toLowerCase()); }
+            }
+          } else if(line.startsWith('ERR: ')){
+            const msg=line.slice(5);
+            setVerifyOutput(prev=>({...prev, stderr:(prev.stderr?prev.stderr+'\n':'')+msg}));
+            if(/SafetyResult/i.test(msg)){
+              const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i);
+              if(m){ setSafetyResult(m[1].toLowerCase()); }
+            }
+          } else if(line.startsWith('RESULT: ')){
+            try{
+              const obj=JSON.parse(line.slice(8));
+              sawResult=true;
+              setVerifyOutput(prev=>({ ...obj, stdout: prev.stdout||'', stderr: prev.stderr||'' }));
+              if (seq === verifySeqRef.current) {
+                setToastMsg('Verification finished');
+                setToastSeverity(obj.code===0?'success':'warning');
+                setToastOpen(true);
+              }
+            }catch(e){ /* ignore parse error */ }
+          }
+        }
       }
       if(!sawResult){ setToastMsg('Verification finished (no result)'); setToastSeverity('warning'); setToastOpen(true) }
     } catch (err) {
-      setVerifyOutput(prev=>({ ...(prev||{}), code: -1, error: String(err) }))
-      setToastMsg('Verification failed')
-      setToastSeverity('error')
-      setToastOpen(true)
+      if (seq === verifySeqRef.current) {
+        setVerifyOutput(prev=>({ ...(prev||{}), code: -1, error: String(err) }))
+        setToastMsg('Verification failed')
+        setToastSeverity('error')
+        setToastOpen(true)
+      }
     } finally {
-      setVerifyRunning(false)
-      setVerifyRunId('')
-      // Mark verification result valid for current code/property
-      setVerificationValid(true)
+      if (seq === verifySeqRef.current) {
+        setVerifyRunning(false)
+        setVerifyRunId('')
+        verifyRunIdRef.current = ''
+        verifyControllerRef.current = null
+        // Mark verification result valid for current code/property
+        setVerificationValid(true)
+      }
     }
   }
   const onSelectExample = (path) => {
@@ -174,8 +241,15 @@ export default function App() {
   }
 
   const cancelVerification = async () => {
-    if (!verifyRunId) return
-    try { await api.post('/api/verify/cancel', { runId: verifyRunId }) } catch {}
+    if (verifyControllerRef.current) {
+      try { verifyControllerRef.current.abort() } catch {}
+    }
+    const id = verifyRunIdRef.current || verifyRunId
+    if (id) { try { await api.post('/api/verify/cancel', { runId: id }) } catch {} }
+    setVerifyRunning(false)
+    setVerifyRunId('')
+    verifyRunIdRef.current = ''
+    verifyControllerRef.current = null
   }
 
   // Retrieval streaming (simplified parser matching server.js current format)
@@ -238,6 +312,28 @@ export default function App() {
   const requestLoginForVersion = (version, jar) => { openLogin() }
 
   const closeAuthNotice = (_, reason) => { if (reason === 'clickaway') return; setAuthNoticeOpen(false) }
+
+  // Cancel running verification on tab close/navigation
+  useEffect(() => {
+    const onPageHide = () => {
+      const id = verifyRunIdRef.current
+      if (id) {
+        try {
+          const blob = new Blob([JSON.stringify({ runId: id })], { type: 'application/json' })
+          navigator.sendBeacon(`${API_ROOT}/api/verify/cancel`, blob)
+        } catch {}
+      }
+      if (verifyControllerRef.current) {
+        try { verifyControllerRef.current.abort() } catch {}
+      }
+    }
+    window.addEventListener('pagehide', onPageHide)
+    window.addEventListener('beforeunload', onPageHide)
+    return () => {
+      window.removeEventListener('pagehide', onPageHide)
+      window.removeEventListener('beforeunload', onPageHide)
+    }
+  }, [])
 
   const handleJarContextChange = ({ isXsts: nextIsXsts }) => {
     setIsXsts(!!nextIsXsts)
