@@ -64,6 +64,7 @@ router.post('/', async (req, res) => {
   const start = Date.now();
   let result;
   
+  let tmpFile = null;
   try {
     const version = String(thetaVersion || '').trim();
     if (!version) {
@@ -519,7 +520,7 @@ retrieveStreamRouter.post('/theta/retrieve/stream', expressBasicAuth, async (req
     
     // Download to temp directory
     const tmpName = `${version}_${asset.name}_${Date.now()}`;
-    const tmpFile = path.join(config.THETA_TEMP_DIR, tmpName);
+    tmpFile = path.join(config.THETA_TEMP_DIR, tmpName);
     send(`Downloading to temp: ${tmpName}`);
     
     const controller = new AbortController();
@@ -601,8 +602,36 @@ retrieveStreamRouter.post('/theta/retrieve/stream', expressBasicAuth, async (req
     
   } catch (err) {
     console.error('[RetrieveStream] Error:', err.message);
+    // Best-effort cleanup of temp file on abort/error
+    try { fs.unlink(tmpFile, () => {}); } catch(err) {console.error(err);}
     activeRetrieval.delete(version);
     endErr(err.message || String(err));
+  }
+});
+
+/**
+ * POST /api/verify/theta/retrieve/cancel
+ * Cancels an active streaming retrieval by version (Basic Auth required)
+ */
+router.post('/theta/retrieve/cancel', expressBasicAuth, (req, res) => {
+  try {
+    const version = String(req.body.version || '').trim();
+    if (!version) {
+      console.error('[RetrieveCancelStream] Missing version');
+      return res.status(400).json({ error: 'version required' });
+    }
+    const ctrl = activeRetrieval.get(version);
+    if (!ctrl) {
+      console.warn(`[RetrieveCancelStream] No active retrieval for ${version}`);
+      return res.status(404).json({ error: 'no active retrieval' });
+    }
+    try { ctrl.abort(); } catch {}
+    activeRetrieval.delete(version);
+    console.log(`[RetrieveCancelStream] Cancelled streaming retrieval for ${version}`);
+    return res.json({ status: 'cancelling' });
+  } catch (err) {
+    console.error('[RetrieveCancelStream] Error:', err.message);
+    return res.status(500).json({ error: String(err.message || err) });
   }
 });
 

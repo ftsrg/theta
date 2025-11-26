@@ -1,24 +1,55 @@
 {
-  "presets": [
-    {
-      "name": "C (portfolio)",
-      "type": "xcfa",
-      "args": "--input %in --property %prop --backend PORTFOLIO"
+  "modes": {
+    "C": {
+      "property": "select",
+      "color": "ftsrg-accent-blue",
+      "jar": "theta-xcfa-cli.jar",
+      "extensions": [".c", ".i", ".cpp"],
+      "presets": [
+        {
+          "name": "Portfolio",
+          "args": "--input %in --property %prop --backend PORTFOLIO"
+        },
+        {
+          "name": "Ordering Consistency",
+          "args": "--input %in --backend OC"
+        },
+        {
+          "name": "CHC",
+          "args": "--input %in --backend CHC"
+        }
+      ]
     },
-    {
-      "name": "CHC (portfolio)",
-      "type": "xcfa",
-      "args": "--input %in --input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model"
+    "CHC": {
+      "color": "ftsrg-accent-orange",
+      "jar": "theta-xcfa-cli.jar",
+      "extensions": [".smt2"],
+      "presets": [
+        {
+          "name": "Portfolio",
+          "args": "--input %in --input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model"
+        },
+        {
+          "name": "CEGAR",
+          "args": "--input %in --input-type CHC --backend CEGAR --print-model"
+        }
+      ]
     },
-    {
-      "name": "XSTS (CEGAR)",
-      "type": "xsts",
-      "args": "CEGAR --model %in --inline-property %prop --cexfile ./trace.cex"
-    },
-    {
-      "name": "XSTS (bounded)",
-      "type": "xsts",
-      "args": "BOUNDED --model %in --inline-property %prop --cexfile ./trace.cex"
+    "XSTS": {
+      "property": "text",
+      "color": "ftsrg-accent-green",
+      "jar": "theta-xsts-cli.jar",
+      "extensions": [".xsts"],
+      "presets": [
+        {
+          "name": "CEGAR",
+          "args": "CEGAR --model %in --inline-property %prop --cexfile ./trace.cex"
+        },
+        {
+          "name": "Bounded Model Checking",
+          "args": "BOUNDED --model %in --inline-property %prop --cexfile ./trace.cex"
+        }
+      ]
     }
-  ]
+  }
 }

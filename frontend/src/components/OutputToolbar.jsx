@@ -8,6 +8,7 @@ export default function OutputToolbar({
   signedIn = false,
   selectedProperty = 'unreach-call.prp',
   presets = [],
+  jar = '',
   onJarContextChange,
   onRun,
   onRefreshVersions,
@@ -15,8 +16,6 @@ export default function OutputToolbar({
   onStreamRetrieve
 }) {
   const [selectedRelease, setSelectedRelease] = useState('')
-  const [availableJars, setAvailableJars] = useState([])
-  const [selectedJar, setSelectedJar] = useState('')
   const [args, setArgs] = useState('--input %in --property %prop --backend PORTFOLIO')
   const [selectedPresetName, setSelectedPresetName] = useState('')
 
@@ -38,28 +37,13 @@ export default function OutputToolbar({
     didRestoreRelease.current = true
   }, [releases])
 
-  // Update jars when release changes and restore saved jar if available
-  useEffect(() => {
-    const rel = releases.find(r => r.tag === selectedRelease)
-    const jars = rel ? rel.assets.map(a => a.name) : []
-    setAvailableJars(jars)
-    const savedJar = localStorage.getItem('theta.selectedJar')
-    if (savedJar && jars.includes(savedJar)) {
-      setSelectedJar(savedJar)
-    } else {
-      const xcfaJar = jars.find(j => j.includes('xcfa'))
-      setSelectedJar(xcfaJar || '')
-    }
-  }, [selectedRelease, releases])
+  // No jar selector: jar derived from selected preset
 
   const currentVersion = versions.find(v => v.name === selectedRelease)
+  const filteredPresets = useMemo(() => presets || [], [presets])
+  const selectedPreset = useMemo(() => filteredPresets.find(p => p.name === selectedPresetName) || null, [filteredPresets, selectedPresetName])
+  const selectedJar = jar
   const jarRetrieved = !!(selectedJar && currentVersion && currentVersion.jars.includes(selectedJar))
-
-  const isXsts = useMemo(() => (selectedJar || '').toLowerCase().includes('xsts'), [selectedJar])
-  const filteredPresets = useMemo(() => {
-    const t = isXsts ? 'xsts' : 'xcfa'
-    return (presets || []).filter(p => (p.type || '') === t)
-  }, [presets, isXsts])
 
   // Restore preset from localStorage if valid for current jar type; else first preset or Custom
   useEffect(() => {
@@ -69,31 +53,29 @@ export default function OutputToolbar({
       if (savedPreset && names.includes(savedPreset)) {
         setSelectedPresetName(savedPreset)
         const preset = filteredPresets.find(p => p.name === savedPreset)
-        setArgs((preset && preset.args) || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+        setArgs((preset && preset.args) || XCFA_DEFAULT)
       } else if (!selectedPresetName || !names.includes(selectedPresetName)) {
         setSelectedPresetName(names[0])
         const preset0 = filteredPresets[0]
-        setArgs((preset0 && preset0.args) || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+        setArgs((preset0 && preset0.args) || XCFA_DEFAULT)
       }
     } else {
       setSelectedPresetName('')
       const savedCustomArgs = localStorage.getItem('theta.customArgs')
-      setArgs(savedCustomArgs || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+      setArgs(savedCustomArgs || XCFA_DEFAULT)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isXsts, filteredPresets.map(p => p.name).join('|')])
+  }, [filteredPresets.map(p => p.name).join('|')])
 
   useEffect(() => {
-    if (onJarContextChange) onJarContextChange({ selectedRelease, selectedJar, isXsts })
-  }, [selectedRelease, selectedJar, isXsts, onJarContextChange])
+    if (onJarContextChange) onJarContextChange({ selectedRelease })
+  }, [selectedRelease, onJarContextChange])
 
   // Persist release/jar/preset/args selections
   useEffect(() => {
     if (selectedRelease) localStorage.setItem('theta.selectedRelease', selectedRelease)
   }, [selectedRelease])
-  useEffect(() => {
-    if (selectedJar) localStorage.setItem('theta.selectedJar', selectedJar)
-  }, [selectedJar])
+  // No need to persist jar; derived from preset
   useEffect(() => {
     // Empty string represents Custom
     localStorage.setItem('theta.selectedPresetName', selectedPresetName || '')
@@ -105,8 +87,8 @@ export default function OutputToolbar({
 
   useEffect(() => {
     const isDefaultLike = (val) => !val || val.trim() === '' || val.trim() === XCFA_DEFAULT || val.trim() === XSTS_DEFAULT
-    if (isDefaultLike(args) && !selectedPresetName) setArgs(isXsts ? XSTS_DEFAULT : XCFA_DEFAULT)
-  }, [isXsts, selectedPresetName])
+    if (isDefaultLike(args) && !selectedPresetName) setArgs(XCFA_DEFAULT)
+  }, [selectedPresetName])
 
   const doRetrieve = () => {
     if (!selectedRelease || !selectedJar) return
@@ -121,18 +103,11 @@ export default function OutputToolbar({
     }
   }
 
-  useEffect(() => {
-    if (!selectedRelease || !selectedJar) return
-    if (isXsts && !jarRetrieved) {
-      if (signedIn) doRetrieve()
-      else onRequestLogin && onRequestLogin(selectedRelease)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isXsts, selectedRelease, selectedJar])
+  // Removed auto-retrieve: user must click the Retrieve button to start download
 
   const run = () => {
     const effectiveArgs = selectedPresetName
-      ? (filteredPresets.find(p => p.name === selectedPresetName)?.args || '')
+      ? (selectedPreset?.args || '')
       : args
     const argList = effectiveArgs.split(/\s+/).filter(Boolean).map(arg => (arg === '%prop' ? selectedProperty : arg))
     onRun({ binaryName: 'theta-jar', args: argList, thetaVersion: selectedRelease, jarFile: selectedJar })
@@ -166,30 +141,7 @@ export default function OutputToolbar({
           )}
         />
 
-        <Autocomplete
-          size="small"
-          options={availableJars}
-          value={selectedJar}
-          onChange={(e, val) => setSelectedJar(val || '')}
-          sx={{
-            flexGrow: 2,
-            minWidth: 200,
-            maxWidth: 350,
-            '& .MuiOutlinedInput-root': {
-              bgcolor: 'transparent',
-              color: '#cfd8e6',
-              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
-              '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
-              '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
-              '& input': { py: 0.75, color: '#cfd8e6' },
-              '& .MuiAutocomplete-endAdornment svg': { color: '#cfd8e6' }
-            }
-          }}
-          disableClearable
-          renderInput={(params) => (
-            <TextField {...params} placeholder="Jar" variant="outlined" />
-          )}
-        />
+        {/* Jar selector removed: jar derived from preset */}
 
         {!jarRetrieved && selectedRelease && selectedJar && (
           <Tooltip title={signedIn ? 'Retrieve jar' : 'Sign in required – click to login'}>

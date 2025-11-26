@@ -15,10 +15,17 @@ export default function App() {
   const [examples, setExamples] = useState([])
   const [properties, setProperties] = useState([])
   const [selectedExample, setSelectedExample] = useState('')
-  const [selectedProperty, setSelectedProperty] = useState('unreach-call.prp')
-  const [isXsts, setIsXsts] = useState(false)
+  const initialMode = (typeof window !== 'undefined' && window.localStorage.getItem('thetaMode')) || 'C'
+  const [selectedProperty, setSelectedProperty] = useState(() => {
+    const key = `thetaProperty_${initialMode}`
+    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
+    if (saved !== null) return saved
+    return initialMode === 'XSTS' ? '' : 'unreach-call.prp'
+  })
+  const [mode, setMode] = useState(initialMode)
   const [code, setCode] = useState(() => {
-    const saved = window.localStorage.getItem('thetaCode')
+    const key = `thetaCode_${initialMode}`
+    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
     return saved || '// select an example or start typing...'
   })
   const [verifyOutput, setVerifyOutput] = useState(null)
@@ -35,7 +42,7 @@ export default function App() {
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [toastSeverity, setToastSeverity] = useState('success')
-  const [cliPresets, setCliPresets] = useState([])
+  const [modesConfig, setModesConfig] = useState({})
 
   // Retrieval streaming dialog state
   const [retrieveOpen, setRetrieveOpen] = useState(false)
@@ -45,6 +52,7 @@ export default function App() {
   const [retrievePct, setRetrievePct] = useState(0)
   const [retrieveSpeed, setRetrieveSpeed] = useState(0)
   const [retrieveEta, setRetrieveEta] = useState(0)
+  const retrieveControllerRef = useRef(null)
   const [verifyRunning, setVerifyRunning] = useState(false)
   const [verifyRunId, setVerifyRunId] = useState('')
   const [safetyResult, setSafetyResult] = useState('')
@@ -54,10 +62,11 @@ export default function App() {
   const verifySeqRef = useRef(0)
   const verifyRunIdRef = useRef('')
 
-  // Save code to localStorage on every change
+  // Save code to localStorage per-mode on every change
   useEffect(() => {
-    window.localStorage.setItem('thetaCode', code)
-  }, [code])
+    const key = `thetaCode_${mode}`
+    window.localStorage.setItem(key, code)
+  }, [code, mode])
 
   // Auth handler
   useEffect(() => {
@@ -75,8 +84,8 @@ export default function App() {
       setProperties(props)
     }).catch(()=>{})
     api.get('/api/configs').then(r => {
-      const presets = r.data?.presets || []
-      setCliPresets(presets)
+      const modes = r.data?.modes || {}
+      setModesConfig(modes)
     }).catch(()=>{})
     if(signedIn) { 
       api.post('/api/auth/csrf').then((resp) => {    
@@ -96,6 +105,31 @@ export default function App() {
 
   const signedIn = !!authToken
   const openLogin = () => setLoginOpen(true)
+  const onChangeMode = (m) => {
+    setMode(m)
+    window.localStorage.setItem('thetaMode', m)
+    // Clear selected example to avoid auto-overwriting code on mode switch
+    setSelectedExample('')
+    // Immediately load saved code for the new mode (or default)
+    const key = `thetaCode_${m}`
+    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
+    setCode(saved || '// select an example or start typing...')
+    // Load saved property for the new mode (or sensible default)
+    const propKey = `thetaProperty_${m}`
+    const savedProp = (typeof window !== 'undefined') ? window.localStorage.getItem(propKey) : null
+    if (savedProp !== null) {
+      setSelectedProperty(savedProp)
+    } else {
+      setSelectedProperty(m === 'XSTS' ? '' : (properties.includes('unreach-call.prp') ? 'unreach-call.prp' : (properties[0] || 'unreach-call.prp')))
+    }
+  }
+
+  // Load saved code when mode changes, or default placeholder if none
+  useEffect(() => {
+    const key = `thetaCode_${mode}`
+    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
+    setCode(saved || '// select an example or start typing...')
+  }, [mode])
 
   const fetchCsrf = async () => {
     try { const resp = await api.post('/api/auth/csrf'); if (resp.data?.token) setCsrfToken(resp.data.token) } catch { setAuthNoticeMsg('Failed to obtain CSRF'); setAuthNoticeOpen(true) }
@@ -233,6 +267,7 @@ export default function App() {
   const handleSelectProperty = (prop) => {
     setSelectedProperty(prop)
     setVerificationValid(false)
+    try { window.localStorage.setItem(`thetaProperty_${mode}`, prop) } catch {}
   }
 
   const handleCodeChange = (val) => {
@@ -294,8 +329,10 @@ export default function App() {
     retrieveStartRef.current = Date.now()
     setRetrieveOpen(true)
     const body = JSON.stringify({ version, assetName: jar })
+    const controller = new AbortController()
+    retrieveControllerRef.current = controller
     const attempt = async () => {
-      let resp = await fetch(`${API_ROOT}/api/theta/retrieve/stream`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authToken, 'X-CSRF-TOKEN': getCsrfToken() || '' }, body })
+      let resp = await fetch(`${API_ROOT}/api/theta/retrieve/stream`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authToken, 'X-CSRF-TOKEN': getCsrfToken() || '' }, body, signal: controller.signal })
       if (resp.status === 403) { try { await fetchCsrf(); } catch {}; if (getCsrfToken()) resp = await fetch(`${API_ROOT}/api/theta/retrieve/stream`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authToken, 'X-CSRF-TOKEN': getCsrfToken() || '' }, body }) }
       return resp
     }
@@ -306,7 +343,18 @@ export default function App() {
       while(true){ const {done,value}=await reader.read(); if(done)break; buf+=decoder.decode(value,{stream:true}); let idx; while((idx=buf.indexOf('\n'))>=0){ const line=buf.slice(0,idx).replace(/\r$/,''); buf=buf.slice(idx+1); if(line) appendRetrieveLine(line); if(/^DONE:/.test(line)){ setRetrieveActive(false); onSuccess && onSuccess(); } if(/^ERROR:/.test(line)){ setRetrieveActive(false); } } }
     } catch(e){ appendRetrieveLine(`ERROR: ${e.message}`); setRetrieveActive(false); }
   }
-  const cancelRetrieve = async () => { if (!retrieveActive) return; const version = retrieveLabel.split(' / ')[0]; try { await api.post('/api/theta/retrieve/cancel', { version }); } catch {} }
+  const cancelRetrieve = async () => {
+    if (!retrieveActive) return;
+    // Abort client-side stream immediately
+    if (retrieveControllerRef.current) {
+      try { retrieveControllerRef.current.abort() } catch {}
+      retrieveControllerRef.current = null
+    }
+    // Ask server to cancel the ongoing download
+    const version = retrieveLabel.split(' / ')[0]
+    try { await api.post('/api/verify/theta/retrieve/cancel', { version }) } catch {}
+    setRetrieveActive(false)
+  }
   const closeRetrieve = () => { if (!retrieveActive) setRetrieveOpen(false) }
 
   const requestLoginForVersion = (version, jar) => { openLogin() }
@@ -335,9 +383,9 @@ export default function App() {
     }
   }, [])
 
-  const handleJarContextChange = ({ isXsts: nextIsXsts }) => {
-    setIsXsts(!!nextIsXsts)
-    if (nextIsXsts) {
+  const handleJarContextChange = () => {
+    const isXstsMode = mode === 'XSTS'
+    if (isXstsMode) {
       if (selectedProperty && selectedProperty.endsWith('.prp')) {
         setSelectedProperty('')
       }
@@ -349,12 +397,25 @@ export default function App() {
     }
   }
 
+  const filteredExamples = React.useMemo(() => {
+    const exts = (modesConfig[mode]?.extensions) || []
+    if (!exts.length) return examples
+    const hasExt = (name) => {
+      const lower = name.toLowerCase()
+      return exts.some(ext => lower.endsWith(ext))
+    }
+    return examples.filter(e => hasExt(e) || hasExt(e.path || ''))
+  }, [examples, mode, modesConfig])
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Toolbar
         signedIn={signedIn}
         onOpenLogin={openLogin}
         onLogout={doLogout}
+        mode={mode}
+        modesConfig={modesConfig}
+        onChangeMode={onChangeMode}
       />
 
       <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
@@ -363,13 +424,15 @@ export default function App() {
           <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
             <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column', borderBottom: '1px solid #2a3138' }}>
               <Editor
+                key={mode}
                 code={code}
                 onChange={handleCodeChange}
                 onPositionChange={setPosition}
-                examples={examples}
+                examples={filteredExamples}
                 properties={properties}
                 selectedProperty={selectedProperty}
-                isXsts={isXsts}
+                mode={mode}
+                modesConfig={modesConfig}
                 safetyResult={safetyResult}
                 verifyRunning={verifyRunning}
                 verificationValid={verificationValid}
@@ -391,7 +454,8 @@ export default function App() {
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
-                presets={cliPresets}
+                presets={(modesConfig[mode]?.presets)||[]}
+                jar={(modesConfig[mode]?.jar)||''}
               />
             </Box>
           </Box>
@@ -400,13 +464,15 @@ export default function App() {
           <Split sizes={[50,50]} minSize={200} gutterSize={8} gutterAlign="center" className="split" style={{ display:'flex', width:'100%', height:'100%' }}>
             <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
               <Editor
+                key={mode}
                 code={code}
                 onChange={handleCodeChange}
                 onPositionChange={setPosition}
-                examples={examples}
+                examples={filteredExamples}
                 properties={properties}
                 selectedProperty={selectedProperty}
-                isXsts={isXsts}
+                mode={mode}
+                modesConfig={modesConfig}
                 safetyResult={safetyResult}
                 verifyRunning={verifyRunning}
                 verificationValid={verificationValid}
@@ -428,7 +494,8 @@ export default function App() {
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
-                presets={cliPresets}
+                presets={(modesConfig[mode]?.presets)||[]}
+                jar={(modesConfig[mode]?.jar)||''}
               />
             </div>
           </Split>

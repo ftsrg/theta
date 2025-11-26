@@ -7,12 +7,13 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import ExampleTree from './ExampleTree'
 
-export default function EditorToolbar({ examples = [], properties = [], selectedProperty = 'unreach-call.prp', isXsts = false, safetyResult = '', verifyRunning = false, verificationValid = false, onSelectExample, onSelectProperty }) {
+export default function EditorToolbar({ examples = [], properties = [], selectedProperty = 'unreach-call.prp', mode = 'C', modesConfig = {}, safetyResult = '', verifyRunning = false, verificationValid = false, onSelectExample, onSelectProperty }) {
   const [examplesAnchor, setExamplesAnchor] = useState(null)
   const [propertiesAnchor, setPropertiesAnchor] = useState(null)
   
   const openExamples = Boolean(examplesAnchor)
   const openProperties = Boolean(propertiesAnchor)
+  const propertyType = modesConfig[mode]?.property
   
   // Format property names for display (remove .prp and convert to title case)
   const formatPropertyName = (prop) => {
@@ -43,7 +44,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
   useEffect(() => {
     const saved = localStorage.getItem('theta.selectedProperty')
     if (!saved) return
-    if (!isXsts) {
+    if (mode !== 'XSTS') {
       // xcfa: only apply if still in list
       if (properties.includes(saved) && saved !== selectedProperty) {
         onSelectProperty && onSelectProperty(saved)
@@ -55,7 +56,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isXsts, properties.join('|')])
+  }, [mode, properties.join('|')])
 
   // Determine status icon and text (only show after verification completes)
   const renderSafetyStatus = () => {
@@ -91,7 +92,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
         <Popover open={openExamples} anchorEl={examplesAnchor} onClose={handleCloseExamples} anchorOrigin={{ vertical:'bottom', horizontal:'left' }}>
           <Box sx={{ width:360 }}><ExampleTree examples={examples} onSelect={handleSelectExample} /></Box>
         </Popover>
-        {!isXsts ? (
+        {propertyType === 'select' ? (
           <>
             <Button
               size="small"
@@ -104,7 +105,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
                 borderColor: 'rgba(255, 255, 255, 0.23)',
                 '&:hover': { borderColor: 'rgba(255, 255, 255, 0.4)', bgcolor: 'rgba(255, 255, 255, 0.05)' }
               }}
-            >Property: {formatPropertyName(selectedProperty)}</Button>
+              >Property: {formatPropertyName(selectedProperty)}</Button>
             <Popover open={openProperties} anchorEl={propertiesAnchor} onClose={handleCloseProperties} anchorOrigin={{ vertical:'bottom', horizontal:'left' }}>
               <Box sx={{ width:300, maxHeight:400, overflow:'auto' }}>
                 {properties.map((prop) => (
@@ -123,7 +124,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
               </Box>
             </Popover>
           </>
-        ) : (
+        ) : propertyType === 'text' ? (
           <Tooltip title="e.g., x > 5">
             <TextField
               size="small"
@@ -134,7 +135,7 @@ export default function EditorToolbar({ examples = [], properties = [], selected
               variant="outlined"
             />
           </Tooltip>
-        )}
+        ) : null}
       </Box>
       {renderSafetyStatus()}
     </Box>

@@ -11,6 +11,7 @@ export default function OutputPanel({
   verifyRunning,
   selectedProperty,
   presets = [],
+  jar = '',
   onRun,
   onRefreshVersions,
   onRequestLogin,
@@ -26,6 +27,7 @@ export default function OutputPanel({
         signedIn={signedIn}
         selectedProperty={selectedProperty}
         presets={presets}
+        jar={jar}
         onJarContextChange={onJarContextChange}
         onRun={onRun}
         onRefreshVersions={onRefreshVersions}

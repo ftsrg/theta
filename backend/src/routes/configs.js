@@ -3,20 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 
-const PRESETS_FILE = path.join(__dirname, '..', '..', 'config', 'cli-presets.json');
+const CONFIG_FILE = path.join(__dirname, '..', '..', 'config', 'cli-presets.json');
 
 router.get('/', (req, res) => {
   try {
-    if (!fs.existsSync(PRESETS_FILE)) {
-      return res.json({ presets: [] });
+    if (!fs.existsSync(CONFIG_FILE)) {
+      return res.json({ modes: {} });
     }
-    const raw = fs.readFileSync(PRESETS_FILE, 'utf8');
+    const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
     const obj = JSON.parse(raw);
-    const presets = Array.isArray(obj.presets) ? obj.presets : [];
-    res.json({ presets });
+    const modes = obj.modes || {};
+    res.json({ modes });
   } catch (e) {
-    console.error('[Configs] Failed to read presets:', e.message);
-    res.status(500).json({ error: 'failed to read presets' });
+    console.error('[Configs] Failed to read config:', e.message);
+    res.status(500).json({ error: 'failed to read config' });
   }
 });
 
