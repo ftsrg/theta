@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { Box, Button, TextField, Autocomplete, Tooltip } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 
@@ -23,17 +23,20 @@ export default function OutputToolbar({
   const XCFA_DEFAULT = '--input %in --property %prop --backend PORTFOLIO'
   const XSTS_DEFAULT = 'CEGAR --model %in --inline-property %prop'
 
-  // Restore release from localStorage if valid; else pick latest
+  // Restore release from localStorage only once after releases load
+  const didRestoreRelease = useRef(false)
   useEffect(() => {
+    if (didRestoreRelease.current) return
     if (releases.length === 0) return
     const saved = localStorage.getItem('theta.selectedRelease')
     const tags = releases.map(r => r.tag)
     if (saved && tags.includes(saved)) {
-      if (selectedRelease !== saved) setSelectedRelease(saved)
+      setSelectedRelease(saved)
     } else if (!selectedRelease) {
       setSelectedRelease(releases[0].tag)
     }
-  }, [releases, selectedRelease])
+    didRestoreRelease.current = true
+  }, [releases])
 
   // Update jars when release changes and restore saved jar if available
   useEffect(() => {
