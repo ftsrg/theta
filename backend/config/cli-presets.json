@@ -13,12 +13,12 @@
     {
       "name": "XSTS (CEGAR)",
       "type": "xsts",
-      "args": "CEGAR --model %in --inline-property %prop"
+      "args": "CEGAR --model %in --inline-property %prop --cexfile ./trace.cex"
     },
     {
       "name": "XSTS (bounded)",
       "type": "xsts",
-      "args": "BOUNDED --model %in --inline-property %prop"
+      "args": "BOUNDED --model %in --inline-property %prop --cexfile ./trace.cex"
     }
   ]
 }
