@@ -48,34 +48,36 @@ async function checkAndRetrieveNewRelease() {
     
     console.log(`[Auto-Retrieval] New release detected: ${latestTag}`);
     
-    // Find xcfa jar asset
-    const xcfaAsset = (latestRelease.assets || []).find(a =>
-      a.name && a.name.endsWith('.jar') && a.name.includes('xcfa')
+    // Find target jar assets: xcfa and xsts
+    const targetAssets = (latestRelease.assets || []).filter(a =>
+      a.name && a.name.endsWith('.jar') && (a.name.includes('xcfa') || a.name.includes('xsts'))
     );
     
-    if (!xcfaAsset) {
-      console.log(`[Auto-Retrieval] No xcfa jar found in release ${latestTag}`);
+    if (!targetAssets || targetAssets.length === 0) {
+      console.log(`[Auto-Retrieval] No xcfa/xsts jars found in release ${latestTag}`);
       lastCheckedRelease = latestTag;
       return;
     }
     
-    // Check if already downloaded
     const targetDir = path.join(config.THETA_CACHE_DIR, latestTag);
-    const destFile = path.join(targetDir, xcfaAsset.name);
     
-    if (fs.existsSync(destFile)) {
-      console.log(`[Auto-Retrieval] Asset ${xcfaAsset.name} already exists`);
-      lastCheckedRelease = latestTag;
-      return;
+    // Download any missing target assets sequentially
+    for (const asset of targetAssets) {
+      const destFile = path.join(targetDir, asset.name);
+      
+      if (fs.existsSync(destFile)) {
+        console.log(`[Auto-Retrieval] Asset ${asset.name} already exists`);
+        continue;
+      }
+      
+      if (activeRetrieval.has(latestTag)) {
+        console.log(`[Auto-Retrieval] Retrieval already in progress for ${latestTag}`);
+        break;
+      }
+      
+      console.log(`[Auto-Retrieval] Downloading ${asset.name} (${asset.size} bytes)`);
+      await downloadAsset(latestTag, asset);
     }
-    
-    if (activeRetrieval.has(latestTag)) {
-      console.log(`[Auto-Retrieval] Retrieval already in progress for ${latestTag}`);
-      return;
-    }
-    
-    console.log(`[Auto-Retrieval] Downloading ${xcfaAsset.name} (${xcfaAsset.size} bytes)`);
-    await downloadAsset(latestTag, xcfaAsset);
     
     lastCheckedRelease = latestTag;
     console.log(`[Auto-Retrieval] Successfully retrieved ${latestTag}`);

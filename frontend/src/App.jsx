@@ -16,6 +16,7 @@ export default function App() {
   const [properties, setProperties] = useState([])
   const [selectedExample, setSelectedExample] = useState('')
   const [selectedProperty, setSelectedProperty] = useState('unreach-call.prp')
+  const [isXsts, setIsXsts] = useState(false)
   const [code, setCode] = useState(() => {
     const saved = window.localStorage.getItem('thetaCode')
     return saved || '// select an example or start typing...'
@@ -34,6 +35,7 @@ export default function App() {
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [toastSeverity, setToastSeverity] = useState('success')
+  const [cliPresets, setCliPresets] = useState([])
 
   // Retrieval streaming dialog state
   const [retrieveOpen, setRetrieveOpen] = useState(false)
@@ -65,6 +67,10 @@ export default function App() {
     api.get('/api/properties').then(r => {
       const props = r.data || []
       setProperties(props)
+    }).catch(()=>{})
+    api.get('/api/configs').then(r => {
+      const presets = r.data?.presets || []
+      setCliPresets(presets)
     }).catch(()=>{})
     if(signedIn) { 
       api.post('/api/auth/csrf').then((resp) => {    
@@ -213,6 +219,20 @@ export default function App() {
 
   const closeAuthNotice = (_, reason) => { if (reason === 'clickaway') return; setAuthNoticeOpen(false) }
 
+  const handleJarContextChange = ({ isXsts: nextIsXsts }) => {
+    setIsXsts(!!nextIsXsts)
+    if (nextIsXsts) {
+      if (selectedProperty && selectedProperty.endsWith('.prp')) {
+        setSelectedProperty('')
+      }
+    } else {
+      if (!selectedProperty || !selectedProperty.endsWith('.prp')) {
+        const fallback = properties.includes('unreach-call.prp') ? 'unreach-call.prp' : (properties[0] || 'unreach-call.prp')
+        setSelectedProperty(fallback)
+      }
+    }
+  }
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Toolbar
@@ -233,6 +253,7 @@ export default function App() {
                 examples={examples}
                 properties={properties}
                 selectedProperty={selectedProperty}
+                isXsts={isXsts}
                 onSelectExample={onSelectExample}
                 onSelectProperty={setSelectedProperty}
               />
@@ -245,11 +266,13 @@ export default function App() {
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
                 selectedProperty={selectedProperty}
+                onJarContextChange={handleJarContextChange}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
+                presets={cliPresets}
               />
             </Box>
           </Box>
@@ -264,6 +287,7 @@ export default function App() {
                 examples={examples}
                 properties={properties}
                 selectedProperty={selectedProperty}
+                isXsts={isXsts}
                 onSelectExample={onSelectExample}
                 onSelectProperty={setSelectedProperty}
               />
@@ -276,11 +300,13 @@ export default function App() {
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
                 selectedProperty={selectedProperty}
+                onJarContextChange={handleJarContextChange}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
                 onRequestLogin={(version) => requestLoginForVersion(version, null)}
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
+                presets={cliPresets}
               />
             </div>
           </Split>

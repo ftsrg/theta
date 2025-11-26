@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Box, Button, TextField, Autocomplete, Tooltip } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 
@@ -7,6 +7,8 @@ export default function OutputToolbar({
   releases = [],
   signedIn = false,
   selectedProperty = 'unreach-call.prp',
+  presets = [],
+  onJarContextChange,
   onRun,
   onRefreshVersions,
   onRequestLogin,
@@ -16,15 +18,15 @@ export default function OutputToolbar({
   const [availableJars, setAvailableJars] = useState([])
   const [selectedJar, setSelectedJar] = useState('')
   const [args, setArgs] = useState('--input %in --property %prop --backend PORTFOLIO')
+  const [selectedPresetName, setSelectedPresetName] = useState('')
 
-  // Auto-select latest release
+  const XCFA_DEFAULT = '--input %in --property %prop --backend PORTFOLIO'
+  const XSTS_DEFAULT = 'CEGAR --model %in --inline-property %prop'
+
   useEffect(() => {
-    if (releases.length > 0 && !selectedRelease) {
-      setSelectedRelease(releases[0].tag)
-    }
+    if (releases.length > 0 && !selectedRelease) setSelectedRelease(releases[0].tag)
   }, [releases, selectedRelease])
 
-  // Update jars when release changes
   useEffect(() => {
     const rel = releases.find(r => r.tag === selectedRelease)
     const jars = rel ? rel.assets.map(a => a.name) : []
@@ -35,6 +37,35 @@ export default function OutputToolbar({
 
   const currentVersion = versions.find(v => v.name === selectedRelease)
   const jarRetrieved = !!(selectedJar && currentVersion && currentVersion.jars.includes(selectedJar))
+
+  const isXsts = useMemo(() => (selectedJar || '').toLowerCase().includes('xsts'), [selectedJar])
+  const filteredPresets = useMemo(() => {
+    const t = isXsts ? 'xsts' : 'xcfa'
+    return (presets || []).filter(p => (p.type || '') === t)
+  }, [presets, isXsts])
+
+  useEffect(() => {
+    if (filteredPresets.length > 0) {
+      const current = filteredPresets.find(p => p.name === selectedPresetName)
+      if (!current) {
+        setSelectedPresetName(filteredPresets[0].name)
+        setArgs(filteredPresets[0].args || (isXsts ? XSTS_DEFAULT : XCFA_DEFAULT))
+      }
+    } else {
+      setSelectedPresetName('')
+      setArgs(isXsts ? XSTS_DEFAULT : XCFA_DEFAULT)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isXsts, filteredPresets.map(p => p.name).join('|')])
+
+  useEffect(() => {
+    if (onJarContextChange) onJarContextChange({ selectedRelease, selectedJar, isXsts })
+  }, [selectedRelease, selectedJar, isXsts, onJarContextChange])
+
+  useEffect(() => {
+    const isDefaultLike = (val) => !val || val.trim() === '' || val.trim() === XCFA_DEFAULT || val.trim() === XSTS_DEFAULT
+    if (isDefaultLike(args) && !selectedPresetName) setArgs(isXsts ? XSTS_DEFAULT : XCFA_DEFAULT)
+  }, [isXsts, selectedPresetName])
 
   const doRetrieve = () => {
     if (!selectedRelease || !selectedJar) return
@@ -49,175 +80,152 @@ export default function OutputToolbar({
     }
   }
 
+  useEffect(() => {
+    if (!selectedRelease || !selectedJar) return
+    if (isXsts && !jarRetrieved) {
+      if (signedIn) doRetrieve()
+      else onRequestLogin && onRequestLogin(selectedRelease)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isXsts, selectedRelease, selectedJar])
+
   const run = () => {
-    const argList = args.split(/\s+/).filter(Boolean).map(arg => 
-      arg === '%prop' ? selectedProperty : arg
-    )
-    onRun({
-      binaryName: 'theta-jar',
-      args: argList,
-      thetaVersion: selectedRelease,
-      jarFile: selectedJar
-    })
+    const effectiveArgs = selectedPresetName
+      ? (filteredPresets.find(p => p.name === selectedPresetName)?.args || '')
+      : args
+    const argList = effectiveArgs.split(/\s+/).filter(Boolean).map(arg => (arg === '%prop' ? selectedProperty : arg))
+    onRun({ binaryName: 'theta-jar', args: argList, thetaVersion: selectedRelease, jarFile: selectedJar })
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        px: 1,
-        py: 0.5,
-        bgcolor: '#1b1f24',
-        borderBottom: '1px solid #2a3138',
-        flexWrap: 'wrap'
-      }}
-    >
-      {/* Release Selector */}
-      <Autocomplete
-        size="small"
-        options={releases.map(r => r.tag)}
-        value={selectedRelease}
-        onChange={(e, val) => setSelectedRelease(val || '')}
-        sx={{
-          flexGrow: 1,
-          minWidth: 150,
-          maxWidth: 200,
-          '& .MuiOutlinedInput-root': {
-            bgcolor: 'transparent',
-            color: '#cfd8e6',
-            '& fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.23)'
-            },
-            '&:hover fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.4)'
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: 'rgb(68, 114, 196)'
-            },
-            '& input': {
-              py: 0.75,
-              color: '#cfd8e6'
-            },
-            '& .MuiAutocomplete-endAdornment svg': {
-              color: '#cfd8e6'
-            }
-          }
-        }}
-        disableClearable
-        renderInput={(params) => (
-          <TextField {...params} placeholder="Release" variant="outlined" />
-        )}
-      />
-
-      {/* Jar Selector */}
-      <Autocomplete
-        size="small"
-        options={availableJars}
-        value={selectedJar}
-        onChange={(e, val) => setSelectedJar(val || '')}
-        sx={{
-          flexGrow: 2,
-          minWidth: 200,
-          maxWidth: 350,
-          '& .MuiOutlinedInput-root': {
-            bgcolor: 'transparent',
-            color: '#cfd8e6',
-            '& fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.23)'
-            },
-            '&:hover fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.4)'
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: 'rgb(68, 114, 196)'
-            },
-            '& input': {
-              py: 0.75,
-              color: '#cfd8e6'
-            },
-            '& .MuiAutocomplete-endAdornment svg': {
-              color: '#cfd8e6'
-            }
-          }
-        }}
-        disableClearable
-        renderInput={(params) => (
-          <TextField {...params} placeholder="Jar" variant="outlined" />
-        )}
-      />
-
-      {/* Retrieve Button */}
-      {!jarRetrieved && selectedRelease && selectedJar && (
-        <Tooltip title={signedIn ? 'Retrieve jar' : 'Sign in required – click to login'}>
-          <span>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={doRetrieve}
-              startIcon={!signedIn ? <LockOutlinedIcon /> : undefined}
-              disabled={!selectedRelease || !selectedJar}
-              sx={{
-                textTransform: 'none',
-                borderColor: 'rgb(68, 114, 196)',
-                color: 'rgb(68, 114, 196)',
-                '&:hover': {
-                  borderColor: 'rgb(68, 114, 196)',
-                  bgcolor: 'rgba(68, 114, 196, 0.1)'
-                }
-              }}
-            >
-              Retrieve
-            </Button>
-          </span>
-        </Tooltip>
-      )}
-
-      {/* Args Input */}
-      <TextField
-        size="small"
-        placeholder="Args"
-        value={args}
-        onChange={e => setArgs(e.target.value)}
-        sx={{
-          flexGrow: 3,
-          minWidth: 200,
-          '& .MuiOutlinedInput-root': {
-            bgcolor: 'transparent',
-            color: '#cfd8e6',
-            '& fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.23)'
-            },
-            '&:hover fieldset': {
-              borderColor: 'rgba(255, 255, 255, 0.4)'
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: 'rgb(68, 114, 196)'
-            },
-            '& input': {
-              py: 0.75,
-              color: '#cfd8e6'
-            }
-          }
-        }}
-        variant="outlined"
-      />
-
-      {/* Run Button */}
-      {selectedRelease && selectedJar && jarRetrieved && (
-        <Button
-          variant="contained"
+    <Box sx={{ px: 1, py: 0.5, bgcolor: '#1b1f24', borderBottom: '1px solid #2a3138' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Autocomplete
           size="small"
-          onClick={run}
+          options={releases.map(r => r.tag)}
+          value={selectedRelease}
+          onChange={(e, val) => setSelectedRelease(val || '')}
           sx={{
-            textTransform: 'none',
-            bgcolor: 'rgb(112, 173, 71)',
-            '&:hover': { bgcolor: 'rgb(92, 153, 51)' }
+            flexGrow: 1,
+            minWidth: 150,
+            maxWidth: 200,
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'transparent',
+              color: '#cfd8e6',
+              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+              '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+              '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
+              '& input': { py: 0.75, color: '#cfd8e6' },
+              '& .MuiAutocomplete-endAdornment svg': { color: '#cfd8e6' }
+            }
           }}
-        >
-          Run
-        </Button>
+          disableClearable
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Release" variant="outlined" />
+          )}
+        />
+
+        <Autocomplete
+          size="small"
+          options={availableJars}
+          value={selectedJar}
+          onChange={(e, val) => setSelectedJar(val || '')}
+          sx={{
+            flexGrow: 2,
+            minWidth: 200,
+            maxWidth: 350,
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'transparent',
+              color: '#cfd8e6',
+              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+              '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+              '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
+              '& input': { py: 0.75, color: '#cfd8e6' },
+              '& .MuiAutocomplete-endAdornment svg': { color: '#cfd8e6' }
+            }
+          }}
+          disableClearable
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Jar" variant="outlined" />
+          )}
+        />
+
+        {!jarRetrieved && selectedRelease && selectedJar && (
+          <Tooltip title={signedIn ? 'Retrieve jar' : 'Sign in required – click to login'}>
+            <span>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={doRetrieve}
+                startIcon={!signedIn ? <LockOutlinedIcon /> : undefined}
+                disabled={!selectedRelease || !selectedJar}
+                sx={{ textTransform: 'none', borderColor: 'rgb(68, 114, 196)', color: 'rgb(68, 114, 196)', '&:hover': { borderColor: 'rgb(68, 114, 196)', bgcolor: 'rgba(68, 114, 196, 0.1)' } }}
+              >
+                Retrieve
+              </Button>
+            </span>
+          </Tooltip>
+        )}
+
+        <Autocomplete
+          size="small"
+          options={filteredPresets.map(p => p.name).concat(['Custom'])}
+          value={selectedPresetName || 'Custom'}
+          onChange={(e, val) => {
+            const name = val || 'Custom'
+            setSelectedPresetName(name === 'Custom' ? '' : name)
+            const preset = filteredPresets.find(p => p.name === name)
+            if (preset && preset.args) setArgs(preset.args)
+          }}
+          sx={{
+            flexGrow: 1,
+            minWidth: 180,
+            maxWidth: 220,
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'transparent',
+              color: '#cfd8e6',
+              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+              '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+              '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
+              '& input': { py: 0.75, color: '#cfd8e6' },
+              '& .MuiAutocomplete-endAdornment svg': { color: '#cfd8e6' }
+            }
+          }}
+          disableClearable
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Config" variant="outlined" />
+          )}
+        />
+
+        {selectedRelease && selectedJar && jarRetrieved && (
+          <Button variant="contained" size="small" onClick={run} sx={{ textTransform: 'none', bgcolor: 'rgb(112, 173, 71)' }}>
+            Run
+          </Button>
+        )}
+      </Box>
+
+      {!selectedPresetName && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+          <TextField
+            size="small"
+            placeholder={'Args'}
+            value={args}
+            onChange={e => setArgs(e.target.value)}
+            sx={{
+              flexGrow: 1,
+              minWidth: 200,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'transparent',
+                color: '#cfd8e6',
+                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+                '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
+                '& input': { py: 0.75, color: '#cfd8e6' }
+              }
+            }}
+            variant="outlined"
+          />
+        </Box>
       )}
     </Box>
   )

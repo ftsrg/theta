@@ -10,10 +10,12 @@ export default function OutputPanel({
   signedIn,
   verifyRunning,
   selectedProperty,
+  presets = [],
   onRun,
   onRefreshVersions,
   onRequestLogin,
   onStreamRetrieve,
+  onJarContextChange,
   onCancelVerification
 }) {
   return (
@@ -23,6 +25,8 @@ export default function OutputPanel({
         releases={releases}
         signedIn={signedIn}
         selectedProperty={selectedProperty}
+        presets={presets}
+        onJarContextChange={onJarContextChange}
         onRun={onRun}
         onRefreshVersions={onRefreshVersions}
         onRequestLogin={onRequestLogin}

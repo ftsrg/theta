@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { Box, Button, Popover } from '@mui/material'
+import { Box, Button, Popover, TextField, Tooltip } from '@mui/material'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import DescriptionIcon from '@mui/icons-material/Description'
 import ExampleTree from './ExampleTree'
 
-export default function EditorToolbar({ examples = [], properties = [], selectedProperty = 'unreach-call.prp', onSelectExample, onSelectProperty }) {
+export default function EditorToolbar({ examples = [], properties = [], selectedProperty = 'unreach-call.prp', isXsts = false, onSelectExample, onSelectProperty }) {
   const [examplesAnchor, setExamplesAnchor] = useState(null)
   const [propertiesAnchor, setPropertiesAnchor] = useState(null)
   
@@ -75,52 +75,77 @@ export default function EditorToolbar({ examples = [], properties = [], selected
         </Box>
       </Popover>
 
-      {/* Property Selector */}
-      <Button
-        size="small"
-        variant="outlined"
-        startIcon={<DescriptionIcon />}
-        onClick={handleOpenProperties}
-        sx={{
-          textTransform: 'none',
-          color: '#cfd8e6',
-          borderColor: 'rgba(255, 255, 255, 0.23)',
-          '&:hover': {
-            borderColor: 'rgba(255, 255, 255, 0.4)',
-            bgcolor: 'rgba(255, 255, 255, 0.05)'
-          }
-        }}
-      >
-        Property: {formatPropertyName(selectedProperty)}
-      </Button>
-      <Popover
-        open={openProperties}
-        anchorEl={propertiesAnchor}
-        onClose={handleCloseProperties}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Box sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
-          {properties.map((prop) => (
-            <Box
-              key={prop}
-              onClick={() => handleSelectProperty(prop)}
-              sx={{
-                px: 2,
-                py: 1,
-                cursor: 'pointer',
-                bgcolor: prop === selectedProperty ? 'rgba(68, 114, 196, 0.1)' : 'transparent',
-                '&:hover': {
-                  bgcolor: prop === selectedProperty ? 'rgba(68, 114, 196, 0.2)' : 'rgba(255, 255, 255, 0.05)'
-                },
-                borderLeft: prop === selectedProperty ? '3px solid rgb(68, 114, 196)' : '3px solid transparent',
-                transition: 'all 0.2s'
-              }}
-            >
-              {formatPropertyName(prop)}
+      {/* Property Selector / Inline Property (depends on jar type) */}
+      {!isXsts ? (
+        <>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<DescriptionIcon />}
+            onClick={handleOpenProperties}
+            sx={{
+              textTransform: 'none',
+              color: '#cfd8e6',
+              borderColor: 'rgba(255, 255, 255, 0.23)',
+              '&:hover': {
+                borderColor: 'rgba(255, 255, 255, 0.4)',
+                bgcolor: 'rgba(255, 255, 255, 0.05)'
+              }
+            }}
+          >
+            Property: {formatPropertyName(selectedProperty)}
+          </Button>
+          <Popover
+            open={openProperties}
+            anchorEl={propertiesAnchor}
+            onClose={handleCloseProperties}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          >
+            <Box sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+              {properties.map((prop) => (
+                <Box
+                  key={prop}
+                  onClick={() => handleSelectProperty(prop)}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    cursor: 'pointer',
+                    bgcolor: prop === selectedProperty ? 'rgba(68, 114, 196, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: prop === selectedProperty ? 'rgba(68, 114, 196, 0.2)' : 'rgba(255, 255, 255, 0.05)'
+                    },
+                    borderLeft: prop === selectedProperty ? '3px solid rgb(68, 114, 196)' : '3px solid transparent',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {formatPropertyName(prop)}
+                </Box>
+              ))}
             </Box>
-          ))}
-        </Box>
-      </Popover>
+          </Popover>
+        </>
+      ) : (
+        <Tooltip title="e.g., x > 5">
+          <TextField
+            size="small"
+            placeholder="x > 5"
+            value={selectedProperty || ''}
+            onChange={(e) => onSelectProperty && onSelectProperty(e.target.value)}
+            sx={{
+              width: 260,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'transparent',
+                color: '#cfd8e6',
+                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+                '&.Mui-focused fieldset': { borderColor: 'rgb(68, 114, 196)' },
+                '& input': { py: 0.75, color: '#cfd8e6' }
+              }
+            }}
+            variant="outlined"
+          />
+        </Tooltip>
+      )}
     </Box>
   )
 }

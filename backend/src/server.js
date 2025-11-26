@@ -16,6 +16,7 @@ const examplesRoutes = require('./routes/examples');
 const propertiesRoutes = require('./routes/properties');
 const authRoutes = require('./routes/auth');
 const thetaRoutes = require('./routes/theta');
+const configsRoutes = require('./routes/configs');
 
 // Ensure required directories exist
 fs.mkdirSync(config.THETA_CACHE_DIR, { recursive: true });
@@ -36,6 +37,7 @@ app.use('/api/examples', examplesRoutes);
 app.use('/api/properties', propertiesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/theta', thetaRoutes);
+app.use('/api/configs', configsRoutes);
 
 // Mount verification routes (includes streaming verification and retrieval)
 const { retrieveStreamRouter } = require('./routes/verification');

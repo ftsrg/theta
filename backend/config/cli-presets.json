@@ -1,0 +1,24 @@
+{
+  "presets": [
+    {
+      "name": "C (portfolio)",
+      "type": "xcfa",
+      "args": "--input %in --property %prop --backend PORTFOLIO"
+    },
+    {
+      "name": "CHC (portfolio)",
+      "type": "xcfa",
+      "args": "--input %in --input-type CHC --backend PORTFOLIO --portfolio CHC-COMP --print-model"
+    },
+    {
+      "name": "XSTS (CEGAR)",
+      "type": "xsts",
+      "args": "CEGAR --model %in --inline-property %prop"
+    },
+    {
+      "name": "XSTS (bounded)",
+      "type": "xsts",
+      "args": "BOUNDED --model %in --inline-property %prop"
+    }
+  ]
+}

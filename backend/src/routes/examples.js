@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
           
           if (ent.isDirectory()) {
             await walk(full, rel);
-          } else if (ent.isFile() && (ent.name.endsWith('.c') || ent.name.endsWith('.cpp'))) {
+          } else if (ent.isFile()) {
             results.push(rel);
           } else {
             console.log(`[Examples] Skipping non-C/C++ file: ${rel}`);
