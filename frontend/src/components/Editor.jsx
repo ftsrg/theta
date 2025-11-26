@@ -3,7 +3,7 @@ import * as monaco from 'monaco-editor'
 import { Box } from '@mui/material'
 import EditorToolbar from './EditorToolbar'
 
-export default function Editor({ code, onChange, onPositionChange, examples, properties, selectedProperty, isXsts, onSelectExample, onSelectProperty }) {
+export default function Editor({ code, onChange, onPositionChange, examples, properties, selectedProperty, isXsts, safetyResult, verifyRunning, verificationValid, onSelectExample, onSelectProperty }) {
   const ref = useRef(null)
   const editorRef = useRef(null)
 
@@ -40,7 +40,7 @@ export default function Editor({ code, onChange, onPositionChange, examples, pro
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <EditorToolbar examples={examples} properties={properties} selectedProperty={selectedProperty} isXsts={isXsts} onSelectExample={onSelectExample} onSelectProperty={onSelectProperty} />
+      <EditorToolbar examples={examples} properties={properties} selectedProperty={selectedProperty} isXsts={isXsts} safetyResult={safetyResult} verifyRunning={verifyRunning} verificationValid={verificationValid} onSelectExample={onSelectExample} onSelectProperty={onSelectProperty} />
       <Box ref={ref} sx={{ flex: 1, minHeight: 0 }} />
     </Box>
   )

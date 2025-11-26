@@ -47,6 +47,8 @@ export default function App() {
   const [retrieveEta, setRetrieveEta] = useState(0)
   const [verifyRunning, setVerifyRunning] = useState(false)
   const [verifyRunId, setVerifyRunId] = useState('')
+  const [safetyResult, setSafetyResult] = useState('')
+  const [verificationValid, setVerificationValid] = useState(false)
 
   // Save code to localStorage on every change
   useEffect(() => {
@@ -124,11 +126,13 @@ export default function App() {
   }
   const doLogout = () => { window.localStorage.removeItem('thetaAuth'); setAuthToken('') }
 
-  const onSelectExample = (path) => setSelectedExample(path)
+  // Remove earlier simple handler (replaced below with invalidation logic)
 
   // Verification (streaming)
   const runVerification = async ({ binaryName, args, thetaVersion, jarFile }) => {
     setVerifyOutput({ stdout: '', stderr: '' })
+    setSafetyResult('')
+    setVerificationValid(false)
     setVerifyRunning(true)
     setVerifyRunId('')
     try {
@@ -139,7 +143,7 @@ export default function App() {
       })
       if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`)
       const reader = resp.body.getReader(); const decoder = new TextDecoder(); let buf=''; let sawResult=false
-      while(true){ const {done,value}=await reader.read(); if(done) break; buf+=decoder.decode(value,{stream:true}); let idx; while((idx=buf.indexOf('\n'))>=0){ const line=buf.slice(0,idx).replace(/\r$/,''); buf=buf.slice(idx+1); if(!line) continue; if(line.startsWith('RUN: ')){ setVerifyRunId(line.slice(5).trim()) } else if(line.startsWith('OUT: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stdout:(prev.stdout?prev.stdout+'\n':'')+msg})) } else if(line.startsWith('ERR: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stderr:(prev.stderr?prev.stderr+'\n':'')+msg})) } else if(line.startsWith('RESULT: ')){ try{ const obj=JSON.parse(line.slice(8)); sawResult=true; setVerifyOutput(prev=>({ ...obj, stdout: prev.stdout||'', stderr: prev.stderr||'' })) ; setToastMsg('Verification finished'); setToastSeverity(obj.code===0?'success':'warning'); setToastOpen(true);}catch(e){ /* ignore parse error */ } } }
+      while(true){ const {done,value}=await reader.read(); if(done) break; buf+=decoder.decode(value,{stream:true}); let idx; while((idx=buf.indexOf('\n'))>=0){ const line=buf.slice(0,idx).replace(/\r$/,''); buf=buf.slice(idx+1); if(!line) continue; if(line.startsWith('RUN: ')){ setVerifyRunId(line.slice(5).trim()) } else if(line.startsWith('OUT: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stdout:(prev.stdout?prev.stdout+'\n':'')+msg})); if(/SafetyResult/i.test(msg)){ const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i); if(m){ setSafetyResult(m[1].toLowerCase()); } } } else if(line.startsWith('ERR: ')){ const msg=line.slice(5); setVerifyOutput(prev=>({...prev, stderr:(prev.stderr?prev.stderr+'\n':'')+msg})); if(/SafetyResult/i.test(msg)){ const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i); if(m){ setSafetyResult(m[1].toLowerCase()); } } } else if(line.startsWith('RESULT: ')){ try{ const obj=JSON.parse(line.slice(8)); sawResult=true; setVerifyOutput(prev=>({ ...obj, stdout: prev.stdout||'', stderr: prev.stderr||'' })) ; setToastMsg('Verification finished'); setToastSeverity(obj.code===0?'success':'warning'); setToastOpen(true);}catch(e){ /* ignore parse error */ } } }
       }
       if(!sawResult){ setToastMsg('Verification finished (no result)'); setToastSeverity('warning'); setToastOpen(true) }
     } catch (err) {
@@ -150,7 +154,23 @@ export default function App() {
     } finally {
       setVerifyRunning(false)
       setVerifyRunId('')
+      // Mark verification result valid for current code/property
+      setVerificationValid(true)
     }
+  }
+  const onSelectExample = (path) => {
+    setSelectedExample(path)
+    setVerificationValid(false)
+  }
+
+  const handleSelectProperty = (prop) => {
+    setSelectedProperty(prop)
+    setVerificationValid(false)
+  }
+
+  const handleCodeChange = (val) => {
+    setCode(val)
+    setVerificationValid(false)
   }
 
   const cancelVerification = async () => {
@@ -248,14 +268,17 @@ export default function App() {
             <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column', borderBottom: '1px solid #2a3138' }}>
               <Editor
                 code={code}
-                onChange={setCode}
+                onChange={handleCodeChange}
                 onPositionChange={setPosition}
                 examples={examples}
                 properties={properties}
                 selectedProperty={selectedProperty}
                 isXsts={isXsts}
+                safetyResult={safetyResult}
+                verifyRunning={verifyRunning}
+                verificationValid={verificationValid}
                 onSelectExample={onSelectExample}
-                onSelectProperty={setSelectedProperty}
+                onSelectProperty={handleSelectProperty}
               />
             </Box>
             <Box sx={{ height: '50%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -282,14 +305,17 @@ export default function App() {
             <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
               <Editor
                 code={code}
-                onChange={setCode}
+                onChange={handleCodeChange}
                 onPositionChange={setPosition}
                 examples={examples}
                 properties={properties}
                 selectedProperty={selectedProperty}
                 isXsts={isXsts}
+                safetyResult={safetyResult}
+                verifyRunning={verifyRunning}
+                verificationValid={verificationValid}
                 onSelectExample={onSelectExample}
-                onSelectProperty={setSelectedProperty}
+                onSelectProperty={handleSelectProperty}
               />
             </div>
             <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column' }}>
