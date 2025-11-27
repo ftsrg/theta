@@ -244,14 +244,10 @@ router.post('/stream', async (req, res) => {
       meta = { binary: 'theta-jar', version, jar, args: finalArgs, placeholderUsed: used };
       
       const libPath = config.LIB_DIR;
-      const homeDir = path.join(process.env.HOME || '/home/' + process.env.USER, '.theta');
-      await fsp.mkdir(homeDir, { recursive: true }).catch((err) => {
-        console.error('[VerifyStream] Failed to create home directory:', err.message);
-      });
+      const solverDir = path.join(process.env.HOME || '/home', 'benchexec', '.theta');
       
       const env = {
         ...process.env,
-        HOME: homeDir,
         LD_LIBRARY_PATH: libPath + (process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : '')
       };
       
@@ -266,6 +262,7 @@ router.post('/stream', async (req, res) => {
         '--read-only-dir', '/',
         '--hidden-dir', '/home',
         '--read-only-dir', backendRoot,
+        '--read-only-dir', solverDir,
         '--read-only-dir', libPath,
         '--full-access-dir', runDir,
         '--',
