@@ -244,7 +244,7 @@ router.post('/stream', async (req, res) => {
       meta = { binary: 'theta-jar', version, jar, args: finalArgs, placeholderUsed: used };
       
       const libPath = config.LIB_DIR;
-      const solverDir = path.join(process.env.HOME || '/home', 'benchexec', '.theta');
+      const solverDir = path.join('home', 'benchexec', '.theta');
       
       const env = {
         ...process.env,
