@@ -170,6 +170,7 @@ public class XcfaTraceConcretizer {
                 labels = List.of(NopLabel.INSTANCE);
             }
 
+            int nextCount = action.getInCnt();
             for (int j = 0; j < labels.size(); j++) {
                 final XcfaLocation source = j == 0 ? action.getSource() : placeholder;
                 final XcfaLocation target =
@@ -185,10 +186,11 @@ public class XcfaTraceConcretizer {
 
                 final XcfaEdge edge = new XcfaEdge(source, target, label, metadata);
                 final XcfaAction newAction =
-                        new XcfaAction(action.getPid(), edge, nextW, action.getInCnt());
+                        new XcfaAction(action.getPid(), edge, nextW, nextCount);
                 sbeActions.add(newAction);
                 nextW = newAction.nextWriteTriples();
                 sbeStates.add(nextState);
+                nextCount = newAction.getCnts().values().stream().max(Comparator.naturalOrder()).orElse(nextCount);
             }
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
