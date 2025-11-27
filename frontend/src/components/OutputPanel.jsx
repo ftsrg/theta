@@ -12,13 +12,19 @@ export default function OutputPanel({
   selectedProperty,
   presets = [],
   jar = '',
+  selectedRelease = '',
+  selectedPreset = '',
+  args = '',
   onRun,
   onRefreshVersions,
   onRequestLogin,
   onStreamRetrieve,
   onJarContextChange,
   onCancelVerification,
-  onWitnessAnnotate
+  onWitnessAnnotate,
+  onReleaseChange,
+  onPresetChange,
+  onArgsChange
 }) {
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -29,11 +35,17 @@ export default function OutputPanel({
         selectedProperty={selectedProperty}
         presets={presets}
         jar={jar}
+        selectedRelease={selectedRelease}
+        selectedPreset={selectedPreset}
+        args={args}
         onJarContextChange={onJarContextChange}
         onRun={onRun}
         onRefreshVersions={onRefreshVersions}
         onRequestLogin={onRequestLogin}
         onStreamRetrieve={onStreamRetrieve}
+        onReleaseChange={onReleaseChange}
+        onPresetChange={onPresetChange}
+        onArgsChange={onArgsChange}
       />
       {verifyRunning && (
         <Box

@@ -6,6 +6,7 @@ import Toolbar from './components/Toolbar'
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, LinearProgress, Box, Button, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { api, setAuthRequiredHandler, setCsrfToken, getCsrfToken } from './api'
+import * as ConfigManager from './utils/configManager'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || 'https://localhost:5175'
 
@@ -14,35 +15,35 @@ export default function App() {
   const isNarrow = useMediaQuery('(max-width:1000px)')
   const [examples, setExamples] = useState([])
   const [properties, setProperties] = useState([])
-  const [selectedExample, setSelectedExample] = useState('')
-  const initialMode = (typeof window !== 'undefined' && window.localStorage.getItem('thetaMode')) || 'C'
-  const [selectedProperty, setSelectedProperty] = useState(() => {
-    const key = `thetaProperty_${initialMode}`
-    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
-    if (saved !== null) return saved
-    return initialMode === 'XSTS' ? '' : 'unreach-call.prp'
-  })
+  const [modesConfig, setModesConfig] = useState({})
+  
+  // Check for URL config override first, then localStorage
+  const urlConfig = ConfigManager.parseUrlConfig()
+  const initialMode = urlConfig?.mode || ConfigManager.getCurrentMode()
+  const initialConfig = urlConfig?.config || ConfigManager.loadConfig(initialMode)
+  
   const [mode, setMode] = useState(initialMode)
-  const [code, setCode] = useState(() => {
-    const key = `thetaCode_${initialMode}`
-    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
-    return saved || '// select an example or start typing...'
-  })
-  const [verifyOutput, setVerifyOutput] = useState(null)
+  const [selectedExample, setSelectedExample] = useState(initialConfig.selectedExample || '')
+  const [selectedProperty, setSelectedProperty] = useState(initialConfig.selectedProperty || '')
+  const [code, setCode] = useState(initialConfig.code || '// select an example or start typing...')
+  const [selectedRelease, setSelectedRelease] = useState(initialConfig.selectedRelease || '')
+  const [selectedPreset, setSelectedPreset] = useState(initialConfig.selectedPreset || '')
+  const [args, setArgs] = useState(initialConfig.args || '--input %in --property %prop --backend PORTFOLIO')
+  
+  const [verifyOutput, setVerifyOutput] = useState(null) // {code, error, generatedFiles, stream: [{type:'DATA'|'ERR'|'OUT', text}]}
   const [thetaVersions, setThetaVersions] = useState([]) // [{name,jars:[]}] retrieved
   const [thetaReleases, setThetaReleases] = useState([]) // [{tag, assets:[{name}]}]
   const [position, setPosition] = useState({ line: 1, column: 1 })
   const [loginOpen, setLoginOpen] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [authToken, setAuthToken] = useState(() => window.localStorage.getItem('thetaAuth') || '')
+  const [authToken, setAuthToken] = useState(() => ConfigManager.getAuthToken())
   const [authNoticeOpen, setAuthNoticeOpen] = useState(false)
   const [authNoticeMsg, setAuthNoticeMsg] = useState('')
 
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [toastSeverity, setToastSeverity] = useState('success')
-  const [modesConfig, setModesConfig] = useState({})
 
   // Retrieval streaming dialog state
   const [retrieveOpen, setRetrieveOpen] = useState(false)
@@ -62,12 +63,37 @@ export default function App() {
   const verifyControllerRef = useRef(null)
   const verifySeqRef = useRef(0)
   const verifyRunIdRef = useRef('')
-
-  // Save code to localStorage per-mode on every change
+  
+  // Migrate old localStorage format on first load
   useEffect(() => {
-    const key = `thetaCode_${mode}`
-    window.localStorage.setItem(key, code)
-  }, [code, mode])
+    ConfigManager.migrateOldConfig()
+  }, [])
+
+  // Auto-save config whenever relevant state changes
+  useEffect(() => {
+    const config = {
+      code,
+      selectedProperty,
+      selectedExample,
+      selectedRelease,
+      selectedPreset,
+      args
+    }
+    ConfigManager.saveConfig(mode, config)
+  }, [mode, code, selectedProperty, selectedExample, selectedRelease, selectedPreset, args])
+
+  // Auto-save config whenever relevant state changes
+  useEffect(() => {
+    const config = {
+      code,
+      selectedProperty,
+      selectedExample,
+      selectedRelease,
+      selectedPreset,
+      args
+    }
+    ConfigManager.saveConfig(mode, config)
+  }, [mode, code, selectedProperty, selectedExample, selectedRelease, selectedPreset, args])
 
   // Auth handler
   useEffect(() => {
@@ -108,33 +134,22 @@ export default function App() {
   const openLogin = () => setLoginOpen(true)
   const onChangeMode = (m) => {
     setMode(m)
-    window.localStorage.setItem('thetaMode', m)
-    // Clear selected example to avoid auto-overwriting code on mode switch
-    setSelectedExample('')
+    ConfigManager.setCurrentMode(m)
+    
+    // Load saved config for new mode
+    const config = ConfigManager.loadConfig(m)
+    setCode(config.code || '// select an example or start typing...')
+    setSelectedProperty(config.selectedProperty || '')
+    setSelectedExample(config.selectedExample || '')
+    setSelectedRelease(config.selectedRelease || '')
+    setSelectedPreset(config.selectedPreset || '')
+    setArgs(config.args || '--input %in --property %prop --backend PORTFOLIO')
+    
     // Clear verification status when mode changes
     setSafetyResult('')
     setVerificationValid(false)
     setWitnessData(null)
-    // Immediately load saved code for the new mode (or default)
-    const key = `thetaCode_${m}`
-    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
-    setCode(saved || '// select an example or start typing...')
-    // Load saved property for the new mode (or sensible default)
-    const propKey = `thetaProperty_${m}`
-    const savedProp = (typeof window !== 'undefined') ? window.localStorage.getItem(propKey) : null
-    if (savedProp !== null) {
-      setSelectedProperty(savedProp)
-    } else {
-      setSelectedProperty(m === 'XSTS' ? '' : (properties.includes('unreach-call.prp') ? 'unreach-call.prp' : (properties[0] || 'unreach-call.prp')))
-    }
   }
-
-  // Load saved code when mode changes, or default placeholder if none
-  useEffect(() => {
-    const key = `thetaCode_${mode}`
-    const saved = (typeof window !== 'undefined') ? window.localStorage.getItem(key) : null
-    setCode(saved || '// select an example or start typing...')
-  }, [mode])
 
   const fetchCsrf = async () => {
     try { const resp = await api.post('/api/auth/csrf'); if (resp.data?.token) setCsrfToken(resp.data.token) } catch { setAuthNoticeMsg('Failed to obtain CSRF'); setAuthNoticeOpen(true) }
@@ -156,7 +171,7 @@ export default function App() {
     try {
       const resp = await api.post('/api/auth/validate', {}, { headers: { Authorization: candidate } })
       if (!resp.data?.ok) throw new Error('invalid')
-      window.localStorage.setItem('thetaAuth', candidate)
+      ConfigManager.setAuthToken(candidate)
       setAuthToken(candidate)
       setUsername('')
       setPassword('')
@@ -167,7 +182,10 @@ export default function App() {
       setAuthNoticeOpen(true)
     }
   }
-  const doLogout = () => { window.localStorage.removeItem('thetaAuth'); setAuthToken('') }
+  const doLogout = () => { 
+    ConfigManager.clearAuthToken()
+    setAuthToken('') 
+  }
 
   // Remove earlier simple handler (replaced below with invalidation logic)
 
@@ -187,7 +205,7 @@ export default function App() {
     const controller = new AbortController()
     verifyControllerRef.current = controller
 
-    setVerifyOutput({ stdout: '', stderr: '' })
+    setVerifyOutput({ stream: [] })
     setSafetyResult('')
     setVerificationValid(false)
     setVerifyRunning(true)
@@ -217,16 +235,23 @@ export default function App() {
             const id=line.slice(5).trim();
             setVerifyRunId(id);
             verifyRunIdRef.current = id;
-          } else if(line.startsWith('OUT: ')){
+          } else if(line.startsWith('DATA: ')){
             const msg=line.slice(5);
-            setVerifyOutput(prev=>({...prev, stdout:(prev.stdout?prev.stdout+'\n':'')+msg}));
+            setVerifyOutput(prev=>({...prev, stream: [...(prev.stream||[]), {type:'DATA', text:msg}]}));
             if(/SafetyResult/i.test(msg)){
               const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i);
               if(m){ setSafetyResult(m[1].toLowerCase()); }
             }
           } else if(line.startsWith('ERR: ')){
             const msg=line.slice(5);
-            setVerifyOutput(prev=>({...prev, stderr:(prev.stderr?prev.stderr+'\n':'')+msg}));
+            setVerifyOutput(prev=>({...prev, stream: [...(prev.stream||[]), {type:'ERR', text:msg}]}));
+            if(/SafetyResult/i.test(msg)){
+              const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i);
+              if(m){ setSafetyResult(m[1].toLowerCase()); }
+            }
+          } else if(line.startsWith('OUT: ')){
+            const msg=line.slice(5);
+            setVerifyOutput(prev=>({...prev, stream: [...(prev.stream||[]), {type:'OUT', text:msg}]}));
             if(/SafetyResult/i.test(msg)){
               const m=msg.match(/SafetyResult\s*[:=]?\s*(Safe|Unsafe|Unknown)/i);
               if(m){ setSafetyResult(m[1].toLowerCase()); }
@@ -235,7 +260,7 @@ export default function App() {
             try{
               const obj=JSON.parse(line.slice(8));
               sawResult=true;
-              setVerifyOutput(prev=>({ ...obj, stdout: prev.stdout||'', stderr: prev.stderr||'' }));
+              setVerifyOutput(prev=>({ ...obj, stream: prev.stream||[] }));
               if (seq === verifySeqRef.current) {
                 setToastMsg('Verification finished');
                 setToastSeverity(obj.code===0?'success':'warning');
@@ -274,7 +299,6 @@ export default function App() {
     setSelectedProperty(prop)
     setVerificationValid(false)
     setWitnessData(null)
-    try { window.localStorage.setItem(`thetaProperty_${mode}`, prop) } catch {}
   }
 
   const handleCodeChange = (val) => {
@@ -415,6 +439,94 @@ export default function App() {
     return examples.filter(e => hasExt(e) || hasExt(e.path || ''))
   }, [examples, mode, modesConfig])
 
+  // Config save/load handlers
+  const handleSaveConfig = () => {
+    const config = {
+      code,
+      selectedProperty,
+      selectedExample,
+      selectedRelease,
+      selectedPreset,
+      args
+    }
+    const json = ConfigManager.exportConfig(mode, config)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `theta-config-${mode}-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    setToastMsg(`Configuration for ${mode} mode saved`)
+    setToastSeverity('success')
+    setToastOpen(true)
+  }
+
+  const handleCopyLink = () => {
+    const config = {
+      code,
+      selectedProperty,
+      selectedExample,
+      selectedRelease,
+      selectedPreset,
+      args
+    }
+    const url = ConfigManager.generateConfigUrl(mode, config)
+    
+    navigator.clipboard.writeText(url).then(() => {
+      setToastMsg('Shareable link copied to clipboard')
+      setToastSeverity('success')
+      setToastOpen(true)
+    }).catch((err) => {
+      setToastMsg('Failed to copy link: ' + err.message)
+      setToastSeverity('error')
+      setToastOpen(true)
+    })
+  }
+
+  const handleLoadConfig = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      
+      try {
+        const text = await file.text()
+        const { mode: importedMode, config } = ConfigManager.importConfig(text)
+        
+        // Save to localStorage
+        ConfigManager.saveConfig(importedMode, config)
+        
+        // If importing for current mode, apply immediately
+        if (importedMode === mode) {
+          setCode(config.code || '// select an example or start typing...')
+          setSelectedProperty(config.selectedProperty || '')
+          setSelectedExample(config.selectedExample || '')
+          setSelectedRelease(config.selectedRelease || '')
+          setSelectedPreset(config.selectedPreset || '')
+          setArgs(config.args || '--input %in --property %prop --backend PORTFOLIO')
+        } else {
+          // Switch to imported mode
+          onChangeMode(importedMode)
+        }
+        
+        setToastMsg(`Configuration loaded for ${importedMode} mode`)
+        setToastSeverity('success')
+        setToastOpen(true)
+      } catch (err) {
+        setToastMsg(`Failed to load configuration: ${err.message}`)
+        setToastSeverity('error')
+        setToastOpen(true)
+      }
+    }
+    input.click()
+  }
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Toolbar
@@ -424,6 +536,9 @@ export default function App() {
         mode={mode}
         modesConfig={modesConfig}
         onChangeMode={onChangeMode}
+        onSaveConfig={handleSaveConfig}
+        onLoadConfig={handleLoadConfig}
+        onCopyLink={handleCopyLink}
       />
 
       <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
@@ -457,6 +572,9 @@ export default function App() {
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
                 selectedProperty={selectedProperty}
+                selectedRelease={selectedRelease}
+                selectedPreset={selectedPreset}
+                args={args}
                 onJarContextChange={handleJarContextChange}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
@@ -464,6 +582,9 @@ export default function App() {
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
                 onWitnessAnnotate={setWitnessData}
+                onReleaseChange={setSelectedRelease}
+                onPresetChange={setSelectedPreset}
+                onArgsChange={setArgs}
                 presets={(modesConfig[mode]?.presets)||[]}
                 jar={(modesConfig[mode]?.jar)||''}
               />
@@ -499,6 +620,9 @@ export default function App() {
                 signedIn={signedIn}
                 verifyRunning={verifyRunning}
                 selectedProperty={selectedProperty}
+                selectedRelease={selectedRelease}
+                selectedPreset={selectedPreset}
+                args={args}
                 onJarContextChange={handleJarContextChange}
                 onRun={runVerification}
                 onRefreshVersions={refreshThetaVersions}
@@ -506,6 +630,9 @@ export default function App() {
                 onStreamRetrieve={(ver, jar, cb) => signedIn ? startStreamingRetrieve(ver, jar, cb) : requestLoginForVersion(ver, jar)}
                 onCancelVerification={cancelVerification}
                 onWitnessAnnotate={setWitnessData}
+                onReleaseChange={setSelectedRelease}
+                onPresetChange={setSelectedPreset}
+                onArgsChange={setArgs}
                 presets={(modesConfig[mode]?.presets)||[]}
                 jar={(modesConfig[mode]?.jar)||''}
               />

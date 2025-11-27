@@ -1,8 +1,11 @@
 import React from 'react'
 import { AppBar, Toolbar as MuiToolbar, Button, Box, Typography, IconButton, Autocomplete, TextField } from '@mui/material'
 import GitHubIcon from '@mui/icons-material/GitHub'
+import SaveAltIcon from '@mui/icons-material/SaveAlt'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import LinkIcon from '@mui/icons-material/Link'
 
-export default function Toolbar({ signedIn = false, onOpenLogin, onLogout, mode = 'C', modesConfig = {}, onChangeMode }) {
+export default function Toolbar({ signedIn = false, onOpenLogin, onLogout, mode = 'C', modesConfig = {}, onChangeMode, onSaveConfig, onLoadConfig, onCopyLink }) {
   return (
     <AppBar position="static" className="app-toolbar" elevation={0} sx={{ backgroundColor: `var(--${(modesConfig[mode]?.color)||'ftsrg-accent-blue'}) !important` }}>
       <MuiToolbar sx={{ minHeight: 56, gap: 2 }}>
@@ -50,6 +53,32 @@ export default function Toolbar({ signedIn = false, onOpenLogin, onLogout, mode 
 
         {/* Spacer */}
         <Box sx={{ flex: 1 }} />
+
+        {/* Config Save/Load */}
+        <IconButton
+          color="inherit"
+          onClick={onSaveConfig}
+          title="Download config"
+          sx={{ p: 0.5 }}
+        >
+          <SaveAltIcon />
+        </IconButton>
+        <IconButton
+          color="inherit"
+          onClick={onLoadConfig}
+          title="Load config"
+          sx={{ p: 0.5 }}
+        >
+          <FolderOpenIcon />
+        </IconButton>
+        <IconButton
+          color="inherit"
+          onClick={onCopyLink}
+          title="Copy shareable link"
+          sx={{ p: 0.5 }}
+        >
+          <LinkIcon />
+        </IconButton>
 
         {/* Login/Logout */}
         {!signedIn ? (

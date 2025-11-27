@@ -292,7 +292,7 @@ router.post('/stream', async (req, res) => {
       await fsp.mkdir(runDir, { recursive: true }).catch(() => {});
       await fsp.appendFile(outputLogPath, '').catch(() => {});
       tailProc = spawn('tail', ['-n', '0', '-f', outputLogPath], { cwd: runDir });
-      tailProc.stdout.on('data', d => splitLines(d).forEach(l => l && send(`OUT: ${l}`)));
+      tailProc.stdout.on('data', d => splitLines(d).forEach(l => l && send(`DATA: ${l}`)));
       // Send tail stderr also as OUT per requirement
       tailProc.stderr.on('data', d => splitLines(d).forEach(l => l && send(`ERR: ${l}`)));
       tailProc.on('error', e => {

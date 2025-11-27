@@ -9,33 +9,59 @@ export default function OutputToolbar({
   selectedProperty = 'unreach-call.prp',
   presets = [],
   jar = '',
+  selectedRelease: controlledRelease,
+  selectedPreset: controlledPreset,
+  args: controlledArgs,
   onJarContextChange,
   onRun,
   onRefreshVersions,
   onRequestLogin,
-  onStreamRetrieve
+  onStreamRetrieve,
+  onReleaseChange,
+  onPresetChange,
+  onArgsChange
 }) {
-  const [selectedRelease, setSelectedRelease] = useState('')
-  const [args, setArgs] = useState('--input %in --property %prop --backend PORTFOLIO')
-  const [selectedPresetName, setSelectedPresetName] = useState('')
+  // Use controlled props if provided, otherwise maintain local state
+  const [localRelease, setLocalRelease] = useState('')
+  const [localArgs, setLocalArgs] = useState('--input %in --property %prop --backend PORTFOLIO')
+  const [localPresetName, setLocalPresetName] = useState('')
+  
+  // Check if controlled props are provided (even if empty string)
+  const hasControlledRelease = controlledRelease !== undefined
+  const hasControlledPreset = controlledPreset !== undefined
+  const hasControlledArgs = controlledArgs !== undefined
+  
+  const selectedRelease = hasControlledRelease ? controlledRelease : localRelease
+  const args = hasControlledArgs ? controlledArgs : localArgs
+  const selectedPresetName = hasControlledPreset ? controlledPreset : localPresetName
+  
+  const setSelectedRelease = (val) => {
+    if (onReleaseChange) onReleaseChange(val)
+    else setLocalRelease(val)
+  }
+  const setArgs = (val) => {
+    if (onArgsChange) onArgsChange(val)
+    else setLocalArgs(val)
+  }
+  const setSelectedPresetName = (val) => {
+    if (onPresetChange) onPresetChange(val)
+    else setLocalPresetName(val)
+  }
 
   const XCFA_DEFAULT = '--input %in --property %prop --backend PORTFOLIO'
   const XSTS_DEFAULT = 'CEGAR --model %in --inline-property %prop'
 
-  // Restore release from localStorage only once after releases load
+  // Initialize release from releases list if not already set
   const didRestoreRelease = useRef(false)
   useEffect(() => {
     if (didRestoreRelease.current) return
     if (releases.length === 0) return
-    const saved = localStorage.getItem('theta.selectedRelease')
-    const tags = releases.map(r => r.tag)
-    if (saved && tags.includes(saved)) {
-      setSelectedRelease(saved)
-    } else if (!selectedRelease) {
+    // Only set default if no release is already selected (from saved config)
+    if (!selectedRelease && !hasControlledRelease && releases[0]) {
       setSelectedRelease(releases[0].tag)
     }
     didRestoreRelease.current = true
-  }, [releases])
+  }, [releases, selectedRelease, hasControlledRelease])
 
   // No jar selector: jar derived from selected preset
 
@@ -45,24 +71,24 @@ export default function OutputToolbar({
   const selectedJar = jar
   const jarRetrieved = !!(selectedJar && currentVersion && currentVersion.jars.includes(selectedJar))
 
-  // Restore preset from localStorage if valid for current jar type; else first preset or Custom
+  // Auto-select first preset only if we don't have a controlled value
   useEffect(() => {
     const names = filteredPresets.map(p => p.name)
-    const savedPreset = localStorage.getItem('theta.selectedPresetName')
-    if (names.length > 0) {
-      if (savedPreset && names.includes(savedPreset)) {
-        setSelectedPresetName(savedPreset)
-        const preset = filteredPresets.find(p => p.name === savedPreset)
-        setArgs((preset && preset.args) || XCFA_DEFAULT)
-      } else if (!selectedPresetName || !names.includes(selectedPresetName)) {
-        setSelectedPresetName(names[0])
-        const preset0 = filteredPresets[0]
-        setArgs((preset0 && preset0.args) || XCFA_DEFAULT)
-      }
-    } else {
-      setSelectedPresetName('')
-      const savedCustomArgs = localStorage.getItem('theta.customArgs')
-      setArgs(savedCustomArgs || XCFA_DEFAULT)
+    
+    if (names.length === 0) {
+      return
+    }
+    
+    // If we have a controlled preset from parent (saved config), use it (even if empty for Custom)
+    if (hasControlledPreset) {
+      return
+    }
+    
+    // Only auto-select if the current selection is invalid
+    if (!selectedPresetName || !names.includes(selectedPresetName)) {
+      setSelectedPresetName(names[0])
+      const preset0 = filteredPresets[0]
+      setArgs((preset0 && preset0.args) || XCFA_DEFAULT)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredPresets.map(p => p.name).join('|')])
@@ -70,20 +96,6 @@ export default function OutputToolbar({
   useEffect(() => {
     if (onJarContextChange) onJarContextChange({ selectedRelease })
   }, [selectedRelease, onJarContextChange])
-
-  // Persist release/jar/preset/args selections
-  useEffect(() => {
-    if (selectedRelease) localStorage.setItem('theta.selectedRelease', selectedRelease)
-  }, [selectedRelease])
-  // No need to persist jar; derived from preset
-  useEffect(() => {
-    // Empty string represents Custom
-    localStorage.setItem('theta.selectedPresetName', selectedPresetName || '')
-  }, [selectedPresetName])
-  useEffect(() => {
-    // Only persist custom args (when Custom selected)
-    if (!selectedPresetName) localStorage.setItem('theta.customArgs', args)
-  }, [args, selectedPresetName])
 
   useEffect(() => {
     const isDefaultLike = (val) => !val || val.trim() === '' || val.trim() === XCFA_DEFAULT || val.trim() === XSTS_DEFAULT
@@ -169,8 +181,6 @@ export default function OutputToolbar({
             setSelectedPresetName(name === 'Custom' ? '' : name)
             const preset = filteredPresets.find(p => p.name === name)
             if (preset && preset.args) setArgs(preset.args)
-            // Persist selection
-            localStorage.setItem('theta.selectedPresetName', name === 'Custom' ? '' : name)
           }}
           sx={{
             flexGrow: 1,

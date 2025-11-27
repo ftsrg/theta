@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Tabs, Tab, Box, Collapse, IconButton, Button } from '@mui/material'
+import { Tabs, Tab, Box, Collapse, IconButton, Button, Checkbox, FormControlLabel } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
@@ -8,11 +8,19 @@ import yaml from 'js-yaml'
 
 export default function OutputTabs({ result, onWitnessAnnotate }) {
   const [tab, setTab] = useState(0)
-  const stderr = result ? (result.stderr || '') : ''
-  const stdout = result ? (result.stdout || '') : ''
+  const stream = result?.stream || []
   const generated = Array.isArray(result?.generatedFiles) ? result.generatedFiles : []
   const [openMap, setOpenMap] = useState({})
+  const [debugMode, setDebugMode] = useState(() => {
+    const saved = localStorage.getItem('theta.debugMode')
+    return saved === 'true'
+  })
   const toggle = (p) => setOpenMap(m => ({ ...m, [p]: !m[p] }))
+  
+  // Persist debug mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('theta.debugMode', debugMode)
+  }, [debugMode])
 
   // Auto-apply witness.yml when it becomes available
   useEffect(() => {
@@ -171,6 +179,20 @@ export default function OutputTabs({ result, onWitnessAnnotate }) {
           <Tab label="Output" />
           <Tab label="Generated Files" />
         </Tabs>
+        {tab === 0 && (
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={debugMode}
+                onChange={(e) => setDebugMode(e.target.checked)}
+                size="small"
+                sx={{ color: '#cfd8e6', '&.Mui-checked': { color: 'rgb(251, 139, 36)' } }}
+              />
+            }
+            label="Debug"
+            sx={{ mr: 1, color: '#cfd8e6', '& .MuiTypography-root': { fontSize: 14 } }}
+          />
+        )}
         {tab === 1 && generated.length > 0 && (
           <Button
             size="small"
@@ -190,9 +212,20 @@ export default function OutputTabs({ result, onWitnessAnnotate }) {
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: '#0f1115', p: 1, fontFamily: 'monospace', fontSize: 12 }}>
         {tab === 0 && (
           <div style={{ whiteSpace: 'pre-wrap' }}>
-            {stderr && <pre style={{ margin: 0, color: '#ff8585', whiteSpace: 'pre-wrap' }}>{stderr}</pre>}
-            {stdout && <pre style={{ margin: 0, color: '#ddd', whiteSpace: 'pre-wrap' }}>{stdout}</pre>}
-            {!stderr && !stdout && <pre style={{ margin: 0, color: '#555', whiteSpace: 'pre-wrap' }}>// no output</pre>}
+            {stream.length === 0 && <pre style={{ margin: 0, color: '#555', whiteSpace: 'pre-wrap' }}>// no output</pre>}
+            {stream.filter(line => {
+              // Filter based on debug mode: always show DATA, conditionally show ERR/OUT
+              if (line.type === 'DATA') return true
+              return debugMode
+            }).map((line, idx) => {
+              // Color-code based on type: DATA=white, OUT=light-gray, ERR=red
+              const color = line.type === 'ERR' ? '#ff8585' : line.type === 'OUT' ? '#aaa' : '#fff'
+              return (
+                <pre key={idx} style={{ margin: 0, color, whiteSpace: 'pre-wrap' }}>
+                  {line.text}
+                </pre>
+              )
+            })}
           </div>
         )}
         {tab === 1 && (
