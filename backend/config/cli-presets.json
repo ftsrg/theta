@@ -13,7 +13,7 @@
         },
         {
           "name": "Ordering Consistency",
-          "args": "--input %in --backend OC"
+          "args": "--input %in --property %prop --backend OC --datarace-to-reachability"
         },
         {
           "name": "CHC",
