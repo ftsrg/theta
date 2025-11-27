@@ -7,10 +7,9 @@ Type=simple
 User=cloud
 WorkingDirectory=/home/cloud/theta-webui/backend
 Environment="NODE_ENV=production"
-Environment="PORT=443"
 
 # Main process: run the backend server
-ExecStart=/usr/bin/bash -c 'cd /home/cloud/theta-webui/backend && exec node src/server.js'
+ExecStart=/usr/bin/bash -c 'cd /home/cloud/theta-webui/backend && PORT=443 exec node src/server.js'
 
 # Restart policy
 Restart=always
