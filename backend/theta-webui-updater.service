@@ -10,7 +10,7 @@ WorkingDirectory=/home/cloud/theta-webui/backend
 # Check for updates and restart backend if changes detected
 ExecStart=/usr/bin/bash -c '\
   cd /home/cloud/theta-webui/backend && \
-  git fetch origin && \
+  git fetch --all  && \
   LOCAL=$(git rev-parse HEAD) && \
   REMOTE=$(git rev-parse @{u}) && \
   if [ "$LOCAL" != "$REMOTE" ]; then \
