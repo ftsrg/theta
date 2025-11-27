@@ -77,9 +77,9 @@ Edit the three service files to replace current values:
 
 3. **Install systemd service files:**
 ```bash
-sudo ln "$PWD"/theta-webui-backend.service /etc/systemd/system/
-sudo ln "$PWD"/theta-webui-updater.service /etc/systemd/system/
-sudo ln "$PWD"/theta-webui-updater.timer /etc/systemd/system/
+sudo ln -sf "$PWD"/theta-webui-backend.service /etc/systemd/system/
+sudo ln -sf "$PWD"/theta-webui-updater.service /etc/systemd/system/
+sudo ln -sf "$PWD"/theta-webui-updater.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
