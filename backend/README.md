@@ -59,6 +59,78 @@ See root `README.md` for detailed list.
 - Per-process timeout and output buffer limits applied.
 - Temporary source file removed after execution.
 
+## Production Deployment with Systemd
+
+### Installation
+
+1. **Install dependencies:**
+```bash
+cd backend
+npm install --production
+```
+
+2. **Configure the systemd service files:**
+
+Edit the three service files to replace current values:
+- your Linux username (e.g., `cloud`)
+- absolute path to backend directory (e.g., `/home/cloud/theta-webui/backend`)
+
+3. **Install systemd service files:**
+```bash
+sudo ln "$PWD"/theta-webui-backend.service /etc/systemd/system/
+sudo ln "$PWD"/theta-webui-updater.service /etc/systemd/system/
+sudo ln "$PWD"/theta-webui-updater.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+```
+
+4. **Enable and start services:**
+```bash
+# Start the backend server
+sudo systemctl enable --now theta-webui-backend.service
+
+# Start the auto-updater timer (checks for git updates every 5 minutes)
+sudo systemctl enable --now theta-webui-updater.timer
+```
+
+5. **Verify status:**
+```bash
+# Check backend server status
+sudo systemctl status theta-webui-backend.service
+
+# Check updater timer status
+sudo systemctl status theta-webui-updater.timer
+
+# View logs
+sudo journalctl -u theta-webui-backend.service -f
+sudo journalctl -u theta-webui-updater.service -f
+```
+
+### How It Works
+
+- **theta-webui-backend.service**: Runs the Node.js backend server continuously
+- **theta-webui-updater.service**: One-shot service that pulls from git and restarts backend if changes detected
+- **theta-webui-updater.timer**: Triggers the updater service every 5 minutes
+
+The updater compares local and remote commit hashes. If they differ, it pulls changes and automatically restarts the backend service.
+
+### Manual Control
+
+```bash
+# Manually trigger update check
+sudo systemctl start theta-webui-updater.service
+
+# Restart backend manually
+sudo systemctl restart theta-webui-backend.service
+
+# Stop services
+sudo systemctl stop theta-webui-backend.service
+sudo systemctl stop theta-webui-updater.timer
+
+# View recent logs
+sudo journalctl -u theta-webui-backend.service -n 50
+sudo journalctl -u theta-webui-updater.service -n 20
+```
+
 ## Development
 ```
 # Ensure Node 18 (matches Docker + avoids ICU issues)

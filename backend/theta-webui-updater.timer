@@ -1,0 +1,11 @@
+[Unit]
+Description=Theta WebUI Auto-Updater Timer (runs every 5 minutes)
+
+[Timer]
+# Run every 5 minutes
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

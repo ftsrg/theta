@@ -1,0 +1,24 @@
+[Unit]
+Description=Theta WebUI Backend Server with Auto-Update
+After=network.target
+
+[Service]
+Type=simple
+User=cloud
+WorkingDirectory=/home/cloud/theta-webui/backend
+Environment="NODE_ENV=production"
+
+# Main process: run the backend server
+ExecStart=/usr/bin/bash -c 'cd /home/cloud/theta-webui/backend && exec node src/server.js'
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=theta-backend
+
+[Install]
+WantedBy=multi-user.target
