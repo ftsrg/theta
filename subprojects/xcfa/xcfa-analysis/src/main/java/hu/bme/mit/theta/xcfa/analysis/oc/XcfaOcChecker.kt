@@ -132,8 +132,13 @@ class XcfaOcChecker(
             if (ocChecker is XcfaOcCorrectnessValidator)
               return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
             if (memoryModel == SC) {
-              val trace = XcfaOcTraceExtractor(xcfa, ocChecker, eg).trace
-              SafetyResult.unsafe<EmptyProof, Cex>(trace, EmptyProof.getInstance())
+              val trace = try {
+                XcfaOcTraceExtractor(xcfa, ocChecker, eg).trace
+              } catch (e: Exception) {
+                logger.info("OC checker trace extraction failed: ${e.message}")
+                EmptyCex.getInstance()
+              }
+              SafetyResult.unsafe(trace, EmptyProof.getInstance())
             } else {
               SafetyResult.unsafe<EmptyProof, Cex>(EmptyCex.getInstance(), EmptyProof.getInstance())
             }

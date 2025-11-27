@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
@@ -65,6 +66,12 @@ internal class XcfaOcTraceExtractor(
       var lastEdge: XcfaEdge = eventTrace[0].edge
 
       for ((index, event) in eventTrace.withIndex()) {
+        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let {
+          (midActions, midStates) ->
+          actionList.addAll(midActions)
+          stateList.addAll(midStates)
+        }
+
         valuation[event.const]?.let {
           val newVal =
             explState.innerState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
@@ -73,12 +80,6 @@ internal class XcfaOcTraceExtractor(
 
         val nextEdge = eventTrace.getOrNull(index + 1)?.edge
         if (nextEdge != lastEdge) {
-          extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let {
-            (midActions, midStates) ->
-            actionList.addAll(midActions)
-            stateList.addAll(midStates)
-          }
-
           val state = stateList.last()
           actionList.add(XcfaAction(event.pid, lastEdge))
           stateList.add(
@@ -166,17 +167,17 @@ internal class XcfaOcTraceExtractor(
     to: XcfaLocation,
     explState: ExplState,
   ): Pair<List<XcfaAction>, List<XcfaState<PtrState<ExplState>>>>? {
+    check(state.mutexes[ATOMIC_MUTEX.name]?.contains(pid) != false) {
+      "Atomic mutex is owned by another process"
+    }
     val actions = mutableListOf<XcfaAction>()
     val states = mutableListOf<XcfaState<PtrState<ExplState>>>()
     var currentState = state
 
     // extend the trace until the target location is reached
-    while (
-      currentState.mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name]?.equals(pid) == false ||
-        currentState.processes[pid]!!.locs.peek() != to
-    ) {
+    while (currentState.processes[pid]!!.locs.peek() != to) {
       // finish atomic block first
-      val stepPid = currentState.mutexes[AtomicFenceLabel.ATOMIC_MUTEX.name]?.first() ?: pid
+      val stepPid = currentState.mutexes[ATOMIC_MUTEX.name]?.first() ?: pid
       val edge =
         currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
       actions.add(XcfaAction(stepPid, edge))
@@ -203,8 +204,8 @@ internal class XcfaOcTraceExtractor(
   private fun Map<String, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<String, Set<Int>> {
     val map = this.toMutableMap()
     edge.getFlatLabels().forEach {
-      if (it is AtomicBeginLabel) map[AtomicFenceLabel.ATOMIC_MUTEX.name] = setOf(pid)
-      if (it is AtomicEndLabel) map.remove(AtomicFenceLabel.ATOMIC_MUTEX.name)
+      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX.name] = setOf(pid)
+      if (it is AtomicEndLabel) map.remove(ATOMIC_MUTEX.name)
     }
     return map
   }
