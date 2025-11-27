@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
@@ -199,10 +200,13 @@ class XstsCliTracegen :
       traceDirPath.mkdir()
     }
 
-    // TODO FIX: if prop at end of xsts, it uses that, not this one
     val propStream = ByteArrayInputStream(("prop {\n" + "\ttrue\n" + "}\n").toByteArray())
     val xsts =
       XstsDslManager.createXsts(SequenceInputStream(FileInputStream(modelFile), propStream))
+    if (xsts.prop != TrueExpr.getInstance())
+      throw RuntimeException(
+        "XSTS model for trace generation should have `true` as property or no property."
+      )
     val sw = Stopwatch.createStarted()
     val checker: XstsTracegenConfig<out State, out Action, out Prec> =
       XstsTracegenBuilder(Z3SolverFactory.getInstance(), true)
