@@ -13,19 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.xsts.utils
 
 import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
+import java.io.File
+import java.util.stream.Stream
+import kotlin.streams.asStream
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.File
-import java.util.stream.Stream
-import kotlin.streams.asStream
-
 
 class ParsingTests {
 
@@ -44,9 +42,7 @@ class ParsingTests {
   }
 
   fun tryParse(file: File): XSTS {
-    return file.inputStream().use {
-      XstsDslManager.createXsts(it)
-    }
+    return file.inputStream().use { XstsDslManager.createXsts(it) }
   }
 
   @ParameterizedTest
@@ -58,9 +54,6 @@ class ParsingTests {
   @ParameterizedTest
   @MethodSource
   fun `Incorrect XSTS models should fail to parse`(file: File) {
-    Assertions.assertThrows(ParseCancellationException::class.java) {
-      tryParse(file)
-    }
+    Assertions.assertThrows(ParseCancellationException::class.java) { tryParse(file) }
   }
-
 }
