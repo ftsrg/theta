@@ -128,7 +128,7 @@ public class XcfaTraceConcretizer {
         Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         final XcfaLocation placeholder =
                 new XcfaLocation("__THETA__placeholder__", EmptyMetaData.INSTANCE);
-        int nextCount= 0;
+        int nextCount = 0;
         for (int i = 0; i < trace.getActions().size(); ++i) {
             final var action = trace.getAction(i);
             var labels = getFlatLabels(action.getLabel());
@@ -190,7 +190,10 @@ public class XcfaTraceConcretizer {
                 sbeActions.add(newAction);
                 nextW = newAction.nextWriteTriples();
                 sbeStates.add(nextState);
-                nextCount = newAction.getCnts().values().stream().max(Comparator.naturalOrder()).orElse(nextCount);
+                nextCount =
+                        newAction.getCnts().values().stream()
+                                .max(Comparator.naturalOrder())
+                                .orElse(nextCount);
             }
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
