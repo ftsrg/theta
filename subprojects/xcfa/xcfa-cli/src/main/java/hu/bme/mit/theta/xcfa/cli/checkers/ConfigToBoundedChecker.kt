@@ -53,6 +53,7 @@ fun getBoundedChecker(
 
   val baseChecker = { monolithicExpr: MonolithicExpr ->
     BoundedChecker(
+      shouldGiveUp = { if (boundedConfig.maxBound == 0) false else it > boundedConfig.maxBound },
       monolithicExpr = monolithicExpr,
       bmcSolver =
         tryGetSolver(boundedConfig.bmcConfig.bmcSolver, boundedConfig.bmcConfig.validateBMCSolver)
