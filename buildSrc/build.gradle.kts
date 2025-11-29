@@ -88,7 +88,7 @@ fun generateVersionsSource(): String {
 tasks {
     withType<KotlinCompile>() {
         kotlinOptions {
-            jvmTarget = "17"
+            jvmTarget = "21"
         }
     }
     val generateVersions by creating {
