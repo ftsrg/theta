@@ -30,10 +30,8 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ExprSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -46,6 +44,7 @@ public class MddExpressionTemplate implements MddNode.Template {
     private final Function<Object, Decl> extractDecl;
     private final SolverPool solverPool;
     private final boolean transExpr;
+    private final boolean knownSat;
 
     private static Solver lazySolver;
 
@@ -70,24 +69,31 @@ public class MddExpressionTemplate implements MddNode.Template {
             Expr<BoolType> expr,
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
-            boolean transExpr) {
+            boolean transExpr,
+            boolean knownSat) {
         this.expr = expr;
         this.extractDecl = extractDecl;
         this.solverPool = solverPool;
         this.transExpr = transExpr;
+        this.knownSat = knownSat;
     }
 
     public static MddExpressionTemplate of(
             Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, false);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, false, false);
     }
 
     public static MddExpressionTemplate of(
+        Expr<BoolType> expr, Function<Object, Decl> extractDecl, SolverPool solverPool, boolean transExpr) {
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, false);
+    }
+
+    public static MddExpressionTemplate ofKnownSat(
             Expr<BoolType> expr,
             Function<Object, Decl> extractDecl,
             SolverPool solverPool,
             boolean transExpr) {
-        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr);
+        return new MddExpressionTemplate(expr, extractDecl, solverPool, transExpr, true);
     }
 
     @Override
@@ -110,7 +116,7 @@ public class MddExpressionTemplate implements MddNode.Template {
         //        }
 
         // Check if terminal 0
-        if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
+        if (!knownSat && (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool))) {
             return null;
         }
 
@@ -128,7 +134,8 @@ public class MddExpressionTemplate implements MddNode.Template {
                                                 canonizedExpr,
                                                 o -> (Decl) o,
                                                 solverPool,
-                                                transExpr));
+                                                transExpr,
+                                                knownSat));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 childNode = mddGraph.getNodeFor(canonizedExpr);
@@ -194,7 +201,8 @@ public class MddExpressionTemplate implements MddNode.Template {
                                                     overApproxExpr,
                                                     extractDecl,
                                                     solverPool,
-                                                    transExpr));
+                                                    transExpr,
+                                                    knownSat));
                 } else {
                     final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                     cont = mddGraph.getNodeFor(overApproxExpr);

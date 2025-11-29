@@ -596,7 +596,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                 representation.mddVariable.getLower();
                         if (lower.isPresent()) {
                             final MddExpressionTemplate template =
-                                    MddExpressionTemplate.of(
+                                    MddExpressionTemplate.ofKnownSat(
                                             substitutedExpr,
                                             o -> (Decl) o,
                                             representation.solverPool,
