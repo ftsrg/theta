@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.common.parser;
 
 import static com.google.common.collect.ImmutableList.of;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -24,13 +24,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class LispLexerTest {
 
     private static final Token LPAREN = Token.of("(", TokenType.LPAREN);
@@ -38,14 +34,9 @@ public final class LispLexerTest {
     private static final Token ATOM1 = Token.of("atom1", TokenType.ATOM);
     private static final Token ATOM2 = Token.of("atom2", TokenType.ATOM);
     private static final Token ATOM3 = Token.of("atom3", TokenType.ATOM);
-
-    @Parameter(0)
     public String string;
-
-    @Parameter(1)
     public List<Token> tokens;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -72,8 +63,10 @@ public final class LispLexerTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String string, List<Token> tokens) {
+        initLispLexerTest(string, tokens);
         // Arrange
         final Reader reader = new StringReader(string);
         final LispLexer lexer = new LispLexer(reader);
@@ -89,5 +82,10 @@ public final class LispLexerTest {
 
         // Assert
         assertEquals(tokens, actTokens);
+    }
+
+    public void initLispLexerTest(String string, List<Token> tokens) {
+        this.string = string;
+        this.tokens = tokens;
     }
 }

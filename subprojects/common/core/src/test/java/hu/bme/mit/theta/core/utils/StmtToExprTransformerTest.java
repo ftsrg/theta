@@ -33,26 +33,17 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class StmtToExprTransformerTest {
 
     private static final VarDecl<IntType> VX = Decls.Var("x", Int());
     private static VarDecl<IntType> TEMP0 = VarPoolUtil.requestInt();
-
-    @Parameter(0)
     public Stmt stmt;
-
-    @Parameter(1)
     public Collection<Expr<BoolType>> expectedExprs;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -103,13 +94,20 @@ public class StmtToExprTransformerTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Stmt stmt, Collection<Expr<BoolType>> expectedExprs) {
+        initStmtToExprTransformerTest(stmt, expectedExprs);
         VarPoolUtil.returnInt(TEMP0);
 
         final StmtUnfoldResult unfoldResult =
                 StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
         final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
-        Assert.assertEquals(expectedExprs, actualExprs);
+        Assertions.assertEquals(expectedExprs, actualExprs);
+    }
+
+    public void initStmtToExprTransformerTest(Stmt stmt, Collection<Expr<BoolType>> expectedExprs) {
+        this.stmt = stmt;
+        this.expectedExprs = expectedExprs;
     }
 }

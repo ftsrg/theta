@@ -21,26 +21,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class StsDslTest {
-
-    @Parameter(0)
     public String filepath;
-
-    @Parameter(1)
     public String propertyName;
-
-    @Parameter(2)
     public int varCount;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -49,11 +38,19 @@ public class StsDslTest {
                 });
     }
 
-    @Test
-    public void test() throws FileNotFoundException, IOException {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String filepath, String propertyName, int varCount) throws FileNotFoundException, IOException {
+        initStsDslTest(filepath, propertyName, varCount);
         final InputStream inputStream = StsDslTest.class.getResourceAsStream(filepath);
         final StsSpec spec = StsDslManager.createStsSpec(inputStream);
         final STS sts = spec.createProp(propertyName);
-        Assert.assertEquals(varCount, sts.getVars().size());
+        Assertions.assertEquals(varCount, sts.getVars().size());
+    }
+
+    public void initStsDslTest(String filepath, String propertyName, int varCount) {
+        this.filepath = filepath;
+        this.propertyName = propertyName;
+        this.varCount = varCount;
     }
 }

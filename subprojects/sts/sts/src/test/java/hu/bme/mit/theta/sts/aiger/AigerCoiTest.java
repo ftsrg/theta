@@ -20,26 +20,15 @@ import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class AigerCoiTest {
-
-    @Parameter(value = 0)
     public String path;
-
-    @Parameter(value = 1)
     public int sizeOld;
-
-    @Parameter(value = 2)
     public int sizeNew;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -51,11 +40,19 @@ public class AigerCoiTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String path, int sizeOld, int sizeNew) throws IOException {
+        initAigerCoiTest(path, sizeOld, sizeNew);
         final AigerSystem system = AigerParser.parse("src/test/resources/" + path);
-        Assert.assertEquals(sizeOld, system.getNodes().size());
+        Assertions.assertEquals(sizeOld, system.getNodes().size());
         AigerCoi.apply(system);
-        Assert.assertEquals(sizeNew, system.getNodes().size());
+        Assertions.assertEquals(sizeNew, system.getNodes().size());
+    }
+
+    public void initAigerCoiTest(String path, int sizeOld, int sizeNew) {
+        this.path = path;
+        this.sizeOld = sizeOld;
+        this.sizeNew = sizeNew;
     }
 }

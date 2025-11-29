@@ -41,7 +41,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -52,14 +52,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class CoreParserTest {
 
     private static final Decl<BoolType> DX = Const("x", Bool());
@@ -77,16 +73,11 @@ public final class CoreParserTest {
     private static final Expr<IntType> B = DB.getRef();
     private static final Expr<IntType> C = DC.getRef();
     private static final Expr<FuncType<IntType, BoolType>> F = DF.getRef();
-
-    @Parameter(0)
     public String string;
-
-    @Parameter(1)
     public Expr<?> expectedExpr;
 
     private CoreParser parser;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -117,7 +108,7 @@ public final class CoreParserTest {
                 });
     }
 
-    @Before
+    @BeforeEach
     public void before() {
         final Reader reader = new StringReader(string);
         parser = new CoreParser(reader);
@@ -130,12 +121,20 @@ public final class CoreParserTest {
         parser.declare(DF);
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String string, Expr<?> expectedExpr) {
+        initCoreParserTest(string, expectedExpr);
         // Act
         final Expr<?> actualExpr = parser.expr();
 
         // Assert
         assertEquals(expectedExpr, actualExpr);
+    }
+
+    public void initCoreParserTest(String string, Expr<?> expectedExpr) {
+        this.string = string;
+        this.expectedExpr = expectedExpr;
+        this.before();
     }
 }

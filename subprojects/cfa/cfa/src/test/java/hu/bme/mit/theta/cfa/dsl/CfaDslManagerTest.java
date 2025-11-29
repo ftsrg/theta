@@ -20,32 +20,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class CfaDslManagerTest {
-
-    @Parameter(0)
     public String filepath;
-
-    @Parameter(1)
     public int varCount;
-
-    @Parameter(2)
     public int locCount;
-
-    @Parameter(3)
     public int edgeCount;
-
-    @Parameter(4)
     public int stmtCount;
 
-    @Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -60,13 +45,23 @@ public final class CfaDslManagerTest {
                 });
     }
 
-    @Test
-    public void test() throws IOException {
+    @MethodSource("data")
+    @ParameterizedTest()
+    public void test(String filepath, int varCount, int locCount, int edgeCount, int stmtCount) throws IOException {
+        initCfaDslManagerTest(filepath, varCount, locCount, edgeCount, stmtCount);
         final InputStream inputStream = getClass().getResourceAsStream(filepath);
         final CFA cfa = CfaDslManager.createCfa(inputStream);
-        Assert.assertEquals(varCount, cfa.getVars().size());
-        Assert.assertEquals(locCount, cfa.getLocs().size());
-        Assert.assertEquals(edgeCount, cfa.getEdges().size());
-        Assert.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
+        Assertions.assertEquals(varCount, cfa.getVars().size());
+        Assertions.assertEquals(locCount, cfa.getLocs().size());
+        Assertions.assertEquals(edgeCount, cfa.getEdges().size());
+        Assertions.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
+    }
+
+    public void initCfaDslManagerTest(String filepath, int varCount, int locCount, int edgeCount, int stmtCount) {
+        this.filepath = filepath;
+        this.varCount = varCount;
+        this.locCount = locCount;
+        this.edgeCount = edgeCount;
+        this.stmtCount = stmtCount;
     }
 }

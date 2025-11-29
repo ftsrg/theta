@@ -30,7 +30,7 @@ dependencies {
 
 
 rewrite {
-  activeRecipe("org.openrewrite.java.testing.junit5.UpdateTestAnnotation")
+  activeRecipe("org.openrewrite.java.testing.mockito.MockitoJUnitRunnerToExtension")
   setExportDatatables(true)
 }
 

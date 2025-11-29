@@ -33,7 +33,7 @@ import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.SequenceInputStream
-import org.junit.Test
+
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 

@@ -20,9 +20,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -33,30 +31,23 @@ import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.kframework.mpfr.BigFloat;
 
-@RunWith(Parameterized.class)
 public class FpTypeTest {
-
-    @Parameterized.Parameter(0)
     public Class<?> exprType;
-
-    @Parameterized.Parameter(1)
     public Expr<?> expected;
-
-    @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @Parameterized.Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return FpTestUtils.GetOperations().collect(Collectors.toUnmodifiableList());
     }
 
-    @Test
-    public void testFp() {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}, expected: {1}, actual: {2}")
+    public void testFp(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        initFpTypeTest(exprType, expected, actual);
         // Sanity check
         assertNotNull(exprType);
         assertNotNull(expected);
@@ -64,19 +55,19 @@ public class FpTypeTest {
 
         // Type checks
         assertTrue(
+                exprType.isInstance(actual),
                 "The type of actual is "
                         + actual.getClass().getName()
                         + " instead of "
-                        + exprType.getName(),
-                exprType.isInstance(actual));
+                        + exprType.getName());
         assertEquals(
+                expected.getType(),
+                actual.getType(),
                 "The type of expected ("
                         + expected.getType()
                         + ") must match the type of actual ("
                         + actual.getType()
-                        + ")",
-                expected.getType(),
-                actual.getType());
+                        + ")");
 
         // Equality check
         Valuation val = ImmutableValuation.builder().build();
@@ -102,10 +93,16 @@ public class FpTypeTest {
                                                 FpUtils.getMathContext(
                                                         (FpType) actual.getType(), RNE)),
                                         (FpType) actual.getType()));
-                assertEquals("%s".formatted(actual.eval(val)), Bool(true), leq.eval(val));
+                assertEquals(Bool(true), leq.eval(val), "%s".formatted(actual.eval(val)));
             }
         } else {
             assertEquals(expected, actual.eval(val));
         }
+    }
+
+    public void initFpTypeTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {
+        this.exprType = exprType;
+        this.expected = expected;
+        this.actual = actual;
     }
 }

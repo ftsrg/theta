@@ -25,24 +25,19 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+
 import java.util.*
-import org.junit.Assert
-import org.junit.Test
-import org.junit.jupiter.api.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 
-@RunWith(Parameterized::class)
-class VarCollectorStmtVisitorTest(
-  private val stmt: Stmt,
-  private val inputVars: Set<VarDecl<*>>,
-  private val expectedVars: Set<VarDecl<*>>,
-) {
+class VarCollectorStmtVisitorTest {
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun test(stmt: Stmt, inputVars: Set<VarDecl<*>>, expectedVars: Set<VarDecl<*>>) {
     val vars = VarCollectorStmtVisitor.visitAll(listOf(stmt), inputVars)
-    Assert.assertEquals(expectedVars, vars)
+    Assertions.assertEquals(expectedVars, vars)
   }
 
   companion object {
@@ -52,7 +47,6 @@ class VarCollectorStmtVisitorTest(
     private val VC: VarDecl<IntType?> = Decls.Var("d", IntExprs.Int())
 
     @JvmStatic
-    @Parameterized.Parameters
     fun data(): Collection<Array<Any>> {
       return listOf(
         arrayOf(Stmts.Skip(), emptySet<VarDecl<*>>(), emptySet<VarDecl<*>>()),

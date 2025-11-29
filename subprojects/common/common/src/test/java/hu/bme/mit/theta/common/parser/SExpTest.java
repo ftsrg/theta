@@ -18,33 +18,22 @@ package hu.bme.mit.theta.common.parser;
 import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.common.parser.SExpr.atom;
 import static hu.bme.mit.theta.common.parser.SExpr.list;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public final class SExpTest {
 
     private static final String A = "A";
     private static final String B = "B";
     private static final String C = "C";
-
-    @Parameter(0)
     public Object object;
-
-    @Parameter(1)
     public SExpr sexpr;
-
-    @Parameter(2)
     public String string;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -62,21 +51,33 @@ public final class SExpTest {
                 });
     }
 
-    @Test
-    public void testBuild() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void testBuild(Object object, SExpr sexpr, String string) {
+        initSExpTest(object, sexpr, string);
         final SExpr actSexpr = SExpr.build(object);
         assertEquals(sexpr, actSexpr);
     }
 
-    @Test
-    public void testParse() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void testParse(Object object, SExpr sexpr, String string) {
+        initSExpTest(object, sexpr, string);
         final SExpr actSexpr = SExpr.parse(string);
         assertEquals(sexpr, actSexpr);
     }
 
-    @Test
-    public void testToString() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void testToString(Object object, SExpr sexpr, String string) {
+        initSExpTest(object, sexpr, string);
         final String actString = sexpr.toString();
         assertEquals(string, actString);
+    }
+
+    public void initSExpTest(Object object, SExpr sexpr, String string) {
+        this.object = object;
+        this.sexpr = sexpr;
+        this.string = string;
     }
 }

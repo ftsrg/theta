@@ -33,12 +33,10 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import java.io.FileInputStream
 import junit.framework.TestCase.fail
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class LtlCheckTestWithCfaPred(
   private val cfaName: String,
   private val ltlExpr: String,
@@ -74,7 +72,6 @@ class LtlCheckTestWithCfaPred(
       )
 
     @JvmStatic
-    @Parameterized.Parameters(name = "{3}-{4}: {0}")
     fun params() =
       listOf(LoopCheckerSearchStrategy.GDFS, LoopCheckerSearchStrategy.NDFS).flatMap { search ->
         listOf(ASGTraceCheckerStrategy.DIRECT_REFINEMENT, ASGTraceCheckerStrategy.BOUNDED_UNROLLING)
@@ -82,8 +79,15 @@ class LtlCheckTestWithCfaPred(
       }
   }
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("params")
+  fun test(
+    cfaName: String,
+    ltlExpr: String,
+    result: Boolean,
+    searchStrategy: LoopCheckerSearchStrategy,
+    refinerStrategy: ASGTraceCheckerStrategy,
+  ) {
     abstractionSolver.reset()
     var cfaI: CFA?
     FileInputStream(String.format("src/test/resources/cfa/%s.cfa", cfaName)).use { inputStream ->
@@ -126,6 +130,6 @@ class LtlCheckTestWithCfaPred(
         nextSideFunction = NextSideFunctions.Alternating(),
       )
 
-    Assert.assertEquals(result, checker.check(configBuilder.createInitPrec(), dataInitPrec).isSafe)
+    Assertions.assertEquals(result, checker.check(configBuilder.createInitPrec(), dataInitPrec).isSafe)
   }
 }

@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xsts.analysis.util.RandomXstsKt.generateXsts;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
@@ -39,28 +39,26 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = org.junit.runners.Parameterized.class)
 public class XstsMddStructuralSymbolicComparisonTest {
 
     private static final int iterations = 5;
     private static final int upperbound = 5;
-
-    @Parameterized.Parameter(value = 0)
     public int seed;
 
-    @Parameterized.Parameters(name = "{index}: {0}")
     public static List<Object[]> data() {
         return IntStream.range(0, iterations)
                 .mapToObj(i -> new Object[] {i})
                 .collect(Collectors.toList());
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}")
+    public void test(int seed) throws Exception {
+
+        initXstsMddStructuralSymbolicComparisonTest(seed);
 
         try (var pool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             var xsts = generateXsts(seed);
@@ -183,5 +181,9 @@ public class XstsMddStructuralSymbolicComparisonTest {
             cache.put(node, lRet);
             return lRet;
         }
+    }
+
+    public void initXstsMddStructuralSymbolicComparisonTest(int seed) {
+        this.seed = seed;
     }
 }

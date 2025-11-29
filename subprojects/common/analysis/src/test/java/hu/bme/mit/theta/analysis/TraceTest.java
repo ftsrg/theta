@@ -19,7 +19,7 @@ import static com.google.common.collect.ImmutableList.of;
 
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TraceTest {
@@ -33,8 +33,8 @@ public class TraceTest {
     @Test
     public void testSizes() {
         final Trace<?, ?> trace = Trace.of(of(s0, s1, s2), of(a0, a1));
-        Assert.assertEquals(trace.length(), trace.getActions().size());
-        Assert.assertEquals(trace.length() + 1, trace.getStates().size());
+        Assertions.assertEquals(trace.length(), trace.getActions().size());
+        Assertions.assertEquals(trace.length() + 1, trace.getStates().size());
     }
 
     @Test
@@ -42,18 +42,18 @@ public class TraceTest {
         final Trace<?, ?> trace = Trace.of(of(s0, s1, s2), of(a0, a1));
         final Trace<?, ?> reverse = trace.reverse();
 
-        Assert.assertEquals(trace.length(), reverse.length());
-        Assert.assertEquals(trace.getStates().size(), reverse.getStates().size());
-        Assert.assertEquals(trace.getActions().size(), reverse.getActions().size());
+        Assertions.assertEquals(trace.length(), reverse.length());
+        Assertions.assertEquals(trace.getStates().size(), reverse.getStates().size());
+        Assertions.assertEquals(trace.getActions().size(), reverse.getActions().size());
 
-        Assert.assertEquals(s2, reverse.getState(0));
-        Assert.assertEquals(s1, reverse.getState(1));
-        Assert.assertEquals(s0, reverse.getState(2));
-        Assert.assertEquals(a1, reverse.getAction(0));
-        Assert.assertEquals(a0, reverse.getAction(1));
+        Assertions.assertEquals(s2, reverse.getState(0));
+        Assertions.assertEquals(s1, reverse.getState(1));
+        Assertions.assertEquals(s0, reverse.getState(2));
+        Assertions.assertEquals(a1, reverse.getAction(0));
+        Assertions.assertEquals(a0, reverse.getAction(1));
 
-        Assert.assertEquals(trace, trace.reverse().reverse());
-        Assert.assertNotEquals(trace, trace.reverse());
+        Assertions.assertEquals(trace, trace.reverse().reverse());
+        Assertions.assertNotEquals(trace, trace.reverse());
     }
 
     @Test
@@ -63,8 +63,8 @@ public class TraceTest {
         final Trace<?, ?> trace3 = Trace.of(of(s0, s2, s1), of(a0, a1));
         final Trace<?, ?> trace4 = Trace.of(of(s0, s1, s2), of(a1, a0));
 
-        Assert.assertTrue(trace1.equals(trace2));
-        Assert.assertFalse(trace1.equals(trace3));
-        Assert.assertFalse(trace1.equals(trace4));
+        Assertions.assertTrue(trace1.equals(trace2));
+        Assertions.assertFalse(trace1.equals(trace3));
+        Assertions.assertFalse(trace1.equals(trace4));
     }
 }

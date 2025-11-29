@@ -26,7 +26,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -35,26 +35,17 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {
 
     private static final VarDecl<BoolType> VA = Var("a", Bool());
     private static final VarDecl<IntType> VB = Var("b", Int());
     private static final VarDecl<IntType> VC = Var("d", Int());
-
-    @Parameter(value = 0)
     public Stmt stmt;
-
-    @Parameter(value = 1)
     public Set<VarDecl<?>> expectedVars;
 
-    @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -68,9 +59,16 @@ public class VarCollectorStmtVisitorTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(Stmt stmt, Set<VarDecl<?>> expectedVars) {
+        initVarCollectorStmtVisitorTest(stmt, expectedVars);
         final Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
         assertEquals(expectedVars, vars);
+    }
+
+    public void initVarCollectorStmtVisitorTest(Stmt stmt, Set<VarDecl<?>> expectedVars) {
+        this.stmt = stmt;
+        this.expectedVars = expectedVars;
     }
 }

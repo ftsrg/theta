@@ -18,15 +18,15 @@ package hu.bme.mit.theta.core.expr;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ExprTest {
 
     @Test
     public void testPrime() {
-        Assert.assertEquals(Prime(Int(1)), Prime(Int(1), 1));
-        Assert.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
-        Assert.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
+        Assertions.assertEquals(Prime(Int(1)), Prime(Int(1), 1));
+        Assertions.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
+        Assertions.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
     }
 }

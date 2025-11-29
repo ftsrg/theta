@@ -20,7 +20,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.delta.java.mdd.JavaMddFactory;
 import hu.bme.mit.delta.java.mdd.MddGraph;
@@ -45,11 +45,9 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
 public class MddConstrainedCursorTest {
 
     private static final VarDecl<IntType> X = Decls.Var("x", IntType.getInstance());
@@ -63,20 +61,11 @@ public class MddConstrainedCursorTest {
     private static final LitExpr<EnumType> RED = colorType.litFromShortName("red");
     private static final LitExpr<EnumType> GREEN = colorType.litFromShortName("green");
     private static final LitExpr<EnumType> BLUE = colorType.litFromShortName("blue");
-
-    @Parameterized.Parameter(value = 0)
     public List<VarDecl<?>> varOrder;
-
-    @Parameterized.Parameter(value = 1)
     public Expr<BoolType> constraintExpr;
-
-    @Parameterized.Parameter(value = 2)
     public Expr<BoolType> transExpr;
-
-    @Parameterized.Parameter(value = 3)
     public Integer topLevelCursorExpectedSize;
 
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -131,8 +120,11 @@ public class MddConstrainedCursorTest {
                 });
     }
 
-    @Test
-    public void test() throws Exception {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+    public void test(List<VarDecl<?>> varOrder, Expr<BoolType> constraintExpr, Expr<BoolType> transExpr, Integer topLevelCursorExpectedSize) throws Exception {
+
+        initMddConstrainedCursorTest(varOrder, constraintExpr, transExpr, topLevelCursorExpectedSize);
 
         try (final SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddGraph<Expr> mddGraph =
@@ -187,5 +179,12 @@ public class MddConstrainedCursorTest {
 
             assertEquals(topLevelCursorExpectedSize, size);
         }
+    }
+
+    public void initMddConstrainedCursorTest(List<VarDecl<?>> varOrder, Expr<BoolType> constraintExpr, Expr<BoolType> transExpr, Integer topLevelCursorExpectedSize) {
+        this.varOrder = varOrder;
+        this.constraintExpr = constraintExpr;
+        this.transExpr = transExpr;
+        this.topLevelCursorExpectedSize = topLevelCursorExpectedSize;
     }
 }

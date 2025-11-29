@@ -23,7 +23,8 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.ParamDirection.*
 import hu.bme.mit.theta.xcfa.toC
-import org.junit.Test
+import org.junit.jupiter.api.Test
+
 
 class XcfaSerializationTest {
 

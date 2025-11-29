@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ValuationTest {
@@ -35,35 +35,35 @@ public class ValuationTest {
     @Test
     public void testNullary() {
         final Valuation val = ImmutableValuation.empty();
-        Assert.assertEquals(val.toExpr(), True());
+        Assertions.assertEquals(val.toExpr(), True());
     }
 
     @Test
     public void testUnary() {
         final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).build();
-        Assert.assertEquals(val.toExpr(), Eq(ca.getRef(), Int(5)));
+        Assertions.assertEquals(val.toExpr(), Eq(ca.getRef(), Int(5)));
     }
 
     @Test
     public void testMultiary() {
         final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
-        Assert.assertEquals(val.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
+        Assertions.assertEquals(val.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
     }
 
     @Test
     public void testCopy() {
         final Valuation val1 = ImmutableValuation.builder().put(ca, Int(1)).build();
         final MutableValuation val2 = MutableValuation.copyOf(val1);
-        Assert.assertEquals(1, val1.getDecls().size());
-        Assert.assertEquals(1, val2.getDecls().size());
+        Assertions.assertEquals(1, val1.getDecls().size());
+        Assertions.assertEquals(1, val2.getDecls().size());
         val2.put(cb, Int(2));
-        Assert.assertEquals(1, val1.getDecls().size());
-        Assert.assertEquals(2, val2.getDecls().size());
+        Assertions.assertEquals(1, val1.getDecls().size());
+        Assertions.assertEquals(2, val2.getDecls().size());
         final Valuation val3 = ImmutableValuation.copyOf(val2);
         val2.put(cc, Int(3));
-        Assert.assertEquals(1, val1.getDecls().size());
-        Assert.assertEquals(3, val2.getDecls().size());
-        Assert.assertEquals(2, val3.getDecls().size());
+        Assertions.assertEquals(1, val1.getDecls().size());
+        Assertions.assertEquals(3, val2.getDecls().size());
+        Assertions.assertEquals(2, val3.getDecls().size());
     }
 
     @Test
@@ -73,25 +73,25 @@ public class ValuationTest {
         final Valuation v3 = ImmutableValuation.builder().put(cb, Int(1)).build();
         final Valuation v4 = ImmutableValuation.builder().put(ca, Int(1)).put(cb, Int(1)).build();
 
-        Assert.assertTrue(v1.isLeq(v1));
-        Assert.assertFalse(v2.isLeq(v1));
-        Assert.assertFalse(v3.isLeq(v1));
-        Assert.assertTrue(v4.isLeq(v1));
+        Assertions.assertTrue(v1.isLeq(v1));
+        Assertions.assertFalse(v2.isLeq(v1));
+        Assertions.assertFalse(v3.isLeq(v1));
+        Assertions.assertTrue(v4.isLeq(v1));
 
-        Assert.assertFalse(v1.isLeq(v2));
-        Assert.assertTrue(v2.isLeq(v2));
-        Assert.assertFalse(v3.isLeq(v2));
-        Assert.assertFalse(v4.isLeq(v2));
+        Assertions.assertFalse(v1.isLeq(v2));
+        Assertions.assertTrue(v2.isLeq(v2));
+        Assertions.assertFalse(v3.isLeq(v2));
+        Assertions.assertFalse(v4.isLeq(v2));
 
-        Assert.assertFalse(v1.isLeq(v3));
-        Assert.assertFalse(v2.isLeq(v3));
-        Assert.assertTrue(v3.isLeq(v3));
-        Assert.assertTrue(v4.isLeq(v3));
+        Assertions.assertFalse(v1.isLeq(v3));
+        Assertions.assertFalse(v2.isLeq(v3));
+        Assertions.assertTrue(v3.isLeq(v3));
+        Assertions.assertTrue(v4.isLeq(v3));
 
-        Assert.assertFalse(v1.isLeq(v4));
-        Assert.assertFalse(v2.isLeq(v4));
-        Assert.assertFalse(v3.isLeq(v4));
-        Assert.assertTrue(v4.isLeq(v4));
+        Assertions.assertFalse(v1.isLeq(v4));
+        Assertions.assertFalse(v2.isLeq(v4));
+        Assertions.assertFalse(v3.isLeq(v4));
+        Assertions.assertTrue(v4.isLeq(v4));
     }
 
     @Test
@@ -101,9 +101,9 @@ public class ValuationTest {
         final Valuation v3 = ImmutableValuation.builder().put(ca, Int(2)).build();
         final Valuation v4 = ImmutableValuation.builder().put(cb, Int(1)).build();
 
-        Assert.assertTrue(v1.equals(v1));
-        Assert.assertTrue(v1.equals(v2));
-        Assert.assertFalse(v1.equals(v3));
-        Assert.assertFalse(v1.equals(v4));
+        Assertions.assertTrue(v1.equals(v1));
+        Assertions.assertTrue(v1.equals(v2));
+        Assertions.assertFalse(v1.equals(v3));
+        Assertions.assertFalse(v1.equals(v4));
     }
 }

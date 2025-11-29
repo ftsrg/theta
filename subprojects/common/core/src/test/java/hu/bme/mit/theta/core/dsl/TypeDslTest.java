@@ -22,21 +22,14 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TypeDslTest {
-
-    @Parameterized.Parameter(value = 0)
     public String actual;
-
-    @Parameterized.Parameter(value = 1)
     public Type expected;
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -58,9 +51,16 @@ public class TypeDslTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String actual, Type expected) {
+        initTypeDslTest(actual, expected);
         final CoreDslManager manager = new CoreDslManager();
-        Assert.assertEquals(expected, manager.parseType(actual));
+        Assertions.assertEquals(expected, manager.parseType(actual));
+    }
+
+    public void initTypeDslTest(String actual, Type expected) {
+        this.actual = actual;
+        this.expected = expected;
     }
 }

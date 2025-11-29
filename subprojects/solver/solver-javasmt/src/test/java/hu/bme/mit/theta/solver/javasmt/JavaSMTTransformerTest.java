@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.runners.Parameterized.Parameters;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import ap.parser.ApInput.Absyn.Arg;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
@@ -42,11 +42,10 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.log.BasicLogManager;
@@ -54,17 +53,11 @@ import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 import org.sosy_lab.java_smt.api.SolverContext;
 
-@RunWith(Parameterized.class)
 public class JavaSMTTransformerTest {
-
-    @Parameter(0)
     public Expr<?> expr;
-
-    @Parameter(1)
     public Solvers solver;
 
-    @Parameters(name = "expr: {0}, solver: {1}")
-    public static Collection<?> operations() {
+    public static Collection<Arguments> operations() {
         final Set<Solvers> solvers;
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
             solvers = Set.of(Solvers.Z3, Solvers.SMTINTERPOL, Solvers.CVC5, Solvers.PRINCESS);
@@ -77,8 +70,7 @@ public class JavaSMTTransformerTest {
                                 .collect(Collectors.toSet()),
                         solvers)
                 .stream()
-                .map(objects -> new Object[] {objects.get(0), objects.get(1)})
-                .toList();
+                .map(objects -> Arguments.of(objects.get(0), objects.get(1))).toList();
     }
 
     private static boolean hasType(Expr<?> expr, Predicate<Type> pred) {
@@ -91,8 +83,10 @@ public class JavaSMTTransformerTest {
         return expr.getOps().stream().anyMatch((op) -> hasExpr(op, pred));
     }
 
-    @Test
-    public void testRoundtripTransformer() throws Exception {
+    @MethodSource("operations")
+    @ParameterizedTest(name = "expr: {0}, solver: {1}")
+    public void testRoundtripTransformer(Expr<?> expr, Solvers solver) throws Exception {
+        initJavaSMTTransformerTest(expr, solver);
         // Sanity check
         assertNotNull(expr);
 
@@ -155,36 +149,41 @@ public class JavaSMTTransformerTest {
             final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
 
             try {
-                Assert.assertEquals(expr, expExpr);
+                Assertions.assertEquals(expr, expExpr);
             } catch (AssertionError e) {
                 if (hasType(expr, type -> type instanceof FuncType<?, ?>)) {
                     throw e; // for functions, we don't want the solver to step in
                 }
-                try (final var solver =
+                try (final var s =
                         JavaSMTSolverFactory.create(this.solver, new String[] {}).createSolver()) {
                     BiFunction<Expr, Expr, Expr<BoolType>> eq =
                             expr.getType() instanceof FpType
                                     ? FpExprs::FpAssign
                                     : AbstractExprs::Eq;
 
-                    solver.push();
-                    solver.add(eq.apply(expr, expExpr));
-                    Assert.assertTrue(
-                            "(= %s %s) is unsat\n".formatted(expr, expExpr),
-                            solver.check().isSat());
-                    solver.pop();
-                    solver.push();
-                    solver.add(Not(eq.apply(expr, expExpr)));
-                    Assert.assertTrue(
+                    s.push();
+                    s.add(eq.apply(expr, expExpr));
+                    Assertions.assertTrue(
+                            s.check().isSat(),
+                            "(= %s %s) is unsat\n".formatted(expr, expExpr));
+                    s.pop();
+                    s.push();
+                    s.add(Not(eq.apply(expr, expExpr)));
+                    Assertions.assertTrue(
+                            s.check().isUnsat(),
                             "(not (= %s %s)) is sat with model %s\n"
                                     .formatted(
                                             expr,
                                             expExpr,
-                                            solver.check().isSat() ? solver.getModel() : ""),
-                            solver.check().isUnsat());
-                    solver.pop();
+                                            s.check().isSat() ? s.getModel() : ""));
+                    s.pop();
                 }
             }
         }
+    }
+
+    public void initJavaSMTTransformerTest(Expr<?> expr, Solvers solver) {
+        this.expr = expr;
+        this.solver = solver;
     }
 }

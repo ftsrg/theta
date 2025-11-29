@@ -22,17 +22,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(value = Parameterized.class)
-public final class DatalogStringTest {
+public final class DatalogStringTest { public String name;
 
-    @Parameterized.Parameter public String name;
-
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {{"succ"}, {"trains"}
@@ -41,8 +36,10 @@ public final class DatalogStringTest {
                 });
     }
 
-    @Test
-    public void test() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void test(String name) {
+        initDatalogStringTest(name);
         final InputStream inStream =
                 getClass().getResourceAsStream("/datalog/in/" + name + ".datalog");
         final InputStream outStream =
@@ -59,9 +56,13 @@ public final class DatalogStringTest {
 
         String[] s = Datalog.runProgram(input).split("\r\n");
         for (String s1 : s) {
-            Assert.assertTrue(output.contains(s1));
+            Assertions.assertTrue(output.contains(s1));
             output.remove(s1);
         }
-        Assert.assertTrue(output.isEmpty());
+        Assertions.assertTrue(output.isEmpty());
+    }
+
+    public void initDatalogStringTest(String name) {
+        this.name = name;
     }
 }

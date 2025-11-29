@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
 import static hu.bme.mit.theta.core.utils.ExprCanonizer.canonize;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -36,12 +36,10 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.experimental.runners.Enclosed;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-@RunWith(Enclosed.class)
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+ 
 public class ExprCanonizerTest {
 
     private static final ConstDecl<BoolType> cx = Const("x", Bool());
@@ -60,25 +58,14 @@ public class ExprCanonizerTest {
     private static final Expr<IntType> c = cc.getRef();
     private static final Expr<RatType> d = cd.getRef();
 
-    @RunWith(Enclosed.class)
     public static class CommutativeBinaryTest {
 
-        @RunWith(Parameterized.class)
         public static class CommutativeBinaryBoolTest {
-
-            @Parameterized.Parameter(value = 0)
             public Expr<BoolType> a1;
-
-            @Parameterized.Parameter(value = 1)
             public Expr<BoolType> b1;
-
-            @Parameterized.Parameter(value = 2)
             public Expr<BoolType> a2;
-
-            @Parameterized.Parameter(value = 3)
             public Expr<BoolType> b2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -89,33 +76,38 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testIff() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testIff(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> a2, Expr<BoolType> b2) {
+                initCommutativeBinaryBoolTest(a1, b1, a2, b2);
                 assertEquals(canonize(Iff(a1, b1)), canonize(Iff(a2, b2)));
             }
 
-            @Test
-            public void testXor() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testXor(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> a2, Expr<BoolType> b2) {
+                initCommutativeBinaryBoolTest(a1, b1, a2, b2);
                 assertEquals(canonize(Xor(a1, b1)), canonize(Xor(a2, b2)));
+            }
+
+            public void initCommutativeBinaryBoolTest(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> a2, Expr<BoolType> b2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.a2 = a2;
+                this.b2 = b2;
             }
         }
 
-        @RunWith(Parameterized.class)
         public static class CommutativeBinaryIntTest {
 
-            @Parameterized.Parameter(value = 0)
             public Expr<IntType> a1;
 
-            @Parameterized.Parameter(value = 1)
             public Expr<IntType> b1;
 
-            @Parameterized.Parameter(value = 2)
             public Expr<IntType> a2;
 
-            @Parameterized.Parameter(value = 3)
             public Expr<IntType> b2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -126,33 +118,38 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testIntEq() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testIntEq(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> a2, Expr<IntType> b2) {
+                initCommutativeBinaryIntTest(a1, b1, a2, b2);
                 assertEquals(canonize(IntExprs.Eq(a1, b1)), canonize(IntExprs.Eq(a2, b2)));
             }
 
-            @Test
-            public void testIntNeq() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testIntNeq(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> a2, Expr<IntType> b2) {
+                initCommutativeBinaryIntTest(a1, b1, a2, b2);
                 assertEquals(canonize(IntExprs.Neq(a1, b1)), canonize(IntExprs.Neq(a2, b2)));
+            }
+
+            public void initCommutativeBinaryIntTest(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> a2, Expr<IntType> b2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.a2 = a2;
+                this.b2 = b2;
             }
         }
 
-        @RunWith(Parameterized.class)
         public static class CommutativeBinaryRatTest {
 
-            @Parameterized.Parameter(value = 0)
             public Expr<RatType> a1;
 
-            @Parameterized.Parameter(value = 1)
             public Expr<RatType> b1;
 
-            @Parameterized.Parameter(value = 2)
             public Expr<RatType> a2;
 
-            @Parameterized.Parameter(value = 3)
             public Expr<RatType> b2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -161,43 +158,45 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testRatEq() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testRatEq(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> a2, Expr<RatType> b2) {
+                initCommutativeBinaryRatTest(a1, b1, a2, b2);
                 assertEquals(canonize(RatExprs.Eq(a1, b1)), canonize(RatExprs.Eq(a2, b2)));
             }
 
-            @Test
-            public void testRatNeq() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}")
+            public void testRatNeq(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> a2, Expr<RatType> b2) {
+                initCommutativeBinaryRatTest(a1, b1, a2, b2);
                 assertEquals(canonize(RatExprs.Neq(a1, b1)), canonize(RatExprs.Neq(a2, b2)));
+            }
+
+            public void initCommutativeBinaryRatTest(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> a2, Expr<RatType> b2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.a2 = a2;
+                this.b2 = b2;
             }
         }
     }
 
-    @RunWith(Enclosed.class)
     public static class CommutativeMultiaryTest {
 
-        @RunWith(Parameterized.class)
         public static class CommutativeMultiaryBoolTest {
 
-            @Parameterized.Parameter(value = 0)
             public Expr<BoolType> a1;
 
-            @Parameterized.Parameter(value = 1)
             public Expr<BoolType> b1;
 
-            @Parameterized.Parameter(value = 2)
             public Expr<BoolType> c1;
 
-            @Parameterized.Parameter(value = 3)
             public Expr<BoolType> a2;
 
-            @Parameterized.Parameter(value = 4)
             public Expr<BoolType> b2;
 
-            @Parameterized.Parameter(value = 5)
             public Expr<BoolType> c2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -208,39 +207,44 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testAnd() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testAnd(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> c1, Expr<BoolType> a2, Expr<BoolType> b2, Expr<BoolType> c2) {
+                initCommutativeMultiaryBoolTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(canonize(And(a1, b1, c1)), canonize(And(a2, b2, c2)));
             }
 
-            @Test
-            public void testOr() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testOr(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> c1, Expr<BoolType> a2, Expr<BoolType> b2, Expr<BoolType> c2) {
+                initCommutativeMultiaryBoolTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(canonize(Or(a1, b1, c1)), canonize(Or(a2, b2, c2)));
+            }
+
+            public void initCommutativeMultiaryBoolTest(Expr<BoolType> a1, Expr<BoolType> b1, Expr<BoolType> c1, Expr<BoolType> a2, Expr<BoolType> b2, Expr<BoolType> c2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.c1 = c1;
+                this.a2 = a2;
+                this.b2 = b2;
+                this.c2 = c2;
             }
         }
 
-        @RunWith(Parameterized.class)
         public static class CommutativeMultiaryIntTest {
 
-            @Parameterized.Parameter(value = 0)
             public Expr<IntType> a1;
 
-            @Parameterized.Parameter(value = 1)
             public Expr<IntType> b1;
 
-            @Parameterized.Parameter(value = 2)
             public Expr<IntType> c1;
 
-            @Parameterized.Parameter(value = 3)
             public Expr<IntType> a2;
 
-            @Parameterized.Parameter(value = 4)
             public Expr<IntType> b2;
 
-            @Parameterized.Parameter(value = 5)
             public Expr<IntType> c2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -251,41 +255,46 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testIntAdd() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testIntAdd(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> c1, Expr<IntType> a2, Expr<IntType> b2, Expr<IntType> c2) {
+                initCommutativeMultiaryIntTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(
                         canonize(IntExprs.Add(a1, b1, c1)), canonize(IntExprs.Add(a2, b2, c2)));
             }
 
-            @Test
-            public void testIntMul() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testIntMul(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> c1, Expr<IntType> a2, Expr<IntType> b2, Expr<IntType> c2) {
+                initCommutativeMultiaryIntTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(
                         canonize(IntExprs.Mul(a1, b1, c1)), canonize(IntExprs.Mul(a2, b2, c2)));
             }
+
+            public void initCommutativeMultiaryIntTest(Expr<IntType> a1, Expr<IntType> b1, Expr<IntType> c1, Expr<IntType> a2, Expr<IntType> b2, Expr<IntType> c2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.c1 = c1;
+                this.a2 = a2;
+                this.b2 = b2;
+                this.c2 = c2;
+            }
         }
 
-        @RunWith(Parameterized.class)
         public static class CommutativeMultiaryRatTest {
 
-            @Parameterized.Parameter(value = 0)
             public Expr<RatType> a1;
 
-            @Parameterized.Parameter(value = 1)
             public Expr<RatType> b1;
 
-            @Parameterized.Parameter(value = 2)
             public Expr<RatType> c1;
 
-            @Parameterized.Parameter(value = 3)
             public Expr<RatType> a2;
 
-            @Parameterized.Parameter(value = 4)
             public Expr<RatType> b2;
 
-            @Parameterized.Parameter(value = 5)
             public Expr<RatType> c2;
 
-            @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
             public static Collection<Object[]> data() {
                 return Arrays.asList(
                         new Object[][] {
@@ -294,16 +303,29 @@ public class ExprCanonizerTest {
                         });
             }
 
-            @Test
-            public void testRatAdd() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testRatAdd(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> c1, Expr<RatType> a2, Expr<RatType> b2, Expr<RatType> c2) {
+                initCommutativeMultiaryRatTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(
                         canonize(RatExprs.Add(a1, b1, c1)), canonize(RatExprs.Add(a2, b2, c2)));
             }
 
-            @Test
-            public void testRatMul() {
+            @MethodSource("data")
+            @ParameterizedTest(name = "{index}: {0}, {1}, {2}, {3}, {4}, {5}")
+            public void testRatMul(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> c1, Expr<RatType> a2, Expr<RatType> b2, Expr<RatType> c2) {
+                initCommutativeMultiaryRatTest(a1, b1, c1, a2, b2, c2);
                 assertEquals(
                         canonize(RatExprs.Mul(a1, b1, c1)), canonize(RatExprs.Mul(a2, b2, c2)));
+            }
+
+            public void initCommutativeMultiaryRatTest(Expr<RatType> a1, Expr<RatType> b1, Expr<RatType> c1, Expr<RatType> a2, Expr<RatType> b2, Expr<RatType> c2) {
+                this.a1 = a1;
+                this.b1 = b1;
+                this.c1 = c1;
+                this.a2 = a2;
+                this.b2 = b2;
+                this.c2 = c2;
             }
         }
     }

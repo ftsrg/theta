@@ -36,12 +36,10 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import java.io.FileInputStream
 import junit.framework.TestCase.fail
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
 class LtlCheckTestWithCfaExpl(
   private val cfaName: String,
   private val ltlExpr: String,
@@ -54,7 +52,6 @@ class LtlCheckTestWithCfaExpl(
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters
     fun data() =
       listOf(
         arrayOf("counter2inf", "G(x=1)", false),
@@ -65,8 +62,9 @@ class LtlCheckTestWithCfaExpl(
       )
   }
 
-  @Test
-  fun test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun test(cfaName: String, ltlExpr: String, result: Boolean) {
     abstractionSolver.reset()
     var cfaI: CFA?
     FileInputStream(String.format("src/test/resources/cfa/%s.cfa", cfaName)).use { inputStream ->
@@ -105,6 +103,6 @@ class LtlCheckTestWithCfaExpl(
         nextSideFunction = NextSideFunctions.Alternating(),
       )
 
-    Assert.assertEquals(result, checker.check(initPrec, dataInitPrec).isSafe)
+    Assertions.assertEquals(result, checker.check(initPrec, dataInitPrec).isSafe)
   }
 }
